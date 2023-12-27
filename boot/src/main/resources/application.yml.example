@@ -1,0 +1,37 @@
+server:
+  port: 8080
+
+spring:
+  data:
+    mongodb:
+      uri: mongodb://[REDACTED]@localhost:32768/DB_NAME?authSource=admin
+
+web:
+  cors:
+    allowed-origins:
+      - "http://localhost:8022"
+      - "http://localhost:8080"
+    allowed-methods:  GET, POST, PATCH, PUT, DELETE, OPTIONS, HEAD
+    max-age: 3600
+    allowed-headers: "Requestor-Type"
+    exposed-headers: "X-Get-Header"
+
+cyanide:
+  scheduler-active: true
+  cache-active: false
+  urls:
+    images-extension: .png
+    images:
+      logos: https://images.cyanide-studio.com/bb3/logos
+      races: https://images.cyanide-studio.com/bb3/races
+      portraits: https://images.cyanide-studio.com/bb3/portraits
+      skills: https://images.cyanide-studio.com/bb3/skillicons/colorset2
+      stadiums: https://images.cyanide-studio.com/bb3/stadiums
+  api-config:
+    base-url: https://web.cyanide-studio.com/ws
+    key: API_KEY
+  images-cache:
+    max-validity-in-minutes: 600
+  request-limit:
+    capacity: 30
+    period-in-seconds: 30
