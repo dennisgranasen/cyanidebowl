@@ -1,0 +1,175 @@
+import React from 'react';
+import Skill from "./Skill";
+import {Stack} from "@chakra-ui/react";
+
+const passingSkills = [
+    "Accurate",
+    "Cannonneer",
+    "CloudBuster",
+    "NervesOfSteel",
+    "OnTheBall",
+    "Pass",
+    "RunningPass",
+    "SafePass",
+    "DumpOff",
+    "FumbleRooskie",
+    "HailMaryPass",
+    "Leader",
+];
+const strengthSkills = [
+    "ArmBar",
+    "Brawler",
+    "BreakTackle",
+    "Grab",
+    "Guard",
+    "Juggernaut",
+    "MightyBlow",
+    "MultipleBlock",
+    "PileDriver",
+    "StandFirm",
+    "StrongArm",
+    "ThickSkull",
+];
+const agilitySkills = [
+    "Catch",
+    "Defensive",
+    "DivingCatch",
+    "DivingTackle",
+    "Dodge",
+    "JumpUp",
+    "Leap",
+    "SafePairOfHands",
+    "SideStep",
+    "SneakyGit",
+    "Sprint",
+    "SureFeet",
+];
+const generalSkills = [
+    "Block",
+    "Dauntless",
+    "DirtyPlayer",
+    "Fend",
+    "Frenzy",
+    "Kick",
+    "Pro",
+    "Shadowing",
+    "Tackle",
+    "Wrestle",
+    "StripBall",
+    "SureHands",
+];
+const mutationSkills = [
+    "BigHand",
+    "Claw",
+    "DisturbingPresence",
+    "ExtraArms",
+    "FoulAppearence",
+    "Horns",
+    "IronHardSkin",
+    "MonstrousMouth",
+    "PrehensileTail",
+    "Tentacles",
+    "TwoHeads",
+    "VeryLongLegs",
+];
+const traitSkills = [
+    "AlwaysHungry",
+    "AnimalSavagery",
+    "Animosity",
+    "BallChain",
+    "Bombardier",
+    "BoneHead",
+    "Chainsaw",
+    "Decay",
+    "HypnoticGaze",
+    "NoHands",
+    "Loner",
+    "PlagueRidden",
+    "PogoStick",
+    "ProjectileVomit",
+    "ReallyStupid",
+    "Regeneration",
+    "RightStuff",
+    "SecretWeapon",
+    "Stab",
+    "Stunty",
+    "Swarmming",
+    "Swoop",
+    "TakeRoot",
+    "ThrowTeamMate",
+    "Timmmber",
+    "Titchy",
+    "UnchannelledFury",
+];
+
+const isInList = (skill, listOfSkills) => {
+    for(const curr of listOfSkills) {
+        const normalizedSkill = skill.toLowerCase().replace(/[^a-z]/g,"");
+        if ( normalizedSkill.startsWith(curr.toLowerCase())) {
+            return true;
+        }
+    }
+    return false;
+}
+
+const isMutation = (skill) => {
+    return isInList(skill, mutationSkills);
+}
+
+const isTrait = (skill) => {
+    return isInList(skill, traitSkills);
+}
+
+const isAgility = (skill) => {
+    return isInList(skill, agilitySkills);
+}
+
+const isStrength = (skill) => {
+    return isInList(skill, strengthSkills);
+}
+
+const isPassing = (skill) => {
+    return isInList(skill, passingSkills);
+}
+
+const isGeneral = (skill) => {
+    return isInList(skill, generalSkills);
+}
+
+const skillComparator = (skillA, skillB) => {
+    let compareResult = orderBySkillGroup(skillA) - orderBySkillGroup(skillB);
+    if ( compareResult !== 0) {
+        return compareResult;
+    }
+    return skillA.localeCompare(skillB);
+}
+const orderBySkillGroup = (skill) => {
+    if (isTrait(skill) )
+        return 0;
+    else if ( isGeneral(skill) )
+        return 1;
+    else if ( isStrength(skill) )
+        return 2;
+    else if ( isAgility(skill) )
+        return 3;
+    else if ( isPassing(skill) )
+        return 4;
+    else if ( isMutation(skill) )
+        return 5;
+    else
+        return 6;
+}
+
+function Skills({skills}) {
+    const mySkills = [].concat(skills);
+    mySkills.sort(skillComparator);
+
+    return <Stack direction='row' spacing="2px">
+        {mySkills.map(skill =>
+            <Skill key={skill} skill={skill}/>
+        )}
+    </Stack>
+}
+
+export default Skills;
+
