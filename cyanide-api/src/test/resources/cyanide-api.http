@@ -1,0 +1,89 @@
+### Get info about api
+
+GET https://web.cyanide-studio.com/ws/?bb=3&key={{apiKey}}
+
+### Get coaches
+
+GET https://web.cyanide-studio.com/ws/bb3/coaches/?competition=DBBL S1 Division 1&limit=10&platform=pc&key={{apiKey}}
+
+### Get competitions
+
+GET https://web.cyanide-studio.com/ws/bb3/competitions/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&limit=10&platform=pc&key={{apiKey}}
+
+### Get contests
+
+GET https://web.cyanide-studio.com/ws/bb3/contests/?status=scheduled&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=7119edf3-a16d-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
+
+### Get contests
+
+GET https://web.cyanide-studio.com/ws/bb3/contests/?competition_id=7119edf3-a16d-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
+
+### Get halloffame (NOT YET IMPLEMENTED)
+
+GET https://web.cyanide-studio.com/ws/bb3/halloffame/?league=NAF BB3 Kickoff&limit=10&platform=pc&key={{apiKey}}
+
+
+### Get ladder
+
+GET https://web.cyanide-studio.com/ws/bb3/ladder/?league=NAF BB3 Kickoff&limit=100&platform=pc&key={{apiKey}}
+
+### Get league
+
+GET https://web.cyanide-studio.com/ws/bb3/league/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&platform=pc&bb=bb3&key={{apiKey}}
+
+### Get leagues
+
+GET https://web.cyanide-studio.com/ws/bb3/leagues/?league=DBBL&limit=100&platform=pc&key={{apiKey}}
+
+### Get lookup
+
+GET https://web.cyanide-studio.com/ws/bb3/lookup/?league=NAF BB3 Kickoff&platform=pc&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/league/?id=94dd6ae4-83fa-11ee-b910-02000090a64f&key={{apiKey}}
+
+### Get leagues
+
+GET https://web.cyanide-studio.com/ws/bb3/leagues/?league=DBBL  BB3&limit=100&platform=pc&key={{apiKey}}
+
+### Get lookup
+
+GET https://web.cyanide-studio.com/ws/bb3/lookup/?competition=DBBL S1 Division 5&platform=pc&key={{apiKey}}
+
+### Get match
+
+GET https://web.cyanide-studio.com/ws/bb3/match/?league=NAF BB3 Kickoff&limit=100&platform=pc&key={{apiKey}}
+
+### Get matches
+
+GET https://web.cyanide-studio.com/ws/bb3/matches/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&startDate=2023-12-01&platform=pc&key={{apiKey}}&order=finished
+GET https://web.cyanide-studio.com/ws/bb3/matches/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&startDate=2023-11-15&platform=pc&key={{apiKey}}
+
+### Get teams
+
+GET https://web.cyanide-studio.com/ws/bb3/teams/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=7119edf3-a16d-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}&order=finished
+
+### Get teams
+
+GET https://web.cyanide-studio.com/ws/bb3/teams/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&platform=pc&key={{apiKey}}&order=finished
+
+### Get team
+
+GET https://web.cyanide-studio.com/ws/bb3/team/?id=77d27b17-9f35-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
+
+### Get team
+
+GET https://web.cyanide-studio.com/ws/bb3/team/?id=099a83d4-8a44-11ee-b910-02000090a64f&platform=pc&key={{apiKey}}
+
+### Get coach
+
+GET https://web.cyanide-studio.com/ws/bb3/lookup/?coach=naytsyrhc&platform=pc&key={{apiKey}}
+
+### Get status
+
+GET https://web.cyanide-studio.com/ws/cya/status/?key={{apiKey}}
+
+
+###
+https://web.cyanide-studio.com/ws/bb3/matches/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&start=Wed Nov 15 23:58:18 CET 2023&platform=pc&key={{apiKey}}
+
+###
+https://web.cyanide-studio.com/ws/bb3/contests/?status=scheduled&competition_id="d4e5bc73-a04e-11ee-a745-02000090a64f&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&round=2&platform=pc&key={{apiKey}}

@@ -1,0 +1,59 @@
+package de.dbbcev.dbbcbb3facade.cyanide.api.model.lookup;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import de.dbbcev.dbbcbb3facade.cyanide.api.model.ApiRequest;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
+import java.util.UUID;
+
+/*
+    {
+      "game": "bb3",
+      "method": "lookup",
+      "url": "https:\/\/web.cyanide-studio.com\/ws\/bb3\/lookup\/?key={{api_key}}",
+      "args": {
+        "platform|platform_name": "pc|playstation|xbox",
+        "bb|opus": "Opus 1|2|3",
+        "league|league_name": "League name",
+        "league|league_id": "League ID",
+        "order|sort": "ID|LastMatchDate|CreationDate",
+        "competition|competition_name": "Competition name",
+        "competition|competition_id": "Competition ID",
+        "team|team_name": "Team name",
+        "team|team_id": "Team ID",
+        "coach|coach_name": "Coach name",
+        "coach|coach_id": "Coach ID",
+        "exact": "Exact league name match 0|1",
+        "instruction|hint": "Lookup instruction",
+        "fallback": "Fallback to defaults if nothing found"
+      },
+      "history": [
+        "2023\/06\/22 : New endpoint meant to look for teams, leagues, competitions or caoches by names or IDs"
+      ]
+    },
+*/
+@Getter
+@Setter
+@ToString
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class LookupRequest extends ApiRequest<LookupRequest, LookupResponse> {
+
+    private String league_name;
+    private UUID league_id;
+    private ApiRequest.Order order;
+    private String competition_name;
+    private UUID competition_id;
+    private String team_name;
+    private UUID team_id;
+    private String coach_name;
+    private UUID coach_id;
+    private Integer exact;
+    private String instruction;
+    private Boolean fallback;
+
+    public LookupRequest() {
+        super("bb3/lookup", LookupRequest.class, LookupResponse.class);
+    }
+}
