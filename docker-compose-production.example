@@ -1,0 +1,46 @@
+version: '3.1'
+
+services:
+  warpscores-db:
+    container_name: warpscores-db
+    hostname: warpscores-db
+    image: 'mongo:latest'
+    environment:
+      - 'MONGO_INITDB_DATABASE=warpscores'
+      - 'MONGO_INITDB_ROOT_PASSWORD=3f2ThhhwMR;CDa3UtDoS'
+      - 'MONGO_INITDB_ROOT_USERNAME=root'
+    ports:
+      - '32768:27017'
+    volumes:
+      - ./data:/data/db
+    networks:
+      - warpscores-backend
+
+  warpscores-backend:
+    container_name: warpscores-backend
+    hostname: warpscores-backend
+    image: 'warpscores/warpscores-backend:1.0.0-SNAPSHOT'
+    depends_on:
+      - warpscores-db
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+    networks:
+      - warpscores-backend
+      - warpscores-frontend
+
+  warpscores-frontend:
+    container_name: warpscores-frontend
+    hostname: warpscores-frontend
+    image: 'warpscores/warpscores-frontend:1.0.0-SNAPSHOT'
+    ports:
+      - '8022:80'
+    depends_on:
+      - warpscores-backend
+    networks:
+      - warpscores-frontend
+
+networks:
+  warpscores-backend:
+    external: false
+  warpscores-frontend:
+    driver: bridge
