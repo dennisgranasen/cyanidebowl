@@ -1,6 +1,7 @@
 import React from "react";
-import {Breadcrumb, BreadcrumbItem, BreadcrumbLink} from "@chakra-ui/react";
+import {Breadcrumb, BreadcrumbItem, BreadcrumbLink, Flex, Spacer} from "@chakra-ui/react";
 import {Link as RouteLink} from "react-router-dom";
+import Status from "./Status";
 
 function Navigation({currentPage, status}) {
 
@@ -11,7 +12,8 @@ function Navigation({currentPage, status}) {
         return pageName !== currentPage;
     }
 
-    return <Breadcrumb>
+    return <Flex>
+        <Breadcrumb>
             <BreadcrumbItem isCurrentPage={isPage("home", currentPage)}>
                 <BreadcrumbLink as={RouteLink} to="/">
                     Home
@@ -28,6 +30,9 @@ function Navigation({currentPage, status}) {
                 </BreadcrumbItem>
                 : ""}
         </Breadcrumb>
+        <Spacer/>
+        <Status/>
+    </Flex>
 }
 
 export default Navigation;
