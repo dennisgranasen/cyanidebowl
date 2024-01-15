@@ -1,10 +1,15 @@
 package de.dbbcev.dbbcbb3facade.domain.model;
 
+import de.dbbcev.dbbcbb3facade.cyanide.api.model.common.CompetitionFormat;
+import de.dbbcev.dbbcbb3facade.cyanide.api.model.common.MatchStatus;
+import de.dbbcev.dbbcbb3facade.cyanide.api.model.common.MatchType;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -13,4 +18,19 @@ import java.util.UUID;
 public class Contest {
     @Id
     private UUID contestUuid;
+    private CompetitionFormat format;
+    private UUID leagueId;
+    private String leagueName;
+    private UUID competitionId;
+    private String competitionName;
+    private String stadium;
+    private MatchType type;
+    private MatchStatus status;
+    private Integer round;
+    private Date matchDate;
+    private String matchId;
+    private UUID matchUuid;
+    private Integer live;
+    private List<Team> opponents;
+    private Object winner;
 }

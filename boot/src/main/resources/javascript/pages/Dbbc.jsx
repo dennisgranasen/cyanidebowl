@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from 'react';
 import CyanideApiService from "../CyanideApiService";
-import Teams from "../components/Teams";
 import {
     Alert,
     AlertDescription,
@@ -16,9 +15,12 @@ import {
 } from "@chakra-ui/react";
 import config from "../config";
 import Navigation from "../components/Navigation";
+import {useParams} from "react-router-dom";
+import Competitions from "../components/Competitions";
 
 function Dbbc() {
-    const [teams, setTeams] = useState([]);
+    const {leagueUuid} = useParams();
+    const [competitions, setCompetitions] = useState([]);
     const [leagues, setLeagues] = useState([]);
     const [leagueId, setLeagueId] = useState("");
     const [loading, setLoading] = useState(false);
@@ -35,30 +37,29 @@ function Dbbc() {
                 })
         }
         fetchLeagues();
+        if (leagueUuid && leagueUuid !== null)
+            setLeagueId(leagueUuid);
     }, []);
 
     useEffect(() => {
-        const fetchTeams = (leagueId) => {
+        const fetchCompetitions = (leagueId) => {
             if (leagueId === null || leagueId.length === 0)
                 return;
             setError("");
             setLoading(true);
-            CyanideApiService.teams(leagueId)
+            CyanideApiService.leagueCompetitions(leagueId)
                 .then((data) => {
-                    data.sort((teamA, teamB) => {
-                        let result = teamA.team.competitionName.localeCompare(teamB.team.competitionName);
-                        if (result !== 0)
-                            return result;
-                        return teamA.team.coachName.localeCompare(teamB.team.coachName)
+                    data.sort((compA, compB) => {
+                        return compA.name.localeCompare(compB.name);
                     });
-                    setTeams(data)
+                    setCompetitions(data)
                 })
                 .then(() => setLoading(false))
                 .catch((reason) => {
                     setError(reason.toLocaleString(config.locale));
                 })
         };
-        fetchTeams(leagueId);
+        fetchCompetitions(leagueId);
     }, [leagueId]);
 
     const changeLeague = (e) => setLeagueId(e.target.value);
@@ -76,14 +77,14 @@ function Dbbc() {
             </FormControl>
         </Box>
         <Box>
-            <Text>Teams</Text>
+            <Text>Competitions</Text>
             {error.length > 0 ?
                 <Alert status='error'>
                     <AlertIcon/>
                     <AlertTitle>There was an error!</AlertTitle>
                     <AlertDescription>{error}</AlertDescription>
                 </Alert>
-                : (loading ? <Spinner/> : <Teams teams={teams}/>)}
+                : (loading ? <Spinner/> : <Competitions competitions={competitions}/>)}
         </Box>
     </Stack>
 

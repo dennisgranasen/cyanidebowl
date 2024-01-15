@@ -1,0 +1,32 @@
+package de.dbbcev.dbbcbb3facade.cyanide.api.model;
+
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import de.dbbcev.dbbcbb3facade.cyanide.api.model.common.IdWithName;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.Date;
+import java.util.UUID;
+
+@Getter
+@Setter
+public class ApiCoach {
+    @JsonAlias({"idcoach"})
+    private UUID id;
+    @JsonAlias({"coachname"})
+    private String name;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date created;
+    private String lastlang;
+
+    public enum Status {Registered}
+
+    private String email;
+    private String twitch;
+    private String youtube;
+    private String country;
+    private String lang;
+    private Status status;
+
+}

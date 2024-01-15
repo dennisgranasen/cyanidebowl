@@ -3,7 +3,9 @@ package de.dbbcev.dbbcbb3facade.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.dbbcev.dbbcbb3facade.config.properties.CyanideApiProperties;
-import de.dbbcev.dbbcbb3facade.cyanide.api.model.ApiRequest;
+import de.dbbcev.dbbcbb3facade.cyanide.api.requests.ApiRequest;
+import de.dbbcev.dbbcbb3facade.cyanide.api.responses.ApiResponse;
+import de.dbbcev.dbbcbb3facade.cyanide.api.responses.EmptyAwareResponse;
 import de.dbbcev.dbbcbb3facade.domain.cache.ApiRequestKey;
 import de.dbbcev.dbbcbb3facade.domain.cache.RestApiResponseCache;
 import de.dbbcev.dbbcbb3facade.domain.cache.RestApiResponseCacheRepository;
@@ -64,12 +66,18 @@ public class CyanideCachedRestApiClient {
                 apiRequestKey.asString());
         Boolean cacheOutdated = cachedRestApiResponse.map(resp -> this.cacheOutdated(resp, apiRequest)).orElse(true);
         Date lastCacheAccess = cachedRestApiResponse.map(RestApiResponseCache::getLastAccess).orElse(null);
-        log.info("Trying to get for '{}'. Last api access was [{}] (outdated: {}).",
+        Boolean changeable = cachedRestApiResponse.map(cache -> Optional.of(cache.getResponse()))
+                .orElse(Optional.empty())
+                .map(response -> ((ApiResponse) response).isChangeableResponse())
+                .orElse(true);
+
+        log.info("Trying to get for '{}'. Last api access was [{}] (outdated: {}, changeable: {}).",
                 apiRequest.getRequestPath(),
-                lastCacheAccess, cacheOutdated);
-        if (cacheOutdated) {
-            ResponseType response = loadFromApi(apiRequest);
-            if (response == null) {
+                lastCacheAccess, cacheOutdated, changeable);
+        if (cacheOutdated && changeable) {
+            EmptyAwareResponse response = loadFromApi(apiRequest);
+            if (response == null || response.isEmpty()) {
+                log.info("Response was null or empty. Getting cached response.");
                 return getFromCache(cachedRestApiResponse, responseClassName);
             }
             try {
@@ -77,7 +85,7 @@ public class CyanideCachedRestApiClient {
             } catch (JsonProcessingException ex) {
                 log.error("Unable to cache response...");
             }
-            return response;
+            return (ResponseType) response;
         } else {
             return getFromCache(cachedRestApiResponse, responseClassName);
         }
@@ -118,7 +126,7 @@ public class CyanideCachedRestApiClient {
         return cacheInvalidAfter.isAfter(restApiResponseCache.getLastAccess().toInstant());
     }
 
-    private <RequestType, ResponseType> ResponseType loadFromApi(ApiRequest<RequestType, ResponseType> apiRequest) {
+    private <RequestType, ResponseType> EmptyAwareResponse loadFromApi(ApiRequest<RequestType, ResponseType> apiRequest) {
         log.info("Loading from real api (request: {}).", apiRequest);
         while (!bucket.tryConsume(1)) {
             log.info("Rate limit ({}) exceeded, waiting limit to be refilled (refills every {})...",
@@ -139,7 +147,7 @@ public class CyanideCachedRestApiClient {
                 log.warn("Got no successful response. Response: [{}]. Returning null.", response);
                 return null;
             } else {
-                return response.getBody();
+                return (EmptyAwareResponse) response.getBody();
             }
         } catch (RestClientException | JsonProcessingException ex) {
             log.error("Unable to process response as json.", ex);

@@ -18,23 +18,21 @@ import CyanideApiService from "../CyanideApiService";
 import {useParams} from "react-router-dom";
 import Roster from "../components/Roster";
 import prettyPrint from "../util/PrettyPrint";
-import formatAsNumber from "../util/FormatAsNumber";
-import config from "../config";
 import Navigation from "../components/Navigation";
 import logger from "../util/Logger";
+import Formatter from "../util/Formatter";
+import ImageUrls from "../ImageUrls";
 
 function TeamPage() {
     const {teamUuid} = useParams();
     const [team, setTeam] = useState();
-    const [coach, setCoach] = useState();
     const [players, setPlayers] = useState();
 
     useEffect(() => {
         const fetchTeam = async () => {
             await CyanideApiService.team(teamUuid).then((data) => {
-                setTeam(data.team);
-                setCoach(data.coach);
-                const players = data.team.players;
+                setTeam(data);
+                const players = data.players;
                 if (players !== null) {
                     players.sort((playerA, playerB) => playerA.number - playerB.number);
                 }
@@ -52,7 +50,7 @@ function TeamPage() {
 
     return <VStack align="left">
         <Box>
-            <Navigation currentPage="team"/>
+            <Navigation currentPage="team" league={ team ? [team.leagueId, team.leagueName] : [] } competition={team ? [ team.competitionIds[0], team.competitionName] : []} team={ team ? [ teamUuid, team.name ] : [] }/>
         </Box>
         {
             team ?
@@ -66,14 +64,14 @@ function TeamPage() {
                                 gap={4}
                             >
                                 <GridItem rowSpan={2} colSpan={1}
-                                          backgroundImage={`url('${config.backendUrl}/img/logo/${team.logo}')`}
+                                          backgroundImage={`url('${ImageUrls.logo(team.logo)}')`}
                                           backgroundRepeat="no-repeat" backgroundSize="contain"/>
                                 <GridItem colSpan={3}>
                                 <Center><Heading>{team.name}</Heading></Center>
-                                    <Center>Coach: {coach.name}</Center>
+                                    <Center>Coach: {team.coachName}</Center>
                                 </GridItem>
                                 <GridItem rowSpan={2} colSpan={1}
-                                          backgroundImage={`url('${config.backendUrl}/img/race/${team.fraction}')`}
+                                          backgroundImage={`url('${ImageUrls.race(team.fraction)}')`}
                                           backgroundRepeat="no-repeat" backgroundSize="contain"/>
                                 <GridItem colSpan={3}>
                                    <StatGroup>
@@ -91,11 +89,11 @@ function TeamPage() {
                                         </Stat>
                                         <Stat size="sm">
                                             <StatLabel>Cash</StatLabel>
-                                            <StatNumber>{formatAsNumber(team.cash)}</StatNumber>
+                                            <StatNumber>{Formatter.formatAsNumber(team.cash)}</StatNumber>
                                         </Stat>
                                         <Stat size="sm">
                                             <StatLabel>Value</StatLabel>
-                                            <StatNumber>{formatAsNumber(team.value)}</StatNumber>
+                                            <StatNumber>{Formatter.formatAsNumber(team.value)}</StatNumber>
                                         </Stat>
                                     </StatGroup>
                                 </GridItem>

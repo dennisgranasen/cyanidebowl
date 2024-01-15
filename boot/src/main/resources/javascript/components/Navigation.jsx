@@ -3,8 +3,11 @@ import {Breadcrumb, BreadcrumbItem, BreadcrumbLink, Flex, Spacer} from "@chakra-
 import {Link as RouteLink} from "react-router-dom";
 import Status from "./Status";
 
-function Navigation({currentPage, status}) {
+function Navigation({currentPage, league, competition, team}) {
 
+    const leagueLink = league ? `/${league[0]}` : "/";
+    const competitionLink = competition ? `/competition/${competition[0]}` : "";
+    const teamLink = team ? `/team/${team[0]}` : "";
     const isPage = (pageName, currentPage) => {
         return pageName === currentPage;
     }
@@ -19,14 +22,25 @@ function Navigation({currentPage, status}) {
                     Home
                 </BreadcrumbLink>
             </BreadcrumbItem>
-            {isPage("team", currentPage) ?
-                <BreadcrumbItem isCurrentPage={isPage("team", currentPage)}>
-                    <BreadcrumbLink>Team</BreadcrumbLink>
+            {league ? <BreadcrumbItem>
+                    <BreadcrumbLink as={RouteLink} to={leagueLink}>
+                        {league[1]}
+                    </BreadcrumbLink>
                 </BreadcrumbItem>
                 : ""}
-            {isPage("coach", currentPage) ?
-                <BreadcrumbItem isCurrentPage={isPage("coach", currentPage)}>
-                    <BreadcrumbLink>Coach</BreadcrumbLink>
+            {competition ?
+                <BreadcrumbItem isCurrentPage={isPage("competition", currentPage)}>
+                    <BreadcrumbLink as={RouteLink} to={competitionLink}>
+                        {competition[1]}
+                    </BreadcrumbLink>
+                </BreadcrumbItem>
+                : ""
+            }
+            {team ?
+                <BreadcrumbItem isCurrentPage={isPage("team", currentPage)}>
+                    <BreadcrumbLink as={RouteLink} to={teamLink}>
+                        {team[1]}
+                    </BreadcrumbLink>
                 </BreadcrumbItem>
                 : ""}
         </Breadcrumb>

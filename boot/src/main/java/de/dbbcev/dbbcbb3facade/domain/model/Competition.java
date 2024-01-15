@@ -16,8 +16,11 @@ import java.util.UUID;
 public class Competition {
     @Id
     private UUID uuid;
-    private UUID leagueId;
     private String name;
+    private String logo;
+    private UUID leagueId;
+    private String leagueName;
+    private String leagueLogo;
     private Date dateCreated;
     private CompetitionFormat format;
     private CompetitionStatus status;

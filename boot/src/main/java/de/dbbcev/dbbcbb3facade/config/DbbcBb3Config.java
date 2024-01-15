@@ -2,6 +2,11 @@ package de.dbbcev.dbbcbb3facade.config;
 
 import de.dbbcev.dbbcbb3facade.config.properties.CyanideApiProperties;
 import de.dbbcev.dbbcbb3facade.config.properties.WebConfigProperties;
+import de.dbbcev.dbbcbb3facade.domain.ApiKeyObfuscatingApiResponseListener;
+import de.dbbcev.dbbcbb3facade.domain.ApiKeyObfuscatingLeagueResponseListener;
+import de.dbbcev.dbbcbb3facade.domain.ApiKeyObfuscatingLeaguesResponseListener;
+import de.dbbcev.dbbcbb3facade.domain.ApiKeyObfuscatingMatchResponseListener;
+import de.dbbcev.dbbcbb3facade.domain.ApiKeyObfuscatingMatchesResponseListener;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -38,5 +43,30 @@ public class DbbcBb3Config {
                         .exposedHeaders(cors.getExposedHeaders());
             }
         };
+    }
+
+    @Bean
+    public ApiKeyObfuscatingApiResponseListener apiKeyObfuscatingApiResponseListener() {
+        return new ApiKeyObfuscatingApiResponseListener();
+    }
+
+    @Bean
+    public ApiKeyObfuscatingMatchResponseListener apiKeyObfuscatingMatchResponseListener() {
+        return new ApiKeyObfuscatingMatchResponseListener();
+    }
+
+    @Bean
+    public ApiKeyObfuscatingMatchesResponseListener apiKeyObfuscatingMatchesResponseListener() {
+        return new ApiKeyObfuscatingMatchesResponseListener();
+    }
+
+    @Bean
+    public ApiKeyObfuscatingLeagueResponseListener apiKeyObfuscatingLeagueResponseListener() {
+        return new ApiKeyObfuscatingLeagueResponseListener();
+    }
+
+    @Bean
+    public ApiKeyObfuscatingLeaguesResponseListener apiKeyObfuscatingLeaguesResponseListener() {
+        return new ApiKeyObfuscatingLeaguesResponseListener();
     }
 }

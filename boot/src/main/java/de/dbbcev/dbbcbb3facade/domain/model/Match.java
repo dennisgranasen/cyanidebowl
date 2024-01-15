@@ -26,6 +26,14 @@ public class Match {
     private String leagueName;
     private String stadium;
     private Integer round;
-    private List<UUID> coaches;
-    private List<UUID> teams;
+    private List<Coach> coaches;
+    private List<Team> teams;
+
+    @Getter
+    @Setter
+    public static class Coach
+    {
+        private UUID id;
+        private String name;
+    }
 }

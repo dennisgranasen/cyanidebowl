@@ -1,7 +1,7 @@
 package de.dbbcev.dbbcbb3facade.controller;
 
-import de.dbbcev.dbbcbb3facade.cyanide.api.model.lookup.LookupRequest;
-import de.dbbcev.dbbcbb3facade.cyanide.api.model.lookup.LookupResponse;
+import de.dbbcev.dbbcbb3facade.cyanide.api.requests.LookupRequest;
+import de.dbbcev.dbbcbb3facade.cyanide.api.responses.LookupResponse;
 import de.dbbcev.dbbcbb3facade.service.CyanideApiService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

@@ -15,13 +15,4 @@ import java.util.UUID;
 public class IdWithName {
     private String id;
     private String name;
-
-    public Optional<UUID> getIdAsUUIDOrNull() {
-        try {
-            return Optional.of(UUID.fromString(id));
-        } catch (IllegalArgumentException ex) {
-            log.error("Not a UUID: '{}'.", id);
-            return Optional.empty();
-        }
-    }
 }

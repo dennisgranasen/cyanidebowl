@@ -1,6 +1,6 @@
 package de.dbbcev.dbbcbb3facade.domain.cache;
 
-import de.dbbcev.dbbcbb3facade.cyanide.api.model.ApiRequest;
+import de.dbbcev.dbbcbb3facade.cyanide.api.requests.ApiRequest;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
