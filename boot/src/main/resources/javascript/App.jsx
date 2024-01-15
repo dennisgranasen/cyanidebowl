@@ -1,8 +1,9 @@
 import React from 'react';
 import {Box, ChakraProvider, CSSReset, extendTheme} from '@chakra-ui/react';
 import Dbbc from "./pages/Dbbc";
-import {BrowserRouter as Router, Route, Routes} from "react-router-dom";
+import {HashRouter as Router, Route, Routes} from "react-router-dom";
 import TeamPage from "./pages/TeamPage";
+import CompetitionPage from "./pages/CompetitionPage";
 
 const colors = {
     brand: {
@@ -32,8 +33,10 @@ function App() {
             <Box padding="4">
                 <Router>
                     <Routes>
-                        <Route path="/" element={<Dbbc/>} />
-                        <Route path="/team/:teamUuid" element={<TeamPage /> } />
+                        <Route path="/" element={<Dbbc/>}/>
+                        <Route path="/:leagueUuid" element={<Dbbc/>}/>
+                        <Route path="/team/:teamUuid" element={<TeamPage/>}/>
+                        <Route path="/competition/:competitionUuid" element={<CompetitionPage/>}/>
                     </Routes>
                 </Router>
             </Box>

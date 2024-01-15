@@ -1,20 +1,22 @@
 package de.dbbcev.dbbcbb3facade.service;
 
-import de.dbbcev.dbbcbb3facade.cyanide.api.model.common.StatusRequest;
-import de.dbbcev.dbbcbb3facade.cyanide.api.model.common.StatusResponse;
-import de.dbbcev.dbbcbb3facade.cyanide.api.model.competitions.CompetitionsRequest;
-import de.dbbcev.dbbcbb3facade.cyanide.api.model.competitions.CompetitionsResponse;
-import de.dbbcev.dbbcbb3facade.cyanide.api.model.contests.ContestsRequest;
-import de.dbbcev.dbbcbb3facade.cyanide.api.model.contests.ContestsResponse;
-import de.dbbcev.dbbcbb3facade.cyanide.api.model.leagues.LeagueRequest;
-import de.dbbcev.dbbcbb3facade.cyanide.api.model.leagues.LeagueResponse;
-import de.dbbcev.dbbcbb3facade.cyanide.api.model.lookup.LookupRequest;
-import de.dbbcev.dbbcbb3facade.cyanide.api.model.lookup.LookupResponse;
-import de.dbbcev.dbbcbb3facade.cyanide.api.model.matches.MatchesRequest;
-import de.dbbcev.dbbcbb3facade.cyanide.api.model.matches.MatchesResponse;
-import de.dbbcev.dbbcbb3facade.cyanide.api.model.teams.TeamRequest;
-import de.dbbcev.dbbcbb3facade.cyanide.api.model.teams.TeamsRequest;
-import de.dbbcev.dbbcbb3facade.cyanide.api.model.teams.TeamsResponse;
+import de.dbbcev.dbbcbb3facade.cyanide.api.requests.CompetitionsRequest;
+import de.dbbcev.dbbcbb3facade.cyanide.api.requests.ContestsRequest;
+import de.dbbcev.dbbcbb3facade.cyanide.api.requests.LeagueRequest;
+import de.dbbcev.dbbcbb3facade.cyanide.api.requests.LookupRequest;
+import de.dbbcev.dbbcbb3facade.cyanide.api.requests.MatchRequest;
+import de.dbbcev.dbbcbb3facade.cyanide.api.requests.MatchesRequest;
+import de.dbbcev.dbbcbb3facade.cyanide.api.requests.StatusRequest;
+import de.dbbcev.dbbcbb3facade.cyanide.api.requests.TeamRequest;
+import de.dbbcev.dbbcbb3facade.cyanide.api.requests.TeamsRequest;
+import de.dbbcev.dbbcbb3facade.cyanide.api.responses.CompetitionsResponse;
+import de.dbbcev.dbbcbb3facade.cyanide.api.responses.ContestsResponse;
+import de.dbbcev.dbbcbb3facade.cyanide.api.responses.LeagueResponse;
+import de.dbbcev.dbbcbb3facade.cyanide.api.responses.LookupResponse;
+import de.dbbcev.dbbcbb3facade.cyanide.api.responses.MatchResponse;
+import de.dbbcev.dbbcbb3facade.cyanide.api.responses.MatchesResponse;
+import de.dbbcev.dbbcbb3facade.cyanide.api.responses.StatusResponse;
+import de.dbbcev.dbbcbb3facade.cyanide.api.responses.TeamsResponse;
 import de.dbbcev.dbbcbb3facade.domain.CompetitionRepository;
 import de.dbbcev.dbbcbb3facade.domain.ContestRepository;
 import de.dbbcev.dbbcbb3facade.domain.LeagueRepository;
@@ -32,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -63,30 +66,33 @@ public class CyanideApiService {
 
     private final CompetitionRepository competitionRepository;
 
-    public void loadLeague(UUID leagueId) {
+    public League loadLeague(UUID leagueId) {
         LeagueRequest leagueRequest = new LeagueRequest();
         leagueRequest.setLeague_id(leagueId);
         LeagueResponse leagueResponse = cyanideCachedRestApiClient.getFromCacheOrApi(leagueRequest);
         League league = cyanideModelConverter.toLeague(leagueResponse.getLeague());
         if (league != null) {
-            leagueRepository.save(league);
+            return leagueRepository.save(league);
         }
+        return null;
     }
 
-    public void loadTeams(UUID competitionId) {
+    public List<Team> loadTeams(Competition competition) {
         TeamsRequest teamsRequest = new TeamsRequest();
-        teamsRequest.setCompetition_id(competitionId);
+        teamsRequest.setCompetition_id(competition.getUuid());
+        teamsRequest.setLeague_id(competition.getLeagueId());
         TeamsResponse teamsResponse = cyanideCachedRestApiClient.getFromCacheOrApi(teamsRequest);
-        List<Team> teams = cyanideModelConverter.toTeams(teamsResponse);
+        List<Team> teams = cyanideModelConverter.createOrUpdateTeams(teamsResponse);
         teamRepository.saveAll(teams);
 
         teams = teams.stream()
                 .map(this::createTeamRequestFor)
                 .map(cyanideCachedRestApiClient::getFromCacheOrApi)
-                .map(cyanideModelConverter::toTeam)
+                .map(cyanideModelConverter::createOrUpdateTeam)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         teamRepository.saveAll(teams);
+        return teams;
     }
 
     public List<Competition> loadCompetitions(UUID leagueId) {
@@ -97,35 +103,53 @@ public class CyanideApiService {
         return competitionRepository.saveAll(competitions);
     }
 
-    public void loadMatches(UUID leagueId) {
-        MatchesRequest matchesRequest = new MatchesRequest();
-        matchesRequest.setLeague_id(leagueId);
-        MatchesResponse matchesResponse = cyanideCachedRestApiClient.getFromCacheOrApi(matchesRequest);
-        List<Match> matches = cyanideModelConverter.toMatches(matchesResponse);
-        matchRepository.saveAll(matches);
-    }
-
-    public void loadContests(Competition competition) {
-        ContestsRequest contestsRequest = new ContestsRequest();
-        contestsRequest.setCompetition_id(competition.getUuid());
-        contestsRequest.setLeague_id(competition.getLeagueId());
-        if (competition.getRoundsCount() == null) {
-            loadContests(contestsRequest);
-        } else {
-            for (int round = 1; round < competition.getRoundsCount(); round++) {
-                contestsRequest.setRound(round);
-                loadContests(contestsRequest);
-            }
+    public void loadMatch(UUID matchUuid) {
+        if (matchUuid == null) {
+            return;
+        }
+        MatchRequest matchRequest = new MatchRequest();
+        matchRequest.setMatch_id(matchUuid);
+        MatchResponse matchResponse = cyanideCachedRestApiClient.getFromCacheOrApi(matchRequest);
+        Match match = cyanideModelConverter.toMatch(matchResponse);
+        if (match != null) {
+            matchRepository.save(match);
         }
     }
 
-    private void loadContests(ContestsRequest contestsRequest) {
+    public List<Contest> loadContests(Competition competition) {
+        ContestsRequest contestsRequest = new ContestsRequest();
+        contestsRequest.setCompetition_id(competition.getUuid());
+        contestsRequest.setLeague_id(competition.getLeagueId());
+        List<Contest> contests = new ArrayList<>();
+        if (competition.getRoundsCount() == null) {
+            contests.addAll(loadContests(contestsRequest));
+        } else {
+            for (int round = 1; round < competition.getRoundsCount(); round++) {
+                contestsRequest.setRound(round);
+                contests.addAll(loadContests(contestsRequest));
+            }
+        }
+        return contests;
+    }
+
+    public List<Match> loadMatches(League league, Date startDate) {
+        MatchesRequest matchesRequest = new MatchesRequest();
+        matchesRequest.setLeague_id(league.getUuid());
+        matchesRequest.setStart(startDate);
+        MatchesResponse matchesResponse = cyanideCachedRestApiClient.getFromCacheOrApi(matchesRequest);
+        List<Match> matches = cyanideModelConverter.toMatches(matchesResponse);
+        return matchRepository.saveAll(matches);
+    }
+
+    private List<Contest> loadContests(ContestsRequest contestsRequest) {
+        List<Contest> allContests = new ArrayList<>();
         for (ContestsRequest.Status status : ContestsRequest.Status.values()) {
             contestsRequest.setStatus(status);
             ContestsResponse contestsResponse = cyanideCachedRestApiClient.getFromCacheOrApi(contestsRequest);
             List<Contest> contests = cyanideModelConverter.toContests(contestsResponse);
-            contestRepository.saveAll(contests);
+            allContests.addAll(contestRepository.saveAll(contests));
         }
+        return allContests;
     }
 
     private TeamRequest createTeamRequestFor(Team team) {

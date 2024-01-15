@@ -1,11 +1,12 @@
 package de.dbbcev.dbbcbb3facade.controller;
 
 import de.dbbcev.dbbcbb3facade.cyanide.api.model.common.IdWithName;
-import de.dbbcev.dbbcbb3facade.cyanide.api.model.lookup.LookupRequest;
-import de.dbbcev.dbbcbb3facade.cyanide.api.model.lookup.LookupResponse;
+import de.dbbcev.dbbcbb3facade.cyanide.api.requests.LookupRequest;
+import de.dbbcev.dbbcbb3facade.cyanide.api.responses.LookupResponse;
 import de.dbbcev.dbbcbb3facade.domain.LeagueCollectionRepository;
 import de.dbbcev.dbbcbb3facade.domain.model.LeagueCollection;
 import de.dbbcev.dbbcbb3facade.service.CyanideApiService;
+import de.dbbcev.dbbcbb3facade.service.CyanideModelConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,6 +26,8 @@ public class LeagueCollectionController {
     private final LeagueCollectionRepository leagueCollectionRepository;
 
     private final CyanideApiService cyanideApiService;
+
+    private final CyanideModelConverter cyanideModelConverter;
 
     @PostMapping("/leagueCollection")
     public void createLeagueCollection(@RequestBody UUID leagueId) {
@@ -46,7 +49,7 @@ public class LeagueCollectionController {
         LeagueCollection leagueCollection = new LeagueCollection();
         leagueCollection.setCollectionActive(true);
         leagueCollection.setLeagueName(idWithName.getName());
-        leagueCollection.setLeagueId(idWithName.getIdAsUUIDOrNull().get());
+        leagueCollection.setLeagueId(cyanideModelConverter.getAsUuid(idWithName.getId()).get());
         return leagueCollection;
     }
 }

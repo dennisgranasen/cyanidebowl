@@ -3,12 +3,12 @@ package de.dbbcev.dbbcbb3facade.domain.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.dbbcev.dbbcbb3facade.cyanide.api.model.common.Race;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -27,8 +27,7 @@ public class Team {
     private String logo;
     private Race fraction;
     private String motto;
-
-    private Integer value;
+    private BigDecimal value;
     private Integer cash;
     private Integer apothecary;
     private Integer dedicatedFans;
@@ -41,7 +40,7 @@ public class Team {
     private UUID leagueId;
     private String leagueName;
 
-    private UUID competitionId;
+    private UUID[] competitionIds;
     private String competitionName;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
@@ -50,5 +49,27 @@ public class Team {
     private Integer score;
     private Integer rank;
 
+    private Integer death;
+
     private List<Player> players;
+
+    private Integer inflictedpasses;
+    private Integer inflictedcatches;
+    private Integer inflictedinterceptions;
+    private Integer inflictedtouchdowns;
+    private Integer inflictedcasualties;
+    private Integer inflictedtackles;
+    private Integer inflictedko;
+    private Integer inflictedinjuries;
+    private Integer inflicteddead;
+    private Integer inflictedmetersrunning;
+    private Integer inflictedmeterspassing;
+    private Integer inflictedpushouts;
+    private Integer sustainedexpulsions;
+    private Integer sustainedtouchdowns;
+    private Integer sustainedcasualties;
+    private Integer sustainedko;
+    private Integer sustainedinjuries;
+    private Integer sustaineddead;
+
 }

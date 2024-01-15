@@ -37,7 +37,10 @@ public class ImageController {
     private final ImageCacheRepository imageCacheRepository;
 
     @GetMapping("/logo/{name}")
-    public ResponseEntity<byte[]> getLogoImage(@PathVariable(name="name") String name) {
+    public ResponseEntity<byte[]> getLogoImage(@PathVariable(name = "name") String name) {
+        if (!name.startsWith("Logo_")) {
+            name = String.format("Logo_%s", name);
+        }
         String imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getLogos(), name);
         return loadImage(imageUrl);
     }
@@ -68,7 +71,7 @@ public class ImageController {
     @GetMapping("/stadium/{name}")
     public ResponseEntity<byte[]> getStadiumImage(@PathVariable(name = "name") String name) {
         String imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getStadiums(), name);
-        return loadImage(imageUrl);
+        return loadImage(imageUrl, Optional.of(128));
     }
 
     @GetMapping("/portrait/{name}")

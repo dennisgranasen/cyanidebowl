@@ -6,11 +6,10 @@ import Team from "./Team";
 const TableColumns = <Tr>
     <Th>Team-Name</Th>
     <Th></Th>
-    <Th>Competition</Th>
     <Th>Coach-Name</Th>
     <Th>Fraction</Th>
-    <Th>CTV</Th>
-    <Th>Cash</Th>
+    <Th isNumeric>CTV</Th>
+    <Th isNumeric>Cash</Th>
 </Tr>
 
 function Teams({teams}) {
@@ -24,8 +23,8 @@ function Teams({teams}) {
                 <Tbody>
                     {
                         teams ?
-                            teams.map(({team, coach}) => {
-                                return <Team team={team} key={team.id} coach={coach}/>
+                            teams.map(team => {
+                                return <Team team={team} key={team.id}/>
                             })
                             : <Spinner/>
                     }
