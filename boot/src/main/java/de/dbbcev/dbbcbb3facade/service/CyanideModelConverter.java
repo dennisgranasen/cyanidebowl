@@ -81,10 +81,10 @@ public class CyanideModelConverter {
     }
 
     private void populateTeam(Team team, ApiTeam apiTeam) {
+        BeanUtils.copyProperties(apiTeam, team);
         team.setCoachName(apiTeam.getCoach());
         team.setId(getAsUuid(apiTeam.getId()).orElse(null));
         //team.setCoachId(apiTeam.getCoach_id());
-        BeanUtils.copyProperties(apiTeam, team);
         team.setCompetitionIds(toUuids(team.getCompetitionIds(), apiTeam.getBb3_competition_id()));
     }
 
@@ -114,10 +114,9 @@ public class CyanideModelConverter {
         if (team == null) {
             return null;
         }
+        BeanUtils.copyProperties(apiTeam, team);
         team.setCoachId(teamResponse.getCoach().getId());
         team.setCoachName(teamResponse.getCoach().getName());
-        team.setCash(apiTeam.getCash());
-        team.setValue(apiTeam.getValue());
 
         TeamResponse.Player[] apiPlayers = teamResponse.getRoster();
         List<Player> players = toPlayers(apiPlayers);
@@ -143,14 +142,9 @@ public class CyanideModelConverter {
 
     private Player toPlayer(TeamResponse.Player apiPlayer) {
         Player player = new Player();
-        player.setName(apiPlayer.getName());
+        BeanUtils.copyProperties(apiPlayer, player);
         player.setId(getAsUuid(apiPlayer.getId()).get());
-        player.setNumber(apiPlayer.getNumber());
-        player.setType(apiPlayer.getType());
-        player.setXp(apiPlayer.getXp());
-        player.setValue(apiPlayer.getValue());
         player.setRaceId(apiPlayer.getIdraces());
-        player.setSkills(apiPlayer.getSkills());
         player.setSuspendedNextMatch(apiPlayer.getSuspended_next_match());
         player.setAttributes(toAttributes(apiPlayer.getAttributes()));
         player.setCasualtiesStateIds(apiPlayer.getCasualties_state_id());
@@ -160,11 +154,7 @@ public class CyanideModelConverter {
 
     private Player.Attributes toAttributes(TeamResponse.Player.Attributes apiAttributes) {
         Player.Attributes attributes = new Player.Attributes();
-        attributes.setAg(apiAttributes.getAg());
-        attributes.setAv(apiAttributes.getAv());
-        attributes.setSt(apiAttributes.getSt());
-        attributes.setMa(apiAttributes.getMa());
-        attributes.setPa(apiAttributes.getPa());
+        BeanUtils.copyProperties(apiAttributes, attributes);
         return attributes;
     }
 
@@ -200,16 +190,14 @@ public class CyanideModelConverter {
 
     private Match newMatch(ApiMatch apiMatch) {
         Match match = new Match();
+        BeanUtils.copyProperties(apiMatch, match);
         match.setMatchId(
                 getNonNull(apiMatch.getMatchUuid(), apiMatch.getUuid(), getAsUuid(apiMatch.getId()).orElse(null)));
-        match.setFinished(apiMatch.getFinished());
-        match.setStarted(apiMatch.getStarted());
-        match.setRound(apiMatch.getRound());
+        match.setStadium(apiMatch.getStadium());
         match.setCompetitionName(apiMatch.getCompetitionname());
         match.setCompetitionId(apiMatch.getIdcompetition());
         match.setLeagueId(apiMatch.getIdleague());
         match.setLeagueName(apiMatch.getLeaguename());
-        match.setStadium(apiMatch.getStadium());
         return match;
     }
 
@@ -234,8 +222,7 @@ public class CyanideModelConverter {
 
     private Match.Coach toCoach(ApiCoach apiCoach) {
         Match.Coach coach = new Match.Coach();
-        coach.setId(apiCoach.getId());
-        coach.setName(apiCoach.getName());
+        BeanUtils.copyProperties(apiCoach, coach);
         return coach;
     }
 
@@ -286,22 +273,16 @@ public class CyanideModelConverter {
 
     private Contest toContest(ApiContest apiContestMatch) {
         Contest contest = new Contest();
+        BeanUtils.copyProperties(apiContestMatch, contest);
         contest.setContestUuid(apiContestMatch.getContest_id());
-        contest.setFormat(apiContestMatch.getFormat());
         contest.setLeagueId(apiContestMatch.getLeague_id());
         contest.setCompetitionId(apiContestMatch.getCompetition_id());
         contest.setCompetitionName(apiContestMatch.getCompetition());
         contest.setLeagueName(apiContestMatch.getLeague());
-        contest.setStadium(apiContestMatch.getStadium());
-        contest.setType(apiContestMatch.getType());
         contest.setMatchId(apiContestMatch.getMatch_id());
         contest.setMatchDate(apiContestMatch.getMatch_date());
         contest.setMatchUuid(apiContestMatch.getMatch_uuid());
-        contest.setLive(apiContestMatch.getLive());
         contest.setOpponents(toOpponents(apiContestMatch.getOpponents()));
-        contest.setStatus(apiContestMatch.getStatus());
-        contest.setRound(apiContestMatch.getRound());
-        contest.setWinner(apiContestMatch.getWinner());
         return contest;
     }
 
@@ -315,16 +296,10 @@ public class CyanideModelConverter {
     private Team toOpponent(ApiContest.Opponent apiOpponent) {
         Team team = new Team();
         ApiContest.Team apiTeam = apiOpponent.getTeam();
+        BeanUtils.copyProperties(apiTeam, team);
         team.setCoachId(apiOpponent.getCoach().getId().toString());
         team.setCoachName(apiOpponent.getCoach().getName());
-        team.setId(apiTeam.getId());
-        team.setName(apiTeam.getName());
         team.setFraction(apiTeam.getRace());
-        team.setScore(apiTeam.getScore());
-        team.setDeath(apiTeam.getDeath());
-        team.setLogo(apiTeam.getLogo());
-        team.setValue(apiTeam.getValue());
-
         return team;
     }
 
@@ -339,16 +314,13 @@ public class CyanideModelConverter {
 
     private Competition toCompetition(ApiCompetition apiCompetition) {
         Competition competition = new Competition();
+        BeanUtils.copyProperties(apiCompetition, competition);
         competition.setUuid(UUID.fromString(apiCompetition.getId()));
         competition.setLeagueId(UUID.fromString(apiCompetition.getLeague().getId()));
         competition.setLeagueLogo(apiCompetition.getLeague().getLogo());
-        competition.setLogo(apiCompetition.getLogo());
         competition.setDateCreated(apiCompetition.getDate_created());
-        competition.setFormat(apiCompetition.getFormat());
         competition.setStatus(apiCompetition.getStatus_name());
-        competition.setName(apiCompetition.getName());
         competition.setLeagueName(apiCompetition.getLeague().getName());
-        competition.setRound(apiCompetition.getRound());
         competition.setRoundsCount(apiCompetition.getRounds_count());
         competition.setTeamsCount(apiCompetition.getTeams_count());
         competition.setTeamsMax(apiCompetition.getTeams_max());
@@ -359,11 +331,9 @@ public class CyanideModelConverter {
 
     public League toLeague(ApiLeague apiLeague) {
         League league = new League();
+        BeanUtils.copyProperties(apiLeague, league);
         league.setUuid(UUID.fromString(apiLeague.getId()));
-        league.setLogo(apiLeague.getLogo());
-        league.setName(apiLeague.getName());
         league.setTeamCount(apiLeague.getTeam_count());
-        league.setTreasury(apiLeague.getTreasury());
         league.setDateLastMatch(apiLeague.getDate_last_match());
         return league;
     }
