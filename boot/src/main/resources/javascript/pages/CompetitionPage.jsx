@@ -22,23 +22,7 @@ import Contests from "../components/Contests";
 import comparators from "../util/Comparators";
 import ImageUrls from "../ImageUrls";
 import Ranks from "../components/Ranks";
-import {FaAddressCard, FaFlagCheckered, FaSpinner} from "react-icons/fa6";
-import {QuestionOutlineIcon} from "@chakra-ui/icons";
-import config from "../config";
-
-const boxSize = config.smallBoxSize;
-const CompetitionStatusIcon = ({status}) => {
-    switch (status) {
-        case 'InProgress':
-            return <FaSpinner boxSize={boxSize}/>
-        case 'Finished':
-            return <FaFlagCheckered boxSize={boxSize}/>
-        case 'Registration':
-            return <FaAddressCard boxSize={boxSize}/>
-        default:
-            return <QuestionOutlineIcon boxSize={boxSize}/>
-    }
-}
+import CompetitionStatus from "../components/CompetitionStatus";
 
 function TeamPage() {
     const {competitionUuid} = useParams();
@@ -125,8 +109,8 @@ function TeamPage() {
                                         </Stat>
                                         <Stat size="sm">
                                             <StatLabel>Status</StatLabel>
-                                            <Tooltip label={competition.status}><StatNumber><CompetitionStatusIcon
-                                                status={competition.status}/></StatNumber></Tooltip>
+                                            <StatNumber><CompetitionStatus
+                                                status={competition.status}/></StatNumber>
                                         </Stat>
                                         <Stat size="sm">
                                             <StatLabel>Progress</StatLabel>

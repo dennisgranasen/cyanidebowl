@@ -10,7 +10,7 @@ import config from "../config";
 const boxSize = config.boxSize;
 const smallBoxSize = config.smallBoxSize;
 
-const getIcon = (status, stadium) => {
+const Icon = ({status, stadium}) => {
     switch (status) {
         case 'played':
             return <Avatar src={`${ImageUrls.stadium(stadium)}`} boxSize={boxSize}
@@ -25,7 +25,7 @@ const getIcon = (status, stadium) => {
 
 function MatchStatus({status, matchDate, stadium}) {
     return <Tooltip
-        label={`${prettyPrint(status)} ${formatter.formatAsDate(matchDate)}`}>{getIcon(status, stadium)}</Tooltip>
+        label={`${prettyPrint(status)} ${formatter.formatAsDate(matchDate)}`}><Icon status={status} stadium={stadium}/></Tooltip>
 }
 
 export default MatchStatus;
