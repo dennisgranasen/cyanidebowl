@@ -15,7 +15,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Document
-public class Contest {
+public class Contest implements UpdateableFromApi {
     @Id
     private UUID contestUuid;
     private CompetitionFormat format;
@@ -33,4 +33,10 @@ public class Contest {
     private Integer live;
     private List<Team> opponents;
     private Object winner;
+    private boolean adminResult;
+
+    @Override
+    public boolean isUpdateableFromApi() {
+        return !adminResult && !MatchStatus.played.equals(status);
+    }
 }

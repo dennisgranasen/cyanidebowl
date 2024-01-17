@@ -13,8 +13,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Document
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class Player {
+public class Player implements UpdateableFromApi {
     @Id
     private UUID id;
     private String name;

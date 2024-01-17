@@ -13,7 +13,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Document
-public class Match {
+public class Match implements UpdateableFromApi {
     @Id
     private UUID matchId;
     private UUID competitionId;
@@ -28,12 +28,17 @@ public class Match {
     private Integer round;
     private List<Coach> coaches;
     private List<Team> teams;
+    private boolean adminResult = false;
 
     @Getter
     @Setter
-    public static class Coach
-    {
+    public static class Coach {
         private UUID id;
         private String name;
+    }
+
+    @Override
+    public boolean isUpdateableFromApi() {
+        return !adminResult && finished == null;
     }
 }

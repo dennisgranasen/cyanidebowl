@@ -16,8 +16,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Document
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class Team {
+public class Team implements UpdateableFromApi {
     @Id
     private UUID id;
 
@@ -71,5 +70,4 @@ public class Team {
     private Integer sustainedko;
     private Integer sustainedinjuries;
     private Integer sustaineddead;
-
 }
