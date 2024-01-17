@@ -32,10 +32,8 @@ function TeamPage() {
         const fetchTeam = async () => {
             await CyanideApiService.team(teamUuid).then((data) => {
                 setTeam(data);
-                const players = data.players;
-                if (players !== null) {
-                    players.sort((playerA, playerB) => playerA.number - playerB.number);
-                }
+                const players = data.players || [];
+                players.sort((playerA, playerB) => playerA.number - playerB.number);
                 setPlayers(players);
             });
         };

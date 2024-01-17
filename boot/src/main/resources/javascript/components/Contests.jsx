@@ -4,8 +4,6 @@ import Contest from "./Contest";
 
 
 const TableColumns = <Tr>
-    <Th><Center>Round</Center></Th>
-    <Th><Center>Match Status</Center></Th>
     <Th/>
     <Th><Center>Home</Center></Th>
     <Th/>

@@ -39,23 +39,23 @@ public class RankController {
         int gamesWon = 0;
         int gamesDrawn = 0;
         int gamesLost = 0;
-        int inflictedTouchdowns = 0;
+        int ownMatchScore = 0;
+        int otherMatchScore = 0;
         int inflictedCasualties = 0;
-        int sustainedTouchdowns = 0;
         int sustainedCasualties = 0;
         for (Match match : matches) {
             List<Team> teamResults = match.getTeams();
-            Optional<Team> myTeam = getTeam(teamResults, team.getId());
-            Optional<Team> otherTeam = getOtherTeam(teamResults, myTeam);
-            if (myTeam.isPresent() && otherTeam.isPresent()) {
+            Optional<Team> ownTeam = getTeam(teamResults, team.getId());
+            Optional<Team> otherTeam = getOtherTeam(teamResults, ownTeam);
+            if (ownTeam.isPresent() && otherTeam.isPresent()) {
                 gamesPlayed++;
-                Team my = myTeam.get();
+                Team own = ownTeam.get();
                 Team other = otherTeam.get();
-                int currInflictedTouchdowns = getNullSafe(my.getInflictedtouchdowns());
-                int currSustainedTouchdowns = getNullSafe(other.getInflictedtouchdowns());
-                boolean won = currInflictedTouchdowns > currSustainedTouchdowns;
-                boolean lost = currInflictedTouchdowns < currSustainedTouchdowns;
-                boolean drawn = currInflictedTouchdowns == currSustainedTouchdowns;
+                int currOwnMatchScore = getNullSafe(own.getScore());
+                int currOtherMatchScore = getNullSafe(other.getScore());
+                boolean won = currOwnMatchScore > currOtherMatchScore;
+                boolean lost = currOwnMatchScore < currOtherMatchScore;
+                boolean drawn = currOwnMatchScore == currOtherMatchScore;
                 if (won) {
                     gamesWon++;
                 }
@@ -65,9 +65,9 @@ public class RankController {
                 if (drawn) {
                     gamesDrawn++;
                 }
-                inflictedTouchdowns += currInflictedTouchdowns;
-                sustainedTouchdowns += currSustainedTouchdowns;
-                inflictedCasualties += getNullSafe(my.getInflictedcasualties());
+                ownMatchScore += currOwnMatchScore;
+                otherMatchScore += currOtherMatchScore;
+                inflictedCasualties += getNullSafe(own.getInflictedcasualties());
                 sustainedCasualties += getNullSafe(other.getInflictedcasualties());
             }
         }
@@ -76,8 +76,8 @@ public class RankController {
         rank.setGamesWon(gamesWon);
         rank.setGamesDrawn(gamesDrawn);
         rank.setGamesLost(gamesLost);
-        rank.setInflictedTouchdowns(inflictedTouchdowns);
-        rank.setSustainedTouchdowns(sustainedTouchdowns);
+        rank.setInflictedTouchdowns(ownMatchScore);
+        rank.setSustainedTouchdowns(otherMatchScore);
         rank.setInflictedCasualties(inflictedCasualties);
         rank.setSustainedCasualties(sustainedCasualties);
         return rank;
@@ -108,6 +108,8 @@ public class RankController {
     }
 
     private Optional<Team> getTeam(List<Team> teamResults, UUID teamId) {
+        if ( teamResults == null)
+            return Optional.empty();
         List<Team> teams = teamResults.stream()
                 .filter(team -> teamId.equals(team.getId()))
                 .collect(Collectors.toList());

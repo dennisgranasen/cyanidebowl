@@ -6,11 +6,12 @@ axios.defaults.baseURL = config.backendUrl;
 
 const handleError = (reason) => {
     logger.error("FAILED!!!", reason);
+    return [];
 }
 
 const returnData = (result) => {
     logger.debug("Result: %o",result.data);
-    return result.data
+    return result.data && result.data !== null ? result.data : [];
 }
 
 export default {
