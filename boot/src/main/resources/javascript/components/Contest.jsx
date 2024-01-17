@@ -3,7 +3,7 @@ import {Center, Spinner, Td, Tooltip, Tr,} from '@chakra-ui/react'
 import Opponent from "./Opponent";
 import prettyPrint from "../util/PrettyPrint";
 import formatter from "../util/Formatter";
-import StatusIcon from "./StatusIcon";
+import MatchStatusIcon from "./MatchStatusIcon";
 
 import config from "../config";
 
@@ -15,7 +15,7 @@ const ScoreOrIcon = ({contest}) => {
         case 'played':
             return <>{contest.opponents[0].score} - {contest.opponents[1].score}</>
         default:
-            return <StatusIcon status={contest.status} boxSize={smallBoxSize} />
+            return <MatchStatusIcon status={contest.status} boxSize={smallBoxSize} />
     }
 }
 function Contest({contest}) {

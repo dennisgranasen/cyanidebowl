@@ -29,11 +29,11 @@ GET https://web.cyanide-studio.com/ws/bb3/ladder/?league=NAF BB3 Kickoff&limit=1
 
 ### Get league
 
-GET https://web.cyanide-studio.com/ws/bb3/league/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&platform=pc&bb=bb3&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/league/?id=94dd6ae4-83fa-11ee-b910-02000090a64f&key={{apiKey}}
 
 ### Get leagues
 
-GET https://web.cyanide-studio.com/ws/bb3/leagues/?league=DBBL&limit=100&platform=pc&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/leagues/?league=DBBL  BB3&limit=100&platform=pc&key={{apiKey}}
 
 ### Get lookup
 
