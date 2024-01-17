@@ -11,18 +11,34 @@ import {
     Stat,
     StatGroup,
     StatLabel,
-    StatNumber,
+    StatNumber, Tooltip,
     VStack,
 } from '@chakra-ui/react'
 import CyanideApiService from "../CyanideApiService";
-import {useParams} from "react-router-dom";
+import {Link as RouteLink, useParams} from "react-router-dom";
 import Navigation from "../components/Navigation";
 import Formatter from "../util/Formatter";
 import Contests from "../components/Contests";
 import comparators from "../util/Comparators";
 import ImageUrls from "../ImageUrls";
 import Ranks from "../components/Ranks";
-import {Link as RouteLink} from "react-router-dom";
+import {FaAddressCard, FaFlagCheckered, FaSpinner} from "react-icons/fa6";
+import {QuestionOutlineIcon} from "@chakra-ui/icons";
+import config from "../config";
+
+const boxSize = config.smallBoxSize;
+const CompetitionStatusIcon = ({status}) => {
+    switch (status) {
+        case 'InProgress':
+            return <FaSpinner boxSize={boxSize}/>
+        case 'Finished':
+            return <FaFlagCheckered boxSize={boxSize}/>
+        case 'Registration':
+            return <FaAddressCard boxSize={boxSize}/>
+        default:
+            return <QuestionOutlineIcon boxSize={boxSize}/>
+    }
+}
 
 function TeamPage() {
     const {competitionUuid} = useParams();
@@ -91,7 +107,8 @@ function TeamPage() {
                                           backgroundRepeat="no-repeat" backgroundSize="contain"/>
                                 <GridItem colSpan={3}>
                                     <Center><Heading>{competition.name}</Heading></Center>
-                                    <Center><RouteLink to={`/${competition.leagueId}`}>League: {competition.leagueName}</RouteLink></Center>
+                                    <Center><RouteLink
+                                        to={`/${competition.leagueId}`}>League: {competition.leagueName}</RouteLink></Center>
                                 </GridItem>
                                 <GridItem rowSpan={2} colSpan={1}
                                           backgroundImage={`url('${ImageUrls.logo(competition.logo)}')`}
@@ -108,7 +125,12 @@ function TeamPage() {
                                         </Stat>
                                         <Stat size="sm">
                                             <StatLabel>Status</StatLabel>
-                                            <StatNumber>{competition.status}</StatNumber>
+                                            <Tooltip label={competition.status}><StatNumber><CompetitionStatusIcon
+                                                status={competition.status}/></StatNumber></Tooltip>
+                                        </Stat>
+                                        <Stat size="sm">
+                                            <StatLabel>Progress</StatLabel>
+                                            <StatNumber>{competition.currentRound}/{competition.totalRounds}</StatNumber>
                                         </Stat>
                                         <Stat size="sm">
                                             <StatLabel>Teams</StatLabel>
