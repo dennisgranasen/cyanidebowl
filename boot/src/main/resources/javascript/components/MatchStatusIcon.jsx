@@ -2,7 +2,7 @@ import React from "react";
 import {TimeIcon} from "@chakra-ui/icons";
 import {FaTowerBroadcast} from "react-icons/fa6";
 
-const StatusIcon = ({status, boxSize}) => {
+const MatchStatusIcon = ({status, boxSize}) => {
     switch (status) {
         case 'scheduled':
             return <TimeIcon boxSize={boxSize}/>
@@ -13,4 +13,4 @@ const StatusIcon = ({status, boxSize}) => {
     }
 }
 
-export default StatusIcon;
+export default MatchStatusIcon;

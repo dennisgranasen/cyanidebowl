@@ -4,7 +4,7 @@ import {Avatar, Tooltip,} from '@chakra-ui/react'
 import ImageUrls from "../ImageUrls";
 import prettyPrint from "../util/PrettyPrint";
 import formatter from "../util/Formatter";
-import StatusIcon from "./StatusIcon";
+import MatchStatusIcon from "./MatchStatusIcon";
 import config from "../config";
 
 const boxSize = config.boxSize;
@@ -17,7 +17,7 @@ const getIcon = (status, stadium) => {
                            icon={<QuestionOutlineIcon boxSize={boxSize}/>}/>
         case 'scheduled':
         case 'live':
-            return <StatusIcon status={status} boxSize={smallBoxSize}/>
+            return <MatchStatusIcon status={status} boxSize={smallBoxSize}/>
         default:
             return <QuestionOutlineIcon boxSize={boxSize}/>
     }
