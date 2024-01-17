@@ -2,6 +2,7 @@ package de.dbbcev.dbbcbb3facade.controller;
 
 import de.dbbcev.dbbcbb3facade.cyanide.api.model.common.CompetitionStatus;
 import de.dbbcev.dbbcbb3facade.domain.CompetitionRepository;
+import de.dbbcev.dbbcbb3facade.domain.ContestRepository;
 import de.dbbcev.dbbcbb3facade.domain.model.Competition;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ import java.util.UUID;
 public class CompetitionController {
 
     private final CompetitionRepository competitionRepository;
+    private final ContestRepository contestsRepository;
 
     @GetMapping("/competitions/league/{leagueId}/{status}")
     public ResponseEntity<List<Competition>> getCompetitionsForLeagueAndStatus(@PathVariable(name = "leagueId") UUID leagueId,
@@ -46,12 +48,26 @@ public class CompetitionController {
     @GetMapping("/competition/{competitionId}")
     private ResponseEntity<Competition> getCompetition(@PathVariable(name = "competitionId") UUID competitionId) {
         try {
-            Optional<Competition> competition = competitionRepository.findById(competitionId);
+            Optional<Competition> competition = loadCompetition(competitionId);
             return competition
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    private Optional<Competition> loadCompetition(UUID competitionId) {
+        return Optional.ofNullable(competitionRepository.findById(competitionId)
+                .map(this::enrich)
+                .orElse(null));
+    }
+
+    private Competition enrich(Competition competition) {
+        Integer teams = competition.getTeamsMax();
+        Integer contestCount = contestsRepository.countByCompetitionId(competition.getUuid());
+        competition.setTotalRounds(teams -1);
+        competition.setCurrentRound(contestCount/(teams/2));
+        return competition;
     }
 }

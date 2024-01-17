@@ -30,4 +30,7 @@ public class Competition implements UpdateableFromApi {
     private Integer teamsMax;
     private Integer timeBonusDuration;
     private Integer turnDuration;
+
+    private Integer currentRound;
+    private Integer totalRounds;
 }
