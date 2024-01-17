@@ -13,7 +13,6 @@ import java.util.UUID;
 @Setter
 @Document
 @ToString
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class LeagueCollection {
     @Id
     private UUID leagueId;

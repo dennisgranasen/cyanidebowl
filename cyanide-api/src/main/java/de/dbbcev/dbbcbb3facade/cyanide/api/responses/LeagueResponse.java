@@ -41,4 +41,8 @@ public class LeagueResponse extends ApiResponse {
         return league == null;
     }
 
+    @Override
+    public void updateChangeableAttribute() {
+        super.setChangeableResponse(false);
+    }
 }

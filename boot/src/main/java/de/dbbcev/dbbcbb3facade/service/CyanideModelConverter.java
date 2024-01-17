@@ -13,6 +13,8 @@ import de.dbbcev.dbbcbb3facade.cyanide.api.responses.MatchesResponse;
 import de.dbbcev.dbbcbb3facade.cyanide.api.responses.StatusResponse;
 import de.dbbcev.dbbcbb3facade.cyanide.api.responses.TeamResponse;
 import de.dbbcev.dbbcbb3facade.cyanide.api.responses.TeamsResponse;
+import de.dbbcev.dbbcbb3facade.domain.ContestRepository;
+import de.dbbcev.dbbcbb3facade.domain.MatchRepository;
 import de.dbbcev.dbbcbb3facade.domain.TeamRepository;
 import de.dbbcev.dbbcbb3facade.domain.model.Competition;
 import de.dbbcev.dbbcbb3facade.domain.model.Contest;
@@ -21,6 +23,7 @@ import de.dbbcev.dbbcbb3facade.domain.model.Match;
 import de.dbbcev.dbbcbb3facade.domain.model.Player;
 import de.dbbcev.dbbcbb3facade.domain.model.Status;
 import de.dbbcev.dbbcbb3facade.domain.model.Team;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -37,12 +40,11 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class CyanideModelConverter {
     private final TeamRepository teamRepository;
-
-    public CyanideModelConverter(TeamRepository teamRepository) {
-        this.teamRepository = teamRepository;
-    }
+    private final MatchRepository matchRepository;
+    private final ContestRepository contestRepository;
 
     public Status toStatus(StatusResponse.Game game) {
         Status status = new Status();
@@ -70,13 +72,14 @@ public class CyanideModelConverter {
         }
         return Arrays.stream(teamsResponse.getTeams())
                 .map(this::createOrUpdateTeam)
-                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
     private Team createOrUpdateTeam(ApiTeam apiTeam) {
         Team team = createOrUpdateTeam(getAsUuid(apiTeam.getId()), apiTeam.getName());
-        populateTeam(team, apiTeam);
+        if (team != null && team.isUpdateableFromApi()) {
+            populateTeam(team, apiTeam);
+        }
         return team;
     }
 
@@ -95,6 +98,9 @@ public class CyanideModelConverter {
         }
         Optional<Team> teamFromDb = teamRepository.findById(id.get());
         Team team = teamFromDb.orElse(new Team());
+        if (!team.isUpdateableFromApi()) {
+            return team;
+        }
         team.setId(id.get());
         team.setName(name);
         return team;
@@ -107,12 +113,10 @@ public class CyanideModelConverter {
         ApiTeam apiTeam = teamResponse.getTeam();
         String id = apiTeam.getId();
         Optional<UUID> uuid = getAsUuid(id);
-        Optional<Team> teamFromDb = uuid
-                .map(teamRepository::findById)
-                .orElse(Optional.empty());
+        Optional<Team> teamFromDb = uuid.flatMap(teamRepository::findById);
         Team team = teamFromDb.orElse(createOrUpdateTeam(uuid, apiTeam.getName()));
-        if (team == null) {
-            return null;
+        if (team == null || !team.isUpdateableFromApi()) {
+            return team;
         }
         BeanUtils.copyProperties(apiTeam, team);
         team.setCoachId(teamResponse.getCoach().getId());
@@ -143,7 +147,7 @@ public class CyanideModelConverter {
     private Player toPlayer(TeamResponse.Player apiPlayer) {
         Player player = new Player();
         BeanUtils.copyProperties(apiPlayer, player);
-        player.setId(getAsUuid(apiPlayer.getId()).get());
+        player.setId(getAsUuid(apiPlayer.getId()).orElse(null));
         player.setRaceId(apiPlayer.getIdraces());
         player.setSuspendedNextMatch(apiPlayer.getSuspended_next_match());
         player.setAttributes(toAttributes(apiPlayer.getAttributes()));
@@ -176,7 +180,10 @@ public class CyanideModelConverter {
             return null;
         }
 
-        Match match = newMatch(apiMatch);
+        Match match = newMatchOrFromDb(apiMatch);
+        if (!match.isUpdateableFromApi()) {
+            return match;
+        }
         match.setCoaches(
                 Arrays.stream(apiMatch.getCoaches())
                         .map(this::toCoach)
@@ -188,11 +195,15 @@ public class CyanideModelConverter {
         return match;
     }
 
-    private Match newMatch(ApiMatch apiMatch) {
-        Match match = new Match();
+    private Match newMatchOrFromDb(ApiMatch apiMatch) {
+        UUID matchId = getNonNull(apiMatch.getMatchUuid(), apiMatch.getUuid(),
+                getAsUuid(apiMatch.getId()).orElse(null));
+        Match match = matchRepository.findById(matchId).orElse(new Match());
+        if (!match.isUpdateableFromApi()) {
+            return match;
+        }
         BeanUtils.copyProperties(apiMatch, match);
-        match.setMatchId(
-                getNonNull(apiMatch.getMatchUuid(), apiMatch.getUuid(), getAsUuid(apiMatch.getId()).orElse(null)));
+        match.setMatchId(matchId);
         match.setStadium(apiMatch.getStadium());
         match.setCompetitionName(apiMatch.getCompetitionname());
         match.setCompetitionId(apiMatch.getIdcompetition());
@@ -203,15 +214,14 @@ public class CyanideModelConverter {
 
     private UUID getNonNull(UUID... uuids) {
         if (uuids == null) {
-            throw new NoSuchElementException(
-                    String.format("Can't get a non null value from null input (input: %s).", uuids));
+            throw new NoSuchElementException("Can't get a non null value from 'null' input.");
         }
         List<UUID> uniqueUuids = Arrays
                 .stream(uuids)
                 .filter(Objects::nonNull)
                 .distinct()
-                .collect(Collectors.toList());
-        if (uniqueUuids.size() == 0) {
+                .toList();
+        if (uniqueUuids.isEmpty()) {
             throw new NoSuchElementException(String.format("All ids null (%s).", Arrays.asList(uuids)));
         }
         if (uniqueUuids.size() > 1) {
@@ -238,23 +248,24 @@ public class CyanideModelConverter {
             return Collections.emptyList();
         }
 
-        List<Match> matches = Arrays
+        return Arrays
                 .stream(apiMatches)
                 .map(this::toMatch)
                 .collect(Collectors.toList());
-        return matches;
     }
 
     public Match toMatch(ApiMatch apiMatch) {
-        Match match = newMatch(apiMatch);
-        match.setCoaches(
-                Arrays.stream(apiMatch.getCoaches())
-                        .map(this::toCoach)
-                        .collect(Collectors.toList()));
-        match.setTeams(
-                Arrays.stream(apiMatch.getTeams())
-                        .map(this::toTeam)
-                        .collect(Collectors.toList()));
+        Match match = newMatchOrFromDb(apiMatch);
+        if (match.isUpdateableFromApi()) {
+            match.setCoaches(
+                    Arrays.stream(apiMatch.getCoaches())
+                            .map(this::toCoach)
+                            .collect(Collectors.toList()));
+            match.setTeams(
+                    Arrays.stream(apiMatch.getTeams())
+                            .map(this::toTeam)
+                            .collect(Collectors.toList()));
+        }
         return match;
     }
 
@@ -272,18 +283,25 @@ public class CyanideModelConverter {
     }
 
     private Contest toContest(ApiContest apiContestMatch) {
-        Contest contest = new Contest();
-        BeanUtils.copyProperties(apiContestMatch, contest);
-        contest.setContestUuid(apiContestMatch.getContest_id());
-        contest.setLeagueId(apiContestMatch.getLeague_id());
-        contest.setCompetitionId(apiContestMatch.getCompetition_id());
-        contest.setCompetitionName(apiContestMatch.getCompetition());
-        contest.setLeagueName(apiContestMatch.getLeague());
-        contest.setMatchId(apiContestMatch.getMatch_id());
-        contest.setMatchDate(apiContestMatch.getMatch_date());
-        contest.setMatchUuid(apiContestMatch.getMatch_uuid());
-        contest.setOpponents(toOpponents(apiContestMatch.getOpponents()));
+        Contest contest = newContestOrFromDb(apiContestMatch);
+        if (contest.isUpdateableFromApi()) {
+            BeanUtils.copyProperties(apiContestMatch, contest);
+            contest.setContestUuid(apiContestMatch.getContest_id());
+            contest.setLeagueId(apiContestMatch.getLeague_id());
+            contest.setCompetitionId(apiContestMatch.getCompetition_id());
+            contest.setCompetitionName(apiContestMatch.getCompetition());
+            contest.setLeagueName(apiContestMatch.getLeague());
+            contest.setMatchId(apiContestMatch.getMatch_id());
+            contest.setMatchDate(apiContestMatch.getMatch_date());
+            contest.setMatchUuid(apiContestMatch.getMatch_uuid());
+            contest.setOpponents(toOpponents(apiContestMatch.getOpponents()));
+        }
         return contest;
+    }
+
+    private Contest newContestOrFromDb(ApiContest apiContestMatch) {
+        return contestRepository.findById(apiContestMatch.getContest_id())
+                .orElse(new Contest());
     }
 
     private List<Team> toOpponents(ApiContest.Opponent[] apiOpponents) {
