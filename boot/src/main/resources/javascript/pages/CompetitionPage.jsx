@@ -22,6 +22,7 @@ import Contests from "../components/Contests";
 import comparators from "../util/Comparators";
 import ImageUrls from "../ImageUrls";
 import Ranks from "../components/Ranks";
+import {Link as RouteLink} from "react-router-dom";
 
 function TeamPage() {
     const {competitionUuid} = useParams();
@@ -81,20 +82,19 @@ function TeamPage() {
                     <Card>
                         <CardBody>
                             <Grid
-                                h='200px'
                                 templateRows='repeat(2, 1fr)'
                                 templateColumns='repeat(5, 1fr)'
                                 gap={4}
                             >
                                 <GridItem rowSpan={2} colSpan={1}
-                                          backgroundImage={`url('${ImageUrls.logo(competition.logo)}')`}
+                                          backgroundImage={`url('${ImageUrls.logo(competition.leagueLogo)}')`}
                                           backgroundRepeat="no-repeat" backgroundSize="contain"/>
                                 <GridItem colSpan={3}>
                                     <Center><Heading>{competition.name}</Heading></Center>
-                                    <Center>League: {competition.leagueName}</Center>
+                                    <Center><RouteLink to={`/${competition.leagueId}`}>League: {competition.leagueName}</RouteLink></Center>
                                 </GridItem>
                                 <GridItem rowSpan={2} colSpan={1}
-                                          backgroundImage={`url('${ImageUrls.logo(competition.leagueLogo)}')`}
+                                          backgroundImage={`url('${ImageUrls.logo(competition.logo)}')`}
                                           backgroundRepeat="no-repeat" backgroundSize="contain"/>
                                 <GridItem colSpan={3}>
                                     <StatGroup>
