@@ -5,6 +5,7 @@ import Fraction from './Fraction'
 import {QuestionOutlineIcon} from "@chakra-ui/icons";
 import Formatter from "../util/Formatter";
 import ImageUrls from "../ImageUrls";
+import CompetitionStatus from "./CompetitionStatus";
 
 const boxSize = "32px";
 
@@ -19,7 +20,7 @@ function Competition({competition}) {
                 <Td><RouteLink to={`/${competition.leagueId}`}>{competition.leagueName}</RouteLink></Td>
                 <Td><RouteLink to={`/competition/${competition.uuid}`}>{competition.name}</RouteLink></Td>
                 <Td>{competition.format}</Td>
-                <Td>{competition.status}</Td>
+                <Td><CompetitionStatus status={competition.status}/></Td>
                 <Td isNumeric>{competition.teamsMax}</Td>
             </Tr> : <Spinner/>
     );
