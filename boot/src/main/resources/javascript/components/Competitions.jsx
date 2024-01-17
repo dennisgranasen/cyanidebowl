@@ -8,7 +8,6 @@ const TableColumns = <Tr>
     <Th>League</Th>
     <Th></Th>
     <Th>Competition</Th>
-    <Th></Th>
     <Th>Format</Th>
     <Th>Status</Th>
     <Th isNumeric>Teams</Th>

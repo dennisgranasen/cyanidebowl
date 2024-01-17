@@ -17,10 +17,6 @@ function Competition({competition}) {
                                                                       fallback={<QuestionOutlineIcon boxSize={boxSize}/>}
                                                                       objectFit="scale-down"/></RouteLink></Td>
                 <Td><RouteLink to={`/${competition.leagueId}`}>{competition.leagueName}</RouteLink></Td>
-                <Td><RouteLink to={`/competition/${competition.uuid}`}><Image src={`${ImageUrls.logo(competition.logo)}`}
-                                                                            boxSize={boxSize}
-                                                                            fallback={<QuestionOutlineIcon boxSize={boxSize}/>}
-                                                                            objectFit="scale-down"/></RouteLink></Td>
                 <Td><RouteLink to={`/competition/${competition.uuid}`}>{competition.name}</RouteLink></Td>
                 <Td>{competition.format}</Td>
                 <Td>{competition.status}</Td>
@@ -30,3 +26,11 @@ function Competition({competition}) {
 }
 
 export default Competition;
+
+
+/*
+                <Td><RouteLink to={`/competition/${competition.uuid}`}><Image src={`${ImageUrls.logo(competition.logo)}`}
+                                                                            boxSize={boxSize}
+                                                                            fallback={<QuestionOutlineIcon boxSize={boxSize}/>}
+                                                                            objectFit="scale-down"/></RouteLink></Td>
+ */
