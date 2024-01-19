@@ -1,5 +1,6 @@
 import React from 'react';
-import { Box, Progress, Tooltip } from '@chakra-ui/react';
+import { Box, Progress } from '@chakra-ui/react';
+import DelayedIconTooltip from './DelayedIconTooltip';
 
 const calcProgress = (currentRound, totalRounds, playedMatches, totalMatches) => {
   let progressValue;
@@ -13,10 +14,10 @@ const calcProgress = (currentRound, totalRounds, playedMatches, totalMatches) =>
 
 function ProgressLabel({ text, additionalText }) {
   return (
-    <Box>
+    <>
       {text}
-      {additionalText ? <Box>{additionalText} </Box> : null}
-    </Box>
+      {additionalText ? ` (${additionalText})` : null}
+    </>
   );
 }
 
@@ -29,9 +30,9 @@ function CompetitionProgress({ currentRound, totalRounds, playedMatches, totalMa
   const calcedProgress = calcProgress(currentRound, totalRounds, playedMatches, totalMatches);
   return calcedProgress ? (
     <Box p="4px">
-      <Tooltip label={<ProgressLabel text={progressText} additionalText={progressAdditionalText} />}>
+      <DelayedIconTooltip label={<ProgressLabel text={progressText} additionalText={progressAdditionalText} />}>
         <Progress value={calcedProgress} />
-      </Tooltip>
+      </DelayedIconTooltip>
     </Box>
   ) : (
     progressText

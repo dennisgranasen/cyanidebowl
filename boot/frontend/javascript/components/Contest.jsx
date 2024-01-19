@@ -5,6 +5,7 @@ import prettyPrint from '../util/PrettyPrint';
 import formatter from '../util/Formatter';
 import MatchStatusIcon from './MatchStatusIcon';
 import config from '../config';
+import DelayedIconTooltip from './DelayedIconTooltip';
 
 const { smallBoxSize } = config;
 
@@ -31,11 +32,11 @@ function Contest({ contest }) {
         reverse={false}
       />
       <Td>
-        <Tooltip label={`${prettyPrint(contest.status)} ${formatter.formatAsDate(contest.matchDate)}`}>
+        <DelayedIconTooltip label={`${prettyPrint(contest.status)} ${formatter.formatAsDate(contest.matchDate)}`}>
           <Center>
             <ScoreOrIcon contest={contest} />
           </Center>
-        </Tooltip>
+        </DelayedIconTooltip>
       </Td>
       <Opponent
         opponent={contest.opponents[1]}
