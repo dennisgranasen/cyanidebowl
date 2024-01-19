@@ -1,7 +1,7 @@
 {
-  "name": "dbbl-bb3-facade",
+  "name": "warp-scores",
   "version": "1.0.0",
-  "homepage": ".",
+  "homepage": "https://warp-scores.net",
   "devDependencies": {
     "@babel/core": "^7.20.5",
     "@babel/eslint-parser": "^7.19.1",

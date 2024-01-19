@@ -1,42 +1,51 @@
 import React from 'react';
-import {Center, Spinner, Td, Tooltip, Tr,} from '@chakra-ui/react'
-import Opponent from "./Opponent";
-import prettyPrint from "../util/PrettyPrint";
-import formatter from "../util/Formatter";
-import MatchStatusIcon from "./MatchStatusIcon";
+import { Center, Spinner, Td, Tooltip, Tr } from '@chakra-ui/react';
+import Opponent from './Opponent';
+import prettyPrint from '../util/PrettyPrint';
+import formatter from '../util/Formatter';
+import MatchStatusIcon from './MatchStatusIcon';
+import config from '../config';
 
-import config from "../config";
+const { smallBoxSize } = config;
 
-const smallBoxSize = config.smallBoxSize;
-
-const ScoreOrIcon = ({contest}) => {
-    switch (contest.status)
-    {
-        case 'played':
-            return <>{contest.opponents[0].score} - {contest.opponents[1].score}</>
-        default:
-            return <MatchStatusIcon status={contest.status} boxSize={smallBoxSize} />
-    }
+function ScoreOrIcon({ contest }) {
+  switch (contest.status) {
+    case 'played':
+      return (
+        <>
+          {contest.opponents[0].score} - {contest.opponents[1].score}
+        </>
+      );
+    default:
+      return <MatchStatusIcon status={contest.status} boxSize={smallBoxSize} />;
+  }
 }
-function Contest({contest}) {
-    return (
-        contest !== null ?
-            <Tr>
-                <Opponent opponent={contest.opponents[0]}
-                          winnerTeamUuid={contest.winner ? contest.winner.team.id : null}
-                          key={contest.opponents[0].id} reverse={false}/>
-                <Td>
-                    <Tooltip
-                        label={`${prettyPrint(contest.status)} ${formatter.formatAsDate(contest.matchDate)}`}>
-                        <Center><ScoreOrIcon contest={contest}/></Center>
-                    </Tooltip>
-                </Td>
-                <Opponent opponent={contest.opponents[1]}
-                          winnerTeamUuid={contest.winner ? contest.winner.team.id : null}
-                          key={contest.opponents[1].id} reverse={true}/>
-            </Tr> :
-            <Spinner/>
-    );
+function Contest({ contest }) {
+  return contest !== null ? (
+    <Tr>
+      <Opponent
+        opponent={contest.opponents[0]}
+        winnerTeamUuid={contest.winner ? contest.winner.team.id : null}
+        key={contest.opponents[0].id}
+        reverse={false}
+      />
+      <Td>
+        <Tooltip label={`${prettyPrint(contest.status)} ${formatter.formatAsDate(contest.matchDate)}`}>
+          <Center>
+            <ScoreOrIcon contest={contest} />
+          </Center>
+        </Tooltip>
+      </Td>
+      <Opponent
+        opponent={contest.opponents[1]}
+        winnerTeamUuid={contest.winner ? contest.winner.team.id : null}
+        key={contest.opponents[1].id}
+        reverse
+      />
+    </Tr>
+  ) : (
+    <Spinner />
+  );
 }
 
 export default Contest;

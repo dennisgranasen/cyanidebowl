@@ -67,7 +67,7 @@ GET https://web.cyanide-studio.com/ws/bb3/teams/?league_id=94dd6ae4-83fa-11ee-b9
 
 ### Get team
 
-GET https://web.cyanide-studio.com/ws/bb3/team/?id=77d27b17-9f35-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/team/?id=099a83d4-8a44-11ee-b910-02000090a64f&platform=pc&key={{apiKey}}
 
 ### Get team
 
