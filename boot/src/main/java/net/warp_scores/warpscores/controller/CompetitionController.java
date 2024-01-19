@@ -1,11 +1,13 @@
 package net.warp_scores.warpscores.controller;
 
-import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionStatus;
-import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
-import net.warp_scores.warpscores.domain.persistence.ContestRepository;
-import net.warp_scores.warpscores.domain.model.Competition;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionStatus;
+import net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus;
+import net.warp_scores.warpscores.domain.model.Competition;
+import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
+import net.warp_scores.warpscores.domain.persistence.ContestRepository;
+import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -68,10 +70,9 @@ public class CompetitionController {
     }
 
     private Competition initializeForFormat(Competition competition) {
-        switch (competition.getFormat())
-        {
+        switch (competition.getFormat()) {
             case RoundRobin -> initializeRoundRobin(competition);
-            case Knockout ->  initializeKnockout(competition);
+            case Knockout -> initializeKnockout(competition);
         }
         return competition;
     }
@@ -84,7 +85,11 @@ public class CompetitionController {
     private void initializeRoundRobin(Competition competition) {
         Integer teams = competition.getTeamsMax();
         Integer contestCount = contestsRepository.countByCompetitionId(competition.getUuid());
-        competition.setTotalRounds(teams -1);
-        competition.setCurrentRound(contestCount/(teams/2));
+        Integer playedMatchesCount = contestsRepository.countByCompetitionIdAndStatus(competition.getUuid(), MatchStatus.played);
+        int totalRounds = teams - 1;
+        competition.setTotalRounds(totalRounds);
+        competition.setCurrentRound(contestCount / (teams / 2));
+        competition.setTotalMatches(totalRounds * teams / 2);
+        competition.setPlayedMatches(playedMatchesCount);
     }
 }

@@ -12,6 +12,6 @@ import java.util.UUID;
 public interface ContestRepository extends MongoRepository<Contest, UUID> {
     List<Contest> findByCompetitionIdAndStatus(UUID competitionId, MatchStatus matchStatus);
     List<Contest> findByCompetitionId(UUID competitionId);
-
     Integer countByCompetitionId(UUID competitionId);
+    Integer countByCompetitionIdAndStatus(UUID competitionId, MatchStatus status);
 }

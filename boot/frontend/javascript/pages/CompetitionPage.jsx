@@ -79,6 +79,8 @@ function TeamPage() {
                           <CompetitionProgress
                             currentRound={competition.currentRound}
                             totalRounds={competition.totalRounds}
+                            totalMatches={competition.totalMatches}
+                            playedMatches={competition.playedMatches}
                           />
                         }
                       />,
