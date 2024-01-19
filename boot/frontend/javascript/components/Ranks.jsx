@@ -4,6 +4,9 @@ import Rank from './Rank';
 
 const TableColumns = (
   <Tr>
+    <Th>
+      <Center>Rank</Center>
+    </Th>
     <Th>Team-Name</Th>
     <Th />
     <Th>Coach-Name</Th>

@@ -21,7 +21,7 @@ function Icon({ status }) {
 
 function CompetitionStatus({ status }) {
   return (
-    <Tooltip label={prettyPrint(status)}>
+    <Tooltip label={`${prettyPrint(status)}`}>
       <Box>
         <Icon status={status} />
       </Box>
