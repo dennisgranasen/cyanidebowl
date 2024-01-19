@@ -1,5 +1,5 @@
 import React from 'react';
-import { Center, Heading, Image, Spinner, Td, Tr } from '@chakra-ui/react';
+import { Center, Heading, Image, LinkBox, LinkOverlay, Spinner, Td, Tr } from '@chakra-ui/react';
 import { Link as RouteLink } from 'react-router-dom';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import Race from './Race';
@@ -11,24 +11,21 @@ const { boxSize } = config;
 
 function Rank({ rank }) {
   return rank !== null ? (
-    <Tr>
+    <LinkBox as={Tr}>
       <Td>
+        <LinkOverlay as={RouteLink} to={`/team/${rank.team.id}`} />
         <Center>
           <Heading size="sm">{rank.rank}</Heading>
         </Center>
       </Td>
+      <Td>{rank.team.name}</Td>
       <Td>
-        <RouteLink to={`/team/${rank.team.id}`}>{rank.team.name}</RouteLink>
-      </Td>
-      <Td>
-        <RouteLink to={`/team/${rank.team.id}`}>
-          <Image
-            src={`${ImageUrls.logo(rank.team.logo)}`}
-            boxSize={boxSize}
-            fallback={<QuestionOutlineIcon boxSize={boxSize} />}
-            objectFit="scale-down"
-          />
-        </RouteLink>
+        <Image
+          src={`${ImageUrls.logo(rank.team.logo)}`}
+          boxSize={boxSize}
+          fallback={<QuestionOutlineIcon boxSize={boxSize} />}
+          objectFit="scale-down"
+        />
       </Td>
       <Td>{rank.team.coachName}</Td>
       <Td>
@@ -67,7 +64,7 @@ function Rank({ rank }) {
       <Td>
         <Center>{Formatter.formatAsNumber(rank.inflictedCasualties - rank.sustainedCasualties)}</Center>
       </Td>
-    </Tr>
+    </LinkBox>
   ) : (
     <Spinner />
   );
