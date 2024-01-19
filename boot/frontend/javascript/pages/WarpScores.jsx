@@ -6,13 +6,11 @@ import {
   Box,
   Card,
   CardBody,
-  Flex,
   FormControl,
   FormLabel,
   Heading,
   Image,
   Select,
-  Spacer,
   Spinner,
   Stack,
 } from '@chakra-ui/react';
@@ -24,6 +22,8 @@ import Competitions from '../components/Competitions';
 import ImageUrls from '../ImageUrls';
 import logger from '../util/Logger';
 import formatter from '../util/Formatter';
+import InfoArea from '../components/InfoArea';
+import InfoItem from '../components/InfoItem';
 
 function WarpScores() {
   const { leagueUuid } = useParams();
@@ -125,22 +125,24 @@ function WarpScores() {
         </Box>
       ) : null}
       {league ? (
-        <Card direction={{ base: 'column', sm: 'row' }}>
-          <Image objectFit="cover" maxW={{ base: '100%', sm: '120px' }} src={ImageUrls.logo(league.logo)} />
+        <Card direction="row">
+          <Box>
+            <Image objectFit="contain" maxW="140px" src={ImageUrls.logo(league.logo)} />
+          </Box>
           <CardBody>
             <Heading>{league.name}</Heading>
-            <Flex>
-              <Box>Teams: {league.teamCount}</Box>
-              <Spacer />
-              <Box>Active Competitions: {competitions.length}</Box>
-              <Spacer />
-              <Box>Last match: {formatter.formatAsDate(league.dateLastMatch)}</Box>
-            </Flex>
+            <InfoArea
+              infoItems={[
+                <InfoItem key="1" label="Teams" info={league.teamCount} />,
+                <InfoItem key="2" label="Active Competitions" info={competitions.length} />,
+                <InfoItem key="3" label="Last match" info={formatter.formatAsDate(league.dateLastMatch)} />,
+              ]}
+            />
           </CardBody>
         </Card>
       ) : null}
       <Box>
-        <Heading>Competitions</Heading>
+        <Heading size="md">Competitions</Heading>
         {error ? (
           <Alert status={error.type}>
             <AlertIcon />

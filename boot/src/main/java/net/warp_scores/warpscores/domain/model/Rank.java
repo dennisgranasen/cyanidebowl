@@ -10,6 +10,7 @@ import java.util.UUID;
 public class Rank {
     private UUID competitionId;
     private Team team;
+    private Integer rank;
     private Integer gamesPlayed;
     private Integer score;
     private Integer gamesWon;

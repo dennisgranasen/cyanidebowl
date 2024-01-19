@@ -4,7 +4,9 @@ import { Link as RouteLink } from 'react-router-dom';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import ImageUrls from '../ImageUrls';
 import CompetitionStatus from './CompetitionStatus';
+import CompetitionProgress from './CompetitionProgress';
 import config from '../config';
+import prettyPrint from '../util/PrettyPrint';
 
 const { boxSize } = config;
 
@@ -27,9 +29,12 @@ function Competition({ competition }) {
       <Td>
         <RouteLink to={`/competition/${competition.uuid}`}>{competition.name}</RouteLink>
       </Td>
-      <Td>{competition.format}</Td>
+      <Td>{prettyPrint(competition.format)}</Td>
       <Td>
         <CompetitionStatus status={competition.status} />
+      </Td>
+      <Td>
+        <CompetitionProgress currentRound={competition.currentRound} totalRounds={competition.totalRounds} />
       </Td>
       <Td isNumeric>{competition.teamsMax}</Td>
     </Tr>

@@ -9,6 +9,7 @@ const TableColumns = (
     <Th>Competition</Th>
     <Th>Format</Th>
     <Th>Status</Th>
+    <Th>Progress</Th>
     <Th isNumeric>Teams</Th>
   </Tr>
 );

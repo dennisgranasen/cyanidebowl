@@ -9,7 +9,7 @@ function MatchStatusIcon({ status, boxSize }) {
     case 'live':
       return <FaTowerBroadcast boxSize={boxSize} />;
     default:
-      return <></>;
+      return null;
   }
 }
 

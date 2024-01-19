@@ -1,19 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Box,
-  Card,
-  CardBody,
-  Center,
-  Grid,
-  GridItem,
-  Heading,
-  Spinner,
-  Stat,
-  StatGroup,
-  StatLabel,
-  StatNumber,
-  VStack,
-} from '@chakra-ui/react';
+import { Box, Card, CardBody, Flex, Heading, Image, Spinner, VStack } from '@chakra-ui/react';
 import { Link as RouteLink, useParams } from 'react-router-dom';
 import CyanideApiService from '../CyanideApiService';
 import Navigation from '../components/Navigation';
@@ -22,45 +8,33 @@ import Contests from '../components/Contests';
 import comparators from '../util/Comparators';
 import ImageUrls from '../ImageUrls';
 import Ranks from '../components/Ranks';
-import CompetitionStatus from '../components/CompetitionStatus';
 import prettyPrint from '../util/PrettyPrint';
+import CompetitionProgress from '../components/CompetitionProgress';
+import InfoArea from '../components/InfoArea';
+import InfoItem from '../components/InfoItem';
+import CompetitionStatus from '../components/CompetitionStatus';
 
 function TeamPage() {
   const { competitionUuid } = useParams();
   const [competition, setCompetition] = useState();
   const [ranks, setRanks] = useState();
   const [contests, setContests] = useState();
-  const [matches, setMatches] = useState();
 
   useEffect(() => {
-    const fetchCompetition = async () => {
-      await CyanideApiService.competition(competitionUuid).then((data) => {
+    const fetchCompetition = () => {
+      CyanideApiService.competition(competitionUuid).then((data) => {
         setCompetition(data);
       });
     };
-    const fetchTeams = async () => {
-      await CyanideApiService.competitionRanks(competitionUuid).then((data) => {
-        data.sort((rankA, rankB) => {
-          let result = (rankB.score || 0) - (rankA.score || 0);
-          if (result !== 0) return result;
-          result = (rankB.inflictedTouchdowns || 0) - (rankA.inflictedTouchdowns || 0);
-          if (result !== 0) return result;
-          result = (rankB.inflictedCasualties || 0) - (rankA.inflictedCasualties || 0);
-          if (result !== 0) return result;
-          result = (rankB.gamesPlayed || 0) - (rankA.gamesPlayed || 0);
-          if (result !== 0) return result;
-          result = (rankA.sustainedTouchdowns || 0) - (rankB.sustainedTouchdowns || 0);
-          if (result !== 0) return result;
-          result = (rankA.sustainedCasualties || 0) - (rankB.sustainedCasualties || 0);
-          if (result !== 0) return result;
-          return rankA.team.name.localeCompare(rankB.team.name);
-        });
+    const fetchTeams = () => {
+      CyanideApiService.competitionRanks(competitionUuid).then((data) => {
+        data.sort((rankA, rankB) => rankA.rank - rankB.rank);
         setRanks(data);
       });
     };
 
-    const fetchContests = async () => {
-      await CyanideApiService.competitionContests(competitionUuid).then((data) => {
+    const fetchContests = () => {
+      CyanideApiService.competitionContests(competitionUuid).then((data) => {
         data.sort((compA, compB) => comparators.compareAsDates(compA.matchDate, compB.matchDate));
         setContests(data);
       });
@@ -82,72 +56,51 @@ function TeamPage() {
       </Box>
       {competition ? (
         <>
-          <Card>
+          <Card direction="row">
+            <Box>
+              <Image objectFit="contain" maxW="140px" src={ImageUrls.logo(competition.leagueLogo)} />
+            </Box>
             <CardBody>
-              <Grid templateRows="repeat(2, 1fr)" templateColumns="repeat(5, 1fr)" gap={4}>
-                <GridItem
-                  rowSpan={2}
-                  colSpan={1}
-                  backgroundImage={`url('${ImageUrls.logo(competition.leagueLogo)}')`}
-                  backgroundRepeat="no-repeat"
-                  backgroundSize="contain"
-                />
-                <GridItem colSpan={3}>
-                  <Center>
-                    <Heading>{competition.name}</Heading>
-                  </Center>
-                  <Center>
+              <Flex>
+                <Box flex="1">
+                  <Heading>{competition.name}</Heading>
+                  <Box mb="10px">
                     <RouteLink to={`/${competition.leagueId}`}>League: {competition.leagueName}</RouteLink>
-                  </Center>
-                </GridItem>
-                <GridItem
-                  rowSpan={2}
-                  colSpan={1}
-                  backgroundImage={`url('${ImageUrls.logo(competition.logo)}')`}
-                  backgroundRepeat="no-repeat"
-                  backgroundSize="contain"
-                />
-                <GridItem colSpan={3}>
-                  <StatGroup>
-                    <Stat size="sm">
-                      <StatLabel>Created</StatLabel>
-                      <StatNumber>{Formatter.formatAsDate(competition.dateCreated)}</StatNumber>
-                    </Stat>
-                    <Stat size="sm">
-                      <StatLabel>Format</StatLabel>
-                      <StatNumber>{prettyPrint(competition.format)}</StatNumber>
-                    </Stat>
-                    <Stat size="sm">
-                      <StatLabel>Status</StatLabel>
-                      <StatNumber>
-                        <CompetitionStatus status={competition.status} />
-                      </StatNumber>
-                    </Stat>
-                    <Stat size="sm">
-                      <StatLabel>Progress</StatLabel>
-                      <StatNumber>
-                        {competition.currentRound}/{competition.totalRounds}
-                      </StatNumber>
-                    </Stat>
-                    <Stat size="sm">
-                      <StatLabel>Teams</StatLabel>
-                      <StatNumber>{Formatter.formatAsNumber(competition.teamsMax)}</StatNumber>
-                    </Stat>
-                    <Stat size="sm">
-                      <StatLabel>Time settings</StatLabel>
-                      <StatNumber>
-                        Turn: {Formatter.formatAsNumber(competition.turnDuration / 60)}m - Bonus:{' '}
-                        {Formatter.formatAsNumber(competition.timeBonusDuration / 60)}m
-                      </StatNumber>
-                    </Stat>
-                  </StatGroup>
-                </GridItem>
-              </Grid>
+                  </Box>
+                  <InfoArea
+                    infoItems={[
+                      <InfoItem key="1" label="Created" info={Formatter.formatAsDate(competition.dateCreated)} />,
+                      <InfoItem key="2" label="Format" info={prettyPrint(competition.format)} />,
+                      <InfoItem key="3" label="Status" info={<CompetitionStatus status={competition.status} />} />,
+                      <InfoItem
+                        key="4"
+                        label="Progress"
+                        info={
+                          <CompetitionProgress
+                            currentRound={competition.currentRound}
+                            totalRounds={competition.totalRounds}
+                          />
+                        }
+                      />,
+                      <InfoItem key="5" label="Teams" info={Formatter.formatAsNumber(competition.teamsMax)} />,
+                      <InfoItem
+                        key="6"
+                        label="Time settings"
+                        info={`Turn: ${Formatter.formatAsNumber(competition.turnDuration / 60)}m`}
+                        additionalInfo={`Bonus: ${Formatter.formatAsNumber(competition.timeBonusDuration / 60)}m`}
+                      />,
+                    ]}
+                  />
+                </Box>
+                <Box hideBelow="lg">
+                  <Image objectFit="contain" maxW="140px" src={ImageUrls.logo(competition.logo)} fallback={null} />
+                </Box>
+              </Flex>
             </CardBody>
           </Card>
-          <Heading>Ranking</Heading>
+          <Heading size="md">Ranking</Heading>
           {ranks ? <Ranks ranks={ranks} /> : <Spinner />}
-          <Heading>Contests</Heading>
+          <Heading size="md">Contests</Heading>
           {contests ? <Contests contests={contests} /> : <Spinner />}
         </>
       ) : (

@@ -4,9 +4,11 @@ import {
   Card,
   CardBody,
   Center,
+  Flex,
   Grid,
   GridItem,
   Heading,
+  Image,
   Spinner,
   Stat,
   StatGroup,
@@ -14,13 +16,18 @@ import {
   StatNumber,
   VStack,
 } from '@chakra-ui/react';
-import { useParams } from 'react-router-dom';
+import { Link as RouteLink, useParams } from 'react-router-dom';
+import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import CyanideApiService from '../CyanideApiService';
 import Roster from '../components/Roster';
 import prettyPrint from '../util/PrettyPrint';
 import Navigation from '../components/Navigation';
 import Formatter from '../util/Formatter';
 import ImageUrls from '../ImageUrls';
+import InfoArea from '../components/InfoArea';
+import InfoItem from '../components/InfoItem';
+import CompetitionStatus from '../components/CompetitionStatus';
+import CompetitionProgress from '../components/CompetitionProgress';
 
 function TeamPage() {
   const { teamUuid } = useParams();
@@ -57,54 +64,37 @@ function TeamPage() {
       </Box>
       {team ? (
         <>
-          <Card>
+          <Card direction="row">
+            <Box>
+              <Image objectFit="contain" maxW="140px" src={ImageUrls.logo(team.logo)} />
+            </Box>
             <CardBody>
-              <Grid h="200px" templateRows="repeat(2, 1fr)" templateColumns="repeat(5, 1fr)" gap={4}>
-                <GridItem
-                  rowSpan={2}
-                  colSpan={1}
-                  backgroundImage={`url('${ImageUrls.logo(team.logo)}')`}
-                  backgroundRepeat="no-repeat"
-                  backgroundSize="contain"
-                />
-                <GridItem colSpan={3}>
-                  <Center>
-                    <Heading>{team.name}</Heading>
-                  </Center>
-                  <Center>Coach: {team.coachName}</Center>
-                </GridItem>
-                <GridItem
-                  rowSpan={2}
-                  colSpan={1}
-                  backgroundImage={`url('${ImageUrls.race(team.race)}')`}
-                  backgroundRepeat="no-repeat"
-                  backgroundSize="contain"
-                />
-                <GridItem colSpan={3}>
-                  <StatGroup>
-                    <Stat size="sm">
-                      <StatLabel>Race</StatLabel>
-                      <StatNumber>{prettyPrint(team.race)}</StatNumber>
-                    </Stat>
-                    <Stat size="sm">
-                      <StatLabel>Players</StatLabel>
-                      <StatNumber>{players !== null ? players.length : '-'}</StatNumber>
-                    </Stat>
-                    <Stat size="sm">
-                      <StatLabel>Score</StatLabel>
-                      <StatNumber>{team.score}</StatNumber>
-                    </Stat>
-                    <Stat size="sm">
-                      <StatLabel>Cash</StatLabel>
-                      <StatNumber>{Formatter.formatAsNumber(team.cash)}</StatNumber>
-                    </Stat>
-                    <Stat size="sm">
-                      <StatLabel>Value</StatLabel>
-                      <StatNumber>{Formatter.formatAsNumber(team.value)}</StatNumber>
-                    </Stat>
-                  </StatGroup>
-                </GridItem>
-              </Grid>
+              <Flex>
+                <Box flex="1">
+                  <Heading>{team.name}</Heading>
+                  <Box mb="10px">Coach: {team.coachName}</Box>
+                  <InfoArea
+                    infoItems={[
+                      <InfoItem key="1" label="Race" info={prettyPrint(team.race)} />,
+                      <InfoItem key="2" label="Players" info={players !== null ? players.length : '-'} />,
+                      <InfoItem key="5" label="Dedicated Fans" info={<QuestionOutlineIcon />} />,
+                      <InfoItem key="5" label="Rerolls" info={<QuestionOutlineIcon />} />,
+                      <InfoItem key="6" label="Apothecary" info={<QuestionOutlineIcon />} />,
+                      <InfoItem key="3" label="Cash" info={Formatter.formatAsNumber(team.cash)} />,
+                      <InfoItem key="4" label="Value" info={Formatter.formatAsNumber(team.value)} />,
+                    ]}
+                  />
+                </Box>
+                <Box>
+                  <Image
+                    hideBelow="lg"
+                    objectFit="contain"
+                    maxW="140px"
+                    src={ImageUrls.race(team.race)}
+                    fallback={null}
+                  />
+                </Box>
+              </Flex>
             </CardBody>
           </Card>
           <Roster players={players} />

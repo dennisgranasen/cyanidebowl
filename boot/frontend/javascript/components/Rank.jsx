@@ -1,5 +1,5 @@
 import React from 'react';
-import { Center, Image, Spinner, Td, Tr } from '@chakra-ui/react';
+import { Center, Heading, Image, Spinner, Td, Tr } from '@chakra-ui/react';
 import { Link as RouteLink } from 'react-router-dom';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import Race from './Race';
@@ -7,11 +7,16 @@ import Formatter from '../util/Formatter';
 import ImageUrls from '../ImageUrls';
 import config from '../config';
 
-const { boxSize} = config;
+const { boxSize } = config;
 
 function Rank({ rank }) {
   return rank !== null ? (
     <Tr>
+      <Td>
+        <Center>
+          <Heading size="sm">{rank.rank}</Heading>
+        </Center>
+      </Td>
       <Td>
         <RouteLink to={`/team/${rank.team.id}`}>{rank.team.name}</RouteLink>
       </Td>

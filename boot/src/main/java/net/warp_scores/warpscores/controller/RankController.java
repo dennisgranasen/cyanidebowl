@@ -1,16 +1,18 @@
 package net.warp_scores.warpscores.controller;
 
-import net.warp_scores.warpscores.domain.persistence.MatchRepository;
-import net.warp_scores.warpscores.domain.persistence.TeamRepository;
+import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.domain.model.Match;
 import net.warp_scores.warpscores.domain.model.Rank;
 import net.warp_scores.warpscores.domain.model.Team;
-import lombok.RequiredArgsConstructor;
+import net.warp_scores.warpscores.domain.persistence.MatchRepository;
+import net.warp_scores.warpscores.domain.persistence.TeamRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,11 +25,57 @@ public class RankController {
     private final TeamRepository teamRepository;
     private final MatchRepository matchRepository;
 
+    private final Comparator<Rank> rankComparator = (rankA, rankB) -> {
+        int result = Optional.ofNullable(rankB.getScore()).orElse(0) - Optional.ofNullable(rankA.getScore())
+                .orElse(0);
+        if (result != 0) {
+            return result;
+        }
+        result = Optional.ofNullable(rankB.getInflictedTouchdowns()).orElse(0) - Optional.ofNullable(
+                rankA.getInflictedTouchdowns()).orElse(0);
+        if (result != 0) {
+            return result;
+        }
+        result = Optional.ofNullable(rankB.getInflictedCasualties()).orElse(0) - Optional.ofNullable(
+                rankA.getInflictedCasualties()).orElse(0);
+        if (result != 0) {
+            return result;
+        }
+        result = Optional.ofNullable(rankB.getGamesPlayed()).orElse(0) - Optional.ofNullable(rankA.getGamesPlayed())
+                .orElse(0);
+        if (result != 0) {
+            return result;
+        }
+        result = Optional.ofNullable(rankA.getSustainedTouchdowns()).orElse(0) - Optional.ofNullable(
+                rankB.getSustainedTouchdowns()).orElse(0);
+        if (result != 0) {
+            return result;
+        }
+        result = Optional.ofNullable(rankA.getSustainedCasualties()).orElse(0) - Optional.ofNullable(
+                rankB.getSustainedCasualties()).orElse(0);
+        if (result != 0) {
+            return result;
+        }
+        return Optional.ofNullable(rankA.getTeam()).map(Team::getName).orElse("")
+                .compareToIgnoreCase(Optional.ofNullable(rankB.getTeam()).map(Team::getName).orElse(""));
+    };
+
     @GetMapping("/ranks/competition/{competitionId}")
     public ResponseEntity<List<Rank>> getRanksForCompetition(@PathVariable(name = "competitionId") UUID competitionId) {
 
         List<Team> teams = teamRepository.findByCompetitionId(competitionId);
-        List<Rank> ranks = teams.stream().map(team -> toRank(team, competitionId)).collect(Collectors.toList());
+        List<Rank> ranks = teams.stream()
+                .map(team -> toRank(team, competitionId))
+                .sorted(rankComparator)
+                .collect(HashMap<Rank, Integer>::new, (map, rank) -> map.put(rank, map.size() + 1), (map, map2) -> {})
+                .entrySet()
+                .stream()
+                .map(entry -> {
+                    entry.getKey().setRank(entry.getValue());
+                    return entry.getKey();
+                })
+                .collect(Collectors.toList());
+
         return ResponseEntity.ok(ranks);
     }
 
@@ -108,8 +156,9 @@ public class RankController {
     }
 
     private Optional<Team> getTeam(List<Team> teamResults, UUID teamId) {
-        if ( teamResults == null)
+        if (teamResults == null) {
             return Optional.empty();
+        }
         List<Team> teams = teamResults.stream()
                 .filter(team -> teamId.equals(team.getId()))
                 .collect(Collectors.toList());
