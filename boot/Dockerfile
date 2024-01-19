@@ -1,4 +1,5 @@
 FROM openjdk:alpine
+MAINTAINER naytsyrhc <naytsyrhc@gmx.org>
 
 RUN addgroup warpscore && adduser -u 10000 -D -G warpscore warpscore
 WORKDIR /home/warpscore/

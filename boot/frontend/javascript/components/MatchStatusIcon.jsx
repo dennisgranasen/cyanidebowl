@@ -6,7 +6,7 @@ function MatchStatusIcon({ status, boxSize }) {
   switch (status) {
     case 'scheduled':
       return <TimeIcon boxSize={boxSize} />;
-    case 'live':
+    case 'in_progress':
       return <FaTowerBroadcast boxSize={boxSize} />;
     default:
       return null;
