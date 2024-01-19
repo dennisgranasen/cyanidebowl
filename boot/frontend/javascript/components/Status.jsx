@@ -18,6 +18,7 @@ import {
 import { FaDatabase, FaDesktop, FaPlaystation, FaSitemap, FaXbox } from 'react-icons/fa6';
 import CyanideApiService from '../CyanideApiService';
 import config from '../config';
+import DelayedIconTooltip from './DelayedIconTooltip';
 
 function StatusIcon({ status1, status2, maintenance }) {
   if (status1 && status2 && maintenance && maintenance.length === 0) {
@@ -75,16 +76,16 @@ function Status() {
         <PopoverBody>
           <HStack spacing={2}>
             <Box>Game-Server:</Box>
-            <Tooltip label="Game-Server database">
+            <DelayedIconTooltip label="Game-Server database">
               <HStack spacing={2}>
                 <FaDatabase color={getColor(status.gameServerDatabase)} />
               </HStack>
-            </Tooltip>
-            <Tooltip label="Game-Server adress directory">
+            </DelayedIconTooltip>
+            <DelayedIconTooltip label="Game-Server adress directory">
               <HStack spacing={2}>
                 <FaSitemap color={getColor(status.gameServerAddressDirectory)} />
               </HStack>
-            </Tooltip>
+            </DelayedIconTooltip>
           </HStack>
           <HStack spacing={2}>
             <Box>Maintenance:</Box>

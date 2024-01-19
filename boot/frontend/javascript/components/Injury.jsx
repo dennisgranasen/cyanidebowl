@@ -3,6 +3,7 @@ import { Image, Tag, TagLabel, Tooltip } from '@chakra-ui/react';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import prettyPrint from '../util/PrettyPrint';
 import config from '../config';
+import DelayedIconTooltip from './DelayedIconTooltip';
 
 const { smallBoxSize: boxSize } = config;
 
@@ -28,12 +29,12 @@ const imageOrIconFor = (injury) => {
 
 function Injury({ injury, count }) {
   return (
-    <Tooltip label={prettyPrint(injury)}>
+    <DelayedIconTooltip label={prettyPrint(injury)}>
       <Tag size={boxSize} borderRadius="full" ml={-1} mr={2}>
         {imageOrIconFor(injury)}
         {count > 1 ? <TagLabel>{count}</TagLabel> : ''}
       </Tag>
-    </Tooltip>
+    </DelayedIconTooltip>
   );
 }
 

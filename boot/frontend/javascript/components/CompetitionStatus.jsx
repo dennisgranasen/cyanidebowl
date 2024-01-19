@@ -1,11 +1,13 @@
 import React from 'react';
 import { FaAddressCard, FaFlagCheckered, FaSpinner } from 'react-icons/fa6';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
-import { Box, Tooltip } from '@chakra-ui/react';
+import { Box } from '@chakra-ui/react';
 import config from '../config';
 import prettyPrint from '../util/PrettyPrint';
+import DelayedIconTooltip from './DelayedIconTooltip';
 
 const boxSize = config.smallBoxSize;
+
 function Icon({ status }) {
   switch (status) {
     case 'InProgress':
@@ -21,11 +23,11 @@ function Icon({ status }) {
 
 function CompetitionStatus({ status }) {
   return (
-    <Tooltip label={`${prettyPrint(status)}`}>
+    <DelayedIconTooltip label={`${prettyPrint(status)}`}>
       <Box>
         <Icon status={status} />
       </Box>
-    </Tooltip>
+    </DelayedIconTooltip>
   );
 }
 

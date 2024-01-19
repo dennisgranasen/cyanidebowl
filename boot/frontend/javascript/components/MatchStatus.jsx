@@ -6,6 +6,7 @@ import prettyPrint from '../util/PrettyPrint';
 import formatter from '../util/Formatter';
 import MatchStatusIcon from './MatchStatusIcon';
 import config from '../config';
+import DelayedIconTooltip from './DelayedIconTooltip';
 
 const { boxSize, smallBoxSize } = config;
 
@@ -29,9 +30,9 @@ function Icon({ status, stadium }) {
 
 function MatchStatus({ status, matchDate, stadium }) {
   return (
-    <Tooltip label={`${prettyPrint(status)} ${formatter.formatAsDate(matchDate)}`}>
+    <DelayedIconTooltip label={`${prettyPrint(status)} ${formatter.formatAsDate(matchDate)}`}>
       <Icon status={status} stadium={stadium} />
-    </Tooltip>
+    </DelayedIconTooltip>
   );
 }
 

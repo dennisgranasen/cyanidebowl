@@ -1,23 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Box,
-  Card,
-  CardBody,
-  Center,
-  Flex,
-  Grid,
-  GridItem,
-  Heading,
-  Image,
-  Spinner,
-  Stat,
-  StatGroup,
-  StatLabel,
-  StatNumber,
-  VStack,
-} from '@chakra-ui/react';
-import { Link as RouteLink, useParams } from 'react-router-dom';
-import { QuestionOutlineIcon } from '@chakra-ui/icons';
+import { Box, Card, CardBody, Flex, Heading, Image, Spinner, Tooltip, VStack } from '@chakra-ui/react';
+import { useParams } from 'react-router-dom';
 import CyanideApiService from '../CyanideApiService';
 import Roster from '../components/Roster';
 import prettyPrint from '../util/PrettyPrint';
@@ -26,8 +9,8 @@ import Formatter from '../util/Formatter';
 import ImageUrls from '../ImageUrls';
 import InfoArea from '../components/InfoArea';
 import InfoItem from '../components/InfoItem';
-import CompetitionStatus from '../components/CompetitionStatus';
-import CompetitionProgress from '../components/CompetitionProgress';
+import NotYetImplemented from '../components/NotYetImplemented';
+import DelayedIconTooltip from '../components/DelayedIconTooltip';
 
 function TeamPage() {
   const { teamUuid } = useParams();
@@ -77,23 +60,25 @@ function TeamPage() {
                     infoItems={[
                       <InfoItem key="1" label="Race" info={prettyPrint(team.race)} />,
                       <InfoItem key="2" label="Players" info={players !== null ? players.length : '-'} />,
-                      <InfoItem key="5" label="Dedicated Fans" info={<QuestionOutlineIcon />} />,
-                      <InfoItem key="5" label="Rerolls" info={<QuestionOutlineIcon />} />,
-                      <InfoItem key="6" label="Apothecary" info={<QuestionOutlineIcon />} />,
+                      <InfoItem key="5" label="Dedicated Fans" info={<NotYetImplemented />} />,
+                      <InfoItem key="5" label="Rerolls" info={<NotYetImplemented />} />,
+                      <InfoItem key="6" label="Apothecary" info={<NotYetImplemented />} />,
                       <InfoItem key="3" label="Cash" info={Formatter.formatAsNumber(team.cash)} />,
                       <InfoItem key="4" label="Value" info={Formatter.formatAsNumber(team.value)} />,
                     ]}
                   />
                 </Box>
-                <Box>
-                  <Image
-                    hideBelow="lg"
-                    objectFit="contain"
-                    maxW="140px"
-                    src={ImageUrls.race(team.race)}
-                    fallback={null}
-                  />
-                </Box>
+                <DelayedIconTooltip label={prettyPrint(team.race)}>
+                  <Box>
+                    <Image
+                      hideBelow="lg"
+                      objectFit="contain"
+                      maxW="140px"
+                      src={ImageUrls.race(team.race)}
+                      fallback={null}
+                    />
+                  </Box>
+                </DelayedIconTooltip>
               </Flex>
             </CardBody>
           </Card>
