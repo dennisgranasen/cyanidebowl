@@ -5,8 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>de.dbbc-ev</groupId>
-        <artifactId>dbbcbb3facade</artifactId>
+        <groupId>net.warp-scores</groupId>
+        <artifactId>warpscores</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
@@ -17,7 +17,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>de.dbbc-ev</groupId>
+            <groupId>net.warp-scores</groupId>
             <artifactId>cyanide-api</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
@@ -157,6 +157,14 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>16</source>
+                    <target>16</target>
+                </configuration>
             </plugin>
         </plugins>
     </build>

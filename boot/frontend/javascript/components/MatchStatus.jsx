@@ -1,31 +1,38 @@
-import React from "react";
-import {QuestionOutlineIcon} from "@chakra-ui/icons";
-import {Avatar, Tooltip,} from '@chakra-ui/react'
-import ImageUrls from "../ImageUrls";
-import prettyPrint from "../util/PrettyPrint";
-import formatter from "../util/Formatter";
-import MatchStatusIcon from "./MatchStatusIcon";
-import config from "../config";
+import React from 'react';
+import { QuestionOutlineIcon } from '@chakra-ui/icons';
+import { Avatar, Tooltip } from '@chakra-ui/react';
+import ImageUrls from '../ImageUrls';
+import prettyPrint from '../util/PrettyPrint';
+import formatter from '../util/Formatter';
+import MatchStatusIcon from './MatchStatusIcon';
+import config from '../config';
 
-const boxSize = config.boxSize;
-const smallBoxSize = config.smallBoxSize;
+const { boxSize, smallBoxSize } = config;
 
-const Icon = ({status, stadium}) => {
-    switch (status) {
-        case 'played':
-            return <Avatar src={`${ImageUrls.stadium(stadium)}`} boxSize={boxSize}
-                           icon={<QuestionOutlineIcon boxSize={boxSize}/>}/>
-        case 'scheduled':
-        case 'live':
-            return <MatchStatusIcon status={status} boxSize={smallBoxSize}/>
-        default:
-            return <QuestionOutlineIcon boxSize={boxSize}/>
-    }
+function Icon({ status, stadium }) {
+  switch (status) {
+    case 'played':
+      return (
+        <Avatar
+          src={`${ImageUrls.stadium(stadium)}`}
+          boxSize={boxSize}
+          icon={<QuestionOutlineIcon boxSize={boxSize} />}
+        />
+      );
+    case 'scheduled':
+    case 'in_progress':
+      return <MatchStatusIcon status={status} boxSize={smallBoxSize} />;
+    default:
+      return <QuestionOutlineIcon boxSize={boxSize} />;
+  }
 }
 
-function MatchStatus({status, matchDate, stadium}) {
-    return <Tooltip
-        label={`${prettyPrint(status)} ${formatter.formatAsDate(matchDate)}`}><Icon status={status} stadium={stadium}/></Tooltip>
+function MatchStatus({ status, matchDate, stadium }) {
+  return (
+    <Tooltip label={`${prettyPrint(status)} ${formatter.formatAsDate(matchDate)}`}>
+      <Icon status={status} stadium={stadium} />
+    </Tooltip>
+  );
 }
 
 export default MatchStatus;
