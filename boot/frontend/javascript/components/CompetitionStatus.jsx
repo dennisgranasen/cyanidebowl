@@ -1,32 +1,27 @@
 import React from 'react';
 import { FaAddressCard, FaFlagCheckered, FaSpinner } from 'react-icons/fa6';
-import { QuestionOutlineIcon } from '@chakra-ui/icons';
-import { Box } from '@chakra-ui/react';
-import config from '../config';
+import { Icon, QuestionOutlineIcon } from '@chakra-ui/icons';
 import prettyPrint from '../util/PrettyPrint';
 import DelayedIconTooltip from './DelayedIconTooltip';
 
-const boxSize = config.smallBoxSize;
-
-function Icon({ status }) {
+function StatusAsIcon({ status }) {
   switch (status) {
     case 'InProgress':
-      return <FaSpinner boxSize={boxSize} />;
+      return <FaSpinner />;
     case 'Finished':
-      return <FaFlagCheckered boxSize={boxSize} />;
+      return <FaFlagCheckered />;
     case 'Registration':
-      return <FaAddressCard boxSize={boxSize} />;
+      return <FaAddressCard />;
     default:
-      return <QuestionOutlineIcon boxSize={boxSize} />;
+      return <QuestionOutlineIcon />;
   }
 }
 
 function CompetitionStatus({ status }) {
+  const statusText = prettyPrint(status);
   return (
-    <DelayedIconTooltip label={`${prettyPrint(status)}`}>
-      <Box>
-        <Icon status={status} />
-      </Box>
+    <DelayedIconTooltip label={statusText}>
+      <StatusAsIcon status={status} />
     </DelayedIconTooltip>
   );
 }

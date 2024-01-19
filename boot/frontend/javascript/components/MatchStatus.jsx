@@ -1,6 +1,6 @@
 import React from 'react';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
-import { Avatar, Tooltip } from '@chakra-ui/react';
+import { Avatar } from '@chakra-ui/react';
 import ImageUrls from '../ImageUrls';
 import prettyPrint from '../util/PrettyPrint';
 import formatter from '../util/Formatter';
@@ -10,7 +10,7 @@ import DelayedIconTooltip from './DelayedIconTooltip';
 
 const { boxSize, smallBoxSize } = config;
 
-function Icon({ status, stadium }) {
+function StatusAsIcon({ status, stadium }) {
   switch (status) {
     case 'played':
       return (
@@ -31,7 +31,7 @@ function Icon({ status, stadium }) {
 function MatchStatus({ status, matchDate, stadium }) {
   return (
     <DelayedIconTooltip label={`${prettyPrint(status)} ${formatter.formatAsDate(matchDate)}`}>
-      <Icon status={status} stadium={stadium} />
+      <StatusAsIcon status={status} stadium={stadium} />
     </DelayedIconTooltip>
   );
 }
