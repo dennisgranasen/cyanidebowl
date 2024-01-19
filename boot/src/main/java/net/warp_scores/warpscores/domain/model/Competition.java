@@ -1,9 +1,9 @@
 package net.warp_scores.warpscores.domain.model;
 
-import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionFormat;
-import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionStatus;
 import lombok.Getter;
 import lombok.Setter;
+import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionFormat;
+import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionStatus;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -33,4 +33,7 @@ public class Competition implements UpdateableFromApi {
 
     private Integer currentRound;
     private Integer totalRounds;
+
+    private Integer playedMatches;
+    private Integer totalMatches;
 }

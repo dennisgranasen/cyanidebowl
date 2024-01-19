@@ -4,8 +4,6 @@ import Competition from './Competition';
 
 const TableColumns = (
   <Tr>
-    <Th>League</Th>
-    <Th />
     <Th>Competition</Th>
     <Th>Format</Th>
     <Th>Status</Th>
