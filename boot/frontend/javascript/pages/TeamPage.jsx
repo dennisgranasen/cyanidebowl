@@ -60,11 +60,11 @@ function TeamPage() {
                     infoItems={[
                       <InfoItem key="1" label="Race" info={prettyPrint(team.race)} />,
                       <InfoItem key="2" label="Players" info={players !== null ? players.length : '-'} />,
-                      <InfoItem key="5" label="Dedicated Fans" info={<NotYetImplemented />} />,
-                      <InfoItem key="5" label="Rerolls" info={<NotYetImplemented />} />,
-                      <InfoItem key="6" label="Apothecary" info={<NotYetImplemented />} />,
-                      <InfoItem key="3" label="Cash" info={Formatter.formatAsNumber(team.cash)} />,
-                      <InfoItem key="4" label="Value" info={Formatter.formatAsNumber(team.value)} />,
+                      <InfoItem key="3" label="Dedicated Fans" info={<NotYetImplemented />} />,
+                      <InfoItem key="4" label="Rerolls" info={<NotYetImplemented />} />,
+                      <InfoItem key="5" label="Apothecary" info={<NotYetImplemented />} />,
+                      <InfoItem key="6" label="Cash" info={Formatter.formatAsNumber(team.cash)} />,
+                      <InfoItem key="7" label="Value" info={Formatter.formatAsNumber(team.value)} />,
                     ]}
                   />
                 </Box>
