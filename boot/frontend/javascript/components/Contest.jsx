@@ -20,6 +20,7 @@ function ScoreOrIcon({ contest }) {
       return <MatchStatusIcon status={contest.status} boxSize={smallBoxSize} />;
   }
 }
+
 function Contest({ contest }) {
   return contest !== null ? (
     <Tr>
