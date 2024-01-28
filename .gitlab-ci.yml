@@ -1,3 +1,8 @@
+include:
+  - component: gitlab.com/to-be-continuous/maven/gitlab-ci-maven@3.9.0
+    inputs:
+      image: registry.hub.docker.com/library/maven:3.8-openjdk-17
+
 stages:
   - test
   - build
