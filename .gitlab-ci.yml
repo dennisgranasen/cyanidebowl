@@ -1,18 +1,21 @@
-include:
-  - component: gitlab.com/to-be-continuous/maven/gitlab-ci-maven@3.9.0
-    inputs:
-      image: registry.hub.docker.com/library/maven:3.8-openjdk-17
+image: gitlab/dind
+services:
+  - docker:dind
+
+variables:
+  DOCKER_DRIVER: overlay
 
 stages:
-  - test
   - build
+  - test
+  - docker
 
-test:
-  stage: test
-  script:
-    - mvn -Pno-docker clean verify
-
-build:
+maven-build:
+  image: registry.hub.docker.com/library/maven:3.8-openjdk-17
   stage: build
-  script:
-    - mvn clean install
+  script: "mvn clean package -B"
+
+maven-test:
+  image: registry.hub.docker.com/library/maven:3.8-openjdk-17
+  stage: test
+  script: "mvn test"
