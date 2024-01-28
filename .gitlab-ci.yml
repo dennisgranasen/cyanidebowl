@@ -1,0 +1,34 @@
+stages:
+  - test
+  - build
+  - release
+  - deploy
+
+test:
+  stage: test
+  script:
+    - mvn -Pno-docker clean verify
+
+build:
+  stage: build
+  script:
+    - mvn clean install
+
+release:
+  stage: release
+  rules:  
+    - if: $CI_COMMIT_REF_NAME !== 'main'
+      when: never
+  script:
+    - echo "TODO: implement"
+    - exit 1
+
+deploy:
+  stage: deploy
+  rules:
+    - if: $CI_COMMIT_REF_NAME !== 'main' 
+      when: never
+  script:
+    - echo "TODO: implement"
+    - exit 1
+
