@@ -1,4 +1,4 @@
-# warp-scores
+# warpscores
 
 Welcome to [Warp-Scores](https://warp-scores.net), a Spike-like facade for Cyanide's BB3 API.
 
