@@ -8,64 +8,117 @@ import lombok.Setter;
 
 {
   "size": [
-    3441,
+    4931,
     170,
     5
   ],
   "games": [
     {
+      "codename": "bb3",
+      "title": "Blood Bowl III",
       "name": "Blood Bowl III",
       "service_statuses": {
         "game_server_database": true,
         "game_server_address_directory": true
       },
+      "status": {
+        "ok": true,
+        "platforms": [
+          {
+            "codename": "pc",
+            "title": "Steam & Epic",
+            "ok": true,
+            "regions": [],
+            "services": {
+              "game_server_database": true
+            }
+          },
+          {
+            "codename": "microsoft",
+            "title": "Xbox",
+            "ok": true,
+            "regions": [],
+            "services": []
+          },
+          {
+            "codename": "sony",
+            "title": "Playstation",
+            "ok": true,
+            "regions": [
+              {
+                "codename": "europe",
+                "title": "Europe",
+                "ok": true,
+                "services": {
+                  "game_server_database": true
+                }
+              },
+              {
+                "codename": "asia",
+                "title": "Asia",
+                "ok": true,
+                "services": {
+                  "game_server_database": true
+                }
+              },
+              {
+                "codename": "north-america",
+                "title": "America",
+                "ok": true,
+                "services": {
+                  "game_server_database": true
+                }
+              }
+            ],
+            "services": {
+              "game_server_database": true
+            }
+          }
+        ],
+        "services": {
+          "game_server_database": true,
+          "game_server_address_directory": true
+        }
+      },
       "news": [
         {
-          "title": "New Season 3 patch note available",
-          "message": "https:\/\/t.co\/Y78FSckm4D"
+          "title": "League Administration Tools are Live!",
+          "message": "https:\/\/store.steampowered.com\/news\/app\/1016950\/view\/3953665275864969090"
         },
         {
-          "title": "",
-          "message": {
-            "Description": "",
-            "BackgroundImageURL": "https:\/\/i.ibb.co\/yRb7FgM\/news-shambling-undead-5.png",
-            "bBackgroundLocalURL": false,
-            "UrlToRedirect": "https:\/\/youtu.be\/Fq5deWHDl1I",
-            "bRedirectLocalURL": false,
-            "ItemID": ""
-          }
-        },
-        {
-          "title": "Season Finals: follow the results of the Play-In Qualified Players",
-          "message": "https:\/\/nacon.me\/BB3PlayIn"
-        },
-        {
-          "title": "Play of the Month is back! Participate on Discord",
+          "title": "Play of the Month - Participate on Discord",
           "message": "https:\/\/discord.gg\/bloodbowl3"
         },
         {
-          "title": "What's new in Season 3 by cKnoor",
-          "message": "https:\/\/www.youtube.com\/watch?v=-bGFhXm0JsQ"
-        },
-        {
-          "title": "Shambling Undead Guide by AndyDavo",
-          "message": "https:\/\/www.youtube.com\/watch?v=QCqb-pSDNzM"
-        },
-        {
-          "title": "Season 3 Blood Pass is now available!",
-          "message": "BattlePass_Progress"
+          "title": "Dev Point: Blood Bowl 3 competitive scene",
+          "message": "https:\/\/store.steampowered.com\/news\/app\/1016950\/view\/7624097983040212673"
         },
         {
           "title": "",
           "message": {
             "Description": "",
-            "BackgroundImageURL": "https:\/\/i.ibb.co\/DkWrkm9\/news-nuffle-special-deals.png",
+            "BackgroundImageURL": "\/Game\/UI\/Menus\/Home\/Textures\/news-nuffle-special-deals.news-nuffle-special-deals",
             "bBackgroundLocalURL": false,
             "UrlToRedirect": "ShopMenu:ShopMenu_DailyOffer",
             "bRedirectLocalURL": true,
             "LocalURLType": "Relative",
             "ItemID": ""
           }
+        },
+        {
+          "title": "",
+          "message": {
+            "Description": "",
+            "BackgroundImageURL": "https:\/\/i.ibb.co\/BgKv8dP\/BB3-Season-Final-Affiche-Matchs-1.png",
+            "bBackgroundLocalURL": false,
+            "UrlToRedirect": "https:\/\/www.twitch.tv\/videos\/2039302922?t=01h56m49s",
+            "bRedirectLocalURL": false,
+            "ItemID": ""
+          }
+        },
+        {
+          "title": "",
+          "message": "Congratulations Strider84 : Season Finals Champion!"
         }
       ],
       "social_links": [
@@ -80,9 +133,13 @@ import lombok.Setter;
       }
     },
     {
+      "codename": "bb2",
+      "title": "Blood Bowl II",
       "name": "Blood Bowl II",
-      "service_statuses": {
-        "game_server_database": true
+      "service_statuses": [],
+      "status": {
+        "ok": true,
+        "services": []
       },
       "news": [
         {
@@ -94,11 +151,11 @@ import lombok.Setter;
     }
   ],
   "meta": {
-    "user": "",
+    "user": "DBBL (Christian Wagner)",
     "game": "cya",
     "method": "status",
     "format": "json",
-    "services": ""
+    "services": "https:\/\/web.cyanide-studio.com\/ws\/?key={{apiKey}}"
   },
   "promotional_content": false
 }
@@ -110,22 +167,38 @@ public class StatusResponse extends ApiResponse {
 
     @Getter
     @Setter
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Game {
+        private String codename;
+        private String title;
         private String name;
-        private ServiceStatuses service_statuses;
-
+        private Status status;
         private News[] news;
-
         private String[] social_links;
-
         private Maintenance maintenance;
     }
 
     @Getter
     @Setter
-    public static class ServiceStatuses {
-        private boolean game_server_database;
-        private boolean game_server_address_directory;
+    public static class Status {
+        private boolean ok;
+        private Platform[] platforms;
+    }
+
+    @Getter
+    @Setter
+    public static class Platform {
+        private String codename;
+        private String title;
+        private Region[] regions;
+    }
+
+    @Getter
+    @Setter
+    private static class Region {
+        private String codename;
+        private String title;
+        private boolean ok;
     }
 
     @Getter
