@@ -13,18 +13,17 @@ import {
   PopoverHeader,
   PopoverTrigger,
   Spinner,
-  Tooltip,
 } from '@chakra-ui/react';
 import { FaDatabase, FaDesktop, FaPlaystation, FaSitemap, FaXbox } from 'react-icons/fa6';
 import CyanideApiService from '../CyanideApiService';
 import config from '../config';
 import DelayedIconTooltip from './DelayedIconTooltip';
 
-function StatusIcon({ status1, status2, maintenance }) {
-  if (status1 && status2 && maintenance && maintenance.length === 0) {
+function StatusIcon({ status, maintenance }) {
+  if (status && maintenance && maintenance.length === 0) {
     return <CheckCircleIcon size="sm" color="green" />;
   }
-  const color = !status1 && !status2 ? 'red' : 'orange';
+  const color = status ? 'orange' : 'red';
   return <WarningIcon size="sm" color={color} />;
 }
 
@@ -59,8 +58,7 @@ function Status() {
       <PopoverTrigger>
         <Link>
           <StatusIcon
-            status1={status.gameServerDatabase}
-            status2={status.gameServerAddressDirectory}
+            status={status.overall}
             maintenance={
               status.maintenance
                 ? [].concat(status.maintenance.pc, status.maintenance.microsoft, status.maintenance.sony)
@@ -75,17 +73,17 @@ function Status() {
         <PopoverHeader>Cyanide Api-Status</PopoverHeader>
         <PopoverBody>
           <HStack spacing={2}>
-            <Box>Game-Server:</Box>
-            <DelayedIconTooltip label="Game-Server database">
+            <Box>Overall:</Box>
               <HStack spacing={2}>
-                <FaDatabase color={getColor(status.gameServerDatabase)} />
+                <StatusIcon
+                  status={status.overall}
+                  maintenance={
+                    status.maintenance
+                      ? [].concat(status.maintenance.pc, status.maintenance.microsoft, status.maintenance.sony)
+                      : []
+                  }
+                />
               </HStack>
-            </DelayedIconTooltip>
-            <DelayedIconTooltip label="Game-Server adress directory">
-              <HStack spacing={2}>
-                <FaSitemap color={getColor(status.gameServerAddressDirectory)} />
-              </HStack>
-            </DelayedIconTooltip>
           </HStack>
           <HStack spacing={2}>
             <Box>Maintenance:</Box>

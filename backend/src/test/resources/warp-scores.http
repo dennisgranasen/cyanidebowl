@@ -1,3 +1,8 @@
+### Status
+POST http://localhost:8080/status
+Accept: application/json
+Content-Type: application/json
+
 ### Lookup
 POST http://localhost:8080/lookup
 Accept: application/json
