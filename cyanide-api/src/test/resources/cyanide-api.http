@@ -1,6 +1,6 @@
 ### Get info about api
 
-GET https://web.cyanide-studio.com/ws/?bb=3&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/?game=bb3&key={{apiKey}}
 
 ### Get coaches
 

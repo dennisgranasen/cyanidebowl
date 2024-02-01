@@ -190,6 +190,7 @@ public class StatusResponse extends ApiResponse {
     public static class Platform {
         private String codename;
         private String title;
+        private boolean ok;
         private Region[] regions;
     }
 
