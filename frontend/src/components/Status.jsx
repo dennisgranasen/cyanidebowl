@@ -14,10 +14,9 @@ import {
   PopoverTrigger,
   Spinner,
 } from '@chakra-ui/react';
-import { FaDatabase, FaDesktop, FaPlaystation, FaSitemap, FaXbox } from 'react-icons/fa6';
+import { FaDesktop, FaPlaystation, FaXbox } from 'react-icons/fa6';
 import CyanideApiService from '../CyanideApiService';
 import config from '../config';
-import DelayedIconTooltip from './DelayedIconTooltip';
 
 function StatusIcon({ status, maintenance }) {
   if (status && maintenance && maintenance.length === 0) {
@@ -74,16 +73,16 @@ function Status() {
         <PopoverBody>
           <HStack spacing={2}>
             <Box>Overall:</Box>
-              <HStack spacing={2}>
-                <StatusIcon
-                  status={status.overall}
-                  maintenance={
-                    status.maintenance
-                      ? [].concat(status.maintenance.pc, status.maintenance.microsoft, status.maintenance.sony)
-                      : []
-                  }
-                />
-              </HStack>
+            <HStack spacing={2}>
+              <StatusIcon
+                status={status.overall}
+                maintenance={
+                  status.maintenance
+                    ? [].concat(status.maintenance.pc, status.maintenance.microsoft, status.maintenance.sony)
+                    : []
+                }
+              />
+            </HStack>
           </HStack>
           <HStack spacing={2}>
             <Box>Maintenance:</Box>
