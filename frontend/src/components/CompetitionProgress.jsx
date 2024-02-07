@@ -1,41 +1,62 @@
 import React from 'react';
-import { Box, Progress } from '@chakra-ui/react';
+import { Box, GridItem, Progress, SimpleGrid, VStack } from '@chakra-ui/react';
 import DelayedIconTooltip from './DelayedIconTooltip';
+import prettyPrint from '../util/PrettyPrint';
 
-const calcProgress = (currentRound, totalRounds, playedMatches, totalMatches) => {
-  let progressValue;
-  if (totalMatches && playedMatches) {
-    progressValue = playedMatches / totalMatches;
-  } else if (totalRounds && currentRound) {
-    progressValue = currentRound / totalRounds;
+function Progresses({ currentRound, totalRounds, playedMatches, totalMatches }) {
+  const roundLength = totalMatches ? totalMatches / totalRounds : 1;
+  const roundProgresses = [];
+  for (let round = 0; round < totalRounds; round += 1) {
+    let progress = 0;
+    let active = false;
+    if (currentRound > round + 1) {
+      progress = 100;
+    } else if (currentRound === round + 1) {
+      progress =
+        playedMatches >= roundLength * currentRound ? 100 : (100 * (playedMatches % roundLength)) / roundLength;
+      active = true;
+    }
+    roundProgresses.push({ name: `round${round + 1}`, progress, active });
   }
-  return progressValue ? progressValue * 100 : undefined;
-};
-
-function ProgressLabel({ text, additionalText }) {
   return (
-    <>
-      {text}
-      {additionalText ? ` (${additionalText})` : null}
-    </>
+    <SimpleGrid columns={totalRounds} spacing="3px">
+      {roundProgresses.map(({ name, progress, active }) => (
+        <GridItem key={name}>
+          <Progress value={progress} hasStripe={active} />
+        </GridItem>
+      ))}
+    </SimpleGrid>
   );
 }
 
-function CompetitionProgress({ currentRound, totalRounds, playedMatches, totalMatches }) {
+function ProgressLabel({ text, additionalText }) {
+  return (
+    <VStack align="left">
+      <Box>{text}</Box>
+      {additionalText ? <Box> {additionalText} </Box> : null}
+    </VStack>
+  );
+}
+
+function CompetitionProgress({ status, currentRound, totalRounds, playedMatches, totalMatches }) {
   const currentRoundText = currentRound ? `Round ${currentRound}` : '';
   const totalRoundsText = currentRound && totalRounds ? `of ${totalRounds}` : '';
-  const progressText = `${currentRoundText} ${totalRoundsText}`;
+  const progressText = `${prettyPrint(status)}, ${currentRoundText} ${totalRoundsText}`;
   const progressAdditionalText =
     totalMatches && playedMatches ? `Played ${playedMatches} out of ${totalMatches} matches` : undefined;
-  const calcedProgress = calcProgress(currentRound, totalRounds, playedMatches, totalMatches);
-  return calcedProgress ? (
+  return (
     <Box p="4px">
       <DelayedIconTooltip label={<ProgressLabel text={progressText} additionalText={progressAdditionalText} />}>
-        <Progress value={calcedProgress} />
+        <Box>
+          <Progresses
+            currentRound={currentRound}
+            totalRounds={totalRounds}
+            totalMatches={totalMatches}
+            playedMatches={playedMatches}
+          />
+        </Box>
       </DelayedIconTooltip>
     </Box>
-  ) : (
-    progressText
   );
 }
 

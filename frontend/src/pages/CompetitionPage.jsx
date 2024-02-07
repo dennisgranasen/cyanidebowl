@@ -12,7 +12,6 @@ import prettyPrint from '../util/PrettyPrint';
 import CompetitionProgress from '../components/CompetitionProgress';
 import InfoArea from '../components/InfoArea';
 import InfoItem from '../components/InfoItem';
-import CompetitionStatus from '../components/CompetitionStatus';
 
 function TeamPage() {
   const { competitionUuid } = useParams();
@@ -69,14 +68,14 @@ function TeamPage() {
                   </Box>
                   <InfoArea
                     infoItems={[
-                      <InfoItem key="1" label="Created" info={Formatter.formatAsDate(competition.dateCreated)} />,
-                      <InfoItem key="2" label="Format" info={prettyPrint(competition.format)} />,
-                      <InfoItem key="3" label="Status" info={<CompetitionStatus status={competition.status} />} />,
+                      <InfoItem key="Created" label="Created" info={Formatter.formatAsDate(competition.dateCreated)} />,
+                      <InfoItem key="Format" label="Format" info={prettyPrint(competition.format)} />,
                       <InfoItem
-                        key="4"
+                        key="Progress"
                         label="Progress"
                         info={
                           <CompetitionProgress
+                            status={competition.status}
                             currentRound={competition.currentRound}
                             totalRounds={competition.totalRounds}
                             totalMatches={competition.totalMatches}
@@ -84,9 +83,9 @@ function TeamPage() {
                           />
                         }
                       />,
-                      <InfoItem key="5" label="Teams" info={Formatter.formatAsNumber(competition.teamsMax)} />,
+                      <InfoItem key="Teams" label="Teams" info={Formatter.formatAsNumber(competition.teamsMax)} />,
                       <InfoItem
-                        key="6"
+                        key="TimeSettings"
                         label="Time settings"
                         info={`Turn: ${Formatter.formatAsNumber(competition.turnDuration / 60)}m`}
                         additionalInfo={`Bonus: ${Formatter.formatAsNumber(competition.timeBonusDuration / 60)}m`}

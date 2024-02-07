@@ -7,9 +7,7 @@ import net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus;
 import net.warp_scores.warpscores.domain.model.Competition;
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
-import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -86,7 +84,7 @@ public class CompetitionController {
     private void initializeRoundRobin(Competition competition) {
         Integer teams = competition.getTeamsMax();
         Integer contestCount = contestsRepository.countByCompetitionId(competition.getUuid());
-        Integer playedMatchesCount = contestsRepository.countByCompetitionIdAndStatus(competition.getUuid(), MatchStatus.played);
+        Integer playedMatchesCount = contestsRepository.countByCompetitionIdAndStatus(competition.getUuid(), MatchStatus.Validated);
         int totalRounds = teams - 1;
         competition.setTotalRounds(totalRounds);
         competition.setCurrentRound(contestCount / (teams / 2));

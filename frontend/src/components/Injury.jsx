@@ -11,14 +11,14 @@ const imageOrIconFor = (injury) => {
   let imageName = '';
   switch (injury.toLowerCase()) {
     case 'groinstrain':
-    case 'brokenjaw':
-      imageName = 'seriouslyHurt';
+      imageName = 'seriously_hurt';
       break;
+    case 'brokenjaw':
     case 'fracturedleg':
-      imageName = 'smashedKnee';
+      imageName = 'smashed_knee';
       break;
     case 'fracturedarm':
-      imageName = 'brokenArm';
+      imageName = 'broken_arm';
       break;
     default:
       imageName = injury.toLowerCase();

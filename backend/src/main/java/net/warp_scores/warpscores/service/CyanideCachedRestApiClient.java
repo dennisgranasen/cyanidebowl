@@ -131,6 +131,7 @@ public class CyanideCachedRestApiClient {
                     responseClass);
         } catch (JsonProcessingException ex) {
             log.error("Unable to convert raw response {} to response object (type: {})...", rawResponse, responseClass);
+            log.error("Exception: ", ex);
             return null;
         }
     }

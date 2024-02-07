@@ -24,16 +24,16 @@ public class UUIDConverter {
         }
     }
 
-    public UUID[] toUuids(UUID[] existingUuids, String bb3CompetitionId) {
-        if (bb3CompetitionId == null) {
+    public UUID[] toUuids(UUID[] existingUuids, String commaSeparatedUuids) {
+        if (commaSeparatedUuids == null) {
             return existingUuids;
         }
         if (existingUuids == null) {
             existingUuids = new UUID[0];
         }
-        String[] competitions = bb3CompetitionId.split(",");
+        String[] uuidValues = commaSeparatedUuids.split(",");
         Set<UUID> uuids = Arrays.stream(existingUuids).collect(Collectors.toSet());
-        uuids.addAll(Arrays.stream(competitions)
+        uuids.addAll(Arrays.stream(uuidValues)
                 .map(UUID::fromString)
                 .collect(Collectors.toSet()));
         return uuids.toArray(new UUID[0]);

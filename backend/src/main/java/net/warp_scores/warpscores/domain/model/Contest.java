@@ -41,7 +41,7 @@ public class Contest implements UpdateableFromApi {
 
     @Override
     public boolean isUpdateableFromApi() {
-        return !adminResult && (!MatchStatus.played.equals(status) || DateUtil.dateWithinLast(matchDate,DateUtil.FORTY_DAYS));
+        return !adminResult && (!MatchStatus.Validated.equals(status) || DateUtil.dateWithinLast(matchDate,DateUtil.FORTY_DAYS));
     }
 
 }

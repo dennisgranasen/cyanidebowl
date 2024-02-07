@@ -58,7 +58,7 @@ public class ApiTeamTest {
         assertThat(apiTeam.getMotto(), is("description"));
         assertThat(apiTeam.getDateLastMatch(), is(simpleDateFormat.parse("2024-01-09 20:22:53")));
         assertThat(apiTeam.getLeagueName(), is("DBBL  BB3"));
-        assertThat(apiTeam.getLeagueId(), is(UUID.fromString("94dd6ae4-83fa-11ee-b910-02000090a64f")));
+        assertThat(apiTeam.getLeagueId(), is("94dd6ae4-83fa-11ee-b910-02000090a64f,7119edf3-a16d-11ee-a745-02000090a64f"));
         assertThat(apiTeam.getCompetitionName(), is("DBBL S1 Division 5"));
         assertThat(apiTeam.getBb3_competition_id(),
                 is("058e700e-a04f-11ee-a745-02000090a64f,7119edf3-a16d-11ee-a745-02000090a64f"));

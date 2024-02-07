@@ -1,6 +1,6 @@
 ### Get info about api
 
-GET https://web.cyanide-studio.com/ws/?game=bb3&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/?bb=3&key={{apiKey}}
 
 ### Get coaches
 
@@ -12,11 +12,11 @@ GET https://web.cyanide-studio.com/ws/bb3/competitions/?league_id=94dd6ae4-83fa-
 
 ### Get contests
 
-GET https://web.cyanide-studio.com/ws/bb3/contests/?status=scheduled&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=7119edf3-a16d-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/contests/?competition_id=e8848221-a04e-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
 
 ### Get contests
 
-GET https://web.cyanide-studio.com/ws/bb3/contests/?competition_id=7119edf3-a16d-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Validated&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=7119edf3-a16d-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
 
 ### Get halloffame (NOT YET IMPLEMENTED)
 
@@ -59,7 +59,7 @@ GET https://web.cyanide-studio.com/ws/bb3/matches/?league_id=94dd6ae4-83fa-11ee-
 
 ### Get teams
 
-GET https://web.cyanide-studio.com/ws/bb3/teams/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=7119edf3-a16d-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}&order=finished
+GET https://web.cyanide-studio.com/ws/bb3/teams/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=e8848221-a04e-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}&order=finished
 
 ### Get teams
 

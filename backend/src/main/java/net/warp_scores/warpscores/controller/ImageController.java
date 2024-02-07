@@ -58,7 +58,7 @@ public class ImageController {
 
     private String translateRaceToImageName(String name) {
         Race race = Race.valueOf(name);
-        return "TeamScreenshot_" + race.getAlternativeRaceName();
+        return "TeamScreenshot_" + race.getImageName();
     }
 
     @GetMapping("/race/{name}")

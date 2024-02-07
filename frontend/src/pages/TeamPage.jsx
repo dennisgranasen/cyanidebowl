@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Card, CardBody, Flex, Heading, Image, Spinner, Tooltip, VStack } from '@chakra-ui/react';
+import { Box, Card, CardBody, Center, Flex, Heading, Image, Spinner, VStack } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
 import CyanideApiService from '../CyanideApiService';
 import Roster from '../components/Roster';
@@ -40,7 +40,7 @@ function TeamPage() {
       <Box>
         <Navigation
           currentPage="team"
-          league={team ? [team.leagueId, team.leagueName] : []}
+          league={team ? [team.leagueIds[0], team.leagueName] : []}
           competition={team ? [team.competitionIds[0], team.competitionName] : []}
           team={team ? [teamUuid, team.name] : []}
         />
@@ -48,9 +48,11 @@ function TeamPage() {
       {team ? (
         <>
           <Card direction="row">
-            <Box>
-              <Image objectFit="contain" maxW="140px" src={ImageUrls.logo(team.logo)} />
-            </Box>
+            <Center>
+              <Box>
+                <Image objectFit="contain" maxH="140px" src={ImageUrls.logo(team.logo)} />
+              </Box>
+            </Center>
             <CardBody>
               <Flex>
                 <Box flex="1">
@@ -58,27 +60,31 @@ function TeamPage() {
                   <Box mb="10px">Coach: {team.coachName}</Box>
                   <InfoArea
                     infoItems={[
-                      <InfoItem key="1" label="Race" info={prettyPrint(team.race)} />,
-                      <InfoItem key="2" label="Players" info={players !== null ? players.length : '-'} />,
-                      <InfoItem key="3" label="Dedicated Fans" info={<NotYetImplemented />} />,
-                      <InfoItem key="4" label="Rerolls" info={<NotYetImplemented />} />,
-                      <InfoItem key="5" label="Apothecary" info={<NotYetImplemented />} />,
-                      <InfoItem key="6" label="Cash" info={Formatter.formatAsNumber(team.cash)} />,
-                      <InfoItem key="7" label="Value" info={Formatter.formatAsNumber(team.value)} />,
+                      <InfoItem key="race" label="Race" info={prettyPrint(team.race)} />,
+                      <InfoItem key="players" label="Players" info={players !== null ? players.length : '-'} />,
+                      <InfoItem key="rerolls" label="Rerolls" info={team.rerolls} />,
+                      <InfoItem key="dedicatedFans" label="Dedicated Fans" info={team.dedicatedFans} />,
+                      <InfoItem key="cheerleaders" label="Cheerleaders" info={team.cheerleaders} />,
+                      <InfoItem key="assistantCoaches" label="Assistant coaches" info={team.coachAssistants} />,
+                      <InfoItem key="apothecary" label="Apothecary" info={team.apothecary} />,
+                      <InfoItem key="cash" label="Cash" info={Formatter.formatAsNumber(team.cash)} />,
+                      <InfoItem key="value" label="Value" info={Formatter.formatAsNumber(team.value)} />,
                     ]}
                   />
                 </Box>
-                <DelayedIconTooltip label={prettyPrint(team.race)}>
+                <Center>
                   <Box>
-                    <Image
-                      hideBelow="lg"
-                      objectFit="contain"
-                      maxW="140px"
-                      src={ImageUrls.race(team.race)}
-                      fallback={null}
-                    />
+                    <DelayedIconTooltip label={prettyPrint(team.race)}>
+                      <Image
+                        hideBelow="lg"
+                        objectFit="cover"
+                        maxH="140px"
+                        src={ImageUrls.race(team.race)}
+                        fallback={null}
+                      />
+                    </DelayedIconTooltip>
                   </Box>
-                </DelayedIconTooltip>
+                </Center>
               </Flex>
             </CardBody>
           </Card>
