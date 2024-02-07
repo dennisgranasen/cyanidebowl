@@ -1,5 +1,5 @@
 import React from 'react';
-import { Center, Spinner, Td, Tooltip, Tr } from '@chakra-ui/react';
+import { Center, Spinner, Td, Tr } from '@chakra-ui/react';
 import Opponent from './Opponent';
 import prettyPrint from '../util/PrettyPrint';
 import formatter from '../util/Formatter';
@@ -12,6 +12,7 @@ const { smallBoxSize } = config;
 function ScoreOrIcon({ contest }) {
   switch (contest.status) {
     case 'played':
+    case 'Validated':
       return (
         <>
           {contest.opponents[0].score} - {contest.opponents[1].score}

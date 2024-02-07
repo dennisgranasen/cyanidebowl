@@ -3,6 +3,7 @@ package net.warp_scores.warpscores.domain;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.cyanide.api.model.ApiContest;
+import net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus;
 import net.warp_scores.warpscores.cyanide.api.responses.ContestsResponse;
 import net.warp_scores.warpscores.domain.model.Contest;
 import net.warp_scores.warpscores.domain.model.Team;
@@ -68,6 +69,12 @@ public class ContestDomainService {
         targetContest.setMatchDate(sourceApiContestMatch.getMatch_date());
         targetContest.setMatchUuid(sourceApiContestMatch.getMatch_uuid());
         targetContest.setOpponents(toOpponents(sourceApiContestMatch.getOpponents()));
+
+        undeprecateMatchStatus(targetContest);
+    }
+
+    private void undeprecateMatchStatus(Contest contest) {
+        contest.setStatus(contest.getStatus().undeprecate());
     }
 
     private List<Team> toOpponents(ApiContest.Opponent[] apiOpponents) {

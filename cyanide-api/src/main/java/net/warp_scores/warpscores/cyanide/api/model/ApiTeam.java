@@ -38,6 +38,14 @@ public class ApiTeam {
     private Integer score;
     private Integer rank;
 
+    private Integer rerolls;
+    private Integer apothecary;
+    @JsonAlias({"dedicated_fans"})
+    private Integer dedicatedFans;
+    private Integer cheerleaders;
+    @JsonAlias({"coach_assistants"})
+    private Integer coachAssistants;
+
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date created;
 
@@ -47,7 +55,7 @@ public class ApiTeam {
     @JsonAlias({"league"})
     private String leagueName;
     @JsonAlias({"league_id"})
-    private UUID leagueId;
+    private String leagueId;
 
     @JsonAlias({"bb3_competition"})
     private String competitionName;

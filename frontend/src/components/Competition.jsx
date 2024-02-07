@@ -1,7 +1,6 @@
 import React from 'react';
 import { Spinner, Td, Tr } from '@chakra-ui/react';
 import { Link as RouteLink } from 'react-router-dom';
-import CompetitionStatus from './CompetitionStatus';
 import CompetitionProgress from './CompetitionProgress';
 import prettyPrint from '../util/PrettyPrint';
 
@@ -13,10 +12,8 @@ function Competition({ competition }) {
       </Td>
       <Td>{prettyPrint(competition.format)}</Td>
       <Td>
-        <CompetitionStatus status={competition.status} />
-      </Td>
-      <Td>
         <CompetitionProgress
+          status={competition.status}
           currentRound={competition.currentRound}
           totalRounds={competition.totalRounds}
           totalMatches={competition.totalMatches}

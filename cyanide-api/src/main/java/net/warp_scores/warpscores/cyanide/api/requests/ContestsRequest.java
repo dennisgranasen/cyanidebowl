@@ -19,7 +19,7 @@ import java.util.UUID;
         "league|league_id": "League ID (default = Official League)",
         "competition|competition_name": "Competition name (default : all competitions)",
         "competition|competition_id": "Competition ID (optional)",
-        "status|contest_status": "scheduled|in_progress|played (default: sheduled)",
+        "status|contest_status": "Scheduled|InProgress|Validated (default: Sheduled)",
         "round": "Round",
         "platform|platform_name": "pc|playstation|xbox",
         "bb|opus": "Opus 1|2|3",
@@ -27,6 +27,7 @@ import java.util.UUID;
         "exact": "Exact league name match 0|1"
       },
       "history": [
+        "2024\/01\/30 : (BB3) Fix contests status",
         "2023\/06\/08 : Add league id parameter (for BB3 only)",
         "2023\/06\/08 : Add competition id parameter (for BB3 only)",
         "2023\/05\/31 : BB3 Compatibility",
@@ -49,7 +50,7 @@ import java.util.UUID;
 @ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ContestsRequest extends ApiRequest<ContestsRequest, ContestsResponse> {
-    public enum Status {scheduled, in_progress, played}
+    public enum Status {Scheduled, InProgress, Validated}
 
     private String league_name;
     private UUID league_id;
@@ -59,6 +60,6 @@ public class ContestsRequest extends ApiRequest<ContestsRequest, ContestsRespons
 
     public ContestsRequest() {
         super("bb3/contests", ContestsRequest.class, ContestsResponse.class);
-        setCacheValidity(CacheValidityDurations.THIRTY_MINUTES);
+        setCacheValidity(CacheValidityDurations.FIVE_MINUTES);
     }
 }

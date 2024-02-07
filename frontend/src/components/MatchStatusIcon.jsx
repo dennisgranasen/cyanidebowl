@@ -5,9 +5,10 @@ import { FaTowerBroadcast } from 'react-icons/fa6';
 function MatchStatusIcon({ status, boxSize }) {
   switch (status) {
     case 'scheduled':
-      return <TimeIcon boxSize={boxSize} />;
+    case 'Scheduled':
     case 'in_progress':
-      return <FaTowerBroadcast boxSize={boxSize} />;
+    case 'InProgress':
+      return <TimeIcon boxSize={boxSize} />;
     default:
       return null;
   }
