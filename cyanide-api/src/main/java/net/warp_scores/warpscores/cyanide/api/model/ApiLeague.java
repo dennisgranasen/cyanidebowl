@@ -1,11 +1,9 @@
 package net.warp_scores.warpscores.cyanide.api.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import net.warp_scores.warpscores.cyanide.api.model.common.ObfuscateApiKeyService;
-import net.warp_scores.warpscores.cyanide.api.model.common.IdWithName;
 import lombok.Getter;
 import lombok.Setter;
+import net.warp_scores.warpscores.cyanide.api.model.common.IdWithName;
 
 import java.util.Date;
 
