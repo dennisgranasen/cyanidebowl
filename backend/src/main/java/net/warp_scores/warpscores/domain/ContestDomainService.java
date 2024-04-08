@@ -33,7 +33,7 @@ public class ContestDomainService {
             return Collections.emptyList();
         }
         List<Contest> contests = Arrays
-                .stream(contestsResponse.getUpcoming_matches())
+                .stream(contestsResponse.getContests())
                 .map(this::internalCreateOrUpdateContest)
                 .collect(Collectors.toList());
         return contestRepository.saveAll(contests);
