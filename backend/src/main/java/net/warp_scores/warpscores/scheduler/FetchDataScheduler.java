@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -71,8 +72,7 @@ public class FetchDataScheduler {
     }
 
     @Scheduled(initialDelay = Schedules.FIVE_SECONDS, fixedDelay = Schedules.FIVE_MINUTES)
-    public void fetchTeams()
-    {
+    public void fetchTeams() {
         if (!cyanideApiProperties.isSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchTeams().");
             return;
@@ -132,7 +132,11 @@ public class FetchDataScheduler {
         List<Match> matches = leagues
                 .stream()
                 .filter(Objects::nonNull)
-                .map(l -> cyanideApiService.loadMatches(l, getStartDateFor(competitions, l)))
+                .map(l -> {
+                    Date earliestStartDate = getStartDateFor(competitions, l);
+                    Optional<Date> lastMatchDate = Optional.ofNullable(l.getDateLastMatch());
+                    return cyanideApiService.loadMatches(l, earliestStartDate, lastMatchDate);
+                })
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
         log.info("Loaded {} (skeleton) matches.", matches.size());

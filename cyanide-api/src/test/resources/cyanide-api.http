@@ -16,6 +16,10 @@ GET https://web.cyanide-studio.com/ws/bb3/contests/?competition_id=e8848221-a04e
 
 ### Get contests
 
+GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Live&limit=10&platform=pc&key={{apiKey}}
+
+### Get contests
+
 GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Validated&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=7119edf3-a16d-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
 
 ### Get halloffame (NOT YET IMPLEMENTED)
