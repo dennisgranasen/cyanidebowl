@@ -41,3 +41,5 @@ http-client.env.json
 application.yml
 
 /data
+
+warpscores-*.tar
