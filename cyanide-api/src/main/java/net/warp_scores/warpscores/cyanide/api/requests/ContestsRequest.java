@@ -50,7 +50,7 @@ import java.util.UUID;
 @ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ContestsRequest extends ApiRequest<ContestsRequest, ContestsResponse> {
-    public enum Status {Scheduled, InProgress, Validated}
+    public enum Status {Scheduled, InProgress, Validated, Live}
 
     private String league_name;
     private UUID league_id;
@@ -60,6 +60,6 @@ public class ContestsRequest extends ApiRequest<ContestsRequest, ContestsRespons
 
     public ContestsRequest() {
         super("bb3/contests", ContestsRequest.class, ContestsResponse.class);
-        setCacheValidity(CacheValidityDurations.FIVE_MINUTES);
+        setCacheValidity(CacheValidityDurations.FIFTEEN_MINUTES);
     }
 }

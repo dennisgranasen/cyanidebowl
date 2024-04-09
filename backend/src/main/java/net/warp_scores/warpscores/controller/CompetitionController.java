@@ -5,8 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionStatus;
 import net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus;
 import net.warp_scores.warpscores.domain.model.Competition;
-import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
-import net.warp_scores.warpscores.domain.persistence.ContestRepository;
+import net.warp_scores.warpscores.service.CompetitionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,18 +21,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CompetitionController {
 
-    private final CompetitionRepository competitionRepository;
-    private final ContestRepository contestsRepository;
+    private final CompetitionService competitionService;
 
     @GetMapping("/competitions/league/{leagueId}/{status}")
     public ResponseEntity<List<Competition>> getCompetitionsForLeagueAndStatus(@PathVariable(name = "leagueId") UUID leagueId,
             @PathVariable(name = "status")
             CompetitionStatus status) {
         try {
-            List<Competition> competitions = competitionRepository.findByLeagueIdAndStatus(leagueId, status);
-            competitions = competitions.stream()
-                    .map(this::initializeForFormat)
-                    .collect(Collectors.toList());
+            List<Competition> competitions = competitionService.loadForLeagueAndStatus(leagueId, status);
             return ResponseEntity.ok(competitions);
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().build();
@@ -43,7 +38,7 @@ public class CompetitionController {
     @GetMapping("/competitions/league/{leagueId}")
     public ResponseEntity<List<Competition>> getCompetitionsForLeague(@PathVariable(name = "leagueId") UUID leagueId) {
         try {
-            List<Competition> competitions = competitionRepository.findByLeagueId(leagueId);
+            List<Competition> competitions = competitionService.loadForLeague(leagueId);
             return ResponseEntity.ok(competitions);
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().build();
@@ -53,42 +48,12 @@ public class CompetitionController {
     @GetMapping("/competition/{competitionId}")
     public ResponseEntity<Competition> getCompetition(@PathVariable(name = "competitionId") UUID competitionId) {
         try {
-            Optional<Competition> competition = loadCompetition(competitionId);
+            Optional<Competition> competition = competitionService.loadCompetition(competitionId);
             return competition
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().build();
         }
-    }
-
-    private Optional<Competition> loadCompetition(UUID competitionId) {
-        return Optional.ofNullable(competitionRepository.findById(competitionId)
-                .map(this::initializeForFormat)
-                .orElse(null));
-    }
-
-    private Competition initializeForFormat(Competition competition) {
-        switch (competition.getFormat()) {
-            case RoundRobin -> initializeRoundRobin(competition);
-            case Knockout -> initializeKnockout(competition);
-        }
-        return competition;
-    }
-
-    private void initializeKnockout(Competition competition) {
-        Integer teams = competition.getTeamsMax();
-
-    }
-
-    private void initializeRoundRobin(Competition competition) {
-        Integer teams = competition.getTeamsMax();
-        Integer contestCount = contestsRepository.countByCompetitionId(competition.getUuid());
-        Integer playedMatchesCount = contestsRepository.countByCompetitionIdAndStatus(competition.getUuid(), MatchStatus.Validated);
-        int totalRounds = teams - 1;
-        competition.setTotalRounds(totalRounds);
-        competition.setCurrentRound(contestCount / (teams / 2));
-        competition.setTotalMatches(totalRounds * teams / 2);
-        competition.setPlayedMatches(playedMatchesCount);
     }
 }

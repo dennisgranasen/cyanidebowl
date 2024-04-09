@@ -90,10 +90,19 @@ public class CyanideCachedRestApiClient {
                 rawResponse = cachedRestApiResponse.map(RestApiResponseCache::getResponse).orElse(null);
             }
         } else {
+            long length = getLength(rawResponse);
             rawResponse = cachedRestApiResponse.map(RestApiResponseCache::getResponse).orElse(null);
         }
-
         return convertRawResponseToResponseObject(rawResponse, apiRequest.getResponseClass());
+    }
+
+    private long getLength(Object rawResponse) {
+        try {
+            int length = objectMapper.writeValueAsString(rawResponse).length();
+            return length;
+        } catch (JsonProcessingException e) {
+            return 0;
+        }
     }
 
     private void cacheRawResponse(ApiRequestKey apiRequestKey, ApiRequest apiRequest,

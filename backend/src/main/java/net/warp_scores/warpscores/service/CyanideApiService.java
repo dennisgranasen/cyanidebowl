@@ -23,7 +23,6 @@ import net.warp_scores.warpscores.domain.CompetitionDomainService;
 import net.warp_scores.warpscores.domain.ContestDomainService;
 import net.warp_scores.warpscores.domain.LeagueDomainService;
 import net.warp_scores.warpscores.domain.MatchDomainService;
-import net.warp_scores.warpscores.domain.persistence.StatusRepository;
 import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.domain.model.Competition;
 import net.warp_scores.warpscores.domain.model.Contest;
@@ -31,6 +30,7 @@ import net.warp_scores.warpscores.domain.model.League;
 import net.warp_scores.warpscores.domain.model.Match;
 import net.warp_scores.warpscores.domain.model.Status;
 import net.warp_scores.warpscores.domain.model.Team;
+import net.warp_scores.warpscores.domain.persistence.StatusRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.ResourceAccessException;
@@ -105,10 +105,10 @@ public class CyanideApiService {
         return matchDomainService.createOrUpdateMatch(matchResponse);
     }
 
-    public List<Match> loadMatches(League league, Date startDate) {
+    public List<Match> loadMatches(League league, Date earliestStartDate, Optional<Date> lastMatchDate) {
         MatchesRequest matchesRequest = new MatchesRequest();
         matchesRequest.setLeague_id(league.getUuid());
-        matchesRequest.setStart(startDate);
+        matchesRequest.setStart(lastMatchDate.orElse(earliestStartDate));
         MatchesResponse matchesResponse = cyanideCachedRestApiClient.getFromCacheOrApi(matchesRequest);
         return matchDomainService.createOrUpdateMatches(matchesResponse);
     }

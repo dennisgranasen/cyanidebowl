@@ -102,7 +102,7 @@ function TeamPage() {
           <Heading size="md">Ranking</Heading>
           {ranks ? <Ranks ranks={ranks} /> : <Spinner />}
           <Heading size="md">Contests</Heading>
-          {contests ? <Contests contests={contests} /> : <Spinner />}
+          {contests ? <Contests contests={contests} currentRound={competition.currentRound} /> : <Spinner />}
         </>
       ) : (
         <Spinner />
