@@ -38,7 +38,8 @@ function isInjured(attributeType, playerCasualties) {
 }
 
 function countInjuries(playerCasualties, injury) {
-  return playerCasualties.reduce((acc, element) => (element === injury ? acc + 1 : acc), 0);
+  const modifier = playerCasualties.reduce((acc, element) => (element === injury ? acc + 1 : acc), 0);
+  return modifier > 2 ? 2 : modifier;
 }
 
 function getModifier(type, playerCasualties) {
@@ -64,9 +65,34 @@ function format(type, value) {
   }
 }
 
+function minMax(value, min, max) {
+  return value ? Math.max(Math.min(value, max), min) : value;
+}
+
 function getRealValue(type, playerCasualties, value) {
   const modifier = getModifier(type, playerCasualties, value);
-  return value + 2 * modifier;
+  let realValue = value ? value + 2 * modifier : value;
+  switch (type) {
+    case ATTR_MA:
+      realValue = minMax(realValue, 1, 9);
+      break;
+    case ATTR_ST:
+      realValue = minMax(realValue, 1, 8);
+      break;
+    case ATTR_AG:
+      realValue = minMax(realValue, 1, 6);
+      break;
+    case ATTR_PA:
+      realValue = minMax(realValue, 1, 6);
+      break;
+    case ATTR_AV:
+      realValue = minMax(realValue, 3, 11);
+      break;
+    default:
+      realValue = value;
+      break;
+  }
+  return realValue;
 }
 
 function Attribute({ type, value, injured }) {
