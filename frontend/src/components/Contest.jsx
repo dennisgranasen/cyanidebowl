@@ -1,5 +1,18 @@
 import React from 'react';
-import { Center, Spinner, Td, Tr } from '@chakra-ui/react';
+import {
+  Center,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+  Spinner,
+  Td,
+  Tr,
+  useDisclosure,
+} from '@chakra-ui/react';
 import Opponent from './Opponent';
 import prettyPrint from '../util/PrettyPrint';
 import formatter from '../util/Formatter';
@@ -24,8 +37,18 @@ function ScoreOrIcon({ contest }) {
 }
 
 function Contest({ contest }) {
+  const { isOpen, onOpen, onClose } = useDisclosure();
   return contest ? (
-    <Tr>
+    <Tr onClick={onOpen}>
+      <Modal size="full" isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>{`Match ${contest.opponents[0].name} vs ${contest.opponents[1].name}`}</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>Match Report</ModalBody>
+          <ModalFooter>Some additional info...</ModalFooter>
+        </ModalContent>
+      </Modal>
       <Opponent
         opponent={contest.opponents[0]}
         winnerTeamUuid={contest.winner ? contest.winner.team.id : null}
