@@ -38,6 +38,7 @@ public class Contest implements UpdateableFromApi {
     private List<Team> opponents;
     private Object winner;
     private boolean adminResult;
+    private Match match;
 
     @Override
     public boolean isUpdateableFromApi() {
