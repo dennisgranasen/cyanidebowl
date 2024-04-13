@@ -31,6 +31,7 @@ public class CompetitionController {
             List<Competition> competitions = competitionService.loadForLeagueAndStatus(leagueId, status);
             return ResponseEntity.ok(competitions);
         } catch (Exception ex) {
+            log.error("Unable to get competitions for league id {} and status {}", leagueId, status, ex);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -41,6 +42,7 @@ public class CompetitionController {
             List<Competition> competitions = competitionService.loadForLeague(leagueId);
             return ResponseEntity.ok(competitions);
         } catch (Exception ex) {
+            log.error("Unable to get competitions for league id {}", leagueId, ex);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -53,6 +55,7 @@ public class CompetitionController {
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
         } catch (Exception ex) {
+            log.error("Unable to get competition {}", competitionId, ex);
             return ResponseEntity.internalServerError().build();
         }
     }

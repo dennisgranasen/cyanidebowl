@@ -14,13 +14,18 @@ GET https://web.cyanide-studio.com/ws/bb3/competitions/?league_id=94dd6ae4-83fa-
 
 GET https://web.cyanide-studio.com/ws/bb3/contests/?competition_id=e8848221-a04e-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
 
+### Get contests InProgress
+GET https://web.cyanide-studio.com/ws/bb3/contests/?status=InProgress&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=6307c66a-a04e-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
+
+### Get contests Validated
+GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Validated&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=6307c66a-a04e-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
+
+### Get contests Scheduled
+GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Scheduled&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=6307c66a-a04e-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
+
 ### Get contests
 
-GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Live&limit=10&platform=pc&key={{apiKey}}
-
-### Get contests
-
-GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Validated&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=7119edf3-a16d-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/contests/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=7119edf3-a16d-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
 
 ### Get halloffame (NOT YET IMPLEMENTED)
 

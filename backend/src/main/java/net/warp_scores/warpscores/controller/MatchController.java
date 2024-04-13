@@ -1,6 +1,7 @@
 package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.domain.model.Competition;
 import net.warp_scores.warpscores.domain.model.Match;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
@@ -20,6 +21,7 @@ import java.util.stream.Stream;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class MatchController {
 
     private final MatchRepository matchRepository;
@@ -35,6 +37,7 @@ public class MatchController {
                     .collect(Collectors.toList());
             return ResponseEntity.ok(byTeamId);
         } catch (Exception ex) {
+            log.error("Unable to retrieve matches for team {}", teamUuid, ex);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -48,6 +51,7 @@ public class MatchController {
             List<Match> matches = initializeForCompetition(byCompetitionId, competition);
             return ResponseEntity.ok(matches);
         } catch (Exception ex) {
+            log.error("Unable to retrieve matches for competition {}", competitionId, ex);
             return ResponseEntity.internalServerError().build();
         }
     }

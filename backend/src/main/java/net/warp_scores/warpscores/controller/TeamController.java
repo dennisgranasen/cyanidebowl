@@ -35,6 +35,7 @@ public class TeamController {
 
             return ResponseEntity.ok(teams);
         } catch (Exception ex) {
+            log.error("Unable to get teams for league {}", leagueId, ex);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -46,6 +47,7 @@ public class TeamController {
             removeInactiveCompetitionsFromTeams(teams);
             return ResponseEntity.ok(teams);
         } catch (Exception ex) {
+            log.error("Unable to get teams for competition {}", competitionId, ex);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -57,6 +59,7 @@ public class TeamController {
             removeInactiveCompetitionsFromTeams(teams);
             return ResponseEntity.ok(teams.get(0));
         } else {
+            log.error("Unable to find team with uuid {}", teamUuid);
             return ResponseEntity.notFound().build();
         }
     }
