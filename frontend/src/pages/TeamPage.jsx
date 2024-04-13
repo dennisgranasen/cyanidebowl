@@ -9,7 +9,6 @@ import Formatter from '../util/Formatter';
 import ImageUrls from '../ImageUrls';
 import InfoArea from '../components/InfoArea';
 import InfoItem from '../components/InfoItem';
-import NotYetImplemented from '../components/NotYetImplemented';
 import DelayedIconTooltip from '../components/DelayedIconTooltip';
 
 function TeamPage() {

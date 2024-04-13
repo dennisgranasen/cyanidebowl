@@ -8,6 +8,7 @@ import {
   TabPanel,
   TabPanels,
   Tabs,
+  Tbody,
   Tfoot,
   Th,
   Thead,
@@ -42,19 +43,19 @@ function Contests({ contests, currentRound }) {
       label: `Round ${key}`,
       content: (
         <TableContainer>
-          <Table variant="simple" size="sm">
+          <Table variant="simpleClickable" size="sm">
             <Thead>{TableColumns}</Thead>
-            {value.map((contest) => {
-              return <Contest contest={contest} key={contest.contestUuid} />;
-            })}
+            <Tbody>
+              {value.map((contest) => {
+                return <Contest contest={contest} key={contest.contestUuid} />;
+              })}
+            </Tbody>
             <Tfoot>{TableColumns}</Tfoot>
           </Table>
         </TableContainer>
       ),
     });
   });
-
-  console.log(`Current round: ${currentRound}`);
 
   return (
     <Tabs defaultIndex={currentRound - 1}>

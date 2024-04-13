@@ -24,7 +24,7 @@ function ScoreOrIcon({ contest }) {
 }
 
 function Contest({ contest }) {
-  return contest !== null ? (
+  return contest ? (
     <Tr>
       <Opponent
         opponent={contest.opponents[0]}
