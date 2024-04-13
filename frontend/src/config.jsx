@@ -5,6 +5,7 @@ const config = {
   locale: 'en-UK',
   boxSize: '32px',
   smallBoxSize: '24px',
+  hoverBoxShadow: 'inset 0 0 0 2000px rgba(255, 0, 150, 0.3);',
 };
 
 export default config;

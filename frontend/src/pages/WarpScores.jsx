@@ -142,7 +142,6 @@ function WarpScores() {
         </Card>
       ) : null}
       <Box>
-        <Heading size="md">Competitions</Heading>
         {error ? (
           <Alert status={error.type}>
             <AlertIcon />

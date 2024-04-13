@@ -1,15 +1,18 @@
 import React from 'react';
 import { Spinner, Td, Tr } from '@chakra-ui/react';
-import { Link as RouteLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import CompetitionProgress from './CompetitionProgress';
 import prettyPrint from '../util/PrettyPrint';
 
 function Competition({ competition }) {
+  const navigate = useNavigate();
+  const goToCompetition = () => {
+    navigate(`/competition/${competition.uuid}`);
+  };
+
   return competition !== null ? (
-    <Tr>
-      <Td>
-        <RouteLink to={`/competition/${competition.uuid}`}>{competition.name}</RouteLink>
-      </Td>
+    <Tr onClick={goToCompetition}>
+      <Td>{competition.name}</Td>
       <Td>{prettyPrint(competition.format)}</Td>
       <Td>
         <CompetitionProgress

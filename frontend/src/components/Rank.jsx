@@ -1,6 +1,6 @@
 import React from 'react';
-import { Center, Heading, Image, LinkBox, LinkOverlay, Spinner, Td, Tr } from '@chakra-ui/react';
-import { Link as RouteLink } from 'react-router-dom';
+import { Center, Heading, Image, Spinner, Td, Tr } from '@chakra-ui/react';
+import { useNavigate } from 'react-router-dom';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import Race from './Race';
 import Formatter from '../util/Formatter';
@@ -10,25 +10,25 @@ import config from '../config';
 const { boxSize } = config;
 
 function Rank({ rank }) {
+  const navigate = useNavigate();
+  const goToTeam = () => {
+    navigate(`/team/${rank.team.id}`);
+  };
   return rank !== null ? (
-    <Tr>
+    <Tr onClick={goToTeam}>
       <Td>
         <Center>
           <Heading size="sm">{rank.rank}</Heading>
         </Center>
       </Td>
+      <Td>{rank.team.name}</Td>
       <Td>
-        <RouteLink to={`/team/${rank.team.id}`}>{rank.team.name}</RouteLink>
-      </Td>
-      <Td>
-        <RouteLink to={`/team/${rank.team.id}`}>
-          <Image
-            src={`${ImageUrls.logo(rank.team.logo)}`}
-            boxSize={boxSize}
-            fallback={<QuestionOutlineIcon boxSize={boxSize} />}
-            objectFit="scale-down"
-          />
-        </RouteLink>
+        <Image
+          src={`${ImageUrls.logo(rank.team.logo)}`}
+          boxSize={boxSize}
+          fallback={<QuestionOutlineIcon boxSize={boxSize} />}
+          objectFit="scale-down"
+        />
       </Td>
       <Td>{rank.team.coachName}</Td>
       <Td>

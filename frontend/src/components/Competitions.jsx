@@ -1,5 +1,5 @@
 import React from 'react';
-import { Spinner, Table, TableContainer, Tbody, Tfoot, Th, Thead, Tr } from '@chakra-ui/react';
+import { Heading, Spinner, Table, TableContainer, Tbody, Tfoot, Th, Thead, Tr } from '@chakra-ui/react';
 import Competition from './Competition';
 
 const TableColumns = (
@@ -14,7 +14,8 @@ const TableColumns = (
 function Competitions({ competitions }) {
   return (
     <TableContainer>
-      <Table variant="striped" size="sm">
+      <Heading size="md">Competitions</Heading>
+      <Table variant="stripedClickable" size="sm">
         <Thead>{TableColumns}</Thead>
         <Tbody>
           {competitions ? (
