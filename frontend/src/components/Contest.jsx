@@ -1,24 +1,12 @@
 import React from 'react';
-import {
-  Center,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  Spinner,
-  Td,
-  Tr,
-  useDisclosure,
-} from '@chakra-ui/react';
+import { Center, Spinner, Td, Text, Tr, useDisclosure } from '@chakra-ui/react';
 import Opponent from './Opponent';
 import prettyPrint from '../util/PrettyPrint';
 import formatter from '../util/Formatter';
 import MatchStatusIcon from './MatchStatusIcon';
 import config from '../config';
 import DelayedIconTooltip from './DelayedIconTooltip';
+import MatchModal from './MatchModal';
 
 const { smallBoxSize } = config;
 
@@ -27,9 +15,9 @@ function ScoreOrIcon({ contest }) {
     case 'played':
     case 'Validated':
       return (
-        <>
+        <Text color={contest.adminResult ? 'orange' : null}>
           {contest.opponents[0].score} - {contest.opponents[1].score}
-        </>
+        </Text>
       );
     default:
       return <MatchStatusIcon status={contest.status} boxSize={smallBoxSize} />;
@@ -38,17 +26,17 @@ function ScoreOrIcon({ contest }) {
 
 function Contest({ contest }) {
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const contestTooltip = `${prettyPrint(contest.status)} ${
+    contest.adminResult ? ' - Admin result' : formatter.formatAsDate(contest.matchDate)
+  }`;
+
+  const openIfValidated = () => {
+    if (contest.status === 'Validated') onOpen();
+  };
+
   return contest ? (
-    <Tr onClick={onOpen}>
-      <Modal size="full" isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>{`Match ${contest.opponents[0].name} vs ${contest.opponents[1].name}`}</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>Match Report</ModalBody>
-          <ModalFooter>Some additional info...</ModalFooter>
-        </ModalContent>
-      </Modal>
+    <Tr onClick={openIfValidated}>
+      <MatchModal isOpen={isOpen} onClose={onClose} contest={contest} />
       <Opponent
         opponent={contest.opponents[0]}
         winnerTeamUuid={contest.winner ? contest.winner.team.id : null}
@@ -56,7 +44,7 @@ function Contest({ contest }) {
         reverse={false}
       />
       <Td>
-        <DelayedIconTooltip label={`${prettyPrint(contest.status)} ${formatter.formatAsDate(contest.matchDate)}`}>
+        <DelayedIconTooltip label={contestTooltip}>
           <Center>
             <ScoreOrIcon contest={contest} />
           </Center>

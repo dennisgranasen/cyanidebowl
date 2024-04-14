@@ -20,6 +20,7 @@ export default {
   leagueCompetitions: async (leagueUuid) =>
     axios(`/competitions/league/${leagueUuid}/InProgress`).then(returnData).catch(handleError),
   competition: async (competitionUuid) => axios(`/competition/${competitionUuid}`).then(returnData).catch(handleError),
+  match: async (matchUuid) => axios(`/match/${matchUuid}`).then(returnData).catch(handleError),
   leagueTeams: async (leagueUuid) => axios(`/teams/league/${leagueUuid}`).then(returnData).catch(handleError),
   competitionTeams: async (competitionUuid) =>
     axios(`/teams/competition/${competitionUuid}`).then(returnData).catch(handleError),
