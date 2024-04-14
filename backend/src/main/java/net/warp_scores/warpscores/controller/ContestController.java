@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus;
 import net.warp_scores.warpscores.domain.model.Contest;
 import net.warp_scores.warpscores.domain.model.Match;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
@@ -33,7 +34,11 @@ public class ContestController {
                             contest ->
                             {
                                 Optional<UUID> matchUuid = Optional.ofNullable(contest.getMatchUuid());
-                                Optional<Match> match = matchUuid.map(matchRepository::findById).orElse(Optional.empty());
+                                Optional<Match> match = matchUuid.map(matchRepository::findById)
+                                        .orElse(Optional.empty());
+                                contest.setAdminResult(contest.isAdminResult() ||
+                                        (match.isEmpty() &&
+                                                MatchStatus.Validated.equals(contest.getStatus())));
                                 match.ifPresent(contest::setMatch);
                                 return contest;
                             }).collect(Collectors.toList());
