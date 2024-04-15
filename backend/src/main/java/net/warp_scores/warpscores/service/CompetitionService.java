@@ -10,6 +10,7 @@ import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,8 +23,8 @@ public class CompetitionService {
     private final CompetitionRepository competitionRepository;
     private final ContestRepository contestsRepository;
 
-    public List<Competition> loadForLeagueAndStatus(UUID leagueId, CompetitionStatus status) {
-        List<Competition> competitions = competitionRepository.findByLeagueIdAndStatus(leagueId, status);
+    public List<Competition> loadForLeagueAndStatuses(UUID leagueId, CompetitionStatus... statuses) {
+        List<Competition> competitions = competitionRepository.findByLeagueIdAndStatusIn(leagueId, Arrays.asList(statuses));
         return initializeForFormat(competitions);
     }
 
