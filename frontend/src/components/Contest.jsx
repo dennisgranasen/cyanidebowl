@@ -30,12 +30,12 @@ function Contest({ contest }) {
     contest.adminResult ? ' - Admin result' : formatter.formatAsDate(contest.matchDate)
   }`;
 
-  const openIfValidated = () => {
-    if (contest.status === 'Validated') onOpen();
+  const openIfValidatedAndNotAdminResult = () => {
+    if (contest.status === 'Validated' && !contest.adminResult) onOpen();
   };
 
   return contest ? (
-    <Tr onClick={openIfValidated}>
+    <Tr onClick={openIfValidatedAndNotAdminResult}>
       <MatchModal isOpen={isOpen} onClose={onClose} contest={contest} />
       <Opponent
         opponent={contest.opponents[0]}
