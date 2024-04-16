@@ -6,7 +6,7 @@ import Status from './Status';
 function Navigation({ currentPage, league, competition, team }) {
   const leagueLink = league ? `/${league[0]}` : '/';
   const competitionLink = competition ? `/competition/${competition[0]}` : '';
-  const teamLink = team ? `/team/${team[0]}` : '';
+  const teamLink = team ? `${competitionLink}/team/${team[0]}` : '';
   const isPage = (pageName, currentPageName) => {
     return pageName === currentPageName;
   };

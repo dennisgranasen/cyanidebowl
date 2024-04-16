@@ -3,7 +3,6 @@ package net.warp_scores.warpscores.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionStatus;
-import net.warp_scores.warpscores.cyanide.api.requests.CompetitionsRequest;
 import net.warp_scores.warpscores.domain.model.Competition;
 import net.warp_scores.warpscores.service.CompetitionService;
 import org.springframework.http.ResponseEntity;

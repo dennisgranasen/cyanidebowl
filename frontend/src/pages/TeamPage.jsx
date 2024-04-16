@@ -12,13 +12,16 @@ import InfoItem from '../components/InfoItem';
 import DelayedIconTooltip from '../components/DelayedIconTooltip';
 
 function TeamPage() {
-  const { teamUuid } = useParams();
+  const { competitionUuid, teamUuid } = useParams();
   const [team, setTeam] = useState();
   const [players, setPlayers] = useState();
 
   useEffect(() => {
     const fetchTeam = () => {
-      CyanideApiService.team(teamUuid).then((data) => {
+      const response = competitionUuid
+        ? CyanideApiService.competitionTeam(competitionUuid, teamUuid)
+        : CyanideApiService.team(teamUuid);
+      response.then((data) => {
         setTeam(data);
         const currentPlayers = data.players || [];
         currentPlayers.sort((playerA, playerB) => playerA.number - playerB.number);
@@ -34,13 +37,16 @@ function TeamPage() {
     // fetchMatches();
   }, []);
 
+  const navCompetition =
+    team && team.competitionIds.length === 1 ? [team.competitionIds[0], team.competitionName] : null;
+
   return (
     <VStack align="left">
       <Box>
         <Navigation
           currentPage="team"
           league={team ? [team.leagueIds[0], team.leagueName] : []}
-          competition={team ? [team.competitionIds[0], team.competitionName] : []}
+          competition={navCompetition}
           team={team ? [teamUuid, team.name] : []}
         />
       </Box>

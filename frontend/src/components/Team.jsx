@@ -1,42 +1,29 @@
-import React, { useEffect, useState } from 'react';
-import { Image, Spinner, Td, Tr, useBoolean } from '@chakra-ui/react';
+import React from 'react';
+import { Image, Spinner, Td, Tr } from '@chakra-ui/react';
 import { Link as RouteLink } from 'react-router-dom';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import Race from './Race';
 import Formatter from '../util/Formatter';
 import ImageUrls from '../ImageUrls';
-import config from '../config';
 
 const boxSize = '32px';
 
 function Team({ team }) {
-  const [flag, setFlag] = useBoolean();
-  const [background, setBackground] = useState();
-  useEffect(() => {
-    if (flag) setBackground(config.hoverBackgroundColor);
-    else setBackground(null);
-  }, [flag]);
-
+  const goToTeam = () => {
+    console.log('TODO: implement');
+  };
   return team !== null ? (
-    <Tr
-      onMouseEnter={setFlag.on}
-      onMouseLeave={setFlag.off}
-      css={`
-        background: ${background};
-      `}
-    >
+    <Tr onClick={goToTeam}>
       <Td>
-        <RouteLink to={`/team/${team.id}`}>{team.name}</RouteLink>
+        <RouteLink to={`/competition/${team.competitionIds[0]}/team/${team.id}`}>{team.name}</RouteLink>
       </Td>
       <Td>
-        <RouteLink to={`/team/${team.id}`}>
-          <Image
-            src={`${ImageUrls.logo(team.logo)}`}
-            boxSize={boxSize}
-            fallback={<QuestionOutlineIcon boxSize={boxSize} />}
-            objectFit="scale-down"
-          />
-        </RouteLink>
+        <Image
+          src={`${ImageUrls.logo(team.logo)}`}
+          boxSize={boxSize}
+          fallback={<QuestionOutlineIcon boxSize={boxSize} />}
+          objectFit="scale-down"
+        />
       </Td>
       <Td>{team.coachName}</Td>
       <Td>

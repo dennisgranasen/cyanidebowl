@@ -12,7 +12,7 @@ const { boxSize } = config;
 function Rank({ rank }) {
   const navigate = useNavigate();
   const goToTeam = () => {
-    navigate(`/team/${rank.team.id}`);
+    navigate(`/competition/${rank.team.competitionIds[0]}/team/${rank.team.id}`);
   };
   return rank !== null ? (
     <Tr onClick={goToTeam}>

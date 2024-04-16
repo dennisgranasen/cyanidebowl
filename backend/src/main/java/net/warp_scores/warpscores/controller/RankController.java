@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus;
+import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.domain.model.Contest;
 import net.warp_scores.warpscores.domain.model.Match;
 import net.warp_scores.warpscores.domain.model.Rank;
@@ -67,11 +68,13 @@ public class RankController {
         return ofNullable(rankA.getTeam()).map(Team::getName).orElse("")
                 .compareToIgnoreCase(ofNullable(rankB.getTeam()).map(Team::getName).orElse(""));
     };
+    private final TeamDomainService teamDomainService;
 
     @GetMapping("/ranks/competition/{competitionId}")
     public ResponseEntity<List<Rank>> getRanksForCompetition(@PathVariable(name = "competitionId") UUID competitionId) {
 
-        List<Team> teams = teamRepository.findByCompetitionId(competitionId);
+        List<Team> teams = teamDomainService.findByCompetitionId(competitionId);
+
         List<Rank> ranks = teams.stream()
                 .map(team -> toRank(team, competitionId))
                 .sorted(rankComparator)
