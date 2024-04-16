@@ -3,7 +3,7 @@ import { Box, GridItem, Progress, SimpleGrid, VStack } from '@chakra-ui/react';
 import DelayedIconTooltip from './DelayedIconTooltip';
 import prettyPrint from '../util/PrettyPrint';
 
-function Progresses({ currentRound, totalRounds, playedMatches, totalMatches }) {
+function Progresses({ currentRound, totalRounds, playedMatches, totalMatches, status }) {
   const roundLength = totalMatches ? totalMatches / totalRounds : 1;
   const roundProgresses = [];
   for (let round = 0; round < totalRounds; round += 1) {
@@ -14,7 +14,7 @@ function Progresses({ currentRound, totalRounds, playedMatches, totalMatches }) 
     } else if (currentRound === round + 1) {
       progress =
         playedMatches >= roundLength * currentRound ? 100 : (100 * (playedMatches % roundLength)) / roundLength;
-      active = true;
+      active = status === 'InProgress';
     }
     roundProgresses.push({ name: `round${round + 1}`, progress, active });
   }
@@ -53,6 +53,7 @@ function CompetitionProgress({ status, currentRound, totalRounds, playedMatches,
             totalRounds={totalRounds}
             totalMatches={totalMatches}
             playedMatches={playedMatches}
+            status={status}
           />
         </Box>
       </DelayedIconTooltip>

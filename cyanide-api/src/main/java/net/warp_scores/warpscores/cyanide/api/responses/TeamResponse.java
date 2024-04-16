@@ -1,12 +1,14 @@
 package net.warp_scores.warpscores.cyanide.api.responses;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
-import net.warp_scores.warpscores.cyanide.api.model.common.IdWithName;
 import lombok.Getter;
 import lombok.Setter;
+import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
+import net.warp_scores.warpscores.cyanide.api.model.common.IdWithName;
 
 import java.util.Date;
+import java.util.Map;
 
 /*
 {
@@ -297,7 +299,6 @@ public class TeamResponse extends ApiResponse {
     private Coach coach;
     private Player[] roster;
 
-
     @Getter
     @Setter
     public static class Coach extends IdWithName {
@@ -315,6 +316,7 @@ public class TeamResponse extends ApiResponse {
         private Integer xp;
 
         private Attributes attributes;
+        private ExtendedAttributes attributes_ex;
 
         private String type;
         private Integer[] casualties_state_id;
@@ -330,6 +332,15 @@ public class TeamResponse extends ApiResponse {
             private Integer st;
             private Integer ag;
             private Integer av;
+        }
+
+        @Getter
+        @Setter
+        public static class ExtendedAttributes {
+            @JsonAlias({"default"})
+            private Attributes defaultAttributes;
+            private Map[] bonus;
+            private Map[] malus;
         }
     }
 

@@ -52,6 +52,7 @@ function App() {
             <Route path="/:leagueUuid" element={<WarpScores />} />
             <Route path="/team/:teamUuid" element={<TeamPage />} />
             <Route path="/competition/:competitionUuid" element={<CompetitionPage />} />
+            <Route path="/competition/:competitionUuid/team/:teamUuid" element={<TeamPage />} />
           </Routes>
         </Router>
       </Box>

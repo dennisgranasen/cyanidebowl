@@ -7,6 +7,7 @@ const TableColumns = (
     <Th>#</Th>
     <Th>Name</Th>
     <Th>Type</Th>
+    <Th>Level</Th>
     <Th>Skills</Th>
     <Th>Injuries</Th>
     <Th>MNG</Th>

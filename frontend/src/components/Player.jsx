@@ -1,5 +1,5 @@
 import React from 'react';
-import { Td, Text, Tr } from '@chakra-ui/react';
+import { Avatar, IconButton, Tag, Td, Text, Tr } from '@chakra-ui/react';
 import { FaBandage } from 'react-icons/fa6';
 import Skills from './Skills';
 import prettyPrint from '../util/PrettyPrint';
@@ -69,6 +69,7 @@ function minMax(value, min, max) {
   return value ? Math.max(Math.min(value, max), min) : value;
 }
 
+/* FIXME: use attribute_ex and bonus / malus instead of "guessing" - see beneath (json at end of file) */
 function getRealValue(type, playerCasualties, value) {
   const modifier = getModifier(type, playerCasualties, value);
   let realValue = value ? value + 2 * modifier : value;
@@ -99,12 +100,28 @@ function Attribute({ type, value, injured }) {
   return <Text color={injured ? 'red' : null}>{format(type, value)}</Text>;
 }
 
+function romanize(num) {
+  const lookup = { X: 10, IX: 9, V: 5, IV: 4, I: 1 };
+  let roman = '';
+  let i;
+  for (i in lookup) {
+    while (num >= lookup[i]) {
+      roman += i;
+      num -= lookup[i];
+    }
+  }
+  return roman;
+}
+
 function Player({ player }) {
   return (
     <Tr>
       <Td>{player.number}</Td>
       <Td>{player.name}</Td>
       <Td>{prettyPrint(player.type, '_')}</Td>
+      <Td>
+        {player.level > 0 && <Tag size="lg" borderRadius="full">{`${player.level} -> ${romanize(player.level)}`}</Tag>}
+      </Td>
       <Td>
         <Skills skills={player.skills} />
       </Td>
@@ -154,3 +171,28 @@ function Player({ player }) {
 }
 
 export default Player;
+
+/*
+   "attributes_ex": {
+        "default": {
+          "ma": new
+          NumberInt(
+          "4"
+          ),
+          "st": new
+          NumberInt(
+          "5"
+          ),
+          "ag": new
+          NumberInt(
+          "5"
+          ),
+          "av": new
+          NumberInt(
+          "10"
+          )
+        },
+        "bonus": [],
+        "malus": []
+      },
+ */

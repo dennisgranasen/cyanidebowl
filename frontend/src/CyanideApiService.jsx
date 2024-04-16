@@ -18,16 +18,15 @@ export default {
   status: async () => axios(`/status`).then(returnData).catch(handleError),
   league: async () => axios(`/league`).then(returnData).catch(handleError),
   leagueCompetitions: async (leagueUuid) =>
-    axios
-      .post(`/competitions/league/${leagueUuid}`, ['InProgress', 'Finished'] )
-      .then(returnData)
-      .catch(handleError),
+    axios.post(`/competitions/league/${leagueUuid}`, ['InProgress', 'Finished']).then(returnData).catch(handleError),
   competition: async (competitionUuid) => axios(`/competition/${competitionUuid}`).then(returnData).catch(handleError),
   match: async (matchUuid) => axios(`/match/${matchUuid}`).then(returnData).catch(handleError),
   leagueTeams: async (leagueUuid) => axios(`/teams/league/${leagueUuid}`).then(returnData).catch(handleError),
   competitionTeams: async (competitionUuid) =>
     axios(`/teams/competition/${competitionUuid}`).then(returnData).catch(handleError),
   team: async (teamUuid) => axios(`/team/${teamUuid}`).then(returnData).catch(handleError),
+  competitionTeam: async (competitionUuid, teamUuid) =>
+    axios(`/competition/${competitionUuid}/team/${teamUuid}`).then(returnData).catch(handleError),
   teamMatches: async (teamUuid) => axios(`/matches/team/${teamUuid}`).then(returnData).catch(handleError),
   competitionMatches: async (competitionUuid) =>
     axios(`/matches/competition/${competitionUuid}`).then(returnData).catch(handleError),

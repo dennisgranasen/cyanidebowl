@@ -11,8 +11,10 @@ GET https://web.cyanide-studio.com/ws/bb3/coaches/?competition=DBBL S1 Division 
 GET https://web.cyanide-studio.com/ws/bb3/competitions/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&limit=10&platform=pc&key={{apiKey}}
 
 ### Get contests
-
 GET https://web.cyanide-studio.com/ws/bb3/contests/?competition_id=e8848221-a04e-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
+
+###
+GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Validated&competition_id=8b18ed1d-e9d9-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
 
 ### Get contests InProgress
 GET https://web.cyanide-studio.com/ws/bb3/contests/?status=InProgress&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=6307c66a-a04e-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
@@ -63,8 +65,15 @@ GET https://web.cyanide-studio.com/ws/bb3/match/?league=NAF BB3 Kickoff&limit=10
 
 ### Get matches
 
-GET https://web.cyanide-studio.com/ws/bb3/matches/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&startDate=2023-12-01&platform=pc&key={{apiKey}}&order=finished
 GET https://web.cyanide-studio.com/ws/bb3/matches/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&startDate=2023-11-15&platform=pc&key={{apiKey}}
+
+### Get matches (ordered)
+
+GET https://web.cyanide-studio.com/ws/bb3/matches/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&startDate=2023-12-01&platform=pc&key={{apiKey}}&order=finished
+
+### Get match by id
+
+GET https://web.cyanide-studio.com/ws/bb3/match/?match_id=f6b6a216-fa90-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
 
 ### Get teams
 

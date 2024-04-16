@@ -11,7 +11,6 @@ import net.warp_scores.warpscores.domain.persistence.TeamRepository;
 import net.warp_scores.warpscores.service.PopulatorUtil;
 import net.warp_scores.warpscores.service.TeamPopulator;
 import net.warp_scores.warpscores.service.UUIDConverter;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,6 +52,35 @@ public class TeamDomainService {
         List<Player> players = toPlayers(apiPlayers);
         team.setPlayers(players);
         return teamRepository.save(team);
+    }
+
+    @Transactional
+    public List<Team> findByLeagueId(UUID leagueUuid) {
+        return this.teamRepository.findByLeagueId(leagueUuid);
+    }
+
+    @Transactional
+    public List<Team> findByCompetitionId(UUID competitionId) {
+        List<Team> teams = this.teamRepository.findByCompetitionId(competitionId);
+        setRelevantCompetition(teams, competitionId);
+        return teams;
+    }
+
+    @Transactional
+    public Optional<Team> findTeam(UUID teamUuid, Optional<UUID> competitionUuid) {
+        List<Team> teams = teamRepository.findAllById(Arrays.asList(teamUuid));
+        if (teams.size() == 1) {
+            competitionUuid.ifPresent((uuid) -> setRelevantCompetition(teams, uuid));
+            return Optional.of(teams.get(0));
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    private void setRelevantCompetition(List<Team> teams, UUID competitionUuid) {
+        teams
+                .stream()
+                .forEach(team -> team.setCompetitionIds(new UUID[]{competitionUuid}));
     }
 
     private Team internalCreateOrUpdateTeam(ApiTeam apiTeam) {
@@ -98,4 +126,5 @@ public class TeamDomainService {
         PopulatorUtil.copyNonNullProperties(apiAttributes, attributes);
         return attributes;
     }
+
 }
