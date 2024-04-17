@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tag, Td, Text, Tr } from '@chakra-ui/react';
+import { Center, Tag, Td, Text, Tr } from '@chakra-ui/react';
 import { FaBandage } from 'react-icons/fa6';
 import Skills from './Skills';
 import prettyPrint from '../util/PrettyPrint';
@@ -82,13 +82,13 @@ function Attribute({ type, defaultAttributes, bonus, malus }) {
 function romanize(num) {
   const lookup = { X: 10, IX: 9, V: 5, IV: 4, I: 1 };
   let roman = '';
-  let i;
-  for (i in lookup) {
-    while (num >= lookup[i]) {
-      roman += i;
-      num -= lookup[i];
+  Object.keys(lookup).forEach((key) => {
+    const value = lookup[key];
+    while (num >= value) {
+      roman += key;
+      num -= value;
     }
-  }
+  });
   return roman;
 }
 
@@ -101,58 +101,49 @@ function Player({ player }) {
       <Td>{player.number}</Td>
       <Td>{player.name}</Td>
       <Td>{prettyPrint(player.type, '_')}</Td>
-      <Td>{player.level > 0 && <Tag size="sm" borderRadius="full">{`${romanize(player.level)}`}</Tag>}</Td>
+      <Td>
+        <Center>
+          {player.level > 0 && <Tag variant="outline" size="sm" borderRadius="full">{`${romanize(player.level)}`}</Tag>}
+        </Center>
+      </Td>
       <Td>
         <Skills skills={player.skills} />
       </Td>
       <Td>
         <Injuries injuries={player.casualtiesStates} />
       </Td>
-      <Td>{player.suspendedNextMatch ? <FaBandage color="orange" size="24px" /> : ''}</Td>
       <Td>
-        <Attribute type={ATTR_MA} defaultAttributes={defaultAttributes} bonus={bonus} malus={malus} />
+        <Center>{player.suspendedNextMatch ? <FaBandage color="orange" size="24px" /> : ''}</Center>
       </Td>
       <Td>
-        <Attribute type={ATTR_ST} defaultAttributes={defaultAttributes} bonus={bonus} malus={malus} />
+        <Center>
+          <Attribute type={ATTR_MA} defaultAttributes={defaultAttributes} bonus={bonus} malus={malus} />
+        </Center>
       </Td>
       <Td>
-        <Attribute type={ATTR_AG} defaultAttributes={defaultAttributes} bonus={bonus} malus={malus} />
+        <Center>
+          <Attribute type={ATTR_ST} defaultAttributes={defaultAttributes} bonus={bonus} malus={malus} />
+        </Center>
       </Td>
       <Td>
-        <Attribute type={ATTR_PA} defaultAttributes={defaultAttributes} bonus={bonus} malus={malus} />
+        <Center>
+          <Attribute type={ATTR_AG} defaultAttributes={defaultAttributes} bonus={bonus} malus={malus} />
+        </Center>
       </Td>
       <Td>
-        <Attribute type={ATTR_AV} defaultAttributes={defaultAttributes} bonus={bonus} malus={malus} />
+        <Center>
+          <Attribute type={ATTR_PA} defaultAttributes={defaultAttributes} bonus={bonus} malus={malus} />
+        </Center>
       </Td>
-      <Td>{player.value}</Td>
-      <Td>{player.xp}</Td>
+      <Td>
+        <Center>
+          <Attribute type={ATTR_AV} defaultAttributes={defaultAttributes} bonus={bonus} malus={malus} />
+        </Center>
+      </Td>
+      <Td isNumeric>{player.xp}</Td>
+      <Td isNumeric>{player.value}</Td>
     </Tr>
   );
 }
 
 export default Player;
-
-/*
-   "attributes_ex": {
-        "default": {
-          "ma": new
-          NumberInt(
-          "4"
-          ),
-          "st": new
-          NumberInt(
-          "5"
-          ),
-          "ag": new
-          NumberInt(
-          "5"
-          ),
-          "av": new
-          NumberInt(
-          "10"
-          )
-        },
-        "bonus": [],
-        "malus": []
-      },
- */
