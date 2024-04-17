@@ -14,5 +14,5 @@ public interface CompetitionRepository extends MongoRepository<Competition, UUID
 
     List<Competition> findByLeagueId(UUID leagueId);
 
-    List<Competition> findByStatus(CompetitionStatus status);
+    List<Competition> findByStatusIn(List<CompetitionStatus> status);
 }

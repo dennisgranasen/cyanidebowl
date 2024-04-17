@@ -140,7 +140,9 @@ function Player({ player }) {
           <Attribute type={ATTR_AV} defaultAttributes={defaultAttributes} bonus={bonus} malus={malus} />
         </Center>
       </Td>
-      <Td isNumeric>{player.xp}</Td>
+      <Td>
+        <Center>{player.xp}</Center>
+      </Td>
       <Td isNumeric>{player.value}</Td>
     </Tr>
   );
