@@ -1,5 +1,5 @@
 import React from 'react';
-import { Spinner, Table, TableContainer, Tbody, Tfoot, Th, Thead, Tr } from '@chakra-ui/react';
+import { Center, Spinner, Table, TableContainer, Tbody, Tfoot, Th, Thead, Tr } from '@chakra-ui/react';
 import Player from './Player';
 
 const TableColumns = (
@@ -7,17 +7,31 @@ const TableColumns = (
     <Th>#</Th>
     <Th>Name</Th>
     <Th>Type</Th>
-    <Th>Level</Th>
+    <Th>
+      <Center>Level</Center>
+    </Th>
     <Th>Skills</Th>
     <Th>Injuries</Th>
-    <Th>MNG</Th>
-    <Th>MA</Th>
-    <Th>ST</Th>
-    <Th>AG</Th>
-    <Th>PA</Th>
-    <Th>AV</Th>
-    <Th>Value</Th>
-    <Th>XP</Th>
+    <Th>
+      <Center>MNG</Center>
+    </Th>
+    <Th>
+      <Center>MA</Center>
+    </Th>
+    <Th>
+      <Center>ST</Center>
+    </Th>
+    <Th>
+      <Center>AG</Center>
+    </Th>
+    <Th>
+      <Center>PA</Center>
+    </Th>
+    <Th>
+      <Center>AV</Center>
+    </Th>
+    <Th isNumeric>XP</Th>
+    <Th isNumeric>Value</Th>
   </Tr>
 );
 
