@@ -5,9 +5,13 @@ import WarpScores from './pages/WarpScores';
 import TeamPage from './pages/TeamPage';
 import CompetitionPage from './pages/CompetitionPage';
 
-const theme = extendTheme({
+const config = {
   initialColorMode: 'dark',
   useSystemColorMode: false,
+};
+
+const theme = extendTheme({
+  config,
   components: {
     Table: {
       variants: {
