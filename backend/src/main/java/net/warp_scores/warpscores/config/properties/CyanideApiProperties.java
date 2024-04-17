@@ -18,6 +18,7 @@ public class CyanideApiProperties {
     public static class ApiConfig {
         private String baseUrl;
         private String key;
+        private boolean fetchActive;
     }
 
     @Getter

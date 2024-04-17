@@ -116,6 +116,7 @@ public class TeamDomainService {
         player.setRaceId(apiPlayer.getIdraces());
         player.setSuspendedNextMatch(apiPlayer.getSuspended_next_match());
         player.setAttributes(toAttributes(apiPlayer.getAttributes()));
+        player.setExtendedAttributes(toExtendedAttributes(apiPlayer.getExtendedAttributes()));
         player.setCasualtiesStateIds(apiPlayer.getCasualties_state_id());
         player.setCasualtiesStates(apiPlayer.getCasualties_state());
         return player;
@@ -127,4 +128,12 @@ public class TeamDomainService {
         return attributes;
     }
 
+    private Player.ExtendedAttributes toExtendedAttributes(TeamResponse.Player.ExtendedAttributes apiExtendedAttributes) {
+        Player.ExtendedAttributes extendedAttributes = new Player.ExtendedAttributes();
+
+        Player.Attributes defaultAttributes = toAttributes(apiExtendedAttributes.getDefaultAttributes());
+        extendedAttributes.setDefaultAttributes(defaultAttributes);
+        PopulatorUtil.copyNonNullProperties(apiExtendedAttributes, extendedAttributes);
+        return extendedAttributes;
+    }
 }

@@ -78,11 +78,12 @@ public class CyanideCachedRestApiClient {
                 .map(response -> ((ApiResponse) response).isChangeableResponse())
                 .orElse(true);
 
-        log.info("Trying to get for '{}'. Last api access was [{}] (outdated: {}, changeable: {}).",
+        boolean fetchActive = cyanideApiProperties.getApiConfig().isFetchActive();
+        log.info("Trying to get for '{}'. Last api access was [{}] (outdated: {}, changeable: {}, apiFetchActive: {}).",
                 apiRequest.getRequestPath(),
-                lastCacheAccess, cacheOutdated, changeable);
+                lastCacheAccess, cacheOutdated, changeable, fetchActive);
         Object rawResponse = null;
-        if (cacheOutdated && changeable) {
+        if (cacheOutdated && changeable && fetchActive) {
             rawResponse = loadRawFromApi(apiRequest);
             if (rawResponse != null) {
                 cacheRawResponse(apiRequestKey, apiRequest, rawResponse);
@@ -90,19 +91,9 @@ public class CyanideCachedRestApiClient {
                 rawResponse = cachedRestApiResponse.map(RestApiResponseCache::getResponse).orElse(null);
             }
         } else {
-            long length = getLength(rawResponse);
             rawResponse = cachedRestApiResponse.map(RestApiResponseCache::getResponse).orElse(null);
         }
         return convertRawResponseToResponseObject(rawResponse, apiRequest.getResponseClass());
-    }
-
-    private long getLength(Object rawResponse) {
-        try {
-            int length = objectMapper.writeValueAsString(rawResponse).length();
-            return length;
-        } catch (JsonProcessingException e) {
-            return 0;
-        }
     }
 
     private void cacheRawResponse(ApiRequestKey apiRequestKey, ApiRequest apiRequest,
