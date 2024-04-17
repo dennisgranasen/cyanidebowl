@@ -3,7 +3,6 @@ package net.warp_scores.warpscores.scheduler;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.config.properties.CyanideApiProperties;
-import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionStatus;
 import net.warp_scores.warpscores.domain.model.Competition;
 import net.warp_scores.warpscores.domain.model.Contest;
 import net.warp_scores.warpscores.domain.model.League;
@@ -23,6 +22,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static net.warp_scores.warpscores.cyanide.api.model.common.CompetitionStatus.Finished;
+import static net.warp_scores.warpscores.cyanide.api.model.common.CompetitionStatus.InProgress;
 
 @Slf4j
 @Service
@@ -60,7 +62,7 @@ public class FetchDataScheduler {
             return;
         }
 
-        List<Competition> competitions = competitionRepository.findByStatus(CompetitionStatus.InProgress);
+        List<Competition> competitions = competitionRepository.findByStatusIn(List.of(InProgress));
         List<UUID> leagueUuids = competitions.stream().map(Competition::getLeagueId).collect(Collectors.toList());
         List<League> leagues = leagueRepository.findAllById(leagueUuids);
 
@@ -78,7 +80,7 @@ public class FetchDataScheduler {
             return;
         }
 
-        List<Competition> competitions = competitionRepository.findByStatus(CompetitionStatus.InProgress);
+        List<Competition> competitions = competitionRepository.findByStatusIn(List.of(InProgress, Finished));
         log.info("Will load teams for {} competitions in progress.",
                 competitions.size());
         List<Team> teams = competitions

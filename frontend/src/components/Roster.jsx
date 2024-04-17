@@ -30,7 +30,9 @@ const TableColumns = (
     <Th>
       <Center>AV</Center>
     </Th>
-    <Th isNumeric>XP</Th>
+    <Th>
+      <Center>XP</Center>
+    </Th>
     <Th isNumeric>Value</Th>
   </Tr>
 );
