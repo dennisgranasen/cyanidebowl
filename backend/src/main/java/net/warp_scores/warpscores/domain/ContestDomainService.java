@@ -62,6 +62,7 @@ public class ContestDomainService {
         PopulatorUtil.copyNonNullProperties(sourceApiContestMatch, targetContest);
         targetContest.setContestUuid(sourceApiContestMatch.getContest_id());
         targetContest.setLeagueId(sourceApiContestMatch.getLeague_id());
+        targetContest.setLive(sourceApiContestMatch.getLive());
         targetContest.setCompetitionId(sourceApiContestMatch.getCompetition_id());
         targetContest.setCompetitionName(sourceApiContestMatch.getCompetition());
         targetContest.setLeagueName(sourceApiContestMatch.getLeague());

@@ -20,7 +20,7 @@ function ScoreOrIcon({ contest }) {
         </Text>
       );
     default:
-      return <MatchStatusIcon status={contest.status} boxSize={smallBoxSize} />;
+      return <MatchStatusIcon status={contest.status} live={contest.live} boxSize={smallBoxSize} />;
   }
 }
 

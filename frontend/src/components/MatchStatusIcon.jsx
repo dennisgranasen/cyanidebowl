@@ -1,14 +1,14 @@
 import React from 'react';
-import { TimeIcon } from '@chakra-ui/icons';
+import { Icon, TimeIcon } from '@chakra-ui/icons';
 import { FaTowerBroadcast } from 'react-icons/fa6';
 
-function MatchStatusIcon({ status, boxSize }) {
+function MatchStatusIcon({ status, live, boxSize }) {
   switch (status) {
     case 'scheduled':
     case 'Scheduled':
     case 'in_progress':
     case 'InProgress':
-      return <TimeIcon boxSize={boxSize} />;
+      return live ? <Icon as={FaTowerBroadcast} boxSize={boxSize} /> : <TimeIcon boxSize={boxSize} />;
     default:
       return null;
   }
