@@ -1,9 +1,12 @@
 import React from 'react';
-import { Center, Tag, Td, Text, Tr } from '@chakra-ui/react';
+import { Center, Image, Tag, Td, Text, Tr } from '@chakra-ui/react';
 import { FaBandage } from 'react-icons/fa6';
 import Skills from './Skills';
 import prettyPrint from '../util/PrettyPrint';
 import Injuries from './Injuries';
+import config from '../config';
+
+const { smallBoxSize } = config;
 
 const NO_PA = '-';
 
@@ -113,7 +116,18 @@ function Player({ player }) {
         <Injuries injuries={player.casualtiesStates} />
       </Td>
       <Td>
-        <Center>{player.suspendedNextMatch ? <FaBandage color="orange" size="24px" /> : ''}</Center>
+        <Center>
+          {player.suspendedNextMatch ? (
+            <Image
+              src="/img/recovering.png"
+              alt="MNG"
+              boxSize={smallBoxSize}
+              fallback={<FaBandage color="orange" size={smallBoxSize} />}
+            />
+          ) : (
+            ''
+          )}
+        </Center>
       </Td>
       <Td>
         <Center>

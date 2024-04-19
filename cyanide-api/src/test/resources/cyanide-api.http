@@ -17,7 +17,7 @@ GET https://web.cyanide-studio.com/ws/bb3/contests/?competition_id=e8848221-a04e
 GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Validated&competition_id=8b18ed1d-e9d9-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
 
 ### Get contests InProgress
-GET https://web.cyanide-studio.com/ws/bb3/contests/?status=InProgress&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=6307c66a-a04e-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/contests/?status=InProgress&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=e8848221-a04e-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
 
 ### Get contests Validated
 GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Validated&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=6307c66a-a04e-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
@@ -65,7 +65,7 @@ GET https://web.cyanide-studio.com/ws/bb3/match/?league=NAF BB3 Kickoff&limit=10
 
 ### Get matches
 
-GET https://web.cyanide-studio.com/ws/bb3/matches/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&startDate=2023-11-15&platform=pc&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/matches/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&startDate=2024-04-14&platform=pc&key={{apiKey}}
 
 ### Get matches (ordered)
 

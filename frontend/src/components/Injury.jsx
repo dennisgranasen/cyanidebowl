@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, Tag, TagLabel, Tooltip } from '@chakra-ui/react';
+import { Image, Tag, TagLabel } from '@chakra-ui/react';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import prettyPrint from '../util/PrettyPrint';
 import config from '../config';
