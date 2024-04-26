@@ -60,8 +60,8 @@ public class ImageController {
     private ResponseEntity<byte[]> loadImage(String imageUrl, Optional<Integer> maxWidth) {
         Optional<byte[]> imageData = imageService.loadImage(imageUrl, maxWidth);
         return imageData
-                .map(ImageController::okFor)
-                .orElse(noContentFor(imageUrl));
+                .map(ImageController::ok)
+                .orElse(noContent());
     }
 
     @GetMapping("/portrait/{name}")
@@ -70,12 +70,11 @@ public class ImageController {
         return loadImage(imageUrl);
     }
 
-    private static ResponseEntity<byte[]> okFor(byte[] data) {
+    private static ResponseEntity<byte[]> ok(byte[] data) {
         return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(data);
     }
 
-    private static ResponseEntity<byte[]> noContentFor(String imageUrl) {
-        log.error("No image found with url [{}]", imageUrl);
+    private static ResponseEntity<byte[]> noContent() {
         return ResponseEntity.noContent().build();
     }
 
