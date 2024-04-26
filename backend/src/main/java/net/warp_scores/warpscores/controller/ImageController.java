@@ -112,7 +112,7 @@ public class ImageController {
         if (ref.image.isEmpty()) {
             ref.image = loadFromClassPath(imageUrl);
         }
-        ref.image = maxWidth.flatMap(width -> rescaleImage(ref.image, width));
+        ref.image = maxWidth.map(width -> rescaleImage(ref.image, width)).orElse(ref.image);
         ref.image.ifPresent(bytes -> cacheImage(imageUrl, bytes));
         return ref.image;
     }
@@ -193,7 +193,7 @@ public class ImageController {
     }
 
     private static ResponseEntity<byte[]> noContentFor(String imageUrl) {
-        log.error("No image found with url {}.", imageUrl);
+        log.error("No image found with url [{}]", imageUrl);
         return ResponseEntity.noContent().build();
     }
 
