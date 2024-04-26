@@ -1,6 +1,6 @@
 import React from 'react';
 import { Image, Spinner, Td, Tr } from '@chakra-ui/react';
-import { Link as RouteLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import Race from './Race';
 import Formatter from '../util/Formatter';
@@ -9,14 +9,14 @@ import ImageUrls from '../ImageUrls';
 const boxSize = '32px';
 
 function Team({ team }) {
+  const navigate = useNavigate();
   const goToTeam = () => {
-    console.log('TODO: implement');
+    navigate(`/competition/${team.competitionIds[0]}/team/${team.id}`);
   };
+
   return team !== null ? (
     <Tr onClick={goToTeam}>
-      <Td>
-        <RouteLink to={`/competition/${team.competitionIds[0]}/team/${team.id}`}>{team.name}</RouteLink>
-      </Td>
+      <Td>{team.name}</Td>
       <Td>
         <Image
           src={`${ImageUrls.logo(team.logo)}`}
