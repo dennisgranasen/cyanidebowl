@@ -12,7 +12,7 @@ import {
   Tfoot,
   Th,
   Thead,
-  Tr,
+  Tr, useMediaQuery,
 } from '@chakra-ui/react';
 import Contest from './Contest';
 
@@ -36,11 +36,12 @@ const TableColumns = (
 
 function Contests({ contests, currentRound }) {
   const groupedContests = Map.groupBy(contests, (contest) => contest.round);
+  const [isSmallScreen] = useMediaQuery('(max-width: 768px)');
   const tabData = [];
   groupedContests.forEach((value, key) => {
     tabData.push({
       round: key,
-      label: `Round ${key}`,
+      label: isSmallScreen ? `${key}` : `Round ${key}`,
       content: (
         <TableContainer>
           <Table variant="simpleClickable" size="sm">
@@ -58,7 +59,7 @@ function Contests({ contests, currentRound }) {
   });
 
   return (
-    <Tabs defaultIndex={currentRound - 1}>
+    <Tabs isFitted defaultIndex={currentRound - 1}>
       <TabList>
         {tabData.map((tab) => (
           <Tab key={tab.round}>{tab.label}</Tab>
