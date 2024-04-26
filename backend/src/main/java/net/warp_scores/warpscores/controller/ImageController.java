@@ -22,6 +22,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
@@ -82,9 +83,8 @@ public class ImageController {
     }
 
     private String getImageUrlFor(String baseUrl, String name) {
-        String logoUrl = String.format("%s/%s.png", baseUrl, name,
+        return String.format("%s/%s.%s", baseUrl, name,
                 cyanideApiProperties.getUrls().getImagesExtension());
-        return logoUrl;
     }
 
     private ResponseEntity<byte[]> loadImage(String imageUrl) {
@@ -92,56 +92,63 @@ public class ImageController {
     }
 
     private ResponseEntity<byte[]> loadImage(String imageUrl, Optional<Integer> maxWidth) {
-        Optional<ImageCache> imageCache = imageCacheRepository.findById(imageUrl);
-        boolean cacheOutdated = imageCache.map(this::cacheOutdated).orElse(true);
-        Optional<byte[]> imageData = Optional.empty();
-        if (!cacheOutdated) {
-            log.debug("Got image for url '{}' from cache.", imageUrl);
-            imageData = Optional.of(imageCache.get().getImageData());
-        } else {
-            RestTemplate restTemplate = new RestTemplateBuilder().build();
-            try {
-                ResponseEntity<byte[]> response = restTemplate.getForEntity(imageUrl, byte[].class);
-                if (response.getStatusCode().is2xxSuccessful()) {
-                    byte[] data = response.getBody();
-                    if (maxWidth.isPresent()) {
-                        data = rescaleImage(data, maxWidth.get());
-                    }
-                    cacheImage(imageUrl, data);
-                    imageData = Optional.of(data);
-                }
-            } catch (Exception ex) {
-                imageData = loadFromClassPath(imageUrl);
-            }
-        }
+        Optional<byte[]> imageData = loadImageFromCacheCyanideOrClasspath(imageUrl, maxWidth);
         return imageData
                 .map(ImageController::okFor)
                 .orElse(noContentFor(imageUrl));
     }
 
+    private Optional<byte[]> loadImageFromCacheCyanideOrClasspath(String imageUrl, Optional<Integer> maxWidth) {
+        Optional<ImageCache> imageCache = imageCacheRepository.findById(imageUrl);
+        boolean cacheOutdated = imageCache.map(this::cacheOutdated).orElse(true);
+        if (!cacheOutdated) {
+            log.debug("Got image for url '{}' from cache.", imageUrl);
+            return Optional.of(imageCache.get().getImageData());
+        }
+        var ref = new Object() {
+            Optional<byte[]> image = loadImageFromCyanide(imageUrl);
+        };
+        if (ref.image.isEmpty()) {
+            ref.image = loadFromClassPath(imageUrl);
+        }
+        ref.image = maxWidth.flatMap(width -> rescaleImage(ref.image, width));
+        ref.image.ifPresent(bytes -> cacheImage(imageUrl, bytes));
+        return ref.image;
+    }
+
+    private Optional<byte[]> loadImageFromCyanide(String imageUrl) {
+        try {
+            RestTemplate restTemplate = new RestTemplateBuilder().build();
+            ResponseEntity<byte[]> response = restTemplate.getForEntity(imageUrl, byte[].class);
+            if (response.getStatusCode().is2xxSuccessful()) {
+                byte[] data = response.getBody();
+                return Optional.ofNullable(data);
+            }
+        } catch (Exception ex) {
+            log.error("Can't load image from cyanide (msg: {}).", ex.getMessage());
+        }
+        return Optional.empty();
+    }
+
     private Optional<byte[]> loadFromClassPath(String imageUrl) {
         URI uri = URI.create(imageUrl);
         String path = String.format("img%s", uri.getPath());
-        try {
-            byte[] data = this.getClass().getClassLoader().getResourceAsStream(path).readAllBytes();
-            cacheImage(imageUrl, data);
-            return Optional.of(data);
-        } catch (Exception e) {
+        try (InputStream in = this.getClass().getClassLoader().getResourceAsStream(path)) {
+            if (in != null) {
+                byte[] data = in.readAllBytes();
+                return Optional.of(data);
+            }
+        } catch (Exception ex) {
+            log.error("Can't load image from classpath (msg: {}).", ex.getMessage());
+        }
+        return Optional.empty();
+    }
+
+    private Optional<byte[]> rescaleImage(Optional<byte[]> imageData, int maxWidth) {
+        if (imageData.isEmpty()) {
             return Optional.empty();
         }
-    }
-
-    private static ResponseEntity<byte[]> okFor(byte[] data) {
-        return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(data);
-    }
-
-    private static ResponseEntity<byte[]> noContentFor(String imageUrl) {
-        log.error("No image found with url {}.", imageUrl);
-        return ResponseEntity.noContent().build();
-    }
-
-    private byte[] rescaleImage(byte[] imageData, int maxWidth) {
-        ByteArrayInputStream in = new ByteArrayInputStream(imageData);
+        ByteArrayInputStream in = new ByteArrayInputStream(imageData.get());
         try {
             BufferedImage img = ImageIO.read(in);
             int height = (maxWidth * img.getHeight()) / img.getWidth();
@@ -149,7 +156,7 @@ public class ImageController {
             BufferedImage imageBuff = resizeImage(img, width, height);
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
             ImageIO.write(imageBuff, "png", buffer);
-            return buffer.toByteArray();
+            return Optional.of(buffer.toByteArray());
         } catch (IOException e) {
             log.error("Unable to scale image, returning original image.");
             return imageData;
@@ -178,4 +185,14 @@ public class ImageController {
                 .minus(Duration.ofMinutes(cyanideApiProperties.getImagesCache().getMaxValidityInMinutes()));
         return cacheInvalidAfter.isAfter(imageCache.getLastAccess().toInstant());
     }
+
+    private static ResponseEntity<byte[]> okFor(byte[] data) {
+        return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(data);
+    }
+
+    private static ResponseEntity<byte[]> noContentFor(String imageUrl) {
+        log.error("No image found with url {}.", imageUrl);
+        return ResponseEntity.noContent().build();
+    }
+
 }
