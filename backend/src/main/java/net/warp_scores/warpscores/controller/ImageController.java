@@ -8,6 +8,7 @@ import net.warp_scores.warpscores.cyanide.api.model.common.Skill;
 import net.warp_scores.warpscores.service.ImageService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,47 +28,47 @@ public class ImageController {
     @GetMapping("/logo/{name}")
     public ResponseEntity<byte[]> getLogoImage(@PathVariable(name = "name") String name) {
         if (!name.startsWith("Logo_")) {
-            name = String.format("Logo_%s", name);
+            name = name.equals("null") ? null : String.format("Logo_%s", name);
         }
-        String imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getLogos(), name);
+        Optional<String> imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getLogos(), name);
         return loadImage(imageUrl);
     }
 
     @GetMapping("/skill/{name}")
     public ResponseEntity<byte[]> getSkillImage(@PathVariable(name = "name") String name) {
         String imageName = translateSkillToImageName(name);
-        String imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getSkills(), imageName);
+        Optional<String> imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getSkills(), imageName);
         return loadImage(imageUrl);
     }
 
     @GetMapping("/race/{name}")
     public ResponseEntity<byte[]> getRaceImage(@PathVariable(name = "name") String name) {
         String imageName = translateRaceToImageName(name);
-        String imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getRaces(), imageName);
+        Optional<String> imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getRaces(), imageName);
         return loadImage(imageUrl, Optional.of(300));
     }
 
     @GetMapping("/stadium/{name}")
     public ResponseEntity<byte[]> getStadiumImage(@PathVariable(name = "name") String name) {
-        String imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getStadiums(), name);
+        Optional<String> imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getStadiums(), name);
         return loadImage(imageUrl, Optional.of(128));
-    }
-
-    private ResponseEntity<byte[]> loadImage(String imageUrl) {
-        return loadImage(imageUrl, Optional.empty());
-    }
-
-    private ResponseEntity<byte[]> loadImage(String imageUrl, Optional<Integer> maxWidth) {
-        Optional<byte[]> imageData = imageService.loadImage(imageUrl, maxWidth);
-        return imageData
-                .map(ImageController::ok)
-                .orElse(noContent());
     }
 
     @GetMapping("/portrait/{name}")
     public ResponseEntity<byte[]> getPortraitImage(@PathVariable(name = "name") String name) {
-        String imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getPortraits(), name);
+        Optional<String> imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getPortraits(), name);
         return loadImage(imageUrl);
+    }
+
+    private ResponseEntity<byte[]> loadImage(Optional<String> imageUrl) {
+        return loadImage(imageUrl, Optional.empty());
+    }
+
+    private ResponseEntity<byte[]> loadImage(Optional<String> imageUrl, Optional<Integer> maxWidth) {
+        Optional<byte[]> imageData = imageUrl.flatMap(url -> imageService.loadImage(url, maxWidth));
+        return imageData
+                .map(ImageController::ok)
+                .orElse(noContent());
     }
 
     private static ResponseEntity<byte[]> ok(byte[] data) {
@@ -87,8 +88,11 @@ public class ImageController {
         return "TeamScreenshot_" + race.getImageName();
     }
 
-    private String getImageUrlFor(String baseUrl, String name) {
-        return String.format("%s/%s.%s", baseUrl, name,
-                cyanideApiProperties.getUrls().getImagesExtension());
+    private Optional<String> getImageUrlFor(String baseUrl, String name) {
+        if (!StringUtils.hasText(baseUrl) || !StringUtils.hasText(name)) {
+            return Optional.empty();
+        }
+        return Optional.of(String.format("%s/%s.%s", baseUrl, name,
+                cyanideApiProperties.getUrls().getImagesExtension()));
     }
 }
