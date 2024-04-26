@@ -2,7 +2,7 @@
 
 docker-compose down
 
-cd data
+cd data || exit 1
 
 sudo -E rsync -rtvzv vserver.wawuschels.de:/var/customers/webs/christian/warpscores_net/data/* ./
 
