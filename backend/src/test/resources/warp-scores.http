@@ -12,6 +12,16 @@ Content-Type: application/json
   "league_name": "DBBL  BB3"
 }
 
+### Image
+GET http://localhost:8080/img/logo/Logo_Community_Supported_Competitions
+
+Accept: application/json
+Content-Type: application/json
+
+{
+  "league_name": "DBBL  BB3"
+}
+
 ###
 GET http://localhost:8080/contests/competition/6307c66a-a04e-11ee-a745-02000090a64f
 Accept: application/json

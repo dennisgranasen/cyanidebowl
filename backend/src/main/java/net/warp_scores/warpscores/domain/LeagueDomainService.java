@@ -55,6 +55,7 @@ public class LeagueDomainService {
         PopulatorUtil.copyNonNullProperties(sourceApiLeague, targetLeague);
         targetLeague.setUuid(UUID.fromString(sourceApiLeague.getId()));
         targetLeague.setTeamCount(sourceApiLeague.getTeam_count());
+        targetLeague.setLogo(sourceApiLeague.getLogo());
         targetLeague.setDateLastMatch(sourceApiLeague.getDate_last_match());
     }
 }

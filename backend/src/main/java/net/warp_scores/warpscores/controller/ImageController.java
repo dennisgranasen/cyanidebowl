@@ -1,12 +1,12 @@
 package net.warp_scores.warpscores.controller;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.config.properties.CyanideApiProperties;
 import net.warp_scores.warpscores.cyanide.api.model.common.Race;
 import net.warp_scores.warpscores.cyanide.api.model.common.Skill;
 import net.warp_scores.warpscores.domain.cache.ImageCache;
 import net.warp_scores.warpscores.domain.cache.ImageCacheRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +22,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
@@ -93,29 +94,50 @@ public class ImageController {
     private ResponseEntity<byte[]> loadImage(String imageUrl, Optional<Integer> maxWidth) {
         Optional<ImageCache> imageCache = imageCacheRepository.findById(imageUrl);
         boolean cacheOutdated = imageCache.map(this::cacheOutdated).orElse(true);
+        Optional<byte[]> imageData = Optional.empty();
         if (!cacheOutdated) {
             log.debug("Got image for url '{}' from cache.", imageUrl);
-            return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(imageCache.get().getImageData());
+            imageData = Optional.of(imageCache.get().getImageData());
         } else {
             RestTemplate restTemplate = new RestTemplateBuilder().build();
             try {
                 ResponseEntity<byte[]> response = restTemplate.getForEntity(imageUrl, byte[].class);
                 if (response.getStatusCode().is2xxSuccessful()) {
-                    byte[] imageData = response.getBody();
+                    byte[] data = response.getBody();
                     if (maxWidth.isPresent()) {
-                        imageData = rescaleImage(imageData, maxWidth.get());
+                        data = rescaleImage(data, maxWidth.get());
                     }
-                    cacheImage(imageUrl, imageData);
-                    return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(imageData);
-                } else {
-                    log.error("No image found with url {}.", imageUrl);
-                    return ResponseEntity.noContent().build();
+                    cacheImage(imageUrl, data);
+                    imageData = Optional.of(data);
                 }
             } catch (Exception ex) {
-                log.error("No image found with url {}.", imageUrl);
-                return ResponseEntity.noContent().build();
+                imageData = loadFromClassPath(imageUrl);
             }
         }
+        return imageData
+                .map(ImageController::okFor)
+                .orElse(noContentFor(imageUrl));
+    }
+
+    private Optional<byte[]> loadFromClassPath(String imageUrl) {
+        URI uri = URI.create(imageUrl);
+        String path = String.format("img%s", uri.getPath());
+        try {
+            byte[] data = this.getClass().getClassLoader().getResourceAsStream(path).readAllBytes();
+            cacheImage(imageUrl, data);
+            return Optional.of(data);
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
+
+    private static ResponseEntity<byte[]> okFor(byte[] data) {
+        return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(data);
+    }
+
+    private static ResponseEntity<byte[]> noContentFor(String imageUrl) {
+        log.error("No image found with url {}.", imageUrl);
+        return ResponseEntity.noContent().build();
     }
 
     private byte[] rescaleImage(byte[] imageData, int maxWidth) {
