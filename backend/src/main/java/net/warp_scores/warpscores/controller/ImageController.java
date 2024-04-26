@@ -21,6 +21,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -134,11 +135,12 @@ public class ImageController {
         URI uri = URI.create(imageUrl);
         String path = String.format("img%s", uri.getPath());
         try (InputStream in = this.getClass().getClassLoader().getResourceAsStream(path)) {
-            if (in != null) {
-                byte[] data = in.readAllBytes();
-                return Optional.of(data);
+            if (in == null) {
+                throw new FileNotFoundException(path);
             }
-        } catch (Exception ex) {
+            byte[] data = in.readAllBytes();
+            return Optional.of(data);
+        } catch (IOException ex) {
             log.error("Can't load image from classpath (msg: {}).", ex.getMessage());
         }
         return Optional.empty();
