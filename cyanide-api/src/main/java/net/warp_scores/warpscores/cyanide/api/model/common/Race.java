@@ -20,6 +20,7 @@ public enum Race {
     skaven(3, "Skaven", "Skaven"),
     orc(4, "Orc", "Orc"),
     lizardmen(5, "Lizardmen", "Lizardmen", "lizardman"),
+    woodElf(7, "Wood Elf", "WoodElf"),
     chaosChosen(8, "Chaos Chosen", "ChaosChosen"),
     darkElf(9, "Dark Elf", "DarkElf"),
     shamblingUndead(10, "Shambling Undead", "ShamblingUndead"),
