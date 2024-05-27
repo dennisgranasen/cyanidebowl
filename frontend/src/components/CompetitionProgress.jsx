@@ -1,9 +1,11 @@
 import React from 'react';
 import { Box, GridItem, Progress, SimpleGrid, VStack } from '@chakra-ui/react';
+import { CalendarIcon, QuestionIcon } from '@chakra-ui/icons';
+import { FaFlagCheckered } from 'react-icons/fa6';
 import DelayedIconTooltip from './DelayedIconTooltip';
 import prettyPrint from '../util/PrettyPrint';
 
-function Progresses({ currentRound, totalRounds, playedMatches, totalMatches, status }) {
+function RoundRobinProgresses({ currentRound, totalRounds, playedMatches, totalMatches, status }) {
   const roundLength = totalMatches ? totalMatches / totalRounds : 1;
   const roundProgresses = [];
   for (let round = 0; round < totalRounds; round += 1) {
@@ -29,6 +31,27 @@ function Progresses({ currentRound, totalRounds, playedMatches, totalMatches, st
   );
 }
 
+function Progresses({ currentRound, totalRounds, playedMatches, totalMatches, status, format }) {
+  if (status === 'Finished') return <FaFlagCheckered />;
+  if (status === 'Registration') return <CalendarIcon />;
+  switch (format) {
+    case 'RoundRobin':
+      return (
+        <RoundRobinProgresses
+          currentRound={currentRound}
+          totalRounds={totalRounds}
+          totalMatches={totalMatches}
+          playedMatches={playedMatches}
+          status={status}
+        />
+      );
+    case 'Wissen':
+    case 'Knockout':
+    default:
+      return <QuestionIcon />;
+  }
+}
+
 function ProgressLabel({ text, additionalText }) {
   return (
     <VStack align="left">
@@ -38,10 +61,10 @@ function ProgressLabel({ text, additionalText }) {
   );
 }
 
-function CompetitionProgress({ status, currentRound, totalRounds, playedMatches, totalMatches }) {
-  const currentRoundText = currentRound ? `Round ${currentRound}` : '';
+function CompetitionProgress({ status, format, currentRound, totalRounds, playedMatches, totalMatches }) {
+  const currentRoundText = currentRound ? `, Round ${currentRound}` : '';
   const totalRoundsText = currentRound && totalRounds ? `of ${totalRounds}` : '';
-  const progressText = `${prettyPrint(status)}, ${currentRoundText} ${totalRoundsText}`;
+  const progressText = `${prettyPrint(status)}${currentRoundText} ${totalRoundsText}`;
   const progressAdditionalText =
     totalMatches && playedMatches ? `Played ${playedMatches} out of ${totalMatches} matches` : undefined;
   return (
@@ -54,6 +77,7 @@ function CompetitionProgress({ status, currentRound, totalRounds, playedMatches,
             totalMatches={totalMatches}
             playedMatches={playedMatches}
             status={status}
+            format={format}
           />
         </Box>
       </DelayedIconTooltip>
