@@ -28,6 +28,9 @@ import InfoItem from '../components/InfoItem';
 function WarpScores() {
   const { leagueUuid } = useParams();
   const [competitions, setCompetitions] = useState([]);
+  const [activeCompetitionsCount, setActiveCompetitionsCount] = useState([]);
+  const [registrationCompetitionsCount, setRegistrationCompetitionsCount] = useState([]);
+  const [finishedCompetitionsCount, setFinishedCompetitionsCount] = useState([]);
   const [leagues, setLeagues] = useState([]);
   const [league, setLeague] = useState();
   const [loading, setLoading] = useState(false);
@@ -91,6 +94,31 @@ function WarpScores() {
     fetchCompetitions(leagueId);
   }, [league]);
 
+  useEffect(() => {
+    if (!competitions) return;
+    let activeCompetitions = 0;
+    let finishedCompetitions = 0;
+    let registrationCompetitions = 0;
+    competitions.forEach((comp) => {
+      switch (comp.status) {
+        case 'InProgress':
+          activeCompetitions += 1;
+          break;
+        case 'Registration':
+          registrationCompetitions += 1;
+          break;
+        case 'Finished':
+          finishedCompetitions += 1;
+          break;
+        default:
+          break;
+      }
+    });
+    setActiveCompetitionsCount(activeCompetitions);
+    setFinishedCompetitionsCount(finishedCompetitions);
+    setRegistrationCompetitionsCount(registrationCompetitions);
+  }, [competitions]);
+
   const changeLeague = (e) => {
     const byUuid = getLeagueByUuid(e.target.value);
     setLeague(byUuid);
@@ -131,8 +159,10 @@ function WarpScores() {
             <InfoArea
               infoItems={[
                 <InfoItem key="1" label="Teams" info={league.teamCount} />,
-                <InfoItem key="2" label="Active Competitions" info={competitions.length} />,
-                <InfoItem key="3" label="Last match" info={formatter.formatAsDate(league.dateLastMatch)} />,
+                <InfoItem key="2" label="Active Competitions" info={activeCompetitionsCount} />,
+                <InfoItem key="3" label="Competitions In Registration" info={registrationCompetitionsCount} />,
+                <InfoItem key="4" label="Finished Competitions" info={finishedCompetitionsCount} />,
+                <InfoItem key="5" label="Last match" info={formatter.formatAsDate(league.dateLastMatch)} />,
               ]}
             />
           </CardBody>
