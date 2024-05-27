@@ -17,6 +17,7 @@ function Competition({ competition }) {
       <Td>
         <CompetitionProgress
           status={competition.status}
+          format={competition.format}
           currentRound={competition.currentRound}
           totalRounds={competition.totalRounds}
           totalMatches={competition.totalMatches}

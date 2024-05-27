@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -29,8 +31,11 @@ public class CompetitionController {
             @RequestBody CompetitionStatus... competitionStatuses) {
         try {
             List<Competition> competitions = competitionService.loadForLeagueAndStatuses(leagueId, competitionStatuses);
-            competitions = competitions.stream().filter(competition -> competition.getPlayedMatches() > 0)
-                    .collect(Collectors.toUnmodifiableList());
+            competitions = competitions
+                    .stream()
+                    .filter(competitionService::competitionConsideredActive)
+                    .sorted()
+                    .collect(Collectors.toUnmodifiableList())                    ;
             return ResponseEntity.ok(competitions);
         } catch (Exception ex) {
             log.error("Unable to get competitions for league id {} and statuses {}", leagueId, competitionStatuses, ex);

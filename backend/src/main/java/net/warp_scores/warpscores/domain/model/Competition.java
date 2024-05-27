@@ -13,7 +13,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Document
-public class Competition implements UpdateableFromApi {
+public class Competition implements UpdateableFromApi, Comparable<Competition> {
     @Id
     private UUID uuid;
     private String name;
@@ -36,4 +36,20 @@ public class Competition implements UpdateableFromApi {
 
     private Integer playedMatches;
     private Integer totalMatches;
+
+    @Override
+    public int compareTo(Competition competition) {
+        int result;
+        result = status.compareTo(competition.getStatus());
+        if (result != 0) {
+            return result;
+        }
+        result = format.compareTo(competition.getFormat());
+        if (result != 0) {
+            return result;
+        }
+        result = name.compareTo(competition.getName());
+        return result;
+
+    }
 }

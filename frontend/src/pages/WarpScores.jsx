@@ -80,9 +80,6 @@ function WarpScores() {
       }
       CyanideApiService.leagueCompetitions(leagueId)
         .then((data) => {
-          data.sort((compA, compB) => {
-            return compA.name.localeCompare(compB.name);
-          });
           setCompetitions(data);
         })
         .then(() => setLoading(false))

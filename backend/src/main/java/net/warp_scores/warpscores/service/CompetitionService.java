@@ -10,11 +10,12 @@ import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static java.util.Arrays.asList;
 
 @Slf4j
 @Service
@@ -24,7 +25,7 @@ public class CompetitionService {
     private final ContestRepository contestsRepository;
 
     public List<Competition> loadForLeagueAndStatuses(UUID leagueId, CompetitionStatus... statuses) {
-        List<Competition> competitions = competitionRepository.findByLeagueIdAndStatusIn(leagueId, Arrays.asList(statuses));
+        List<Competition> competitions = competitionRepository.findByLeagueIdAndStatusIn(leagueId, asList(statuses));
         return initializeForFormat(competitions);
     }
 
@@ -49,10 +50,11 @@ public class CompetitionService {
     private Competition initializeForFormat(Competition competition) {
         switch (competition.getFormat()) {
             case RoundRobin -> initializeRoundRobin(competition);
-            //case Wissen -> initializeWissen(competition);
-            //case Knockout -> initializeKnockout(competition);
+            case Wissen -> initializeWissen(competition);
+            case Knockout -> initializeKnockout(competition);
             default -> notYetImplemented(competition.getFormat());
         }
+        log.info("Competition '{}' initialized as {}.", competition.getUuid(), competition.getFormat());
         return competition;
     }
 
@@ -70,5 +72,20 @@ public class CompetitionService {
         competition.setCurrentRound(contestCount / (teams / 2));
         competition.setTotalMatches(totalRounds * teams / 2);
         competition.setPlayedMatches(playedMatchesCount);
+    }
+
+    private void initializeWissen(Competition competition) {
+        log.warn("Nothing to be done for Wissen (yet?).");
+    }
+
+    private void initializeKnockout(Competition competition) {
+        log.warn("Nothing to be done for Knockout (yet?).");
+    }
+
+    public boolean competitionConsideredActive(Competition competition) {
+        return
+                asList(CompetitionStatus.Registration, CompetitionStatus.InProgress).contains(competition.getStatus())
+                        || (CompetitionStatus.Finished.equals(
+                        competition.getStatus()) && competition.getPlayedMatches() > 0);
     }
 }
