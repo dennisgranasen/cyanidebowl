@@ -48,6 +48,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.Optional.ofNullable;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -105,9 +107,10 @@ public class CyanideApiService {
         TeamMatchesRequest teamMatchesRequest = new TeamMatchesRequest();
         teamMatchesRequest.setTeamId(teamUuid);
         TeamMatchesResponse teamMatchesResponse = cyanideCachedRestApiClient.getFromCacheOrApi(teamMatchesRequest);
-        return Optional
-                .ofNullable(teamMatchesResponse)
-                .map(t -> Arrays.stream(t.getMatchIds()))
+        return ofNullable(teamMatchesResponse)
+                .map(t -> Arrays.stream(
+                        ofNullable(t.getMatchIds())
+                                .orElse(new TeamMatchesResponse.MatchId[0])))
                 .orElse(Stream.empty())
                 .map(TeamMatchesResponse.MatchId::getUuid)
                 .collect(Collectors.toList());
@@ -168,7 +171,7 @@ public class CyanideApiService {
     public void checkApiStatus() {
         Status status;
         try {
-            Optional<StatusResponse> statusResponse = Optional.ofNullable(
+            Optional<StatusResponse> statusResponse = ofNullable(
                     cyanideCachedRestApiClient.getFromCacheOrApi(new StatusRequest()));
             status = statusResponse
                     .map(sr -> Arrays.stream(sr.getGames()))

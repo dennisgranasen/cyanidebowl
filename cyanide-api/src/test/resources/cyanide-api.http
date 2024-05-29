@@ -73,7 +73,7 @@ GET https://web.cyanide-studio.com/ws/bb3/matches/?league_id=94dd6ae4-83fa-11ee-
 
 ### Get match by id
 
-GET https://web.cyanide-studio.com/ws/bb3/match/?match_id=f6b6a216-fa90-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/match/?match_id=0785ab21-0f6d-11ef-895c-bc24112ec32e&platform=pc&key={{apiKey}}
 
 ### Get teams
 
@@ -85,15 +85,17 @@ GET https://web.cyanide-studio.com/ws/bb3/teams/?league_id=94dd6ae4-83fa-11ee-b9
 
 ### Get team
 
-GET https://web.cyanide-studio.com/ws/bb3/team/?id=d8fe1c79-12d6-11ef-895c-bc24112ec32e&platform=pc&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/team/?id=1749c704-e328-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
 
 ### Get team
 
 GET https://web.cyanide-studio.com/ws/bb3/team/?id=099a83d4-8a44-11ee-b910-02000090a64f&platform=pc&key={{apiKey}}
 
 ### Get team matches
+GET https://web.cyanide-studio.com/ws/bb3/teammatches/?team_id=7e69a4ba-87f1-11ee-b910-02000090a64f&platform=pc&key={{apiKey}}
 
-GET https://web.cyanide-studio.com/ws/bb3/teammatches/?id=099a83d4-8a44-11ee-b910-02000090a64f&platform=pc&key={{apiKey}}
+### Get team matches
+GET https://web.cyanide-studio.com/ws/bb3/teammatches/?team_id=1749c704-e328-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
 
 ### Get coach
 
