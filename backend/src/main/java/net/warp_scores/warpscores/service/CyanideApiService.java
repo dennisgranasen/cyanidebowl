@@ -9,6 +9,7 @@ import net.warp_scores.warpscores.cyanide.api.requests.LookupRequest;
 import net.warp_scores.warpscores.cyanide.api.requests.MatchRequest;
 import net.warp_scores.warpscores.cyanide.api.requests.MatchesRequest;
 import net.warp_scores.warpscores.cyanide.api.requests.StatusRequest;
+import net.warp_scores.warpscores.cyanide.api.requests.TeamMatchesRequest;
 import net.warp_scores.warpscores.cyanide.api.requests.TeamRequest;
 import net.warp_scores.warpscores.cyanide.api.requests.TeamsRequest;
 import net.warp_scores.warpscores.cyanide.api.responses.CompetitionsResponse;
@@ -18,6 +19,7 @@ import net.warp_scores.warpscores.cyanide.api.responses.LookupResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.MatchResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.MatchesResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.StatusResponse;
+import net.warp_scores.warpscores.cyanide.api.responses.TeamMatchesResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.TeamsResponse;
 import net.warp_scores.warpscores.domain.CompetitionDomainService;
 import net.warp_scores.warpscores.domain.ContestDomainService;
@@ -37,6 +39,7 @@ import org.springframework.web.client.ResourceAccessException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -93,6 +96,21 @@ public class CyanideApiService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         return teams;
+    }
+
+    public List<UUID> loadTeamMatches(UUID teamUuid) {
+        if (teamUuid == null) {
+            return Collections.emptyList();
+        }
+        TeamMatchesRequest teamMatchesRequest = new TeamMatchesRequest();
+        teamMatchesRequest.setTeamId(teamUuid);
+        TeamMatchesResponse teamMatchesResponse = cyanideCachedRestApiClient.getFromCacheOrApi(teamMatchesRequest);
+        return Optional
+                .ofNullable(teamMatchesResponse)
+                .map(t -> Arrays.stream(t.getMatchIds()))
+                .orElse(Stream.empty())
+                .map(TeamMatchesResponse.MatchId::getUuid)
+                .collect(Collectors.toList());
     }
 
     public Match loadMatch(UUID matchUuid) {

@@ -3,6 +3,7 @@ package net.warp_scores.warpscores.scheduler;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.config.properties.CyanideApiProperties;
+import net.warp_scores.warpscores.domain.MatchDomainService;
 import net.warp_scores.warpscores.domain.model.Competition;
 import net.warp_scores.warpscores.domain.model.Contest;
 import net.warp_scores.warpscores.domain.model.League;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static net.warp_scores.warpscores.cyanide.api.model.common.CompetitionStatus.Finished;
@@ -40,6 +42,7 @@ public class FetchDataScheduler {
     private final LeagueRepository leagueRepository;
 
     private final CompetitionRepository competitionRepository;
+    private final MatchDomainService matchDomainService;
 
     @Scheduled(initialDelay = Schedules.FIVE_SECONDS, fixedDelay = Schedules.FIFTEEN_MINUTES)
     public void fetchLeaguesAndCompetitions() {
@@ -81,7 +84,7 @@ public class FetchDataScheduler {
         }
 
         List<Competition> competitions = competitionRepository.findByStatusIn(List.of(InProgress, Finished));
-        log.info("Will load teams for {} competitions in progress.",
+        log.info("Will load teams (and their matches) for {} competitions in progress.",
                 competitions.size());
         List<Team> teams = competitions
                 .stream()
@@ -89,8 +92,15 @@ public class FetchDataScheduler {
                 .map(cyanideApiService::loadTeams)
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
-        log.info("Loaded {} teams.", teams.size());
-
+        AtomicInteger matchesCount = new AtomicInteger(0);
+        teams
+                .stream()
+                .flatMap(t -> cyanideApiService.loadTeamMatches(t.getId()).stream())
+                .forEach(matchUuid -> {
+                    cyanideApiService.loadMatch(matchUuid);
+                    matchesCount.incrementAndGet();
+                });
+        log.info("Loaded {} teams and {} matches.", teams.size(), matchesCount.get());
     }
 
     private Date getStartDateFor(List<Competition> competitions, League league) {

@@ -2,7 +2,9 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.domain.MatchDomainService;
 import net.warp_scores.warpscores.domain.TeamDomainService;
+import net.warp_scores.warpscores.domain.model.Match;
 import net.warp_scores.warpscores.domain.model.Team;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +21,8 @@ import java.util.UUID;
 public class TeamController {
 
     private final TeamDomainService teamDomainService;
+
+    private final MatchDomainService matchDomainService;
 
     @GetMapping("/league/{leagueId}/teams")
     public ResponseEntity<List<Team>> getTeamsForLeague(@PathVariable(name = "leagueId") UUID leagueId) {
@@ -39,7 +43,20 @@ public class TeamController {
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
         } catch (Exception ex) {
-            log.error("Unable to get team for {}", teamId, ex);
+            log.error("Unable to get team for uuid {}.", teamId, ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/team/{teamId}/matches")
+    public ResponseEntity<List<Match>> getMatches(@PathVariable(name = "teamId") UUID teamId) {
+        try {
+            Optional<List<Match>> matchesForTeam = Optional.ofNullable(matchDomainService.findMatchesForTeam(teamId));
+            return matchesForTeam
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (Exception ex) {
+            log.error("Unable to get matches for team uuid {}.", teamId, ex);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -50,7 +67,7 @@ public class TeamController {
             List<Team> teams = teamDomainService.findByCompetitionId(competitionId);
             return ResponseEntity.ok(teams);
         } catch (Exception ex) {
-            log.error("Unable to get teams for competition {}", competitionId, ex);
+            log.error("Unable to get teams for competition uuid {}.", competitionId, ex);
             return ResponseEntity.internalServerError().build();
         }
     }

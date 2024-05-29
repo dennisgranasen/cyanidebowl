@@ -45,7 +45,7 @@ import java.util.UUID;
 @ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MatchesRequest extends ApiRequest<MatchesRequest, MatchesResponse> {
-    private enum Ordering {started, finished}
+    public enum Ordering {started, finished}
 
     private String league_name;
     private UUID league_id;
