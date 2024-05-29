@@ -5,30 +5,63 @@ import prettyPrint from '../util/PrettyPrint';
 import formatter from '../util/Formatter';
 import MatchStatusIcon from './MatchStatusIcon';
 import config from '../config';
-import DelayedIconTooltip from './DelayedIconTooltip';
 import MatchModal from './MatchModal';
+import DelayedIconTooltip from './DelayedIconTooltip';
 
 const { smallBoxSize } = config;
 
-function ScoreOrIcon({ contest }) {
+function ScoreOrIconTooltip({ contest }) {
+  let matchPlayed = false;
+  let matchValidated = false;
+
   switch (contest.status) {
     case 'played':
     case 'Validated':
-      return (
-        <Text color={contest.adminResult ? 'orange' : null}>
-          {contest.opponents[0].score} - {contest.opponents[1].score}
-        </Text>
-      );
+      matchPlayed = true;
+      matchValidated = true;
+      break;
+    case 'InProgress':
+      matchPlayed = contest.matchDate && contest.winner && contest.status === 'InProgress';
+      break;
     default:
-      return <MatchStatusIcon status={contest.status} live={contest.live} boxSize={smallBoxSize} />;
+      break;
   }
+
+  const status = `${matchPlayed && !matchValidated ? 'Awaiting validation' : prettyPrint(contest.status)}`;
+  return `${status} ${contest.adminResult ? ' - Admin result' : formatter.formatAsDate(contest.matchDate)}`;
+}
+
+function ScoreOrIcon({ contest }) {
+  let matchPlayed = false;
+  let matchValidated = false;
+
+  switch (contest.status) {
+    case 'played':
+    case 'Validated':
+      matchPlayed = true;
+      matchValidated = true;
+      break;
+    case 'InProgress':
+      matchPlayed = contest.matchDate && contest.winner && contest.status === 'InProgress';
+      break;
+    default:
+      break;
+  }
+
+  let color = null;
+  if (!matchValidated) color = 'grey';
+  if (contest.adminResult) color = 'orange';
+  return matchPlayed ? (
+    <Text color={color}>
+      {contest.opponents[0].score} - {contest.opponents[1].score}
+    </Text>
+  ) : (
+    <MatchStatusIcon status={contest.status} live={contest.live} boxSize={smallBoxSize} />
+  );
 }
 
 function Contest({ contest }) {
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const contestTooltip = `${prettyPrint(contest.status)} ${
-    contest.adminResult ? ' - Admin result' : formatter.formatAsDate(contest.matchDate)
-  }`;
 
   const openIfValidatedAndNotAdminResult = () => {
     if (contest.status === 'Validated' && !contest.adminResult) onOpen();
@@ -44,7 +77,7 @@ function Contest({ contest }) {
         reverse={false}
       />
       <Td>
-        <DelayedIconTooltip label={contestTooltip}>
+        <DelayedIconTooltip label={<ScoreOrIconTooltip contest={contest} />}>
           <Center>
             <ScoreOrIcon contest={contest} />
           </Center>
