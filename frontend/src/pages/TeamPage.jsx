@@ -10,31 +10,41 @@ import ImageUrls from '../ImageUrls';
 import InfoArea from '../components/InfoArea';
 import InfoItem from '../components/InfoItem';
 import DelayedIconTooltip from '../components/DelayedIconTooltip';
+import Matches from '../components/Matches';
+
+function MatchesCount({ matches }) {
+  return matches ? matches.length : <Spinner />;
+}
 
 function TeamPage() {
   const { competitionUuid, teamUuid } = useParams();
   const [team, setTeam] = useState();
+  const [matches, setMatches] = useState();
   const [players, setPlayers] = useState();
 
   useEffect(() => {
     const fetchTeam = () => {
-      const response = competitionUuid
+      const teamResponse = competitionUuid
         ? CyanideApiService.competitionTeam(competitionUuid, teamUuid)
         : CyanideApiService.team(teamUuid);
-      response.then((data) => {
+
+      teamResponse.then((data) => {
         setTeam(data);
         const currentPlayers = data.players || [];
         currentPlayers.sort((playerA, playerB) => playerA.number - playerB.number);
         setPlayers(currentPlayers);
       });
     };
-    /*    const fetchMatches = async () => {
-          await CyanideApiService.matches(teamUuid).then((data) => {
-            logger.info('Matches: %o', data);
-          });
-        }; */
+
+    const fetchMatches = () => {
+      const matchesResponse = CyanideApiService.teamMatches(teamUuid);
+      matchesResponse.then((data) => {
+        setMatches(data);
+      });
+    };
+
     fetchTeam();
-    // fetchMatches();
+    fetchMatches();
   }, []);
 
   const navCompetition =
@@ -50,54 +60,61 @@ function TeamPage() {
           team={team ? [teamUuid, team.name] : []}
         />
       </Box>
-      {team ? (
-        <>
-          <Card direction="row">
-            <Center>
-              <Box>
-                <Image objectFit="contain" maxH="140px" src={ImageUrls.logo(team.logo)} />
-              </Box>
-            </Center>
-            <CardBody>
-              <Flex>
-                <Box flex="1">
-                  <Heading>{team.name}</Heading>
-                  <Box mb="10px">Coach: {team.coachName}</Box>
-                  <InfoArea
-                    infoItems={[
-                      <InfoItem key="race" label="Race" info={prettyPrint(team.race)} />,
-                      <InfoItem key="players" label="Players" info={players !== null ? players.length : '-'} />,
-                      <InfoItem key="rerolls" label="Rerolls" info={team.rerolls} />,
-                      <InfoItem key="dedicatedFans" label="Dedicated Fans" info={team.dedicatedFans} />,
-                      <InfoItem key="cheerleaders" label="Cheerleaders" info={team.cheerleaders} />,
-                      <InfoItem key="assistantCoaches" label="Assistant coaches" info={team.coachAssistants} />,
-                      <InfoItem key="apothecary" label="Apothecary" info={team.apothecary} />,
-                      <InfoItem key="cash" label="Cash" info={Formatter.formatAsNumber(team.cash)} />,
-                      <InfoItem key="value" label="Value" info={Formatter.formatAsNumber(team.value)} />,
-                    ]}
-                  />
+      <Box>
+        {team ? (
+          <>
+            <Card direction="row">
+              <Center>
+                <Box>
+                  <Image objectFit="contain" maxH="140px" src={ImageUrls.logo(team.logo)} />
                 </Box>
-                <Center>
-                  <Box>
-                    <DelayedIconTooltip label={prettyPrint(team.race)}>
-                      <Image
-                        hideBelow="lg"
-                        objectFit="cover"
-                        maxH="140px"
-                        src={ImageUrls.race(team.race)}
-                        fallback={null}
-                      />
-                    </DelayedIconTooltip>
+              </Center>
+              <CardBody>
+                <Flex>
+                  <Box flex="1">
+                    <Heading>{team.name}</Heading>
+                    <Box mb="10px">Coach: {team.coachName}</Box>
+                    <InfoArea
+                      infoItems={[
+                        <InfoItem key="race" label="Race" info={prettyPrint(team.race)} />,
+                        <InfoItem key="players" label="Players" info={players !== null ? players.length : '-'} />,
+                        <InfoItem key="rerolls" label="Rerolls" info={team.rerolls} />,
+                        <InfoItem key="dedicatedFans" label="Dedicated Fans" info={team.dedicatedFans} />,
+                        <InfoItem key="cheerleaders" label="Cheerleaders" info={team.cheerleaders} />,
+                        <InfoItem key="assistantCoaches" label="Assistant coaches" info={team.coachAssistants} />,
+                        <InfoItem key="apothecary" label="Apothecary" info={team.apothecary} />,
+                        <InfoItem key="cash" label="Cash" info={Formatter.formatAsNumber(team.cash)} />,
+                        <InfoItem key="value" label="Value" info={Formatter.formatAsNumber(team.value)} />,
+                        <InfoItem key="matches" label="Matches" info={<MatchesCount matches={matches} />} />,
+                      ]}
+                    />
                   </Box>
-                </Center>
-              </Flex>
-            </CardBody>
-          </Card>
-          <Roster players={players} />
-        </>
-      ) : (
-        <Spinner />
-      )}
+                  <Center>
+                    <Box>
+                      <DelayedIconTooltip label={prettyPrint(team.race)}>
+                        <Image
+                          hideBelow="lg"
+                          objectFit="cover"
+                          maxH="140px"
+                          src={ImageUrls.race(team.race)}
+                          fallback={null}
+                        />
+                      </DelayedIconTooltip>
+                    </Box>
+                  </Center>
+                </Flex>
+              </CardBody>
+            </Card>
+            <Roster players={players} />
+          </>
+        ) : (
+          <Spinner />
+        )}
+      </Box>
+      <Box>
+        <Heading size="md">Matches</Heading>
+        <Matches matches={matches} />
+      </Box>
     </VStack>
   );
 }

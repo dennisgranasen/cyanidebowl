@@ -5,8 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
 import net.warp_scores.warpscores.cyanide.api.responses.TeamResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.TeamsResponse;
+import net.warp_scores.warpscores.domain.model.Competition;
 import net.warp_scores.warpscores.domain.model.Player;
 import net.warp_scores.warpscores.domain.model.Team;
+import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
 import net.warp_scores.warpscores.domain.persistence.TeamRepository;
 import net.warp_scores.warpscores.service.PopulatorUtil;
 import net.warp_scores.warpscores.service.TeamPopulator;
@@ -26,6 +28,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TeamDomainService {
     private final TeamRepository teamRepository;
+
+    private final CompetitionRepository competitionRepository;
 
     private final TeamPopulator teamPopulator;
 
@@ -78,9 +82,13 @@ public class TeamDomainService {
     }
 
     private void setRelevantCompetition(List<Team> teams, UUID competitionUuid) {
+        Optional<Competition> competition = this.competitionRepository.findById(competitionUuid);
         teams
                 .stream()
-                .forEach(team -> team.setCompetitionIds(new UUID[]{competitionUuid}));
+                .forEach(team -> {
+                    team.setCompetitionIds(new UUID[]{competitionUuid});
+                    competition.ifPresent(c -> team.setCompetitionName(c.getName()));
+                });
     }
 
     private Team internalCreateOrUpdateTeam(ApiTeam apiTeam) {
