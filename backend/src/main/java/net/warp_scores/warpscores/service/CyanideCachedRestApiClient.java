@@ -82,7 +82,7 @@ public class CyanideCachedRestApiClient {
         log.info("Trying to get for '{}'. Last api access was [{}] (outdated: {}, changeable: {}, apiFetchActive: {}).",
                 apiRequest.getRequestPath(),
                 lastCacheAccess, cacheOutdated, changeable, fetchActive);
-        Object rawResponse = null;
+        Object rawResponse;
         if (cacheOutdated && changeable && fetchActive) {
             rawResponse = loadRawFromApi(apiRequest);
             if (rawResponse != null) {
