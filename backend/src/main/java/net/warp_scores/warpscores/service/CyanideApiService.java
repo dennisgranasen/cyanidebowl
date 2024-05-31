@@ -169,11 +169,6 @@ public class CyanideApiService {
             ContestsResponse contestsResponse = cyanideCachedRestApiClient.getFromCacheOrApi(contestsRequest);
             allContests.addAll(contestDomainService.createOrUpdateContests(contestsResponse));
         }
-        Map<UUID, Contest> latestContests = allContests.stream()
-                .collect(toMap(Contest::getContestUuid, Function.identity(),
-                        BinaryOperator.maxBy(Comparator.comparing(Contest::getMatchDate,
-                                Comparator.nullsFirst(Comparator.naturalOrder())))));
-        allContests = new ArrayList<>(latestContests.values());
         return allContests;
     }
 

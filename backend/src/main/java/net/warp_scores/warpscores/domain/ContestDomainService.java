@@ -3,22 +3,25 @@ package net.warp_scores.warpscores.domain;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.cyanide.api.model.ApiContest;
-import net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus;
 import net.warp_scores.warpscores.cyanide.api.responses.ContestsResponse;
 import net.warp_scores.warpscores.domain.model.Contest;
 import net.warp_scores.warpscores.domain.model.Team;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.service.PopulatorUtil;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toMap;
 
 @Slf4j
 @Service
@@ -32,8 +35,14 @@ public class ContestDomainService {
         if (contestsResponse == null || contestsResponse.isEmpty()) {
             return Collections.emptyList();
         }
+
         List<Contest> contests = Arrays
                 .stream(contestsResponse.getContests())
+                .collect(toMap(ApiContest::getContest_id, Function.identity(),
+                        BinaryOperator.maxBy(Comparator.comparing(ApiContest::getMatch_date,
+                                Comparator.nullsFirst(Comparator.naturalOrder())))))
+                .values()
+                .stream()
                 .map(this::internalCreateOrUpdateContest)
                 .collect(Collectors.toList());
         return contestRepository.saveAll(contests);
