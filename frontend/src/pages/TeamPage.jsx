@@ -12,8 +12,21 @@ import InfoItem from '../components/InfoItem';
 import DelayedIconTooltip from '../components/DelayedIconTooltip';
 import Matches from '../components/Matches';
 
-function MatchesCount({ matches }) {
-  return matches ? matches.length : <Spinner />;
+function MatchesCount({ matches, teamUuid }) {
+  if (!matches) return <Spinner />;
+
+  let won = 0;
+  let lost = 0;
+
+  matches.forEach((match) => {
+    const myTeam = match.teams[0].id === teamUuid ? match.teams[0] : match.teams[1];
+    const otherTeam = match.teams[0].id !== teamUuid ? match.teams[0] : match.teams[1];
+    if (myTeam.score > otherTeam.score) won += 1;
+    else if (myTeam.score < otherTeam.score) lost += 1;
+  });
+
+  const drawn = matches.length - won - lost;
+  return `${matches.length} (${won}/${drawn}/${lost})`;
 }
 
 function TeamPage() {
@@ -85,7 +98,11 @@ function TeamPage() {
                         <InfoItem key="apothecary" label="Apothecary" info={team.apothecary} />,
                         <InfoItem key="cash" label="Cash" info={Formatter.formatAsNumber(team.cash)} />,
                         <InfoItem key="value" label="Value" info={Formatter.formatAsNumber(team.value)} />,
-                        <InfoItem key="matches" label="Matches" info={<MatchesCount matches={matches} />} />,
+                        <InfoItem
+                          key="matches"
+                          label="Matches"
+                          info={<MatchesCount matches={matches} teamUuid={teamUuid} />}
+                        />,
                       ]}
                     />
                   </Box>
