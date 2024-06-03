@@ -20,7 +20,7 @@ GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Validated&league_id=9
 GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Validated&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=558803fb-1878-11ef-895c-bc24112ec32e&platform=pc&key={{apiKey}}
 
 ### Get contests Scheduled
-GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Scheduled&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=558803fb-1878-11ef-895c-bc24112ec32e&platform=pc&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Scheduled&round=2&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=558803fb-1878-11ef-895c-bc24112ec32e&platform=pc&key={{apiKey}}
 
 
 ### Get contests
