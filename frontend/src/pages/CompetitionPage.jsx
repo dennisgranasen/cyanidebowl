@@ -81,6 +81,7 @@ function TeamPage() {
                             totalRounds={competition.totalRounds}
                             totalMatches={competition.totalMatches}
                             playedMatches={competition.playedMatches}
+                            validatedMatches={competition.validatedMatches}
                           />
                         }
                       />,
