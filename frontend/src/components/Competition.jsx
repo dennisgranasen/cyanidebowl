@@ -22,6 +22,7 @@ function Competition({ competition }) {
           totalRounds={competition.totalRounds}
           totalMatches={competition.totalMatches}
           playedMatches={competition.playedMatches}
+          validatedMatches={competition.validatedMatches}
         />
       </Td>
       <Td isNumeric>{competition.teamsMax}</Td>

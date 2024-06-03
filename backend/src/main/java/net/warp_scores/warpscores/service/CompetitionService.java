@@ -65,13 +65,15 @@ public class CompetitionService {
     private void initializeRoundRobin(Competition competition) {
         Integer teams = competition.getTeamsMax();
         Integer contestCount = contestsRepository.countByCompetitionId(competition.getUuid());
-        Integer playedMatchesCount = contestsRepository.countByCompetitionIdAndStatus(competition.getUuid(),
+        Integer validatedMatchesCount = contestsRepository.countByCompetitionIdAndStatus(competition.getUuid(),
                 MatchStatus.Validated);
+        Integer playedMatchesCount = contestsRepository.countByCompetitionIdAndMatchDateNotNull(competition.getUuid());
         int totalRounds = teams - 1;
         competition.setTotalRounds(totalRounds);
         competition.setCurrentRound(contestCount / (teams / 2));
         competition.setTotalMatches(totalRounds * teams / 2);
         competition.setPlayedMatches(playedMatchesCount);
+        competition.setValidatedMatches(validatedMatchesCount);
     }
 
     private void initializeWissen(Competition competition) {
