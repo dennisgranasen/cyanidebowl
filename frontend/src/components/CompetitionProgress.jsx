@@ -5,8 +5,9 @@ import { FaFlagCheckered } from 'react-icons/fa6';
 import DelayedIconTooltip from './DelayedIconTooltip';
 import prettyPrint from '../util/PrettyPrint';
 
-function RoundRobinProgresses({ currentRound, totalRounds, playedMatches, totalMatches, status }) {
+function RoundRobinProgresses({ currentRound, totalRounds, playedMatches, totalMatches, validatedMatches, status }) {
   const roundLength = totalMatches ? totalMatches / totalRounds : 1;
+  const finishedMatches = Math.max(playedMatches, validatedMatches);
   const roundProgresses = [];
   for (let round = 0; round < totalRounds; round += 1) {
     let progress = 0;
@@ -15,7 +16,7 @@ function RoundRobinProgresses({ currentRound, totalRounds, playedMatches, totalM
       progress = 100;
     } else if (currentRound === round + 1) {
       progress =
-        playedMatches >= roundLength * currentRound ? 100 : (100 * (playedMatches % roundLength)) / roundLength;
+        finishedMatches >= roundLength * currentRound ? 100 : (100 * (finishedMatches % roundLength)) / roundLength;
       active = status === 'InProgress';
     }
     roundProgresses.push({ name: `round${round + 1}`, progress, active });
@@ -31,7 +32,7 @@ function RoundRobinProgresses({ currentRound, totalRounds, playedMatches, totalM
   );
 }
 
-function Progresses({ currentRound, totalRounds, playedMatches, totalMatches, status, format }) {
+function Progresses({ currentRound, totalRounds, playedMatches, totalMatches, validatedMatches, status, format }) {
   if (status === 'Finished') return <FaFlagCheckered />;
   if (status === 'Registration') return <CalendarIcon />;
   switch (format) {
@@ -42,6 +43,7 @@ function Progresses({ currentRound, totalRounds, playedMatches, totalMatches, st
           totalRounds={totalRounds}
           totalMatches={totalMatches}
           playedMatches={playedMatches}
+          validatedMatches={validatedMatches}
           status={status}
         />
       );
@@ -61,12 +63,25 @@ function ProgressLabel({ text, additionalText }) {
   );
 }
 
-function CompetitionProgress({ status, format, currentRound, totalRounds, playedMatches, totalMatches }) {
+function CompetitionProgress({
+  status,
+  format,
+  currentRound,
+  totalRounds,
+  playedMatches,
+  totalMatches,
+  validatedMatches,
+}) {
   const currentRoundText = currentRound ? `, Round ${currentRound}` : '';
   const totalRoundsText = currentRound && totalRounds ? `of ${totalRounds}` : '';
   const progressText = `${prettyPrint(status)}${currentRoundText} ${totalRoundsText}`;
+  const finishedMatches = Math.max(playedMatches, validatedMatches);
+  const notYetValidatedMatches =
+    playedMatches > validatedMatches ? ` (${playedMatches - validatedMatches} not yet validated)` : '';
   const progressAdditionalText =
-    totalMatches && playedMatches ? `Played ${playedMatches} out of ${totalMatches} matches` : undefined;
+    totalMatches && playedMatches
+      ? `Finished ${finishedMatches} out of ${totalMatches} matches${notYetValidatedMatches}`
+      : undefined;
   return (
     <Box p="4px">
       <DelayedIconTooltip label={<ProgressLabel text={progressText} additionalText={progressAdditionalText} />}>
@@ -76,6 +91,7 @@ function CompetitionProgress({ status, format, currentRound, totalRounds, played
             totalRounds={totalRounds}
             totalMatches={totalMatches}
             playedMatches={playedMatches}
+            validatedMatches={validatedMatches}
             status={status}
             format={format}
           />

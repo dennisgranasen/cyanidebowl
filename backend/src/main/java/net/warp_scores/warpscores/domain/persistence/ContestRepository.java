@@ -17,4 +17,6 @@ public interface ContestRepository extends MongoRepository<Contest, UUID> {
     Integer countByCompetitionId(UUID competitionId);
 
     Integer countByCompetitionIdAndStatus(UUID competitionId, MatchStatus status);
+
+    Integer countByCompetitionIdAndMatchDateNotNull(UUID competitionId);
 }
