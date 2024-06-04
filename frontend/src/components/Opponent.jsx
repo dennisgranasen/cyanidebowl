@@ -7,12 +7,9 @@ import logger from '../util/Logger';
 
 const { boxSize } = config;
 
-const Boxes = (opponent, reverse, winnerTeamUuid) => {
-  const winner = winnerTeamUuid && opponent.id === winnerTeamUuid;
+const Boxes = (opponent, reverse, winner) => {
   const fontWeight = winner ? 'bold' : 'normal';
   const textAlign = !reverse ? 'right' : 'left';
-
-  logger.debug('Opponent: %o', opponent);
 
   return [
     <Td key={opponent.coachName}>
@@ -39,8 +36,8 @@ const Boxes = (opponent, reverse, winnerTeamUuid) => {
   ];
 };
 
-function Opponent({ opponent, reverse, winnerTeamUuid }) {
-  return reverse ? Boxes(opponent, reverse, winnerTeamUuid).reverse() : Boxes(opponent);
+function Opponent({ opponent, reverse, winner }) {
+  return reverse ? Boxes(opponent, reverse, winner).reverse() : Boxes(opponent);
 }
 
 export default Opponent;

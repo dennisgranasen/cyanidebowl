@@ -68,14 +68,14 @@ function Contest({ contest }) {
     if (contest.status === 'Validated' && !contest.adminResult) onOpen();
   };
 
+  const winnerTeamUuid = contest.winner ? contest.winner.team.id : null;
   return contest ? (
     <Tr onClick={openIfValidatedAndNotAdminResult}>
       <MatchModal isOpen={isOpen} onClose={onClose} contest={contest} />
       <Opponent
         opponent={contest.opponents[0]}
-        winnerTeamUuid={contest.winner ? contest.winner.team.id : null}
         key={contest.opponents[0].id}
-        reverse={false}
+        winner={contest.opponents[0].id === winnerTeamUuid}
       />
       <Td>
         <DelayedIconTooltip label={<ScoreOrIconTooltip contest={contest} />}>
@@ -86,8 +86,8 @@ function Contest({ contest }) {
       </Td>
       <Opponent
         opponent={contest.opponents[1]}
-        winnerTeamUuid={contest.winner ? contest.winner.team.id : null}
         key={contest.opponents[1].id}
+        winner={contest.opponents[1].id === winnerTeamUuid}
         reverse
       />
     </Tr>
