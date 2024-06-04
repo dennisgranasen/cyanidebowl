@@ -48,7 +48,9 @@ function Progresses({ currentRound, totalRounds, playedMatches, totalMatches, va
         />
       );
     case 'Wissen':
+      return `${currentRound} of ${totalRounds}`;
     case 'Knockout':
+      return `${currentRound} of ${totalRounds}`;
     default:
       return <QuestionIcon />;
   }

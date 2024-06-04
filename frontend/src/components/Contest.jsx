@@ -7,6 +7,7 @@ import MatchStatusIcon from './MatchStatusIcon';
 import config from '../config';
 import MatchModal from './MatchModal';
 import DelayedIconTooltip from './DelayedIconTooltip';
+import logger from '../util/Logger';
 
 const { smallBoxSize } = config;
 
