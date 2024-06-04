@@ -3,13 +3,17 @@ import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import { Box, Image, Td, Text } from '@chakra-ui/react';
 import ImageUrls from '../ImageUrls';
 import config from '../config';
+import logger from '../util/Logger';
 
 const { boxSize } = config;
 
-const Boxes = (opponent, reverse /* , winnerTeamUuid */) => {
-  // const winner = winnerTeamUuid && opponent.id === winnerTeamUuid;
-  const fontWeight = 'normal'; // winner ? 'bold' : 'normal';
+const Boxes = (opponent, reverse, winnerTeamUuid) => {
+  const winner = winnerTeamUuid && opponent.id === winnerTeamUuid;
+  const fontWeight = winner ? 'bold' : 'normal';
   const textAlign = !reverse ? 'right' : 'left';
+
+  logger.debug('Opponent: %o', opponent);
+
   return [
     <Td key={opponent.coachName}>
       <Text fontWeight={fontWeight} textAlign={textAlign}>

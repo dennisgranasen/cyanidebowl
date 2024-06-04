@@ -6,12 +6,14 @@ import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionFormat;
 import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionStatus;
 import net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus;
 import net.warp_scores.warpscores.domain.model.Competition;
+import net.warp_scores.warpscores.domain.model.Contest;
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -77,7 +79,18 @@ public class CompetitionService {
     }
 
     private void initializeWissen(Competition competition) {
-        log.warn("Nothing to be done for Wissen (yet?).");
+        Integer teams = competition.getTeamsMax();
+
+        Integer validatedMatchesCount = contestsRepository.countByCompetitionIdAndStatus(competition.getUuid(),
+                MatchStatus.Validated);
+        Integer playedMatchesCount = contestsRepository.countByCompetitionIdAndMatchDateNotNull(competition.getUuid());
+
+        List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid());
+        OptionalInt currentRound = contests.stream().mapToInt(Contest::getRound).max();
+
+        competition.setCurrentRound(currentRound.orElse(0));
+        competition.setPlayedMatches(playedMatchesCount);
+        competition.setValidatedMatches(validatedMatchesCount);
     }
 
     private void initializeKnockout(Competition competition) {
