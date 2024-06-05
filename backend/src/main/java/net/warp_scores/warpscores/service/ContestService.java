@@ -44,6 +44,7 @@ public class ContestService {
                                             MatchStatus.Validated.equals(contest.getStatus())));
                             match.ifPresent(contest::setMatch);
                         }).collect(Collectors.toList());
+
         initializeContestsScheduleForFormat(competition, contests);
         return contests;
     }
