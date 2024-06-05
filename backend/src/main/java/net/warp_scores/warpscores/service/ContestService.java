@@ -40,7 +40,7 @@ public class ContestService {
                             Optional<UUID> matchUuid = Optional.ofNullable(contest.getMatchUuid());
                             Optional<Match> match = matchUuid.flatMap(matchRepository::findById);
                             contest.setAdminResult(contest.isAdminResult() ||
-                                    (match.isEmpty() &&
+                                    (matchUuid.isEmpty() &&
                                             MatchStatus.Validated.equals(contest.getStatus())));
                             match.ifPresent(contest::setMatch);
                         }).collect(Collectors.toList());
