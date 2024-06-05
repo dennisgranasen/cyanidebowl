@@ -56,7 +56,6 @@ public class CompetitionService {
             case Knockout -> initializeKnockout(competition);
             default -> notYetImplemented(competition.getFormat());
         }
-        log.info("Competition '{}' initialized as {}.", competition.getUuid(), competition.getFormat());
         return competition;
     }
 
