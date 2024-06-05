@@ -7,7 +7,6 @@ import MatchStatusIcon from './MatchStatusIcon';
 import config from '../config';
 import MatchModal from './MatchModal';
 import DelayedIconTooltip from './DelayedIconTooltip';
-import logger from '../util/Logger';
 
 const { smallBoxSize } = config;
 
@@ -17,6 +16,7 @@ function ScoreOrIconTooltip({ contest }) {
 
   switch (contest.status) {
     case 'played':
+    case 'Played':
     case 'Validated':
       matchPlayed = true;
       matchValidated = true;
@@ -28,7 +28,8 @@ function ScoreOrIconTooltip({ contest }) {
       break;
   }
 
-  const status = `${matchPlayed && !matchValidated ? 'Awaiting validation' : prettyPrint(contest.status)}`;
+  let status = `${matchPlayed && !matchValidated ? 'Awaiting validation' : prettyPrint(contest.status)}`;
+  if (contest.live) status = 'Live';
   return `${status} ${contest.adminResult ? ' - Admin result' : formatter.formatAsDate(contest.matchDate)}`;
 }
 
@@ -43,7 +44,7 @@ function ScoreOrIcon({ contest }) {
       matchValidated = true;
       break;
     case 'InProgress':
-      matchPlayed = contest.matchDate && contest.winner && contest.status === 'InProgress';
+      matchPlayed = contest.matchDate && contest.winner && contest.status === 'InProgress' && !contest.live;
       break;
     default:
       break;
