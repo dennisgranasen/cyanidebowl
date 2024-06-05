@@ -1,7 +1,6 @@
 package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
-import net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus;
 import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.domain.model.Contest;
 import net.warp_scores.warpscores.domain.model.Match;

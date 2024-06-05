@@ -12,9 +12,11 @@ import {
   Tfoot,
   Th,
   Thead,
-  Tr, useMediaQuery,
+  Tr,
+  useMediaQuery,
 } from '@chakra-ui/react';
 import Contest from './Contest';
+import logger from '../util/Logger';
 
 const TableColumns = (
   <Tr>
@@ -34,11 +36,33 @@ const TableColumns = (
   </Tr>
 );
 
+function getDateFromUUID(uuid) {
+  const timestampHex = `${uuid.substr(15, 3)}${uuid.substr(9, 4)}${uuid.substr(0, 8)}`;
+  const timestamp = parseInt(timestampHex, 16);
+  let seconds = timestamp / (10 * 1000 * 1000);
+  // we can convert this to unix time by subtracting the number of seconds between that date and January 1, 1970
+  seconds -= 141427 * 24 * 60 * 60;
+  return new Date(seconds * 1000);
+}
+
+function getRobinFrom(contests) {
+  contests.sort((contestA, contestB) => getDateFromUUID(contestA.contestUuid) > getDateFromUUID(contestB.contestUuid));
+  const { coachName } = contests[0].opponents[0];
+  logger.info('Robin: %s', coachName);
+  return coachName;
+}
+
 function Contests({ contests, currentRound }) {
   const groupedContests = Map.groupBy(contests, (contest) => contest.round);
   const [isSmallScreen] = useMediaQuery('(max-width: 768px)');
   const tabData = [];
+  const robin = getRobinFrom(groupedContests.get(1));
   groupedContests.forEach((value, key) => {
+    value.sort((contestA, contestB) =>
+      robin === contestA.opponents[0].coachName
+        ? -1
+        : contestA.opponents[0].coachName.localeCompare(contestB.opponents[0].coachName)
+    );
     tabData.push({
       round: key,
       label: isSmallScreen ? `${key}` : `Round ${key}`,
