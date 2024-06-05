@@ -32,7 +32,23 @@ function RoundRobinProgresses({ currentRound, totalRounds, playedMatches, totalM
   );
 }
 
-function Progresses({ currentRound, totalRounds, playedMatches, totalMatches, validatedMatches, status, format }) {
+function WissenProgresses({ playedMatches, validatedMatches, teamsMax, status }) {
+  const roundLength = teamsMax / 2;
+  const finishedMatches = Math.max(playedMatches, validatedMatches);
+  const progress = finishedMatches === roundLength ? 100 : finishedMatches % roundLength;
+  return <Progress value={progress} hasStripe={status === 'InProgress'} />;
+}
+
+function Progresses({
+  currentRound,
+  totalRounds,
+  playedMatches,
+  totalMatches,
+  validatedMatches,
+  teamsMax,
+  status,
+  format,
+}) {
   if (status === 'Finished') return <FaFlagCheckered />;
   if (status === 'Registration') return <CalendarIcon />;
   switch (format) {
@@ -48,7 +64,15 @@ function Progresses({ currentRound, totalRounds, playedMatches, totalMatches, va
         />
       );
     case 'Wissen':
-      return `Round ${currentRound}`;
+      return (
+        <WissenProgresses
+          currentRound={currentRound}
+          teamsMax={teamsMax}
+          playedMatches={playedMatches}
+          validatedMatches={validatedMatches}
+          status={status}
+        />
+      );
     case 'Knockout':
       return `${currentRound} of ${totalRounds}`;
     default:
@@ -73,6 +97,7 @@ function CompetitionProgress({
   playedMatches,
   totalMatches,
   validatedMatches,
+  teamsMax,
 }) {
   const currentRoundText = currentRound ? `, Round ${currentRound}` : '';
   const totalRoundsText = currentRound && totalRounds ? `of ${totalRounds}` : '';
@@ -89,6 +114,7 @@ function CompetitionProgress({
       <DelayedIconTooltip label={<ProgressLabel text={progressText} additionalText={progressAdditionalText} />}>
         <Box>
           <Progresses
+            teamsMax={teamsMax}
             currentRound={currentRound}
             totalRounds={totalRounds}
             totalMatches={totalMatches}

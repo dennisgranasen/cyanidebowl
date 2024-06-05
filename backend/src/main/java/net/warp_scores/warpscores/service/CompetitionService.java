@@ -79,8 +79,6 @@ public class CompetitionService {
     }
 
     private void initializeWissen(Competition competition) {
-        Integer teams = competition.getTeamsMax();
-
         Integer validatedMatchesCount = contestsRepository.countByCompetitionIdAndStatus(competition.getUuid(),
                 MatchStatus.Validated);
         Integer playedMatchesCount = contestsRepository.countByCompetitionIdAndMatchDateNotNull(competition.getUuid());

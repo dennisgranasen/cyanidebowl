@@ -18,6 +18,7 @@ function Competition({ competition }) {
         <CompetitionProgress
           status={competition.status}
           format={competition.format}
+          teamsMax={competition.teamsMax}
           currentRound={competition.currentRound}
           totalRounds={competition.totalRounds}
           totalMatches={competition.totalMatches}
