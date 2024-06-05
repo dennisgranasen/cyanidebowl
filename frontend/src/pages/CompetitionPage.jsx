@@ -75,6 +75,7 @@ function TeamPage() {
                         label="Progress"
                         info={
                           <CompetitionProgress
+                            teamsMax={competition.teamsMax}
                             status={competition.status}
                             format={competition.format}
                             currentRound={competition.currentRound}

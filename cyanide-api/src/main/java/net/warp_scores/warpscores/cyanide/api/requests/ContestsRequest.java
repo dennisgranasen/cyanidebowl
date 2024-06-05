@@ -1,12 +1,11 @@
 package net.warp_scores.warpscores.cyanide.api.requests;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import net.warp_scores.warpscores.cyanide.api.responses.ContestsResponse;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import net.warp_scores.warpscores.cyanide.api.responses.ContestsResponse;
 
-import java.time.Duration;
 import java.util.UUID;
 
 /*
@@ -50,7 +49,7 @@ import java.util.UUID;
 @ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ContestsRequest extends ApiRequest<ContestsRequest, ContestsResponse> {
-    public enum Status {Scheduled, InProgress, Validated, Live}
+    public enum Status {Scheduled, InProgress, Validated, Played}
 
     private String league_name;
     private UUID league_id;
