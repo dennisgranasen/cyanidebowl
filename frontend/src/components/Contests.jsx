@@ -16,7 +16,6 @@ import {
   useMediaQuery,
 } from '@chakra-ui/react';
 import Contest from './Contest';
-import logger from '../util/Logger';
 
 const TableColumns = (
   <Tr>
@@ -46,9 +45,10 @@ function getDateFromUUID(uuid) {
 }
 
 function getRobinFrom(contests) {
+  if (contests[0].format !== 'RoundRobin') return null;
+
   contests.sort((contestA, contestB) => getDateFromUUID(contestA.contestUuid) > getDateFromUUID(contestB.contestUuid));
   const { coachName } = contests[0].opponents[0];
-  logger.info('Robin: %s', coachName);
   return coachName;
 }
 
@@ -58,11 +58,24 @@ function Contests({ contests, currentRound }) {
   const tabData = [];
   const robin = getRobinFrom(groupedContests.get(1));
   groupedContests.forEach((value, key) => {
-    value.sort((contestA, contestB) =>
-      robin === contestA.opponents[0].coachName
-        ? -1
-        : contestA.opponents[0].coachName.localeCompare(contestB.opponents[0].coachName)
-    );
+    value.sort((contestA, contestB) => {
+      let comparison = 0;
+      if (robin) {
+        comparison =
+          robin === contestA.opponents[0].coachName
+            ? -1
+            : contestA.opponents[0].coachName.localeCompare(contestB.opponents[0].coachName);
+      } else if (contestA.matchDate) {
+        if (contestB.matchDate) {
+          comparison = contestA.matchDate - contestB.matchDate;
+        } else {
+          comparison = -1;
+        }
+      } else {
+        comparison = getDateFromUUID(contestA.contestUuid) - getDateFromUUID(contestB.contestUuid);
+      }
+      return comparison;
+    });
     tabData.push({
       round: key,
       label: isSmallScreen ? `${key}` : `Round ${key}`,
