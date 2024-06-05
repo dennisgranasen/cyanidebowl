@@ -62,6 +62,17 @@ public class ContestService {
 
         List<Team> homeTeams = new ArrayList<>();
         List<Team> awayTeams = new ArrayList<>();
+        extractFirstRoundTeams(contests, homeTeams, awayTeams);
+
+        List<Contest> scheduledContests = generateScheduledContests(competition.get(), homeTeams, awayTeams)
+                .stream()
+                .filter(c -> c.getRound() > currentRound.orElse(0))
+                .toList();
+
+        contests.addAll(scheduledContests);
+    }
+
+    private void extractFirstRoundTeams(List<Contest> contests, List<Team> homeTeams, List<Team> awayTeams) {
         contests
                 .stream()
                 .filter(c -> c.getRound() == 1)
@@ -70,13 +81,6 @@ public class ContestService {
                     homeTeams.add(c.getOpponents().get(0));
                     awayTeams.add(c.getOpponents().get(1));
                 });
-
-        List<Contest> scheduledContests = generateScheduledContests(competition.get(), homeTeams, awayTeams)
-                .stream()
-                .filter(c -> c.getRound() > currentRound.orElse(0))
-                .toList();
-
-        contests.addAll(scheduledContests);
     }
 
     private Collection<Contest> generateScheduledContests(Competition competition,
