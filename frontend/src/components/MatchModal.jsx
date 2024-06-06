@@ -13,6 +13,7 @@ import {
   Td,
   Tr,
 } from '@chakra-ui/react';
+import formatter from '../util/Formatter';
 
 function MatchModal({ isOpen, onClose, contest }) {
   const [match, setMatch] = useState();
@@ -34,7 +35,14 @@ function MatchModal({ isOpen, onClose, contest }) {
       <ModalContent>
         <ModalCloseButton />
         <ModalHeader>
-          <Center>{match && `${match.started} - ${match.finished}`}</Center>
+          <Center>
+            {contest && `${contest.competitionName}: `}
+            {match && `${match.teams[0].name} vs ${match.teams[1].name}`}
+          </Center>
+          <Center>
+            {match && `${formatter.formatAsDate(match.started)} - ${formatter.formatAsDate(match.finished)}`}
+          </Center>
+          <Center>{match && `Duration: ${formatter.formatAsDuration(match.started, match.finished)}`}</Center>
         </ModalHeader>
         <ModalBody>
           {match && (
@@ -51,6 +59,17 @@ function MatchModal({ isOpen, onClose, contest }) {
                       </Td>
                       <Td>
                         <Center>{match.teams[1].name}</Center>
+                      </Td>
+                    </Tr>
+                    <Tr>
+                      <Td>
+                        <Center>{match.coaches[0].name}</Center>
+                      </Td>
+                      <Td>
+                        <Center>vs</Center>
+                      </Td>
+                      <Td>
+                        <Center>{match.coaches[1].name}</Center>
                       </Td>
                     </Tr>
                     <Tr>
