@@ -62,7 +62,7 @@ function ScoreOrIcon({ contest }) {
   );
 }
 
-function Contest({ contest, isSmallScreen }) {
+function Contest({ contest, smallscreen }) {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const openIfValidatedAndNotAdminResult = () => {
@@ -75,7 +75,7 @@ function Contest({ contest, isSmallScreen }) {
     <Tr onClick={openIfValidatedAndNotAdminResult}>
       <MatchModal isOpen={isOpen} onClose={onClose} contest={contest} />
       <Opponent
-        isSmallScreen={isSmallScreen}
+        smallscreen={smallscreen}
         opponent={contest.opponents[0]}
         key={contest.opponents[0].id}
         winner={contest.opponents[0].id === winnerTeamUuid}
@@ -88,7 +88,7 @@ function Contest({ contest, isSmallScreen }) {
         </DelayedIconTooltip>
       </Td>
       <Opponent
-        isSmallScreen={isSmallScreen}
+        smallscreen={smallscreen}
         opponent={contest.opponents[1]}
         key={contest.opponents[1].id}
         winner={contest.opponents[1].id === winnerTeamUuid}

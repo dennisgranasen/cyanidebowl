@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Card, CardBody, Flex, Heading, Image, Spinner, useMediaQuery, VStack } from '@chakra-ui/react';
-import { Link as RouteLink, useParams } from 'react-router-dom';
+import { Box, Heading, Spinner, useMediaQuery, VStack } from '@chakra-ui/react';
+import { useParams, Link as RouteLink } from 'react-router-dom';
 import CyanideApiService from '../CyanideApiService';
 import Navigation from '../components/Navigation';
 import Formatter from '../util/Formatter';
@@ -15,7 +15,7 @@ import InfoItem from '../components/InfoItem';
 import HeaderCard from '../components/HeaderCard';
 
 function CompetitionPage() {
-  const [isSmallScreen] = useMediaQuery('(max-width: 768px)');
+  const [smallscreen] = useMediaQuery('(max-width: 768px)');
   const { competitionUuid } = useParams();
   const [competition, setCompetition] = useState();
   const [ranks, setRanks] = useState();
@@ -62,7 +62,7 @@ function CompetitionPage() {
             subHeading={<RouteLink to={`/${competition.leagueId}`}>League: {competition.leagueName}</RouteLink>}
             mainImageSrc={ImageUrls.logo(competition.leagueLogo)}
             additionalImageSrc={ImageUrls.logo(competition.logo)}
-            isSmallScreen={isSmallScreen}
+            smallscreen={smallscreen}
           >
             <InfoArea
               infoItems={[
@@ -95,10 +95,10 @@ function CompetitionPage() {
             />
           </HeaderCard>
           <Heading size="md">Ranking</Heading>
-          {ranks ? <Ranks isSmallScreen={isSmallScreen} ranks={ranks} /> : <Spinner />}
+          {ranks ? <Ranks smallscreen={smallscreen} ranks={ranks} /> : <Spinner />}
           <Heading size="md">Contests</Heading>
           {contests ? (
-            <Contests isSmallScreen={isSmallScreen} contests={contests} currentRound={competition.currentRound} />
+            <Contests smallscreen={smallscreen} contests={contests} currentRound={competition.currentRound} />
           ) : (
             <Spinner />
           )}

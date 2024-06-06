@@ -2,21 +2,21 @@ import React from 'react';
 import { Center, Spinner, Table, TableContainer, Tbody, Tfoot, Th, Thead, Tr } from '@chakra-ui/react';
 import Rank from './Rank';
 
-function TableColumns(isSmallScreen) {
+function TableColumns(smallscreen) {
   return (
     <Tr>
       <Th>
-        <Center>{isSmallScreen ? 'R' : 'Rank'}</Center>
+        <Center>{smallscreen ? 'R' : 'Rank'}</Center>
       </Th>
-      <Th>{isSmallScreen ? 'TN' : 'Team-Name'}</Th>
+      <Th>{smallscreen ? 'TN' : 'Team-Name'}</Th>
       <Th />
-      <Th>{isSmallScreen ? 'CN' : 'Coach-Name'}</Th>
-      <Th>{isSmallScreen ? null : 'Race'}</Th>
+      <Th>{smallscreen ? 'CN' : 'Coach-Name'}</Th>
+      <Th>{smallscreen ? null : 'Race'}</Th>
       <Th>
-        <Center>{isSmallScreen ? 'GP' : 'Games played'}</Center>
+        <Center>{smallscreen ? 'GP' : 'Games played'}</Center>
       </Th>
       <Th>
-        <Center>{isSmallScreen ? 'Sc.' : 'Score'}</Center>
+        <Center>{smallscreen ? 'Sc.' : 'Score'}</Center>
       </Th>
       <Th>
         <Center>W</Center>
@@ -49,21 +49,21 @@ function TableColumns(isSmallScreen) {
   );
 }
 
-function Ranks({ ranks, isSmallScreen }) {
+function Ranks({ ranks, smallscreen }) {
   return (
     <TableContainer>
       <Table variant="stripedClickable" size="sm">
-        <Thead>{TableColumns(isSmallScreen)}</Thead>
+        <Thead>{TableColumns(smallscreen)}</Thead>
         <Tbody>
           {ranks ? (
             ranks.map((rank) => {
-              return <Rank rank={rank} key={rank.team.id} isSmallScreen={isSmallScreen} />;
+              return <Rank rank={rank} key={rank.team.id} smallscreen={smallscreen} />;
             })
           ) : (
             <Spinner />
           )}
         </Tbody>
-        <Tfoot>{TableColumns(isSmallScreen)}</Tfoot>
+        <Tfoot>{TableColumns(smallscreen)}</Tfoot>
       </Table>
     </TableContainer>
   );

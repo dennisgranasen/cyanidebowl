@@ -54,7 +54,7 @@ function getRobinFrom(contests) {
   return coachName;
 }
 
-function Contests({ contests, currentRound, isSmallScreen }) {
+function Contests({ contests, currentRound, smallscreen }) {
   const groupedContests = Map.groupBy(contests, (contest) => contest.round);
   const tabData = [];
   const robin = getRobinFrom(groupedContests.get(1));
@@ -79,14 +79,14 @@ function Contests({ contests, currentRound, isSmallScreen }) {
     });
     tabData.push({
       round: key,
-      label: isSmallScreen ? `${key}` : `Round ${key}`,
+      label: smallscreen ? `${key}` : `Round ${key}`,
       content: (
         <TableContainer>
           <Table variant="simpleClickable" size="sm">
             <Thead>{TableColumns}</Thead>
             <Tbody>
               {value.map((contest) => {
-                return <Contest isSmallScreen={isSmallScreen} contest={contest} key={contest.contestUuid} />;
+                return <Contest smallscreen={smallscreen} contest={contest} key={contest.contestUuid} />;
               })}
             </Tbody>
             <Tfoot>{TableColumns}</Tfoot>

@@ -7,19 +7,19 @@ import abbreviators from '../util/Abbreviators';
 
 const { boxSize } = config;
 
-const Boxes = (opponent, reverse, winner, isSmallScreen) => {
+const Boxes = (opponent, reverse, winner, smallscreen) => {
   const fontWeight = winner ? 'bold' : 'normal';
   const textAlign = !reverse ? 'right' : 'left';
 
   return [
     <Td key={opponent.coachName}>
       <Text fontWeight={fontWeight} textAlign={textAlign}>
-        {isSmallScreen ? abbreviators.abbreviateCoachName(opponent.coachName) : opponent.coachName}
+        {smallscreen ? abbreviators.abbreviateCoachName(opponent.coachName) : opponent.coachName}
       </Text>
     </Td>,
     <Td key={opponent.name}>
       <Text fontWeight={fontWeight} textAlign={textAlign}>
-        {isSmallScreen ? abbreviators.abbreviateTeamName(opponent.name) : opponent.name}
+        {smallscreen ? abbreviators.abbreviateTeamName(opponent.name) : opponent.name}
       </Text>
     </Td>,
     <Td key={`${opponent.name}${opponent.logo}`}>
@@ -36,10 +36,10 @@ const Boxes = (opponent, reverse, winner, isSmallScreen) => {
   ];
 };
 
-function Opponent({ opponent, reverse, winner, isSmallScreen }) {
+function Opponent({ opponent, reverse, winner, smallscreen }) {
   return reverse
-    ? Boxes(opponent, reverse, winner, isSmallScreen).reverse()
-    : Boxes(opponent, reverse, winner, isSmallScreen);
+    ? Boxes(opponent, reverse, winner, smallscreen).reverse()
+    : Boxes(opponent, reverse, winner, smallscreen);
 }
 
 export default Opponent;

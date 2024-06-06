@@ -58,8 +58,8 @@ function SmallScreenHeaderCard(mainImageSrc, heading, subHeading, additionalImag
   );
 }
 
-function HeaderCard({ mainImageSrc, heading, subHeading, additionalImageSrc, isSmallScreen, children }) {
-  return isSmallScreen
+function HeaderCard({ mainImageSrc, heading, subHeading, additionalImageSrc, smallscreen, children }) {
+  return smallscreen
     ? SmallScreenHeaderCard(mainImageSrc, heading, subHeading, additionalImageSrc, children)
     : StandardScreenHeaderCard(mainImageSrc, heading, subHeading, additionalImageSrc, children);
 }

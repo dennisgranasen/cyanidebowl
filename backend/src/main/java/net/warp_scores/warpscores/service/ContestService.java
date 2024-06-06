@@ -106,7 +106,7 @@ public class ContestService {
             contest.setCompetitionName(competition.getName());
             contest.setLeagueId(competition.getLeagueId());
             contest.setLeagueName(competition.getLeagueName());
-            contest.setStatus(MatchStatus.Scheduled);
+            contest.setStatus(MatchStatus.Calculated);
             contest.setContestUuid(UUID.randomUUID());
             contest.setOpponents(Arrays.asList(groupA.get(i), groupB.get(i)));
             roundContests.add(contest);

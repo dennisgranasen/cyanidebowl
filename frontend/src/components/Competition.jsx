@@ -5,7 +5,7 @@ import CompetitionProgress from './CompetitionProgress';
 import prettyPrint from '../util/PrettyPrint';
 import abbreviators from '../util/Abbreviators';
 
-function Competition({ competition, isSmallScreen }) {
+function Competition({ competition, smallscreen }) {
   const navigate = useNavigate();
   const goToCompetition = () => {
     navigate(`/competition/${competition.uuid}`);
@@ -14,7 +14,7 @@ function Competition({ competition, isSmallScreen }) {
   return competition !== null ? (
     <Tr onClick={goToCompetition}>
       <Td>{competition.name}</Td>
-      <Td>{isSmallScreen ? abbreviators.abbreviate(competition.format) : prettyPrint(competition.format)}</Td>
+      <Td>{smallscreen ? abbreviators.abbreviate(competition.format) : prettyPrint(competition.format)}</Td>
       <Td>
         <CompetitionProgress
           status={competition.status}

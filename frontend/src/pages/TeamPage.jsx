@@ -31,7 +31,7 @@ function MatchesCount({ matches, teamUuid }) {
 }
 
 function TeamPage() {
-  const [isSmallScreen] = useMediaQuery('(max-width: 768px)');
+  const [smallscreen] = useMediaQuery('(max-width: 768px)');
   const { competitionUuid, teamUuid } = useParams();
   const [team, setTeam] = useState();
   const [matches, setMatches] = useState();
@@ -83,10 +83,10 @@ function TeamPage() {
               subHeading={`Coach: ${team.coachName}`}
               mainImageSrc={ImageUrls.logo(team.logo)}
               additionalImageSrc={ImageUrls.race(team.race)}
-              isSmallScreen={isSmallScreen}
+              smallscreen={smallscreen}
             >
               <InfoArea
-                isSmallScreen={isSmallScreen}
+                smallscreen={smallscreen}
                 infoItems={[
                   <InfoItem key="race" label="Race" info={prettyPrint(team.race)} />,
                   <InfoItem key="players" label="Players" info={players !== null ? players.length : '-'} />,
