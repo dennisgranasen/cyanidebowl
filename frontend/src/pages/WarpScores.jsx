@@ -18,7 +18,6 @@ import config from '../config';
 import Navigation from '../components/Navigation';
 import Competitions from '../components/Competitions';
 import ImageUrls from '../ImageUrls';
-import logger from '../util/Logger';
 import formatter from '../util/Formatter';
 import InfoArea from '../components/InfoArea';
 import InfoItem from '../components/InfoItem';
@@ -40,7 +39,6 @@ function WarpScores() {
   const getLeagueByUuid = (uuid) => {
     if (uuid && uuid !== null) {
       const byUuid = leagues.filter((curr) => curr.uuid === uuid)[0];
-      logger.debug('League by uuid (%s): %o.', uuid, league);
       return byUuid;
     }
     return null;
@@ -61,7 +59,6 @@ function WarpScores() {
   }, []);
 
   useEffect(() => {
-    logger.debug('Setting league (uuid: %s). Leagues: %o, count: %s', leagueUuid, leagues, leagues.length);
     if ((!leagueUuid || leagueUuid === null) && leagues.length === 1) {
       setLeague(leagues[0]);
     } else {
