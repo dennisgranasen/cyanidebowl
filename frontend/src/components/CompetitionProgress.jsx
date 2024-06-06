@@ -8,6 +8,7 @@ import prettyPrint from '../util/PrettyPrint';
 function RoundRobinProgresses({ currentRound, totalRounds, playedMatches, totalMatches, validatedMatches, status }) {
   const roundLength = totalMatches ? totalMatches / totalRounds : 1;
   const finishedMatches = Math.max(playedMatches, validatedMatches);
+  const needsValidation = validatedMatches < playedMatches;
   const roundProgresses = [];
   for (let round = 0; round < totalRounds; round += 1) {
     let progress = 0;
@@ -21,11 +22,12 @@ function RoundRobinProgresses({ currentRound, totalRounds, playedMatches, totalM
     }
     roundProgresses.push({ name: `round${round + 1}`, progress, active });
   }
+  const color = needsValidation ? 'orange' : null;
   return (
     <SimpleGrid columns={totalRounds} spacing="3px">
       {roundProgresses.map(({ name, progress, active }) => (
         <GridItem key={name}>
-          <Progress value={progress} hasStripe={active} />
+          <Progress value={progress} hasStripe={active} colorScheme={color} />
         </GridItem>
       ))}
     </SimpleGrid>
@@ -35,8 +37,10 @@ function RoundRobinProgresses({ currentRound, totalRounds, playedMatches, totalM
 function WissenProgresses({ playedMatches, validatedMatches, teamsMax, status }) {
   const roundLength = teamsMax / 2;
   const finishedMatches = Math.max(playedMatches, validatedMatches);
+  const needsValidation = validatedMatches < playedMatches;
+  const color = needsValidation ? 'orange' : null;
   const progress = finishedMatches === roundLength ? 100 : finishedMatches % roundLength;
-  return <Progress value={progress} hasStripe={status === 'InProgress'} />;
+  return <Progress value={progress} hasStripe={status === 'InProgress'} colorScheme={color} />;
 }
 
 function Progresses({
