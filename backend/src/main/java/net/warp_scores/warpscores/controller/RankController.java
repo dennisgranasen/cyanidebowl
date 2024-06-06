@@ -1,14 +1,16 @@
 package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
+import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionFormat;
 import net.warp_scores.warpscores.domain.TeamDomainService;
+import net.warp_scores.warpscores.domain.model.Competition;
 import net.warp_scores.warpscores.domain.model.Contest;
 import net.warp_scores.warpscores.domain.model.Match;
 import net.warp_scores.warpscores.domain.model.Rank;
 import net.warp_scores.warpscores.domain.model.Team;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
-import net.warp_scores.warpscores.domain.persistence.TeamRepository;
+import net.warp_scores.warpscores.service.CompetitionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -29,7 +32,6 @@ import static net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus.Va
 @RequiredArgsConstructor
 public class RankController {
 
-    private final TeamRepository teamRepository;
     private final MatchRepository matchRepository;
     private final ContestRepository contestRepository;
 
@@ -68,14 +70,17 @@ public class RankController {
                 .compareToIgnoreCase(ofNullable(rankB.getTeam()).map(Team::getName).orElse(""));
     };
     private final TeamDomainService teamDomainService;
+    private final CompetitionService competitionService;
 
     @GetMapping("/ranks/competition/{competitionId}")
     public ResponseEntity<List<Rank>> getRanksForCompetition(@PathVariable(name = "competitionId") UUID competitionId) {
 
         List<Team> teams = teamDomainService.findByCompetitionId(competitionId);
+        Competition competition = competitionService.loadCompetition(competitionId)
+                .orElseThrow(NoSuchElementException::new);
 
         List<Rank> ranks = teams.stream()
-                .map(team -> toRank(team, competitionId))
+                .map(team -> toRank(team, competition))
                 .sorted(rankComparator)
                 .collect(HashMap<Rank, Integer>::new, (map, rank) -> map.put(rank, map.size() + 1), (map, map2) -> {})
                 .entrySet()
@@ -89,10 +94,10 @@ public class RankController {
         return ResponseEntity.ok(ranks);
     }
 
-    private Rank toRank(Team team, UUID competitionId) {
+    private Rank toRank(Team team, Competition competition) {
         Rank rank = new Rank();
         rank.setTeam(team);
-        List<Contest> contests = contestRepository.findByCompetitionIdAndStatus(competitionId, Validated);
+        List<Contest> contests = contestRepository.findByCompetitionIdAndStatus(competition.getUuid(), Validated);
         int gamesPlayed = 0;
         int gamesWon = 0;
         int gamesDrawn = 0;
@@ -133,7 +138,22 @@ public class RankController {
                 sustainedCasualties += getNullSafe(other.getInflictedcasualties());
             }
         }
-        rank.setScore(gamesWon * 3 + gamesDrawn);
+        CompetitionFormat format = competition.getFormat();
+        int winFactor = 0;
+        int drawFactor = 0;
+        switch (format) {
+            case RoundRobin:
+                winFactor = 3;
+                drawFactor = 1;
+                break;
+            case Wissen:
+                winFactor = 2;
+                drawFactor = 1;
+                break;
+            default:
+                break;
+        }
+        rank.setScore(gamesWon * winFactor + gamesDrawn * drawFactor);
         rank.setGamesPlayed(gamesPlayed);
         rank.setGamesWon(gamesWon);
         rank.setGamesDrawn(gamesDrawn);
