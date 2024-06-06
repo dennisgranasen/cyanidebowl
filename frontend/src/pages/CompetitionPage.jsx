@@ -81,6 +81,7 @@ function CompetitionPage() {
                       totalMatches={competition.totalMatches}
                       playedMatches={competition.playedMatches}
                       validatedMatches={competition.validatedMatches}
+                      liveMatches={competition.liveMatches}
                     />
                   }
                 />,
