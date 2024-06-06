@@ -21,18 +21,12 @@ test('Pretty print works with mixed snake and camel case', () => {
   expect(prettyPrint(' hello_thereYouAre')).toBe('Hello There You Are');
 });
 
-test('Pretty print works with "null"', () => {
+test('Pretty print works with "null" or "undefined"', () => {
   expect(prettyPrint(null)).toBeNull();
-});
-
-test('Pretty print works with "undefined"', () => {
   expect(prettyPrint(undefined)).toBeUndefined();
 });
 
-test('Pretty print ignores "null" as optionalPrefixSeperator', () => {
+test('Pretty print ignores "null" and "undefined" as optionalPrefixSeperator', () => {
   expect(prettyPrint('hello_thereYouAre', null)).toBe('Hello There You Are');
-});
-
-test('Pretty print ignores "undefined" as optionalPrefixSeperator', () => {
   expect(prettyPrint('hello_thereYouAre', undefined)).toBe('Hello There You Are');
 });
