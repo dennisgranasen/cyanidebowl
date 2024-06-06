@@ -4,15 +4,13 @@ import {
   AlertDescription,
   AlertIcon,
   Box,
-  Card,
-  CardBody,
   FormControl,
   FormLabel,
   Heading,
-  Image,
   Select,
   Spinner,
   Stack,
+  useMediaQuery,
 } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
 import CyanideApiService from '../CyanideApiService';
@@ -24,8 +22,11 @@ import logger from '../util/Logger';
 import formatter from '../util/Formatter';
 import InfoArea from '../components/InfoArea';
 import InfoItem from '../components/InfoItem';
+import HeaderCard from '../components/HeaderCard';
 
 function WarpScores() {
+  const [isSmallScreen] = useMediaQuery('(max-width: 768px)');
+
   const { leagueUuid } = useParams();
   const [competitions, setCompetitions] = useState([]);
   const [activeCompetitionsCount, setActiveCompetitionsCount] = useState([]);
@@ -127,7 +128,7 @@ function WarpScores() {
   return (
     <Stack>
       <Box>
-        <Navigation currentPage="home" />
+        <Navigation currentPage="home" isSmallScreen={isSmallScreen} />
       </Box>
       {leagues.length > 1 ? (
         <Box>
@@ -150,23 +151,18 @@ function WarpScores() {
         </Box>
       ) : null}
       {league ? (
-        <Card direction="row">
-          <Box>
-            <Image objectFit="contain" maxW="140px" src={ImageUrls.logo(league.logo)} />
-          </Box>
-          <CardBody>
-            <Heading>{league.name}</Heading>
-            <InfoArea
-              infoItems={[
-                <InfoItem key="1" label="Teams" info={league.teamCount} />,
-                <InfoItem key="2" label="Active Competitions" info={activeCompetitionsCount} />,
-                <InfoItem key="3" label="Competitions In Registration" info={registrationCompetitionsCount} />,
-                <InfoItem key="4" label="Finished Competitions" info={finishedCompetitionsCount} />,
-                <InfoItem key="5" label="Last match" info={formatter.formatAsDate(league.dateLastMatch)} />,
-              ]}
-            />
-          </CardBody>
-        </Card>
+        <HeaderCard heading={league.name} mainImageSrc={ImageUrls.logo(league.logo)} isSmallScreen={isSmallScreen}>
+          <InfoArea
+            isSmallScreen={isSmallScreen}
+            infoItems={[
+              <InfoItem key="1" label="Teams" info={league.teamCount} />,
+              <InfoItem key="2" label="Active Competitions" info={activeCompetitionsCount} />,
+              <InfoItem key="3" label="Competitions In Registration" info={registrationCompetitionsCount} />,
+              <InfoItem key="4" label="Finished Competitions" info={finishedCompetitionsCount} />,
+              <InfoItem key="5" label="Last match" info={formatter.formatAsDate(league.dateLastMatch)} />,
+            ]}
+          />
+        </HeaderCard>
       ) : null}
       <Box>
         {error ? (
@@ -175,7 +171,7 @@ function WarpScores() {
             <AlertDescription>{error.message}</AlertDescription>
           </Alert>
         ) : null}
-        {loading ? <Spinner /> : <Competitions competitions={competitions} />}
+        {loading ? <Spinner /> : <Competitions competitions={competitions} isSmallScreen={isSmallScreen} />}
       </Box>
     </Stack>
   );

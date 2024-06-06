@@ -6,7 +6,7 @@ import Race from './Race';
 import Formatter from '../util/Formatter';
 import ImageUrls from '../ImageUrls';
 import config from '../config';
-import abbrevators from '../util/Abbrevators';
+import abbreviators from '../util/Abbreviators';
 
 const { boxSize } = config;
 
@@ -22,7 +22,7 @@ function Rank({ rank, isSmallScreen }) {
           <Heading size="sm">{rank.rank}</Heading>
         </Center>
       </Td>
-      <Td>{isSmallScreen ? abbrevators.abbrevateTeamName(rank.team.name) : rank.team.name}</Td>
+      <Td>{isSmallScreen ? abbreviators.abbreviateTeamName(rank.team.name) : rank.team.name}</Td>
       <Td>
         <Image
           src={`${ImageUrls.logo(rank.team.logo)}`}
@@ -31,7 +31,7 @@ function Rank({ rank, isSmallScreen }) {
           objectFit="scale-down"
         />
       </Td>
-      <Td>{isSmallScreen ? abbrevators.abbrevateCoachName(rank.team.coachName) : rank.team.coachName}</Td>
+      <Td>{isSmallScreen ? abbreviators.abbreviateCoachName(rank.team.coachName) : rank.team.coachName}</Td>
       <Td>{isSmallScreen ? null : <Race race={rank.team.race} />}</Td>
       <Td>
         <Center>{Formatter.formatAsNumber(rank.gamesPlayed)}</Center>
