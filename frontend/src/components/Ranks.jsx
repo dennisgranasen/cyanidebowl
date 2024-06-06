@@ -1,5 +1,5 @@
 import React from 'react';
-import { Center, Spinner, Table, TableContainer, Tbody, Tfoot, Th, Thead, Tr, useMediaQuery } from '@chakra-ui/react';
+import { Center, Spinner, Table, TableContainer, Tbody, Tfoot, Th, Thead, Tr } from '@chakra-ui/react';
 import Rank from './Rank';
 
 function TableColumns(isSmallScreen) {
@@ -49,9 +49,7 @@ function TableColumns(isSmallScreen) {
   );
 }
 
-function Ranks({ ranks }) {
-  const [isSmallScreen] = useMediaQuery('(max-width: 768px)');
-
+function Ranks({ ranks, isSmallScreen }) {
   return (
     <TableContainer>
       <Table variant="stripedClickable" size="sm">

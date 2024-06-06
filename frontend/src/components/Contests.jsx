@@ -13,7 +13,6 @@ import {
   Th,
   Thead,
   Tr,
-  useMediaQuery,
 } from '@chakra-ui/react';
 import Contest from './Contest';
 import comparators from '../util/Comparators';
@@ -49,15 +48,14 @@ function getRobinFrom(contests) {
   if (contests[0].format !== 'RoundRobin') return null;
 
   contests.sort((contestA, contestB) =>
-    comparators.compareAsDates(getDateFromUUID(contestA.contestUuid), getDateFromUUID(contestB.contestUuid))
+    comparators.compareAsDates(getDateFromUUID(contestA.contestUuid), getDateFromUUID(contestB.contestUuid)),
   );
   const { coachName } = contests[0].opponents[0];
   return coachName;
 }
 
-function Contests({ contests, currentRound }) {
+function Contests({ contests, currentRound, isSmallScreen }) {
   const groupedContests = Map.groupBy(contests, (contest) => contest.round);
-  const [isSmallScreen] = useMediaQuery('(max-width: 768px)');
   const tabData = [];
   const robin = getRobinFrom(groupedContests.get(1));
   groupedContests.forEach((value, key) => {
@@ -88,7 +86,7 @@ function Contests({ contests, currentRound }) {
             <Thead>{TableColumns}</Thead>
             <Tbody>
               {value.map((contest) => {
-                return <Contest contest={contest} key={contest.contestUuid} />;
+                return <Contest isSmallScreen={isSmallScreen} contest={contest} key={contest.contestUuid} />;
               })}
             </Tbody>
             <Tfoot>{TableColumns}</Tfoot>

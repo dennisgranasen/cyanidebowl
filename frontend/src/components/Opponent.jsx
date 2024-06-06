@@ -1,26 +1,25 @@
 import React from 'react';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
-import { Box, Image, Td, Text, useMediaQuery } from '@chakra-ui/react';
+import { Box, Image, Td, Text } from '@chakra-ui/react';
 import ImageUrls from '../ImageUrls';
 import config from '../config';
-import abbrevators from '../util/Abbrevators';
+import abbreviators from '../util/Abbreviators';
 
 const { boxSize } = config;
 
-const Boxes = (opponent, reverse, winner) => {
+const Boxes = (opponent, reverse, winner, isSmallScreen) => {
   const fontWeight = winner ? 'bold' : 'normal';
   const textAlign = !reverse ? 'right' : 'left';
-  const [isSmallScreen] = useMediaQuery('(max-width: 768px)');
 
   return [
     <Td key={opponent.coachName}>
       <Text fontWeight={fontWeight} textAlign={textAlign}>
-        {isSmallScreen ? abbrevators.abbrevateCoachName(opponent.coachName) : opponent.coachName}
+        {isSmallScreen ? abbreviators.abbreviateCoachName(opponent.coachName) : opponent.coachName}
       </Text>
     </Td>,
     <Td key={opponent.name}>
       <Text fontWeight={fontWeight} textAlign={textAlign}>
-        {isSmallScreen ? abbrevators.abbrevateTeamName(opponent.name) : opponent.name}
+        {isSmallScreen ? abbreviators.abbreviateTeamName(opponent.name) : opponent.name}
       </Text>
     </Td>,
     <Td key={`${opponent.name}${opponent.logo}`}>
@@ -37,8 +36,10 @@ const Boxes = (opponent, reverse, winner) => {
   ];
 };
 
-function Opponent({ opponent, reverse, winner }) {
-  return reverse ? Boxes(opponent, reverse, winner).reverse() : Boxes(opponent);
+function Opponent({ opponent, reverse, winner, isSmallScreen }) {
+  return reverse
+    ? Boxes(opponent, reverse, winner, isSmallScreen).reverse()
+    : Boxes(opponent, reverse, winner, isSmallScreen);
 }
 
 export default Opponent;
