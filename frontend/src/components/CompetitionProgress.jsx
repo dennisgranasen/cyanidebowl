@@ -5,10 +5,19 @@ import { FaFlagCheckered } from 'react-icons/fa6';
 import DelayedIconTooltip from './DelayedIconTooltip';
 import prettyPrint from '../util/PrettyPrint';
 
-function RoundRobinProgresses({ currentRound, totalRounds, playedMatches, totalMatches, validatedMatches, status }) {
+function RoundRobinProgresses({
+  currentRound,
+  totalRounds,
+  liveMatches,
+  playedMatches,
+  totalMatches,
+  validatedMatches,
+  status,
+}) {
   const roundLength = totalMatches ? totalMatches / totalRounds : 1;
   const finishedMatches = Math.max(playedMatches, validatedMatches);
-  const needsValidation = validatedMatches < playedMatches;
+  const needsValidation = validatedMatches + liveMatches < playedMatches;
+  const live = liveMatches > 0;
   const roundProgresses = [];
   for (let round = 0; round < totalRounds; round += 1) {
     let progress = 0;
@@ -27,20 +36,21 @@ function RoundRobinProgresses({ currentRound, totalRounds, playedMatches, totalM
     <SimpleGrid columns={totalRounds} spacing="3px">
       {roundProgresses.map(({ name, progress, active }) => (
         <GridItem key={name}>
-          <Progress value={progress} hasStripe={active} colorScheme={color} />
+          <Progress value={progress} isIndeterminate={active && live} hasStripe={active} colorScheme={color} />
         </GridItem>
       ))}
     </SimpleGrid>
   );
 }
 
-function WissenProgresses({ playedMatches, validatedMatches, teamsMax, status }) {
+function WissenProgresses({ playedMatches, liveMatches, validatedMatches, teamsMax, status }) {
   const roundLength = teamsMax / 2;
   const finishedMatches = Math.max(playedMatches, validatedMatches);
-  const needsValidation = validatedMatches < playedMatches;
+  const needsValidation = validatedMatches + liveMatches < playedMatches;
+  const live = liveMatches > 0;
   const color = needsValidation ? 'orange' : null;
   const progress = finishedMatches === roundLength ? 100 : finishedMatches % roundLength;
-  return <Progress value={progress} hasStripe={status === 'InProgress'} colorScheme={color} />;
+  return <Progress value={progress} isIndeterminate={live} hasStripe={status === 'InProgress'} colorScheme={color} />;
 }
 
 function Progresses({
@@ -49,6 +59,7 @@ function Progresses({
   playedMatches,
   totalMatches,
   validatedMatches,
+  liveMatches,
   teamsMax,
   status,
   format,
@@ -64,6 +75,7 @@ function Progresses({
           totalMatches={totalMatches}
           playedMatches={playedMatches}
           validatedMatches={validatedMatches}
+          liveMatches={liveMatches}
           status={status}
         />
       );
@@ -74,6 +86,7 @@ function Progresses({
           teamsMax={teamsMax}
           playedMatches={playedMatches}
           validatedMatches={validatedMatches}
+          liveMatches={liveMatches}
           status={status}
         />
       );
@@ -101,6 +114,7 @@ function CompetitionProgress({
   playedMatches,
   totalMatches,
   validatedMatches,
+  liveMatches,
   teamsMax,
 }) {
   const currentRoundText = currentRound ? `, Round ${currentRound}` : '';
@@ -124,6 +138,7 @@ function CompetitionProgress({
             totalMatches={totalMatches}
             playedMatches={playedMatches}
             validatedMatches={validatedMatches}
+            liveMatches={liveMatches}
             status={status}
             format={format}
           />

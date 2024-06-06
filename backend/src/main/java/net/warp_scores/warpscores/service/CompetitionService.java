@@ -69,11 +69,13 @@ public class CompetitionService {
         Integer validatedMatchesCount = contestsRepository.countByCompetitionIdAndStatus(competition.getUuid(),
                 MatchStatus.Validated);
         Integer playedMatchesCount = contestsRepository.countByCompetitionIdAndMatchDateNotNull(competition.getUuid());
+        Integer liveMatches = contestsRepository.countByCompetitionIdAndLive(competition.getUuid(), 1);
         int totalRounds = teams - 1;
         competition.setTotalRounds(totalRounds);
         competition.setCurrentRound(contestCount / (teams / 2));
         competition.setTotalMatches(totalRounds * teams / 2);
         competition.setPlayedMatches(playedMatchesCount);
+        competition.setLiveMatches(liveMatches);
         competition.setValidatedMatches(validatedMatchesCount);
     }
 
@@ -81,6 +83,7 @@ public class CompetitionService {
         Integer validatedMatchesCount = contestsRepository.countByCompetitionIdAndStatus(competition.getUuid(),
                 MatchStatus.Validated);
         Integer playedMatchesCount = contestsRepository.countByCompetitionIdAndMatchDateNotNull(competition.getUuid());
+        Integer liveMatches = contestsRepository.countByCompetitionIdAndLive(competition.getUuid(), 1);
 
         List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid());
         OptionalInt currentRound = contests.stream().mapToInt(Contest::getRound).max();
@@ -88,6 +91,7 @@ public class CompetitionService {
         competition.setCurrentRound(currentRound.orElse(0));
         competition.setPlayedMatches(playedMatchesCount);
         competition.setValidatedMatches(validatedMatchesCount);
+        competition.setLiveMatches(liveMatches);
     }
 
     private void initializeKnockout(Competition competition) {

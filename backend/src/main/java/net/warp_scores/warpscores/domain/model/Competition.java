@@ -35,6 +35,7 @@ public class Competition implements UpdateableFromApi, Comparable<Competition> {
     private Integer totalRounds;
 
     private Integer validatedMatches;
+    private Integer liveMatches;
     private Integer playedMatches;
     private Integer totalMatches;
 

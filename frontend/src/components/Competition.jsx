@@ -25,6 +25,7 @@ function Competition({ competition, smallscreen }) {
           totalMatches={competition.totalMatches}
           playedMatches={competition.playedMatches}
           validatedMatches={competition.validatedMatches}
+          liveMatches={competition.liveMatches}
         />
       </Td>
       <Td isNumeric>{competition.teamsMax}</Td>
