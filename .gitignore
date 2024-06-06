@@ -40,6 +40,8 @@ frontend/public/index.js.LICENSE.txt
 http-client.env.json
 application.yml
 
+frontend/coverage
+
 /data
 
 warpscores-*.tar
