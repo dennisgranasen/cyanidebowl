@@ -24,7 +24,7 @@ import InfoItem from '../components/InfoItem';
 import HeaderCard from '../components/HeaderCard';
 
 function WarpScores() {
-  const [isSmallScreen] = useMediaQuery('(max-width: 768px)');
+  const [smallscreen] = useMediaQuery('(max-width: 768px)');
 
   const { leagueUuid } = useParams();
   const [competitions, setCompetitions] = useState([]);
@@ -125,7 +125,7 @@ function WarpScores() {
   return (
     <Stack>
       <Box>
-        <Navigation currentPage="home" isSmallScreen={isSmallScreen} />
+        <Navigation currentPage="home" smallscreen={smallscreen} />
       </Box>
       {leagues.length > 1 ? (
         <Box>
@@ -148,9 +148,9 @@ function WarpScores() {
         </Box>
       ) : null}
       {league ? (
-        <HeaderCard heading={league.name} mainImageSrc={ImageUrls.logo(league.logo)} isSmallScreen={isSmallScreen}>
+        <HeaderCard heading={league.name} mainImageSrc={ImageUrls.logo(league.logo)} smallscreen={smallscreen}>
           <InfoArea
-            isSmallScreen={isSmallScreen}
+            smallscreen={smallscreen}
             infoItems={[
               <InfoItem key="1" label="Teams" info={league.teamCount} />,
               <InfoItem key="2" label="Active Competitions" info={activeCompetitionsCount} />,
@@ -168,7 +168,7 @@ function WarpScores() {
             <AlertDescription>{error.message}</AlertDescription>
           </Alert>
         ) : null}
-        {loading ? <Spinner /> : <Competitions competitions={competitions} isSmallScreen={isSmallScreen} />}
+        {loading ? <Spinner /> : <Competitions competitions={competitions} smallscreen={smallscreen} />}
       </Box>
     </Stack>
   );

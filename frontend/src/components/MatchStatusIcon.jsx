@@ -1,9 +1,11 @@
 import React from 'react';
 import { Icon } from '@chakra-ui/icons';
-import { FaRegCalendar, FaRegClock, FaTowerBroadcast } from 'react-icons/fa6';
+import { FaCalculator, FaRegCalendar, FaRegClock, FaTowerBroadcast } from 'react-icons/fa6';
 
 function MatchStatusIcon({ status, live, boxSize }) {
   switch (status) {
+    case 'Calculated':
+      return <Icon as={FaCalculator} boxSize={boxSize} />;
     case 'scheduled':
     case 'Scheduled':
       return <Icon as={FaRegCalendar} boxSize={boxSize} />;

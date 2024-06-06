@@ -63,13 +63,13 @@ function MatchModal({ isOpen, onClose, contest }) {
                     </Tr>
                     <Tr>
                       <Td>
-                        <Center>{match.coaches[0].name}</Center>
+                        <Center>{match.coaches ? match.coaches[0].name : ''}</Center>
                       </Td>
                       <Td>
                         <Center>vs</Center>
                       </Td>
                       <Td>
-                        <Center>{match.coaches[1].name}</Center>
+                        <Center>{match.coaches ? match.coaches[1].name : ''}</Center>
                       </Td>
                     </Tr>
                     <Tr>

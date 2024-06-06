@@ -10,7 +10,7 @@ import abbreviators from '../util/Abbreviators';
 
 const { boxSize } = config;
 
-function Rank({ rank, isSmallScreen }) {
+function Rank({ rank, smallscreen: issmallscreen }) {
   const navigate = useNavigate();
   const goToTeam = () => {
     navigate(`/competition/${rank.team.competitionIds[0]}/team/${rank.team.id}`);
@@ -22,7 +22,7 @@ function Rank({ rank, isSmallScreen }) {
           <Heading size="sm">{rank.rank}</Heading>
         </Center>
       </Td>
-      <Td>{isSmallScreen ? abbreviators.abbreviateTeamName(rank.team.name) : rank.team.name}</Td>
+      <Td>{issmallscreen ? abbreviators.abbreviateTeamName(rank.team.name) : rank.team.name}</Td>
       <Td>
         <Image
           src={`${ImageUrls.logo(rank.team.logo)}`}
@@ -31,8 +31,8 @@ function Rank({ rank, isSmallScreen }) {
           objectFit="scale-down"
         />
       </Td>
-      <Td>{isSmallScreen ? abbreviators.abbreviateCoachName(rank.team.coachName) : rank.team.coachName}</Td>
-      <Td>{isSmallScreen ? null : <Race race={rank.team.race} />}</Td>
+      <Td>{issmallscreen ? abbreviators.abbreviateCoachName(rank.team.coachName) : rank.team.coachName}</Td>
+      <Td>{issmallscreen ? null : <Race race={rank.team.race} />}</Td>
       <Td>
         <Center>{Formatter.formatAsNumber(rank.gamesPlayed)}</Center>
       </Td>

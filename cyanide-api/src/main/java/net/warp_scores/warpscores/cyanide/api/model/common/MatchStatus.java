@@ -4,6 +4,7 @@ public enum MatchStatus {
     Scheduled,
     Validated,
     InProgress,
+    Calculated,
     @Deprecated
     scheduled(true, Scheduled),
     @Deprecated
