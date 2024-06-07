@@ -63,7 +63,7 @@ function CompetitionPage() {
             detailsHeading="Competition details"
             mainImageSrc={ImageUrls.logo(competition.leagueLogo)}
             additionalImageSrc={ImageUrls.logo(competition.logo)}
-            smallscreen={smallscreen}
+            smallscreen={smallscreen ? 'smallscreen' : undefined}
           >
             <InfoArea
               infoItems={[
@@ -97,10 +97,10 @@ function CompetitionPage() {
             />
           </HeaderCard>
           <Heading size="md">Ranking</Heading>
-          {ranks ? <Ranks smallscreen={smallscreen} ranks={ranks} /> : <Spinner />}
+          {ranks ? <Ranks smallscreen={smallscreen ? 'smallscreen' : undefined} ranks={ranks} /> : <Spinner />}
           <Heading size="md">Contests</Heading>
           {contests ? (
-            <Contests smallscreen={smallscreen} contests={contests} currentRound={competition.currentRound} />
+            <Contests smallscreen={smallscreen ? 'smallscreen' : undefined} contests={contests} currentRound={competition.currentRound} />
           ) : (
             <Spinner />
           )}

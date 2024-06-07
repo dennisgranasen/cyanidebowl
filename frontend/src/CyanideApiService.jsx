@@ -32,6 +32,10 @@ export default {
     axios(`/ranks/competition/${competitionUuid}`).then(returnData).catch(handleError),
   competitionContests: async (competitionUuid) =>
     axios(`/contests/competition/${competitionUuid}`).then(returnData).catch(handleError),
+  liveLeagueContests: async (leagueUuid) =>
+    axios(`/contests/league/${leagueUuid}/live`).then(returnData).catch(handleError),
+  latestLeagueContests: async (leagueUuid) =>
+    axios(`/contests/league/${leagueUuid}/latest`).then(returnData).catch(handleError),
 };
 
 // leagueTeams: async (leagueUuid) => axios(`/teams/league/${leagueUuid}`).then(returnData).catch(handleError),

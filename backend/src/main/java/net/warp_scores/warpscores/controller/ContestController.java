@@ -35,4 +35,26 @@ public class ContestController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+    @GetMapping("/contests/league/{leagueUuid}/latest")
+    public ResponseEntity<List<Contest>> getLatestLeagueContests(@PathVariable(name = "leagueUuid") UUID leagueUuid) {
+        try {
+            List<Contest> contests = contestService.getLatestLeagueContests(leagueUuid);
+            return ResponseEntity.ok(contests);
+        } catch (Exception ex) {
+            log.error("Unable to retrieve contests", ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/contests/league/{leagueUuid}/live")
+    public ResponseEntity<List<Contest>> getLiveLeagueContests(@PathVariable(name = "leagueUuid") UUID leagueUuid) {
+        try {
+            List<Contest> contests = contestService.getLiveLeagueContests(leagueUuid);
+            return ResponseEntity.ok(contests);
+        } catch (Exception ex) {
+            log.error("Unable to retrieve contests", ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }

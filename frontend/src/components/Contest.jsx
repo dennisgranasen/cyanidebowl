@@ -75,7 +75,7 @@ function Contest({ contest, smallscreen }) {
     <Tr onClick={openIfValidatedAndNotAdminResult}>
       <MatchModal isOpen={isOpen} onClose={onClose} contest={contest} />
       <Opponent
-        smallscreen={smallscreen}
+        smallscreen={smallscreen ? 'smallscreen' : undefined}
         opponent={contest.opponents[0]}
         key={contest.opponents[0].id}
         winner={contest.opponents[0].id === winnerTeamUuid}
@@ -88,7 +88,7 @@ function Contest({ contest, smallscreen }) {
         </DelayedIconTooltip>
       </Td>
       <Opponent
-        smallscreen={smallscreen}
+        smallscreen={smallscreen ? 'smallscreen' : undefined}
         opponent={contest.opponents[1]}
         key={contest.opponents[1].id}
         winner={contest.opponents[1].id === winnerTeamUuid}

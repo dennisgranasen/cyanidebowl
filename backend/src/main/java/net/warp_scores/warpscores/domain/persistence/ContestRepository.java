@@ -14,6 +14,10 @@ public interface ContestRepository extends MongoRepository<Contest, UUID> {
 
     List<Contest> findByCompetitionId(UUID competitionId);
 
+    List<Contest> findByLeagueIdAndLive(UUID leagueId, Integer live);
+
+    List<Contest> findTop6ByLeagueIdAndStatusOrderByMatchDateDesc(UUID leagueId, MatchStatus matchStatus);
+
     Integer countByCompetitionId(UUID competitionId);
 
     Integer countByCompetitionIdAndStatus(UUID competitionId, MatchStatus status);
