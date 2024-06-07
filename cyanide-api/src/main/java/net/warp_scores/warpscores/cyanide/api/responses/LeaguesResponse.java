@@ -1,8 +1,10 @@
 package net.warp_scores.warpscores.cyanide.api.responses;
 
-import net.warp_scores.warpscores.cyanide.api.model.ApiLeague;
 import lombok.Getter;
 import lombok.Setter;
+import net.warp_scores.warpscores.cyanide.api.model.ApiLeague;
+
+import java.util.Optional;
 
 /*
 {
@@ -42,5 +44,13 @@ public class LeaguesResponse extends ApiResponse {
     @Override
     public boolean isEmpty() {
         return leagues == null || leagues.length == 0;
+    }
+
+    @Override
+    public String getInformationString() {
+        return String.format("LeaguesResponse[isEmpty=%s, leagues=%s, changeable=%s]",
+                isEmpty(),
+                Optional.ofNullable(leagues).map(l -> String.valueOf(l.length)).orElse("n/a"),
+                isChangeableResponse());
     }
 }

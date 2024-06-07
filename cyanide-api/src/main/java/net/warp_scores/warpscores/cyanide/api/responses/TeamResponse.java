@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /*
 {
@@ -371,5 +372,14 @@ public class TeamResponse extends ApiResponse {
     @Override
     public boolean isEmpty() {
         return team == null;
+    }
+
+    @Override
+    public String getInformationString() {
+        return String.format("TeamResponse[isEmpty=%s, team=%s, players=%s, changeable=%s]",
+                isEmpty(),
+                Optional.ofNullable(team).map(ApiTeam::getId).orElse("n/a"),
+                Optional.ofNullable(roster).map(r -> String.valueOf(r.length)).orElse("n/a"),
+                isChangeableResponse());
     }
 }
