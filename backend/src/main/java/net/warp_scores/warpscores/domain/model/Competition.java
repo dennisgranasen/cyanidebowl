@@ -1,5 +1,6 @@
 package net.warp_scores.warpscores.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
 import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionFormat;
@@ -21,6 +22,7 @@ public class Competition implements UpdateableFromApi, Comparable<Competition> {
     private UUID leagueId;
     private String leagueName;
     private String leagueLogo;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date dateCreated;
     private CompetitionFormat format;
     private CompetitionStatus status;

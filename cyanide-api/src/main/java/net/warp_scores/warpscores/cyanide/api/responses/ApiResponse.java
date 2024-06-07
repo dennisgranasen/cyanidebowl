@@ -32,10 +32,10 @@ public abstract class ApiResponse implements EmptyAwareResponse, UpdateChangeabl
         this.changeableResponse = true;
     }
 
-    public abstract String getInformationString();
-
     @Override
     public String toString() {
         return getInformationString();
     }
+
+    protected abstract String getInformationString();
 }
