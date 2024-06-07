@@ -10,7 +10,7 @@ function LatestContests({ league }) {
   const [contests, setContests] = useState();
   const fetchLatestContests = (leagueUuid) => {
     CyanideApiService.latestLeagueContests(leagueUuid).then((data) => {
-      data.sort((compA, compB) => comparators.compareAsDates(compA.matchDate, compB.matchDate));
+      data.sort((compA, compB) => comparators.compareAsDates(compB.matchDate, compA.matchDate));
       setContests(data);
     });
   };

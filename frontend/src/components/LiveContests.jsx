@@ -11,7 +11,7 @@ function LiveContests({ league }) {
 
   const fetchLiveContests = (leagueUuid) => {
     CyanideApiService.liveLeagueContests(leagueUuid).then((data) => {
-      data.sort((compA, compB) => comparators.compareAsDates(compA.matchDate, compB.matchDate));
+      data.sort((compA, compB) => comparators.compareAsDates(compB.matchDate, compA.matchDate));
       setContests(data);
     });
   };

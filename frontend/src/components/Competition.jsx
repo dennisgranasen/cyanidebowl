@@ -36,10 +36,3 @@ function Competition({ competition, smallscreen }) {
 }
 
 export default Competition;
-
-/*
-                <Td><RouteLink to={`/competition/${competition.uuid}`}><Image src={`${ImageUrls.logo(competition.logo)}`}
-                                                                            boxSize={boxSize}
-                                                                            fallback={<QuestionOutlineIcon boxSize={boxSize}/>}
-                                                                            objectFit="scale-down"/></RouteLink></Td>
- */
