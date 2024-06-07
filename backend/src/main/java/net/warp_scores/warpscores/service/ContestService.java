@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -26,21 +25,33 @@ public class ContestService {
 
     public List<Contest> getCompetitionContests(UUID competitionUuid) {
         Optional<Competition> competition = competitionService.loadCompetition(competitionUuid);
-        List<Contest> contests = contestRepository.findByCompetitionId(competitionUuid)
-                .stream()
-                .peek(
-                        contest ->
-                        {
-                            Optional<UUID> matchUuid = Optional.ofNullable(contest.getMatchUuid());
-                            Optional<Match> match = matchUuid.flatMap(matchRepository::findById);
-                            contest.setAdminResult(contest.isAdminResult() ||
-                                    (matchUuid.isEmpty() &&
-                                            MatchStatus.Validated.equals(contest.getStatus())));
-                            match.ifPresent(contest::setMatch);
-                        }).collect(Collectors.toList());
+        List<Contest> contests = contestRepository.findByCompetitionId(competitionUuid);
+        contests.stream().forEach(this::loadMatchInto);
 
         List<Contest> initializedContests = contestInitializationService.initializeContestsScheduleForFormat(
                 competition, contests);
         return initializedContests;
+    }
+
+    public List<Contest> getLatestLeagueContests(UUID leagueUuid) {
+        List<Contest> contests = contestRepository.findTop6ByLeagueIdAndStatusOrderByMatchDateDesc(leagueUuid,
+                MatchStatus.Validated);
+        contests.stream().forEach(this::loadMatchInto);
+        return contests;
+    }
+
+    public List<Contest> getLiveLeagueContests(UUID leagueUuid) {
+        List<Contest> contests = contestRepository.findByLeagueIdAndLive(leagueUuid, 1);
+        contests.stream().forEach(this::loadMatchInto);
+        return contests;
+    }
+
+    private void loadMatchInto(Contest contest) {
+        Optional<UUID> matchUuid = Optional.ofNullable(contest.getMatchUuid());
+        Optional<Match> match = matchUuid.flatMap(matchRepository::findById);
+        contest.setAdminResult(contest.isAdminResult() ||
+                (matchUuid.isEmpty() &&
+                        MatchStatus.Validated.equals(contest.getStatus())));
+        match.ifPresent(contest::setMatch);
     }
 }

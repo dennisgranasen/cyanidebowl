@@ -1,5 +1,6 @@
 package net.warp_scores.warpscores.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
 import net.warp_scores.warpscores.DateUtil;
@@ -30,6 +31,7 @@ public class Contest implements UpdateableFromApi, Comparable {
     private MatchType type;
     private MatchStatus status;
     private Integer round;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date matchDate;
     private String matchId;
     private UUID matchUuid;

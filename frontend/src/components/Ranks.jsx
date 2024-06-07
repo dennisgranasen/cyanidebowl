@@ -57,7 +57,7 @@ function Ranks({ ranks, smallscreen }) {
         <Tbody>
           {ranks ? (
             ranks.map((rank) => {
-              return <Rank rank={rank} key={rank.team.id} smallscreen={smallscreen} />;
+              return <Rank rank={rank} key={rank.team.id} smallscreen={smallscreen ? 'smallscreen' : undefined} />;
             })
           ) : (
             <Spinner />

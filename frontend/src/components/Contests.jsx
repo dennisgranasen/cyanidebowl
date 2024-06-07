@@ -86,7 +86,7 @@ function Contests({ contests, currentRound, smallscreen }) {
             <Thead>{TableColumns}</Thead>
             <Tbody>
               {value.map((contest) => {
-                return <Contest smallscreen={smallscreen} contest={contest} key={contest.contestUuid} />;
+                return <Contest smallscreen={smallscreen ? 'smallscreen' : undefined} contest={contest} key={contest.contestUuid} />;
               })}
             </Tbody>
             <Tfoot>{TableColumns}</Tfoot>

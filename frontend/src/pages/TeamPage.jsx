@@ -84,10 +84,10 @@ function TeamPage() {
               detailsHeading="Team details"
               mainImageSrc={ImageUrls.logo(team.logo)}
               additionalImageSrc={ImageUrls.race(team.race)}
-              smallscreen={smallscreen}
+              smallscreen={smallscreen ? 'smallscreen' : undefined}
             >
               <InfoArea
-                smallscreen={smallscreen}
+                smallscreen={smallscreen ? 'smallscreen' : undefined}
                 infoItems={[
                   <InfoItem key="race" label="Race" info={prettyPrint(team.race)} />,
                   <InfoItem key="players" label="Players" info={players !== null ? players.length : '-'} />,

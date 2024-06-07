@@ -22,7 +22,7 @@ function Competitions({ competitions, smallscreen }) {
         <Tbody>
           {competitions ? (
             competitions.map((competition) => {
-              return <Competition smallscreen={smallscreen} competition={competition} key={competition.uuid} />;
+              return <Competition smallscreen={smallscreen ? 'smallscreen' : undefined} competition={competition} key={competition.uuid} />;
             })
           ) : (
             <Spinner />
