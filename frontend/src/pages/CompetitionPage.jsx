@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Heading, Spinner, useMediaQuery, VStack } from '@chakra-ui/react';
-import { useParams, Link as RouteLink } from 'react-router-dom';
+import { Link as RouteLink, useParams } from 'react-router-dom';
 import CyanideApiService from '../CyanideApiService';
 import Navigation from '../components/Navigation';
-import Formatter from '../util/Formatter';
 import Contests from '../components/Contests';
 import comparators from '../util/Comparators';
 import ImageUrls from '../ImageUrls';
@@ -13,6 +12,7 @@ import CompetitionProgress from '../components/CompetitionProgress';
 import InfoArea from '../components/InfoArea';
 import InfoItem from '../components/InfoItem';
 import HeaderCard from '../components/HeaderCard';
+import formatter from '../util/Formatter';
 
 function CompetitionPage() {
   const [smallscreen] = useMediaQuery('(max-width: 768px)');
@@ -67,7 +67,7 @@ function CompetitionPage() {
           >
             <InfoArea
               infoItems={[
-                <InfoItem key="Created" label="Created" info={Formatter.formatAsDate(competition.dateCreated)} />,
+                <InfoItem key="Created" label="Created" info={formatter.formatAsDate(competition.dateCreated)} />,
                 <InfoItem key="Format" label="Format" info={prettyPrint(competition.format)} />,
                 <InfoItem
                   key="Progress"
@@ -86,12 +86,12 @@ function CompetitionPage() {
                     />
                   }
                 />,
-                <InfoItem key="Teams" label="Teams" info={Formatter.formatAsNumber(competition.teamsMax)} />,
+                <InfoItem key="Teams" label="Teams" info={formatter.formatAsNumber(competition.teamsMax)} />,
                 <InfoItem
                   key="TimeSettings"
                   label="Time settings"
-                  info={`Turn: ${Formatter.formatAsNumber(competition.turnDuration / 60)}m`}
-                  additionalInfo={`Bonus: ${Formatter.formatAsNumber(competition.timeBonusDuration / 60)}m`}
+                  info={`Turn: ${formatter.formatAsNumber(competition.turnDuration / 60)}m`}
+                  additionalInfo={`Bonus: ${formatter.formatAsNumber(competition.timeBonusDuration / 60)}m`}
                 />,
               ]}
             />
@@ -100,7 +100,11 @@ function CompetitionPage() {
           {ranks ? <Ranks smallscreen={smallscreen ? 'smallscreen' : undefined} ranks={ranks} /> : <Spinner />}
           <Heading size="md">Contests</Heading>
           {contests ? (
-            <Contests smallscreen={smallscreen ? 'smallscreen' : undefined} contests={contests} currentRound={competition.currentRound} />
+            <Contests
+              smallscreen={smallscreen ? 'smallscreen' : undefined}
+              contests={contests}
+              currentRound={competition.currentRound}
+            />
           ) : (
             <Spinner />
           )}

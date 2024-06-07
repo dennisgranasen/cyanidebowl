@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
+  Box,
   Center,
   Modal,
   ModalBody,
@@ -13,9 +14,9 @@ import {
   Td,
   Tr,
 } from '@chakra-ui/react';
-import formatter from '../util/Formatter';
+import ContestMatchCard from './ContestMatchCard';
 
-function MatchModal({ isOpen, onClose, contest }) {
+function MatchModal({ isOpen, onClose, contest, smallscreen }) {
   const [match, setMatch] = useState();
   useEffect(() => {
     let m = contest.match;
@@ -30,59 +31,24 @@ function MatchModal({ isOpen, onClose, contest }) {
   }, [contest]);
 
   return (
-    <Modal size="full" isOpen={isOpen} onClose={onClose}>
-      <ModalOverlay />
+    <Modal size={smallscreen ? 'full' : 'xl'} isOpen={isOpen} onClose={onClose}>
+      <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(5px)" />
       <ModalContent>
         <ModalCloseButton />
         <ModalHeader>
-          <Center>
-            {contest && `${contest.competitionName}: `}
-            {match && `${match.teams[0].name} vs ${match.teams[1].name}`}
-          </Center>
-          <Center>
-            {match && `${formatter.formatAsDate(match.started)} - ${formatter.formatAsDate(match.finished)}`}
-          </Center>
-          <Center>{match && `Duration: ${formatter.formatAsDuration(match.started, match.finished)}`}</Center>
+          <Center>{contest.competitionName}</Center>
         </ModalHeader>
         <ModalBody>
+          <Center>
+            <Box w="100%">
+              <ContestMatchCard contest={contest} contestHeader={null} variant="filled" />
+            </Box>
+          </Center>
           {match && (
             <Center>
               <TableContainer>
                 <Table variant="striped" size="sm">
                   <Tbody>
-                    <Tr>
-                      <Td>
-                        <Center>{match.teams[0].name}</Center>
-                      </Td>
-                      <Td>
-                        <Center>vs</Center>
-                      </Td>
-                      <Td>
-                        <Center>{match.teams[1].name}</Center>
-                      </Td>
-                    </Tr>
-                    <Tr>
-                      <Td>
-                        <Center>{match.coaches ? match.coaches[0].name : ''}</Center>
-                      </Td>
-                      <Td>
-                        <Center>vs</Center>
-                      </Td>
-                      <Td>
-                        <Center>{match.coaches ? match.coaches[1].name : ''}</Center>
-                      </Td>
-                    </Tr>
-                    <Tr>
-                      <Td>
-                        <Center>{match.teams[0].inflictedtouchdowns}</Center>
-                      </Td>
-                      <Td>
-                        <Center>Touchdowns</Center>
-                      </Td>
-                      <Td>
-                        <Center>{match.teams[1].inflictedtouchdowns}</Center>
-                      </Td>
-                    </Tr>
                     <Tr>
                       <Td>
                         <Center>{match.teams[0].inflictedtackles}</Center>

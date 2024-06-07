@@ -1,25 +1,34 @@
 const numberFormat = new Intl.NumberFormat('en-GB');
-const dateFormat = new Intl.DateTimeFormat('en-GB', {
+const dateFormatOptions = {
   year: '2-digit',
   month: '2-digit',
   day: '2-digit',
   hour12: false,
   hour: 'numeric',
   minute: 'numeric',
-  timeZone: 'UTC',
-});
+};
+
 const formatAsNumber = (value) => {
   return value !== null ? numberFormat.format(value) : '-';
 };
 
+const asUTCDate = (date) => {
+  const [year, month, day, hours, minutes, seconds] = date.split(/-|\s|:/).map((c) => parseInt(c, 10));
+  return new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds, 0));
+};
+
 const formatAsDate = (date) => {
-  return date && date !== null ? dateFormat.format(new Date(date)) : '';
+  if (!date) return '';
+
+  const utcDate = asUTCDate(date);
+  return utcDate.toLocaleString([], dateFormatOptions);
 };
 
 const formatAsDuration = (startDate, endDate) => {
-  if (!startDate || !endDate) return '';
+  if (!startDate) return '';
+  const endTime = endDate ? asUTCDate(endDate).getTime() : Date.now();
 
-  const millis = new Date(endDate).getTime() - new Date(startDate).getTime();
+  const millis = endTime - asUTCDate(startDate).getTime();
   const minutes = Math.floor(millis / 1000 / 60);
   const hours = Math.floor(minutes / 60);
   const restMinutes = minutes % 60;

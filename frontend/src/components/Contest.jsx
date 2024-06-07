@@ -1,5 +1,5 @@
-import React from 'react';
-import { Center, Spinner, Td, Text, Tr, useDisclosure } from '@chakra-ui/react';
+import React, { useState } from 'react';
+import { Center, ModalOverlay, Spinner, Td, Text, Tr, useDisclosure } from '@chakra-ui/react';
 import Opponent from './Opponent';
 import prettyPrint from '../util/PrettyPrint';
 import formatter from '../util/Formatter';
@@ -7,6 +7,7 @@ import MatchStatusIcon from './MatchStatusIcon';
 import config from '../config';
 import MatchModal from './MatchModal';
 import DelayedIconTooltip from './DelayedIconTooltip';
+import ScoreOrIcon from './ScoreOrIcon';
 
 const { smallBoxSize } = config;
 
@@ -30,36 +31,10 @@ function ScoreOrIconTooltip({ contest }) {
 
   let status = `${matchPlayed && !matchValidated ? 'Awaiting validation' : prettyPrint(contest.status)}`;
   if (contest.live) status = 'Live';
-  return `${status} ${contest.adminResult ? ' - Admin result' : formatter.formatAsDate(contest.matchDate)}`;
-}
-
-function ScoreOrIcon({ contest }) {
-  let matchPlayed = false;
-  let matchValidated = false;
-
-  switch (contest.status) {
-    case 'played':
-    case 'Validated':
-      matchPlayed = true;
-      matchValidated = true;
-      break;
-    case 'InProgress':
-      matchPlayed = contest.matchDate && contest.winner && contest.status === 'InProgress' && !contest.live;
-      break;
-    default:
-      break;
-  }
-
-  let color = null;
-  if (!matchValidated) color = 'grey';
-  if (contest.adminResult) color = 'orange';
-  return matchPlayed ? (
-    <Text color={color}>
-      {contest.opponents[0].score} - {contest.opponents[1].score}
-    </Text>
-  ) : (
-    <MatchStatusIcon status={contest.status} live={contest.live} boxSize={smallBoxSize} />
-  );
+  const matchDate = contest.live
+    ? formatter.formatAsDuration(contest.matchDate, null)
+    : formatter.formatAsDate(contest.matchDate);
+  return `${status} ${contest.adminResult ? ' - Admin result' : matchDate}`;
 }
 
 function Contest({ contest, smallscreen }) {
@@ -73,7 +48,12 @@ function Contest({ contest, smallscreen }) {
     contest.winner && contest.opponents[0].score !== contest.opponents[1].score ? contest.winner.team.id : null;
   return contest ? (
     <Tr onClick={openIfValidatedAndNotAdminResult}>
-      <MatchModal isOpen={isOpen} onClose={onClose} contest={contest} />
+      <MatchModal
+        isOpen={isOpen}
+        onClose={onClose}
+        contest={contest}
+        smallscreen={smallscreen ? 'smallscreen' : undefined}
+      />
       <Opponent
         smallscreen={smallscreen ? 'smallscreen' : undefined}
         opponent={contest.opponents[0]}
@@ -83,7 +63,7 @@ function Contest({ contest, smallscreen }) {
       <Td>
         <DelayedIconTooltip label={<ScoreOrIconTooltip contest={contest} />}>
           <Center>
-            <ScoreOrIcon contest={contest} />
+            <ScoreOrIcon contest={contest} boxSize={smallBoxSize} size="sm" />
           </Center>
         </DelayedIconTooltip>
       </Td>

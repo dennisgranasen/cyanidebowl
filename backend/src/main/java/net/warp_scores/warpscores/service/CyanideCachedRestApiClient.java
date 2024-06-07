@@ -110,7 +110,7 @@ public class CyanideCachedRestApiClient {
             String responseClassName = getResponseClassName(apiRequest);
             restApiResponseCache.setResponseClassName(responseClassName);
             restApiResponseCache.setResponse(response);
-            log.info("Storing response [{}] in cache with key [{}].", response, apiRequestKey.asString());
+            log.info("Storing response [{}] in cache with key [{}].", apiRequest.getResponseClass().getSimpleName(), apiRequestKey.asString());
             restApiResponseCacheRepository.save(restApiResponseCache);
         } catch (JsonProcessingException ex) {
             log.error("Unable to cache response...");
@@ -127,8 +127,10 @@ public class CyanideCachedRestApiClient {
             return null;
         }
         try {
-            return objectMapper.readValue(objectMapper.writeValueAsString(rawResponse),
+            ResponseType responseType = objectMapper.readValue(objectMapper.writeValueAsString(rawResponse),
                     responseClass);
+            log.info("Converted raw response to '{}'.", responseType.toString());
+            return responseType;
         } catch (JsonProcessingException ex) {
             log.error("Unable to convert raw response {} to response object (type: {})...", rawResponse, responseClass);
             log.error("Exception: ", ex);
