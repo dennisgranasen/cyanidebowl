@@ -148,7 +148,12 @@ function WarpScores() {
         </Box>
       ) : null}
       {league ? (
-        <HeaderCard heading={league.name} mainImageSrc={ImageUrls.logo(league.logo)} smallscreen={smallscreen}>
+        <HeaderCard
+          heading={league.name}
+          detailsHeading="League details"
+          mainImageSrc={ImageUrls.logo(league.logo)}
+          smallscreen={smallscreen}
+        >
           <InfoArea
             smallscreen={smallscreen}
             infoItems={[

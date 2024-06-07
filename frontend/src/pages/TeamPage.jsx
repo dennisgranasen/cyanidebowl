@@ -81,6 +81,7 @@ function TeamPage() {
             <HeaderCard
               heading={team.name}
               subHeading={`Coach: ${team.coachName}`}
+              detailsHeading="Team details"
               mainImageSrc={ImageUrls.logo(team.logo)}
               additionalImageSrc={ImageUrls.race(team.race)}
               smallscreen={smallscreen}

@@ -2,6 +2,7 @@ import React from 'react';
 import {
   Accordion,
   AccordionButton,
+  AccordionIcon,
   AccordionItem,
   AccordionPanel,
   Box,
@@ -34,7 +35,7 @@ function StandardScreenHeaderCard(mainImageSrc, heading, subHeading, additionalI
   );
 }
 
-function SmallScreenHeaderCard(mainImageSrc, heading, subHeading, additionalImageSrc, children) {
+function SmallScreenHeaderCard(mainImageSrc, heading, subHeading, detailsHeading, additionalImageSrc, children) {
   return (
     <Card direction="column">
       <Box>
@@ -47,7 +48,12 @@ function SmallScreenHeaderCard(mainImageSrc, heading, subHeading, additionalImag
             <Box mb="10px">{subHeading}</Box>
             <Accordion allowMultiple>
               <AccordionItem>
-                <AccordionButton>Information</AccordionButton>
+                <AccordionButton>
+                  <Box as="span" flex="1" textAlign="left">
+                    {detailsHeading}
+                  </Box>
+                  <AccordionIcon />
+                </AccordionButton>
                 <AccordionPanel>{children}</AccordionPanel>
               </AccordionItem>
             </Accordion>
@@ -58,9 +64,9 @@ function SmallScreenHeaderCard(mainImageSrc, heading, subHeading, additionalImag
   );
 }
 
-function HeaderCard({ mainImageSrc, heading, subHeading, additionalImageSrc, smallscreen, children }) {
+function HeaderCard({ mainImageSrc, heading, subHeading, detailsHeading, additionalImageSrc, smallscreen, children }) {
   return smallscreen
-    ? SmallScreenHeaderCard(mainImageSrc, heading, subHeading, additionalImageSrc, children)
+    ? SmallScreenHeaderCard(mainImageSrc, heading, subHeading, detailsHeading, additionalImageSrc, children)
     : StandardScreenHeaderCard(mainImageSrc, heading, subHeading, additionalImageSrc, children);
 }
 

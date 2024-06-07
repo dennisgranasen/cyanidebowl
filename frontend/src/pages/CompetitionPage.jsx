@@ -60,6 +60,7 @@ function CompetitionPage() {
           <HeaderCard
             heading={competition.name}
             subHeading={<RouteLink to={`/${competition.leagueId}`}>League: {competition.leagueName}</RouteLink>}
+            detailsHeading="Competition details"
             mainImageSrc={ImageUrls.logo(competition.leagueLogo)}
             additionalImageSrc={ImageUrls.logo(competition.logo)}
             smallscreen={smallscreen}
