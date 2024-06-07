@@ -1,8 +1,14 @@
 import { Box, Center, Grid, GridItem, Heading, Image, SimpleGrid, Text } from '@chakra-ui/react';
 import React from 'react';
+import { Link as RouteLink } from 'react-router-dom';
+import { FaTowerBroadcast } from 'react-icons/fa6';
+import { Icon } from '@chakra-ui/icons';
 import ContestMatchCard from './ContestMatchCard';
 import ImageUrls from '../ImageUrls';
 import formatter from '../util/Formatter';
+import config from '../config';
+
+const { boxSize } = config;
 
 function TeamAndCoach({ teamName, coachName }) {
   return (
@@ -14,7 +20,7 @@ function TeamAndCoach({ teamName, coachName }) {
 }
 
 function ContestMatchCards({ contests, noContentIcon, noContentHeading, noContentText }) {
-  return contests ? (
+  return contests && contests.length > 0 ? (
     <SimpleGrid columns={{ lg: 3, sm: 1, md: 2 }} spacing="20px">
       {contests.map((contest) => {
         const started = contest.match ? contest.match.started : contest.matchDate;
@@ -24,7 +30,9 @@ function ContestMatchCards({ contests, noContentIcon, noContentHeading, noConten
           <ContestMatchCard key={contest.contestUuid}>
             <Grid templateRows="repeat(4)" templateColumns="repeat(8, 1fr)" gap={4} w="100%">
               <GridItem colSpan={8}>
-                <Center color="grey">{contest.competitionName}</Center>
+                <Center color="grey">
+                  <RouteLink to={`/competition/${contest.competitionId}`}>{contest.competitionName}</RouteLink>
+                </Center>
               </GridItem>
               <GridItem colSpan={4}>
                 <TeamAndCoach teamName={contest.opponents[0].name} coachName={contest.opponents[0].coachName} />
@@ -39,7 +47,13 @@ function ContestMatchCards({ contests, noContentIcon, noContentHeading, noConten
               </GridItem>
               <GridItem colSpan={2}>
                 <Center h="100%">
-                  <Heading size="md">{`${contest.opponents[0].score} - ${contest.opponents[1].score}`}</Heading>
+                  <Heading size="md">
+                    {contest.live ? (
+                      <Icon as={FaTowerBroadcast} boxSize={boxSize} />
+                    ) : (
+                      `${contest.opponents[0].score} - ${contest.opponents[1].score}`
+                    )}
+                  </Heading>
                 </Center>
               </GridItem>
               <GridItem colSpan={3} align="center">
