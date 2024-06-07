@@ -3,6 +3,7 @@ package net.warp_scores.warpscores.cyanide.api.responses;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /*
@@ -453,5 +454,13 @@ public class TeamMatchesResponse extends ApiResponse {
     public class MatchId {
         private UUID uuid;
         private String id;
+    }
+
+    @Override
+    public String getInformationString() {
+        return String.format("TeamMatchesResponse[isEmpty=%s, matchIds=%s, changeable=%s]",
+                isEmpty(),
+                Optional.ofNullable(matchIds).map(m -> String.valueOf(m.length)).orElse("n/a"),
+                isChangeableResponse());
     }
 }

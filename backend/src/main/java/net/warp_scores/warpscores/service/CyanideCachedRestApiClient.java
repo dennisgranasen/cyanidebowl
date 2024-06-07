@@ -110,7 +110,7 @@ public class CyanideCachedRestApiClient {
             String responseClassName = getResponseClassName(apiRequest);
             restApiResponseCache.setResponseClassName(responseClassName);
             restApiResponseCache.setResponse(response);
-            log.info("Storing response [{}] in cache with key [{}].", responseClassName, apiRequestKey.asString());
+            log.info("Storing response [{}] in cache with key [{}].", response, apiRequestKey.asString());
             restApiResponseCacheRepository.save(restApiResponseCache);
         } catch (JsonProcessingException ex) {
             log.error("Unable to cache response...");

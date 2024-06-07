@@ -1,8 +1,10 @@
 package net.warp_scores.warpscores.cyanide.api.responses;
 
-import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
 import lombok.Getter;
 import lombok.Setter;
+import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
+
+import java.util.Optional;
 
 /*
 GET https://web.cyanide-studio.com/ws/bb3/teams/?league=DBBL  BB3&limit=100&platform=pc&key={{apiKey}}&order=finished
@@ -123,5 +125,13 @@ public class TeamsResponse extends ApiResponse {
     @Override
     public boolean isEmpty() {
         return teams == null || teams.length == 0;
+    }
+
+    @Override
+    public String getInformationString() {
+        return String.format("CompetitionsResponse[isEmpty=%s, teams=%s, changeable=%s]",
+                isEmpty(),
+                Optional.ofNullable(teams).map(t -> String.valueOf(t.length)).orElse("n/a"),
+                isChangeableResponse());
     }
 }

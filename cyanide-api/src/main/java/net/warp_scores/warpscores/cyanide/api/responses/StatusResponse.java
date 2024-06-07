@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Optional;
+
 /*
 
 {
@@ -215,5 +217,13 @@ public class StatusResponse extends ApiResponse {
         private Object[] pc;
         private Object[] microsoft;
         private Object[] sony;
+    }
+
+    @Override
+    public String getInformationString() {
+        return String.format("StatusResponse[isEmpty=%s, games=%s, changeable=%s]",
+                isEmpty(),
+                Optional.ofNullable(games).map(g -> String.valueOf(g.length)).orElse("n/a"),
+                isChangeableResponse());
     }
 }

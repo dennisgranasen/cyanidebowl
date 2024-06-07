@@ -1,10 +1,12 @@
 package net.warp_scores.warpscores.cyanide.api.responses;
 
+import lombok.Getter;
+import lombok.Setter;
 import net.warp_scores.warpscores.cyanide.api.model.ApiCoach;
 import net.warp_scores.warpscores.cyanide.api.model.ApiMatch;
 import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
-import lombok.Getter;
-import lombok.Setter;
+
+import java.util.Optional;
 
 /*
 {
@@ -154,5 +156,14 @@ public class MatchResponse extends ApiResponse {
         if (match.getFinished() != null) {
             setChangeableResponse(false);
         }
+    }
+
+    @Override
+    public String getInformationString() {
+        return String.format("MatchResponse[match=%s, coaches=%s, teams=%s, changeable=%s]",
+                Optional.ofNullable(match).map(ApiMatch::getId).orElse("n/a"),
+                Optional.ofNullable(coaches).map(c -> String.valueOf(c.length)).orElse("n/a"),
+                Optional.ofNullable(teams).map(t -> String.valueOf(t.length)).orElse("n/a"),
+                isChangeableResponse());
     }
 }

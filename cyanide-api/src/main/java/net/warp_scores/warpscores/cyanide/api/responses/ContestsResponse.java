@@ -1,9 +1,11 @@
 package net.warp_scores.warpscores.cyanide.api.responses;
 
-import net.warp_scores.warpscores.cyanide.api.model.ApiContest;
-import net.warp_scores.warpscores.cyanide.api.model.common.Context;
 import lombok.Getter;
 import lombok.Setter;
+import net.warp_scores.warpscores.cyanide.api.model.ApiContest;
+import net.warp_scores.warpscores.cyanide.api.model.common.Context;
+
+import java.util.Optional;
 
 
 /*
@@ -303,5 +305,13 @@ public class ContestsResponse extends ApiResponse {
     @Override
     public boolean isEmpty() {
         return contests == null || contests.length == 0;
+    }
+
+    @Override
+    public String getInformationString() {
+        return String.format("ContestsResponse[isEmpty=%s, contests=%s, changeable=%s]",
+                isEmpty(),
+                Optional.ofNullable(contests).map(c -> String.valueOf(c.length)).orElse("n/a"),
+                isChangeableResponse());
     }
 }

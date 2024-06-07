@@ -4,6 +4,8 @@ import net.warp_scores.warpscores.cyanide.api.model.ApiMatch;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Optional;
+
 /*
 {
   "size": [
@@ -447,4 +449,11 @@ public class MatchesResponse extends ApiResponse {
         return matches == null || matches.length == 0;
     }
 
+    @Override
+    public String getInformationString() {
+        return String.format("MatchesResponse[isEmpty=%s, matches=%s, changeable=%s]",
+                isEmpty(),
+                Optional.ofNullable(matches).map(m -> String.valueOf(m.length)).orElse("n/a"),
+                isChangeableResponse());
+    }
 }
