@@ -1,4 +1,4 @@
-const backendUrl = process.env.NODE_ENV === 'production' ? 'https://warp-scores.net/api' : 'http://localhost:8080';
+const backendUrl = process.env.NODE_ENV === 'production' ? 'https://warp-scores.net/api' : 'http://localhost:18080';
 
 const config = {
   backendUrl,
