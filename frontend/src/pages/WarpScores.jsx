@@ -159,11 +159,15 @@ function WarpScores() {
           <InfoArea
             smallscreen={smallscreen ? 'smallscreen' : undefined}
             infoItems={[
-              <InfoItem key="1" label="Teams" info={league.teamCount} />,
-              <InfoItem key="2" label="Active Competitions" info={activeCompetitionsCount} />,
-              <InfoItem key="3" label="Competitions In Registration" info={registrationCompetitionsCount} />,
-              <InfoItem key="4" label="Finished Competitions" info={finishedCompetitionsCount} />,
-              <InfoItem key="5" label="Last match" info={formatter.formatAsDate(league.dateLastMatch)} />,
+              <InfoItem key="teams" label="Teams" info={league.teamCount} />,
+              <InfoItem key="activeCompetitions" label="Active Competitions" info={activeCompetitionsCount} />,
+              <InfoItem
+                key="competitionsInRegistration"
+                label="Competitions In Registration"
+                info={registrationCompetitionsCount}
+              />,
+              <InfoItem key="finishedCompetitions" label="Finished Competitions" info={finishedCompetitionsCount} />,
+              <InfoItem key="lastMatch" label="Last match" info={formatter.formatAsDate(league.dateLastMatch)} />,
             ]}
           />
         </HeaderCard>
@@ -175,7 +179,11 @@ function WarpScores() {
             <AlertDescription>{error.message}</AlertDescription>
           </Alert>
         ) : null}
-        {loading ? <Spinner /> : <Competitions competitions={competitions} smallscreen={smallscreen ? 'smallscreen' : undefined} />}
+        {loading ? (
+          <Spinner />
+        ) : (
+          <Competitions competitions={competitions} smallscreen={smallscreen ? 'smallscreen' : undefined} />
+        )}
       </Box>
       <LiveContests league={league} smallscreen={smallscreen ? 'smallscreen' : undefined} />
       <LatestContests league={league} smallscreen={smallscreen ? 'smallscreen' : undefined} />

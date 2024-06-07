@@ -17,7 +17,7 @@ function StandardScreenHeaderCard(mainImageSrc, heading, subHeading, additionalI
   return (
     <Card direction="row">
       <Box>
-        <Image objectFit="contain" maxW="140px" src={mainImageSrc} />
+        <Image objectFit="contain" maxW="140px" src={mainImageSrc} fallback={null} />
       </Box>
       <CardBody>
         <Flex>
@@ -27,7 +27,7 @@ function StandardScreenHeaderCard(mainImageSrc, heading, subHeading, additionalI
             {children}
           </Box>
           <Box hideBelow="lg">
-            <Image objectFit="contain" maxW="140px" src={additionalImageSrc} fallback={null} />
+            <Image hideBelow="lg" objectFit="cover" maxH="140px" src={additionalImageSrc} fallback={null} />
           </Box>
         </Flex>
       </CardBody>
