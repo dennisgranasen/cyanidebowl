@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Card, CardBody, Center, Flex, Heading, Image, Spinner, useMediaQuery, VStack } from '@chakra-ui/react';
+import { Box, Heading, Spinner, useMediaQuery, VStack } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
 import CyanideApiService from '../CyanideApiService';
 import Roster from '../components/Roster';
@@ -9,7 +9,6 @@ import Formatter from '../util/Formatter';
 import ImageUrls from '../ImageUrls';
 import InfoArea from '../components/InfoArea';
 import InfoItem from '../components/InfoItem';
-import DelayedIconTooltip from '../components/DelayedIconTooltip';
 import Matches from '../components/Matches';
 import HeaderCard from '../components/HeaderCard';
 

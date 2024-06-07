@@ -4,6 +4,7 @@ import { Flex } from '@chakra-ui/react';
 function InfoArea({ infoItems, ...props }) {
   return (
     <Flex
+      flex="1"
       align="left"
       justify={{ base: 'center', md: 'space-between' }}
       direction={{ base: 'column', md: 'row' }}
