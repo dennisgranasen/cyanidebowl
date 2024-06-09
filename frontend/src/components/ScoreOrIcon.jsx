@@ -29,9 +29,10 @@ function ScoreOrIcon({ contest, size, boxSize }) {
         {matchPlayed && contest.match && (
           <Heading size={size}>{`${contest.match.teams[0].score} - ${contest.match.teams[1].score}`}</Heading>
         )}
-        {((matchPlayed && !contest.match) || !matchPlayed) && (
-          <MatchStatusIcon status={contest.status} live={contest.live} boxSize={boxSize} />
+        {matchPlayed && !contest.match && (
+          <Heading size={size}>{`${contest.opponents[0].score} - ${contest.opponents[1].score}`}</Heading>
         )}
+        {!matchPlayed && <MatchStatusIcon status={contest.status} live={contest.live} boxSize={boxSize} />}
       </VStack>
     </Center>
   );
