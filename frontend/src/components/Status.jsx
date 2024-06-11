@@ -4,6 +4,8 @@ import {
   Box,
   HStack,
   Link,
+  List,
+  ListItem,
   Popover,
   PopoverArrow,
   PopoverBody,
@@ -25,10 +27,6 @@ function StatusIcon({ status, maintenance }) {
   const color = status ? 'orange' : 'red';
   return <WarningIcon size="sm" color={color} />;
 }
-
-const getColor = (status) => {
-  return status ? 'green' : 'red';
-};
 
 const getMaintenanceColor = (maintenanceStatus) => {
   return maintenanceStatus.length === 0 ? 'grey' : 'orange';
@@ -96,6 +94,21 @@ function Status() {
               ) : null}
             </HStack>
           </HStack>
+          <Box fontSize="sm">
+            Latest News:
+            <List>
+              {status.news.map(
+                (newsItem) =>
+                  !newsItem.title &&
+                  typeof newsItem.message === 'string' &&
+                  newsItem.message.match(/maintenance/i) && (
+                    <ListItem key={newsItem.message} fontSize="xs">
+                      {newsItem.message}
+                    </ListItem>
+                  )
+              )}
+            </List>
+          </Box>
         </PopoverBody>
         <PopoverFooter>Last check: {status && status.lastCheck ? status.lastCheck : status}</PopoverFooter>
       </PopoverContent>
