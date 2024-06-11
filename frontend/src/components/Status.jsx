@@ -23,6 +23,7 @@ import { FaDiscord } from 'react-icons/fa';
 import CyanideApiService from '../CyanideApiService';
 import config from '../config';
 import hashCode from '../util/HashCode';
+import formatter from '../util/Formatter';
 
 function NewsItem({ title, message }) {
   const hasStringTitle = typeof title === 'string' && title.length > 0;
@@ -178,7 +179,8 @@ function Status() {
                 This site is completely unofficial and not affiliated with Cyanide, Nacon or Games Workshop.
               </Text>
               <Text fontSize="xs">
-                Blood Bowl, BB3 and probably a lot more names are trademarks of their respective owners. Used without permission. No challenge to their status intended.
+                Blood Bowl, BB3 and probably a lot more names are trademarks of their respective owners. Used without
+                permission. No challenge to their status intended.
               </Text>
               <Text fontSize="xs">
                 Page maintained by{' '}
@@ -189,7 +191,9 @@ function Status() {
             </VStack>
           </Box>
         </PopoverBody>
-        <PopoverFooter>Last check: {status && status.lastCheck ? status.lastCheck : status}</PopoverFooter>
+        <PopoverFooter>
+          Last check: {status && status.lastCheck ? formatter.formatAsDate(status.lastCheck) : 'unknown'}
+        </PopoverFooter>
       </PopoverContent>
     </Popover>
   );
