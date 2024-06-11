@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import net.warp_scores.warpscores.cyanide.api.responses.StatusResponse;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -31,9 +30,9 @@ public class Status implements UpdateableFromApi {
     @NoArgsConstructor
     @ToString
     public static class Maintenance {
-        private Object[] pc;
-        private Object[] microsoft;
-        private Object[] sony;
+        private Object pc;
+        private Object microsoft;
+        private Object sony;
     }
 
     @Getter
