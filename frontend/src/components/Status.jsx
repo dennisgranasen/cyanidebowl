@@ -94,21 +94,16 @@ function Status() {
               ) : null}
             </HStack>
           </HStack>
-          <Box fontSize="sm">
-            Latest News:
-            <List>
-              {status.news.map(
-                (newsItem) =>
-                  !newsItem.title &&
-                  typeof newsItem.message === 'string' &&
-                  newsItem.message.match(/maintenance/i) && (
-                    <ListItem key={newsItem.message} fontSize="xs">
-                      {newsItem.message}
-                    </ListItem>
-                  )
-              )}
-            </List>
-          </Box>
+          {status.news.map(
+            (newsItem) =>
+              !newsItem.title &&
+              typeof newsItem.message === 'string' &&
+              newsItem.message.match(/maintenance/i) && (
+                <List key={newsItem.message} fontSize="xs" color="orange">
+                  <ListItem>{newsItem.message}</ListItem>
+                </List>
+              )
+          )}
         </PopoverBody>
         <PopoverFooter>Last check: {status && status.lastCheck ? status.lastCheck : status}</PopoverFooter>
       </PopoverContent>
