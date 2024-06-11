@@ -172,7 +172,7 @@ public class CyanideApiService {
         Status status;
         try {
             Optional<StatusResponse> statusResponse = ofNullable(
-                    cyanideCachedRestApiClient.getFromCacheOrApi(new StatusRequest()));
+                    cyanideCachedRestApiClient.getFromCacheOrApi(new StatusRequest(), true, true, true));
             status = statusResponse
                     .map(sr -> Arrays.stream(sr.getGames()))
                     .orElse(Stream.empty())

@@ -60,14 +60,15 @@ public class CyanideCachedRestApiClient {
     }
 
     public <RequestType, ResponseType> ResponseType getFromCacheOrApi(ApiRequest<RequestType, ResponseType> apiRequest) {
-        return getFromCacheOrApi(apiRequest, true);
+        return getFromCacheOrApi(apiRequest, true, false, false);
     }
 
     public <RequestType, ResponseType> ResponseType getFromCacheOrApi(ApiRequest<RequestType, ResponseType> apiRequest,
-            boolean getCachedValueAsFallback) {
+            boolean getCachedValueAsFallback, boolean overrideFetchActive, boolean forceRefresh) {
         ApiRequestKey apiRequestKey = ApiRequestKey.newFor(apiRequest);
 
-        log.info("Looking up '{}' in cache for key [{}] (requestParams: {}).", apiRequest.getRequestPath(), apiRequestKey.asString(), apiRequest.toQueryParams());
+        log.info("Looking up '{}' in cache for key [{}] (requestParams: {}).", apiRequest.getRequestPath(),
+                apiRequestKey.asString(), apiRequest.toQueryParams());
         Optional<RestApiResponseCache> cachedRestApiResponse = restApiResponseCacheRepository.findById(
                 apiRequestKey.asString());
         Boolean cacheOutdated = cachedRestApiResponse.map(this::cacheOutdated).orElse(true);
@@ -78,12 +79,13 @@ public class CyanideCachedRestApiClient {
                 .map(response -> ((ApiResponse) response).isChangeableResponse())
                 .orElse(true);
 
-        boolean fetchActive = cyanideApiProperties.isFetchActive();
-        log.info("Trying to get for '{}'. Last api access was [{}] (outdated: {}, changeable: {}, apiFetchActive: {}).",
+        boolean fetchActive = overrideFetchActive || cyanideApiProperties.isFetchActive();
+        log.info(
+                "Trying to get for '{}'. Last api access was [{}] (outdated: {}, changeable: {}, apiFetchActive: {}, overrideFetchActive: {}, forceRefresh: {}).",
                 apiRequest.getRequestPath(),
-                lastCacheAccess, cacheOutdated, changeable, fetchActive);
+                lastCacheAccess, cacheOutdated, changeable, fetchActive, overrideFetchActive, forceRefresh);
         Object rawResponse;
-        if (cacheOutdated && changeable && fetchActive) {
+        if (forceRefresh || (cacheOutdated && changeable && fetchActive)) {
             rawResponse = loadRawFromApi(apiRequest);
             if (rawResponse != null) {
                 cacheRawResponse(apiRequestKey, apiRequest, rawResponse);
@@ -110,7 +112,8 @@ public class CyanideCachedRestApiClient {
             String responseClassName = getResponseClassName(apiRequest);
             restApiResponseCache.setResponseClassName(responseClassName);
             restApiResponseCache.setResponse(response);
-            log.info("Storing response [{}] in cache with key [{}].", apiRequest.getResponseClass().getSimpleName(), apiRequestKey.asString());
+            log.info("Storing response [{}] in cache with key [{}].", apiRequest.getResponseClass().getSimpleName(),
+                    apiRequestKey.asString());
             restApiResponseCacheRepository.save(restApiResponseCache);
         } catch (JsonProcessingException ex) {
             log.error("Unable to cache response...");

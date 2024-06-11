@@ -185,6 +185,7 @@ public class StatusResponse extends ApiResponse {
     public static class Status {
         private boolean ok;
         private Platform[] platforms;
+        private Object services;
     }
 
     @Getter
@@ -194,6 +195,7 @@ public class StatusResponse extends ApiResponse {
         private String title;
         private boolean ok;
         private Region[] regions;
+        private Object services;
     }
 
     @Getter
@@ -214,9 +216,9 @@ public class StatusResponse extends ApiResponse {
     @Getter
     @Setter
     public static class Maintenance {
-        private Object[] pc;
-        private Object[] microsoft;
-        private Object[] sony;
+        private Object pc;
+        private Object microsoft;
+        private Object sony;
     }
 
     @Override
