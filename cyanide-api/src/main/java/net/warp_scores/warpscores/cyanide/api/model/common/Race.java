@@ -31,7 +31,7 @@ public enum Race {
     elvenUnion(14, "Elven Union", "ElvenUnion"),
     highElf(15, "High Elf", "HighElf"),
     thombKings(16, "Thomb Kings", "ThombKings"),
-    necromantic(17, "Necromantic Horror", "Necromantic"),
+    necromanticHorror(17, "Necromantic Horror", "Necromantic", "NecromanticHorror"),
     nurgle(18, "Nurgle", "Nurgle"),
     ogre(19, "Ogre", "Ogre"),
     vampire(20, "Vampire", "Vampire"),
