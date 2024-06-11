@@ -21,6 +21,7 @@ public class Status implements UpdateableFromApi {
     private boolean overall;
     private Platform[] platforms;
     private Maintenance maintenance;
+    private News[] news;
     private String[] socialLinks;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date lastCheck;
@@ -45,4 +46,14 @@ public class Status implements UpdateableFromApi {
         private boolean ok;
         private Object[] regions;
     }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @ToString
+    public static class News {
+        private String title;
+        private Object message;
+    }
 }
+

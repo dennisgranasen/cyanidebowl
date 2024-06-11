@@ -17,6 +17,7 @@ public class StatusModelConverter {
         status.setMaintenance(toMaintenance(game.getMaintenance()));
         status.setSocialLinks(game.getSocial_links());
         status.setPlatforms(toPlatforms(game.getStatus().getPlatforms()));
+        status.setNews(toNews(game.getNews()));
         return status;
     }
 
@@ -37,5 +38,15 @@ public class StatusModelConverter {
         Status.Maintenance maintenance = new Status.Maintenance();
         PopulatorUtil.copyNonNullProperties(responseMaintenance, maintenance);
         return maintenance;
+    }
+
+    private Status.News[] toNews(StatusResponse.News[] responseNews) {
+        return Arrays.stream(responseNews).map(this::toNews).toList().toArray(new Status.News[0]);
+    }
+
+    private Status.News toNews(StatusResponse.News responseNews) {
+        Status.News news = new Status.News();
+        PopulatorUtil.copyNonNullProperties(responseNews, news);
+        return news;
     }
 }
