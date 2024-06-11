@@ -26,8 +26,8 @@ import hashCode from '../util/HashCode';
 import formatter from '../util/Formatter';
 
 function NewsItem({ title, message }) {
-  const hasStringTitle = typeof title === 'string' && title.length > 0;
-  const hasStringMessage = typeof message === 'string' && message.length > 0;
+  const hasStringTitle = title && typeof title === 'string' && title.length > 0;
+  const hasStringMessage = message && typeof message === 'string' && message.length > 0;
   const color = hasStringMessage && message.match(/maintenance/i) ? 'orange' : null;
   let text;
   if (hasStringTitle) {
@@ -61,10 +61,11 @@ function StatusIcon({ status, maintenance }) {
 }
 
 const getMaintenanceColor = (maintenanceStatus) => {
-  return maintenanceStatus.length === 0 ? 'grey' : 'orange';
+  return maintenanceStatus && maintenanceStatus.length > 0 ? 'orange' : 'grey';
 };
 
 function SocialLink({ url }) {
+  if (!url) return null;
   const isDiscord = /\/discord\.gg/.test(url);
   const isTwitter = /twitter\.com/.test(url) || /\/x\.com/.test(url);
   const isFacebook = /\/www\.facebook/.test(url);
@@ -96,20 +97,18 @@ function Status() {
     fetchStatus();
   }, []);
 
+  const maintenance =
+    status && status.maintenance
+      ? [].concat(status.maintenance.pc, status.maintenance.microsoft, status.maintenance.sony).filter((value) => value)
+      : [];
+
   return status === null ? (
     <Spinner size="sm" color="orange" />
   ) : (
     <Popover>
       <PopoverTrigger>
         <Link>
-          <StatusIcon
-            status={status.overall}
-            maintenance={
-              status.maintenance
-                ? [].concat(status.maintenance.pc, status.maintenance.microsoft, status.maintenance.sony)
-                : []
-            }
-          />
+          <StatusIcon status={status.overall} maintenance={maintenance} />
         </Link>
       </PopoverTrigger>
       <PopoverContent>
@@ -120,14 +119,7 @@ function Status() {
           <HStack spacing={2}>
             <Box>Overall:</Box>
             <HStack spacing={2}>
-              <StatusIcon
-                status={status.overall}
-                maintenance={
-                  status.maintenance
-                    ? [].concat(status.maintenance.pc, status.maintenance.microsoft, status.maintenance.sony)
-                    : []
-                }
-              />
+              <StatusIcon status={status.overall} maintenance={maintenance} />
             </HStack>
           </HStack>
           <HStack spacing={2}>

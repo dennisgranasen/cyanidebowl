@@ -451,12 +451,5 @@
         "2022\/04\/15 : Live race leaderboard first draft"
       ]
     }
-  ],
-  "meta": {
-    "user": "DBBL - warp-scores.net (Christian Wagner)",
-    "method": "ws",
-    "format": "json",
-    "services": "https:\/\/web.cyanide-studio.com\/ws\/?key={{apiKey}}&bb=3"
-  },
-  "promotional_content": false
+  ]
 }
