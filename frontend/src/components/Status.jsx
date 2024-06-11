@@ -142,7 +142,7 @@ function Status() {
               ) : null}
             </HStack>
           </HStack>
-          {status.news.length > 0 && (
+          {status.news && status.news.length > 0 && (
             <Box mt={2} fontSize="sm" color="grey">
               <Text fontStyle="italic">Latest BB3 news</Text>
               <List>
