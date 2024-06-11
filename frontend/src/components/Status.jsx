@@ -142,7 +142,7 @@ function Status() {
               ) : null}
             </HStack>
           </HStack>
-          {status.news && status.news.length > 0 && (
+          {status && status.news && status.news.length > 0 && (
             <Box mt={2} fontSize="sm" color="grey">
               <Text fontStyle="italic">Latest BB3 news</Text>
               <List>
@@ -162,7 +162,7 @@ function Status() {
               </List>
             </Box>
           )}
-          {status.socialLinks.length > 0 && (
+          {status && status.socialLinks && status.socialLinks.length > 0 && (
             <Box mt={2} fontSize="sm" color="grey">
               <Text fontStyle="italic">BB3 social links</Text>
               <HStack>
