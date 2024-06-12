@@ -9,7 +9,7 @@ import java.util.NoSuchElementException;
 import java.util.stream.Stream;
 
 class RaceTest {
-    @ParameterizedTest
+    @ParameterizedTest(name="Race [{1}] is returned for input value [{0}].")
     @MethodSource("provideValidParameters")
     public void raceReturnedForValidValue(Object inputValue, Race expectedRace) {
         Race race = Race.forValue(inputValue);
@@ -17,7 +17,7 @@ class RaceTest {
         Assertions.assertEquals(expectedRace, race);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name="NoSuchElementException for input value [{0}].")
     @MethodSource("provideInvalidParameters")
     public void noSuchElementExceptionThrownForInvalidValues(Object inputValue) {
         Assertions.assertThrows(NoSuchElementException.class, () -> Race.forValue(inputValue));
