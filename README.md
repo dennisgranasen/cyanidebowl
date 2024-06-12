@@ -8,7 +8,7 @@ This is a Spike-like web page to show match results and data from BB3 obtained t
 
 ## Build Status
 
-main: [https://gitlab.com/warp-scores/warp-scores/badges/main/pipeline.svg](https://gitlab.com/%{project_path}/-/pipelines?page=1&scope=branches&ref=main) dev: [https://gitlab.com/warp-scores/warp-scores/badges/dev/pipeline.svg](https://gitlab.com/%{project_path}/-/pipelines?page=1&scope=branches&ref=dev)
+main: [![main](https://gitlab.com/warp-scores/warp-scores/badges/main/pipeline.svg)](https://gitlab.com/%{project_path}/-/pipelines?page=1&scope=branches&ref=main) dev: [![dev](https://gitlab.com/warp-scores/warp-scores/badges/dev/pipeline.svg](https://gitlab.com/%{project_path}/-/pipelines?page=1&scope=branches&ref=dev)
 
 
 ## Roadmap
