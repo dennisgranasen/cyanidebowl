@@ -18,5 +18,7 @@ public class TeamPopulator {
         //team.setCoachId(apiTeam.getCoach_id());
         targetTeam.setCompetitionIds(
                 uuidConverter.toUuids(targetTeam.getCompetitionIds(), sourceApiTeam.getBb3_competition_id()));
+        targetTeam.setLeagueIds(
+                uuidConverter.toUuids(targetTeam.getLeagueIds(), sourceApiTeam.getLeagueId()));
     }
 }

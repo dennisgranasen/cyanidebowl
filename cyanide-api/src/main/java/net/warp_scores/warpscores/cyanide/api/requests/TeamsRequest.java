@@ -54,5 +54,6 @@ public class TeamsRequest extends ApiRequest<TeamsRequest, TeamsResponse> {
 
     public TeamsRequest() {
         super("bb3/teams", TeamsRequest.class, TeamsResponse.class);
+        setCacheValidity(CacheValidityDurations.TWELVE_HOURS);
     }
 }

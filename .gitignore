@@ -34,10 +34,14 @@ build/
 
 node_modules
 node
-/frontend/public/index.js
-/frontend/public/index.js.LICENSE.txt
+frontend/public/index.js
+frontend/public/index.js.LICENSE.txt
 
 http-client.env.json
 application.yml
 
+frontend/coverage
+
 /data
+
+warpscores-*.tar

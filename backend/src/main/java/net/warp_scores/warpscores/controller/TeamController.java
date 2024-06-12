@@ -1,86 +1,88 @@
 package net.warp_scores.warpscores.controller;
 
-import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionStatus;
-import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
-import net.warp_scores.warpscores.domain.persistence.TeamRepository;
-import net.warp_scores.warpscores.domain.model.Competition;
-import net.warp_scores.warpscores.domain.model.Team;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.domain.MatchDomainService;
+import net.warp_scores.warpscores.domain.TeamDomainService;
+import net.warp_scores.warpscores.domain.model.Match;
+import net.warp_scores.warpscores.domain.model.Team;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
+import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 public class TeamController {
 
-    private final TeamRepository teamRepository;
+    private final TeamDomainService teamDomainService;
 
-    private final CompetitionRepository competitionRepository;
+    private final MatchDomainService matchDomainService;
 
-    @GetMapping("/teams/league/{leagueId}")
+    @GetMapping("/league/{leagueId}/teams")
     public ResponseEntity<List<Team>> getTeamsForLeague(@PathVariable(name = "leagueId") UUID leagueId) {
         try {
-            List<Team> teams = teamRepository.findByLeagueId(leagueId);
-            removeInactiveCompetitionsFromTeams(teams);
-
+            List<Team> teams = teamDomainService.findByLeagueId(leagueId);
             return ResponseEntity.ok(teams);
         } catch (Exception ex) {
+            log.error("Unable to get teams for league {}", leagueId, ex);
             return ResponseEntity.internalServerError().build();
         }
     }
 
-    @GetMapping("/teams/competition/{competitionId}")
+    @GetMapping("/team/{teamId}")
+    public ResponseEntity<Team> getTeam(@PathVariable(name = "teamId") UUID teamId) {
+        try {
+            Optional<Team> team = teamDomainService.findTeam(teamId, Optional.empty());
+            return team
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (Exception ex) {
+            log.error("Unable to get team for uuid {}.", teamId, ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/team/{teamId}/matches")
+    public ResponseEntity<List<Match>> getMatches(@PathVariable(name = "teamId") UUID teamId) {
+        try {
+            Optional<List<Match>> matchesForTeam = Optional.ofNullable(matchDomainService.findMatchesForTeam(teamId));
+            return matchesForTeam
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (Exception ex) {
+            log.error("Unable to get matches for team uuid {}.", teamId, ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/competition/{competitionId}/teams")
     public ResponseEntity<List<Team>> getTeamsForCompetition(@PathVariable(name = "competitionId") UUID competitionId) {
         try {
-            List<Team> teams = teamRepository.findByCompetitionId(competitionId);
-            removeInactiveCompetitionsFromTeams(teams);
+            List<Team> teams = teamDomainService.findByCompetitionId(competitionId);
             return ResponseEntity.ok(teams);
         } catch (Exception ex) {
+            log.error("Unable to get teams for competition uuid {}.", competitionId, ex);
             return ResponseEntity.internalServerError().build();
         }
     }
 
-    @GetMapping("/team/{teamUuid}")
-    public ResponseEntity<Team> getTeam(@PathVariable(name = "teamUuid") UUID teamUuid) {
-        List<Team> teams = teamRepository.findAllById(Arrays.asList(teamUuid));
-        if (teams.size() == 1) {
-            removeInactiveCompetitionsFromTeams(teams);
-            return ResponseEntity.ok(teams.get(0));
-        } else {
-            return ResponseEntity.notFound().build();
+    @GetMapping("/competition/{competitionUuid}/team/{teamUuid}")
+    public ResponseEntity<Team> getTeam(@PathVariable(name = "competitionUuid") UUID competitionUuid,
+            @PathVariable(name = "teamUuid") UUID teamUuid) {
+        try {
+            Optional<Team> team = teamDomainService.findTeam(teamUuid, Optional.of(competitionUuid));
+            return team
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (Exception ex) {
+            log.error("Unable to get team for competition {} (teamId: {})", competitionUuid, teamUuid, ex);
+            return ResponseEntity.internalServerError().build();
         }
-    }
-
-    private void removeInactiveCompetitionsFromTeams(List<Team> teams) {
-        Set<UUID> competitionIds = teams
-                .stream()
-                .map(Team::getCompetitionIds)
-                .flatMap(array -> Arrays.stream(array))
-                .collect(Collectors.toSet());
-        List<Competition> competitions = competitionRepository.findAllById(competitionIds);
-        Set<UUID> inactiveCompetitionUuids = competitions
-                .stream()
-                .filter(comp -> !CompetitionStatus.InProgress.equals(comp.getStatus()))
-                .map(Competition::getUuid)
-                .collect(Collectors.toSet());
-        teams
-                .stream()
-                .forEach(team -> removeInactiveCompetitionsFromTeam(team, inactiveCompetitionUuids));
-    }
-
-    private void removeInactiveCompetitionsFromTeam(Team team, Set<UUID> inactiveCompetitionUuids) {
-        Set<UUID> competitionIds = Arrays.stream(team.getCompetitionIds()).collect(Collectors.toSet());
-        competitionIds.removeAll(inactiveCompetitionUuids);
-        team.setCompetitionIds(competitionIds.toArray(new UUID[0]));
     }
 }

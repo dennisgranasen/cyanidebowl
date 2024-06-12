@@ -9,6 +9,7 @@ import net.warp_scores.warpscores.cyanide.api.requests.LookupRequest;
 import net.warp_scores.warpscores.cyanide.api.requests.MatchRequest;
 import net.warp_scores.warpscores.cyanide.api.requests.MatchesRequest;
 import net.warp_scores.warpscores.cyanide.api.requests.StatusRequest;
+import net.warp_scores.warpscores.cyanide.api.requests.TeamMatchesRequest;
 import net.warp_scores.warpscores.cyanide.api.requests.TeamRequest;
 import net.warp_scores.warpscores.cyanide.api.requests.TeamsRequest;
 import net.warp_scores.warpscores.cyanide.api.responses.CompetitionsResponse;
@@ -18,12 +19,12 @@ import net.warp_scores.warpscores.cyanide.api.responses.LookupResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.MatchResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.MatchesResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.StatusResponse;
+import net.warp_scores.warpscores.cyanide.api.responses.TeamMatchesResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.TeamsResponse;
 import net.warp_scores.warpscores.domain.CompetitionDomainService;
 import net.warp_scores.warpscores.domain.ContestDomainService;
 import net.warp_scores.warpscores.domain.LeagueDomainService;
 import net.warp_scores.warpscores.domain.MatchDomainService;
-import net.warp_scores.warpscores.domain.persistence.StatusRepository;
 import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.domain.model.Competition;
 import net.warp_scores.warpscores.domain.model.Contest;
@@ -31,12 +32,14 @@ import net.warp_scores.warpscores.domain.model.League;
 import net.warp_scores.warpscores.domain.model.Match;
 import net.warp_scores.warpscores.domain.model.Status;
 import net.warp_scores.warpscores.domain.model.Team;
+import net.warp_scores.warpscores.domain.persistence.StatusRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.ResourceAccessException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -44,6 +47,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static java.util.Optional.ofNullable;
 
 @Slf4j
 @Service
@@ -95,6 +100,22 @@ public class CyanideApiService {
         return teams;
     }
 
+    public List<UUID> loadTeamMatches(UUID teamUuid) {
+        if (teamUuid == null) {
+            return Collections.emptyList();
+        }
+        TeamMatchesRequest teamMatchesRequest = new TeamMatchesRequest();
+        teamMatchesRequest.setTeamId(teamUuid);
+        TeamMatchesResponse teamMatchesResponse = cyanideCachedRestApiClient.getFromCacheOrApi(teamMatchesRequest);
+        return ofNullable(teamMatchesResponse)
+                .map(t -> Arrays.stream(
+                        ofNullable(t.getMatchIds())
+                                .orElse(new TeamMatchesResponse.MatchId[0])))
+                .orElse(Stream.empty())
+                .map(TeamMatchesResponse.MatchId::getUuid)
+                .collect(Collectors.toList());
+    }
+
     public Match loadMatch(UUID matchUuid) {
         if (matchUuid == null) {
             return null;
@@ -105,10 +126,10 @@ public class CyanideApiService {
         return matchDomainService.createOrUpdateMatch(matchResponse);
     }
 
-    public List<Match> loadMatches(League league, Date startDate) {
+    public List<Match> loadMatches(League league, Date earliestStartDate, Optional<Date> lastMatchDate) {
         MatchesRequest matchesRequest = new MatchesRequest();
         matchesRequest.setLeague_id(league.getUuid());
-        matchesRequest.setStart(startDate);
+        matchesRequest.setStart(lastMatchDate.orElse(earliestStartDate));
         MatchesResponse matchesResponse = cyanideCachedRestApiClient.getFromCacheOrApi(matchesRequest);
         return matchDomainService.createOrUpdateMatches(matchesResponse);
     }
@@ -150,8 +171,8 @@ public class CyanideApiService {
     public void checkApiStatus() {
         Status status;
         try {
-            Optional<StatusResponse> statusResponse = Optional.ofNullable(
-                    cyanideCachedRestApiClient.getFromCacheOrApi(new StatusRequest()));
+            Optional<StatusResponse> statusResponse = ofNullable(
+                    cyanideCachedRestApiClient.getFromCacheOrApi(new StatusRequest(), true, true, true));
             status = statusResponse
                     .map(sr -> Arrays.stream(sr.getGames()))
                     .orElse(Stream.empty())

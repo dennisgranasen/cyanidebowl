@@ -1,47 +1,77 @@
-import React from 'react';
-import { Center, Spinner, Td, Tooltip, Tr } from '@chakra-ui/react';
+import React, { useState } from 'react';
+import { Center, ModalOverlay, Spinner, Td, Text, Tr, useDisclosure } from '@chakra-ui/react';
 import Opponent from './Opponent';
 import prettyPrint from '../util/PrettyPrint';
 import formatter from '../util/Formatter';
 import MatchStatusIcon from './MatchStatusIcon';
 import config from '../config';
+import MatchModal from './MatchModal';
 import DelayedIconTooltip from './DelayedIconTooltip';
+import ScoreOrIcon from './ScoreOrIcon';
 
 const { smallBoxSize } = config;
 
-function ScoreOrIcon({ contest }) {
+function ScoreOrIconTooltip({ contest }) {
+  let matchPlayed = false;
+  let matchValidated = false;
+
   switch (contest.status) {
     case 'played':
-      return (
-        <>
-          {contest.opponents[0].score} - {contest.opponents[1].score}
-        </>
-      );
+    case 'Played':
+    case 'Validated':
+      matchPlayed = true;
+      matchValidated = true;
+      break;
+    case 'InProgress':
+      matchPlayed = contest.matchDate && contest.winner && contest.status === 'InProgress';
+      break;
     default:
-      return <MatchStatusIcon status={contest.status} boxSize={smallBoxSize} />;
+      break;
   }
+
+  let status = `${matchPlayed && !matchValidated ? 'Awaiting validation' : prettyPrint(contest.status)}`;
+  if (contest.live) status = 'Live';
+  const matchDate = contest.live
+    ? formatter.formatAsDuration(contest.matchDate, null)
+    : formatter.formatAsDate(contest.matchDate);
+  return `${status} ${contest.adminResult ? ' - Admin result' : matchDate}`;
 }
 
-function Contest({ contest }) {
-  return contest !== null ? (
-    <Tr>
+function Contest({ contest, smallscreen }) {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const openIfValidatedAndNotAdminResult = () => {
+    if (contest.status === 'Validated' && !contest.adminResult) onOpen();
+  };
+
+  const winnerTeamUuid =
+    contest.winner && contest.opponents[0].score !== contest.opponents[1].score ? contest.winner.team.id : null;
+  return contest ? (
+    <Tr onClick={openIfValidatedAndNotAdminResult}>
+      <MatchModal
+        isOpen={isOpen}
+        onClose={onClose}
+        contest={contest}
+        smallscreen={smallscreen ? 'smallscreen' : undefined}
+      />
       <Opponent
+        smallscreen={smallscreen ? 'smallscreen' : undefined}
         opponent={contest.opponents[0]}
-        winnerTeamUuid={contest.winner ? contest.winner.team.id : null}
         key={contest.opponents[0].id}
-        reverse={false}
+        winner={contest.opponents[0].id === winnerTeamUuid}
       />
       <Td>
-        <DelayedIconTooltip label={`${prettyPrint(contest.status)} ${formatter.formatAsDate(contest.matchDate)}`}>
+        <DelayedIconTooltip label={<ScoreOrIconTooltip contest={contest} />}>
           <Center>
-            <ScoreOrIcon contest={contest} />
+            <ScoreOrIcon contest={contest} boxSize={smallBoxSize} size="sm" />
           </Center>
         </DelayedIconTooltip>
       </Td>
       <Opponent
+        smallscreen={smallscreen ? 'smallscreen' : undefined}
         opponent={contest.opponents[1]}
-        winnerTeamUuid={contest.winner ? contest.winner.team.id : null}
         key={contest.opponents[1].id}
+        winner={contest.opponents[1].id === winnerTeamUuid}
         reverse
       />
     </Tr>

@@ -12,6 +12,7 @@ public class CyanideApiProperties {
     private Cache imagesCache;
     private Urls urls;
     private boolean schedulerActive;
+    private boolean fetchActive;
 
     @Getter
     @Setter

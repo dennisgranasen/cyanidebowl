@@ -1,8 +1,8 @@
 package net.warp_scores.warpscores.cyanide.api.responses;
 
-import net.warp_scores.warpscores.cyanide.api.model.common.ResponseMeta;
 import lombok.Getter;
 import lombok.Setter;
+import net.warp_scores.warpscores.cyanide.api.model.common.ResponseMeta;
 
 @Getter
 @Setter
@@ -31,4 +31,11 @@ public abstract class ApiResponse implements EmptyAwareResponse, UpdateChangeabl
     public void updateChangeableAttribute() {
         this.changeableResponse = true;
     }
+
+    @Override
+    public String toString() {
+        return getInformationString();
+    }
+
+    protected abstract String getInformationString();
 }

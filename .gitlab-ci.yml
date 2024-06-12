@@ -1,0 +1,21 @@
+image: gitlab/dind
+services:
+  - docker:dind
+
+variables:
+  DOCKER_DRIVER: overlay
+
+stages:
+  - build
+  - test
+  - docker
+
+maven-build:
+  image: registry.hub.docker.com/library/maven:3.8-openjdk-17
+  stage: build
+  script: "mvn clean package -B"
+
+maven-test:
+  image: registry.hub.docker.com/library/maven:3.8-openjdk-17
+  stage: test
+  script: "mvn test"

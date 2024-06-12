@@ -11,8 +11,5 @@ import java.util.UUID;
 
 @Repository
 public interface MatchRepository extends MongoRepository<Match, UUID> {
-    @Query("{teams._id: ?0}")
-    List<Match> findByTeamId(UUID teamId);
-
     List<Match> findByCompetitionId(UUID competitionId);
 }

@@ -2,8 +2,6 @@ package net.warp_scores.warpscores.cyanide.api.model;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import net.warp_scores.warpscores.cyanide.api.model.common.ObfuscateApiKeyService;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,7 +11,7 @@ import java.util.UUID;
 @Getter
 @Setter
 public class ApiMatch {
-    @JsonAlias({"_id", "matchUuid","uuid"})
+    @JsonAlias({"_id", "matchUuid", "uuid"})
     private UUID matchId;
     private String id;
     @JsonAlias("idcompetition")

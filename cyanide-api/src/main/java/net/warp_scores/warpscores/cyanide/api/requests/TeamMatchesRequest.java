@@ -4,6 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import net.warp_scores.warpscores.cyanide.api.responses.TeamMatchesResponse;
+
+import java.util.Date;
+import java.util.UUID;
 
 /*
     {
@@ -29,5 +33,14 @@ import lombok.ToString;
 @Setter
 @ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class TeamMatchesRequest {
+public class TeamMatchesRequest extends ApiRequest<TeamMatchesRequest, TeamMatchesResponse> {
+    private UUID teamId;
+    private Date startDate;
+    private Date endDate;
+    private MatchesRequest.Ordering ordering;
+
+    public TeamMatchesRequest() {
+        super("bb3/teammatches", TeamMatchesRequest.class, TeamMatchesResponse.class);
+        setCacheValidity(CacheValidityDurations.ONE_HOUR);
+    }
 }

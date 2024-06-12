@@ -1,9 +1,11 @@
 package net.warp_scores.warpscores.cyanide.api.responses;
 
-import net.warp_scores.warpscores.cyanide.api.model.ApiCoach;
-import net.warp_scores.warpscores.cyanide.api.model.common.Meta;
 import lombok.Getter;
 import lombok.Setter;
+import net.warp_scores.warpscores.cyanide.api.model.ApiCoach;
+import net.warp_scores.warpscores.cyanide.api.model.common.Meta;
+
+import java.util.Optional;
 
 /*
 {
@@ -66,4 +68,11 @@ public class CoachesResponse extends ApiResponse {
         return coaches == null || coaches.length == 0;
     }
 
+    @Override
+    public String getInformationString() {
+        return String.format("CoachesResponse[isEmpty=%s, coaches=%s, changeable=%s]",
+                isEmpty(),
+                Optional.ofNullable(coaches).map(c -> String.valueOf(c.length)).orElse("n/a"),
+                isChangeableResponse());
+    }
 }

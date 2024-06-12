@@ -18,6 +18,7 @@ web:
 
 cyanide:
   scheduler-active: true
+  fetch-active: true
   urls:
     images-extension: .png
     images:
