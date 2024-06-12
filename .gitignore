@@ -44,4 +44,7 @@ frontend/coverage
 
 /data
 
+sync.sh
+fetchMongoData.sh
+
 warpscores-*.tar

@@ -1,10 +1,3 @@
-image: gitlab/dind
-services:
-  - docker:dind
-
-variables:
-  DOCKER_DRIVER: overlay
-
 stages:
   - build
   - test
@@ -13,9 +6,13 @@ stages:
 maven-build:
   image: registry.hub.docker.com/library/maven:3.8-openjdk-17
   stage: build
-  script: "mvn clean package -B"
+  script: "mvn -Ddockerfile.skip clean package -B"
 
 maven-test:
   image: registry.hub.docker.com/library/maven:3.8-openjdk-17
   stage: test
-  script: "mvn test"
+  script: "mvn -Ddockerfile.skip test -fae"
+  artifacts:
+    reports:
+      junit:
+        - "**/target/surefire-reports/TEST-*.xml"
