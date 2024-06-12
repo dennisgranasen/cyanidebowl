@@ -1,9 +1,15 @@
 # warpscores
 
+
 Welcome to [Warp-Scores](https://warp-scores.net), a Spike-like facade for Cyanide's BB3 API.
 
 ## Description
-This is a [Spike](https://spike.ovh)-like web page to show match results and data from BB3 obtained through Cyanide's API. 
+This is a Spike-like web page to show match results and data from BB3 obtained through Cyanide's API. 
+
+## Build Status
+
+main: [https://gitlab.com/warp-scores/warp-scores/badges/main/pipeline.svg](https://gitlab.com/%{project_path}/-/pipelines?page=1&scope=branches&ref=main) dev: [https://gitlab.com/warp-scores/warp-scores/badges/dev/pipeline.svg](https://gitlab.com/%{project_path}/-/pipelines?page=1&scope=branches&ref=dev)
+
 
 ## Roadmap
 - 🟡 Increase Mobile UI/UX
