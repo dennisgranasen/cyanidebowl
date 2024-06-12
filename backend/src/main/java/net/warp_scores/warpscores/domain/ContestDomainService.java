@@ -8,16 +8,20 @@ import net.warp_scores.warpscores.domain.model.Contest;
 import net.warp_scores.warpscores.domain.model.Team;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.service.PopulatorUtil;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toMap;
 
 @Slf4j
 @Service
@@ -31,8 +35,14 @@ public class ContestDomainService {
         if (contestsResponse == null || contestsResponse.isEmpty()) {
             return Collections.emptyList();
         }
+
         List<Contest> contests = Arrays
-                .stream(contestsResponse.getUpcoming_matches())
+                .stream(contestsResponse.getContests())
+                .collect(toMap(ApiContest::getContest_id, Function.identity(),
+                        BinaryOperator.maxBy(Comparator.comparing(ApiContest::getMatch_date,
+                                Comparator.nullsFirst(Comparator.naturalOrder())))))
+                .values()
+                .stream()
                 .map(this::internalCreateOrUpdateContest)
                 .collect(Collectors.toList());
         return contestRepository.saveAll(contests);
@@ -61,6 +71,7 @@ public class ContestDomainService {
         PopulatorUtil.copyNonNullProperties(sourceApiContestMatch, targetContest);
         targetContest.setContestUuid(sourceApiContestMatch.getContest_id());
         targetContest.setLeagueId(sourceApiContestMatch.getLeague_id());
+        targetContest.setLive(sourceApiContestMatch.getLive());
         targetContest.setCompetitionId(sourceApiContestMatch.getCompetition_id());
         targetContest.setCompetitionName(sourceApiContestMatch.getCompetition());
         targetContest.setLeagueName(sourceApiContestMatch.getLeague());
@@ -68,6 +79,12 @@ public class ContestDomainService {
         targetContest.setMatchDate(sourceApiContestMatch.getMatch_date());
         targetContest.setMatchUuid(sourceApiContestMatch.getMatch_uuid());
         targetContest.setOpponents(toOpponents(sourceApiContestMatch.getOpponents()));
+
+        undeprecateMatchStatus(targetContest);
+    }
+
+    private void undeprecateMatchStatus(Contest contest) {
+        contest.setStatus(contest.getStatus().undeprecate());
     }
 
     private List<Team> toOpponents(ApiContest.Opponent[] apiOpponents) {

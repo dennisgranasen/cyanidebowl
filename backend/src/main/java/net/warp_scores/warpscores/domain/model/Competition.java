@@ -1,5 +1,6 @@
 package net.warp_scores.warpscores.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
 import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionFormat;
@@ -13,7 +14,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Document
-public class Competition implements UpdateableFromApi {
+public class Competition implements UpdateableFromApi, Comparable<Competition> {
     @Id
     private UUID uuid;
     private String name;
@@ -21,6 +22,7 @@ public class Competition implements UpdateableFromApi {
     private UUID leagueId;
     private String leagueName;
     private String leagueLogo;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date dateCreated;
     private CompetitionFormat format;
     private CompetitionStatus status;
@@ -34,6 +36,24 @@ public class Competition implements UpdateableFromApi {
     private Integer currentRound;
     private Integer totalRounds;
 
+    private Integer validatedMatches;
+    private Integer liveMatches;
     private Integer playedMatches;
     private Integer totalMatches;
+
+    @Override
+    public int compareTo(Competition competition) {
+        int result;
+        result = status.compareTo(competition.getStatus());
+        if (result != 0) {
+            return result;
+        }
+        result = format.compareTo(competition.getFormat());
+        if (result != 0) {
+            return result;
+        }
+        result = name.compareTo(competition.getName());
+        return result;
+
+    }
 }

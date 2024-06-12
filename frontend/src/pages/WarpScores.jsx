@@ -4,15 +4,13 @@ import {
   AlertDescription,
   AlertIcon,
   Box,
-  Card,
-  CardBody,
   FormControl,
   FormLabel,
   Heading,
-  Image,
   Select,
   Spinner,
   Stack,
+  useMediaQuery,
 } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
 import CyanideApiService from '../CyanideApiService';
@@ -20,14 +18,21 @@ import config from '../config';
 import Navigation from '../components/Navigation';
 import Competitions from '../components/Competitions';
 import ImageUrls from '../ImageUrls';
-import logger from '../util/Logger';
 import formatter from '../util/Formatter';
 import InfoArea from '../components/InfoArea';
 import InfoItem from '../components/InfoItem';
+import HeaderCard from '../components/HeaderCard';
+import LiveContests from '../components/LiveContests';
+import LatestContests from '../components/LatestContests';
 
 function WarpScores() {
+  const [smallscreen] = useMediaQuery('(max-width: 768px)');
+
   const { leagueUuid } = useParams();
   const [competitions, setCompetitions] = useState([]);
+  const [activeCompetitionsCount, setActiveCompetitionsCount] = useState([]);
+  const [registrationCompetitionsCount, setRegistrationCompetitionsCount] = useState([]);
+  const [finishedCompetitionsCount, setFinishedCompetitionsCount] = useState([]);
   const [leagues, setLeagues] = useState([]);
   const [league, setLeague] = useState();
   const [loading, setLoading] = useState(false);
@@ -36,7 +41,6 @@ function WarpScores() {
   const getLeagueByUuid = (uuid) => {
     if (uuid && uuid !== null) {
       const byUuid = leagues.filter((curr) => curr.uuid === uuid)[0];
-      logger.debug('League by uuid (%s): %o.', uuid, league);
       return byUuid;
     }
     return null;
@@ -57,7 +61,6 @@ function WarpScores() {
   }, []);
 
   useEffect(() => {
-    logger.debug('Setting league (uuid: %s). Leagues: %o, count: %s', leagueUuid, leagues, leagues.length);
     if ((!leagueUuid || leagueUuid === null) && leagues.length === 1) {
       setLeague(leagues[0]);
     } else {
@@ -80,9 +83,6 @@ function WarpScores() {
       }
       CyanideApiService.leagueCompetitions(leagueId)
         .then((data) => {
-          data.sort((compA, compB) => {
-            return compA.name.localeCompare(compB.name);
-          });
           setCompetitions(data);
         })
         .then(() => setLoading(false))
@@ -94,6 +94,31 @@ function WarpScores() {
     fetchCompetitions(leagueId);
   }, [league]);
 
+  useEffect(() => {
+    if (!competitions) return;
+    let activeCompetitions = 0;
+    let finishedCompetitions = 0;
+    let registrationCompetitions = 0;
+    competitions.forEach((comp) => {
+      switch (comp.status) {
+        case 'InProgress':
+          activeCompetitions += 1;
+          break;
+        case 'Registration':
+          registrationCompetitions += 1;
+          break;
+        case 'Finished':
+          finishedCompetitions += 1;
+          break;
+        default:
+          break;
+      }
+    });
+    setActiveCompetitionsCount(activeCompetitions);
+    setFinishedCompetitionsCount(finishedCompetitions);
+    setRegistrationCompetitionsCount(registrationCompetitions);
+  }, [competitions]);
+
   const changeLeague = (e) => {
     const byUuid = getLeagueByUuid(e.target.value);
     setLeague(byUuid);
@@ -102,7 +127,7 @@ function WarpScores() {
   return (
     <Stack>
       <Box>
-        <Navigation currentPage="home" />
+        <Navigation currentPage="home" smallscreen={smallscreen ? 'smallscreen' : undefined} />
       </Box>
       {leagues.length > 1 ? (
         <Box>
@@ -125,32 +150,43 @@ function WarpScores() {
         </Box>
       ) : null}
       {league ? (
-        <Card direction="row">
-          <Box>
-            <Image objectFit="contain" maxW="140px" src={ImageUrls.logo(league.logo)} />
-          </Box>
-          <CardBody>
-            <Heading>{league.name}</Heading>
-            <InfoArea
-              infoItems={[
-                <InfoItem key="1" label="Teams" info={league.teamCount} />,
-                <InfoItem key="2" label="Active Competitions" info={competitions.length} />,
-                <InfoItem key="3" label="Last match" info={formatter.formatAsDate(league.dateLastMatch)} />,
-              ]}
-            />
-          </CardBody>
-        </Card>
+        <HeaderCard
+          heading={league.name}
+          detailsHeading="League details"
+          mainImageSrc={ImageUrls.logo(league.logo)}
+          smallscreen={smallscreen ? 'smallscreen' : undefined}
+        >
+          <InfoArea
+            smallscreen={smallscreen ? 'smallscreen' : undefined}
+            infoItems={[
+              <InfoItem key="teams" label="Teams" info={league.teamCount} />,
+              <InfoItem key="activeCompetitions" label="Active Competitions" info={activeCompetitionsCount} />,
+              <InfoItem
+                key="competitionsInRegistration"
+                label="Competitions In Registration"
+                info={registrationCompetitionsCount}
+              />,
+              <InfoItem key="finishedCompetitions" label="Finished Competitions" info={finishedCompetitionsCount} />,
+              <InfoItem key="lastMatch" label="Last match" info={formatter.formatAsDate(league.dateLastMatch)} />,
+            ]}
+          />
+        </HeaderCard>
       ) : null}
       <Box>
-        <Heading size="md">Competitions</Heading>
         {error ? (
           <Alert status={error.type}>
             <AlertIcon />
             <AlertDescription>{error.message}</AlertDescription>
           </Alert>
         ) : null}
-        {loading ? <Spinner /> : <Competitions competitions={competitions} />}
+        {loading ? (
+          <Spinner />
+        ) : (
+          <Competitions competitions={competitions} smallscreen={smallscreen ? 'smallscreen' : undefined} />
+        )}
       </Box>
+      <LiveContests league={league} smallscreen={smallscreen ? 'smallscreen' : undefined} />
+      <LatestContests league={league} smallscreen={smallscreen ? 'smallscreen' : undefined} />
     </Stack>
   );
 }

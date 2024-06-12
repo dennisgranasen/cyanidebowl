@@ -15,7 +15,7 @@ public class CheckStatusScheduler {
 
     private final CyanideApiProperties cyanideApiProperties;
 
-    @Scheduled(initialDelay = Schedules.ONE_SECOND, fixedDelay = Schedules.FIVE_MINUTES)
+    @Scheduled(initialDelay = Schedules.ONE_SECOND, fixedDelay = Schedules.FIFTEEN_MINUTES)
     public void checkApiStatus() {
         if (!cyanideApiProperties.isSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping checkApiStatus().");

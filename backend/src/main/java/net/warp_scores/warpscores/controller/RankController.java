@@ -1,11 +1,16 @@
 package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
+import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionFormat;
+import net.warp_scores.warpscores.domain.TeamDomainService;
+import net.warp_scores.warpscores.domain.model.Competition;
+import net.warp_scores.warpscores.domain.model.Contest;
 import net.warp_scores.warpscores.domain.model.Match;
 import net.warp_scores.warpscores.domain.model.Rank;
 import net.warp_scores.warpscores.domain.model.Team;
+import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
-import net.warp_scores.warpscores.domain.persistence.TeamRepository;
+import net.warp_scores.warpscores.service.CompetitionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,58 +19,68 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static java.util.Optional.empty;
+import static java.util.Optional.ofNullable;
+import static net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus.Validated;
 
 @RestController
 @RequiredArgsConstructor
 public class RankController {
 
-    private final TeamRepository teamRepository;
     private final MatchRepository matchRepository;
+    private final ContestRepository contestRepository;
 
     private final Comparator<Rank> rankComparator = (rankA, rankB) -> {
-        int result = Optional.ofNullable(rankB.getScore()).orElse(0) - Optional.ofNullable(rankA.getScore())
+        int result = ofNullable(rankB.getScore()).orElse(0) - ofNullable(rankA.getScore())
                 .orElse(0);
         if (result != 0) {
             return result;
         }
-        result = Optional.ofNullable(rankB.getInflictedTouchdowns()).orElse(0) - Optional.ofNullable(
+        result = ofNullable(rankB.getInflictedTouchdowns()).orElse(0) - ofNullable(
                 rankA.getInflictedTouchdowns()).orElse(0);
         if (result != 0) {
             return result;
         }
-        result = Optional.ofNullable(rankB.getInflictedCasualties()).orElse(0) - Optional.ofNullable(
+        result = ofNullable(rankB.getInflictedCasualties()).orElse(0) - ofNullable(
                 rankA.getInflictedCasualties()).orElse(0);
         if (result != 0) {
             return result;
         }
-        result = Optional.ofNullable(rankB.getGamesPlayed()).orElse(0) - Optional.ofNullable(rankA.getGamesPlayed())
+        result = ofNullable(rankB.getGamesPlayed()).orElse(0) - ofNullable(rankA.getGamesPlayed())
                 .orElse(0);
         if (result != 0) {
             return result;
         }
-        result = Optional.ofNullable(rankA.getSustainedTouchdowns()).orElse(0) - Optional.ofNullable(
+        result = ofNullable(rankA.getSustainedTouchdowns()).orElse(0) - ofNullable(
                 rankB.getSustainedTouchdowns()).orElse(0);
         if (result != 0) {
             return result;
         }
-        result = Optional.ofNullable(rankA.getSustainedCasualties()).orElse(0) - Optional.ofNullable(
+        result = ofNullable(rankA.getSustainedCasualties()).orElse(0) - ofNullable(
                 rankB.getSustainedCasualties()).orElse(0);
         if (result != 0) {
             return result;
         }
-        return Optional.ofNullable(rankA.getTeam()).map(Team::getName).orElse("")
-                .compareToIgnoreCase(Optional.ofNullable(rankB.getTeam()).map(Team::getName).orElse(""));
+        return ofNullable(rankA.getTeam()).map(Team::getName).orElse("")
+                .compareToIgnoreCase(ofNullable(rankB.getTeam()).map(Team::getName).orElse(""));
     };
+    private final TeamDomainService teamDomainService;
+    private final CompetitionService competitionService;
 
     @GetMapping("/ranks/competition/{competitionId}")
     public ResponseEntity<List<Rank>> getRanksForCompetition(@PathVariable(name = "competitionId") UUID competitionId) {
 
-        List<Team> teams = teamRepository.findByCompetitionId(competitionId);
+        List<Team> teams = teamDomainService.findByCompetitionId(competitionId);
+        Competition competition = competitionService.loadCompetition(competitionId)
+                .orElseThrow(NoSuchElementException::new);
+
         List<Rank> ranks = teams.stream()
-                .map(team -> toRank(team, competitionId))
+                .map(team -> toRank(team, competition))
                 .sorted(rankComparator)
                 .collect(HashMap<Rank, Integer>::new, (map, rank) -> map.put(rank, map.size() + 1), (map, map2) -> {})
                 .entrySet()
@@ -79,10 +94,10 @@ public class RankController {
         return ResponseEntity.ok(ranks);
     }
 
-    private Rank toRank(Team team, UUID competitionId) {
+    private Rank toRank(Team team, Competition competition) {
         Rank rank = new Rank();
         rank.setTeam(team);
-        List<Match> matches = matchRepository.findByCompetitionId(competitionId);
+        List<Contest> contests = contestRepository.findByCompetitionIdAndStatus(competition.getUuid(), Validated);
         int gamesPlayed = 0;
         int gamesWon = 0;
         int gamesDrawn = 0;
@@ -91,8 +106,12 @@ public class RankController {
         int otherMatchScore = 0;
         int inflictedCasualties = 0;
         int sustainedCasualties = 0;
-        for (Match match : matches) {
-            List<Team> teamResults = match.getTeams();
+        for (Contest contest : contests) {
+            Optional<Match> match = ofNullable(contest.getMatchUuid())
+                    .map(matchRepository::findById)
+                    .orElse(empty());
+
+            List<Team> teamResults = match.map(Match::getTeams).orElse(contest.getOpponents());
             Optional<Team> ownTeam = getTeam(teamResults, team.getId());
             Optional<Team> otherTeam = getOtherTeam(teamResults, ownTeam);
             if (ownTeam.isPresent() && otherTeam.isPresent()) {
@@ -119,7 +138,22 @@ public class RankController {
                 sustainedCasualties += getNullSafe(other.getInflictedcasualties());
             }
         }
-        rank.setScore(gamesWon * 3 + gamesDrawn);
+        CompetitionFormat format = competition.getFormat();
+        int winFactor = 0;
+        int drawFactor = 0;
+        switch (format) {
+            case RoundRobin:
+                winFactor = 3;
+                drawFactor = 1;
+                break;
+            case Wissen:
+                winFactor = 2;
+                drawFactor = 1;
+                break;
+            default:
+                break;
+        }
+        rank.setScore(gamesWon * winFactor + gamesDrawn * drawFactor);
         rank.setGamesPlayed(gamesPlayed);
         rank.setGamesWon(gamesWon);
         rank.setGamesDrawn(gamesDrawn);
@@ -141,13 +175,13 @@ public class RankController {
 
     private Optional<Team> getOtherTeam(List<Team> teamResults, Optional<Team> myTeam) {
         if (myTeam.isEmpty()) {
-            return Optional.empty();
+            return empty();
         }
         List<Team> teams = teamResults.stream()
                 .filter(team -> !myTeam.get().getId().equals(team.getId()))
                 .collect(Collectors.toList());
         if (teams.size() == 0) {
-            return Optional.empty();
+            return empty();
         }
         if (teams.size() != 1) {
             throw new IllegalArgumentException("Ambiguous results for other team.");
@@ -157,13 +191,13 @@ public class RankController {
 
     private Optional<Team> getTeam(List<Team> teamResults, UUID teamId) {
         if (teamResults == null) {
-            return Optional.empty();
+            return empty();
         }
         List<Team> teams = teamResults.stream()
                 .filter(team -> teamId.equals(team.getId()))
                 .collect(Collectors.toList());
         if (teams.size() == 0) {
-            return Optional.empty();
+            return empty();
         }
         if (teams.size() != 1) {
             throw new IllegalArgumentException("Ambiguous results for other team.");

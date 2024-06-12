@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, Tag, TagLabel, Tooltip } from '@chakra-ui/react';
+import { Image, Tag, TagLabel } from '@chakra-ui/react';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import prettyPrint from '../util/PrettyPrint';
 import config from '../config';
@@ -11,14 +11,14 @@ const imageOrIconFor = (injury) => {
   let imageName = '';
   switch (injury.toLowerCase()) {
     case 'groinstrain':
-    case 'brokenjaw':
-      imageName = 'seriouslyHurt';
+      imageName = 'seriously_hurt';
       break;
+    case 'brokenjaw':
     case 'fracturedleg':
-      imageName = 'smashedKnee';
+      imageName = 'smashed_knee';
       break;
     case 'fracturedarm':
-      imageName = 'brokenArm';
+      imageName = 'broken_arm';
       break;
     default:
       imageName = injury.toLowerCase();

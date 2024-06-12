@@ -5,27 +5,45 @@ import WarpScores from './pages/WarpScores';
 import TeamPage from './pages/TeamPage';
 import CompetitionPage from './pages/CompetitionPage';
 
-const colors = {
-  brand: {
-    50: '#ecefff',
-    100: '#cbceeb',
-    200: '#a9aed6',
-    300: '#888ec5',
-    400: '#666db3',
-    500: '#4d5499',
-    600: '#3c4178',
-    700: '#2a2f57',
-    800: '#181c37',
-    900: '#080819',
-  },
-};
-
 const config = {
   initialColorMode: 'dark',
   useSystemColorMode: false,
 };
 
-const theme = extendTheme({ colors, config });
+const theme = extendTheme({
+  config,
+  components: {
+    Table: {
+      variants: {
+        simpleClickable: {
+          tbody: {
+            tr: {
+              borderBlock: 'thin solid',
+              borderColor: 'gray.700',
+              cursor: 'pointer',
+              _hover: {
+                background: 'gray.600',
+              },
+            },
+          },
+        },
+        stripedClickable: {
+          tbody: {
+            tr: {
+              cursor: 'pointer',
+              _odd: {
+                background: 'gray.700',
+              },
+              _hover: {
+                background: 'gray.600',
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+});
 
 function App() {
   return (
@@ -38,6 +56,7 @@ function App() {
             <Route path="/:leagueUuid" element={<WarpScores />} />
             <Route path="/team/:teamUuid" element={<TeamPage />} />
             <Route path="/competition/:competitionUuid" element={<CompetitionPage />} />
+            <Route path="/competition/:competitionUuid/team/:teamUuid" element={<TeamPage />} />
           </Routes>
         </Router>
       </Box>

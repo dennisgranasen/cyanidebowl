@@ -16,7 +16,7 @@ const TableColumns = (
 function Teams({ teams }) {
   return (
     <TableContainer>
-      <Table variant="striped" size="sm">
+      <Table variant="stripedClickable" size="sm">
         <Thead>{TableColumns}</Thead>
         <Tbody>
           {teams ? (

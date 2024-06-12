@@ -6,6 +6,10 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Getter
@@ -19,7 +23,9 @@ public class Player implements UpdateableFromApi {
     private int number;
     private int value;
     private int xp;
+    private int level;
     private Attributes attributes;
+    private ExtendedAttributes extendedAttributes;
     private String type;
     private Integer[] casualtiesStateIds;
     private String[] casualtiesStates;
@@ -28,7 +34,6 @@ public class Player implements UpdateableFromApi {
 
     @Getter
     @Setter
-    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Attributes {
         private Integer pa;
         private Integer ma;
@@ -36,4 +41,14 @@ public class Player implements UpdateableFromApi {
         private Integer ag;
         private Integer av;
     }
+
+    @Getter
+    @Setter
+    public static class ExtendedAttributes {
+        private Attributes defaultAttributes;
+        private List<LinkedHashMap<String, Integer>> bonus;
+        private List<LinkedHashMap<String, Integer>> malus;
+    }
 }
+
+

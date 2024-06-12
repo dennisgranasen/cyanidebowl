@@ -1,9 +1,9 @@
 package net.warp_scores.warpscores.domain.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import net.warp_scores.warpscores.cyanide.api.model.common.Race;
 import lombok.Getter;
 import lombok.Setter;
+import net.warp_scores.warpscores.cyanide.api.model.common.Race;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -27,15 +27,17 @@ public class Team implements UpdateableFromApi {
     private String motto;
     private BigDecimal value;
     private Integer cash;
+
+    private Integer rerolls;
     private Integer apothecary;
     private Integer dedicatedFans;
     private Integer cheerleaders;
-    private Integer assistantCoaches;
+    private Integer coachAssistants;
 
     private String coachId;
     private String coachName;
 
-    private UUID leagueId;
+    private UUID[] leagueIds;
     private String leagueName;
 
     private UUID[] competitionIds;

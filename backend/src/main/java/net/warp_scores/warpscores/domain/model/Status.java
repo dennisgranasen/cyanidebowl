@@ -18,9 +18,10 @@ import java.util.Date;
 public class Status implements UpdateableFromApi {
     @Id
     private String gameName;
-    private boolean gameServerDatabase;
-    private boolean gameServerAddressDirectory;
+    private boolean overall;
+    private Platform[] platforms;
     private Maintenance maintenance;
+    private News[] news;
     private String[] socialLinks;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date lastCheck;
@@ -30,8 +31,29 @@ public class Status implements UpdateableFromApi {
     @NoArgsConstructor
     @ToString
     public static class Maintenance {
-        private Object[] pc;
-        private Object[] microsoft;
-        private Object[] sony;
+        private Object pc;
+        private Object microsoft;
+        private Object sony;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @ToString
+    public static class Platform {
+        private String codename;
+        private String title;
+        private boolean ok;
+        private Object[] regions;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @ToString
+    public static class News {
+        private String title;
+        private Object message;
     }
 }
+

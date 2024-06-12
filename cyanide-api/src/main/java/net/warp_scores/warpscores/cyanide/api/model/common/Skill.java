@@ -65,7 +65,7 @@ public enum Skill {
     NoHands("NoHands", "No hands"),
     OnTheBall("OnTheBall", "On the ball"),
     Pass("Pass"),
-    PileDriver("PileDriver", "Pile-Driver"),
+    PileDriver("PileDriver", "Pile-Driver", "Pile driver"),
     PlagueRidden("PlagueRidden", "Plague ridden"),
     PogoStick("PogoStick", "Pogo-Stick"),
     PrehensileTail("PrehensileTail", "Prehensile tail"),
@@ -92,15 +92,15 @@ public enum Skill {
     Swarmming("Swarmming", "swarming"),
     Swoop("Swoop"),
     Tackle("Tackle"),
-    TakeRoot("TakeRoot"),
+    TakeRoot("TakeRoot", "take root"),
     Tentacles("Tentacles"),
     ThickSkull("ThickSkull", "thick skull"),
     ThrowTeamMate("ThrowTeamMate", "throw team-mate"),
     Timmmber("Timmm-ber", "timmmber"),
     Titchy("Titchy"),
     TwoHeads("TwoHeads", "two heads"),
-    UnchannelledFury("UnchannelledFury"),
-    VeryLongLegs("VeryLongLegs"),
+    UnchannelledFury("UnchannelledFury", "unchannelled fury"),
+    VeryLongLegs("VeryLongLegs", "very long legs"),
     Wrestle("Wrestle");
 
     private final String imageName;

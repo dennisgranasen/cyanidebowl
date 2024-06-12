@@ -1,5 +1,34 @@
 package net.warp_scores.warpscores.cyanide.api.model.common;
 
 public enum MatchStatus {
-    scheduled, played, in_progress
+    Scheduled,
+    Validated,
+    InProgress,
+    Calculated,
+    @Deprecated
+    scheduled(true, Scheduled),
+    @Deprecated
+    in_progress(true, InProgress),
+    @Deprecated
+    played(true, Validated);
+
+    private final boolean deprecated;
+    private final MatchStatus superseededMatchStatus;
+
+    MatchStatus() {
+        this(false, null);
+    }
+
+    MatchStatus(boolean deprecated, MatchStatus superseededMatchStatus) {
+        this.deprecated = deprecated;
+        this.superseededMatchStatus = superseededMatchStatus;
+    }
+
+    public MatchStatus undeprecate() {
+        if (deprecated) {
+            return superseededMatchStatus;
+        } else {
+            return this;
+        }
+    }
 }

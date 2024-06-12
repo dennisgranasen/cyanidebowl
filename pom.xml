@@ -69,6 +69,15 @@
                 <artifactId>jackson-databind</artifactId>
                 <version>2.15.3</version>
             </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.uuid</groupId>
+                <artifactId>java-uuid-generator</artifactId>
+                <version>4.1.0</version>
+            </dependency>
+
+
+            <!-- tests dependencies -->
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter</artifactId>

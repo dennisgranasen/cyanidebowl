@@ -5,13 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
 import net.warp_scores.warpscores.cyanide.api.responses.TeamResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.TeamsResponse;
+import net.warp_scores.warpscores.domain.model.Competition;
 import net.warp_scores.warpscores.domain.model.Player;
 import net.warp_scores.warpscores.domain.model.Team;
+import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
 import net.warp_scores.warpscores.domain.persistence.TeamRepository;
 import net.warp_scores.warpscores.service.PopulatorUtil;
 import net.warp_scores.warpscores.service.TeamPopulator;
 import net.warp_scores.warpscores.service.UUIDConverter;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +28,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TeamDomainService {
     private final TeamRepository teamRepository;
+
+    private final CompetitionRepository competitionRepository;
 
     private final TeamPopulator teamPopulator;
 
@@ -53,6 +56,39 @@ public class TeamDomainService {
         List<Player> players = toPlayers(apiPlayers);
         team.setPlayers(players);
         return teamRepository.save(team);
+    }
+
+    @Transactional
+    public List<Team> findByLeagueId(UUID leagueUuid) {
+        return this.teamRepository.findByLeagueId(leagueUuid);
+    }
+
+    @Transactional
+    public List<Team> findByCompetitionId(UUID competitionId) {
+        List<Team> teams = this.teamRepository.findByCompetitionId(competitionId);
+        setRelevantCompetition(teams, competitionId);
+        return teams;
+    }
+
+    @Transactional
+    public Optional<Team> findTeam(UUID teamUuid, Optional<UUID> competitionUuid) {
+        List<Team> teams = teamRepository.findAllById(Arrays.asList(teamUuid));
+        if (teams.size() == 1) {
+            competitionUuid.ifPresent((uuid) -> setRelevantCompetition(teams, uuid));
+            return Optional.of(teams.get(0));
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    private void setRelevantCompetition(List<Team> teams, UUID competitionUuid) {
+        Optional<Competition> competition = this.competitionRepository.findById(competitionUuid);
+        teams
+                .stream()
+                .forEach(team -> {
+                    team.setCompetitionIds(new UUID[]{competitionUuid});
+                    competition.ifPresent(c -> team.setCompetitionName(c.getName()));
+                });
     }
 
     private Team internalCreateOrUpdateTeam(ApiTeam apiTeam) {
@@ -88,6 +124,7 @@ public class TeamDomainService {
         player.setRaceId(apiPlayer.getIdraces());
         player.setSuspendedNextMatch(apiPlayer.getSuspended_next_match());
         player.setAttributes(toAttributes(apiPlayer.getAttributes()));
+        player.setExtendedAttributes(toExtendedAttributes(apiPlayer.getExtendedAttributes()));
         player.setCasualtiesStateIds(apiPlayer.getCasualties_state_id());
         player.setCasualtiesStates(apiPlayer.getCasualties_state());
         return player;
@@ -97,5 +134,14 @@ public class TeamDomainService {
         Player.Attributes attributes = new Player.Attributes();
         PopulatorUtil.copyNonNullProperties(apiAttributes, attributes);
         return attributes;
+    }
+
+    private Player.ExtendedAttributes toExtendedAttributes(TeamResponse.Player.ExtendedAttributes apiExtendedAttributes) {
+        Player.ExtendedAttributes extendedAttributes = new Player.ExtendedAttributes();
+
+        Player.Attributes defaultAttributes = toAttributes(apiExtendedAttributes.getDefaultAttributes());
+        extendedAttributes.setDefaultAttributes(defaultAttributes);
+        PopulatorUtil.copyNonNullProperties(apiExtendedAttributes, extendedAttributes);
+        return extendedAttributes;
     }
 }

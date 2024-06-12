@@ -1,8 +1,10 @@
 package net.warp_scores.warpscores.cyanide.api.responses;
 
-import net.warp_scores.warpscores.cyanide.api.model.ApiLeague;
 import lombok.Getter;
 import lombok.Setter;
+import net.warp_scores.warpscores.cyanide.api.model.ApiLeague;
+
+import java.util.Optional;
 
 /*
 
@@ -44,5 +46,13 @@ public class LeagueResponse extends ApiResponse {
     @Override
     public void updateChangeableAttribute() {
         super.setChangeableResponse(false);
+    }
+
+    @Override
+    public String getInformationString() {
+        return String.format("LeagueResponse[isEmpty=%s, league=%s, changeable=%s]",
+                isEmpty(),
+                Optional.ofNullable(league).map(ApiLeague::getApi_league).orElse("n/a"),
+                isChangeableResponse());
     }
 }

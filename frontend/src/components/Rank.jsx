@@ -1,39 +1,38 @@
 import React from 'react';
-import { Center, Heading, Image, LinkBox, LinkOverlay, Spinner, Td, Tr } from '@chakra-ui/react';
-import { Link as RouteLink } from 'react-router-dom';
+import { Center, Heading, Image, Spinner, Td, Tr } from '@chakra-ui/react';
+import { useNavigate } from 'react-router-dom';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import Race from './Race';
 import Formatter from '../util/Formatter';
 import ImageUrls from '../ImageUrls';
 import config from '../config';
+import abbreviators from '../util/Abbreviators';
 
 const { boxSize } = config;
 
-function Rank({ rank }) {
+function Rank({ rank, smallscreen: issmallscreen }) {
+  const navigate = useNavigate();
+  const goToTeam = () => {
+    navigate(`/competition/${rank.team.competitionIds[0]}/team/${rank.team.id}`);
+  };
   return rank !== null ? (
-    <Tr>
+    <Tr onClick={goToTeam}>
       <Td>
         <Center>
           <Heading size="sm">{rank.rank}</Heading>
         </Center>
       </Td>
+      <Td>{issmallscreen ? abbreviators.abbreviateTeamName(rank.team.name) : rank.team.name}</Td>
       <Td>
-        <RouteLink to={`/team/${rank.team.id}`}>{rank.team.name}</RouteLink>
+        <Image
+          src={`${ImageUrls.logo(rank.team.logo)}`}
+          boxSize={boxSize}
+          fallback={<QuestionOutlineIcon boxSize={boxSize} />}
+          objectFit="scale-down"
+        />
       </Td>
-      <Td>
-        <RouteLink to={`/team/${rank.team.id}`}>
-          <Image
-            src={`${ImageUrls.logo(rank.team.logo)}`}
-            boxSize={boxSize}
-            fallback={<QuestionOutlineIcon boxSize={boxSize} />}
-            objectFit="scale-down"
-          />
-        </RouteLink>
-      </Td>
-      <Td>{rank.team.coachName}</Td>
-      <Td>
-        <Race race={rank.team.race} />
-      </Td>
+      <Td>{issmallscreen ? abbreviators.abbreviateCoachName(rank.team.coachName) : rank.team.coachName}</Td>
+      <Td>{issmallscreen ? null : <Race race={rank.team.race} />}</Td>
       <Td>
         <Center>{Formatter.formatAsNumber(rank.gamesPlayed)}</Center>
       </Td>

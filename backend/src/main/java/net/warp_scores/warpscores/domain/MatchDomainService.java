@@ -13,12 +13,12 @@ import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.service.PopulatorUtil;
 import net.warp_scores.warpscores.service.TeamPopulator;
 import net.warp_scores.warpscores.service.UUIDConverter;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,6 +31,22 @@ public class MatchDomainService {
     private final MatchRepository matchRepository;
     private final TeamPopulator teamPopulator;
     private final UUIDConverter uuidConverter;
+
+    @Transactional
+    public List<Match> findMatchesForTeam(UUID teamUuid) {
+        List<Match> all = matchRepository.findAll();
+        return all.stream()
+                .filter(m -> idMatches(teamUuid, m.getTeams()))
+                .sorted(Comparator.comparing(Match::getStarted).reversed())
+                .collect(Collectors.toList());
+    }
+
+    private boolean idMatches(UUID teamUuid, List<Team> teams) {
+        return teams
+                .stream()
+                .map(team -> team.getId())
+                .anyMatch(uuid -> uuid.equals(teamUuid));
+    }
 
     @Transactional
     public List<Match> createOrUpdateMatches(MatchesResponse matchesResponse) {

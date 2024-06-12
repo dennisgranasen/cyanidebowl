@@ -1,32 +1,40 @@
 import React from 'react';
-import { Spinner, Table, TableContainer, Tbody, Tfoot, Th, Thead, Tr } from '@chakra-ui/react';
+import { Heading, Spinner, Table, TableContainer, Tbody, Tfoot, Th, Thead, Tr } from '@chakra-ui/react';
 import Competition from './Competition';
 
-const TableColumns = (
-  <Tr>
-    <Th>Competition</Th>
-    <Th>Format</Th>
-    <Th>Status</Th>
-    <Th>Progress</Th>
-    <Th isNumeric>Teams</Th>
-  </Tr>
-);
+function TableColumns(smallscreen) {
+  return (
+    <Tr>
+      <Th>Competition</Th>
+      <Th>{smallscreen ? 'F' : 'Format'}</Th>
+      <Th>Status</Th>
+      <Th isNumeric>{smallscreen ? 'T' : 'Teams'}</Th>
+    </Tr>
+  );
+}
 
-function Competitions({ competitions }) {
+function Competitions({ competitions, smallscreen }) {
   return (
     <TableContainer>
-      <Table variant="striped" size="sm">
-        <Thead>{TableColumns}</Thead>
+      <Heading size="md">Competitions</Heading>
+      <Table variant="stripedClickable" size="sm">
+        <Thead>{TableColumns(smallscreen)}</Thead>
         <Tbody>
           {competitions ? (
             competitions.map((competition) => {
-              return <Competition competition={competition} key={competition.uuid} />;
+              return (
+                <Competition
+                  smallscreen={smallscreen ? 'smallscreen' : undefined}
+                  competition={competition}
+                  key={competition.uuid}
+                />
+              );
             })
           ) : (
             <Spinner />
           )}
         </Tbody>
-        <Tfoot>{TableColumns}</Tfoot>
+        <Tfoot>{TableColumns(smallscreen)}</Tfoot>
       </Table>
     </TableContainer>
   );

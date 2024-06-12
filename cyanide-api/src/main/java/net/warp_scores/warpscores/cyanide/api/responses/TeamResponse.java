@@ -1,12 +1,19 @@
 package net.warp_scores.warpscores.cyanide.api.responses;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
-import net.warp_scores.warpscores.cyanide.api.model.common.IdWithName;
 import lombok.Getter;
 import lombok.Setter;
+import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
+import net.warp_scores.warpscores.cyanide.api.model.common.IdWithName;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /*
 {
@@ -297,7 +304,6 @@ public class TeamResponse extends ApiResponse {
     private Coach coach;
     private Player[] roster;
 
-
     @Getter
     @Setter
     public static class Coach extends IdWithName {
@@ -313,8 +319,11 @@ public class TeamResponse extends ApiResponse {
         private Integer number;
         private Integer value;
         private Integer xp;
+        private Integer level;
 
         private Attributes attributes;
+        @JsonAlias({"attributes_ex"})
+        private ExtendedAttributes extendedAttributes;
 
         private String type;
         private Integer[] casualties_state_id;
@@ -331,10 +340,46 @@ public class TeamResponse extends ApiResponse {
             private Integer ag;
             private Integer av;
         }
+
+        @Getter
+        @Setter
+        public static class ExtendedAttributes {
+            @JsonAlias({"default"})
+            private Attributes defaultAttributes;
+            private List<LinkedHashMap<String, Integer>> bonus = new ArrayList<>();
+            private List<LinkedHashMap<String, Integer>> malus = new ArrayList<>();
+
+            @JsonAnySetter
+            public void setBonus(Object bonus) {
+                if (bonus instanceof ArrayList) {
+                    this.bonus.addAll((ArrayList) bonus);
+                } else if (bonus instanceof Map) {
+                    this.bonus.add((LinkedHashMap<String, Integer>) bonus);
+                }
+            }
+
+            @JsonAnySetter
+            public void setMalus(Object malus) {
+                if (malus instanceof ArrayList) {
+                    this.malus.addAll((ArrayList) malus);
+                } else if (malus instanceof Map) {
+                    this.malus.add((LinkedHashMap<String, Integer>) malus);
+                }
+            }
+        }
     }
 
     @Override
     public boolean isEmpty() {
         return team == null;
+    }
+
+    @Override
+    public String getInformationString() {
+        return String.format("TeamResponse[isEmpty=%s, team=%s, players=%s, changeable=%s]",
+                isEmpty(),
+                Optional.ofNullable(team).map(ApiTeam::getId).orElse("n/a"),
+                Optional.ofNullable(roster).map(r -> String.valueOf(r.length)).orElse("n/a"),
+                isChangeableResponse());
     }
 }

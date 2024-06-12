@@ -1,9 +1,9 @@
 package net.warp_scores.warpscores.controller;
 
-import net.warp_scores.warpscores.domain.persistence.LeagueRepository;
-import net.warp_scores.warpscores.domain.model.League;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.domain.model.League;
+import net.warp_scores.warpscores.domain.persistence.LeagueRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
