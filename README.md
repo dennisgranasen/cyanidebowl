@@ -6,28 +6,28 @@ Welcome to [Warp-Scores](https://warp-scores.net), a Spike-like facade for Cyani
 This is a [Spike](https://spike.ovh)-like web page to show match results and data from BB3 obtained through Cyanide's API. 
 
 ## Roadmap
-- 🟡 Increase Mobile UI/UX
-- 🟢 Generate Round Robin Schedules
+
+- 🟡 [Increase Mobile UI/UX](https://gitlab.com/warp-scores/warp-scores/-/issues/3)
+- 🟢 Generate Round Robin Schedules  
 - 🟢 Show last matches
 - 🟢 Show live matches
-- 🟢 Support Swiss (Wissen) Tournaments
-- Support Knockout Tournaments
-- 🟡 Match-Details
-- Coach page
-- League-Statistics
-- Competition-Statistics
-- Discord publishing of match results
-- Authentication (Discord-OAuth)
-- NAF Data export for tournaments
-- NAF OAuth for NAF-Account-Link
-- Admin/Edit results?
-- Win/Tie breaker editor
-- Others: -> See ⁠warp-scores-feature-requests on Discord
+- 🟢 Support Swiss (Wissen) Tournaments  
+- [Support Knockout Tournaments](https://gitlab.com/warp-scores/warp-scores/-/issues/4)
+- 🟡 [Match-Details](https://gitlab.com/warp-scores/warp-scores/-/issues/5)
+- [Coach page](https://gitlab.com/warp-scores/warp-scores/-/issues/6)
+- [League-Statistics](https://gitlab.com/warp-scores/warp-scores/-/issues/7)
+- [Competition-Statistics](https://gitlab.com/warp-scores/warp-scores/-/issues/8)
+- [Discord publishing of match results](https://gitlab.com/warp-scores/warp-scores/-/issues/9)
+- [Authentication (Discord-, NAF-OAuth)](https://gitlab.com/warp-scores/warp-scores/-/issues/10)
+- [NAF Data export for tournaments](https://gitlab.com/warp-scores/warp-scores/-/issues/11)
+- [Admin/Edit results? Win/Tie breaker editor?](https://gitlab.com/warp-scores/warp-scores/-/issues/12)
+- Others: -> See https://gitlab.com/warp-scores/warp-scores/-/issues/
 
 ### Legend
 - 🟢 Finished
 - 🟡 Currently in work
 - 🔴 Obsolete/Canceled
 
-## Discord
-https://discord.gg/hZDU6ymyrj
+## Contribute/Get involved
+
+- [Discord](https://discord.gg/hZDU6ymyrj)
