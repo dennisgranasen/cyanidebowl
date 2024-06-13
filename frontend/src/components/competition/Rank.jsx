@@ -2,11 +2,11 @@ import React from 'react';
 import { Center, Heading, Image, Spinner, Td, Tr } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
-import Race from './team/Race';
-import Formatter from '../util/Formatter';
-import ImageUrls from '../ImageUrls';
-import config from '../config';
-import abbreviators from '../util/Abbreviators';
+import Race from '../team/Race';
+import Formatter from '../../util/Formatter';
+import ImageUrls from '../../ImageUrls';
+import config from '../../config';
+import abbreviators from '../../util/Abbreviators';
 
 const { boxSize } = config;
 
