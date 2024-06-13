@@ -1,6 +1,6 @@
 import React from 'react';
 import { Spinner, Table, TableContainer, Tbody, Td, Tfoot, Th, Thead, Tr } from '@chakra-ui/react';
-import formatter from '../util/Formatter';
+import formatter from '../../util/Formatter';
 
 function Match({ match }) {
   return (

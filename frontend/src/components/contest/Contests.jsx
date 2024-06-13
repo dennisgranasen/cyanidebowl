@@ -15,7 +15,7 @@ import {
   Tr,
 } from '@chakra-ui/react';
 import Contest from './Contest';
-import comparators from '../util/Comparators';
+import comparators from '../../util/Comparators';
 
 const TableColumns = (
   <Tr>

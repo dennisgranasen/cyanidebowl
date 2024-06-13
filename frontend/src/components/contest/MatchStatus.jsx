@@ -1,12 +1,12 @@
 import React from 'react';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import { Avatar } from '@chakra-ui/react';
-import ImageUrls from '../ImageUrls';
-import prettyPrint from '../util/PrettyPrint';
-import formatter from '../util/Formatter';
+import ImageUrls from '../../ImageUrls';
+import prettyPrint from '../../util/PrettyPrint';
+import formatter from '../../util/Formatter';
 import MatchStatusIcon from './MatchStatusIcon';
-import config from '../config';
-import DelayedIconTooltip from './common/DelayedIconTooltip';
+import config from '../../config';
+import DelayedIconTooltip from '../common/DelayedIconTooltip';
 
 const { boxSize, smallBoxSize } = config;
 

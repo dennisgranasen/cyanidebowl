@@ -2,8 +2,8 @@ import React from 'react';
 import { Spinner, Td, Tr } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import CompetitionProgress from './CompetitionProgress';
-import prettyPrint from '../util/PrettyPrint';
-import abbreviators from '../util/Abbreviators';
+import prettyPrint from '../../util/PrettyPrint';
+import abbreviators from '../../util/Abbreviators';
 
 function Competition({ competition, smallscreen }) {
   const navigate = useNavigate();

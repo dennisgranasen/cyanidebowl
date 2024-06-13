@@ -16,14 +16,14 @@ import { useParams } from 'react-router-dom';
 import CyanideApiService from '../CyanideApiService';
 import config from '../config';
 import Navigation from '../components/common/Navigation';
-import Competitions from '../components/Competitions';
+import Competitions from '../components/competition/Competitions';
 import ImageUrls from '../ImageUrls';
 import formatter from '../util/Formatter';
 import InfoArea from '../components/common/InfoArea';
 import InfoItem from '../components/common/InfoItem';
 import HeaderCard from '../components/common/HeaderCard';
-import LiveContests from '../components/LiveContests';
-import LatestContests from '../components/LatestContests';
+import LiveContests from '../components/contest/LiveContests';
+import LatestContests from '../components/contest/LatestContests';
 
 function WarpScores() {
   const [smallscreen] = useMediaQuery('(max-width: 768px)');
