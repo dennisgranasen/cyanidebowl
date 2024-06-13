@@ -1,3 +1,5 @@
+import timeUtil from './TimeUtil';
+
 const numberFormat = new Intl.NumberFormat('en-GB');
 const dateFormatOptions = {
   year: '2-digit',
@@ -12,23 +14,16 @@ const formatAsNumber = (value) => {
   return value !== null ? numberFormat.format(value) : '-';
 };
 
-const asUTCDate = (date) => {
-  const [year, month, day, hours, minutes, seconds] = date.split(/-|\s|:/).map((c) => parseInt(c, 10));
-  return new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds, 0));
-};
-
 const formatAsDate = (date) => {
   if (!date) return '';
 
-  const utcDate = asUTCDate(date);
+  const utcDate = timeUtil.asUTCDate(date);
   return utcDate.toLocaleString([], dateFormatOptions);
 };
 
 const formatAsDuration = (startDate, endDate) => {
   if (!startDate) return '';
-  const endTime = endDate ? asUTCDate(endDate).getTime() : Date.now();
-
-  const millis = endTime - asUTCDate(startDate).getTime();
+  const millis = timeUtil.durationInMillis(startDate, endDate);
   const minutes = Math.floor(millis / 1000 / 60);
   const hours = Math.floor(minutes / 60);
   const restMinutes = minutes % 60;
