@@ -15,13 +15,13 @@ import {
 import { useParams } from 'react-router-dom';
 import CyanideApiService from '../CyanideApiService';
 import config from '../config';
-import Navigation from '../components/Navigation';
+import Navigation from '../components/common/Navigation';
 import Competitions from '../components/Competitions';
 import ImageUrls from '../ImageUrls';
 import formatter from '../util/Formatter';
-import InfoArea from '../components/InfoArea';
-import InfoItem from '../components/InfoItem';
-import HeaderCard from '../components/HeaderCard';
+import InfoArea from '../components/common/InfoArea';
+import InfoItem from '../components/common/InfoItem';
+import HeaderCard from '../components/common/HeaderCard';
 import LiveContests from '../components/LiveContests';
 import LatestContests from '../components/LatestContests';
 

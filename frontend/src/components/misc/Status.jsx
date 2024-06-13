@@ -16,10 +16,10 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { FaDatabase, FaDesktop, FaPlaystation, FaRegAddressBook, FaTriangleExclamation, FaXbox } from 'react-icons/fa6';
-import CyanideApiService from '../CyanideApiService';
-import config from '../config';
-import formatter from '../util/Formatter';
-import timeUtil from '../util/TimeUtil';
+import CyanideApiService from '../../CyanideApiService';
+import config from '../../config';
+import formatter from '../../util/Formatter';
+import timeUtil from '../../util/TimeUtil';
 import NewsList from './NewsList';
 import SocialLinks from './SocialLinks';
 import Disclaimer from './Disclaimer';
