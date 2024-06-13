@@ -1,9 +1,9 @@
 import React from 'react';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import { Box, Image, Td, Text } from '@chakra-ui/react';
-import ImageUrls from '../ImageUrls';
-import config from '../config';
-import abbreviators from '../util/Abbreviators';
+import ImageUrls from '../../ImageUrls';
+import config from '../../config';
+import abbreviators from '../../util/Abbreviators';
 
 const { boxSize } = config;
 

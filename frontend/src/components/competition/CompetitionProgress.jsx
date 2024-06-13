@@ -2,8 +2,8 @@ import React from 'react';
 import { Box, GridItem, Progress, SimpleGrid, VStack } from '@chakra-ui/react';
 import { CalendarIcon, QuestionIcon } from '@chakra-ui/icons';
 import { FaFlagCheckered } from 'react-icons/fa6';
-import DelayedIconTooltip from './common/DelayedIconTooltip';
-import prettyPrint from '../util/PrettyPrint';
+import DelayedIconTooltip from '../common/DelayedIconTooltip';
+import prettyPrint from '../../util/PrettyPrint';
 
 function RoundRobinProgresses({
   currentRound,
