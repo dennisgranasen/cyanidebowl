@@ -3,8 +3,8 @@ import { Image, Spinner, Td, Tr } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import Race from './Race';
-import Formatter from '../util/Formatter';
-import ImageUrls from '../ImageUrls';
+import Formatter from '../../util/Formatter';
+import ImageUrls from '../../ImageUrls';
 
 const boxSize = '32px';
 

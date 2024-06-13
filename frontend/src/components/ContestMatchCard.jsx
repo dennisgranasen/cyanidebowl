@@ -1,7 +1,6 @@
 import React from 'react';
-import { Box, Card, CardBody, Center, Grid, GridItem, Heading, Image, Progress, Text, VStack } from '@chakra-ui/react';
+import { Box, Card, CardBody, Center, Grid, GridItem, Heading, Image, Text } from '@chakra-ui/react';
 import { Icon } from '@chakra-ui/icons';
-import { FaTowerBroadcast } from 'react-icons/fa6';
 import ImageUrls from '../ImageUrls';
 import formatter from '../util/Formatter';
 import config from '../config';

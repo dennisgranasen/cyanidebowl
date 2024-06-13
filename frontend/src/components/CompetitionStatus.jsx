@@ -1,8 +1,8 @@
 import React from 'react';
 import { FaAddressCard, FaFlagCheckered, FaSpinner } from 'react-icons/fa6';
-import { Icon, QuestionOutlineIcon } from '@chakra-ui/icons';
+import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import prettyPrint from '../util/PrettyPrint';
-import DelayedIconTooltip from './DelayedIconTooltip';
+import DelayedIconTooltip from './common/DelayedIconTooltip';
 
 function StatusAsIcon({ status }) {
   switch (status) {

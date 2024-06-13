@@ -1,10 +1,10 @@
 import React from 'react';
-import { Box, Image, Tooltip } from '@chakra-ui/react';
+import { Box, Image } from '@chakra-ui/react';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
-import prettyPrint from '../util/PrettyPrint';
-import config from '../config';
-import ImageUrls from '../ImageUrls';
-import DelayedIconTooltip from './DelayedIconTooltip';
+import prettyPrint from '../../util/PrettyPrint';
+import config from '../../config';
+import ImageUrls from '../../ImageUrls';
+import DelayedIconTooltip from '../common/DelayedIconTooltip';
 
 const { smallBoxSize: boxSize } = config;
 
