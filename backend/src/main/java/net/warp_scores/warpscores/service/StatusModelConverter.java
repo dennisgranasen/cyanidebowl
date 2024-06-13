@@ -14,6 +14,7 @@ public class StatusModelConverter {
         Status status = new Status();
         status.setGameName(game.getName());
         status.setOverall(game.getStatus().isOk());
+        status.setServiceStatuses(game.getService_statuses());
         status.setMaintenance(toMaintenance(game.getMaintenance()));
         status.setSocialLinks(game.getSocial_links());
         status.setPlatforms(toPlatforms(game.getStatus().getPlatforms()));

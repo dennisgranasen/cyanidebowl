@@ -21,7 +21,6 @@ public class CheckStatusScheduler {
             log.info("Scheduler deactivated by configuration. Skipping checkApiStatus().");
             return;
         }
-
         cyanideApiService.checkApiStatus();
     }
 }

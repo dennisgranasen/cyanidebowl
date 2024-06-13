@@ -19,6 +19,8 @@ public class Status implements UpdateableFromApi {
     @Id
     private String gameName;
     private boolean overall;
+    private Object serviceStatuses;
+
     private Platform[] platforms;
     private Maintenance maintenance;
     private News[] news;

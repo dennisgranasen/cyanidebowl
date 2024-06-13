@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { CheckCircleIcon, ExternalLinkIcon, Icon, WarningIcon } from '@chakra-ui/icons';
+import { CheckCircleIcon, Icon, WarningIcon } from '@chakra-ui/icons';
 import {
   Box,
   HStack,
   Link,
-  List,
-  ListItem,
   Popover,
   PopoverArrow,
   PopoverBody,
@@ -15,70 +13,52 @@ import {
   PopoverHeader,
   PopoverTrigger,
   Spinner,
-  Text,
   VStack,
 } from '@chakra-ui/react';
-import { FaDesktop, FaFacebook, FaGlobe, FaPlaystation, FaXbox, FaXTwitter } from 'react-icons/fa6';
-import { FaDiscord } from 'react-icons/fa';
+import { FaDatabase, FaDesktop, FaPlaystation, FaRegAddressBook, FaTriangleExclamation, FaXbox } from 'react-icons/fa6';
 import CyanideApiService from '../CyanideApiService';
 import config from '../config';
-import hashCode from '../util/HashCode';
 import formatter from '../util/Formatter';
+import timeUtil from '../util/TimeUtil';
+import NewsList from './NewsList';
+import SocialLinks from './SocialLinks';
+import Disclaimer from './Disclaimer';
 
-function NewsItem({ title, message }) {
-  const hasStringTitle = title && typeof title === 'string' && title.length > 0;
-  const hasStringMessage = message && typeof message === 'string' && message.length > 0;
-  const color = hasStringMessage && message.match(/maintenance/i) ? 'orange' : null;
-  let text;
-  if (hasStringTitle) {
-    text = title;
-  } else if (hasStringMessage && !message.match(/^http/)) text = message;
-  const url = hasStringMessage && message.match(/^http/) ? message : null;
-  return (
-    <List fontSize="xs" color={color}>
-      <ListItem>
-        {url ? (
-          <Link href={url} isExternal>
-            <>
-              {text}
-              <ExternalLinkIcon mx="2px" />
-            </>
-          </Link>
-        ) : (
-          text
-        )}
-      </ListItem>
-    </List>
-  );
-}
+const MAX_AGE_FOR_STATUS_IN_MILLIS = 20 * 60 * 1_000; // 20 Minutes
 
-function StatusIcon({ status, maintenance }) {
-  if (status && maintenance && maintenance.length === 0) {
-    return <CheckCircleIcon size="sm" color="green" />;
-  }
-  const color = status ? 'orange' : 'red';
-  return <WarningIcon size="sm" color={color} />;
-}
-
-const getMaintenanceColor = (maintenanceStatus) => {
-  return maintenanceStatus && maintenanceStatus.length > 0 ? 'orange' : 'grey';
+const isMaintenance = (maintenanceStatus) => {
+  return maintenanceStatus && maintenanceStatus.length > 0;
 };
 
-function SocialLink({ url }) {
-  if (!url) return null;
-  const isDiscord = /\/discord\.gg/.test(url);
-  const isTwitter = /twitter\.com/.test(url) || /\/x\.com/.test(url);
-  const isFacebook = /\/www\.facebook/.test(url);
-  let icon = FaGlobe;
-  icon = isFacebook ? FaFacebook : icon;
-  icon = isTwitter ? FaXTwitter : icon;
-  icon = isDiscord ? FaDiscord : icon;
+function StatusIcon({ status, maintenance, statusOutdated }) {
+  let color;
+  let icon;
+  if (status && maintenance && maintenance.length === 0) {
+    color = statusOutdated ? 'yellow' : 'green';
+    icon = CheckCircleIcon;
+  } else {
+    color = status ? 'orange' : 'red';
+    icon = WarningIcon;
+  }
+  return <Icon as={icon} size="sm" color={color} />;
+}
 
-  return (
-    <Link href={url}>
-      <Icon as={icon} size="sm" />
-    </Link>
-  );
+function PlatformIcon({ codename, status, maintenance }) {
+  let color;
+  let icon;
+
+  const isPc = /pc/i.test(codename);
+  const isXbox = /microsoft/i.test(codename);
+  const isPlaystation = /sony/i.test(codename);
+
+  color = status ? 'green' : 'red';
+  if (maintenance) color = 'orange';
+
+  icon = isPc ? FaDesktop : null;
+  icon = isXbox ? FaXbox : icon;
+  icon = isPlaystation ? FaPlaystation : icon;
+
+  return <Icon as={icon} color={color} />;
 }
 
 function Status() {
@@ -102,13 +82,15 @@ function Status() {
       ? [].concat(status.maintenance.pc, status.maintenance.microsoft, status.maintenance.sony).filter((value) => value)
       : [];
 
+  const statusOutdated = status && timeUtil.durationInMillis(status.lastCheck) > MAX_AGE_FOR_STATUS_IN_MILLIS;
+
   return status === null ? (
     <Spinner size="sm" color="orange" />
   ) : (
     <Popover>
       <PopoverTrigger>
         <Link>
-          <StatusIcon status={status.overall} maintenance={maintenance} />
+          <StatusIcon status={status.overall} maintenance={maintenance} statusOutdated={statusOutdated} />
         </Link>
       </PopoverTrigger>
       <PopoverContent>
@@ -116,75 +98,50 @@ function Status() {
         <PopoverCloseButton />
         <PopoverHeader>Cyanide Api-Status</PopoverHeader>
         <PopoverBody>
-          <HStack spacing={2}>
-            <Box>Overall:</Box>
-            <HStack spacing={2}>
+          <VStack spacing={2} align="left">
+            <HStack spacing={2} align="left">
+              <Box>Overall:</Box>
               <StatusIcon status={status.overall} maintenance={maintenance} />
             </HStack>
-          </HStack>
-          <HStack spacing={2}>
-            <Box>Maintenance:</Box>
-            <HStack spacing={2}>
-              {status.maintenance ? (
-                <>
-                  <FaDesktop color={getMaintenanceColor(status.maintenance.pc)} />
-                  <FaXbox color={getMaintenanceColor(status.maintenance.microsoft)} />
-                  <FaPlaystation color={getMaintenanceColor(status.maintenance.sony)} />
-                </>
-              ) : null}
+            <HStack spacing={2} align="left">
+              <Box>Game Server:</Box>
+              <Icon as={FaDatabase} color={status.serviceStatuses.game_server_database ? 'green' : 'red'} />
+              <Icon
+                as={FaRegAddressBook}
+                color={status.serviceStatuses.game_server_address_directory ? 'green' : 'red'}
+              />
             </HStack>
-          </HStack>
-          {status && status.news && status.news.length > 0 && (
-            <Box mt={2} fontSize="sm" color="grey">
-              <Text fontStyle="italic">Latest BB3 news</Text>
-              <List>
-                {status.news
-                  .sort((news1, news2) => {
-                    if (!news1.title) return -1;
-                    if (!news2.title) return 1;
-                    return 0;
-                  })
-                  .map((newsItem) => (
-                    <NewsItem
-                      key={hashCode(newsItem.title, newsItem.message)}
-                      title={newsItem.title}
-                      message={newsItem.message}
-                    />
-                  ))}
-              </List>
-            </Box>
-          )}
-          {status && status.socialLinks && status.socialLinks.length > 0 && (
-            <Box mt={2} fontSize="sm" color="grey">
-              <Text fontStyle="italic">BB3 social links</Text>
-              <HStack>
-                {status.socialLinks.map((socialLink) => (
-                  <SocialLink url={socialLink} key={socialLink} />
+            <HStack spacing={2} align="left">
+              <Box>Platforms:</Box>
+              {status.platforms &&
+                status.platforms.map((platform) => (
+                  <PlatformIcon
+                    key={platform.codename}
+                    codename={platform.codename}
+                    status={platform.ok}
+                    maintenance={isMaintenance(status.maintenance[platform.codename])}
+                  />
                 ))}
-              </HStack>
-            </Box>
-          )}
-          <Box mt={2} fontSize="sm" color="grey">
-            <Text fontStyle="italic">Disclaimer</Text>
-            <VStack>
-              <Text fontSize="xs">
-                This site is completely unofficial and not affiliated with Cyanide, Nacon or Games Workshop.
-              </Text>
-              <Text fontSize="xs">
-                Blood Bowl, BB3 and probably a lot more names are trademarks of their respective owners. Used without
-                permission. No challenge to their status intended.
-              </Text>
-              <Text fontSize="xs">
-                Page maintained by{' '}
-                <Link href="mailto:naytsyrhc@gmx.org" isExternal>
-                  Naytsyrhc
-                </Link>
-              </Text>
-            </VStack>
-          </Box>
+            </HStack>
+            {status && <NewsList news={status.news} headerSize="sm" textSize="xs" mt={2} color="grey" />}
+            {status && (
+              <SocialLinks socialLinks={status.socialLinks} headerSize="sm" iconSize="sm" mt={2} color="grey" />
+            )}
+            <Disclaimer mt={2} headerSize="sm" textSize="xs" color="grey" />
+          </VStack>
         </PopoverBody>
         <PopoverFooter>
-          Last check: {status && status.lastCheck ? formatter.formatAsDate(status.lastCheck) : 'unknown'}
+          <HStack spacing={2}>
+            <Box>{`Last check: ${
+              status && status.lastCheck ? formatter.formatAsDate(status.lastCheck) : 'unknown'
+            } `}</Box>
+            {statusOutdated && <Icon as={FaTriangleExclamation} color="yellow" size="xs" />}
+            {statusOutdated && (
+              <Box fontSize="xs" color="yellow">
+                Outdated
+              </Box>
+            )}
+          </HStack>
         </PopoverFooter>
       </PopoverContent>
     </Popover>
