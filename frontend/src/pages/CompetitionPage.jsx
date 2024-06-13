@@ -2,16 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { Box, Heading, Spinner, useMediaQuery, VStack } from '@chakra-ui/react';
 import { Link as RouteLink, useParams } from 'react-router-dom';
 import CyanideApiService from '../CyanideApiService';
-import Navigation from '../components/Navigation';
+import Navigation from '../components/common/Navigation';
 import Contests from '../components/Contests';
 import comparators from '../util/Comparators';
 import ImageUrls from '../ImageUrls';
 import Ranks from '../components/Ranks';
 import prettyPrint from '../util/PrettyPrint';
 import CompetitionProgress from '../components/CompetitionProgress';
-import InfoArea from '../components/InfoArea';
-import InfoItem from '../components/InfoItem';
-import HeaderCard from '../components/HeaderCard';
+import InfoArea from '../components/common/InfoArea';
+import InfoItem from '../components/common/InfoItem';
+import HeaderCard from '../components/common/HeaderCard';
 import formatter from '../util/Formatter';
 
 function CompetitionPage() {

@@ -6,7 +6,7 @@ import prettyPrint from '../util/PrettyPrint';
 import formatter from '../util/Formatter';
 import MatchStatusIcon from './MatchStatusIcon';
 import config from '../config';
-import DelayedIconTooltip from './DelayedIconTooltip';
+import DelayedIconTooltip from './common/DelayedIconTooltip';
 
 const { boxSize, smallBoxSize } = config;
 

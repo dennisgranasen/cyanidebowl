@@ -1,9 +1,9 @@
 import React from 'react';
 import { Image, Tag, TagLabel } from '@chakra-ui/react';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
-import prettyPrint from '../util/PrettyPrint';
-import config from '../config';
-import DelayedIconTooltip from './DelayedIconTooltip';
+import prettyPrint from '../../util/PrettyPrint';
+import config from '../../config';
+import DelayedIconTooltip from '../common/DelayedIconTooltip';
 
 const { smallBoxSize: boxSize } = config;
 

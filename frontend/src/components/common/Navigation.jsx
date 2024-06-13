@@ -1,7 +1,7 @@
 import React from 'react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, Flex, Spacer } from '@chakra-ui/react';
 import { Link as RouteLink } from 'react-router-dom';
-import Status from './Status';
+import Status from '../misc/Status';
 
 function Navigation({ currentPage, league, competition, team }) {
   const leagueLink = league ? `/${league[0]}` : '/';

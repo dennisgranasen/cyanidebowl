@@ -2,9 +2,9 @@ import React from 'react';
 import { Center, Image, Tag, Td, Text, Tr } from '@chakra-ui/react';
 import { FaBandage } from 'react-icons/fa6';
 import Skills from './Skills';
-import prettyPrint from '../util/PrettyPrint';
+import prettyPrint from '../../util/PrettyPrint';
 import Injuries from './Injuries';
-import config from '../config';
+import config from '../../config';
 
 const { smallBoxSize } = config;
 
