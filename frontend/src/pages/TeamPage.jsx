@@ -2,15 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { Box, Heading, Spinner, useMediaQuery, VStack } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
 import CyanideApiService from '../CyanideApiService';
-import Roster from '../components/Roster';
+import Roster from '../components/team/Roster';
 import prettyPrint from '../util/PrettyPrint';
-import Navigation from '../components/Navigation';
+import Navigation from '../components/common/Navigation';
 import Formatter from '../util/Formatter';
 import ImageUrls from '../ImageUrls';
-import InfoArea from '../components/InfoArea';
-import InfoItem from '../components/InfoItem';
+import InfoArea from '../components/common/InfoArea';
+import InfoItem from '../components/common/InfoItem';
 import Matches from '../components/Matches';
-import HeaderCard from '../components/HeaderCard';
+import HeaderCard from '../components/common/HeaderCard';
 
 function MatchesCount({ matches, teamUuid }) {
   if (!matches) return <Spinner />;
