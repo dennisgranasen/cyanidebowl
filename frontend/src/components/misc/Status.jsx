@@ -103,14 +103,16 @@ function Status() {
               <Box>Overall:</Box>
               <StatusIcon status={status.overall} maintenance={maintenance} />
             </HStack>
-            <HStack spacing={2} align="left">
-              <Box>Game Server:</Box>
-              <Icon as={FaDatabase} color={status.serviceStatuses.game_server_database ? 'green' : 'red'} />
-              <Icon
-                as={FaRegAddressBook}
-                color={status.serviceStatuses.game_server_address_directory ? 'green' : 'red'}
-              />
-            </HStack>
+            {status.serviceStatuses && (
+              <HStack spacing={2} align="left">
+                <Box>Game Server:</Box>
+                <Icon as={FaDatabase} color={status.serviceStatuses.game_server_database ? 'green' : 'red'} />}
+                <Icon
+                  as={FaRegAddressBook}
+                  color={status.serviceStatuses.game_server_address_directory ? 'green' : 'red'}
+                />
+              </HStack>
+            )}
             <HStack spacing={2} align="left">
               <Box>Platforms:</Box>
               {status.platforms &&
