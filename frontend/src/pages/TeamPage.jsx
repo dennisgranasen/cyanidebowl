@@ -9,7 +9,7 @@ import Formatter from '../util/Formatter';
 import ImageUrls from '../ImageUrls';
 import InfoArea from '../components/common/InfoArea';
 import InfoItem from '../components/common/InfoItem';
-import Matches from '../components/Matches';
+import Matches from '../components/contest/Matches';
 import HeaderCard from '../components/common/HeaderCard';
 
 function MatchesCount({ matches, teamUuid }) {

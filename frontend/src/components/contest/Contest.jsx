@@ -1,11 +1,11 @@
 import React from 'react';
 import { Center, Spinner, Td, Tr, useDisclosure } from '@chakra-ui/react';
 import Opponent from './Opponent';
-import prettyPrint from '../util/PrettyPrint';
-import formatter from '../util/Formatter';
-import config from '../config';
+import prettyPrint from '../../util/PrettyPrint';
+import formatter from '../../util/Formatter';
+import config from '../../config';
 import MatchModal from './MatchModal';
-import DelayedIconTooltip from './common/DelayedIconTooltip';
+import DelayedIconTooltip from '../common/DelayedIconTooltip';
 import ScoreOrIcon from './ScoreOrIcon';
 
 const { smallBoxSize } = config;

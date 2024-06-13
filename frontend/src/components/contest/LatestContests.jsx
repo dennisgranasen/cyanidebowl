@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Heading } from '@chakra-ui/react';
 import { FaRegFaceSadTear } from 'react-icons/fa6';
-import formatter from '../util/Formatter';
-import CyanideApiService from '../CyanideApiService';
-import comparators from '../util/Comparators';
+import formatter from '../../util/Formatter';
+import CyanideApiService from '../../CyanideApiService';
+import comparators from '../../util/Comparators';
 import ContestMatchCards from './ContestMatchCards';
 
 function LatestContests({ league }) {
