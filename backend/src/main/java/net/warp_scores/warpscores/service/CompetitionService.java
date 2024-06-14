@@ -99,10 +99,10 @@ public class CompetitionService {
     }
 
     public boolean competitionConsideredActive(Competition competition) {
-        var matchCount = competition.getPlayedMatches();
-        return matchCount != null && 
-                (asList(CompetitionStatus.Registration, CompetitionStatus.InProgress).contains(competition.getStatus())
-                        || (CompetitionStatus.Finished.equals(
-                        competition.getStatus()) && matchCount > 0));
+        boolean inRegistrationOrInProgress = asList(CompetitionStatus.Registration, CompetitionStatus.InProgress)
+                .contains(competition.getStatus());
+        boolean finished = CompetitionStatus.Finished.equals(competition.getStatus());
+        int matchCount = Optional.ofNullable(competition.getPlayedMatches()).orElse(0);
+        return inRegistrationOrInProgress || finished && matchCount > 0;
     }
 }
