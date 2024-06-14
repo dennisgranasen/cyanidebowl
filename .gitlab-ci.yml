@@ -1,17 +1,26 @@
 stages:
   - build
   - test
-  - docker
+  - package
+  - deploy
+
+variables:
+  MAVEN_OPTS: -Dmaven.repo.local=.m2/repository
+
+cache:
+  paths:
+    - .m2/repository
+    - target
 
 maven-build:
-  image: registry.hub.docker.com/library/maven:3.8-openjdk-17
   stage: build
-  script: "mvn -Ddockerfile.skip clean package -B"
+  image: registry.hub.docker.com/library/maven:3.8-openjdk-17
+  script: "mvn -Ddockerfile.skip clean compile -B"
 
 maven-test:
-  image: registry.hub.docker.com/library/maven:3.8-openjdk-17
   stage: test
-  script: "mvn -Ddockerfile.skip test -fae"
+  image: registry.hub.docker.com/library/maven:3.8-openjdk-17
+  script: "mvn -Ddockerfile.skip test -fae -B"
   artifacts:
     reports:
       junit:
