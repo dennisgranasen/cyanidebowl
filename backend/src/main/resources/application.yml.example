@@ -5,16 +5,9 @@ spring:
   data:
     mongodb:
       uri: mongodb://USER:PASS@localhost:32768/DB_NAME?authSource=admin
-
-web:
-  cors:
-    allowed-origins:
-      - "http://localhost:8022"
-      - "http://localhost:8080"
-    allowed-methods:  GET, POST, PATCH, PUT, DELETE, OPTIONS, HEAD
-    max-age: 3600
-    allowed-headers: "Requestor-Type"
-    exposed-headers: "X-Get-Header"
+  web:
+    resources:
+      static-locations: classpath=/public
 
 cyanide:
   scheduler-active: true
