@@ -7,10 +7,8 @@ services:
     image: 'mongo:latest'
     environment:
       - 'MONGO_INITDB_DATABASE=warpscores'
-      - 'MONGO_INITDB_ROOT_PASSWORD=3f2ThhhwMR;CDa3UtDoS'
+      - 'MONGO_INITDB_ROOT_PASSWORD=[PASSWORD]'
       - 'MONGO_INITDB_ROOT_USERNAME=root'
-    ports:
-      - '32768:27017'
     volumes:
       - ./data:/data/db
     networks:
