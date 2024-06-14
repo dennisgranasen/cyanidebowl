@@ -15,7 +15,7 @@ import {
 import { useParams } from 'react-router-dom';
 import CyanideApiService from '../CyanideApiService';
 import config from '../config';
-import Navigation from '../components/common/Navigation';
+import Navigation from '../components/misc/Navigation';
 import Competitions from '../components/competition/Competitions';
 import ImageUrls from '../ImageUrls';
 import formatter from '../util/Formatter';

@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import CyanideApiService from '../CyanideApiService';
 import Roster from '../components/team/Roster';
 import prettyPrint from '../util/PrettyPrint';
-import Navigation from '../components/common/Navigation';
+import Navigation from '../components/misc/Navigation';
 import Formatter from '../util/Formatter';
 import ImageUrls from '../ImageUrls';
 import InfoArea from '../components/common/InfoArea';

@@ -5,7 +5,7 @@ function Disclaimer({ headerSize, textSize, ...props }) {
   return (
     <Box fontSize={headerSize} {...props}>
       <Text fontStyle="italic">Disclaimer</Text>
-      <VStack>
+      <VStack align="left">
         <Text fontSize={textSize}>
           This site is completely unofficial and not affiliated with Cyanide, Nacon or Games Workshop.
         </Text>

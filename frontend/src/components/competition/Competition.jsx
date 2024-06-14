@@ -14,7 +14,7 @@ function Competition({ competition, smallscreen }) {
   return competition !== null ? (
     <Tr onClick={goToCompetition}>
       <Td>{competition.name}</Td>
-      <Td>{smallscreen ? abbreviators.abbreviate(competition.format) : prettyPrint(competition.format)}</Td>
+      <Td>{smallscreen ? abbreviators.makeInitials(competition.format ) : prettyPrint(competition.format)}</Td>
       <Td>
         <CompetitionProgress
           status={competition.status}
