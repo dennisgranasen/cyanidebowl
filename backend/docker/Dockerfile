@@ -1,7 +1,7 @@
 FROM openjdk:17-jdk-slim
 MAINTAINER naytsyrhc <naytsyrhc@gmx.org>
 
-HEALTHCHECK CMD curl -sSf http://localhost:8080/version.json
+HEALTHCHECK CMD curl -sSf http://localhost:8080/public/version.json
 
 COPY ./backend.jar warpscores-backend.jar
 
