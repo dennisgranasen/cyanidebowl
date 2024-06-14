@@ -1,6 +1,6 @@
 import prettyPrint from './PrettyPrint';
 
-const abbreviate = (name) => {
+const makeInitials = (name) => {
   if (!name) return name;
 
   const prettyName = prettyPrint(name);
@@ -13,17 +13,22 @@ const abbreviate = (name) => {
   return abbreviatedName;
 };
 
-const abbreviateCoachName = (coachName, letterCount = 3) => {
+const abbreviateText = (text, letterCount, suffix = '') => {
   const regex = new RegExp(`(^.{0,${letterCount}}).*`, 'g');
-  return coachName && coachName.length > letterCount + 1 ? coachName.replace(regex, '$1.') : coachName;
+  return text && text.length > letterCount + 1 ? `${text.replace(regex, '$1')}${suffix}` : text;
+};
+
+const abbreviateCoachName = (text, letterCount = 3) => {
+  return abbreviateText(text, letterCount, '.');
 };
 
 const abbreviateTeamName = (teamName) => {
-  return abbreviate(teamName);
+  return makeInitials(teamName);
 };
 
 export default {
-  abbreviate,
+  makeInitials,
+  abbreviateText,
   abbreviateCoachName,
   abbreviateTeamName,
 };

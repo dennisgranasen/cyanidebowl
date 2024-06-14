@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Box, Heading, Spinner, useMediaQuery, VStack } from '@chakra-ui/react';
 import { Link as RouteLink, useParams } from 'react-router-dom';
 import CyanideApiService from '../CyanideApiService';
-import Navigation from '../components/common/Navigation';
+import Navigation from '../components/misc/Navigation';
 import Contests from '../components/contest/Contests';
 import comparators from '../util/Comparators';
 import ImageUrls from '../ImageUrls';

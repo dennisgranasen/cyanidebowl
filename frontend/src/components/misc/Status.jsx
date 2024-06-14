@@ -1,47 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { CheckCircleIcon, Icon, WarningIcon } from '@chakra-ui/icons';
-import {
-  Box,
-  HStack,
-  Link,
-  Popover,
-  PopoverArrow,
-  PopoverBody,
-  PopoverCloseButton,
-  PopoverContent,
-  PopoverFooter,
-  PopoverHeader,
-  PopoverTrigger,
-  Spinner,
-  VStack,
-} from '@chakra-ui/react';
-import { FaDatabase, FaDesktop, FaPlaystation, FaRegAddressBook, FaTriangleExclamation, FaXbox } from 'react-icons/fa6';
-import CyanideApiService from '../../CyanideApiService';
-import config from '../../config';
-import formatter from '../../util/Formatter';
-import timeUtil from '../../util/TimeUtil';
-import NewsList from './NewsList';
-import SocialLinks from './SocialLinks';
-import Disclaimer from './Disclaimer';
-
-const MAX_AGE_FOR_STATUS_IN_MILLIS = 20 * 60 * 1_000; // 20 Minutes
+import { Box, HStack, Spacer, Text, VStack } from '@chakra-ui/react';
+import { Icon } from '@chakra-ui/icons';
+import { FaDatabase, FaDesktop, FaPlaystation, FaRegAddressBook, FaXbox } from 'react-icons/fa6';
+import React from 'react';
+import StatusIcon from './StatusIcon';
 
 const isMaintenance = (maintenanceStatus) => {
   return maintenanceStatus && maintenanceStatus.length > 0;
 };
-
-function StatusIcon({ status, maintenance, statusOutdated }) {
-  let color;
-  let icon;
-  if (status && maintenance && maintenance.length === 0) {
-    color = statusOutdated ? 'yellow' : 'green';
-    icon = CheckCircleIcon;
-  } else {
-    color = status ? 'orange' : 'red';
-    icon = WarningIcon;
-  }
-  return <Icon as={icon} size="sm" color={color} />;
-}
 
 function PlatformIcon({ codename, status, maintenance }) {
   let color;
@@ -61,92 +26,43 @@ function PlatformIcon({ codename, status, maintenance }) {
   return <Icon as={icon} color={color} />;
 }
 
-function Status() {
-  const [status, setStatus] = useState(null);
-  useEffect(() => {
-    const fetchStatus = () => {
-      setStatus(null);
-      CyanideApiService.status()
-        .then((data) => {
-          setStatus(data);
-        })
-        .catch((reason) => {
-          setStatus(reason.toLocaleString(config.locale));
-        });
-    };
-    fetchStatus();
-  }, []);
-
-  const maintenance =
-    status && status.maintenance
-      ? [].concat(status.maintenance.pc, status.maintenance.microsoft, status.maintenance.sony).filter((value) => value)
-      : [];
-
-  const statusOutdated = status && timeUtil.durationInMillis(status.lastCheck) > MAX_AGE_FOR_STATUS_IN_MILLIS;
-
-  return status === null ? (
-    <Spinner size="sm" color="orange" />
-  ) : (
-    <Popover>
-      <PopoverTrigger>
-        <Link>
-          <StatusIcon status={status.overall} maintenance={maintenance} statusOutdated={statusOutdated} />
-        </Link>
-      </PopoverTrigger>
-      <PopoverContent>
-        <PopoverArrow />
-        <PopoverCloseButton />
-        <PopoverHeader>Cyanide Api-Status</PopoverHeader>
-        <PopoverBody>
-          <VStack spacing={2} align="left">
-            <HStack spacing={2} align="left">
-              <Box>Overall:</Box>
-              <StatusIcon status={status.overall} maintenance={maintenance} />
-            </HStack>
-            {status.serviceStatuses && (
-              <HStack spacing={2} align="left">
-                <Box>Game Server:</Box>
-                <Icon as={FaDatabase} color={status.serviceStatuses.game_server_database ? 'green' : 'red'} />
-                <Icon
-                  as={FaRegAddressBook}
-                  color={status.serviceStatuses.game_server_address_directory ? 'green' : 'red'}
-                />
-              </HStack>
-            )}
-            <HStack spacing={2} align="left">
-              <Box>Platforms:</Box>
-              {status.platforms &&
-                status.platforms.map((platform) => (
-                  <PlatformIcon
-                    key={platform.codename}
-                    codename={platform.codename}
-                    status={platform.ok}
-                    maintenance={isMaintenance(status.maintenance[platform.codename])}
-                  />
-                ))}
-            </HStack>
-            {status && <NewsList news={status.news} headerSize="sm" textSize="xs" mt={2} color="grey" />}
-            {status && (
-              <SocialLinks socialLinks={status.socialLinks} headerSize="sm" iconSize="sm" mt={2} color="grey" />
-            )}
-            <Disclaimer mt={2} headerSize="sm" textSize="xs" color="grey" />
-          </VStack>
-        </PopoverBody>
-        <PopoverFooter>
-          <HStack spacing={2}>
-            <Box>{`Last check: ${
-              status && status.lastCheck ? formatter.formatAsDate(status.lastCheck) : 'unknown'
-            } `}</Box>
-            {statusOutdated && <Icon as={FaTriangleExclamation} color="yellow" size="xs" />}
-            {statusOutdated && (
-              <Box fontSize="xs" color="yellow">
-                Outdated
-              </Box>
-            )}
-          </HStack>
-        </PopoverFooter>
-      </PopoverContent>
-    </Popover>
+function Status({ status, headerFontSize, fontSize, color }) {
+  return (
+    <VStack align="left">
+      <Text fontStyle="italic" fontSize={headerFontSize} color={color}>
+        Cyanide Api Status
+      </Text>
+      <HStack align="left">
+        <Box fontSize={fontSize} color={color}>
+          Overall:
+        </Box>
+        <Spacer />
+        <StatusIcon status={status} />
+      </HStack>
+      {status.serviceStatuses && (
+        <HStack spacing={2} align="left">
+          <Box fontSize={fontSize} color={color}>
+            Game Server:
+          </Box>
+          <Spacer />
+          <Icon as={FaDatabase} color={status.serviceStatuses.game_server_database ? 'green' : 'red'} />
+          <Icon as={FaRegAddressBook} color={status.serviceStatuses.game_server_address_directory ? 'green' : 'red'} />
+        </HStack>
+      )}
+      <HStack spacing={2} align="left">
+        <Box fontSize={fontSize} color={color}>Platforms:</Box>
+        <Spacer />
+        {status.platforms &&
+          status.platforms.map((platform) => (
+            <PlatformIcon
+              key={platform.codename}
+              codename={platform.codename}
+              status={platform.ok}
+              maintenance={isMaintenance(status.maintenance[platform.codename])}
+            />
+          ))}
+      </HStack>
+    </VStack>
   );
 }
 
