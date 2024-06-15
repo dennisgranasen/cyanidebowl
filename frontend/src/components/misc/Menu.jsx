@@ -26,6 +26,9 @@ import Disclaimer from './Disclaimer';
 import Version from './Version';
 import Status from './Status';
 import StatusIcon from './StatusIcon';
+import timeUtil from '../../util/TimeUtil';
+
+import MAX_AGE_FOR_STATUS_IN_MILLIS from '../../config'
 
 function Menu() {
   const { isOpen, onOpen, onClose } = useDisclosure();
