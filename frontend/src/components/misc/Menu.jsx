@@ -31,6 +31,7 @@ import timeUtil from '../../util/TimeUtil';
 function Menu() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [status, setStatus] = useState(null);
+  const [statusOutdated, setStatusOutdated] = useState(false);
 
   const fetchStatus = () => {
     CyanideApiService.status()
@@ -44,9 +45,15 @@ function Menu() {
 
   useEffect(() => {
     fetchStatus();
-  }, [isOpen]);
+    setTimeout(() => {
+      fetchStatus();
+    }, 15_000);
+  }, []);
 
-  const statusOutdated = status && timeUtil.durationInMillis(status.lastCheck) > config.MAX_AGE_FOR_STATUS_IN_MILLIS;
+  useEffect(() => {
+    const outdated = status && timeUtil.durationInMillis(status.lastCheck) > config.MAX_AGE_FOR_STATUS_IN_MILLIS;
+    setStatusOutdated(outdated);
+  }, [status]);
 
   return status === null ? (
     <Spinner size="sm" color="orange" />
