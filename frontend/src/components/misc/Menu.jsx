@@ -27,6 +27,7 @@ import Version from './Version';
 import Status from './Status';
 import StatusIcon from './StatusIcon';
 import timeUtil from '../../util/TimeUtil';
+import logger from '../../util/Logger';
 
 function Menu() {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -45,9 +46,6 @@ function Menu() {
 
   useEffect(() => {
     fetchStatus();
-    setTimeout(() => {
-      fetchStatus();
-    }, 15_000);
   }, []);
 
   useEffect(() => {
