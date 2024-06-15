@@ -28,8 +28,6 @@ import Status from './Status';
 import StatusIcon from './StatusIcon';
 import timeUtil from '../../util/TimeUtil';
 
-import MAX_AGE_FOR_STATUS_IN_MILLIS from '../../config'
-
 function Menu() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [status, setStatus] = useState(null);
@@ -48,7 +46,7 @@ function Menu() {
     fetchStatus();
   }, [isOpen]);
 
-  const statusOutdated = status && timeUtil.durationInMillis(status.lastCheck) > MAX_AGE_FOR_STATUS_IN_MILLIS;
+  const statusOutdated = status && timeUtil.durationInMillis(status.lastCheck) > config.MAX_AGE_FOR_STATUS_IN_MILLIS;
 
   return status === null ? (
     <Spinner size="sm" color="orange" />
@@ -65,6 +63,11 @@ function Menu() {
           <DrawerBody>
             <VStack align="left">
               <Box>
+                <Link as={RouteLink} to="/" onClick={() => onClose()}>
+                  Home
+                </Link>
+              </Box>
+              {/*              <Box>
                 <Link as={RouteLink} to="/admin" onClick={() => onClose()}>
                   Admin
                 </Link>
@@ -84,6 +87,7 @@ function Menu() {
                   Login
                 </Link>
               </Box>
+*/}
               <Box>
                 <Link as={RouteLink} to="/about" onClick={() => onClose()}>
                   About
