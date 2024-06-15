@@ -50,7 +50,9 @@ function Status({ status, headerFontSize, fontSize, color }) {
         </HStack>
       )}
       <HStack spacing={2} align="left">
-        <Box fontSize={fontSize} color={color}>Platforms:</Box>
+        <Box fontSize={fontSize} color={color}>
+          Platforms:
+        </Box>
         <Spacer />
         {status.platforms &&
           status.platforms.map((platform) => (
