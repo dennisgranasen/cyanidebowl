@@ -49,7 +49,10 @@ function WissenProgresses({ playedMatches, liveMatches, validatedMatches, teamsM
   const needsValidation = validatedMatches + liveMatches < playedMatches;
   const live = liveMatches > 0;
   const color = needsValidation ? 'orange' : null;
-  const progress = finishedMatches === roundLength ? 100 : finishedMatches % roundLength;
+  const progress =
+    finishedMatches > 0 && finishedMatches === roundLength
+      ? 100
+      : (100 * (finishedMatches % roundLength)) / roundLength;
   return <Progress value={progress} isIndeterminate={live} hasStripe={status === 'InProgress'} colorScheme={color} />;
 }
 
