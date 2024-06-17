@@ -45,14 +45,15 @@ function RoundRobinProgresses({
 
 function WissenProgresses({ playedMatches, liveMatches, validatedMatches, teamsMax, status }) {
   const roundLength = teamsMax / 2;
+  const totalMatches = roundLength * 6; // FIXME how many really?
   const finishedMatches = Math.max(playedMatches, validatedMatches);
   const needsValidation = validatedMatches + liveMatches < playedMatches;
   const live = liveMatches > 0;
   const color = needsValidation ? 'orange' : null;
   const progress =
-    finishedMatches > 0 && finishedMatches === roundLength
+    finishedMatches > 0 && finishedMatches === totalMatches
       ? 100
-      : (100 * (finishedMatches % roundLength)) / roundLength;
+      : (100 * (finishedMatches % totalMatches)) / totalMatches;
   return <Progress value={progress} isIndeterminate={live} hasStripe={status === 'InProgress'} colorScheme={color} />;
 }
 
