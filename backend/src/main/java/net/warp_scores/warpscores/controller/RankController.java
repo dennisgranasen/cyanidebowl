@@ -46,8 +46,18 @@ public class RankController {
         if (result != 0) {
             return result;
         }
+        result = ofNullable(rankA.getSustainedTouchdowns()).orElse(0) - ofNullable(
+                rankB.getSustainedTouchdowns()).orElse(0);
+        if (result != 0) {
+            return result;
+        }
         result = ofNullable(rankB.getInflictedCasualties()).orElse(0) - ofNullable(
                 rankA.getInflictedCasualties()).orElse(0);
+        if (result != 0) {
+            return result;
+        }
+        result = ofNullable(rankA.getSustainedCasualties()).orElse(0) - ofNullable(
+                rankB.getSustainedCasualties()).orElse(0);
         if (result != 0) {
             return result;
         }
@@ -56,13 +66,6 @@ public class RankController {
         if (result != 0) {
             return result;
         }
-        result = ofNullable(rankA.getSustainedTouchdowns()).orElse(0) - ofNullable(
-                rankB.getSustainedTouchdowns()).orElse(0);
-        if (result != 0) {
-            return result;
-        }
-        result = ofNullable(rankA.getSustainedCasualties()).orElse(0) - ofNullable(
-                rankB.getSustainedCasualties()).orElse(0);
         if (result != 0) {
             return result;
         }
@@ -143,11 +146,8 @@ public class RankController {
         int drawFactor = 0;
         switch (format) {
             case RoundRobin:
-                winFactor = 3;
-                drawFactor = 1;
-                break;
             case Wissen:
-                winFactor = 2;
+                winFactor = 3;
                 drawFactor = 1;
                 break;
             default:
