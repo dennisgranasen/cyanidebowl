@@ -2,8 +2,7 @@ package net.warp_scores.warpscores.service;
 
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
-import net.warp_scores.warpscores.domain.model.Team;
-import org.springframework.beans.BeanUtils;
+import net.warp_scores.warpscores.model.Team;
 import org.springframework.stereotype.Service;
 
 @Service

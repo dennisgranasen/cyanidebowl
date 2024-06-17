@@ -1,11 +1,10 @@
 package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
-import net.warp_scores.warpscores.domain.model.Status;
+import net.warp_scores.warpscores.model.Status;
 import net.warp_scores.warpscores.domain.persistence.StatusRepository;
 import net.warp_scores.warpscores.service.CyanideApiService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 

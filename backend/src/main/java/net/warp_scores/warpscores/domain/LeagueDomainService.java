@@ -4,11 +4,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.cyanide.api.model.ApiLeague;
 import net.warp_scores.warpscores.cyanide.api.responses.LeagueResponse;
-import net.warp_scores.warpscores.domain.model.League;
+import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.domain.persistence.LeagueRepository;
 import net.warp_scores.warpscores.service.PopulatorUtil;
 import net.warp_scores.warpscores.service.UUIDConverter;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
