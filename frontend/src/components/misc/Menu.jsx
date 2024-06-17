@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Icon } from '@chakra-ui/icons';
+import { HamburgerIcon, Icon } from '@chakra-ui/icons';
 import {
+  Avatar,
+  AvatarBadge,
   Box,
   Drawer,
   DrawerBody,
@@ -15,7 +17,7 @@ import {
   useDisclosure,
   VStack,
 } from '@chakra-ui/react';
-import { FaTriangleExclamation } from 'react-icons/fa6';
+import { FaBurger, FaTriangleExclamation } from 'react-icons/fa6';
 import { Link as RouteLink } from 'react-router-dom';
 import CyanideApiService from '../../CyanideApiService';
 import config from '../../config';
@@ -27,7 +29,8 @@ import Version from './Version';
 import Status from './Status';
 import StatusIcon from './StatusIcon';
 import timeUtil from '../../util/TimeUtil';
-import logger from '../../util/Logger';
+
+const { boxSize, smallBoxSize } = config;
 
 function Menu() {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -58,7 +61,11 @@ function Menu() {
   ) : (
     <>
       <Link onClick={onOpen}>
-        <StatusIcon status={status} statusOutdated={statusOutdated} />
+        <Avatar borderRadius={4} boxSize={boxSize} icon={<HamburgerIcon />}>
+          <AvatarBadge boxSize="24px">
+            <StatusIcon status={status} statusOutdated={statusOutdated} />
+          </AvatarBadge>
+        </Avatar>
       </Link>
       <Drawer isOpen={isOpen} placement="right" onClose={onClose}>
         <DrawerOverlay />
