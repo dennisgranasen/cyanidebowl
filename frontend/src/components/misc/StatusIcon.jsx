@@ -6,14 +6,13 @@ function StatusIcon({ status, statusOutdated }) {
     status && status.maintenance
       ? [].concat(status.maintenance.pc, status.maintenance.microsoft, status.maintenance.sony).filter((value) => value)
       : [];
-
   let color;
   let icon;
   if (status.overall && maintenance && maintenance.length === 0) {
     color = statusOutdated ? 'yellow' : 'green';
     icon = CheckCircleIcon;
   } else {
-    color = status ? 'orange' : 'red';
+    color = status && status.overall ? 'orange' : 'red';
     icon = WarningIcon;
   }
   return <Icon as={icon} size="sm" color={color} />;
