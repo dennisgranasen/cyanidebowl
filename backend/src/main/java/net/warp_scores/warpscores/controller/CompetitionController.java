@@ -33,7 +33,7 @@ public class CompetitionController {
                     .stream()
                     .filter(competitionService::competitionConsideredActive)
                     .sorted()
-                    .collect(Collectors.toUnmodifiableList())                    ;
+                    .collect(Collectors.toUnmodifiableList())                   ;
             return ResponseEntity.ok(competitions);
         } catch (Exception ex) {
             log.error("Unable to get competitions for league id {} and statuses {}", leagueId, competitionStatuses, ex);

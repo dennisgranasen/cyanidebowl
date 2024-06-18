@@ -9,12 +9,10 @@ import ImageUrls from '../ImageUrls';
 import HeaderCard from '../components/common/HeaderCard';
 
 function AboutPage() {
-  const [smallscreen] = useMediaQuery('(max-width: 768px)');
-
   return (
     <Stack>
       <Box>
-        <Navigation currentPage="home" smallscreen={smallscreen ? 'smallscreen' : undefined} />
+        <Navigation currentPage="home" />
       </Box>
       <HeaderCard
         heading="About"

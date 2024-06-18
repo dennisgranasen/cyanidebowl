@@ -26,13 +26,13 @@ import net.warp_scores.warpscores.domain.ContestDomainService;
 import net.warp_scores.warpscores.domain.LeagueDomainService;
 import net.warp_scores.warpscores.domain.MatchDomainService;
 import net.warp_scores.warpscores.domain.TeamDomainService;
+import net.warp_scores.warpscores.domain.persistence.StatusRepository;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Status;
 import net.warp_scores.warpscores.model.Team;
-import net.warp_scores.warpscores.domain.persistence.StatusRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.ResourceAccessException;
@@ -49,13 +49,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
+import static net.warp_scores.warpscores.cyanide.api.requests.StatusRequest.BB3_GAME_NAME;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class CyanideApiService {
-    public static final String BB3_GAME_NAME = "Blood Bowl III";
-
     private final CyanideCachedRestApiClient cyanideCachedRestApiClient;
 
     private final StatusRepository statusRepository;
