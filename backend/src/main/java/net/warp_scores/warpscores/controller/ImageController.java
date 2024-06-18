@@ -34,6 +34,36 @@ public class ImageController {
         return loadImage(imageUrl);
     }
 
+    @GetMapping("/warpscores.png")
+    public ResponseEntity<byte[]> getWarpScoresLogoPng() {
+        return getWarpScoresLogoPng(null);
+    }
+
+    @GetMapping("/warpscores.png/{size}")
+    public ResponseEntity<byte[]> getWarpScoresLogoPng(@PathVariable(name = "size", required = false) String size) {
+        Optional<byte[]> imageData = imageService.loadFromClassPath("/warpscores.png");
+        if (size != null && !size.equalsIgnoreCase("original")) {
+            int width = 256;
+            if ("small" .equalsIgnoreCase(size)) {
+                width = 64;
+            } else if ("medium" .equalsIgnoreCase(size)) {
+                width = 128;
+            }
+            imageData = imageService.rescaleImage(imageData, width);
+        }
+        return imageData
+                .map(ImageController::ok)
+                .orElse(noContent());
+    }
+
+    @GetMapping("/warpscores.svg")
+    public ResponseEntity<byte[]> getWarpScoresLogoSvg() {
+        Optional<byte[]> imageData = imageService.loadFromClassPath("/warpscores.svg");
+        return imageData
+                .map(ImageController::ok)
+                .orElse(noContent());
+    }
+
     @GetMapping("/skill/{name}")
     public ResponseEntity<byte[]> getSkillImage(@PathVariable(name = "name") String name) {
         String imageName = translateSkillToImageName(name);

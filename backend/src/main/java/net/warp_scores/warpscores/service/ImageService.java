@@ -64,7 +64,7 @@ public class ImageService {
         return Optional.empty();
     }
 
-    private Optional<byte[]> loadFromClassPath(String imageUrl) {
+    public Optional<byte[]> loadFromClassPath(String imageUrl) {
         URI uri = URI.create(imageUrl);
         String path = String.format("img%s", uri.getPath());
         try (InputStream in = this.getClass().getClassLoader().getResourceAsStream(path)) {
@@ -79,7 +79,7 @@ public class ImageService {
         return Optional.empty();
     }
 
-    private Optional<byte[]> rescaleImage(Optional<byte[]> imageData, int maxWidth) {
+    public Optional<byte[]> rescaleImage(Optional<byte[]> imageData, int maxWidth) {
         if (imageData.isEmpty()) {
             return imageData;
         }
