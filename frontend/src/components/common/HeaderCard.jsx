@@ -16,7 +16,7 @@ import {
 function StandardScreenHeaderCard(mainImageSrc, heading, subHeading, additionalImageSrc, children) {
   return (
     <Card direction="row">
-      <Box>
+      <Box p="10px">
         <Image objectFit="contain" maxW="140px" src={mainImageSrc} fallback={null} />
       </Box>
       <CardBody>
@@ -38,7 +38,7 @@ function StandardScreenHeaderCard(mainImageSrc, heading, subHeading, additionalI
 function SmallScreenHeaderCard(mainImageSrc, heading, subHeading, detailsHeading, additionalImageSrc, children) {
   return (
     <Card direction="column">
-      <Box>
+      <Box p="10px">
         <Image objectFit="contain" maxW="140px" src={mainImageSrc} />
       </Box>
       <CardBody>
