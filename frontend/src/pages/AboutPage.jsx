@@ -22,7 +22,7 @@ function AboutPage() {
         mainImageSrc={ImageUrls.warpscoresLogoPng('medium')}
       >
         <Text>
-          This is a Spike-like (good old Spike <Icon as={FaRegHeart} /> for BB2 made by poncho) facade to BB3 data
+          This is a Spike-like (good old Spike made by poncho for BB2 <Icon as={FaRegHeart} />) facade to BB3 data
           provided by Cyanide&apos;s BB3-API.
         </Text>
         <Disclaimer />
