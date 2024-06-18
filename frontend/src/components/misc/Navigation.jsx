@@ -13,38 +13,32 @@ function Navigation({ currentPage, league, competition, team }) {
 
   return (
     <Flex>
-      <Breadcrumb>
+      <Breadcrumb spacing={1}>
         <BreadcrumbItem isCurrentPage={isPage('home', currentPage)}>
           <BreadcrumbLink as={RouteLink} to="/">
             Home
           </BreadcrumbLink>
         </BreadcrumbItem>
-        {league ? (
-          <BreadcrumbItem>
+        {league && (
+          <BreadcrumbItem isCurrentPage={isPage('league', currentPage)} flexWrap>
             <BreadcrumbLink as={RouteLink} to={leagueLink}>
               {league[1]}
             </BreadcrumbLink>
           </BreadcrumbItem>
-        ) : (
-          ''
         )}
-        {competition ? (
-          <BreadcrumbItem isCurrentPage={isPage('competition', currentPage)}>
+        {competition && (
+          <BreadcrumbItem isCurrentPage={isPage('competition', currentPage)} flexWrap>
             <BreadcrumbLink as={RouteLink} to={competitionLink}>
               {competition[1]}
             </BreadcrumbLink>
           </BreadcrumbItem>
-        ) : (
-          ''
         )}
-        {team ? (
-          <BreadcrumbItem isCurrentPage={isPage('team', currentPage)}>
+        {team && (
+          <BreadcrumbItem isCurrentPage={isPage('team', currentPage)} flexWrap>
             <BreadcrumbLink as={RouteLink} to={teamLink}>
               {team[1]}
             </BreadcrumbLink>
           </BreadcrumbItem>
-        ) : (
-          ''
         )}
       </Breadcrumb>
       <Spacer />

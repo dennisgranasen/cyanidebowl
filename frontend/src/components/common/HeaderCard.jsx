@@ -21,7 +21,7 @@ function StandardScreenHeaderCard(mainImageSrc, heading, subHeading, additionalI
       </Box>
       <CardBody>
         <Flex>
-          <Box flex="1">
+          <Box flex="1" overflow="hidden">
             <Heading>{heading}</Heading>
             <Box mb="10px">{subHeading}</Box>
             {children}
@@ -43,7 +43,7 @@ function SmallScreenHeaderCard(mainImageSrc, heading, subHeading, detailsHeading
       </Box>
       <CardBody>
         <Flex>
-          <Box flex="1">
+          <Box flex="1" overflow="hidden">
             <Heading>{heading}</Heading>
             <Box mb="10px">{subHeading}</Box>
             <Accordion allowMultiple>
