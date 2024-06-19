@@ -16,7 +16,10 @@ const returnData = (result) => {
 
 export default {
   status: async () => axios(`/status`).then(returnData).catch(handleError),
-  league: async () => axios(`/league`).then(returnData).catch(handleError),
+  league: async (leagueUuid) =>
+    axios(`/league${leagueUuid ? `/${leagueUuid}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
   leagueCompetitions: async (leagueUuid) =>
     axios
       .post(`/competitions/league/${leagueUuid}`, ['Registration', 'InProgress', 'Finished'])

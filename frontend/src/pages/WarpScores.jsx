@@ -1,17 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Alert,
-  AlertDescription,
-  AlertIcon,
-  Box,
-  FormControl,
-  FormLabel,
-  Heading,
-  Select,
-  Spinner,
-  Stack,
-  useMediaQuery,
-} from '@chakra-ui/react';
+import { Box, FormControl, FormLabel, Heading, Select, Stack, useMediaQuery } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
 import CyanideApiService from '../CyanideApiService';
 import config from '../config';
@@ -24,6 +12,7 @@ import InfoItem from '../components/common/InfoItem';
 import HeaderCard from '../components/common/HeaderCard';
 import LiveContests from '../components/contest/LiveContests';
 import LatestContests from '../components/contest/LatestContests';
+import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 
 function WarpScores() {
   const [smallscreen] = useMediaQuery('(max-width: 768px)');
@@ -129,7 +118,7 @@ function WarpScores() {
       <Box>
         <Navigation currentPage="home" smallscreen={smallscreen ? 'smallscreen' : undefined} />
       </Box>
-      {leagues.length > 1 ? (
+      {leagues?.length > 1 ? (
         <Box>
           <Heading>Warp-Scores</Heading>
           <FormControl>
@@ -149,7 +138,7 @@ function WarpScores() {
           </FormControl>
         </Box>
       ) : null}
-      {league ? (
+      {league && (
         <HeaderCard
           heading={league.name}
           detailsHeading="League details"
@@ -171,22 +160,12 @@ function WarpScores() {
             ]}
           />
         </HeaderCard>
-      ) : null}
-      <Box>
-        {error ? (
-          <Alert status={error.type}>
-            <AlertIcon />
-            <AlertDescription>{error.message}</AlertDescription>
-          </Alert>
-        ) : null}
-        {loading ? (
-          <Spinner />
-        ) : (
-          <Competitions competitions={competitions} smallscreen={smallscreen ? 'smallscreen' : undefined} />
-        )}
-      </Box>
-      <LiveContests league={league} smallscreen={smallscreen ? 'smallscreen' : undefined} />
-      <LatestContests league={league} smallscreen={smallscreen ? 'smallscreen' : undefined} />
+      )}
+      <LoadingOrErrorWrapper loading={loading} error={error}>
+        <Competitions competitions={competitions} smallscreen={smallscreen ? 'smallscreen' : undefined} />
+        <LiveContests league={league} smallscreen={smallscreen ? 'smallscreen' : undefined} />
+        <LatestContests league={league} smallscreen={smallscreen ? 'smallscreen' : undefined} />
+      </LoadingOrErrorWrapper>
     </Stack>
   );
 }

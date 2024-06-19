@@ -6,7 +6,7 @@ import CyanideApiService from '../../CyanideApiService';
 import comparators from '../../util/Comparators';
 import ContestMatchCards from './ContestMatchCards';
 
-function LatestContests({ league }) {
+function LatestContests({ league, embeddable }) {
   const [contests, setContests] = useState();
   const fetchLatestContests = (leagueUuid) => {
     CyanideApiService.latestLeagueContests(leagueUuid).then((data) => {
@@ -23,8 +23,9 @@ function LatestContests({ league }) {
 
   return (
     <>
-      <Heading size="md">Latest matches</Heading>
+      {!embeddable && <Heading size="md">Latest matches</Heading>}
       <ContestMatchCards
+        embeddable={embeddable ? 'embeddable' : null}
         contests={contests}
         noContentIcon={FaRegFaceSadTear}
         noContentHeading="No matches played (yet?)..."
