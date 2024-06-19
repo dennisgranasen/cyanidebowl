@@ -31,8 +31,6 @@ import StatusIcon from './StatusIcon';
 import timeUtil from '../../util/TimeUtil';
 import imageUrls from '../../ImageUrls';
 
-const { boxSize } = config;
-
 function Menu() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [status, setStatus] = useState(null);
@@ -57,13 +55,11 @@ function Menu() {
     setStatusOutdated(outdated);
   }, [status]);
 
-  return status === null ? (
-    <Spinner size="sm" color="orange" />
-  ) : (
+  return (
     <>
       <Link onClick={onOpen}>
         <Avatar borderRadius={4} boxSize={12} src={imageUrls.warpscoresLogoPng('medium')}>
-          <AvatarBadge boxSize="24px">
+          <AvatarBadge boxSize="24px" bg="black">
             <StatusIcon status={status} statusOutdated={statusOutdated} />
           </AvatarBadge>
         </Avatar>
@@ -116,11 +112,9 @@ function Menu() {
                 </Box>
               </VStack>
               <VStack align="left">
-                {status && <Status status={status} headerSize="md" textSize="sm" mt={2} />}
-                {status && <NewsList news={status.news} headerSize="sm" textSize="xs" mt={2} color="grey" />}
-                {status && (
-                  <SocialLinks socialLinks={status.socialLinks} headerSize="sm" iconSize="sm" mt={2} color="grey" />
-                )}
+                <Status status={status} headerSize="md" textSize="sm" mt={2} />
+                <NewsList news={status?.news} headerSize="sm" textSize="xs" mt={2} color="grey" />
+                <SocialLinks socialLinks={status?.socialLinks} headerSize="sm" iconSize="sm" mt={2} color="grey" />
                 <Disclaimer mt={2} headerSize="sm" textSize="xs" color="grey" />
               </VStack>
             </VStack>
@@ -130,10 +124,15 @@ function Menu() {
               <Version mt={2} headerSize="sm" textSize="xs" color="grey" />
               <Box align="left">
                 <HStack spacing={2} align="left">
-                  <Box>{`Last check: ${
-                    status?.lastCheck ? formatter.formatAsDate(status.lastCheck) : 'unknown'
-                  } `}</Box>
-                  {statusOutdated && <Icon as={FaTriangleExclamation} color="yellow" size="xs" />}
+                  <Box>Last check:</Box>
+                  <Box>
+                    {status ? (
+                      `${status.lastCheck ? formatter.formatAsDate(status.lastCheck) : 'unknown'}`
+                    ) : (
+                      <Spinner size="sm" color="orange" />
+                    )}
+                  </Box>
+                  <Box>{statusOutdated && <Icon as={FaTriangleExclamation} color="yellow" size="xs" />}</Box>
                 </HStack>
               </Box>
             </VStack>
