@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Icon } from '@chakra-ui/icons';
 import {
   Avatar,
   AvatarBadge,
@@ -13,12 +12,14 @@ import {
   DrawerOverlay,
   HStack,
   Link,
+  Spacer,
   Spinner,
   useDisclosure,
   VStack,
 } from '@chakra-ui/react';
 import { FaTriangleExclamation } from 'react-icons/fa6';
 import { Link as RouteLink } from 'react-router-dom';
+import { Icon } from '@chakra-ui/icons';
 import CyanideApiService from '../../CyanideApiService';
 import config from '../../config';
 import formatter from '../../util/Formatter';
@@ -29,7 +30,8 @@ import Version from './Version';
 import Status from './Status';
 import StatusIcon from './StatusIcon';
 import timeUtil from '../../util/TimeUtil';
-import imageUrls from '../../ImageUrls';
+import ImageUrls from '../../ImageUrls';
+import DelayedIconTooltip from '../common/DelayedIconTooltip';
 
 function Menu() {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -58,7 +60,7 @@ function Menu() {
   return (
     <>
       <Link onClick={onOpen}>
-        <Avatar borderRadius={4} boxSize={12} src={imageUrls.warpscoresLogoPng('medium')}>
+        <Avatar borderRadius={4} boxSize={12} src={ImageUrls.warpscoresLogoPng('medium')}>
           <AvatarBadge boxSize="24px" bg="black">
             <StatusIcon status={status} statusOutdated={statusOutdated} />
           </AvatarBadge>
@@ -67,15 +69,16 @@ function Menu() {
       <Drawer isOpen={isOpen} placement="right" onClose={onClose}>
         <DrawerOverlay />
         <DrawerContent>
-          <DrawerHeader>Menu</DrawerHeader>
+          <DrawerHeader borderBottomWidth="1px">Menu</DrawerHeader>
           <DrawerCloseButton />
           <DrawerBody
             display="block"
-            backgroundImage={imageUrls.warpscoresLogoPng()}
+            backgroundImage={ImageUrls.warpscoresLogoPng()}
             backgroundRepeat="no-repeat"
             backgroundSize="cover"
             backgroundColor="gray.700"
             backgroundBlendMode="multiply"
+            borderBottomWidth="1px"
           >
             <VStack h="full" align="left">
               <VStack align="left" h="full">
@@ -112,18 +115,18 @@ function Menu() {
                 </Box>
               </VStack>
               <VStack align="left">
-                <Status status={status} headerSize="md" textSize="sm" mt={2} />
                 <NewsList news={status?.news} headerSize="sm" textSize="xs" mt={2} color="grey" />
                 <SocialLinks socialLinks={status?.socialLinks} headerSize="sm" iconSize="sm" mt={2} color="grey" />
                 <Disclaimer mt={2} headerSize="sm" textSize="xs" color="grey" />
               </VStack>
             </VStack>
           </DrawerBody>
-          <DrawerFooter overflowX="scroll">
-            <VStack align="left">
+          <DrawerFooter mt={0} pt={0} align="left">
+            <VStack m={0} p={0} align="left" w="full">
               <Version mt={2} headerSize="sm" textSize="xs" color="grey" />
+              <Status status={status} headerSize="md" textSize="sm" mt={2} />
               <Box align="left">
-                <HStack spacing={2} align="left">
+                <HStack spacing={2} align="left" w="full">
                   <Box>Last check:</Box>
                   <Box>
                     {status ? (
@@ -132,7 +135,14 @@ function Menu() {
                       <Spinner size="sm" color="orange" />
                     )}
                   </Box>
-                  <Box>{statusOutdated && <Icon as={FaTriangleExclamation} color="yellow" size="xs" />}</Box>
+                  <Spacer />
+                  <Box align="right">
+                    {statusOutdated && (
+                      <DelayedIconTooltip label="Outdated" placement="left-start" shouldWrapChildren>
+                        <Icon as={FaTriangleExclamation} color="yellow" size="xs" />
+                      </DelayedIconTooltip>
+                    )}
+                  </Box>
                 </HStack>
               </Box>
             </VStack>
