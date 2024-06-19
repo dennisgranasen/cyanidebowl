@@ -39,7 +39,7 @@ function Status({ status, headerFontSize, fontSize, color }) {
         <Spacer />
         <StatusIcon status={status} />
       </HStack>
-      {status.serviceStatuses && (
+      {status?.serviceStatuses && (
         <HStack spacing={2} align="left">
           <Box fontSize={fontSize} color={color}>
             Game Server:
@@ -49,21 +49,23 @@ function Status({ status, headerFontSize, fontSize, color }) {
           <Icon as={FaRegAddressBook} color={status.serviceStatuses.game_server_address_directory ? 'green' : 'red'} />
         </HStack>
       )}
-      <HStack spacing={2} align="left">
-        <Box fontSize={fontSize} color={color}>
-          Platforms:
-        </Box>
-        <Spacer />
-        {status.platforms &&
-          status.platforms.map((platform) => (
-            <PlatformIcon
-              key={platform.codename}
-              codename={platform.codename}
-              status={platform.ok}
-              maintenance={isMaintenance(status.maintenance[platform.codename])}
-            />
-          ))}
-      </HStack>
+      {status && (
+        <HStack spacing={2} align="left">
+          <Box fontSize={fontSize} color={color}>
+            Platforms:
+          </Box>
+          <Spacer />
+          {status.platforms &&
+            status.platforms.map((platform) => (
+              <PlatformIcon
+                key={platform.codename}
+                codename={platform.codename}
+                status={platform.ok}
+                maintenance={isMaintenance(status.maintenance[platform.codename])}
+              />
+            ))}
+        </HStack>
+      )}
     </VStack>
   );
 }
