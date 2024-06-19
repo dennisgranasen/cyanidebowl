@@ -9,6 +9,8 @@ import CoachPage from './pages/CoachPage';
 import AdminPage from './pages/AdminPage';
 import StatisticsPage from './pages/StatisticsPage';
 import LoginPage from './pages/LoginPage';
+import LatestMatchesPage from './pages/LatestMatchesPage';
+import LiveMatchesPage from './pages/LiveMatchesPage';
 
 const config = {
   initialColorMode: 'dark',
@@ -64,6 +66,8 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/:leagueUuid" element={<WarpScores />} />
+            <Route path="/latestMatches/:leagueUuid" element={<LatestMatchesPage />} />
+            <Route path="/liveMatches/:leagueUuid" element={<LiveMatchesPage />} />
             <Route path="/team/:teamUuid" element={<TeamPage />} />
             <Route path="/competition/:competitionUuid" element={<CompetitionPage />} />
             <Route path="/competition/:competitionUuid/team/:teamUuid" element={<TeamPage />} />
