@@ -24,7 +24,7 @@ public class QueryBackendService {
     public List<Match> getLatestLeagueContests() {
         RestTemplate restTemplate = new RestTemplate();
 
-        ParameterizedTypeReference<List<Match>> typeRef = new ParameterizedTypeReference<List<Match>>() {};
+        ParameterizedTypeReference<List<Match>> typeRef = new ParameterizedTypeReference<>() {};
         ResponseEntity<List<Match>> responseEntity = restTemplate.exchange(
                 String.format("%s/contests/league/%s/latest", backendBaseUrl, leagueUuid), HttpMethod.GET,
                 RequestEntity.EMPTY, typeRef);
