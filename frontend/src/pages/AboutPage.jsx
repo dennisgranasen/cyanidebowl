@@ -9,6 +9,8 @@ import ImageUrls from '../ImageUrls';
 import HeaderCard from '../components/common/HeaderCard';
 
 function AboutPage() {
+  const [smallscreen] = useMediaQuery('(max-width: 768px)');
+
   return (
     <Stack>
       <Box>
@@ -18,6 +20,7 @@ function AboutPage() {
         heading="About"
         subHeading={<RouteLink to="/">warp-scores.net</RouteLink>}
         mainImageSrc={ImageUrls.warpscoresLogoPng('medium')}
+        smallscreen={smallscreen ? 'smallscreen' : undefined}
       >
         <Text>
           This is a Spike-like (good old Spike made by poncho for BB2 <Icon as={FaRegHeart} />) facade to BB3 data

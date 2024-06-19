@@ -53,7 +53,6 @@ function CompetitionPage() {
           currentPage="competition"
           league={competition ? [competition.leagueId, competition.leagueName] : []}
           competition={[competitionUuid, competition ? competition.name : '']}
-          smallscreen={smallscreen ? 'smallscreen' : undefined}
         />
       </Box>
       {competition ? (

@@ -5,12 +5,10 @@ import { Icon } from '@chakra-ui/icons';
 import Navigation from '../components/misc/Navigation';
 
 function CoachPage() {
-  const [smallscreen] = useMediaQuery('(max-width: 768px)');
-
   return (
     <Stack>
       <Box>
-        <Navigation currentPage="home" smallscreen={smallscreen ? 'smallscreen' : undefined} />
+        <Navigation currentPage="home" />
       </Box>
       <Box>
         <Heading size="md">Coach-Page</Heading>
