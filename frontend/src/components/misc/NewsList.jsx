@@ -5,8 +5,7 @@ import hashCode from '../../util/HashCode';
 
 function NewsList({ news, headerSize, textSize, ...props }) {
   return (
-    news &&
-    news.length > 0 && (
+    news?.length > 0 && (
       <Box fontSize={headerSize} {...props}>
         <Text fontStyle="italic">Latest BB3 news</Text>
         <List>

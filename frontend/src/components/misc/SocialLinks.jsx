@@ -4,8 +4,7 @@ import SocialLink from './SocialLink';
 
 function SocialLinks({ socialLinks, headerSize, iconSize, ...props }) {
   return (
-    socialLinks &&
-    socialLinks.length > 0 && (
+    socialLinks?.length > 0 && (
       <Box fontSize={headerSize} {...props}>
         <Text fontStyle="italic">BB3 social links</Text>
         <HStack>
