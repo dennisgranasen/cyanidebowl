@@ -19,7 +19,7 @@ import {
 } from '@chakra-ui/react';
 import { FaTriangleExclamation } from 'react-icons/fa6';
 import { Link as RouteLink } from 'react-router-dom';
-import { Icon } from '@chakra-ui/icons';
+import { HamburgerIcon, Icon } from '@chakra-ui/icons';
 import CyanideApiService from '../../CyanideApiService';
 import config from '../../config';
 import formatter from '../../util/Formatter';
@@ -60,7 +60,7 @@ function Menu() {
   return (
     <>
       <Link onClick={onOpen}>
-        <Avatar borderRadius={4} boxSize={12} src={ImageUrls.warpscoresLogoPng('medium')}>
+        <Avatar borderRadius={4} boxSize={12} icon={<HamburgerIcon />} src={ImageUrls.warpscoresLogoPng('medium')}>
           <AvatarBadge boxSize="24px" bg="black">
             <StatusIcon status={status} statusOutdated={statusOutdated} />
           </AvatarBadge>
