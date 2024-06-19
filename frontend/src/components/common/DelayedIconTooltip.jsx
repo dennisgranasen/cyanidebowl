@@ -10,16 +10,17 @@ function IconLabel({ icon, label }) {
   );
 }
 
-function DelayedIconTooltip({ label, icon, children }) {
+function DelayedIconTooltip({ label, icon, children, ...props }) {
   return (
     <Tooltip
       placement="bottom-start"
       bg="none"
       closeDelay={300}
       openDelay={500}
+      {...props}
       label={<IconLabel icon={icon} label={label} />}
     >
-      {children}
+      {children || null}
     </Tooltip>
   );
 }
