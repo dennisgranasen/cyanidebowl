@@ -33,6 +33,31 @@ import timeUtil from '../../util/TimeUtil';
 import ImageUrls from '../../ImageUrls';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
 
+function LastCheck({ status, textSize, statusOutdated }) {
+  return (
+    <Box align="left" pt={2} fontSize={textSize}>
+      <HStack spacing={2} align="left" w="full">
+        <Box>Last check:</Box>
+        <Box>
+          {status ? (
+            `${status.lastCheck ? formatter.formatAsDate(status.lastCheck) : 'unknown'}`
+          ) : (
+            <Spinner size={textSize} color="orange" />
+          )}
+        </Box>
+        <Spacer />
+        <Box align="right">
+          {statusOutdated && (
+            <DelayedIconTooltip label="Outdated" placement="left-start" shouldWrapChildren>
+              <Icon as={FaTriangleExclamation} color="yellow" size={textSize} />
+            </DelayedIconTooltip>
+          )}
+        </Box>
+      </HStack>
+    </Box>
+  );
+}
+
 function Menu() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [status, setStatus] = useState(null);
@@ -121,30 +146,11 @@ function Menu() {
               </VStack>
             </VStack>
           </DrawerBody>
-          <DrawerFooter mt={0} pt={0} align="left">
+          <DrawerFooter mt={0} pt={0} align="left" color="grey">
             <VStack m={0} p={0} align="left" w="full">
-              <Version mt={2} headerSize="sm" textSize="xs" color="grey" />
+              <Version mt={2} textSize="xs" color="grey" />
               <Status status={status} headerSize="md" textSize="sm" mt={2} />
-              <Box align="left">
-                <HStack spacing={2} align="left" w="full">
-                  <Box>Last check:</Box>
-                  <Box>
-                    {status ? (
-                      `${status.lastCheck ? formatter.formatAsDate(status.lastCheck) : 'unknown'}`
-                    ) : (
-                      <Spinner size="sm" color="orange" />
-                    )}
-                  </Box>
-                  <Spacer />
-                  <Box align="right">
-                    {statusOutdated && (
-                      <DelayedIconTooltip label="Outdated" placement="left-start" shouldWrapChildren>
-                        <Icon as={FaTriangleExclamation} color="yellow" size="xs" />
-                      </DelayedIconTooltip>
-                    )}
-                  </Box>
-                </HStack>
-              </Box>
+              <LastCheck status={status} textSize="sm" statusOutdated={statusOutdated} />
             </VStack>
           </DrawerFooter>
         </DrawerContent>

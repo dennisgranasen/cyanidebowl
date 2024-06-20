@@ -183,7 +183,7 @@ public class CyanideApiService {
             status = createEmptyStatus();
         }
         status.setLastCheck(new Date());
-        log.info("Current status is {}.", status);
+        log.info("Current status is (overall={}, serviceStatuses={}, maintenance={}).", status.isOverall(), status.getServiceStatuses(), status.getMaintenance());
         statusRepository.save(status);
     }
 

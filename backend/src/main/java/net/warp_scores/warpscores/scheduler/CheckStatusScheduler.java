@@ -1,9 +1,9 @@
 package net.warp_scores.warpscores.scheduler;
 
-import net.warp_scores.warpscores.config.properties.CyanideApiProperties;
-import net.warp_scores.warpscores.service.CyanideApiService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.config.properties.CyanideApiProperties;
+import net.warp_scores.warpscores.service.CyanideApiService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -11,12 +11,18 @@ import org.springframework.stereotype.Service;
 @Service
 @AllArgsConstructor
 public class CheckStatusScheduler {
+
     private final CyanideApiService cyanideApiService;
 
     private final CyanideApiProperties cyanideApiProperties;
 
-    @Scheduled(initialDelay = Schedules.ONE_SECOND, fixedDelay = Schedules.FIFTEEN_MINUTES)
-    public void checkApiStatus() {
+    @Scheduled(initialDelay = Schedules.FIVE_SECONDS)
+    public void checkStatusOnStartup() {
+        cyanideApiService.checkApiStatus();
+    }
+
+    @Scheduled(cron = "${cyanide.check-api-status-cron}")
+    public void checkApiStatusPeriodically() {
         if (!cyanideApiProperties.isSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping checkApiStatus().");
             return;

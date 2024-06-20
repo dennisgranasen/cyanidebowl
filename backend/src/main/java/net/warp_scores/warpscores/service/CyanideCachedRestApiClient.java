@@ -74,7 +74,7 @@ public class CyanideCachedRestApiClient {
             boolean getCachedValueAsFallback, boolean overrideFetchActive, boolean forceRefresh) {
         ApiRequestKey apiRequestKey = ApiRequestKey.newFor(apiRequest);
 
-        log.info("Looking up '{}' in cache for key [{}] (requestParams: {}).", apiRequest.getRequestPath(),
+        log.debug("Looking up '{}' in cache for key [{}] (requestParams: {}).", apiRequest.getRequestPath(),
                 apiRequestKey.asString(), apiRequest.toQueryParams());
         Optional<RestApiResponseCache> cachedRestApiResponse = restApiResponseCacheRepository.findById(
                 apiRequestKey.asString());
@@ -87,7 +87,7 @@ public class CyanideCachedRestApiClient {
                 .orElse(true);
 
         boolean fetchActive = overrideFetchActive || cyanideApiProperties.isFetchActive();
-        log.info(
+        log.debug(
                 "Trying to get for '{}'. Last api access was [{}] (outdated: {}, changeable: {}, apiFetchActive: {}, overrideFetchActive: {}, forceRefresh: {}).",
                 apiRequest.getRequestPath(),
                 lastCacheAccess, cacheOutdated, changeable, fetchActive, overrideFetchActive, forceRefresh);
@@ -119,7 +119,7 @@ public class CyanideCachedRestApiClient {
             String responseClassName = getResponseClassName(apiRequest);
             restApiResponseCache.setResponseClassName(responseClassName);
             restApiResponseCache.setResponse(response);
-            log.info("Storing response [{}] in cache with key [{}].", apiRequest.getResponseClass().getSimpleName(),
+            log.debug("Storing response [{}] in cache with key [{}].", apiRequest.getResponseClass().getSimpleName(),
                     apiRequestKey.asString());
             restApiResponseCacheRepository.save(restApiResponseCache);
         } catch (JsonProcessingException ex) {
@@ -139,7 +139,7 @@ public class CyanideCachedRestApiClient {
         try {
             ResponseType responseType = objectMapper.readValue(objectMapper.writeValueAsString(rawResponse),
                     responseClass);
-            log.info("Converted raw response to '{}'.", responseType.toString());
+            log.debug("Converted raw response to '{}'.", responseType.toString());
             return responseType;
         } catch (JsonProcessingException ex) {
             log.error("Unable to convert raw response {} to response object (type: {})...", rawResponse, responseClass);

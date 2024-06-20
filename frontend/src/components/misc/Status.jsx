@@ -26,14 +26,14 @@ function PlatformIcon({ codename, status, maintenance }) {
   return <Icon as={icon} color={color} />;
 }
 
-function Status({ status, headerFontSize, fontSize, color }) {
+function Status({ status, headerSize, textSize, color }) {
   return (
     <VStack align="left">
-      <Text fontStyle="italic" fontSize={headerFontSize} color={color}>
+      <Text fontStyle="italic" fontSize={headerSize} color={color}>
         Cyanide Api Status
       </Text>
       <HStack align="left">
-        <Box fontSize={fontSize} color={color}>
+        <Box fontSize={textSize} color={color}>
           Overall:
         </Box>
         <Spacer />
@@ -41,7 +41,7 @@ function Status({ status, headerFontSize, fontSize, color }) {
       </HStack>
       {status?.serviceStatuses && (
         <HStack spacing={2} align="left">
-          <Box fontSize={fontSize} color={color}>
+          <Box fontSize={textSize} color={color}>
             Game Server:
           </Box>
           <Spacer />
@@ -51,7 +51,7 @@ function Status({ status, headerFontSize, fontSize, color }) {
       )}
       {status && (
         <HStack spacing={2} align="left">
-          <Box fontSize={fontSize} color={color}>
+          <Box fontSize={textSize} color={color}>
             Platforms:
           </Box>
           <Spacer />
