@@ -175,6 +175,7 @@ public class StatusResponse extends ApiResponse {
         private String title;
         private String name;
         private Status status;
+        private Object service_statuses;
         private News[] news;
         private String[] social_links;
         private Maintenance maintenance;

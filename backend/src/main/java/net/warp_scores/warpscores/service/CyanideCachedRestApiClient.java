@@ -11,10 +11,13 @@ import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.config.properties.CyanideApiProperties;
 import net.warp_scores.warpscores.cyanide.api.model.common.ObfuscateApiKeyService;
 import net.warp_scores.warpscores.cyanide.api.requests.ApiRequest;
+import net.warp_scores.warpscores.cyanide.api.requests.StatusRequest;
 import net.warp_scores.warpscores.cyanide.api.responses.ApiResponse;
 import net.warp_scores.warpscores.domain.cache.ApiRequestKey;
 import net.warp_scores.warpscores.domain.cache.RestApiResponseCache;
 import net.warp_scores.warpscores.domain.cache.RestApiResponseCacheRepository;
+import net.warp_scores.warpscores.domain.persistence.StatusRepository;
+import net.warp_scores.warpscores.model.Status;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -32,6 +35,8 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
 
+import static net.warp_scores.warpscores.cyanide.api.requests.StatusRequest.BB3_GAME_NAME;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -40,6 +45,8 @@ public class CyanideCachedRestApiClient {
     private final CyanideApiProperties cyanideApiProperties;
 
     private final RestApiResponseCacheRepository restApiResponseCacheRepository;
+
+    private final StatusRepository statusRepository;
 
     private final ObfuscateApiKeyService obfuscateApiKeyService;
 
@@ -67,7 +74,7 @@ public class CyanideCachedRestApiClient {
             boolean getCachedValueAsFallback, boolean overrideFetchActive, boolean forceRefresh) {
         ApiRequestKey apiRequestKey = ApiRequestKey.newFor(apiRequest);
 
-        log.info("Looking up '{}' in cache for key [{}] (requestParams: {}).", apiRequest.getRequestPath(),
+        log.debug("Looking up '{}' in cache for key [{}] (requestParams: {}).", apiRequest.getRequestPath(),
                 apiRequestKey.asString(), apiRequest.toQueryParams());
         Optional<RestApiResponseCache> cachedRestApiResponse = restApiResponseCacheRepository.findById(
                 apiRequestKey.asString());
@@ -80,7 +87,7 @@ public class CyanideCachedRestApiClient {
                 .orElse(true);
 
         boolean fetchActive = overrideFetchActive || cyanideApiProperties.isFetchActive();
-        log.info(
+        log.debug(
                 "Trying to get for '{}'. Last api access was [{}] (outdated: {}, changeable: {}, apiFetchActive: {}, overrideFetchActive: {}, forceRefresh: {}).",
                 apiRequest.getRequestPath(),
                 lastCacheAccess, cacheOutdated, changeable, fetchActive, overrideFetchActive, forceRefresh);
@@ -112,7 +119,7 @@ public class CyanideCachedRestApiClient {
             String responseClassName = getResponseClassName(apiRequest);
             restApiResponseCache.setResponseClassName(responseClassName);
             restApiResponseCache.setResponse(response);
-            log.info("Storing response [{}] in cache with key [{}].", apiRequest.getResponseClass().getSimpleName(),
+            log.debug("Storing response [{}] in cache with key [{}].", apiRequest.getResponseClass().getSimpleName(),
                     apiRequestKey.asString());
             restApiResponseCacheRepository.save(restApiResponseCache);
         } catch (JsonProcessingException ex) {
@@ -132,7 +139,7 @@ public class CyanideCachedRestApiClient {
         try {
             ResponseType responseType = objectMapper.readValue(objectMapper.writeValueAsString(rawResponse),
                     responseClass);
-            log.info("Converted raw response to '{}'.", responseType.toString());
+            log.debug("Converted raw response to '{}'.", responseType.toString());
             return responseType;
         } catch (JsonProcessingException ex) {
             log.error("Unable to convert raw response {} to response object (type: {})...", rawResponse, responseClass);
@@ -148,6 +155,16 @@ public class CyanideCachedRestApiClient {
     }
 
     private <RequestType, ResponseType> Object loadRawFromApi(ApiRequest<RequestType, ResponseType> apiRequest) {
+
+        if (!StatusRequest.class.equals(apiRequest.getRequestClass())) {
+            Optional<Status> status = statusRepository.findById(BB3_GAME_NAME);
+            boolean serviceAvailable = status.map(Status::isOverall).orElse(false);
+            if (!serviceAvailable) {
+                log.warn("API seems to be down. Will not attempt to fetch data from api.");
+                return null;
+            }
+        }
+
         log.info("Loading from real api (request: {}).", apiRequest);
         while (!bucket.tryConsume(1)) {
             log.debug("Rate limit ({}) exceeded, waiting limit to be refilled (refills every {})...",
@@ -176,8 +193,7 @@ public class CyanideCachedRestApiClient {
         }
     }
 
-    private <RequestType, ResponseType> URI
-    createUri(ApiRequest<RequestType, ResponseType> apiRequest, String apiKey) {
+    private <RequestType, ResponseType> URI createUri(ApiRequest<RequestType, ResponseType> apiRequest, String apiKey) {
         MultiValueMap<String, String> queryParams = apiRequest.toQueryParams();
         queryParams.add("key", apiKey);
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder

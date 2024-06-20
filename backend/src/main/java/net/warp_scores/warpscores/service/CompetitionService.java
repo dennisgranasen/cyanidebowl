@@ -5,8 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionFormat;
 import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionStatus;
 import net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus;
-import net.warp_scores.warpscores.domain.model.Competition;
-import net.warp_scores.warpscores.domain.model.Contest;
+import net.warp_scores.warpscores.model.Competition;
+import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import org.springframework.stereotype.Service;
@@ -99,10 +99,10 @@ public class CompetitionService {
     }
 
     public boolean competitionConsideredActive(Competition competition) {
-        var matchCount = competition.getPlayedMatches();
-        return matchCount != null && 
-                (asList(CompetitionStatus.Registration, CompetitionStatus.InProgress).contains(competition.getStatus())
-                        || (CompetitionStatus.Finished.equals(
-                        competition.getStatus()) && matchCount > 0));
+        boolean inRegistrationOrInProgress = asList(CompetitionStatus.Registration, CompetitionStatus.InProgress)
+                .contains(competition.getStatus());
+        boolean finished = CompetitionStatus.Finished.equals(competition.getStatus());
+        int matchCount = Optional.ofNullable(competition.getPlayedMatches()).orElse(0);
+        return inRegistrationOrInProgress || finished && matchCount > 0;
     }
 }

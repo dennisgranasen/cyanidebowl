@@ -10,11 +10,15 @@ test('abbreviate coach name defaults to 3 letters with dot.', () => {
   expect(abbreviators.abbreviateCoachName('hello')).toBe('hel.');
 });
 
+test('abbreviate text can have a suffix and different length', () => {
+  expect(abbreviators.abbreviateText('hello world we go out.', 6, '...')).toBe('hello ...');
+});
+
 test('abbreviate coach name can use letter count', () => {
   expect(abbreviators.abbreviateCoachName('hello', 2)).toBe('he.');
 });
 
-test('abbreviate coach name will return unmodified coach name if shorter or samen length than letter count', () => {
+test('abbreviate coach name will return unmodified coach name if shorter or same length than letter count', () => {
   expect(abbreviators.abbreviateCoachName('hi', 3)).toBe('hi');
   expect(abbreviators.abbreviateCoachName('hiho', 3)).toBe('hiho');
 });
@@ -29,8 +33,8 @@ test('abbreviate team name will ignore special characters', () => {
   expect(abbreviators.abbreviateTeamName('(WCQ) DarkGogetters')).toBe('WDG');
 });
 
-test('abbreviate works', () => {
-  expect(abbreviators.abbreviate('Round Robin')).toBe('RR');
-  expect(abbreviators.abbreviate(null)).toBeNull();
-  expect(abbreviators.abbreviate(undefined)).toBeUndefined();
+test('makeInitials works', () => {
+  expect(abbreviators.makeInitials('Round Robin')).toBe('RR');
+  expect(abbreviators.makeInitials(null)).toBeNull();
+  expect(abbreviators.makeInitials(undefined)).toBeUndefined();
 });

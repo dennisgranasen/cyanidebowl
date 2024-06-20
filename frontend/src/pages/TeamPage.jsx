@@ -2,15 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { Box, Heading, Spinner, useMediaQuery, VStack } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
 import CyanideApiService from '../CyanideApiService';
-import Roster from '../components/Roster';
+import Roster from '../components/team/Roster';
 import prettyPrint from '../util/PrettyPrint';
-import Navigation from '../components/Navigation';
+import Navigation from '../components/misc/Navigation';
 import Formatter from '../util/Formatter';
 import ImageUrls from '../ImageUrls';
-import InfoArea from '../components/InfoArea';
-import InfoItem from '../components/InfoItem';
-import Matches from '../components/Matches';
-import HeaderCard from '../components/HeaderCard';
+import InfoArea from '../components/common/InfoArea';
+import InfoItem from '../components/common/InfoItem';
+import Matches from '../components/contest/Matches';
+import HeaderCard from '../components/common/HeaderCard';
+import config from '../config';
+import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 
 function MatchesCount({ matches, teamUuid }) {
   if (!matches) return <Spinner />;
@@ -35,6 +37,8 @@ function TeamPage() {
   const [team, setTeam] = useState();
   const [matches, setMatches] = useState();
   const [players, setPlayers] = useState();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(undefined);
 
   useEffect(() => {
     const fetchTeam = () => {
@@ -42,12 +46,17 @@ function TeamPage() {
         ? CyanideApiService.competitionTeam(competitionUuid, teamUuid)
         : CyanideApiService.team(teamUuid);
 
-      teamResponse.then((data) => {
-        setTeam(data);
-        const currentPlayers = data.players || [];
-        currentPlayers.sort((playerA, playerB) => playerA.number - playerB.number);
-        setPlayers(currentPlayers);
-      });
+      teamResponse
+        .then((data) => {
+          setLoading(false);
+          setTeam(data);
+          const currentPlayers = data.players || [];
+          currentPlayers.sort((playerA, playerB) => playerA.number - playerB.number);
+          setPlayers(currentPlayers);
+        })
+        .catch((reason) => {
+          setError({ type: 'error', message: reason.toLocaleString(config.locale) });
+        });
     };
 
     const fetchMatches = () => {
@@ -75,41 +84,41 @@ function TeamPage() {
         />
       </Box>
       <Box>
-        {team ? (
-          <>
-            <HeaderCard
-              heading={team.name}
-              subHeading={`Coach: ${team.coachName}`}
-              detailsHeading="Team details"
-              mainImageSrc={ImageUrls.logo(team.logo)}
-              additionalImageSrc={ImageUrls.race(team.race)}
-              smallscreen={smallscreen ? 'smallscreen' : undefined}
-            >
-              <InfoArea
+        <LoadingOrErrorWrapper loading={loading} error={error}>
+          {team && (
+            <>
+              <HeaderCard
+                heading={team.name}
+                subHeading={`Coach: ${team.coachName}`}
+                detailsHeading="Team details"
+                mainImageSrc={ImageUrls.logo(team.logo)}
+                additionalImageSrc={ImageUrls.race(team.race)}
                 smallscreen={smallscreen ? 'smallscreen' : undefined}
-                infoItems={[
-                  <InfoItem key="race" label="Race" info={prettyPrint(team.race)} />,
-                  <InfoItem key="players" label="Players" info={players !== null ? players.length : '-'} />,
-                  <InfoItem key="rerolls" label="Rerolls" info={team.rerolls} />,
-                  <InfoItem key="dedicatedFans" label="Dedicated Fans" info={team.dedicatedFans} />,
-                  <InfoItem key="cheerleaders" label="Cheerleaders" info={team.cheerleaders} />,
-                  <InfoItem key="assistantCoaches" label="Assistant coaches" info={team.coachAssistants} />,
-                  <InfoItem key="apothecary" label="Apothecary" info={team.apothecary} />,
-                  <InfoItem key="cash" label="Cash" info={Formatter.formatAsNumber(team.cash)} />,
-                  <InfoItem key="value" label="Value" info={Formatter.formatAsNumber(team.value)} />,
-                  <InfoItem
-                    key="matches"
-                    label="Matches"
-                    info={<MatchesCount matches={matches} teamUuid={teamUuid} />}
-                  />,
-                ]}
-              />
-            </HeaderCard>
-            <Roster players={players} />
-          </>
-        ) : (
-          <Spinner />
-        )}
+              >
+                <InfoArea
+                  smallscreen={smallscreen ? 'smallscreen' : undefined}
+                  infoItems={[
+                    <InfoItem key="race" label="Race" info={prettyPrint(team.race)} />,
+                    <InfoItem key="players" label="Players" info={players !== null ? players.length : '-'} />,
+                    <InfoItem key="rerolls" label="Rerolls" info={team.rerolls} />,
+                    <InfoItem key="dedicatedFans" label="Dedicated Fans" info={team.dedicatedFans} />,
+                    <InfoItem key="cheerleaders" label="Cheerleaders" info={team.cheerleaders} />,
+                    <InfoItem key="assistantCoaches" label="Assistant coaches" info={team.coachAssistants} />,
+                    <InfoItem key="apothecary" label="Apothecary" info={team.apothecary} />,
+                    <InfoItem key="cash" label="Cash" info={Formatter.formatAsNumber(team.cash)} />,
+                    <InfoItem key="value" label="Value" info={Formatter.formatAsNumber(team.value)} />,
+                    <InfoItem
+                      key="matches"
+                      label="Matches"
+                      info={<MatchesCount matches={matches} teamUuid={teamUuid} />}
+                    />,
+                  ]}
+                />
+              </HeaderCard>
+              <Roster players={players} />
+            </>
+          )}
+        </LoadingOrErrorWrapper>
       </Box>
       <Box>
         <Heading size="md">Matches</Heading>
