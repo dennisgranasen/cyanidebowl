@@ -23,6 +23,8 @@ import java.time.Duration;
 @ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StatusRequest extends ApiRequest<StatusRequest, StatusResponse> {
+    public static final String BB3_GAME_NAME = "Blood Bowl III";
+
     public StatusRequest() {
         super("cya/status", StatusRequest.class, StatusResponse.class);
         setReadTimeout(Duration.ofSeconds(5));

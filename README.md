@@ -23,7 +23,7 @@ main: [![main](https://gitlab.com/warp-scores/warp-scores/badges/main/pipeline.s
 - [Coach page](https://gitlab.com/warp-scores/warp-scores/-/issues/6)
 - [League-Statistics](https://gitlab.com/warp-scores/warp-scores/-/issues/7)
 - [Competition-Statistics](https://gitlab.com/warp-scores/warp-scores/-/issues/8)
-- [Discord publishing of match results](https://gitlab.com/warp-scores/warp-scores/-/issues/9)
+- 🟡 [Discord publishing of match results](https://gitlab.com/warp-scores/warp-scores/-/issues/9)
 - [Authentication (Discord-, NAF-OAuth)](https://gitlab.com/warp-scores/warp-scores/-/issues/10)
 - [NAF Data export for tournaments](https://gitlab.com/warp-scores/warp-scores/-/issues/11)
 - [Admin/Edit results? Win/Tie breaker editor?](https://gitlab.com/warp-scores/warp-scores/-/issues/12)

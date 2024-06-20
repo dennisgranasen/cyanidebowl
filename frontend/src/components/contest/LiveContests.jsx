@@ -6,7 +6,7 @@ import CyanideApiService from '../../CyanideApiService';
 import comparators from '../../util/Comparators';
 import ContestMatchCards from './ContestMatchCards';
 
-function LiveContests({ league }) {
+function LiveContests({ league, embeddable }) {
   const [contests, setContests] = useState();
 
   const fetchLiveContests = (leagueUuid) => {
@@ -24,8 +24,9 @@ function LiveContests({ league }) {
 
   return (
     <>
-      <Heading size="md">Live matches</Heading>
+      {!embeddable && <Heading size="md">Live matches</Heading>}
       <ContestMatchCards
+        embeddable={embeddable ? 'embeddable' : null}
         contests={contests}
         noContentIcon={FaRegMoon}
         noContentHeading="No matches live currently..."

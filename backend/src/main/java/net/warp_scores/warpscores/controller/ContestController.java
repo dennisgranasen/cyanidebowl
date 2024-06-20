@@ -2,7 +2,8 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.warp_scores.warpscores.domain.model.Contest;
+import net.warp_scores.warpscores.model.Contest;
+import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.service.ContestService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

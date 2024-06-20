@@ -8,43 +8,56 @@ function TableColumns(smallscreen) {
       <Th>
         <Center>{smallscreen ? 'R' : 'Rank'}</Center>
       </Th>
-      <Th>{smallscreen ? 'TN' : 'Team-Name'}</Th>
-      <Th />
-      <Th>{smallscreen ? 'CN' : 'Coach-Name'}</Th>
-      <Th>{smallscreen ? null : 'Race'}</Th>
+      {smallscreen ? (
+        <>
+          <Th>Team/Coach</Th>
+          <Th />
+        </>
+      ) : (
+        <>
+          <Th>Team-Name</Th>
+          <Th />
+          <Th>Coach-Name</Th>
+          <Th>Race</Th>
+        </>
+      )}
       <Th>
         <Center>{smallscreen ? 'GP' : 'Games played'}</Center>
       </Th>
       <Th>
         <Center>{smallscreen ? 'Sc.' : 'Score'}</Center>
       </Th>
-      <Th>
-        <Center>W</Center>
-      </Th>
-      <Th>
-        <Center>D</Center>
-      </Th>
-      <Th>
-        <Center>L</Center>
-      </Th>
-      <Th>
-        <Center>TD+</Center>
-      </Th>
-      <Th>
-        <Center>TD-</Center>
-      </Th>
-      <Th>
-        <Center>TDD</Center>
-      </Th>
-      <Th>
-        <Center>CAS+</Center>
-      </Th>
-      <Th>
-        <Center>CAS-</Center>
-      </Th>
-      <Th>
-        <Center>CASD</Center>
-      </Th>
+      {!smallscreen && (
+        <>
+          <Th>
+            <Center>W</Center>
+          </Th>
+          <Th>
+            <Center>D</Center>
+          </Th>
+          <Th>
+            <Center>L</Center>
+          </Th>
+          <Th>
+            <Center>TD+</Center>
+          </Th>
+          <Th>
+            <Center>TD-</Center>
+          </Th>
+          <Th>
+            <Center>TDD</Center>
+          </Th>
+          <Th>
+            <Center>CAS+</Center>
+          </Th>
+          <Th>
+            <Center>CAS-</Center>
+          </Th>
+          <Th>
+            <Center>CASD</Center>
+          </Th>
+        </>
+      )}
     </Tr>
   );
 }

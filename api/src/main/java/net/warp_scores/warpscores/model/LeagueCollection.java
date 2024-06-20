@@ -1,6 +1,5 @@
-package net.warp_scores.warpscores.domain.model;
+package net.warp_scores.warpscores.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;

@@ -1,16 +1,15 @@
 import React from 'react';
-import { Center, Heading, Image, Spinner, Td, Tr } from '@chakra-ui/react';
+import { Center, Heading, Image, Spinner, Td, Text, Tr } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import Race from '../team/Race';
 import Formatter from '../../util/Formatter';
-import ImageUrls from '../../ImageUrls';
 import config from '../../config';
-import abbreviators from '../../util/Abbreviators';
+import ImageUrls from '../../ImageUrls';
 
 const { boxSize } = config;
 
-function Rank({ rank, smallscreen: issmallscreen }) {
+function Rank({ rank, smallscreen }) {
   const navigate = useNavigate();
   const goToTeam = () => {
     navigate(`/competition/${rank.team.competitionIds[0]}/team/${rank.team.id}`);
@@ -22,50 +21,77 @@ function Rank({ rank, smallscreen: issmallscreen }) {
           <Heading size="sm">{rank.rank}</Heading>
         </Center>
       </Td>
-      <Td>{issmallscreen ? abbreviators.abbreviateTeamName(rank.team.name) : rank.team.name}</Td>
+      {smallscreen ? (
+        <>
+          <Td>
+            <Text fontSize="sm">{rank.team.name}</Text>
+            <Text fontSize="sm" color="grey">
+              {rank.team.coachName}
+            </Text>
+          </Td>
+          <Td>
+            <Image
+              src={`${ImageUrls.logo(rank.team.logo)}`}
+              boxSize={boxSize}
+              fallback={<QuestionOutlineIcon boxSize={boxSize} />}
+              objectFit="scale-down"
+            />
+          </Td>
+        </>
+      ) : (
+        <>
+          <Td>{rank.team.name}</Td>
+          <Td>
+            <Image
+              src={`${ImageUrls.logo(rank.team.logo)}`}
+              boxSize={boxSize}
+              fallback={<QuestionOutlineIcon boxSize={boxSize} />}
+              objectFit="scale-down"
+            />
+          </Td>
+          <Td>{rank.team.coachName}</Td>
+          <Td>
+            <Race race={rank.team.race} />
+          </Td>
+        </>
+      )}
       <Td>
-        <Image
-          src={`${ImageUrls.logo(rank.team.logo)}`}
-          boxSize={boxSize}
-          fallback={<QuestionOutlineIcon boxSize={boxSize} />}
-          objectFit="scale-down"
-        />
-      </Td>
-      <Td>{issmallscreen ? abbreviators.abbreviateCoachName(rank.team.coachName) : rank.team.coachName}</Td>
-      <Td>{issmallscreen ? null : <Race race={rank.team.race} />}</Td>
-      <Td>
-        <Center>{Formatter.formatAsNumber(rank.gamesPlayed)}</Center>
+        <Center> {Formatter.formatAsNumber(rank.gamesPlayed)}</Center>
       </Td>
       <Td>
         <Center>{Formatter.formatAsNumber(rank.score)}</Center>
       </Td>
-      <Td>
-        <Center>{Formatter.formatAsNumber(rank.gamesWon)}</Center>
-      </Td>
-      <Td>
-        <Center>{Formatter.formatAsNumber(rank.gamesDrawn)}</Center>
-      </Td>
-      <Td>
-        <Center>{Formatter.formatAsNumber(rank.gamesLost)}</Center>
-      </Td>
-      <Td>
-        <Center>{Formatter.formatAsNumber(rank.inflictedTouchdowns)}</Center>
-      </Td>
-      <Td>
-        <Center>{Formatter.formatAsNumber(rank.sustainedTouchdowns)}</Center>
-      </Td>
-      <Td>
-        <Center>{Formatter.formatAsNumber(rank.inflictedTouchdowns - rank.sustainedTouchdowns)}</Center>
-      </Td>
-      <Td>
-        <Center>{Formatter.formatAsNumber(rank.inflictedCasualties)}</Center>
-      </Td>
-      <Td>
-        <Center>{Formatter.formatAsNumber(rank.sustainedCasualties)}</Center>
-      </Td>
-      <Td>
-        <Center>{Formatter.formatAsNumber(rank.inflictedCasualties - rank.sustainedCasualties)}</Center>
-      </Td>
+      {!smallscreen && (
+        <>
+          <Td>
+            <Center>{Formatter.formatAsNumber(rank.gamesWon)}</Center>
+          </Td>
+          <Td>
+            <Center>{Formatter.formatAsNumber(rank.gamesDrawn)}</Center>
+          </Td>
+          <Td>
+            <Center>{Formatter.formatAsNumber(rank.gamesLost)}</Center>
+          </Td>
+          <Td>
+            <Center>{Formatter.formatAsNumber(rank.inflictedTouchdowns)}</Center>
+          </Td>
+          <Td>
+            <Center>{Formatter.formatAsNumber(rank.sustainedTouchdowns)}</Center>
+          </Td>
+          <Td>
+            <Center>{Formatter.formatAsNumber(rank.inflictedTouchdowns - rank.sustainedTouchdowns)}</Center>
+          </Td>
+          <Td>
+            <Center>{Formatter.formatAsNumber(rank.inflictedCasualties)}</Center>
+          </Td>
+          <Td>
+            <Center>{Formatter.formatAsNumber(rank.sustainedCasualties)}</Center>
+          </Td>
+          <Td>
+            <Center>{Formatter.formatAsNumber(rank.inflictedCasualties - rank.sustainedCasualties)}</Center>
+          </Td>
+        </>
+      )}
     </Tr>
   ) : (
     <Spinner />

@@ -1,7 +1,7 @@
 package net.warp_scores.warpscores.service;
 
 import net.warp_scores.warpscores.cyanide.api.responses.StatusResponse;
-import net.warp_scores.warpscores.domain.model.Status;
+import net.warp_scores.warpscores.model.Status;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
