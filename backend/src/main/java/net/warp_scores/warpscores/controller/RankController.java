@@ -3,11 +3,11 @@ package net.warp_scores.warpscores.controller;
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionFormat;
 import net.warp_scores.warpscores.domain.TeamDomainService;
-import net.warp_scores.warpscores.domain.model.Competition;
-import net.warp_scores.warpscores.domain.model.Contest;
-import net.warp_scores.warpscores.domain.model.Match;
-import net.warp_scores.warpscores.domain.model.Rank;
-import net.warp_scores.warpscores.domain.model.Team;
+import net.warp_scores.warpscores.model.Competition;
+import net.warp_scores.warpscores.model.Contest;
+import net.warp_scores.warpscores.model.Match;
+import net.warp_scores.warpscores.model.Rank;
+import net.warp_scores.warpscores.model.Team;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.service.CompetitionService;
@@ -46,8 +46,18 @@ public class RankController {
         if (result != 0) {
             return result;
         }
+        result = ofNullable(rankA.getSustainedTouchdowns()).orElse(0) - ofNullable(
+                rankB.getSustainedTouchdowns()).orElse(0);
+        if (result != 0) {
+            return result;
+        }
         result = ofNullable(rankB.getInflictedCasualties()).orElse(0) - ofNullable(
                 rankA.getInflictedCasualties()).orElse(0);
+        if (result != 0) {
+            return result;
+        }
+        result = ofNullable(rankA.getSustainedCasualties()).orElse(0) - ofNullable(
+                rankB.getSustainedCasualties()).orElse(0);
         if (result != 0) {
             return result;
         }
@@ -56,13 +66,6 @@ public class RankController {
         if (result != 0) {
             return result;
         }
-        result = ofNullable(rankA.getSustainedTouchdowns()).orElse(0) - ofNullable(
-                rankB.getSustainedTouchdowns()).orElse(0);
-        if (result != 0) {
-            return result;
-        }
-        result = ofNullable(rankA.getSustainedCasualties()).orElse(0) - ofNullable(
-                rankB.getSustainedCasualties()).orElse(0);
         if (result != 0) {
             return result;
         }
@@ -143,11 +146,8 @@ public class RankController {
         int drawFactor = 0;
         switch (format) {
             case RoundRobin:
-                winFactor = 3;
-                drawFactor = 1;
-                break;
             case Wissen:
-                winFactor = 2;
+                winFactor = 3;
                 drawFactor = 1;
                 break;
             default:

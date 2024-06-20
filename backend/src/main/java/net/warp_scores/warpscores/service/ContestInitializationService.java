@@ -3,9 +3,9 @@ package net.warp_scores.warpscores.service;
 import com.fasterxml.uuid.Generators;
 import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionFormat;
 import net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus;
-import net.warp_scores.warpscores.domain.model.Competition;
-import net.warp_scores.warpscores.domain.model.Contest;
-import net.warp_scores.warpscores.domain.model.Team;
+import net.warp_scores.warpscores.model.Competition;
+import net.warp_scores.warpscores.model.Contest;
+import net.warp_scores.warpscores.model.Team;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;

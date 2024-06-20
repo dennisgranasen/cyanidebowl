@@ -16,7 +16,10 @@ const returnData = (result) => {
 
 export default {
   status: async () => axios(`/status`).then(returnData).catch(handleError),
-  league: async () => axios(`/league`).then(returnData).catch(handleError),
+  league: async (leagueUuid) =>
+    axios(`/league${leagueUuid ? `/${leagueUuid}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
   leagueCompetitions: async (leagueUuid) =>
     axios
       .post(`/competitions/league/${leagueUuid}`, ['Registration', 'InProgress', 'Finished'])
@@ -36,6 +39,7 @@ export default {
     axios(`/contests/league/${leagueUuid}/live`).then(returnData).catch(handleError),
   latestLeagueContests: async (leagueUuid) =>
     axios(`/contests/league/${leagueUuid}/latest`).then(returnData).catch(handleError),
+  backendVersion: async () => axios(`/public/version.json`).then(returnData).catch(handleError),
 };
 
 // leagueTeams: async (leagueUuid) => axios(`/teams/league/${leagueUuid}`).then(returnData).catch(handleError),

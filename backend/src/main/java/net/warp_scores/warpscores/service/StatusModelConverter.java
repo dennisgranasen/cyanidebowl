@@ -1,7 +1,7 @@
 package net.warp_scores.warpscores.service;
 
 import net.warp_scores.warpscores.cyanide.api.responses.StatusResponse;
-import net.warp_scores.warpscores.domain.model.Status;
+import net.warp_scores.warpscores.model.Status;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
@@ -14,6 +14,7 @@ public class StatusModelConverter {
         Status status = new Status();
         status.setGameName(game.getName());
         status.setOverall(game.getStatus().isOk());
+        status.setServiceStatuses(game.getService_statuses());
         status.setMaintenance(toMaintenance(game.getMaintenance()));
         status.setSocialLinks(game.getSocial_links());
         status.setPlatforms(toPlatforms(game.getStatus().getPlatforms()));

@@ -2,11 +2,8 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus;
-import net.warp_scores.warpscores.domain.model.Contest;
-import net.warp_scores.warpscores.domain.model.Match;
-import net.warp_scores.warpscores.domain.persistence.ContestRepository;
-import net.warp_scores.warpscores.domain.persistence.MatchRepository;
+import net.warp_scores.warpscores.model.Contest;
+import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.service.ContestService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,9 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
