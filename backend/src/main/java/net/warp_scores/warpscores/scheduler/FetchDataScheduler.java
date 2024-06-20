@@ -44,7 +44,7 @@ public class FetchDataScheduler {
     private final CompetitionRepository competitionRepository;
     private final MatchDomainService matchDomainService;
 
-    @Scheduled(initialDelay = Schedules.FIVE_SECONDS, fixedDelay = Schedules.FIFTEEN_MINUTES)
+    @Scheduled(initialDelay = Schedules.TWENTY_SECONDS, fixedDelay = Schedules.FIFTEEN_MINUTES)
     public void fetchLeaguesAndCompetitions() {
         if (!cyanideApiProperties.isSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchLeaguesAndCompetitions().");
@@ -58,7 +58,7 @@ public class FetchDataScheduler {
         loadCompetitionsFor(leaguesToCollect);
     }
 
-    @Scheduled(initialDelay = Schedules.FIVE_SECONDS, fixedDelay = Schedules.THREE_MINUTES)
+    @Scheduled(initialDelay = Schedules.TWENTY_SECONDS, fixedDelay = Schedules.THREE_MINUTES)
     public void fetchCompetitions() {
         if (!cyanideApiProperties.isSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchCompetitions().");
@@ -76,7 +76,7 @@ public class FetchDataScheduler {
         loadMatchesFor(competitions, leagues);
     }
 
-    @Scheduled(initialDelay = Schedules.FIVE_SECONDS, fixedDelay = Schedules.FIVE_MINUTES)
+    @Scheduled(initialDelay = Schedules.TWENTY_SECONDS, fixedDelay = Schedules.FIVE_MINUTES)
     public void fetchTeams() {
         if (!cyanideApiProperties.isSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchTeams().");

@@ -17,23 +17,25 @@ import {
 import Contest from './Contest';
 import comparators from '../../util/Comparators';
 
-const TableColumns = (
-  <Tr>
-    <Th />
-    <Th>
-      <Center>Home</Center>
-    </Th>
-    <Th />
-    <Th>
-      <Center>Result</Center>
-    </Th>
-    <Th />
-    <Th>
-      <Center>Away</Center>
-    </Th>
-    <Th />
-  </Tr>
-);
+function TableColumns(smallscreen) {
+  return (
+    <Tr>
+      {!smallscreen && <Th />}
+      <Th>
+        <Center>Home</Center>
+      </Th>
+      {!smallscreen && <Th />}
+      <Th>
+        <Center>Result</Center>
+      </Th>
+      {!smallscreen && <Th />}
+      <Th>
+        <Center>Away</Center>
+      </Th>
+      {!smallscreen && <Th />}
+    </Tr>
+  );
+}
 
 function getDateFromUUID(uuid) {
   const timestampHex = `${uuid.substr(15, 3)}${uuid.substr(9, 4)}${uuid.substr(0, 8)}`;
@@ -48,7 +50,7 @@ function getRobinFrom(contests) {
   if (contests[0].format !== 'RoundRobin') return null;
 
   contests.sort((contestA, contestB) =>
-    comparators.compareAsDates(getDateFromUUID(contestA.contestUuid), getDateFromUUID(contestB.contestUuid)),
+    comparators.compareAsDates(getDateFromUUID(contestA.contestUuid), getDateFromUUID(contestB.contestUuid))
   );
   const { coachName } = contests[0].opponents[0];
   return coachName;
@@ -83,13 +85,19 @@ function Contests({ contests, currentRound, smallscreen }) {
       content: (
         <TableContainer>
           <Table variant="simpleClickable" size="sm">
-            <Thead>{TableColumns}</Thead>
+            <Thead>{TableColumns(smallscreen)}</Thead>
             <Tbody>
               {value.map((contest) => {
-                return <Contest smallscreen={smallscreen ? 'smallscreen' : undefined} contest={contest} key={contest.contestUuid} />;
+                return (
+                  <Contest
+                    smallscreen={smallscreen ? 'smallscreen' : undefined}
+                    contest={contest}
+                    key={contest.contestUuid}
+                  />
+                );
               })}
             </Tbody>
-            <Tfoot>{TableColumns}</Tfoot>
+            <Tfoot>{TableColumns(smallscreen)}</Tfoot>
           </Table>
         </TableContainer>
       ),
