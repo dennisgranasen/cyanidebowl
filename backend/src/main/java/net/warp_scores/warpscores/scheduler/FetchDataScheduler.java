@@ -4,12 +4,12 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.config.properties.CyanideApiProperties;
 import net.warp_scores.warpscores.domain.MatchDomainService;
-import net.warp_scores.warpscores.domain.model.Competition;
-import net.warp_scores.warpscores.domain.model.Contest;
-import net.warp_scores.warpscores.domain.model.League;
-import net.warp_scores.warpscores.domain.model.LeagueCollection;
-import net.warp_scores.warpscores.domain.model.Match;
-import net.warp_scores.warpscores.domain.model.Team;
+import net.warp_scores.warpscores.model.Competition;
+import net.warp_scores.warpscores.model.Contest;
+import net.warp_scores.warpscores.model.League;
+import net.warp_scores.warpscores.model.LeagueCollection;
+import net.warp_scores.warpscores.model.Match;
+import net.warp_scores.warpscores.model.Team;
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
 import net.warp_scores.warpscores.domain.persistence.LeagueCollectionRepository;
 import net.warp_scores.warpscores.domain.persistence.LeagueRepository;
@@ -44,7 +44,7 @@ public class FetchDataScheduler {
     private final CompetitionRepository competitionRepository;
     private final MatchDomainService matchDomainService;
 
-    @Scheduled(initialDelay = Schedules.FIVE_SECONDS, fixedDelay = Schedules.FIFTEEN_MINUTES)
+    @Scheduled(initialDelay = Schedules.TWENTY_SECONDS, fixedDelay = Schedules.FIFTEEN_MINUTES)
     public void fetchLeaguesAndCompetitions() {
         if (!cyanideApiProperties.isSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchLeaguesAndCompetitions().");
@@ -58,7 +58,7 @@ public class FetchDataScheduler {
         loadCompetitionsFor(leaguesToCollect);
     }
 
-    @Scheduled(initialDelay = Schedules.FIVE_SECONDS, fixedDelay = Schedules.THREE_MINUTES)
+    @Scheduled(initialDelay = Schedules.TWENTY_SECONDS, fixedDelay = Schedules.THREE_MINUTES)
     public void fetchCompetitions() {
         if (!cyanideApiProperties.isSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchCompetitions().");
@@ -76,7 +76,7 @@ public class FetchDataScheduler {
         loadMatchesFor(competitions, leagues);
     }
 
-    @Scheduled(initialDelay = Schedules.FIVE_SECONDS, fixedDelay = Schedules.FIVE_MINUTES)
+    @Scheduled(initialDelay = Schedules.TWENTY_SECONDS, fixedDelay = Schedules.FIVE_MINUTES)
     public void fetchTeams() {
         if (!cyanideApiProperties.isSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchTeams().");

@@ -1,4 +1,4 @@
-package net.warp_scores.warpscores.domain.model;
+package net.warp_scores.warpscores.model;
 
 import lombok.Getter;
 import lombok.Setter;

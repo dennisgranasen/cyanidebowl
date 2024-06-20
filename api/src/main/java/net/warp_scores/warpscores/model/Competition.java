@@ -1,4 +1,4 @@
-package net.warp_scores.warpscores.domain.model;
+package net.warp_scores.warpscores.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;

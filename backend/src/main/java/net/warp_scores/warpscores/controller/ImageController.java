@@ -41,15 +41,18 @@ public class ImageController {
 
     @GetMapping("/warpscores.png/{size}")
     public ResponseEntity<byte[]> getWarpScoresLogoPng(@PathVariable(name = "size", required = false) String size) {
-        Optional<byte[]> imageData = imageService.loadFromClassPath("/warpscores.png");
+        Optional<byte[]> imageData = Optional.empty();
         if (size != null && !size.equalsIgnoreCase("original")) {
+            imageData = imageService.loadFromClassPath("/warpscores.png");
             int width = 256;
-            if ("small" .equalsIgnoreCase(size)) {
+            if ("small".equalsIgnoreCase(size)) {
                 width = 64;
-            } else if ("medium" .equalsIgnoreCase(size)) {
+            } else if ("medium".equalsIgnoreCase(size)) {
                 width = 128;
             }
             imageData = imageService.rescaleImage(imageData, width);
+        } else {
+            imageData = imageService.loadFromClassPath("/warpscores.800.png");
         }
         return imageData
                 .map(ImageController::ok)

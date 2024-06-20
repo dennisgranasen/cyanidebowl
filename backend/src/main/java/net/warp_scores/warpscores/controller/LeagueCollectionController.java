@@ -6,7 +6,7 @@ import net.warp_scores.warpscores.cyanide.api.model.common.IdWithName;
 import net.warp_scores.warpscores.cyanide.api.requests.LookupRequest;
 import net.warp_scores.warpscores.cyanide.api.responses.LookupResponse;
 import net.warp_scores.warpscores.domain.persistence.LeagueCollectionRepository;
-import net.warp_scores.warpscores.domain.model.LeagueCollection;
+import net.warp_scores.warpscores.model.LeagueCollection;
 import net.warp_scores.warpscores.service.CyanideApiService;
 import net.warp_scores.warpscores.service.UUIDConverter;
 import org.springframework.web.bind.annotation.PathVariable;
