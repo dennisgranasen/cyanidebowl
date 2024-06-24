@@ -11,6 +11,8 @@ services:
       - 'MONGO_INITDB_ROOT_USERNAME=root'
     volumes:
       - ./data:/data/db
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     networks:
       - warpscores-backend
 
@@ -22,6 +24,9 @@ services:
       - warpscores-db
     environment:
       SPRING_PROFILES_ACTIVE: prod
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     networks:
       - warpscores-backend
       - warpscores-frontend
@@ -34,6 +39,21 @@ services:
       - '8022:80'
     depends_on:
       - warpscores-backend
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - warpscores-frontend
+
+  warpscores-discord-bot:
+    container_name: warpscores-discord-bot
+    hostname: warpscores-discord-bot
+    image: 'warpscores/warpscores-discord-bot:1.0.0-SNAPSHOT'
+    depends_on:
+      - warpscores-backend
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     networks:
       - warpscores-frontend
 
