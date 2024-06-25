@@ -6,10 +6,10 @@ import CyanideApiService from '../../CyanideApiService';
 import comparators from '../../util/Comparators';
 import ContestMatchCards from './ContestMatchCards';
 
-function LatestContests({ league, embeddable }) {
+function LatestContests({ league, embeddable, limit }) {
   const [contests, setContests] = useState();
-  const fetchLatestContests = (leagueUuid) => {
-    CyanideApiService.latestLeagueContests(leagueUuid).then((data) => {
+  const fetchLatestContests = (leagueUuid, limit) => {
+    CyanideApiService.latestLeagueContests(leagueUuid, limit).then((data) => {
       data.sort((compA, compB) => comparators.compareAsDates(compB.matchDate, compA.matchDate));
       setContests(data);
     });
@@ -17,7 +17,7 @@ function LatestContests({ league, embeddable }) {
 
   useEffect(() => {
     if (league) {
-      fetchLatestContests(league.uuid);
+      fetchLatestContests(league.uuid, limit);
     }
   }, [league]);
 

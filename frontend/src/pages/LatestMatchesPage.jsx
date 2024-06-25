@@ -7,7 +7,7 @@ import config from '../config';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 
 function LatestMatchesPage() {
-  const { leagueUuid } = useParams();
+  const { leagueUuid, limit } = useParams();
   const [league, setLeague] = useState();
   const [loading, setLoading] = useState();
   const [error, setError] = useState(undefined);
@@ -24,12 +24,12 @@ function LatestMatchesPage() {
         });
     };
     fetchLeague();
-  }, [leagueUuid]);
+  }, [leagueUuid, limit]);
 
   return (
     <Stack>
       <LoadingOrErrorWrapper loading={loading} error={error}>
-        <LatestContests embeddable league={league} />
+        <LatestContests embeddable league={league} limit={limit} />
       </LoadingOrErrorWrapper>
     </Stack>
   );

@@ -37,8 +37,10 @@ function TeamPage() {
   const [team, setTeam] = useState();
   const [matches, setMatches] = useState();
   const [players, setPlayers] = useState();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(undefined);
+  const [loadingTeam, setLoadingTeam] = useState(false);
+  const [teamError, setTeamError] = useState(undefined);
+  const [loadingMatches, setLoadingMatches] = useState(false);
+  const [matchesError, setMatchesError] = useState(undefined);
 
   useEffect(() => {
     const fetchTeam = () => {
@@ -48,27 +50,34 @@ function TeamPage() {
 
       teamResponse
         .then((data) => {
-          setLoading(false);
+          setLoadingTeam(false);
           setTeam(data);
           const currentPlayers = data.players || [];
           currentPlayers.sort((playerA, playerB) => playerA.number - playerB.number);
           setPlayers(currentPlayers);
         })
         .catch((reason) => {
-          setError({ type: 'error', message: reason.toLocaleString(config.locale) });
+          setTeamError({ type: 'error', message: reason.toLocaleString(config.locale) });
         });
     };
 
     const fetchMatches = () => {
+      setMatches([]);
+      setLoadingMatches(true);
       const matchesResponse = CyanideApiService.teamMatches(teamUuid);
-      matchesResponse.then((data) => {
-        setMatches(data);
-      });
+      matchesResponse
+        .then((data) => {
+          setLoadingMatches(false);
+          setMatches(data);
+        })
+        .catch((reason) => {
+          setMatchesError({ type: 'error', message: reason.toLocaleString(config.locale) });
+        });
     };
 
     fetchTeam();
     fetchMatches();
-  }, []);
+  }, [competitionUuid, teamUuid]);
 
   const navCompetition =
     team && team.competitionIds.length === 1 ? [team.competitionIds[0], team.competitionName] : null;
@@ -84,7 +93,7 @@ function TeamPage() {
         />
       </Box>
       <Box>
-        <LoadingOrErrorWrapper loading={loading} error={error}>
+        <LoadingOrErrorWrapper loading={loadingTeam} error={teamError}>
           {team && (
             <>
               <HeaderCard
@@ -122,7 +131,9 @@ function TeamPage() {
       </Box>
       <Box>
         <Heading size="md">Matches</Heading>
-        <Matches matches={matches} />
+        <LoadingOrErrorWrapper loading={loadingMatches} error={matchesError}>
+          <Matches matches={matches} smallscreen={smallscreen ? 'smallscreen' : null} />
+        </LoadingOrErrorWrapper>
       </Box>
     </VStack>
   );
