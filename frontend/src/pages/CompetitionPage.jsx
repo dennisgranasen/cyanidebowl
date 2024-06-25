@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Heading, Spinner, useMediaQuery, VStack } from '@chakra-ui/react';
 import { Link as RouteLink, useParams } from 'react-router-dom';
-import CyanideApiService from '../CyanideApiService';
+import WarpScoresApiService from '../WarpScoresApiService';
 import Navigation from '../components/misc/Navigation';
 import Contests from '../components/contest/Contests';
 import comparators from '../util/Comparators';
@@ -23,19 +23,19 @@ function CompetitionPage() {
 
   useEffect(() => {
     const fetchCompetition = () => {
-      CyanideApiService.competition(competitionUuid).then((data) => {
+      WarpScoresApiService.competition(competitionUuid).then((data) => {
         setCompetition(data);
       });
     };
     const fetchTeams = () => {
-      CyanideApiService.competitionRanks(competitionUuid).then((data) => {
+      WarpScoresApiService.competitionRanks(competitionUuid).then((data) => {
         data.sort((rankA, rankB) => rankA.rank - rankB.rank);
         setRanks(data);
       });
     };
 
     const fetchContests = () => {
-      CyanideApiService.competitionContests(competitionUuid).then((data) => {
+      WarpScoresApiService.competitionContests(competitionUuid).then((data) => {
         data.sort((compA, compB) => comparators.compareAsDates(compA.matchDate, compB.matchDate));
         setContests(data);
       });

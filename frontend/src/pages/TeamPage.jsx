@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Heading, Spinner, useMediaQuery, VStack } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
-import CyanideApiService from '../CyanideApiService';
+import WarpScoresApiService from '../WarpScoresApiService';
 import Roster from '../components/team/Roster';
 import prettyPrint from '../util/PrettyPrint';
 import Navigation from '../components/misc/Navigation';
@@ -45,8 +45,8 @@ function TeamPage() {
   useEffect(() => {
     const fetchTeam = () => {
       const teamResponse = competitionUuid
-        ? CyanideApiService.competitionTeam(competitionUuid, teamUuid)
-        : CyanideApiService.team(teamUuid);
+        ? WarpScoresApiService.competitionTeam(competitionUuid, teamUuid)
+        : WarpScoresApiService.team(teamUuid);
 
       teamResponse
         .then((data) => {
@@ -64,7 +64,7 @@ function TeamPage() {
     const fetchMatches = () => {
       setMatches([]);
       setLoadingMatches(true);
-      const matchesResponse = CyanideApiService.teamMatches(teamUuid);
+      const matchesResponse = WarpScoresApiService.teamMatches(teamUuid);
       matchesResponse
         .then((data) => {
           setLoadingMatches(false);

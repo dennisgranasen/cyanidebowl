@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Stack } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
 import LatestContests from '../components/contest/LatestContests';
-import CyanideApiService from '../CyanideApiService';
+import WarpScoresApiService from '../WarpScoresApiService';
 import config from '../config';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 
@@ -14,7 +14,7 @@ function LatestMatchesPage() {
 
   useEffect(() => {
     const fetchLeague = () => {
-      CyanideApiService.league(leagueUuid)
+      WarpScoresApiService.league(leagueUuid)
         .then((data) => {
           setLeague(data);
         })

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Stack } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
 import LatestContests from '../components/contest/LatestContests';
-import CyanideApiService from '../CyanideApiService';
+import WarpScoresApiService from '../WarpScoresApiService';
 import config from '../config';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import LiveContests from '../components/contest/LiveContests';
@@ -15,7 +15,7 @@ function LiveMatchesPage() {
 
   useEffect(() => {
     const fetchLeague = () => {
-      CyanideApiService.league(leagueUuid)
+      WarpScoresApiService.league(leagueUuid)
         .then((data) => {
           setLeague(data);
         })

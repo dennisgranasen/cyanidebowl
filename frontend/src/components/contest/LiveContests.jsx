@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Heading } from '@chakra-ui/react';
 import { FaRegMoon } from 'react-icons/fa6';
 import formatter from '../../util/Formatter';
-import CyanideApiService from '../../CyanideApiService';
+import WarpScoresApiService from '../../WarpScoresApiService';
 import comparators from '../../util/Comparators';
 import ContestMatchCards from './ContestMatchCards';
 
@@ -10,7 +10,7 @@ function LiveContests({ league, embeddable }) {
   const [contests, setContests] = useState();
 
   const fetchLiveContests = (leagueUuid) => {
-    CyanideApiService.liveLeagueContests(leagueUuid).then((data) => {
+    WarpScoresApiService.liveLeagueContests(leagueUuid).then((data) => {
       data.sort((compA, compB) => comparators.compareAsDates(compB.matchDate, compA.matchDate));
       setContests(data);
     });

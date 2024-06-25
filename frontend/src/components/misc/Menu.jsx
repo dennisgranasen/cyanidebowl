@@ -20,7 +20,7 @@ import {
 import { FaTriangleExclamation } from 'react-icons/fa6';
 import { Link as RouteLink } from 'react-router-dom';
 import { HamburgerIcon, Icon } from '@chakra-ui/icons';
-import CyanideApiService from '../../CyanideApiService';
+import WarpScoresApiService from '../../WarpScoresApiService';
 import config from '../../config';
 import formatter from '../../util/Formatter';
 import NewsList from './NewsList';
@@ -64,7 +64,7 @@ function Menu() {
   const [statusOutdated, setStatusOutdated] = useState(false);
 
   const fetchStatus = () => {
-    CyanideApiService.status()
+    WarpScoresApiService.status()
       .then((data) => {
         setStatus(data);
       })

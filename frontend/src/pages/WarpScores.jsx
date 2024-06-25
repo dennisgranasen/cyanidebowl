@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, FormControl, FormLabel, Heading, Select, Stack, useMediaQuery } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
-import CyanideApiService from '../CyanideApiService';
+import WarpScoresApiService from '../WarpScoresApiService';
 import config from '../config';
 import Navigation from '../components/misc/Navigation';
 import Competitions from '../components/competition/Competitions';
@@ -37,7 +37,7 @@ function WarpScores() {
 
   useEffect(() => {
     const fetchLeagues = () => {
-      CyanideApiService.league()
+      WarpScoresApiService.league()
         .then((data) => {
           setLeagues(data);
         })
@@ -70,7 +70,7 @@ function WarpScores() {
         setError({ type: 'info', message: 'No League selected.' });
         return;
       }
-      CyanideApiService.leagueCompetitions(leagueId)
+      WarpScoresApiService.leagueCompetitions(leagueId)
         .then((data) => {
           setCompetitions(data);
         })
