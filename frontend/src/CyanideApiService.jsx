@@ -37,8 +37,10 @@ export default {
     axios(`/contests/competition/${competitionUuid}`).then(returnData).catch(handleError),
   liveLeagueContests: async (leagueUuid) =>
     axios(`/contests/league/${leagueUuid}/live`).then(returnData).catch(handleError),
-  latestLeagueContests: async (leagueUuid) =>
-    axios(`/contests/league/${leagueUuid}/latest`).then(returnData).catch(handleError),
+  latestLeagueContests: async (leagueUuid, limit) =>
+    axios(`/contests/league/${leagueUuid}/latest${limit ? `/${limit}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
   backendVersion: async () => axios(`/public/version.json`).then(returnData).catch(handleError),
 };
 

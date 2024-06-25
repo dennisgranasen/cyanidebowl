@@ -67,6 +67,7 @@ function App() {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/:leagueUuid" element={<WarpScores />} />
             <Route path="/latestMatches/:leagueUuid" element={<LatestMatchesPage />} />
+            <Route path="/latestMatches/:leagueUuid/:limit" element={<LatestMatchesPage />} />
             <Route path="/liveMatches/:leagueUuid" element={<LiveMatchesPage />} />
             <Route path="/team/:teamUuid" element={<TeamPage />} />
             <Route path="/competition/:competitionUuid" element={<CompetitionPage />} />

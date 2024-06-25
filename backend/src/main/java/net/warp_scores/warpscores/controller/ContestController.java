@@ -3,7 +3,6 @@ package net.warp_scores.warpscores.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.model.Contest;
-import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.service.ContestService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -18,6 +18,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ContestController {
 
+    public static final int MAX_LIMIT_FOR_LATEST_CONTESTS = 12;
+    public static final int DEFAULT_LIMIT_FOR_LATEST_CONTESTS = 6;
     private final ContestService contestService;
 
     @GetMapping("/contests/competition/{competitionUuid}")
@@ -33,8 +35,16 @@ public class ContestController {
 
     @GetMapping("/contests/league/{leagueUuid}/latest")
     public ResponseEntity<List<Contest>> getLatestLeagueContests(@PathVariable(name = "leagueUuid") UUID leagueUuid) {
+        return getLatestLeagueContests(leagueUuid, null);
+    }
+
+    @GetMapping("/contests/league/{leagueUuid}/latest/{limit}")
+    public ResponseEntity<List<Contest>> getLatestLeagueContests(@PathVariable(name = "leagueUuid") UUID leagueUuid,
+            @PathVariable(name = "limit") Integer limit) {
+        limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT_FOR_LATEST_CONTESTS);
+        limit = Math.min(limit, MAX_LIMIT_FOR_LATEST_CONTESTS);
         try {
-            List<Contest> contests = contestService.getLatestLeagueContests(leagueUuid);
+            List<Contest> contests = contestService.getLatestLeagueContests(leagueUuid, limit);
             return ResponseEntity.ok(contests);
         } catch (Exception ex) {
             log.error("Unable to retrieve contests", ex);

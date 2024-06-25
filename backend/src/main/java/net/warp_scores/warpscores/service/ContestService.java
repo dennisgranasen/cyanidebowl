@@ -3,11 +3,13 @@ package net.warp_scores.warpscores.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus;
+import net.warp_scores.warpscores.domain.persistence.ContestRepository;
+import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.Match;
-import net.warp_scores.warpscores.domain.persistence.ContestRepository;
-import net.warp_scores.warpscores.domain.persistence.MatchRepository;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -33,9 +35,9 @@ public class ContestService {
         return initializedContests;
     }
 
-    public List<Contest> getLatestLeagueContests(UUID leagueUuid) {
-        List<Contest> contests = contestRepository.findTop6ByLeagueIdAndStatusOrderByMatchDateDesc(leagueUuid,
-                MatchStatus.Validated);
+    public List<Contest> getLatestLeagueContests(UUID leagueUuid, int limit) {
+        List<Contest> contests = contestRepository.findByLeagueIdAndStatusOrderByMatchDateDesc(leagueUuid,
+                MatchStatus.Validated, PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "matchDate")));
         contests.stream().forEach(this::loadMatchInto);
         return contests;
     }
