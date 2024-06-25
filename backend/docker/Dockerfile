@@ -3,7 +3,8 @@ MAINTAINER naytsyrhc <naytsyrhc@gmx.org>
 
 HEALTHCHECK CMD curl -sSf http://localhost:8080/public/version.json
 
-COPY ./backend.jar warpscores-backend.jar
+# COPY ./backend.jar warpscores-backend.jar
+ADD backend.jar warpscores-backend.jar
 
 EXPOSE 8080
 
