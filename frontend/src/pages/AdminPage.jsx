@@ -1,16 +1,14 @@
 import React from 'react';
-import { Box, Heading, HStack, Stack, useMediaQuery } from '@chakra-ui/react';
+import { Box, Heading, HStack, Stack } from '@chakra-ui/react';
 import { FaRegFaceSadTear } from 'react-icons/fa6';
 import { Icon } from '@chakra-ui/icons';
 import Navigation from '../components/misc/Navigation';
 
 function AdminPage() {
-  const [smallscreen] = useMediaQuery('(max-width: 768px)');
-
   return (
     <Stack>
       <Box>
-        <Navigation currentPage="home" smallscreen={smallscreen ? 'smallscreen' : undefined} />
+        <Navigation currentPage="home" />
       </Box>
       <Box>
         <Heading size="md">Admin-Page</Heading>

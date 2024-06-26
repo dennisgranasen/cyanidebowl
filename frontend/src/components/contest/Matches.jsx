@@ -1,12 +1,27 @@
 import React from 'react';
-import { Spinner, Table, TableContainer, Tag, Tbody, Td, Text, Tfoot, Th, Thead, Tr } from '@chakra-ui/react';
+import {
+  Spinner,
+  Table,
+  TableContainer,
+  Tag,
+  Tbody,
+  Td,
+  Text,
+  Tfoot,
+  Th,
+  Thead,
+  Tr,
+  useBreakpointValue,
+} from '@chakra-ui/react';
 import { Link as RouteLink } from 'react-router-dom';
 import formatter from '../../util/Formatter';
 
-function Match({ match, smallscreen }) {
+function Match({ match }) {
+  const isSmallScreen = useBreakpointValue({ base: true, sm: true, md: false });
+
   return (
     <>
-      {smallscreen && (
+      {isSmallScreen && (
         <Tr>
           <Td textAlign="right">
             <Tag size="sm">{formatter.formatAsDate(match.started)}</Tag>
@@ -24,8 +39,8 @@ function Match({ match, smallscreen }) {
         </Tr>
       )}
       <Tr>
-        {!smallscreen && <Td>{formatter.formatAsDate(match.started)}</Td>}
-        {!smallscreen && (
+        {!isSmallScreen && <Td>{formatter.formatAsDate(match.started)}</Td>}
+        {!isSmallScreen && (
           <Td>
             <Text>
               <RouteLink to={`/competition/${match.competitionId}`}>{match.competitionName}</RouteLink>
@@ -57,11 +72,12 @@ function Match({ match, smallscreen }) {
   );
 }
 
-function TableColumns({ smallscreen }) {
+function TableColumns() {
+  const isSmallScreen = useBreakpointValue({ base: true, sm: true, md: false });
   return (
     <Tr>
-      {!smallscreen && <Th>Date</Th>}
-      {!smallscreen && <Th>Competition</Th>}
+      {!isSmallScreen && <Th>Date</Th>}
+      {!isSmallScreen && <Th>Competition</Th>}
       <Th textAlign="center">Home</Th>
       <Th textAlign="center">Result</Th>
       <Th textAlign="center">Away</Th>
@@ -69,17 +85,19 @@ function TableColumns({ smallscreen }) {
   );
 }
 
-function Matches({ matches, smallscreen }) {
+function Matches({ matches }) {
+  const isSmallScreen = useBreakpointValue({ base: true, sm: true, md: false });
+
   return (
     <TableContainer>
-      <Table variant={smallscreen ? 'unstyled' : 'simple'} size="sm">
+      <Table variant={isSmallScreen ? 'unstyled' : 'simple'} size="sm">
         <Thead>
-          <TableColumns smallscreen={smallscreen ? 'smallscreen' : null} />
+          <TableColumns />
         </Thead>
         <Tbody>
           {matches ? (
             matches.map((match) => {
-              return <Match key={match.matchId} match={match} smallscreen={smallscreen ? 'smallscreen' : null} />;
+              return <Match key={match.matchId} match={match} />;
             })
           ) : (
             <Spinner />

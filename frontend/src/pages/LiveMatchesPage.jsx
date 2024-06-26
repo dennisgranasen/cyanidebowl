@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Stack } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
-import LatestContests from '../components/contest/LatestContests';
 import WarpScoresApiService from '../WarpScoresApiService';
 import config from '../config';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';

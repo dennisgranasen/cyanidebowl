@@ -15,7 +15,6 @@ import HeaderCard from '../components/common/HeaderCard';
 import formatter from '../util/Formatter';
 
 function CompetitionPage() {
-  const [smallscreen] = useMediaQuery('(max-width: 768px)');
   const { competitionUuid } = useParams();
   const [competition, setCompetition] = useState();
   const [ranks, setRanks] = useState();
@@ -63,7 +62,6 @@ function CompetitionPage() {
             detailsHeading="Competition details"
             mainImageSrc={ImageUrls.logo(competition.leagueLogo)}
             additionalImageSrc={ImageUrls.logo(competition.logo)}
-            smallscreen={smallscreen ? 'smallscreen' : undefined}
           >
             <InfoArea
               infoItems={[
@@ -97,11 +95,10 @@ function CompetitionPage() {
             />
           </HeaderCard>
           <Heading size="md">Ranking</Heading>
-          {ranks ? <Ranks smallscreen={smallscreen ? 'smallscreen' : undefined} ranks={ranks} /> : <Spinner />}
+          {ranks ? <Ranks ranks={ranks} /> : <Spinner />}
           <Heading size="md">Contests</Heading>
           {contests ? (
             <Contests
-              smallscreen={smallscreen ? 'smallscreen' : undefined}
               contests={contests}
               currentRound={competition.currentRound}
             />

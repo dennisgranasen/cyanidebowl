@@ -91,7 +91,7 @@ function Menu() {
           </AvatarBadge>
         </Avatar>
       </Link>
-      <Drawer isOpen={isOpen} placement="right" onClose={onClose}>
+      <Drawer size={{ base: 'full', sm: 'xs' }} isOpen={isOpen} placement="right" onClose={onClose}>
         <DrawerOverlay />
         <DrawerContent>
           <DrawerHeader borderBottomWidth="1px">Menu</DrawerHeader>

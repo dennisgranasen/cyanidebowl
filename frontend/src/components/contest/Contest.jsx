@@ -36,7 +36,7 @@ function ScoreOrIconTooltip({ contest }) {
   return `${status} ${contest.adminResult ? ' - Admin result' : matchDate}`;
 }
 
-function Contest({ contest, smallscreen }) {
+function Contest({ contest }) {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const openIfValidatedAndNotAdminResult = () => {
@@ -47,14 +47,8 @@ function Contest({ contest, smallscreen }) {
     contest.winner && contest.opponents[0].score !== contest.opponents[1].score ? contest.winner.team.id : null;
   return contest ? (
     <Tr onClick={openIfValidatedAndNotAdminResult}>
-      <MatchModal
-        isOpen={isOpen}
-        onClose={onClose}
-        contest={contest}
-        smallscreen={smallscreen ? 'smallscreen' : undefined}
-      />
+      <MatchModal isOpen={isOpen} onClose={onClose} contest={contest} />
       <Opponent
-        smallscreen={smallscreen ? 'smallscreen' : undefined}
         opponent={contest.opponents[0]}
         key={contest.opponents[0].id}
         winner={contest.opponents[0].id === winnerTeamUuid}
@@ -67,7 +61,6 @@ function Contest({ contest, smallscreen }) {
         </DelayedIconTooltip>
       </Td>
       <Opponent
-        smallscreen={smallscreen ? 'smallscreen' : undefined}
         opponent={contest.opponents[1]}
         key={contest.opponents[1].id}
         winner={contest.opponents[1].id === winnerTeamUuid}
