@@ -1,12 +1,14 @@
 import React from 'react';
-import { Spinner, Td, Tr } from '@chakra-ui/react';
+import { Spinner, Td, Tr, useBreakpointValue } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import CompetitionProgress from './CompetitionProgress';
 import prettyPrint from '../../util/PrettyPrint';
 import abbreviators from '../../util/Abbreviators';
 
-function Competition({ competition, smallscreen }) {
+function Competition({ competition }) {
   const navigate = useNavigate();
+  const isSmallScreen = useBreakpointValue({ base: true, sm: true, md: false });
+
   const goToCompetition = () => {
     navigate(`/competition/${competition.uuid}`);
   };
@@ -14,7 +16,7 @@ function Competition({ competition, smallscreen }) {
   return competition !== null ? (
     <Tr onClick={goToCompetition}>
       <Td>{competition.name}</Td>
-      <Td>{smallscreen ? abbreviators.makeInitials(competition.format ) : prettyPrint(competition.format)}</Td>
+      <Td>{isSmallScreen ? abbreviators.makeInitials(competition.format) : prettyPrint(competition.format)}</Td>
       <Td>
         <CompetitionProgress
           status={competition.status}

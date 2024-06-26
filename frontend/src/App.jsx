@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Box, ChakraProvider, CSSReset, extendTheme } from '@chakra-ui/react';
 import { HashRouter as Router, Route, Routes } from 'react-router-dom';
 import WarpScores from './pages/WarpScores';
@@ -11,6 +11,8 @@ import StatisticsPage from './pages/StatisticsPage';
 import LoginPage from './pages/LoginPage';
 import LatestMatchesPage from './pages/LatestMatchesPage';
 import LiveMatchesPage from './pages/LiveMatchesPage';
+import Config from './config';
+import logger from './util/Logger';
 
 const config = {
   initialColorMode: 'dark',

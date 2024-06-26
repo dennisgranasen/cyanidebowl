@@ -16,7 +16,7 @@ import {
 } from '@chakra-ui/react';
 import ContestMatchCard from './ContestMatchCard';
 
-function MatchModal({ isOpen, onClose, contest, smallscreen }) {
+function MatchModal({ isOpen, onClose, contest }) {
   const [match, setMatch] = useState();
   useEffect(() => {
     let m = contest.match;
@@ -31,7 +31,7 @@ function MatchModal({ isOpen, onClose, contest, smallscreen }) {
   }, [contest]);
 
   return (
-    <Modal size={smallscreen ? 'full' : 'xl'} isOpen={isOpen} onClose={onClose}>
+    <Modal size={{ base: 'full', md: 'xl' }} isOpen={isOpen} onClose={onClose}>
       <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(5px)" />
       <ModalContent>
         <ModalCloseButton />

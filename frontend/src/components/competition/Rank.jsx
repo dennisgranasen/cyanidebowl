@@ -1,5 +1,5 @@
 import React from 'react';
-import { Center, Heading, Image, Spinner, Td, Text, Tr } from '@chakra-ui/react';
+import { Center, Heading, Image, Spinner, Td, Text, Tr, useBreakpointValue } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import Race from '../team/Race';
@@ -9,8 +9,9 @@ import ImageUrls from '../../ImageUrls';
 
 const { boxSize } = config;
 
-function Rank({ rank, smallscreen }) {
+function Rank({ rank }) {
   const navigate = useNavigate();
+  const isSmallScreen = useBreakpointValue({ base: true, sm: true, md: false });
   const goToTeam = () => {
     navigate(`/competition/${rank.team.competitionIds[0]}/team/${rank.team.id}`);
   };
@@ -21,7 +22,7 @@ function Rank({ rank, smallscreen }) {
           <Heading size="sm">{rank.rank}</Heading>
         </Center>
       </Td>
-      {smallscreen ? (
+      {isSmallScreen ? (
         <>
           <Td>
             <Text fontSize="sm">{rank.team.name}</Text>
@@ -61,7 +62,7 @@ function Rank({ rank, smallscreen }) {
       <Td>
         <Center>{Formatter.formatAsNumber(rank.score)}</Center>
       </Td>
-      {!smallscreen && (
+      {!isSmallScreen && (
         <>
           <Td>
             <Center>{Formatter.formatAsNumber(rank.gamesWon)}</Center>

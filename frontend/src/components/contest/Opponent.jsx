@@ -1,16 +1,17 @@
 import React from 'react';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
-import { Box, Image, Td, Text } from '@chakra-ui/react';
+import { Box, Image, Td, Text, useBreakpointValue } from '@chakra-ui/react';
 import ImageUrls from '../../ImageUrls';
 import config from '../../config';
 
 const { boxSize } = config;
 
-const Boxes = (opponent, reverse, winner, smallscreen) => {
+const Boxes = (opponent, reverse, winner) => {
   const fontWeight = winner ? 'bold' : 'normal';
   const textAlign = !reverse ? 'right' : 'left';
+  const isSmallScreen = useBreakpointValue({ base: true, sm: true, md: false });
 
-  return smallscreen
+  return isSmallScreen
     ? [
         <Td key={opponent.name}>
           <Text fontWeight={fontWeight} textAlign={textAlign} fontSize="xs">
@@ -46,10 +47,8 @@ const Boxes = (opponent, reverse, winner, smallscreen) => {
       ];
 };
 
-function Opponent({ opponent, reverse, winner, smallscreen }) {
-  return reverse
-    ? Boxes(opponent, reverse, winner, smallscreen).reverse()
-    : Boxes(opponent, reverse, winner, smallscreen);
+function Opponent({ opponent, reverse, winner }) {
+  return reverse ? Boxes(opponent, reverse, winner).reverse() : Boxes(opponent, reverse, winner);
 }
 
 export default Opponent;

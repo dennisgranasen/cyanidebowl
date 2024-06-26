@@ -8,8 +8,8 @@ import ContestMatchCards from './ContestMatchCards';
 
 function LatestContests({ league, embeddable, limit }) {
   const [contests, setContests] = useState();
-  const fetchLatestContests = (leagueUuid, limit) => {
-    WarpScoresApiService.latestLeagueContests(leagueUuid, limit).then((data) => {
+  const fetchLatestContests = (leagueUuid, contestLimit) => {
+    WarpScoresApiService.latestLeagueContests(leagueUuid, contestLimit).then((data) => {
       data.sort((compA, compB) => comparators.compareAsDates(compB.matchDate, compA.matchDate));
       setContests(data);
     });

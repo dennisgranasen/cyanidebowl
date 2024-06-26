@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Heading, Spinner, useMediaQuery, VStack } from '@chakra-ui/react';
+import { Box, Heading, Spinner, VStack } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
 import WarpScoresApiService from '../WarpScoresApiService';
 import Roster from '../components/team/Roster';
@@ -32,7 +32,6 @@ function MatchesCount({ matches, teamUuid }) {
 }
 
 function TeamPage() {
-  const [smallscreen] = useMediaQuery('(max-width: 768px)');
   const { competitionUuid, teamUuid } = useParams();
   const [team, setTeam] = useState();
   const [matches, setMatches] = useState();
@@ -102,10 +101,8 @@ function TeamPage() {
                 detailsHeading="Team details"
                 mainImageSrc={ImageUrls.logo(team.logo)}
                 additionalImageSrc={ImageUrls.race(team.race)}
-                smallscreen={smallscreen ? 'smallscreen' : undefined}
               >
                 <InfoArea
-                  smallscreen={smallscreen ? 'smallscreen' : undefined}
                   infoItems={[
                     <InfoItem key="race" label="Race" info={prettyPrint(team.race)} />,
                     <InfoItem key="players" label="Players" info={players !== null ? players.length : '-'} />,
@@ -132,7 +129,7 @@ function TeamPage() {
       <Box>
         <Heading size="md">Matches</Heading>
         <LoadingOrErrorWrapper loading={loadingMatches} error={matchesError}>
-          <Matches matches={matches} smallscreen={smallscreen ? 'smallscreen' : null} />
+          <Matches matches={matches} />
         </LoadingOrErrorWrapper>
       </Box>
     </VStack>

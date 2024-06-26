@@ -15,8 +15,6 @@ import LatestContests from '../components/contest/LatestContests';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 
 function WarpScores() {
-  const [smallscreen] = useMediaQuery('(max-width: 768px)');
-
   const { leagueUuid } = useParams();
   const [competitions, setCompetitions] = useState([]);
   const [activeCompetitionsCount, setActiveCompetitionsCount] = useState([]);
@@ -116,7 +114,7 @@ function WarpScores() {
   return (
     <Stack>
       <Box>
-        <Navigation currentPage="home" smallscreen={smallscreen ? 'smallscreen' : undefined} />
+        <Navigation currentPage="home" />
       </Box>
       {leagues?.length > 1 ? (
         <Box>
@@ -139,14 +137,8 @@ function WarpScores() {
         </Box>
       ) : null}
       {league && (
-        <HeaderCard
-          heading={league.name}
-          detailsHeading="League details"
-          mainImageSrc={ImageUrls.logo(league.logo)}
-          smallscreen={smallscreen ? 'smallscreen' : undefined}
-        >
+        <HeaderCard heading={league.name} detailsHeading="League details" mainImageSrc={ImageUrls.logo(league.logo)}>
           <InfoArea
-            smallscreen={smallscreen ? 'smallscreen' : undefined}
             infoItems={[
               <InfoItem key="teams" label="Teams" info={league.teamCount} />,
               <InfoItem key="activeCompetitions" label="Active Competitions" info={activeCompetitionsCount} />,
@@ -162,9 +154,9 @@ function WarpScores() {
         </HeaderCard>
       )}
       <LoadingOrErrorWrapper loading={loading} error={error}>
-        <Competitions competitions={competitions} smallscreen={smallscreen ? 'smallscreen' : undefined} />
-        <LiveContests league={league} smallscreen={smallscreen ? 'smallscreen' : undefined} />
-        <LatestContests league={league} smallscreen={smallscreen ? 'smallscreen' : undefined} />
+        <Competitions competitions={competitions} />
+        <LiveContests league={league} />
+        <LatestContests league={league} />
       </LoadingOrErrorWrapper>
     </Stack>
   );

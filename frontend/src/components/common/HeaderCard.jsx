@@ -11,6 +11,7 @@ import {
   Flex,
   Heading,
   Image,
+  useBreakpointValue,
 } from '@chakra-ui/react';
 
 function StandardScreenHeaderCard(mainImageSrc, heading, subHeading, additionalImageSrc, children) {
@@ -68,8 +69,9 @@ function SmallScreenHeaderCard(mainImageSrc, heading, subHeading, detailsHeading
   );
 }
 
-function HeaderCard({ mainImageSrc, heading, subHeading, detailsHeading, additionalImageSrc, smallscreen, children }) {
-  return smallscreen
+function HeaderCard({ mainImageSrc, heading, subHeading, detailsHeading, additionalImageSrc, children }) {
+  const isSmallScreen = useBreakpointValue( { base: true, sm: true, md: false } );
+  return isSmallScreen
     ? SmallScreenHeaderCard(mainImageSrc, heading, subHeading, detailsHeading, additionalImageSrc, children)
     : StandardScreenHeaderCard(mainImageSrc, heading, subHeading, additionalImageSrc, children);
 }

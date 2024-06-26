@@ -13,28 +13,47 @@ import {
   Th,
   Thead,
   Tr,
+  useBreakpointValue,
 } from '@chakra-ui/react';
 import Contest from './Contest';
 import comparators from '../../util/Comparators';
 
-function TableColumns(smallscreen) {
+function HeaderColumn({ title }) {
+  return (
+    <Th>
+      <Center>{title}</Center>
+    </Th>
+  );
+}
+
+function SmallTableColumns() {
   return (
     <Tr>
-      {!smallscreen && <Th />}
-      <Th>
-        <Center>Home</Center>
-      </Th>
-      {!smallscreen && <Th />}
-      <Th>
-        <Center>Result</Center>
-      </Th>
-      {!smallscreen && <Th />}
-      <Th>
-        <Center>Away</Center>
-      </Th>
-      {!smallscreen && <Th />}
+      <HeaderColumn title="Home" />
+      <HeaderColumn title="Result" />
+      <HeaderColumn title="Away" />
     </Tr>
   );
+}
+
+function NormalTableColumns() {
+  return (
+    <Tr>
+      <Th />
+      <HeaderColumn title="Home" />
+      <Th />
+      <HeaderColumn title="Result" />
+      <Th />
+      <HeaderColumn title="Away" />
+      <Th />
+    </Tr>
+  );
+}
+
+function TableColumns() {
+  const isSmallScreen = useBreakpointValue({ base: true, sm: true, md: false });
+
+  return isSmallScreen ? <SmallTableColumns /> : <NormalTableColumns />;
 }
 
 function getDateFromUUID(uuid) {
@@ -56,7 +75,8 @@ function getRobinFrom(contests) {
   return coachName;
 }
 
-function Contests({ contests, currentRound, smallscreen }) {
+function Contests({ contests, currentRound }) {
+  const isSmallScreen = useBreakpointValue({ base: true, sm: true, md: false });
   const groupedContests = Map.groupBy(contests, (contest) => contest.round);
   const tabData = [];
   const robin = getRobinFrom(groupedContests.get(1));
@@ -81,23 +101,21 @@ function Contests({ contests, currentRound, smallscreen }) {
     });
     tabData.push({
       round: key,
-      label: smallscreen ? `${key}` : `Round ${key}`,
+      label: isSmallScreen ? `${key}` : `Round ${key}`,
       content: (
         <TableContainer>
           <Table variant="simpleClickable" size="sm">
-            <Thead>{TableColumns(smallscreen)}</Thead>
+            <Thead>
+              <TableColumns />
+            </Thead>
             <Tbody>
               {value.map((contest) => {
-                return (
-                  <Contest
-                    smallscreen={smallscreen ? 'smallscreen' : undefined}
-                    contest={contest}
-                    key={contest.contestUuid}
-                  />
-                );
+                return <Contest contest={contest} key={contest.contestUuid} />;
               })}
             </Tbody>
-            <Tfoot>{TableColumns(smallscreen)}</Tfoot>
+            <Tfoot>
+              <TableColumns />
+            </Tfoot>
           </Table>
         </TableContainer>
       ),
