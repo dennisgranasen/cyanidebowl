@@ -5,7 +5,7 @@ import ContestMatchCard from './ContestMatchCard';
 
 function ContestMatchCards({ contests, noContentIcon, noContentHeading, noContentText, embeddable }) {
   return contests?.length > 0 ? (
-    <SimpleGrid columns={{ lg: 3, sm: 1, md: 2 }} spacing="20px">
+    <SimpleGrid columns={{ lg: 3, sm: 1, md: 2 }} spacing="1.25rem">
       {contests.map((contest) => (
         <ContestMatchCard
           key={contest.contestUuid}

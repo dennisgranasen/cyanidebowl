@@ -5,8 +5,9 @@ import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import Race from './Race';
 import Formatter from '../../util/Formatter';
 import ImageUrls from '../../ImageUrls';
+import config from '../../config';
 
-const boxSize = '32px';
+const { boxSize } = config;
 
 function Team({ team }) {
   const navigate = useNavigate();

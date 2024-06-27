@@ -4,10 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import CompetitionProgress from './CompetitionProgress';
 import prettyPrint from '../../util/PrettyPrint';
 import abbreviators from '../../util/Abbreviators';
+import config from '../../config';
+
+const { smallScreenBreakpointValues } = config;
 
 function Competition({ competition }) {
   const navigate = useNavigate();
-  const isSmallScreen = useBreakpointValue({ base: true, sm: true, md: false });
+  const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
 
   const goToCompetition = () => {
     navigate(`/competition/${competition.uuid}`);

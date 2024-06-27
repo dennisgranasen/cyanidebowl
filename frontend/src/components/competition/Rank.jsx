@@ -7,11 +7,11 @@ import Formatter from '../../util/Formatter';
 import config from '../../config';
 import ImageUrls from '../../ImageUrls';
 
-const { boxSize } = config;
+const { boxSize, smallScreenBreakpointValues } = config;
 
 function Rank({ rank }) {
   const navigate = useNavigate();
-  const isSmallScreen = useBreakpointValue({ base: true, sm: true, md: false });
+  const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
   const goToTeam = () => {
     navigate(`/competition/${rank.team.competitionIds[0]}/team/${rank.team.id}`);
   };

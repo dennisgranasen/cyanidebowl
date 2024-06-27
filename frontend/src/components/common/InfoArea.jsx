@@ -8,7 +8,7 @@ function InfoArea({ infoItems, ...props }) {
       align="left"
       justify={{ base: 'center', md: 'space-between' }}
       direction={{ base: 'column', md: 'row' }}
-      gap="10px"
+      gap="0.5rem"
       wrap="wrap"
       {...props}
     >

@@ -33,7 +33,7 @@ function RoundRobinProgresses({
   }
   const color = needsValidation ? 'orange' : null;
   return (
-    <SimpleGrid columns={totalRounds} spacing="3px">
+    <SimpleGrid columns={totalRounds} spacing="0.25rem">
       {roundProgresses.map(({ name, progress, active }) => (
         <GridItem key={name}>
           <Progress value={progress} isIndeterminate={active && live} hasStripe={active} colorScheme={color} />
@@ -132,7 +132,7 @@ function CompetitionProgress({
       ? `Finished ${finishedMatches} out of ${totalMatches} matches${notYetValidatedMatches}`
       : undefined;
   return (
-    <Box p="4px">
+    <Box p="0.25rem">
       <DelayedIconTooltip label={<ProgressLabel text={progressText} additionalText={progressAdditionalText} />}>
         <Box>
           <Progresses
