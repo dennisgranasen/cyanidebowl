@@ -17,6 +17,9 @@ import {
 } from '@chakra-ui/react';
 import Contest from './Contest';
 import comparators from '../../util/Comparators';
+import config from '../../config';
+
+const { smallScreenBreakpointValues } = config;
 
 function HeaderColumn({ title }) {
   return (
@@ -51,7 +54,7 @@ function NormalTableColumns() {
 }
 
 function TableColumns() {
-  const isSmallScreen = useBreakpointValue({ base: true, sm: true, md: false });
+  const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
 
   return isSmallScreen ? <SmallTableColumns /> : <NormalTableColumns />;
 }
@@ -69,14 +72,14 @@ function getRobinFrom(contests) {
   if (contests[0].format !== 'RoundRobin') return null;
 
   contests.sort((contestA, contestB) =>
-    comparators.compareAsDates(getDateFromUUID(contestA.contestUuid), getDateFromUUID(contestB.contestUuid))
+    comparators.compareAsDates(getDateFromUUID(contestA.contestUuid), getDateFromUUID(contestB.contestUuid)),
   );
   const { coachName } = contests[0].opponents[0];
   return coachName;
 }
 
 function Contests({ contests, currentRound }) {
-  const isSmallScreen = useBreakpointValue({ base: true, sm: true, md: false });
+  const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
   const groupedContests = Map.groupBy(contests, (contest) => contest.round);
   const tabData = [];
   const robin = getRobinFrom(groupedContests.get(1));

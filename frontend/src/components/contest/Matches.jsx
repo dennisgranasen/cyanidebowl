@@ -15,9 +15,12 @@ import {
 } from '@chakra-ui/react';
 import { Link as RouteLink } from 'react-router-dom';
 import formatter from '../../util/Formatter';
+import config from '../../config';
+
+const { smallScreenBreakpointValues } = config;
 
 function Match({ match }) {
-  const isSmallScreen = useBreakpointValue({ base: true, sm: true, md: false });
+  const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
 
   return (
     <>
@@ -73,7 +76,7 @@ function Match({ match }) {
 }
 
 function TableColumns() {
-  const isSmallScreen = useBreakpointValue({ base: true, sm: true, md: false });
+  const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
   return (
     <Tr>
       {!isSmallScreen && <Th>Date</Th>}
@@ -86,7 +89,7 @@ function TableColumns() {
 }
 
 function Matches({ matches }) {
-  const isSmallScreen = useBreakpointValue({ base: true, sm: true, md: false });
+  const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
 
   return (
     <TableContainer>

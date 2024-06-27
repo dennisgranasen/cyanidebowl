@@ -12,9 +12,12 @@ import {
   useBreakpointValue,
 } from '@chakra-ui/react';
 import Competition from './Competition';
+import config from '../../config';
+
+const { smallScreenBreakpointValues } = config;
 
 function TableColumns() {
-  const isSmallScreen = useBreakpointValue({ base: true, sm: true, md: false });
+  const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
   return (
     <Tr>
       <Th>Competition</Th>

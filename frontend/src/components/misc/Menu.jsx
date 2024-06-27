@@ -33,6 +33,8 @@ import timeUtil from '../../util/TimeUtil';
 import ImageUrls from '../../ImageUrls';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
 
+const { smallBoxSize } = config;
+
 function LastCheck({ status, textSize, statusOutdated }) {
   return (
     <Box align="left" pt={2} fontSize={textSize}>
@@ -86,7 +88,7 @@ function Menu() {
     <>
       <Link onClick={onOpen}>
         <Avatar borderRadius={4} boxSize={12} icon={<HamburgerIcon />} src={ImageUrls.warpscoresLogoPng('medium')}>
-          <AvatarBadge boxSize="24px" bg="black">
+          <AvatarBadge boxSize={smallBoxSize} bg="black">
             <StatusIcon status={status} statusOutdated={statusOutdated} />
           </AvatarBadge>
         </Avatar>

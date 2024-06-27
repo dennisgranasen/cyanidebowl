@@ -13,18 +13,21 @@ import {
   Image,
   useBreakpointValue,
 } from '@chakra-ui/react';
+import config from '../../config';
+
+const { smallScreenBreakpointValues } = config;
 
 function StandardScreenHeaderCard(mainImageSrc, heading, subHeading, additionalImageSrc, children) {
   return (
     <Card direction="row">
-      <Box p="10px">
+      <Box p="0.5rem">
         <Image objectFit="contain" maxW="140px" src={mainImageSrc} fallback={null} />
       </Box>
       <CardBody>
         <Flex>
           <Box flex="1" overflow="hidden">
             <Heading>{heading}</Heading>
-            <Box mb="10px">{subHeading}</Box>
+            <Box mb="0.5rem">{subHeading}</Box>
             {children}
           </Box>
           <Box hideBelow="lg">
@@ -40,14 +43,14 @@ function SmallScreenHeaderCard(mainImageSrc, heading, subHeading, detailsHeading
   const noAccordion = !detailsHeading;
   return (
     <Card direction="column">
-      <Box p="10px">
+      <Box p="0.5rem">
         <Image objectFit="contain" maxW="140px" src={mainImageSrc} />
       </Box>
       <CardBody>
         <Flex>
           <Box flex="1" overflow="hidden">
             <Heading>{heading}</Heading>
-            <Box mb="10px">{subHeading}</Box>
+            <Box mb="0.5rem">{subHeading}</Box>
             {noAccordion && children}
             {!noAccordion && (
               <Accordion allowMultiple defaultIndex={!detailsHeading ? [0] : null}>
@@ -70,7 +73,7 @@ function SmallScreenHeaderCard(mainImageSrc, heading, subHeading, detailsHeading
 }
 
 function HeaderCard({ mainImageSrc, heading, subHeading, detailsHeading, additionalImageSrc, children }) {
-  const isSmallScreen = useBreakpointValue( { base: true, sm: true, md: false } );
+  const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
   return isSmallScreen
     ? SmallScreenHeaderCard(mainImageSrc, heading, subHeading, detailsHeading, additionalImageSrc, children)
     : StandardScreenHeaderCard(mainImageSrc, heading, subHeading, additionalImageSrc, children);
