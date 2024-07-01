@@ -29,3 +29,5 @@ Content-Type: application/json
 
 ### Create league collection
 POST http://localhost:8080/leagueCollection/94dd6ae4-83fa-11ee-b910-02000090a64f
+
+

@@ -7,4 +7,5 @@ export default {
   skill: (name) => `${config.backendUrl}/img/skill/${name}`,
   warpscoresLogoPng: (size = null) => `${config.backendUrl}/img/warpscores.png${size ? `/${size}` : ''}`,
   warpscoresLogoSvg: () => `${config.backendUrl}/img/warpscores.svg`,
+  dbbcLogoPng: (size = null) => `${config.backendUrl}/img/dbbc.png${size ? `/${size}` : ''}`,
 };

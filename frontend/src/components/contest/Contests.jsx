@@ -69,7 +69,7 @@ function getDateFromUUID(uuid) {
 }
 
 function getRobinFrom(contests) {
-  if (contests[0].format !== 'RoundRobin') return null;
+  if (!contests || contests[0].format !== 'RoundRobin') return null;
 
   contests.sort((contestA, contestB) =>
     comparators.compareAsDates(getDateFromUUID(contestA.contestUuid), getDateFromUUID(contestB.contestUuid)),
@@ -80,10 +80,10 @@ function getRobinFrom(contests) {
 
 function Contests({ contests, currentRound }) {
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
-  const groupedContests = Map.groupBy(contests, (contest) => contest.round);
+  const groupedContests = contests ? Map.groupBy(contests, (contest) => contest.round) : null;
   const tabData = [];
-  const robin = getRobinFrom(groupedContests.get(1));
-  groupedContests.forEach((value, key) => {
+  const robin = groupedContests ? getRobinFrom(groupedContests.get(1)) : null;
+  groupedContests?.forEach((value, key) => {
     value.sort((contestA, contestB) => {
       let comparison = 0;
       if (robin) {

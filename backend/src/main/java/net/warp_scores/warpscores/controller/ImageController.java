@@ -34,6 +34,27 @@ public class ImageController {
         return loadImage(imageUrl);
     }
 
+    @GetMapping("/dbbc.png")
+    public ResponseEntity<byte[]> getDbbcLogoPng() {
+        return getDbbcLogoPng(null);
+    }
+
+    @GetMapping("/dbbc.png/{size}")
+    public ResponseEntity<byte[]> getDbbcLogoPng(@PathVariable(name = "size", required = false) String size) {
+        Optional<byte[]> imageData = Optional.empty();
+        imageData = imageService.loadFromClassPath("/dbbc.png");
+        int width = 256;
+        if ("small".equalsIgnoreCase(size)) {
+            width = 64;
+        } else if ("medium".equalsIgnoreCase(size)) {
+            width = 128;
+        }
+        imageData = imageService.rescaleImage(imageData, width);
+        return imageData
+                .map(ImageController::ok)
+                .orElse(noContent());
+    }
+
     @GetMapping("/warpscores.png")
     public ResponseEntity<byte[]> getWarpScoresLogoPng() {
         return getWarpScoresLogoPng(null);
