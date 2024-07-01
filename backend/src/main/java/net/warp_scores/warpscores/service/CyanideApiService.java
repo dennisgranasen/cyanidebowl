@@ -144,6 +144,7 @@ public class CyanideApiService {
         ContestsRequest contestsRequest = new ContestsRequest();
         contestsRequest.setCompetition_id(competition.getUuid());
         contestsRequest.setLeague_id(competition.getLeagueId());
+        contestsRequest.setStatus("*");
         List<Contest> contests = new ArrayList<>();
         if (competition.getRoundsCount() == null) {
             contests.addAll(loadContests(contestsRequest));
@@ -157,12 +158,8 @@ public class CyanideApiService {
     }
 
     private List<Contest> loadContests(ContestsRequest contestsRequest) {
-        List<Contest> allContests = new ArrayList<>();
-        for (ContestsRequest.Status status : ContestsRequest.Status.values()) {
-            contestsRequest.setStatus(status);
-            ContestsResponse contestsResponse = cyanideCachedRestApiClient.getFromCacheOrApi(contestsRequest);
-            allContests.addAll(contestDomainService.createOrUpdateContests(contestsResponse));
-        }
+        ContestsResponse contestsResponse = cyanideCachedRestApiClient.getFromCacheOrApi(contestsRequest);
+        List<Contest> allContests = contestDomainService.createOrUpdateContests(contestsResponse);
         return allContests;
     }
 
@@ -183,7 +180,8 @@ public class CyanideApiService {
             status = createEmptyStatus();
         }
         status.setLastCheck(new Date());
-        log.info("Current status is (overall={}, serviceStatuses={}, maintenance={}).", status.isOverall(), status.getServiceStatuses(), status.getMaintenance());
+        log.info("Current status is (overall={}, serviceStatuses={}, maintenance={}).", status.isOverall(),
+                status.getServiceStatuses(), status.getMaintenance());
         statusRepository.save(status);
     }
 

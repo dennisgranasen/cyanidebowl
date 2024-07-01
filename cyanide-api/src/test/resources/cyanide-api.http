@@ -16,7 +16,7 @@ GET https://web.cyanide-studio.com/ws/bb3/coaches/?competition=DBBL S1 Division 
 GET https://web.cyanide-studio.com/ws/bb3/competitions/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&limit=10&platform=pc&key={{apiKey}}
 
 ### Get contests InProgress
-GET https://web.cyanide-studio.com/ws/bb3/contests/?status=InProgress&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=558803fb-1878-11ef-895c-bc24112ec32e&platform=pc&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Sheduled&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=558803fb-1878-11ef-895c-bc24112ec32e&platform=pc&key={{apiKey}}
 
 ### Get contests Validated
 GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Validated&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=558803fb-1878-11ef-895c-bc24112ec32e&platform=pc&key={{apiKey}}
@@ -59,7 +59,7 @@ GET https://web.cyanide-studio.com/ws/bb3/leagues/?league=DBBL  BB3&limit=100&pl
 
 ### Get lookup
 
-GET https://web.cyanide-studio.com/ws/bb3/lookup/?competition=DBBL S1 Division 5&platform=pc&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/lookup/?league=NAF BB3 Tournament&key={{apiKey}}
 
 ### Get match
 

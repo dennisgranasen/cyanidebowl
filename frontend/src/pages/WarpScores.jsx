@@ -120,7 +120,10 @@ function WarpScores() {
         <Box>
           <Heading>Warp-Scores</Heading>
           <FormControl>
-            <FormLabel>League</FormLabel>
+            <FormLabel>
+              {' '}
+              <Heading size="md">Leagues</Heading>
+            </FormLabel>
             <Select
               variant="filled"
               placeholder="Select league"
