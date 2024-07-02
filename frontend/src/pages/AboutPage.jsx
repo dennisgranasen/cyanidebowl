@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Box, Card, CardBody, GridItem, HStack, Image, Link, SimpleGrid, Stack, Text, VStack } from '@chakra-ui/react';
+import { Box, Card, CardBody, HStack, Image, Link, Stack, Text, VStack } from '@chakra-ui/react';
 import { Link as RouteLink } from 'react-router-dom';
 import ReactMarkdown from 'markdown-to-jsx';
 import { ChakraUIRenderer } from 'chakra-ui-markdown';
