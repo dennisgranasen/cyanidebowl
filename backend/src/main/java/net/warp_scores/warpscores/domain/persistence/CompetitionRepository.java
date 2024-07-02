@@ -12,7 +12,10 @@ import java.util.UUID;
 public interface CompetitionRepository extends MongoRepository<Competition, UUID> {
     List<Competition> findByLeagueIdAndStatusIn(UUID leagueId, List<CompetitionStatus> status);
 
+    Integer countByLeagueIdAndStatus(UUID leagueId, CompetitionStatus status);
+
     List<Competition> findByLeagueId(UUID leagueId);
 
     List<Competition> findByStatusIn(List<CompetitionStatus> status);
+
 }

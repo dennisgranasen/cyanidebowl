@@ -1,0 +1,31 @@
+import React from 'react';
+import { Box, Card, CardBody, Flex, Heading, Image } from '@chakra-ui/react';
+import { useNavigate } from 'react-router-dom';
+import ImageUrls from '../../ImageUrls';
+import LeagueInfo from './LeagueInfo';
+
+function LeagueCard({ league, ...props }) {
+  const navigate = useNavigate();
+  const goToLeague = () => {
+    navigate(`/${league.uuid}`);
+  };
+  return (
+    <Card direction="row" {...props} _hover={{ background: 'gray.600' }} cursor="pointer" onClick={goToLeague}>
+      <Box p="0.5rem">
+        <Image objectFit="contain" maxW="140px" src={ImageUrls.logo(league.logo)} fallback={null} />
+      </Box>
+      <Flex minWidth="max-content" w="100%">
+        <CardBody>
+          <Box flex="1" overflow="hidden" minWidth="max-content" w="100%">
+            <Heading size="md" mb="0.5rem">
+              {league.name}
+            </Heading>
+            <LeagueInfo league={league} />
+          </Box>
+        </CardBody>
+      </Flex>
+    </Card>
+  );
+}
+
+export default LeagueCard;

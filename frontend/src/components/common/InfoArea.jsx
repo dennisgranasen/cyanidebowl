@@ -1,7 +1,7 @@
 import React from 'react';
 import { Flex } from '@chakra-ui/react';
 
-function InfoArea({ infoItems, ...props }) {
+function InfoArea({ children, ...props }) {
   return (
     <Flex
       flex="1"
@@ -12,11 +12,7 @@ function InfoArea({ infoItems, ...props }) {
       wrap="wrap"
       {...props}
     >
-      {infoItems
-        ? infoItems.map((infoItem) => {
-            return infoItem;
-          })
-        : null}
+      {children}
     </Flex>
   );
 }

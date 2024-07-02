@@ -5,13 +5,15 @@ import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionFormat;
 import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionStatus;
 import net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus;
-import net.warp_scores.warpscores.model.Competition;
-import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
+import net.warp_scores.warpscores.model.Competition;
+import net.warp_scores.warpscores.model.Contest;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.UUID;
@@ -104,5 +106,15 @@ public class CompetitionService {
         boolean finished = CompetitionStatus.Finished.equals(competition.getStatus());
         int matchCount = Optional.ofNullable(competition.getPlayedMatches()).orElse(0);
         return inRegistrationOrInProgress || finished && matchCount > 0;
+    }
+
+    public Map<CompetitionStatus, Long> countForLeague(UUID leagueUuid) {
+        List<Competition> competitions = loadForLeague(leagueUuid);
+        Map<CompetitionStatus, Long> collect = competitions
+                .stream()
+                .filter(this::competitionConsideredActive)
+                .collect(
+                        Collectors.groupingBy(Competition::getStatus, Collectors.counting()));
+        return collect;
     }
 }

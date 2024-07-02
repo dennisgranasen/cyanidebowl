@@ -19,7 +19,7 @@ import {
 } from '@chakra-ui/react';
 import { FaTriangleExclamation } from 'react-icons/fa6';
 import { Link as RouteLink } from 'react-router-dom';
-import { HamburgerIcon, Icon } from '@chakra-ui/icons';
+import { ExternalLinkIcon, HamburgerIcon, Icon } from '@chakra-ui/icons';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import config from '../../config';
 import formatter from '../../util/Formatter';
@@ -138,6 +138,12 @@ function Menu() {
                 <Box>
                   <Link as={RouteLink} to="/about" onClick={() => onClose()}>
                     About
+                  </Link>
+                </Box>
+                <Spacer />
+                <Box>
+                  <Link href="https://web.cyanide-studio.com/bloodbowl/" isExternal>
+                    Cyanide Admin-Tools <ExternalLinkIcon mx={2} />
                   </Link>
                 </Box>
               </VStack>
