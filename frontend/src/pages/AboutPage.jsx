@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Box, Card, CardBody, Image, Link, Stack, Text, VStack } from '@chakra-ui/react';
+import { Box, Card, CardBody, GridItem, HStack, Image, Link, SimpleGrid, Stack, Text, VStack } from '@chakra-ui/react';
 import { Link as RouteLink } from 'react-router-dom';
 import ReactMarkdown from 'markdown-to-jsx';
 import { ChakraUIRenderer } from 'chakra-ui-markdown';
@@ -43,20 +43,22 @@ function AboutPage() {
             This is a Spike-like (good old Spike made by poncho for BB2 <Icon as={FaRegHeart} />) facade to BB3 data
             provided by Cyanide&apos;s BB3-API.
           </Text>
-          <Card direction={{ base: 'row' }} overflow="hidden" size="sm">
-            <Image objectFit="cover" src={ImageUrls.dbbcLogoPng('small')} flexWrap="left" />
-            <CardBody maxW="sm">
-              It was initially coded to support the{' '}
-              <Link href="http://dbbcev.de" isExternal>
-                Deutsche Blood Bowl Community <ExternalLinkIcon mx="2x" />
-              </Link>{' '}
-              (German Blood Bowl Community) organising it&apos;s League &quot;
-              <Link as={RouteLink} to="/94dd6ae4-83fa-11ee-b910-02000090a64f">
-                Deutsche Blood Bowl Liga
-              </Link>
-              &quot; but is about to open to support other private leagues as well.
-            </CardBody>
-          </Card>
+          <HStack spacing="1rem">
+            <Card direction={{ base: 'row' }} overflow="hidden" size="sm">
+              <Image objectFit="cover" src={ImageUrls.dbbcLogoPng('small')} flexWrap="left" />
+              <CardBody maxW="sm">
+                It was initially coded to support the{' '}
+                <Link href="http://dbbcev.de" isExternal>
+                  Deutsche Blood Bowl Community <ExternalLinkIcon mx="2x" />
+                </Link>{' '}
+                (German Blood Bowl Community) organising it&apos;s League &quot;
+                <Link as={RouteLink} to="/94dd6ae4-83fa-11ee-b910-02000090a64f">
+                  Deutsche Blood Bowl Liga
+                </Link>
+                &quot; but is about to open to support other private leagues as well.
+              </CardBody>
+            </Card>
+          </HStack>
           {readme && (
             <Card variant="outline">
               <CardBody>

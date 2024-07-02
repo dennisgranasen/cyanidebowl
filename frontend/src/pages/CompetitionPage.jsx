@@ -63,48 +63,39 @@ function CompetitionPage() {
             mainImageSrc={ImageUrls.logo(competition.leagueLogo)}
             additionalImageSrc={ImageUrls.logo(competition.logo)}
           >
-            <InfoArea
-              infoItems={[
-                <InfoItem key="Created" label="Created" info={formatter.formatAsDate(competition.dateCreated)} />,
-                <InfoItem key="Format" label="Format" info={prettyPrint(competition.format)} />,
-                <InfoItem
-                  key="Progress"
-                  label="Progress"
-                  info={
-                    <CompetitionProgress
-                      teamsMax={competition.teamsMax}
-                      status={competition.status}
-                      format={competition.format}
-                      currentRound={competition.currentRound}
-                      totalRounds={competition.totalRounds}
-                      totalMatches={competition.totalMatches}
-                      playedMatches={competition.playedMatches}
-                      validatedMatches={competition.validatedMatches}
-                      liveMatches={competition.liveMatches}
-                    />
-                  }
-                />,
-                <InfoItem key="Teams" label="Teams" info={formatter.formatAsNumber(competition.teamsMax)} />,
-                <InfoItem
-                  key="TimeSettings"
-                  label="Time settings"
-                  info={`Turn: ${formatter.formatAsNumber(competition.turnDuration / 60)}m`}
-                  additionalInfo={`Bonus: ${formatter.formatAsNumber(competition.timeBonusDuration / 60)}m`}
-                />,
-              ]}
-            />
+            <InfoArea>
+              <InfoItem key="Created" label="Created" info={formatter.formatAsDate(competition.dateCreated)} />
+              <InfoItem key="Format" label="Format" info={prettyPrint(competition.format)} />
+              <InfoItem
+                key="Progress"
+                label="Progress"
+                info={
+                  <CompetitionProgress
+                    teamsMax={competition.teamsMax}
+                    status={competition.status}
+                    format={competition.format}
+                    currentRound={competition.currentRound}
+                    totalRounds={competition.totalRounds}
+                    totalMatches={competition.totalMatches}
+                    playedMatches={competition.playedMatches}
+                    validatedMatches={competition.validatedMatches}
+                    liveMatches={competition.liveMatches}
+                  />
+                }
+              />
+              <InfoItem key="Teams" label="Teams" info={formatter.formatAsNumber(competition.teamsMax)} />
+              <InfoItem
+                key="TimeSettings"
+                label="Time settings"
+                info={`Turn: ${formatter.formatAsNumber(competition.turnDuration / 60)}m`}
+                additionalInfo={`Bonus: ${formatter.formatAsNumber(competition.timeBonusDuration / 60)}m`}
+              />
+            </InfoArea>
           </HeaderCard>
           <Heading size="md">Ranking</Heading>
           {ranks ? <Ranks ranks={ranks} /> : <Spinner />}
           <Heading size="md">Contests</Heading>
-          {contests ? (
-            <Contests
-              contests={contests}
-              currentRound={competition.currentRound}
-            />
-          ) : (
-            <Spinner />
-          )}
+          {contests ? <Contests contests={contests} currentRound={competition.currentRound} /> : <Spinner />}
         </>
       ) : (
         <Spinner />

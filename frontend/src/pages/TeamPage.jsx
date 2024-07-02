@@ -102,24 +102,22 @@ function TeamPage() {
                 mainImageSrc={ImageUrls.logo(team.logo)}
                 additionalImageSrc={ImageUrls.race(team.race)}
               >
-                <InfoArea
-                  infoItems={[
-                    <InfoItem key="race" label="Race" info={prettyPrint(team.race)} />,
-                    <InfoItem key="players" label="Players" info={players !== null ? players.length : '-'} />,
-                    <InfoItem key="rerolls" label="Rerolls" info={team.rerolls} />,
-                    <InfoItem key="dedicatedFans" label="Dedicated Fans" info={team.dedicatedFans} />,
-                    <InfoItem key="cheerleaders" label="Cheerleaders" info={team.cheerleaders} />,
-                    <InfoItem key="assistantCoaches" label="Assistant coaches" info={team.coachAssistants} />,
-                    <InfoItem key="apothecary" label="Apothecary" info={team.apothecary} />,
-                    <InfoItem key="cash" label="Cash" info={Formatter.formatAsNumber(team.cash)} />,
-                    <InfoItem key="value" label="Value" info={Formatter.formatAsNumber(team.value)} />,
-                    <InfoItem
-                      key="matches"
-                      label="Matches"
-                      info={<MatchesCount matches={matches} teamUuid={teamUuid} />}
-                    />,
-                  ]}
-                />
+                <InfoArea>
+                  <InfoItem key="race" label="Race" info={prettyPrint(team.race)} />
+                  <InfoItem key="players" label="Players" info={players !== null ? players.length : '-'} />
+                  <InfoItem key="rerolls" label="Rerolls" info={team.rerolls} />
+                  <InfoItem key="dedicatedFans" label="Dedicated Fans" info={team.dedicatedFans} />
+                  <InfoItem key="cheerleaders" label="Cheerleaders" info={team.cheerleaders} />
+                  <InfoItem key="assistantCoaches" label="Assistant coaches" info={team.coachAssistants} />
+                  <InfoItem key="apothecary" label="Apothecary" info={team.apothecary} />
+                  <InfoItem key="cash" label="Cash" info={Formatter.formatAsNumber(team.cash)} />
+                  <InfoItem key="value" label="Value" info={Formatter.formatAsNumber(team.value)} />
+                  <InfoItem
+                    key="matches"
+                    label="Matches"
+                    info={<MatchesCount matches={matches} teamUuid={teamUuid} />}
+                  />
+                </InfoArea>
               </HeaderCard>
               <Roster players={players} />
             </>
