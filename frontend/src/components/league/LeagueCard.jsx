@@ -10,7 +10,13 @@ function LeagueCard({ league, ...props }) {
     navigate(`/${league.uuid}`);
   };
   return (
-    <Card direction="row" {...props} _hover={{ background: 'gray.600' }} cursor="pointer" onClick={goToLeague}>
+    <Card
+      direction={{ base: 'column', sm: 'row' }}
+      _hover={{ background: 'gray.600' }}
+      cursor="pointer"
+      onClick={goToLeague}
+      {...props}
+    >
       <Box p="0.5rem">
         <Image objectFit="contain" maxW="140px" src={ImageUrls.logo(league.logo)} fallback={null} />
       </Box>
