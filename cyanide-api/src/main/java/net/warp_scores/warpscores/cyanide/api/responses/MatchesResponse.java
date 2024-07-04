@@ -445,6 +445,11 @@ public class MatchesResponse extends ApiResponse {
     private ApiMatch[] matches;
 
     @Override
+    public void updateChangeableAttribute() {
+        super.updateChangeableAttributeTo(true);
+    }
+
+    @Override
     public boolean isEmpty() {
         return matches == null || matches.length == 0;
     }

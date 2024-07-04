@@ -93,7 +93,7 @@ public class TeamDomainService {
 
     private Team internalCreateOrUpdateTeam(ApiTeam apiTeam) {
         Team team = newTeamOrFromDb(uuidConverter.toUuid(apiTeam.getId()), apiTeam.getName());
-        if (team != null && team.isUpdateableFromApi()) {
+        if (team != null) {
             teamPopulator.populateTeam(apiTeam, team);
         }
         return team;

@@ -4,9 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.cyanide.api.model.ApiContest;
 import net.warp_scores.warpscores.cyanide.api.responses.ContestsResponse;
+import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.Team;
-import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.service.PopulatorUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,7 +50,7 @@ public class ContestDomainService {
 
     public Contest internalCreateOrUpdateContest(ApiContest apiContest) {
         Contest contest = newContestOrFromDb(apiContest.getContest_id());
-        if (contest != null && contest.isUpdateableFromApi()) {
+        if (contest != null) {
             populateContest(apiContest, contest);
         }
         return contest;

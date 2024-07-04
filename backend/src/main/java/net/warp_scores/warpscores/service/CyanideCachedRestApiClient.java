@@ -80,9 +80,13 @@ public class CyanideCachedRestApiClient {
                 apiRequestKey.asString());
         Boolean cacheOutdated = cachedRestApiResponse.map(this::cacheOutdated).orElse(true);
         Date lastCacheAccess = cachedRestApiResponse.map(RestApiResponseCache::getLastAccess).orElse(null);
-        Boolean changeable = cachedRestApiResponse.map(
-                        restApiResponseCache -> convertRawResponseToResponseObject(restApiResponseCache.getResponse(),
-                                apiRequest.getResponseClass()))
+        Boolean changeable = cachedRestApiResponse
+                .map(restApiResponseCache -> convertRawResponseToResponseObject(restApiResponseCache.getResponse(),
+                        apiRequest.getResponseClass()))
+                .map(response -> {
+                    ((ApiResponse) response).updateChangeableAttribute();
+                    return response;
+                })
                 .map(response -> ((ApiResponse) response).isChangeableResponse())
                 .orElse(true);
 
@@ -166,9 +170,13 @@ public class CyanideCachedRestApiClient {
         }
 
         log.info("Loading from real api (request: {}).", apiRequest);
+        boolean waitingForRateLimit = false;
         while (!bucket.tryConsume(1)) {
-            log.debug("Rate limit ({}) exceeded, waiting limit to be refilled (refills every {})...",
-                    limit.getCapacity(), refill);
+            if (!waitingForRateLimit) {
+                log.info("Rate limit ({}) exceeded, waiting limit to be refilled (refills every {})...",
+                        limit.getCapacity(), refill);
+                waitingForRateLimit = true;
+            }
             waitIgnoringExceptions(1000);
         }
         RestTemplate restTemplate = new RestTemplateBuilder()

@@ -15,7 +15,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Document
-public class Team implements UpdateableFromApi {
+public class Team {
     @Id
     private UUID id;
 

@@ -3,7 +3,6 @@ package net.warp_scores.warpscores.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
-import net.warp_scores.warpscores.DateUtil;
 import net.warp_scores.warpscores.UUIDUtil;
 import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionFormat;
 import net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus;
@@ -19,7 +18,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Document
-public class Contest implements UpdateableFromApi, Comparable {
+public class Contest implements Comparable {
     @Id
     private UUID contestUuid;
     private CompetitionFormat format;
@@ -41,11 +40,6 @@ public class Contest implements UpdateableFromApi, Comparable {
     private boolean adminResult;
     private Match match;
 
-    @Override
-    public boolean isUpdateableFromApi() {
-        return !adminResult && (!MatchStatus.Validated.equals(status) || DateUtil.dateWithinLast(matchDate,
-                DateUtil.FORTY_DAYS));
-    }
 
     @Override
     public String toString() {

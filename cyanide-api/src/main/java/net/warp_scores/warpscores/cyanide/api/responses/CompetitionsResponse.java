@@ -107,6 +107,11 @@ public class CompetitionsResponse extends ApiResponse {
     private Context context;
 
     @Override
+    public void updateChangeableAttribute() {
+        super.updateChangeableAttributeTo(true);
+    }
+
+    @Override
     public boolean isEmpty() {
         return competitions == null || competitions.length == 0;
     }

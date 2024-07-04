@@ -14,7 +14,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Document
-public class Competition implements UpdateableFromApi, Comparable<Competition> {
+public class Competition implements Comparable<Competition> {
     @Id
     private UUID uuid;
     private String name;
