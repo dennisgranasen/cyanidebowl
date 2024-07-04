@@ -45,7 +45,7 @@ public class LeagueResponse extends ApiResponse {
 
     @Override
     public void updateChangeableAttribute() {
-        updateChangeableAttributeTo(false);
+        updateChangeableAttributeTo(true);
     }
 
     @Override

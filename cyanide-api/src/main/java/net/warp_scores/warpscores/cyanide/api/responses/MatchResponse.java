@@ -156,7 +156,7 @@ public class MatchResponse extends ApiResponse {
 
     @Override
     public void updateChangeableAttribute() {
-        if (match.getFinished() != null && DateUtil.dateWithinLast(match.getFinished(), DateUtil.TEN_DAYS)) {
+        if (match.getFinished() != null && !DateUtil.dateWithinLast(match.getFinished(), DateUtil.TEN_DAYS)) {
             updateChangeableAttributeTo(false);
         }
     }
