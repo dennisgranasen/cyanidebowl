@@ -33,7 +33,7 @@ public class LeagueDomainService {
 
     private League internalCreateOrUpdateLeague(ApiLeague apiLeague) {
         League league = newOrFromDb(uuidConverter.toUuid(apiLeague.getId()), apiLeague.getName());
-        if (league != null || league.isUpdateableFromApi()) {
+        if (league != null) {
             populateLeague(apiLeague, league);
         }
         return league;

@@ -14,7 +14,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Document
-public class League implements UpdateableFromApi {
+public class League {
     @Id
     private UUID uuid;
     private String logo;

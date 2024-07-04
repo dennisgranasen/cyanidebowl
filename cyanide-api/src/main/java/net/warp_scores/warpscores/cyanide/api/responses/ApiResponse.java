@@ -2,14 +2,21 @@ package net.warp_scores.warpscores.cyanide.api.responses;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.cyanide.api.model.common.ResponseMeta;
 
-@Getter
-@Setter
+@Slf4j
 public abstract class ApiResponse implements EmptyAwareResponse, UpdateChangeable {
+    @Getter
+    @Setter
     private Long[] size;
+    @Getter
+    @Setter
     private ResponseMeta meta;
+    @Getter
+    @Setter
     private Boolean promotional_content;
+    @Getter
     private boolean changeableResponse = true;
 
     @Getter
@@ -28,8 +35,13 @@ public abstract class ApiResponse implements EmptyAwareResponse, UpdateChangeabl
         private ImageUrls images;
     }
 
-    public void updateChangeableAttribute() {
-        this.changeableResponse = true;
+    public abstract void updateChangeableAttribute();
+
+    final void updateChangeableAttributeTo(boolean changeable) {
+        if (!changeable) {
+            log.info("Updating {} changeable attribute to {}.", this.getClass().getSimpleName(), changeable);
+        }
+        this.changeableResponse = changeable;
     }
 
     @Override

@@ -64,6 +64,11 @@ public class CoachesResponse extends ApiResponse {
     private Meta meta;
 
     @Override
+    public void updateChangeableAttribute() {
+        updateChangeableAttributeTo(true);
+    }
+
+    @Override
     public boolean isEmpty() {
         return coaches == null || coaches.length == 0;
     }

@@ -40,7 +40,7 @@ public class CompetitionDomainService {
     private Competition internalCreateOrUpdateCompetition(ApiCompetition apiCompetition) {
         Competition competition = newCompetitionOrFromDb(uuidConverter.toUuid(apiCompetition.getId()),
                 apiCompetition.getName());
-        if (competition != null && competition.isUpdateableFromApi()) {
+        if (competition != null) {
             populateCompetition(apiCompetition, competition);
         }
         return competition;

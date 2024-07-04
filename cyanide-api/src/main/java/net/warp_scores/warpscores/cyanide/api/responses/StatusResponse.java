@@ -167,6 +167,11 @@ import java.util.Optional;
 public class StatusResponse extends ApiResponse {
     private Game[] games;
 
+    @Override
+    public void updateChangeableAttribute() {
+        super.updateChangeableAttributeTo(true);
+    }
+
     @Getter
     @Setter
     @JsonIgnoreProperties(ignoreUnknown = true)
