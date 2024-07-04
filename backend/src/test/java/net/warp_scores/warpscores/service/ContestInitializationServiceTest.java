@@ -67,19 +67,20 @@ public class ContestInitializationServiceTest {
     public void roundRobinCompetitionContestsAreGeneratedForOddNumberOfParticipants() {
         givenCompetition(CompetitionFormat.RoundRobin);
         givenTeams("A", "B", "C", "D", "E", "F", "G");
-        givenSeedContests(new String[]{"A", "F", "B", "E", "C", "D"});
+        givenSeedContests(new String[]{"B", "G", "C", "F", "D", "E"});
 
         whenContestsInitialized();
 
         initializedContests.stream().forEach(this::print);
 
         thenExpectRoundRobinGeneratedContests(
-                new String[]{"A", "F", "B", "E", "C", "D"},
-                new String[]{"G", "A", "C", "F", "D", "E"},
-                new String[]{"G", "B", "D", "A", "E", "F"},
-                new String[]{"G", "C", "E", "B", "F", "A"},
-                new String[]{"G", "D", "F", "C", "A", "B"},
-                new String[]{"G", "E", "A", "D", "B", "C"}
+                new String[]{"B", "G", "C", "F", "D", "E"},
+                new String[]{"A", "B", "D", "G", "E", "F"},
+                new String[]{"A", "C", "D", "B", "F", "G"},
+                new String[]{"A", "D", "E", "C", "F", "B"},
+                new String[]{"A", "E", "F", "D", "G", "C"},
+                new String[]{"A", "F", "G", "E", "B", "C"},
+                new String[]{"A", "G", "B", "E", "C", "D"}
         );
     }
 
