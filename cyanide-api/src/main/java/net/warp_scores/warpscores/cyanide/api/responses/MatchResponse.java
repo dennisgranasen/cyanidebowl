@@ -9,8 +9,6 @@ import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
 
 import java.util.Optional;
 
-import static net.warp_scores.warpscores.cyanide.api.DateUtil.dateWithinLast;
-
 /*
 {
   "size": [
@@ -156,7 +154,8 @@ public class MatchResponse extends ApiResponse {
 
     @Override
     public void updateChangeableAttribute() {
-        if (match.getFinished() != null && !DateUtil.dateWithinLast(match.getFinished(), DateUtil.TEN_DAYS)) {
+        if (match != null && match.getFinished() != null && !DateUtil.dateWithinLast(match.getFinished(),
+                DateUtil.TEN_DAYS)) {
             updateChangeableAttributeTo(false);
         }
     }
