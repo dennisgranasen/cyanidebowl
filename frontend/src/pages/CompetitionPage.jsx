@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Heading, Spinner, useMediaQuery, VStack } from '@chakra-ui/react';
+import { Box, Heading, Spinner, VStack } from '@chakra-ui/react';
 import { Link as RouteLink, useParams } from 'react-router-dom';
 import WarpScoresApiService from '../WarpScoresApiService';
 import Navigation from '../components/misc/Navigation';

@@ -127,10 +127,10 @@ function CompetitionProgress({
   const finishedMatches = Math.max(playedMatches, validatedMatches);
   const notYetValidatedMatches =
     playedMatches > validatedMatches ? ` (${playedMatches - validatedMatches} not yet validated)` : '';
-  const progressAdditionalText =
-    totalMatches && playedMatches
-      ? `Finished ${finishedMatches} out of ${totalMatches} matches${notYetValidatedMatches}`
-      : undefined;
+  const outOfTotalMatchesText = totalMatches ? ` out of ${totalMatches}` : '';
+  const progressAdditionalText = playedMatches
+    ? `Finished ${finishedMatches}${outOfTotalMatchesText} matches${notYetValidatedMatches}`
+    : undefined;
   return (
     <Box p="0.25rem">
       <DelayedIconTooltip label={<ProgressLabel text={progressText} additionalText={progressAdditionalText} />}>

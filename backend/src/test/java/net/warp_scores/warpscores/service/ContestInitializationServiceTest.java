@@ -71,8 +71,6 @@ public class ContestInitializationServiceTest {
 
         whenContestsInitialized();
 
-        initializedContests.stream().forEach(this::print);
-
         thenExpectRoundRobinGeneratedContests(
                 new String[]{"B", "G", "C", "F", "D", "E"},
                 new String[]{"A", "B", "D", "G", "E", "F"},
@@ -84,14 +82,10 @@ public class ContestInitializationServiceTest {
         );
     }
 
-    private void print(Contest contest) {
-        System.out.println(String.format("%s# %s - %s", contest.getRound(), contest.getOpponents().get(0).getName(),
-                contest.getOpponents().get(1).getName()));
-    }
-
     @Test
     public void generationForWissenDoesNothing() {
         givenCompetition(CompetitionFormat.Wissen);
+        givenTeams();
         givenSeedContests(
                 new String[]{"A", "F", "B", "E", "C", "D"},
                 new String[]{"U", "V", "W", "X", "Y", "Z"},
@@ -110,6 +104,7 @@ public class ContestInitializationServiceTest {
     @Test
     public void generationForKnockoutDoesNothing() {
         givenCompetition(CompetitionFormat.Knockout);
+        givenTeams();
         givenSeedContests(
                 new String[]{"A", "F", "B", "E", "C", "D"},
                 new String[]{"U", "V", "W", "X", "Y", "Z"},
