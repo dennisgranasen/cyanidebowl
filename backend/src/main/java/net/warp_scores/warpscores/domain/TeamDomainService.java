@@ -5,11 +5,12 @@ import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
 import net.warp_scores.warpscores.cyanide.api.responses.TeamResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.TeamsResponse;
-import net.warp_scores.warpscores.model.Competition;
-import net.warp_scores.warpscores.model.Player;
-import net.warp_scores.warpscores.model.Team;
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
 import net.warp_scores.warpscores.domain.persistence.TeamRepository;
+import net.warp_scores.warpscores.model.Competition;
+import net.warp_scores.warpscores.model.CompetitionTeams;
+import net.warp_scores.warpscores.model.Player;
+import net.warp_scores.warpscores.model.Team;
 import net.warp_scores.warpscores.service.PopulatorUtil;
 import net.warp_scores.warpscores.service.TeamPopulator;
 import net.warp_scores.warpscores.service.UUIDConverter;
@@ -34,6 +35,7 @@ public class TeamDomainService {
     private final TeamPopulator teamPopulator;
 
     private final UUIDConverter uuidConverter;
+    private final CompetitionTeamsDomainService competitionTeamsDomainService;
 
     @Transactional
     public List<Team> createOrUpdateTeams(TeamsResponse teamsResponse) {
@@ -59,14 +61,12 @@ public class TeamDomainService {
     }
 
     @Transactional
-    public List<Team> findByLeagueId(UUID leagueUuid) {
-        return this.teamRepository.findByLeagueId(leagueUuid);
-    }
-
-    @Transactional
-    public List<Team> findByCompetitionId(UUID competitionId) {
-        List<Team> teams = this.teamRepository.findByCompetitionId(competitionId);
-        setRelevantCompetition(teams, competitionId);
+    public List<Team> findByCompetitionId(UUID competitionUuid) {
+        Optional<CompetitionTeams> competitionTeams = competitionTeamsDomainService.findByCompetitionId(
+                competitionUuid);
+        List<UUID> teamUuids = competitionTeams.map(ct -> ct.getTeamUuids()).orElse(Collections.emptyList());
+        List<Team> teams = this.teamRepository.findAllById(teamUuids);
+        setRelevantCompetition(teams, competitionUuid);
         return teams;
     }
 
@@ -144,4 +144,5 @@ public class TeamDomainService {
         PopulatorUtil.copyNonNullProperties(apiExtendedAttributes, extendedAttributes);
         return extendedAttributes;
     }
+
 }

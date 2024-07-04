@@ -3,6 +3,7 @@ package net.warp_scores.warpscores.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus;
+import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.domain.persistence.TeamRepository;
@@ -27,10 +28,11 @@ public class ContestService {
     private final TeamRepository teamRepository;
     private final CompetitionService competitionService;
     private final ContestInitializationService contestInitializationService;
+    private final TeamDomainService teamDomainService;
 
     public List<Contest> getCompetitionContests(UUID competitionUuid) {
         Optional<Competition> competition = competitionService.loadCompetition(competitionUuid);
-        List<Team> teams = teamRepository.findByCompetitionId(competitionUuid);
+        List<Team> teams = teamDomainService.findByCompetitionId(competitionUuid);
         List<Contest> contests = contestRepository.findByCompetitionId(competitionUuid);
         contests.stream().forEach(this::loadMatchInto);
 

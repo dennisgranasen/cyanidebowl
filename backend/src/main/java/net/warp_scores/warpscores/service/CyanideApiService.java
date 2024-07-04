@@ -22,6 +22,7 @@ import net.warp_scores.warpscores.cyanide.api.responses.StatusResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.TeamMatchesResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.TeamsResponse;
 import net.warp_scores.warpscores.domain.CompetitionDomainService;
+import net.warp_scores.warpscores.domain.CompetitionTeamsDomainService;
 import net.warp_scores.warpscores.domain.ContestDomainService;
 import net.warp_scores.warpscores.domain.LeagueDomainService;
 import net.warp_scores.warpscores.domain.MatchDomainService;
@@ -71,6 +72,8 @@ public class CyanideApiService {
 
     private final CompetitionDomainService competitionDomainService;
 
+    private final CompetitionTeamsDomainService competitionTeamsDomainService;
+
     public LookupResponse lookup(LookupRequest lookupRequest) {
         LookupResponse lookupResponse = cyanideCachedRestApiClient.getFromCacheOrApi(lookupRequest);
         return lookupResponse;
@@ -96,6 +99,8 @@ public class CyanideApiService {
                 .map(teamDomainService::createOrUpdateTeam)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+
+        competitionTeamsDomainService.createOrUpdateCompetitionTeams(competition, teams);
         return teams;
     }
 

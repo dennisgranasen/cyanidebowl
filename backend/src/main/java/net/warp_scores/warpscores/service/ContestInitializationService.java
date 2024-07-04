@@ -33,7 +33,7 @@ public class ContestInitializationService {
         List<Contest> initializedContests = new ArrayList<>(contests);
 
         Optional<CompetitionFormat> competitionFormat = competition.map(Competition::getFormat);
-        if (!CompetitionFormat.RoundRobin.equals(competitionFormat.orElse(null))) {
+        if (teams.isEmpty() || !CompetitionFormat.RoundRobin.equals(competitionFormat.orElse(null))) {
             return initializedContests;
         }
 
