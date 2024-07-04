@@ -20,7 +20,7 @@ import static java.util.Comparator.comparing;
 @Service
 public class ContestInitializationService {
 
-    public List<Contest> initializeContestsScheduleForFormat(Optional<Competition> competition,
+    public List<Contest> initializeContestsScheduleForFormat(Optional<Competition> competition, List<Team> teams,
             List<Contest> contests) {
 
         List<Contest> initializedContests = new ArrayList<>(contests);
@@ -39,7 +39,7 @@ public class ContestInitializationService {
         List<Team> awayTeams = new ArrayList<>();
         extractFirstRoundTeams(contests, homeTeams, awayTeams);
 
-        List<Contest> scheduledContests = generateScheduledContests(competition.get(), homeTeams, awayTeams)
+        List<Contest> scheduledContests = generateScheduledContests(competition.get(), teams, homeTeams, awayTeams)
                 .stream()
                 .filter(c -> c.getRound() > currentRound.orElse(0))
                 .toList();
@@ -60,12 +60,28 @@ public class ContestInitializationService {
     }
 
     private Collection<Contest> generateScheduledContests(Competition competition,
+            List<Team> teams,
             List<Team> groupA,
             List<Team> groupB) {
-        int participants = groupA.size() + groupB.size();
+        int participants = teams.size();
         List<Contest> scheduledContests = new ArrayList<>(getRound(competition, 0, groupA, groupB));
+        Optional<Team> byeTeam = teams
+                .stream()
+                .filter(team -> !groupA.contains(team))
+                .filter(team -> !groupB.contains(team))
+                .findFirst();
         for (int i = 1; i < participants - 1; i++) {
-            groupB.add(0, groupA.remove(1));
+            if (byeTeam.isPresent()) {
+                if (i == 1) {
+                    groupA.add(0, byeTeam.get());
+                    groupB.add(0, groupA.remove(1));
+                } else {
+                    groupB.add(0, byeTeam.get());
+                }
+                byeTeam = Optional.of(groupA.remove(1));
+            } else {
+                groupB.add(0, groupA.remove(1));
+            }
             groupA.add(groupB.remove(groupB.size() - 1));
             scheduledContests.addAll(getRound(competition, i, groupA, groupB));
         }

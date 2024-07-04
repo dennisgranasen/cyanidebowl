@@ -5,9 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
+import net.warp_scores.warpscores.domain.persistence.TeamRepository;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.Match;
+import net.warp_scores.warpscores.model.Team;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -22,16 +24,18 @@ import java.util.UUID;
 public class ContestService {
     private final MatchRepository matchRepository;
     private final ContestRepository contestRepository;
+    private final TeamRepository teamRepository;
     private final CompetitionService competitionService;
     private final ContestInitializationService contestInitializationService;
 
     public List<Contest> getCompetitionContests(UUID competitionUuid) {
         Optional<Competition> competition = competitionService.loadCompetition(competitionUuid);
+        List<Team> teams = teamRepository.findByCompetitionId(competitionUuid);
         List<Contest> contests = contestRepository.findByCompetitionId(competitionUuid);
         contests.stream().forEach(this::loadMatchInto);
 
         List<Contest> initializedContests = contestInitializationService.initializeContestsScheduleForFormat(
-                competition, contests);
+                competition, teams, contests);
         return initializedContests;
     }
 

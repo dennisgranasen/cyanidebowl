@@ -21,12 +21,14 @@ public class ContestInitializationServiceTest {
 
     private Competition givenCompetition;
     private List<Contest> givenSeedContests;
+    private List<Team> givenTeams;
 
     private List<Contest> initializedContests;
 
     @Test
     public void roundRobinCompetitionContestsAreGenerated() {
         givenCompetition(CompetitionFormat.RoundRobin);
+        givenTeams("A", "B", "C", "D", "E", "F");
         givenSeedContests(new String[]{"A", "F", "B", "E", "C", "D"});
 
         whenContestsInitialized();
@@ -43,6 +45,7 @@ public class ContestInitializationServiceTest {
     @Test
     public void generationForRoundRobinDoesNotOverrideGivenContests() {
         givenCompetition(CompetitionFormat.RoundRobin);
+        givenTeams("A", "B", "C", "D", "E", "F");
         givenSeedContests(
                 new String[]{"A", "F", "B", "E", "C", "D"},
                 new String[]{"U", "V", "W", "X", "Y", "Z"},
@@ -58,6 +61,31 @@ public class ContestInitializationServiceTest {
                 new String[]{"A", "D", "E", "C", "F", "B"},
                 new String[]{"A", "E", "F", "D", "B", "C"}
         );
+    }
+
+    @Test
+    public void roundRobinCompetitionContestsAreGeneratedForOddNumberOfParticipants() {
+        givenCompetition(CompetitionFormat.RoundRobin);
+        givenTeams("A", "B", "C", "D", "E", "F", "G");
+        givenSeedContests(new String[]{"A", "F", "B", "E", "C", "D"});
+
+        whenContestsInitialized();
+
+        initializedContests.stream().forEach(this::print);
+
+        thenExpectRoundRobinGeneratedContests(
+                new String[]{"A", "F", "B", "E", "C", "D"},
+                new String[]{"G", "A", "C", "F", "D", "E"},
+                new String[]{"G", "B", "D", "A", "E", "F"},
+                new String[]{"G", "C", "E", "B", "F", "A"},
+                new String[]{"G", "D", "F", "C", "A", "B"},
+                new String[]{"G", "E", "A", "D", "B", "C"}
+        );
+    }
+
+    private void print(Contest contest) {
+        System.out.println(String.format("%s# %s - %s", contest.getRound(), contest.getOpponents().get(0).getName(),
+                contest.getOpponents().get(1).getName()));
     }
 
     @Test
@@ -99,6 +127,7 @@ public class ContestInitializationServiceTest {
     @Test
     public void serviceDoesNotChangeGivenContests() {
         givenCompetition(CompetitionFormat.RoundRobin);
+        givenTeams("A", "B", "C", "D", "E", "F");
         List<Contest> seedContests = createPairedContests(1, new String[]{"A", "F", "B", "E", "C", "D"});
         this.givenSeedContests = new ArrayList<>(seedContests);
 
@@ -152,8 +181,19 @@ public class ContestInitializationServiceTest {
         givenSeedContests = Collections.unmodifiableList(seedContests);
     }
 
+    private void givenTeams(String... teamNames) {
+        List<Team> teams = new ArrayList<>();
+        for (String teamName : teamNames) {
+            Team team = new Team();
+            team.setName(teamName);
+            teams.add(team);
+        }
+        givenTeams = teams;
+    }
+
     private void whenContestsInitialized() {
         this.initializedContests = this.service.initializeContestsScheduleForFormat(Optional.of(givenCompetition),
+                givenTeams,
                 givenSeedContests);
     }
 
