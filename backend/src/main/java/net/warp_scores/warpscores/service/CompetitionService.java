@@ -11,7 +11,6 @@ import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Contest;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -67,15 +66,17 @@ public class CompetitionService {
 
     private void initializeRoundRobin(Competition competition) {
         Integer teams = competition.getTeamsMax();
+        boolean isOdd = teams % 2 == 1;
         Integer contestCount = contestsRepository.countByCompetitionId(competition.getUuid());
         Integer validatedMatchesCount = contestsRepository.countByCompetitionIdAndStatus(competition.getUuid(),
                 MatchStatus.Validated);
         Integer playedMatchesCount = contestsRepository.countByCompetitionIdAndMatchDateNotNull(competition.getUuid());
         Integer liveMatches = contestsRepository.countByCompetitionIdAndLive(competition.getUuid(), 1);
-        int totalRounds = teams - 1;
+        int totalRounds = isOdd ? teams : teams - 1;
+        int contestsPerRound = isOdd ? (teams - 1) / 2 : teams / 2;
         competition.setTotalRounds(totalRounds);
-        competition.setCurrentRound(contestCount / (teams / 2));
-        competition.setTotalMatches(totalRounds * teams / 2);
+        competition.setCurrentRound(contestCount > 0 ? contestCount / contestsPerRound : 1);
+        competition.setTotalMatches(totalRounds * contestsPerRound);
         competition.setPlayedMatches(playedMatchesCount);
         competition.setLiveMatches(liveMatches);
         competition.setValidatedMatches(validatedMatchesCount);

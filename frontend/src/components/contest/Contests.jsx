@@ -72,7 +72,7 @@ function getRobinFrom(contests) {
   if (!contests || contests[0].format !== 'RoundRobin') return null;
 
   contests.sort((contestA, contestB) =>
-    comparators.compareAsDates(getDateFromUUID(contestA.contestUuid), getDateFromUUID(contestB.contestUuid)),
+    comparators.compareAsDates(getDateFromUUID(contestA.contestUuid), getDateFromUUID(contestB.contestUuid))
   );
   const { coachName } = contests[0].opponents[0];
   return coachName;

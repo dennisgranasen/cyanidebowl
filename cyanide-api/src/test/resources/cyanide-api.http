@@ -30,7 +30,7 @@ GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Scheduled&round=3&lea
 
 ### Get contests
 
-GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Played&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=558803fb-1878-11ef-895c-bc24112ec32e&platform=pc&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Validated&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=558803fb-1878-11ef-895c-bc24112ec32e&platform=pc&key={{apiKey}}
 
 ### Get halloffame (NOT YET IMPLEMENTED)
 
@@ -83,7 +83,8 @@ GET https://web.cyanide-studio.com/ws/bb3/teams/?league_id=94dd6ae4-83fa-11ee-b9
 
 ### Get teams
 
-GET https://web.cyanide-studio.com/ws/bb3/teams/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=e8848221-a04e-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}&order=finished
+GET https://web.cyanide-studio.com/ws/bb3/teams/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=558803fb-1878-11ef-895c-bc24112ec32e&platform=pc&key={{apiKey}}&order=finished
+
 
 ### Get team
 
