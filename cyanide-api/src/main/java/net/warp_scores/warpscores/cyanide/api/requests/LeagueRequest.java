@@ -37,6 +37,6 @@ public class LeagueRequest extends ApiRequest<LeagueRequest, LeagueResponse> {
 
     public LeagueRequest() {
         super("bb3/league", LeagueRequest.class, LeagueResponse.class);
-        setCacheValidity(CacheValidityDurations.ONE_HOUR);
+        setCacheValidity(CacheValidityDurations.TWO_HOURS);
     }
 }
