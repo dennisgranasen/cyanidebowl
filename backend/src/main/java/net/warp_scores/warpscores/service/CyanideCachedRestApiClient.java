@@ -97,7 +97,7 @@ public class CyanideCachedRestApiClient {
                 lastCacheAccess, cacheOutdated, changeable, fetchActive, overrideFetchActive, forceRefresh);
         Object rawResponse;
         if (forceRefresh || (cacheOutdated && changeable && fetchActive)) {
-            rawResponse = loadRawFromApi(apiRequest);
+            rawResponse = loadRawFromApi(apiRequest, forceRefresh);
             if (rawResponse != null) {
                 cacheRawResponse(apiRequestKey, apiRequest, rawResponse);
             } else if (getCachedValueAsFallback) {
@@ -158,18 +158,16 @@ public class CyanideCachedRestApiClient {
         return cacheInvalidAfter.isAfter(restApiResponseCache.getLastAccess().toInstant());
     }
 
-    private <RequestType, ResponseType> Object loadRawFromApi(ApiRequest<RequestType, ResponseType> apiRequest) {
-
-        if (!StatusRequest.class.equals(apiRequest.getRequestClass())) {
-            Optional<Status> status = statusRepository.findById(BB3_GAME_NAME);
-            boolean serviceAvailable = status.map(Status::isOverall).orElse(false);
-            if (!serviceAvailable) {
-                log.warn("API seems to be down. Will not attempt to fetch data from api.");
-                return null;
-            }
+    private <RequestType, ResponseType> Object loadRawFromApi(ApiRequest<RequestType, ResponseType> apiRequest,
+            boolean forceRefresh) {
+        if (forceRefresh) {
+            return loadRawFromApi(apiRequest);
+        } else {
+            return loadRawFromApiRespectingRateLimitAndStatus(apiRequest);
         }
+    }
 
-        log.info("Loading from real api (request: {}).", apiRequest);
+    private <RequestType, ResponseType> Object loadRawFromApiRespectingRateLimitAndStatus(ApiRequest<RequestType, ResponseType> apiRequest) {
         boolean waitingForRateLimit = false;
         while (!bucket.tryConsume(1)) {
             if (!waitingForRateLimit) {
@@ -182,6 +180,19 @@ public class CyanideCachedRestApiClient {
         if (waitingForRateLimit) {
             log.info("Bucket refilled, resuming...");
         }
+        return loadRawFromApi(apiRequest);
+    }
+
+    private <RequestType, ResponseType> Object loadRawFromApi(ApiRequest<RequestType, ResponseType> apiRequest) {
+        if (!StatusRequest.class.equals(apiRequest.getRequestClass())) {
+            Optional<Status> status = statusRepository.findById(BB3_GAME_NAME);
+            boolean serviceAvailable = status.map(Status::isOverall).orElse(false);
+            if (!serviceAvailable) {
+                log.warn("API seems to be down. Will not attempt to fetch data from api.");
+                return null;
+            }
+        }
+        log.info("Loading from real api (request: {}).", apiRequest);
         RestTemplate restTemplate = new RestTemplateBuilder()
                 .setConnectTimeout(apiRequest.getConnectTimeout())
                 .setReadTimeout(apiRequest.getReadTimeout())
