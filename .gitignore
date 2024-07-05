@@ -41,6 +41,7 @@ http-client.env.json
 application.yml
 
 frontend/coverage
+backend/src/main/resources/img/bb3
 
 /data
 
