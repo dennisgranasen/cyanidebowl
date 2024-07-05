@@ -28,5 +28,6 @@ import lombok.ToString;
 public class RulesRequest extends ApiRequest<RulesRequest, RulesResponse> {
     public RulesRequest() {
         super("bb3/rules", RulesRequest.class, RulesResponse.class);
+        setCacheValidity(CacheValidityDurations.ONE_DAY);
     }
 }

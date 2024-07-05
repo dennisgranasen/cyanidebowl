@@ -19,8 +19,8 @@ import {
 } from '@chakra-ui/react';
 import { FaTriangleExclamation } from 'react-icons/fa6';
 import { Link as RouteLink } from 'react-router-dom';
-import { HamburgerIcon, Icon } from '@chakra-ui/icons';
-import CyanideApiService from '../../CyanideApiService';
+import { ExternalLinkIcon, HamburgerIcon, Icon } from '@chakra-ui/icons';
+import WarpScoresApiService from '../../WarpScoresApiService';
 import config from '../../config';
 import formatter from '../../util/Formatter';
 import NewsList from './NewsList';
@@ -32,6 +32,8 @@ import StatusIcon from './StatusIcon';
 import timeUtil from '../../util/TimeUtil';
 import ImageUrls from '../../ImageUrls';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
+
+const { smallBoxSize } = config;
 
 function LastCheck({ status, textSize, statusOutdated }) {
   return (
@@ -64,7 +66,7 @@ function Menu() {
   const [statusOutdated, setStatusOutdated] = useState(false);
 
   const fetchStatus = () => {
-    CyanideApiService.status()
+    WarpScoresApiService.status()
       .then((data) => {
         setStatus(data);
       })
@@ -86,12 +88,12 @@ function Menu() {
     <>
       <Link onClick={onOpen}>
         <Avatar borderRadius={4} boxSize={12} icon={<HamburgerIcon />} src={ImageUrls.warpscoresLogoPng('medium')}>
-          <AvatarBadge boxSize="24px" bg="black">
+          <AvatarBadge boxSize={smallBoxSize} bg="black">
             <StatusIcon status={status} statusOutdated={statusOutdated} />
           </AvatarBadge>
         </Avatar>
       </Link>
-      <Drawer isOpen={isOpen} placement="right" onClose={onClose}>
+      <Drawer size={{ base: 'full', sm: 'xs' }} isOpen={isOpen} placement="right" onClose={onClose}>
         <DrawerOverlay />
         <DrawerContent>
           <DrawerHeader borderBottomWidth="1px">Menu</DrawerHeader>
@@ -136,6 +138,12 @@ function Menu() {
                 <Box>
                   <Link as={RouteLink} to="/about" onClick={() => onClose()}>
                     About
+                  </Link>
+                </Box>
+                <Spacer />
+                <Box>
+                  <Link href="https://web.cyanide-studio.com/bloodbowl/" isExternal>
+                    Cyanide Admin-Tools <ExternalLinkIcon mx={2} />
                   </Link>
                 </Box>
               </VStack>

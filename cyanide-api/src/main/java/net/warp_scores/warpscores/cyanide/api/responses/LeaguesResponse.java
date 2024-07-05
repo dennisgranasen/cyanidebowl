@@ -42,6 +42,11 @@ public class LeaguesResponse extends ApiResponse {
     private ApiLeague[] leagues;
 
     @Override
+    public void updateChangeableAttribute() {
+        updateChangeableAttributeTo(true);
+    }
+
+    @Override
     public boolean isEmpty() {
         return leagues == null || leagues.length == 0;
     }

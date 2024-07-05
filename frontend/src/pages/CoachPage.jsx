@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Heading, HStack, Stack, useMediaQuery } from '@chakra-ui/react';
+import { Box, Heading, HStack, Stack } from '@chakra-ui/react';
 import { FaRegFaceSadTear } from 'react-icons/fa6';
 import { Icon } from '@chakra-ui/icons';
 import Navigation from '../components/misc/Navigation';

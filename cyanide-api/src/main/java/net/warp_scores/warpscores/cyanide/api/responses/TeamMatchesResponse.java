@@ -445,6 +445,11 @@ public class TeamMatchesResponse extends ApiResponse {
     private MatchId[] matchIds;
 
     @Override
+    public void updateChangeableAttribute() {
+        updateChangeableAttributeTo(true);
+    }
+
+    @Override
     public boolean isEmpty() {
         return matchIds == null || matchIds.length == 0;
     }

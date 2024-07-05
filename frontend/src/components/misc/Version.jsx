@@ -1,13 +1,13 @@
 import { Box } from '@chakra-ui/react';
 import React, { useEffect, useState } from 'react';
-import CyanideApiService from '../../CyanideApiService';
+import WarpScoresApiService from '../../WarpScoresApiService';
 import config from '../../config';
 import abbreviators from '../../util/Abbreviators';
 
 function Version({ textSize, ...props }) {
   const [backendVersion, setBackendVersion] = useState(null);
   const fetchBackendVersion = () => {
-    CyanideApiService.backendVersion()
+    WarpScoresApiService.backendVersion()
       .then((data) => {
         setBackendVersion(data);
       })

@@ -12,7 +12,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Document
-public class Player implements UpdateableFromApi {
+public class Player {
     @Id
     private UUID id;
     private String name;

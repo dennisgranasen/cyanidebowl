@@ -2,19 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { Stack } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
 import LatestContests from '../components/contest/LatestContests';
-import CyanideApiService from '../CyanideApiService';
+import WarpScoresApiService from '../WarpScoresApiService';
 import config from '../config';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 
 function LatestMatchesPage() {
-  const { leagueUuid } = useParams();
+  const { leagueUuid, limit } = useParams();
   const [league, setLeague] = useState();
   const [loading, setLoading] = useState();
   const [error, setError] = useState(undefined);
 
   useEffect(() => {
     const fetchLeague = () => {
-      CyanideApiService.league(leagueUuid)
+      WarpScoresApiService.league(leagueUuid)
         .then((data) => {
           setLeague(data);
         })
@@ -24,12 +24,12 @@ function LatestMatchesPage() {
         });
     };
     fetchLeague();
-  }, [leagueUuid]);
+  }, [leagueUuid, limit]);
 
   return (
     <Stack>
       <LoadingOrErrorWrapper loading={loading} error={error}>
-        <LatestContests embeddable league={league} />
+        <LatestContests embeddable league={league} limit={limit} />
       </LoadingOrErrorWrapper>
     </Stack>
   );

@@ -1,40 +1,51 @@
 import React from 'react';
-import { Heading, Spinner, Table, TableContainer, Tbody, Tfoot, Th, Thead, Tr } from '@chakra-ui/react';
+import {
+  Heading,
+  Spinner,
+  Table,
+  TableContainer,
+  Tbody,
+  Tfoot,
+  Th,
+  Thead,
+  Tr,
+  useBreakpointValue,
+} from '@chakra-ui/react';
 import Competition from './Competition';
+import config from '../../config';
 
-function TableColumns(smallscreen) {
+const { smallScreenBreakpointValues } = config;
+
+function TableColumns() {
+  const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
   return (
     <Tr>
       <Th>Competition</Th>
-      <Th>{smallscreen ? 'F' : 'Format'}</Th>
+      <Th>{isSmallScreen ? 'F' : 'Format'}</Th>
       <Th>Status</Th>
-      <Th isNumeric>{smallscreen ? 'T' : 'Teams'}</Th>
+      <Th isNumeric>{isSmallScreen ? 'T' : 'Teams'}</Th>
     </Tr>
   );
 }
 
-function Competitions({ competitions, smallscreen }) {
+function Competitions({ competitions }) {
   return (
     <TableContainer>
       <Heading size="md">Competitions</Heading>
       <Table variant="stripedClickable" size="sm">
-        <Thead>{TableColumns(smallscreen)}</Thead>
+        <Thead>
+          <TableColumns />
+        </Thead>
         <Tbody>
           {competitions ? (
-            competitions.map((competition) => {
-              return (
-                <Competition
-                  smallscreen={smallscreen ? 'smallscreen' : undefined}
-                  competition={competition}
-                  key={competition.uuid}
-                />
-              );
-            })
+            competitions.map((competition) => <Competition competition={competition} key={competition.uuid} />)
           ) : (
             <Spinner />
           )}
         </Tbody>
-        <Tfoot>{TableColumns(smallscreen)}</Tfoot>
+        <Tfoot>
+          <TableColumns />
+        </Tfoot>
       </Table>
     </TableContainer>
   );

@@ -10,9 +10,4 @@ import java.util.UUID;
 
 @Repository
 public interface TeamRepository extends MongoRepository<Team, UUID> {
-    @Query("{leagueIds: ?0}")
-    List<Team> findByLeagueId(UUID leagueId);
-
-    @Query("{competitionIds: ?0}")
-    List<Team> findByCompetitionId(UUID competitionId);
 }

@@ -2,14 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Heading } from '@chakra-ui/react';
 import { FaRegFaceSadTear } from 'react-icons/fa6';
 import formatter from '../../util/Formatter';
-import CyanideApiService from '../../CyanideApiService';
+import WarpScoresApiService from '../../WarpScoresApiService';
 import comparators from '../../util/Comparators';
 import ContestMatchCards from './ContestMatchCards';
 
-function LatestContests({ league, embeddable }) {
+function LatestContests({ league, embeddable, limit }) {
   const [contests, setContests] = useState();
-  const fetchLatestContests = (leagueUuid) => {
-    CyanideApiService.latestLeagueContests(leagueUuid).then((data) => {
+  const fetchLatestContests = (leagueUuid, contestLimit) => {
+    WarpScoresApiService.latestLeagueContests(leagueUuid, contestLimit).then((data) => {
       data.sort((compA, compB) => comparators.compareAsDates(compB.matchDate, compA.matchDate));
       setContests(data);
     });
@@ -17,7 +17,7 @@ function LatestContests({ league, embeddable }) {
 
   useEffect(() => {
     if (league) {
-      fetchLatestContests(league.uuid);
+      fetchLatestContests(league.uuid, limit);
     }
   }, [league]);
 

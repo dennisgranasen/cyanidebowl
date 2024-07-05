@@ -16,5 +16,6 @@ import net.warp_scores.warpscores.cyanide.api.responses.RssResponse;
 public class RssRequest extends ApiRequest<RssRequest, RssResponse> {
     public RssRequest() {
         super("bb3/rss", RssRequest.class, RssResponse.class);
+        setCacheValidity(CacheValidityDurations.ONE_DAY);
     }
 }

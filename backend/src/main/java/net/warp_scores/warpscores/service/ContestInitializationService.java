@@ -20,13 +20,20 @@ import static java.util.Comparator.comparing;
 @Service
 public class ContestInitializationService {
 
-    public List<Contest> initializeContestsScheduleForFormat(Optional<Competition> competition,
+    private static final Team DUMMY_TEAM = new Team();
+
+    static {
+        DUMMY_TEAM.setName("Dummy Team");
+        DUMMY_TEAM.setId(Generators.timeBasedGenerator().generate());
+    }
+
+    public List<Contest> initializeContestsScheduleForFormat(Optional<Competition> competition, List<Team> teams,
             List<Contest> contests) {
 
         List<Contest> initializedContests = new ArrayList<>(contests);
 
         Optional<CompetitionFormat> competitionFormat = competition.map(Competition::getFormat);
-        if (!CompetitionFormat.RoundRobin.equals(competitionFormat.orElse(null))) {
+        if (teams.isEmpty() || !CompetitionFormat.RoundRobin.equals(competitionFormat.orElse(null))) {
             return initializedContests;
         }
 
@@ -38,9 +45,11 @@ public class ContestInitializationService {
         List<Team> homeTeams = new ArrayList<>();
         List<Team> awayTeams = new ArrayList<>();
         extractFirstRoundTeams(contests, homeTeams, awayTeams);
+        addDummyTeamIfOddParticipants(teams, homeTeams, awayTeams);
 
         List<Contest> scheduledContests = generateScheduledContests(competition.get(), homeTeams, awayTeams)
                 .stream()
+                .filter(this::doesNotContainDummyTeam)
                 .filter(c -> c.getRound() > currentRound.orElse(0))
                 .toList();
 
@@ -48,7 +57,13 @@ public class ContestInitializationService {
         return initializedContests;
     }
 
-    private void extractFirstRoundTeams(List<Contest> contests, List<Team> homeTeams, List<Team> awayTeams) {
+    private boolean doesNotContainDummyTeam(Contest contest) {
+        return !contest.getOpponents().contains(DUMMY_TEAM);
+    }
+
+    private void extractFirstRoundTeams(List<Contest> contests,
+            List<Team> homeTeams,
+            List<Team> awayTeams) {
         contests
                 .stream()
                 .filter(c -> c.getRound() == 1)
@@ -57,6 +72,22 @@ public class ContestInitializationService {
                     homeTeams.add(c.getOpponents().get(0));
                     awayTeams.add(c.getOpponents().get(1));
                 });
+    }
+
+    private void addDummyTeamIfOddParticipants(List<Team> teams, List<Team> homeTeams, List<Team> awayTeams) {
+        boolean isEven = teams.size() % 2 == 0;
+        if (isEven) {
+            return;
+        }
+
+        Optional<Team> byeTeam = teams
+                .stream()
+                .filter(team -> !homeTeams.contains(team))
+                .filter(team -> !awayTeams.contains(team))
+                .findFirst();
+
+        homeTeams.add(0, byeTeam.get());
+        awayTeams.add(0, DUMMY_TEAM);
     }
 
     private Collection<Contest> generateScheduledContests(Competition competition,
@@ -73,7 +104,7 @@ public class ContestInitializationService {
         return scheduledContests;
     }
 
-    private List<Contest> getRound(Competition competition, int round, List<Team> groupA, List<Team> groupB) {
+    private static List<Contest> getRound(Competition competition, int round, List<Team> groupA, List<Team> groupB) {
         List<Contest> roundContests = new ArrayList<>();
         for (int i = 0; i < groupA.size(); i++) {
             Contest contest = new Contest();

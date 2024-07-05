@@ -10,10 +10,11 @@ spring:
       static-locations: classpath=/public
 
 cyanide:
+  check-api-status-cron: '0 */15 * * * ?'
   scheduler-active: true
-  fetch-active: true
+  fetch-active: false
   urls:
-    images-extension: .png
+    images-extension: png
     images:
       logos: https://images.cyanide-studio.com/bb3/logos
       races: https://images.cyanide-studio.com/bb3/races

@@ -304,6 +304,11 @@ public class TeamResponse extends ApiResponse {
     private Coach coach;
     private Player[] roster;
 
+    @Override
+    public void updateChangeableAttribute() {
+        updateChangeableAttributeTo(true);
+    }
+
     @Getter
     @Setter
     public static class Coach extends IdWithName {

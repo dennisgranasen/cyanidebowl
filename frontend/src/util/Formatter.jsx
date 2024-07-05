@@ -15,7 +15,7 @@ const formatAsNumber = (value) => {
 };
 
 const formatAsDate = (date) => {
-  if (!date) return '';
+  if (!date) return '-';
 
   const utcDate = timeUtil.asUTCDate(date);
   return utcDate.toLocaleString([], dateFormatOptions);

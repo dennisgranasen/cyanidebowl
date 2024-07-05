@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Heading, Spinner, useMediaQuery, VStack } from '@chakra-ui/react';
+import { Box, Heading, Spinner, VStack } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
-import CyanideApiService from '../CyanideApiService';
+import WarpScoresApiService from '../WarpScoresApiService';
 import Roster from '../components/team/Roster';
 import prettyPrint from '../util/PrettyPrint';
 import Navigation from '../components/misc/Navigation';
@@ -32,43 +32,51 @@ function MatchesCount({ matches, teamUuid }) {
 }
 
 function TeamPage() {
-  const [smallscreen] = useMediaQuery('(max-width: 768px)');
   const { competitionUuid, teamUuid } = useParams();
   const [team, setTeam] = useState();
   const [matches, setMatches] = useState();
   const [players, setPlayers] = useState();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(undefined);
+  const [loadingTeam, setLoadingTeam] = useState(false);
+  const [teamError, setTeamError] = useState(undefined);
+  const [loadingMatches, setLoadingMatches] = useState(false);
+  const [matchesError, setMatchesError] = useState(undefined);
 
   useEffect(() => {
     const fetchTeam = () => {
       const teamResponse = competitionUuid
-        ? CyanideApiService.competitionTeam(competitionUuid, teamUuid)
-        : CyanideApiService.team(teamUuid);
+        ? WarpScoresApiService.competitionTeam(competitionUuid, teamUuid)
+        : WarpScoresApiService.team(teamUuid);
 
       teamResponse
         .then((data) => {
-          setLoading(false);
+          setLoadingTeam(false);
           setTeam(data);
           const currentPlayers = data.players || [];
           currentPlayers.sort((playerA, playerB) => playerA.number - playerB.number);
           setPlayers(currentPlayers);
         })
         .catch((reason) => {
-          setError({ type: 'error', message: reason.toLocaleString(config.locale) });
+          setTeamError({ type: 'error', message: reason.toLocaleString(config.locale) });
         });
     };
 
     const fetchMatches = () => {
-      const matchesResponse = CyanideApiService.teamMatches(teamUuid);
-      matchesResponse.then((data) => {
-        setMatches(data);
-      });
+      setMatches([]);
+      setLoadingMatches(true);
+      const matchesResponse = WarpScoresApiService.teamMatches(teamUuid);
+      matchesResponse
+        .then((data) => {
+          setLoadingMatches(false);
+          setMatches(data);
+        })
+        .catch((reason) => {
+          setMatchesError({ type: 'error', message: reason.toLocaleString(config.locale) });
+        });
     };
 
     fetchTeam();
     fetchMatches();
-  }, []);
+  }, [competitionUuid, teamUuid]);
 
   const navCompetition =
     team && team.competitionIds.length === 1 ? [team.competitionIds[0], team.competitionName] : null;
@@ -84,7 +92,7 @@ function TeamPage() {
         />
       </Box>
       <Box>
-        <LoadingOrErrorWrapper loading={loading} error={error}>
+        <LoadingOrErrorWrapper loading={loadingTeam} error={teamError}>
           {team && (
             <>
               <HeaderCard
@@ -93,27 +101,23 @@ function TeamPage() {
                 detailsHeading="Team details"
                 mainImageSrc={ImageUrls.logo(team.logo)}
                 additionalImageSrc={ImageUrls.race(team.race)}
-                smallscreen={smallscreen ? 'smallscreen' : undefined}
               >
-                <InfoArea
-                  smallscreen={smallscreen ? 'smallscreen' : undefined}
-                  infoItems={[
-                    <InfoItem key="race" label="Race" info={prettyPrint(team.race)} />,
-                    <InfoItem key="players" label="Players" info={players !== null ? players.length : '-'} />,
-                    <InfoItem key="rerolls" label="Rerolls" info={team.rerolls} />,
-                    <InfoItem key="dedicatedFans" label="Dedicated Fans" info={team.dedicatedFans} />,
-                    <InfoItem key="cheerleaders" label="Cheerleaders" info={team.cheerleaders} />,
-                    <InfoItem key="assistantCoaches" label="Assistant coaches" info={team.coachAssistants} />,
-                    <InfoItem key="apothecary" label="Apothecary" info={team.apothecary} />,
-                    <InfoItem key="cash" label="Cash" info={Formatter.formatAsNumber(team.cash)} />,
-                    <InfoItem key="value" label="Value" info={Formatter.formatAsNumber(team.value)} />,
-                    <InfoItem
-                      key="matches"
-                      label="Matches"
-                      info={<MatchesCount matches={matches} teamUuid={teamUuid} />}
-                    />,
-                  ]}
-                />
+                <InfoArea>
+                  <InfoItem key="race" label="Race" info={prettyPrint(team.race)} />
+                  <InfoItem key="players" label="Players" info={players !== null ? players.length : '-'} />
+                  <InfoItem key="rerolls" label="Rerolls" info={team.rerolls} />
+                  <InfoItem key="dedicatedFans" label="Dedicated Fans" info={team.dedicatedFans} />
+                  <InfoItem key="cheerleaders" label="Cheerleaders" info={team.cheerleaders} />
+                  <InfoItem key="assistantCoaches" label="Assistant coaches" info={team.coachAssistants} />
+                  <InfoItem key="apothecary" label="Apothecary" info={team.apothecary} />
+                  <InfoItem key="cash" label="Cash" info={Formatter.formatAsNumber(team.cash)} />
+                  <InfoItem key="value" label="Value" info={Formatter.formatAsNumber(team.value)} />
+                  <InfoItem
+                    key="matches"
+                    label="Matches"
+                    info={<MatchesCount matches={matches} teamUuid={teamUuid} />}
+                  />
+                </InfoArea>
               </HeaderCard>
               <Roster players={players} />
             </>
@@ -122,7 +126,9 @@ function TeamPage() {
       </Box>
       <Box>
         <Heading size="md">Matches</Heading>
-        <Matches matches={matches} />
+        <LoadingOrErrorWrapper loading={loadingMatches} error={matchesError}>
+          <Matches matches={matches} />
+        </LoadingOrErrorWrapper>
       </Box>
     </VStack>
   );

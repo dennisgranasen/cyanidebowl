@@ -1,9 +1,11 @@
 package net.warp_scores.warpscores.cyanide.api.model.common;
 
 public enum MatchStatus {
+    Sheduled,
     Scheduled,
     Validated,
     InProgress,
+    Played,
     Calculated,
     @Deprecated
     scheduled(true, Scheduled),

@@ -5,9 +5,10 @@ const config = {
   MAX_AGE_FOR_STATUS_IN_MILLIS,
   backendUrl,
   locale: 'en-UK',
-  boxSize: '32px',
-  smallBoxSize: '24px',
+  boxSize: '2rem',
+  smallBoxSize: '1.5rem',
   hoverBoxShadow: 'inset 0 0 0 2000px rgba(255, 0, 150, 0.3);',
+  smallScreenBreakpointValues: { base: true, sm: true, md: false },
 };
 
 export default config;

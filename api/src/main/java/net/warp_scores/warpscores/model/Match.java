@@ -3,7 +3,6 @@ package net.warp_scores.warpscores.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
-import net.warp_scores.warpscores.DateUtil;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -14,7 +13,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Document
-public class Match implements UpdateableFromApi {
+public class Match {
     @Id
     private UUID matchId;
     private UUID competitionId;
@@ -38,8 +37,4 @@ public class Match implements UpdateableFromApi {
         private String name;
     }
 
-    @Override
-    public boolean isUpdateableFromApi() {
-        return !adminResult && (finished == null || DateUtil.dateWithinLast(finished, DateUtil.FORTY_DAYS));
-    }
 }

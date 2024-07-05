@@ -21,12 +21,14 @@ public class ContestInitializationServiceTest {
 
     private Competition givenCompetition;
     private List<Contest> givenSeedContests;
+    private List<Team> givenTeams;
 
     private List<Contest> initializedContests;
 
     @Test
     public void roundRobinCompetitionContestsAreGenerated() {
         givenCompetition(CompetitionFormat.RoundRobin);
+        givenTeams("A", "B", "C", "D", "E", "F");
         givenSeedContests(new String[]{"A", "F", "B", "E", "C", "D"});
 
         whenContestsInitialized();
@@ -43,6 +45,7 @@ public class ContestInitializationServiceTest {
     @Test
     public void generationForRoundRobinDoesNotOverrideGivenContests() {
         givenCompetition(CompetitionFormat.RoundRobin);
+        givenTeams("A", "B", "C", "D", "E", "F");
         givenSeedContests(
                 new String[]{"A", "F", "B", "E", "C", "D"},
                 new String[]{"U", "V", "W", "X", "Y", "Z"},
@@ -61,8 +64,28 @@ public class ContestInitializationServiceTest {
     }
 
     @Test
+    public void roundRobinCompetitionContestsAreGeneratedForOddNumberOfParticipants() {
+        givenCompetition(CompetitionFormat.RoundRobin);
+        givenTeams("A", "B", "C", "D", "E", "F", "G");
+        givenSeedContests(new String[]{"B", "G", "C", "F", "D", "E"});
+
+        whenContestsInitialized();
+
+        thenExpectRoundRobinGeneratedContests(
+                new String[]{"B", "G", "C", "F", "D", "E"},
+                new String[]{"A", "B", "D", "G", "E", "F"},
+                new String[]{"A", "C", "D", "B", "F", "G"},
+                new String[]{"A", "D", "E", "C", "F", "B"},
+                new String[]{"A", "E", "F", "D", "G", "C"},
+                new String[]{"A", "F", "G", "E", "B", "C"},
+                new String[]{"A", "G", "B", "E", "C", "D"}
+        );
+    }
+
+    @Test
     public void generationForWissenDoesNothing() {
         givenCompetition(CompetitionFormat.Wissen);
+        givenTeams();
         givenSeedContests(
                 new String[]{"A", "F", "B", "E", "C", "D"},
                 new String[]{"U", "V", "W", "X", "Y", "Z"},
@@ -81,6 +104,7 @@ public class ContestInitializationServiceTest {
     @Test
     public void generationForKnockoutDoesNothing() {
         givenCompetition(CompetitionFormat.Knockout);
+        givenTeams();
         givenSeedContests(
                 new String[]{"A", "F", "B", "E", "C", "D"},
                 new String[]{"U", "V", "W", "X", "Y", "Z"},
@@ -99,6 +123,7 @@ public class ContestInitializationServiceTest {
     @Test
     public void serviceDoesNotChangeGivenContests() {
         givenCompetition(CompetitionFormat.RoundRobin);
+        givenTeams("A", "B", "C", "D", "E", "F");
         List<Contest> seedContests = createPairedContests(1, new String[]{"A", "F", "B", "E", "C", "D"});
         this.givenSeedContests = new ArrayList<>(seedContests);
 
@@ -152,8 +177,19 @@ public class ContestInitializationServiceTest {
         givenSeedContests = Collections.unmodifiableList(seedContests);
     }
 
+    private void givenTeams(String... teamNames) {
+        List<Team> teams = new ArrayList<>();
+        for (String teamName : teamNames) {
+            Team team = new Team();
+            team.setName(teamName);
+            teams.add(team);
+        }
+        givenTeams = teams;
+    }
+
     private void whenContestsInitialized() {
         this.initializedContests = this.service.initializeContestsScheduleForFormat(Optional.of(givenCompetition),
+                givenTeams,
                 givenSeedContests);
     }
 

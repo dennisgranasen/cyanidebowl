@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.cyanide.api.responses;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.warp_scores.warpscores.cyanide.api.DateUtil;
 import net.warp_scores.warpscores.cyanide.api.model.ApiCoach;
 import net.warp_scores.warpscores.cyanide.api.model.ApiMatch;
 import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
@@ -153,8 +154,9 @@ public class MatchResponse extends ApiResponse {
 
     @Override
     public void updateChangeableAttribute() {
-        if (match.getFinished() != null) {
-            setChangeableResponse(false);
+        if (match != null && match.getFinished() != null && !DateUtil.dateWithinLast(match.getFinished(),
+                DateUtil.TEN_DAYS)) {
+            updateChangeableAttributeTo(false);
         }
     }
 

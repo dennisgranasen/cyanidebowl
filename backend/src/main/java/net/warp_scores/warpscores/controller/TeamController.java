@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.domain.CompetitionTeamsDomainService;
 import net.warp_scores.warpscores.domain.MatchDomainService;
 import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.model.Match;
@@ -23,17 +24,7 @@ public class TeamController {
     private final TeamDomainService teamDomainService;
 
     private final MatchDomainService matchDomainService;
-
-    @GetMapping("/league/{leagueId}/teams")
-    public ResponseEntity<List<Team>> getTeamsForLeague(@PathVariable(name = "leagueId") UUID leagueId) {
-        try {
-            List<Team> teams = teamDomainService.findByLeagueId(leagueId);
-            return ResponseEntity.ok(teams);
-        } catch (Exception ex) {
-            log.error("Unable to get teams for league {}", leagueId, ex);
-            return ResponseEntity.internalServerError().build();
-        }
-    }
+    private final CompetitionTeamsDomainService competitionTeamsDomainService;
 
     @GetMapping("/team/{teamId}")
     public ResponseEntity<Team> getTeam(@PathVariable(name = "teamId") UUID teamId) {

@@ -15,7 +15,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Document
-public class Team implements UpdateableFromApi {
+public class Team {
     @Id
     private UUID id;
 
@@ -71,4 +71,19 @@ public class Team implements UpdateableFromApi {
     private Integer sustainedko;
     private Integer sustainedinjuries;
     private Integer sustaineddead;
+
+    @Override
+    public boolean equals(Object other) {
+        if (other == null || !Team.class.isInstance(other)) {
+            return false;
+        }
+        Team otherTeam = (Team) other;
+        if (id != null || otherTeam.id != null) {
+            return id.equals(otherTeam.id);
+        } else if (name != null || otherTeam.name != null) {
+            return name.equals(otherTeam.name);
+        } else {
+            return false;
+        }
+    }
 }
