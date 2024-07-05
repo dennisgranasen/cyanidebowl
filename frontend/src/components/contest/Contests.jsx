@@ -13,28 +13,50 @@ import {
   Th,
   Thead,
   Tr,
+  useBreakpointValue,
 } from '@chakra-ui/react';
 import Contest from './Contest';
 import comparators from '../../util/Comparators';
+import config from '../../config';
 
-function TableColumns(smallscreen) {
+const { smallScreenBreakpointValues } = config;
+
+function HeaderColumn({ title }) {
+  return (
+    <Th>
+      <Center>{title}</Center>
+    </Th>
+  );
+}
+
+function SmallTableColumns() {
   return (
     <Tr>
-      {!smallscreen && <Th />}
-      <Th>
-        <Center>Home</Center>
-      </Th>
-      {!smallscreen && <Th />}
-      <Th>
-        <Center>Result</Center>
-      </Th>
-      {!smallscreen && <Th />}
-      <Th>
-        <Center>Away</Center>
-      </Th>
-      {!smallscreen && <Th />}
+      <HeaderColumn title="Home" />
+      <HeaderColumn title="Result" />
+      <HeaderColumn title="Away" />
     </Tr>
   );
+}
+
+function NormalTableColumns() {
+  return (
+    <Tr>
+      <Th />
+      <HeaderColumn title="Home" />
+      <Th />
+      <HeaderColumn title="Result" />
+      <Th />
+      <HeaderColumn title="Away" />
+      <Th />
+    </Tr>
+  );
+}
+
+function TableColumns() {
+  const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
+
+  return isSmallScreen ? <SmallTableColumns /> : <NormalTableColumns />;
 }
 
 function getDateFromUUID(uuid) {
@@ -47,7 +69,7 @@ function getDateFromUUID(uuid) {
 }
 
 function getRobinFrom(contests) {
-  if (contests[0].format !== 'RoundRobin') return null;
+  if (!contests || contests[0].format !== 'RoundRobin') return null;
 
   contests.sort((contestA, contestB) =>
     comparators.compareAsDates(getDateFromUUID(contestA.contestUuid), getDateFromUUID(contestB.contestUuid))
@@ -56,11 +78,12 @@ function getRobinFrom(contests) {
   return coachName;
 }
 
-function Contests({ contests, currentRound, smallscreen }) {
-  const groupedContests = Map.groupBy(contests, (contest) => contest.round);
+function Contests({ contests, currentRound }) {
+  const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
+  const groupedContests = contests ? Map.groupBy(contests, (contest) => contest.round) : null;
   const tabData = [];
-  const robin = getRobinFrom(groupedContests.get(1));
-  groupedContests.forEach((value, key) => {
+  const robin = groupedContests ? getRobinFrom(groupedContests.get(1)) : null;
+  groupedContests?.forEach((value, key) => {
     value.sort((contestA, contestB) => {
       let comparison = 0;
       if (robin) {
@@ -81,23 +104,21 @@ function Contests({ contests, currentRound, smallscreen }) {
     });
     tabData.push({
       round: key,
-      label: smallscreen ? `${key}` : `Round ${key}`,
+      label: isSmallScreen ? `${key}` : `Round ${key}`,
       content: (
         <TableContainer>
           <Table variant="simpleClickable" size="sm">
-            <Thead>{TableColumns(smallscreen)}</Thead>
+            <Thead>
+              <TableColumns />
+            </Thead>
             <Tbody>
               {value.map((contest) => {
-                return (
-                  <Contest
-                    smallscreen={smallscreen ? 'smallscreen' : undefined}
-                    contest={contest}
-                    key={contest.contestUuid}
-                  />
-                );
+                return <Contest contest={contest} key={contest.contestUuid} />;
               })}
             </Tbody>
-            <Tfoot>{TableColumns(smallscreen)}</Tfoot>
+            <Tfoot>
+              <TableColumns />
+            </Tfoot>
           </Table>
         </TableContainer>
       ),

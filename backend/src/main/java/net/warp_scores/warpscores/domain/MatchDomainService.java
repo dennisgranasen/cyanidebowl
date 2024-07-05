@@ -7,9 +7,9 @@ import net.warp_scores.warpscores.cyanide.api.model.ApiMatch;
 import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
 import net.warp_scores.warpscores.cyanide.api.responses.MatchResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.MatchesResponse;
+import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Team;
-import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.service.PopulatorUtil;
 import net.warp_scores.warpscores.service.TeamPopulator;
 import net.warp_scores.warpscores.service.UUIDConverter;
@@ -74,7 +74,7 @@ public class MatchDomainService {
     private Match internalCreateOrUpdateMatch(ApiMatch apiMatch) {
         Match match = newMatchOrFromDb(
                 uuidConverter.getNonNull(apiMatch.getMatchId(), uuidConverter.toUuid(apiMatch.getId()).orElse(null)));
-        if (match != null && match.isUpdateableFromApi()) {
+        if (match != null) {
             populateMatch(apiMatch, match);
         }
         return match;

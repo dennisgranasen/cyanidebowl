@@ -15,6 +15,11 @@ public class LookupResponse extends ApiResponse {
     private IdWithName[] competitions;
 
     @Override
+    public void updateChangeableAttribute() {
+        updateChangeableAttributeTo(true);
+    }
+
+    @Override
     public String getInformationString() {
         return String.format("CompetitionsResponse[isEmpty=%s, competitions=%s, leagues=%s, changeable=%s]",
                 isEmpty(),

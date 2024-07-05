@@ -15,7 +15,7 @@ import java.util.Date;
 @Document
 @ToString
 @NoArgsConstructor
-public class Status implements UpdateableFromApi {
+public class Status {
     @Id
     private String gameName;
     private boolean overall;

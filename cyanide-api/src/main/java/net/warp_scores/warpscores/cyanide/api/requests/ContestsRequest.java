@@ -49,12 +49,12 @@ import java.util.UUID;
 @ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ContestsRequest extends ApiRequest<ContestsRequest, ContestsResponse> {
-    public enum Status {Scheduled, InProgress, Validated, Played}
+    public enum Status {Sheduled, Scheduled, InProgress, Validated, Played}
 
     private String league_name;
     private UUID league_id;
     private UUID competition_id;
-    private Status status;
+    private String status;
     private Integer round;
 
     public ContestsRequest() {

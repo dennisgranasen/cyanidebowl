@@ -2,10 +2,16 @@ package net.warp_scores.warpscores.cyanide.api.responses;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.warp_scores.warpscores.cyanide.api.DateUtil;
 import net.warp_scores.warpscores.cyanide.api.model.ApiContest;
 import net.warp_scores.warpscores.cyanide.api.model.common.Context;
+import net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+
+import static net.warp_scores.warpscores.cyanide.api.DateUtil.dateWithinLast;
 
 
 /*
@@ -301,6 +307,18 @@ public class ContestsResponse extends ApiResponse {
     private ApiContest[] contests;
     private ApiResponse.Urls urls;
     private Context context;
+
+    @Override
+    public void updateChangeableAttribute() {
+        List<ApiContest> notValidatedOrNotOldEnoughContests = Arrays.stream(contests)
+                .filter(c -> MatchStatus.Validated.equals(c.getStatus()) && dateWithinLast(c.getMatch_date(),
+                        DateUtil.TEN_DAYS))
+                .toList();
+
+        if (notValidatedOrNotOldEnoughContests.isEmpty()) {
+            updateChangeableAttributeTo(true);
+        }
+    }
 
     @Override
     public boolean isEmpty() {

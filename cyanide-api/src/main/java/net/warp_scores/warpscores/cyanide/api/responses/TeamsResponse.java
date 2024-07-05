@@ -123,6 +123,11 @@ public class TeamsResponse extends ApiResponse {
     private ApiTeam[] teams;
 
     @Override
+    public void updateChangeableAttribute() {
+        updateChangeableAttributeTo(true);
+    }
+
+    @Override
     public boolean isEmpty() {
         return teams == null || teams.length == 0;
     }

@@ -1,14 +1,29 @@
 import React from 'react';
-import { Center, Spinner, Table, TableContainer, Tbody, Tfoot, Th, Thead, Tr } from '@chakra-ui/react';
+import {
+  Center,
+  Spinner,
+  Table,
+  TableContainer,
+  Tbody,
+  Tfoot,
+  Th,
+  Thead,
+  Tr,
+  useBreakpointValue,
+} from '@chakra-ui/react';
 import Rank from './Rank';
+import config from '../../config';
 
-function TableColumns(smallscreen) {
+const { smallScreenBreakpointValues } = config;
+
+function TableColumns() {
+  const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
   return (
     <Tr>
       <Th>
-        <Center>{smallscreen ? 'R' : 'Rank'}</Center>
+        <Center>{isSmallScreen ? 'R' : 'Rank'}</Center>
       </Th>
-      {smallscreen ? (
+      {isSmallScreen ? (
         <>
           <Th>Team/Coach</Th>
           <Th />
@@ -22,12 +37,12 @@ function TableColumns(smallscreen) {
         </>
       )}
       <Th>
-        <Center>{smallscreen ? 'GP' : 'Games played'}</Center>
+        <Center>{isSmallScreen ? 'GP' : 'Games played'}</Center>
       </Th>
       <Th>
-        <Center>{smallscreen ? 'Sc.' : 'Score'}</Center>
+        <Center>{isSmallScreen ? 'Sc.' : 'Score'}</Center>
       </Th>
-      {!smallscreen && (
+      {!isSmallScreen && (
         <>
           <Th>
             <Center>W</Center>
@@ -62,21 +77,25 @@ function TableColumns(smallscreen) {
   );
 }
 
-function Ranks({ ranks, smallscreen }) {
+function Ranks({ ranks }) {
   return (
     <TableContainer>
       <Table variant="stripedClickable" size="sm">
-        <Thead>{TableColumns(smallscreen)}</Thead>
+        <Thead>
+          <TableColumns />
+        </Thead>
         <Tbody>
           {ranks ? (
             ranks.map((rank) => {
-              return <Rank rank={rank} key={rank.team.id} smallscreen={smallscreen ? 'smallscreen' : undefined} />;
+              return <Rank rank={rank} key={rank.team.id} />;
             })
           ) : (
             <Spinner />
           )}
         </Tbody>
-        <Tfoot>{TableColumns(smallscreen)}</Tfoot>
+        <Tfoot>
+          <TableColumns />
+        </Tfoot>
       </Table>
     </TableContainer>
   );

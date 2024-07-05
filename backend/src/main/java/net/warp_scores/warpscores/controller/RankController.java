@@ -2,14 +2,15 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionFormat;
+import net.warp_scores.warpscores.domain.CompetitionTeamsDomainService;
 import net.warp_scores.warpscores.domain.TeamDomainService;
+import net.warp_scores.warpscores.domain.persistence.ContestRepository;
+import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Rank;
 import net.warp_scores.warpscores.model.Team;
-import net.warp_scores.warpscores.domain.persistence.ContestRepository;
-import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.service.CompetitionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -72,16 +73,18 @@ public class RankController {
         return ofNullable(rankA.getTeam()).map(Team::getName).orElse("")
                 .compareToIgnoreCase(ofNullable(rankB.getTeam()).map(Team::getName).orElse(""));
     };
+
+    private final CompetitionTeamsDomainService competitionTeamsDomainService;
     private final TeamDomainService teamDomainService;
     private final CompetitionService competitionService;
 
     @GetMapping("/ranks/competition/{competitionId}")
     public ResponseEntity<List<Rank>> getRanksForCompetition(@PathVariable(name = "competitionId") UUID competitionId) {
 
-        List<Team> teams = teamDomainService.findByCompetitionId(competitionId);
         Competition competition = competitionService.loadCompetition(competitionId)
                 .orElseThrow(NoSuchElementException::new);
 
+        List<Team> teams = teamDomainService.findByCompetitionId(competitionId);
         List<Rank> ranks = teams.stream()
                 .map(team -> toRank(team, competition))
                 .sorted(rankComparator)
