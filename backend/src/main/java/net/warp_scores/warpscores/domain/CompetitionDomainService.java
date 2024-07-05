@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.cyanide.api.model.ApiCompetition;
 import net.warp_scores.warpscores.cyanide.api.responses.CompetitionsResponse;
-import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
+import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.service.PopulatorUtil;
 import net.warp_scores.warpscores.service.UUIDConverter;
 import org.springframework.stereotype.Service;
@@ -13,7 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -35,6 +38,18 @@ public class CompetitionDomainService {
                 .map(this::internalCreateOrUpdateCompetition)
                 .collect(Collectors.toList());
         return competitionRepository.saveAll(competitions);
+    }
+
+    @Transactional
+    public Map<UUID, Optional<Date>> getEarliestStartDatesFor(List<UUID> leagueUuids) {
+        Map<UUID, Optional<Date>> earliestStartDatesByLeagueUuid = new HashMap<>();
+        leagueUuids
+                .stream()
+                .forEach(leagueUuid ->
+                        earliestStartDatesByLeagueUuid.put(leagueUuid, competitionRepository
+                                .findTopByLeagueIdOrderByDateCreatedAsc(leagueUuid)
+                                .map(Competition::getDateCreated)));
+        return earliestStartDatesByLeagueUuid;
     }
 
     private Competition internalCreateOrUpdateCompetition(ApiCompetition apiCompetition) {

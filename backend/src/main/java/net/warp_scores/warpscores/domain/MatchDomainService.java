@@ -19,7 +19,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -36,16 +39,21 @@ public class MatchDomainService {
     public List<Match> findMatchesForTeam(UUID teamUuid) {
         List<Match> all = matchRepository.findAll();
         return all.stream()
-                .filter(m -> idMatches(teamUuid, m.getTeams()))
+                .filter(m -> teamWithIdInList(teamUuid, m.getTeams()))
                 .sorted(Comparator.comparing(Match::getStarted).reversed())
                 .collect(Collectors.toList());
     }
 
-    private boolean idMatches(UUID teamUuid, List<Team> teams) {
-        return teams
+    @Transactional
+    public Map<UUID, Optional<Date>> getLastMatchDatesFor(List<UUID> leagueUuids) {
+        Map<UUID, Optional<Date>> lastMatchDatesByLeagueUuid = new HashMap<>();
+        leagueUuids
                 .stream()
-                .map(team -> team.getId())
-                .anyMatch(uuid -> uuid.equals(teamUuid));
+                .forEach(leagueUuid ->
+                        lastMatchDatesByLeagueUuid.put(leagueUuid, matchRepository
+                                .findTopByLeagueIdOrderByStartedDesc(leagueUuid)
+                                .map(Match::getStarted)));
+        return lastMatchDatesByLeagueUuid;
     }
 
     @Transactional
@@ -69,6 +77,13 @@ public class MatchDomainService {
 
         Match match = internalCreateOrUpdateMatch(matchResponse.getMatch());
         return matchRepository.save(match);
+    }
+
+    private boolean teamWithIdInList(UUID teamUuid, List<Team> teams) {
+        return teams
+                .stream()
+                .map(team -> team.getId())
+                .anyMatch(uuid -> uuid.equals(teamUuid));
     }
 
     private Match internalCreateOrUpdateMatch(ApiMatch apiMatch) {
