@@ -446,7 +446,7 @@ public class TeamMatchesResponse extends ApiResponse {
 
     @Override
     public void updateChangeableAttribute() {
-        super.updateChangeableAttributeTo(true);
+        updateChangeableAttributeTo(true);
     }
 
     @Override

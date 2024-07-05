@@ -9,8 +9,12 @@ import java.util.Set;
 
 public class PopulatorUtil {
     public static void copyNonNullProperties(Object source, Object destination) {
-        BeanUtils.copyProperties(source, destination,
-                getNullPropertyNames(source));
+        copyProperties(source, destination, true);
+    }
+
+    public static void copyProperties(Object source, Object destination, boolean ignoreNullProperties) {
+        String[] ignorePropertyNames = ignoreNullProperties ? getNullPropertyNames(source) : new String[0];
+        BeanUtils.copyProperties(source, destination, ignorePropertyNames);
     }
 
     private static String[] getNullPropertyNames(Object source) {

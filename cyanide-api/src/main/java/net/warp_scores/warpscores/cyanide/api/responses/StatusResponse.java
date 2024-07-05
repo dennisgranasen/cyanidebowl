@@ -169,7 +169,7 @@ public class StatusResponse extends ApiResponse {
 
     @Override
     public void updateChangeableAttribute() {
-        super.updateChangeableAttributeTo(true);
+        updateChangeableAttributeTo(true);
     }
 
     @Getter
