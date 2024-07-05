@@ -4,15 +4,15 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.config.properties.CyanideApiProperties;
 import net.warp_scores.warpscores.domain.MatchDomainService;
+import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
+import net.warp_scores.warpscores.domain.persistence.LeagueCollectionRepository;
+import net.warp_scores.warpscores.domain.persistence.LeagueRepository;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.model.LeagueCollection;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Team;
-import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
-import net.warp_scores.warpscores.domain.persistence.LeagueCollectionRepository;
-import net.warp_scores.warpscores.domain.persistence.LeagueRepository;
 import net.warp_scores.warpscores.service.CyanideApiService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -58,25 +58,25 @@ public class FetchDataScheduler {
         loadCompetitionsFor(leaguesToCollect);
     }
 
-    @Scheduled(initialDelay = Schedules.TWENTY_SECONDS, fixedDelay = Schedules.THREE_MINUTES)
+    @Scheduled(initialDelay = Schedules.THREE_MINUTES, fixedDelay = Schedules.FIVE_MINUTES)
     public void fetchCompetitions() {
         if (!cyanideApiProperties.isSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchCompetitions().");
             return;
         }
 
-        List<Competition> competitions = competitionRepository.findByStatusIn(List.of(InProgress));
+        List<Competition> competitions = competitionRepository.findAll();
         List<UUID> leagueUuids = competitions.stream().map(Competition::getLeagueId).collect(Collectors.toList());
         List<League> leagues = leagueRepository.findAllById(leagueUuids);
 
-        log.info("Will load contests and matches for {} competitions in progress of {} leagues.",
+        log.info("Will load contests and matches for {} competitions of {} leagues.",
                 competitions.size(), leagues.size());
 
         loadContestsFor(competitions);
         loadMatchesFor(competitions, leagues);
     }
 
-    @Scheduled(initialDelay = Schedules.TWENTY_SECONDS, fixedDelay = Schedules.FIVE_MINUTES)
+    @Scheduled(initialDelay = Schedules.FIVE_MINUTES, fixedDelay = Schedules.FIFTEEN_MINUTES)
     public void fetchTeams() {
         if (!cyanideApiProperties.isSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchTeams().");
