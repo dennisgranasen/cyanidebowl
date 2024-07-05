@@ -15,7 +15,7 @@ cache:
 maven-build:
   stage: build
   image: registry.hub.docker.com/library/maven:3.8-openjdk-17
-  script: "mvn -Ddockerfile.skip clean compile ---batch-mode"
+  script: "mvn -Ddockerfile.skip clean compile --batch-mode"
 
 maven-test:
   stage: test
