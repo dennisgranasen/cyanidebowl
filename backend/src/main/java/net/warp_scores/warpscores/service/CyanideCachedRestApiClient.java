@@ -173,11 +173,14 @@ public class CyanideCachedRestApiClient {
         boolean waitingForRateLimit = false;
         while (!bucket.tryConsume(1)) {
             if (!waitingForRateLimit) {
-                log.info("Rate limit ({}) exceeded, waiting limit to be refilled (refills every {})...",
+                log.info("Rate limit ({}) exceeded, waiting to be refilled (refills every {})...",
                         limit.getCapacity(), refill);
                 waitingForRateLimit = true;
             }
             waitIgnoringExceptions(1000);
+        }
+        if (waitingForRateLimit) {
+            log.info("Bucket refilled, resuming...");
         }
         RestTemplate restTemplate = new RestTemplateBuilder()
                 .setConnectTimeout(apiRequest.getConnectTimeout())

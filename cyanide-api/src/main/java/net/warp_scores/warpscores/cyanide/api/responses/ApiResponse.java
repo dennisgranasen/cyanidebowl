@@ -39,7 +39,7 @@ public abstract class ApiResponse implements EmptyAwareResponse, UpdateChangeabl
 
     final void updateChangeableAttributeTo(boolean changeable) {
         if (!changeable) {
-            log.info("Updating {} changeable attribute to {}.", this.getClass().getSimpleName(), changeable);
+            log.debug("Updating {} changeable attribute to {}.", this.getClass().getSimpleName(), changeable);
         }
         this.changeableResponse = changeable;
     }
