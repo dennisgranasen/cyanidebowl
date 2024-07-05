@@ -104,12 +104,14 @@ public class CyanideApiService {
         return teams;
     }
 
-    public List<UUID> loadTeamMatches(UUID teamUuid) {
-        if (teamUuid == null) {
+    public List<UUID> loadTeamMatches(Team team) {
+        if (team == null || team.getId() == null) {
             return Collections.emptyList();
         }
+        team.getCreated();
+        team.getDateLastMatch();
         TeamMatchesRequest teamMatchesRequest = new TeamMatchesRequest();
-        teamMatchesRequest.setTeamId(teamUuid);
+        teamMatchesRequest.setTeamId(team.getId());
         TeamMatchesResponse teamMatchesResponse = cyanideCachedRestApiClient.getFromCacheOrApi(teamMatchesRequest);
         return ofNullable(teamMatchesResponse)
                 .map(t -> Arrays.stream(
@@ -130,12 +132,26 @@ public class CyanideApiService {
         return matchDomainService.createOrUpdateMatch(matchResponse);
     }
 
-    public List<Match> loadMatches(League league, Date earliestStartDate, Optional<Date> lastMatchDate) {
-        MatchesRequest matchesRequest = new MatchesRequest();
-        matchesRequest.setLeague_id(league.getUuid());
-        matchesRequest.setStart(lastMatchDate.orElse(earliestStartDate));
-        MatchesResponse matchesResponse = cyanideCachedRestApiClient.getFromCacheOrApi(matchesRequest);
-        return matchDomainService.createOrUpdateMatches(matchesResponse);
+    public List<Match> loadMatches(League league,
+            Optional<Date> earliestStartDate,
+            Optional<Date> lastMatchDateKnown,
+            Optional<Date> lastMatchDateReported) {
+        log.info(
+                "Checking if matches to be loaded for league {} (earliestStart: {}, lastMatchDateKnown: {}, lastMatchDateReported: {}).",
+                league.getUuid(), earliestStartDate, lastMatchDateKnown, lastMatchDateReported);
+        Date startDate = lastMatchDateKnown.orElse(earliestStartDate.orElse(null));
+        if (startDate != null && (lastMatchDateReported.isEmpty() || startDate.before(lastMatchDateReported.get()))) {
+            MatchesRequest matchesRequest = new MatchesRequest();
+            matchesRequest.setLeague_id(league.getUuid());
+            matchesRequest.setStart(startDate);
+            log.info(
+                    "Loading matches for league {} starting from {}.",
+                    league.getUuid(), startDate);
+            MatchesResponse matchesResponse = cyanideCachedRestApiClient.getFromCacheOrApi(matchesRequest);
+            return matchDomainService.createOrUpdateMatches(matchesResponse);
+        }
+        log.info("No matches to load.");
+        return Collections.emptyList();
     }
 
     public List<Competition> loadCompetitions(UUID leagueId) {
