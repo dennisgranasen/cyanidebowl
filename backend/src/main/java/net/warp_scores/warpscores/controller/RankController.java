@@ -150,6 +150,7 @@ public class RankController {
         switch (format) {
             case RoundRobin:
             case Wissen:
+            case Ladder:
                 winFactor = 3;
                 drawFactor = 1;
                 break;

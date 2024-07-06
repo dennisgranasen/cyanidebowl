@@ -19,4 +19,6 @@ public class LeagueCollection {
     private String leagueName;
 
     private Boolean collectionActive;
+
+    private String platform;
 }
