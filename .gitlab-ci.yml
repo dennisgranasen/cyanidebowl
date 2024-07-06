@@ -15,12 +15,12 @@ cache:
 maven-build:
   stage: build
   image: registry.hub.docker.com/library/maven:3.8-openjdk-17
-  script: "mvn -Ddockerfile.skip clean compile -B"
+  script: "mvn -Ddockerfile.skip clean compile --batch-mode"
 
 maven-test:
   stage: test
   image: registry.hub.docker.com/library/maven:3.8-openjdk-17
-  script: "mvn -Ddockerfile.skip test -fae -B"
+  script: "mvn -Ddockerfile.skip test --fail-at-end --batch-mode"
   artifacts:
     reports:
       junit:
