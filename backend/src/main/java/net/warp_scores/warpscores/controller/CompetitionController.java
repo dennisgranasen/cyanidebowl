@@ -26,7 +26,7 @@ public class CompetitionController {
 
     @PostMapping("/competitions/league/{leagueId}")
     public ResponseEntity<List<Competition>> getCompetitionsForLeagueAndStatus(@PathVariable(name = "leagueId") UUID leagueId,
-            @RequestBody CompetitionStatus... competitionStatuses) {
+                                                                               @RequestBody CompetitionStatus... competitionStatuses) {
         try {
             List<Competition> competitions = competitionService.loadForLeagueAndStatuses(leagueId, competitionStatuses);
             competitions = competitions

@@ -4,6 +4,7 @@ import { HashRouter as Router, Route, Routes } from 'react-router-dom';
 import WarpScores from './pages/WarpScores';
 import TeamPage from './pages/TeamPage';
 import CompetitionPage from './pages/CompetitionPage';
+import CircuitLegPage from './pages/CircuitLegPage';
 import AboutPage from './pages/AboutPage';
 import CoachPage from './pages/CoachPage';
 import AdminPage from './pages/AdminPage';
@@ -11,6 +12,7 @@ import StatisticsPage from './pages/StatisticsPage';
 import LoginPage from './pages/LoginPage';
 import LatestMatchesPage from './pages/LatestMatchesPage';
 import LiveMatchesPage from './pages/LiveMatchesPage';
+import CircuitPage from './pages/CircuitPage';
 import LeaguePage from './pages/LeaguePage';
 
 const config = {
@@ -71,6 +73,9 @@ function App() {
             <Route path="/latestMatches/:leagueUuid/:limit" element={<LatestMatchesPage />} />
             <Route path="/liveMatches/:leagueUuid" element={<LiveMatchesPage />} />
             <Route path="/team/:teamUuid" element={<TeamPage />} />
+            <Route path="/admin" element={<AdminPage /> } />
+            <Route path="/admin/circuit/:circuitId" element={<CircuitPage /> } />
+            <Route path="/admin/circuit/:circuitId/leg/:legId" element={<CircuitLegPage />} />
             <Route path="/competition/:competitionUuid" element={<CompetitionPage />} />
             <Route path="/competition/:competitionUuid/team/:teamUuid" element={<TeamPage />} />
           </Routes>

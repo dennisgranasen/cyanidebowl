@@ -41,6 +41,14 @@ function Navigation({ currentPage, league, competition, team }) {
           </BreadcrumbItem>
         )}
       </Breadcrumb>
+      &nbsp;
+      <Breadcrumb>
+        <BreadcrumbItem isCurrentPage={isPage('admin', currentPage)} flexWrap>
+          <BreadcrumbLink as={RouteLink} to="/admin">
+              [Admin]
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+      </Breadcrumb>
       <Spacer />
       <Menu />
     </Flex>
