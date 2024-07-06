@@ -1,5 +1,20 @@
 package net.warp_scores.warpscores.controller;
 
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.IntSupplier;
+import java.util.function.ToIntFunction;
+import java.util.stream.Collectors;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.cyanide.api.model.common.IdWithName;
@@ -9,20 +24,12 @@ import net.warp_scores.warpscores.domain.persistence.LeagueCollectionRepository;
 import net.warp_scores.warpscores.model.LeagueCollection;
 import net.warp_scores.warpscores.service.CyanideApiService;
 import net.warp_scores.warpscores.service.UUIDConverter;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Arrays;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
 @Slf4j
 public class LeagueCollectionController {
-
+    
     private final LeagueCollectionRepository leagueCollectionRepository;
 
     private final CyanideApiService cyanideApiService;

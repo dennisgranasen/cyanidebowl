@@ -1,5 +1,5 @@
 const MAX_AGE_FOR_STATUS_IN_MILLIS = 35 * 60 * 1_000;
-const backendUrl = process.env.NODE_ENV === 'production' ? 'https://warp-scores.net/api' : 'http://localhost:18080';
+const backendUrl = process.env.NODE_ENV === 'production' ? 'https://warp-scores.net/api' : 'http://localhost:8080';
 
 const config = {
   MAX_AGE_FOR_STATUS_IN_MILLIS,

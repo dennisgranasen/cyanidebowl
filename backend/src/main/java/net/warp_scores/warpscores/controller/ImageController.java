@@ -26,7 +26,7 @@ public class ImageController {
     private final ImageService imageService;
 
     @GetMapping("/logo/{name}")
-    public ResponseEntity<byte[]> getLogoImage(@PathVariable(name = "name") String name) {
+    public ResponseEntity<byte[]> getLogoImage(@PathVariable(name = "name") String name) {  
         if (!name.startsWith("Logo_")) {
             name = name.equals("null") ? null : String.format("Logo_%s", name);
         }
@@ -146,7 +146,9 @@ public class ImageController {
         if (!StringUtils.hasText(baseUrl) || !StringUtils.hasText(name)) {
             return Optional.empty();
         }
-        return Optional.of(String.format("%s/%s.%s", baseUrl, name,
-                cyanideApiProperties.getUrls().getImagesExtension()));
+        String ext = cyanideApiProperties.getUrls().getImagesExtension();
+        return Optional.of(String.format("%s/%s%s%s", baseUrl, name,
+                ext.startsWith(".") ? "" : ".",
+                ext));
     }
 }
