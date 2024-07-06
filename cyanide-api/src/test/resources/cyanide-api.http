@@ -41,7 +41,9 @@ GET https://web.cyanide-studio.com/ws/bb3/teams/?league_id=94dd6ae4-83fa-11ee-b9
 GET https://web.cyanide-studio.com/ws/bb3/contests/?status=*&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=558803fb-1878-11ef-895c-bc24112ec32e&platform=pc&key={{apiKey}}
 
 ### Get matches
-GET https://web.cyanide-studio.com/ws/bb3/matches/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&startDate=2024-04-14&platform=pc&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/matches/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&start=2024-07-04T13:04:46&platform=pc&key={{apiKey}}
+
+, competition_name=null, competition_id=null, start=Sat Jul 06 13:04:56 CEST 2024,
 
 ### Get matches (ordered)
 GET https://web.cyanide-studio.com/ws/bb3/matches/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&startDate=2023-12-01&platform=pc&key={{apiKey}}&order=finished

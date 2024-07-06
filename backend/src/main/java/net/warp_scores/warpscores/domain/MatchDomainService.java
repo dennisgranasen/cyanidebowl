@@ -45,7 +45,7 @@ public class MatchDomainService {
     }
 
     @Transactional
-    public Map<UUID, Optional<Date>> getLastMatchDatesFor(List<UUID> leagueUuids) {
+    public Map<UUID, Optional<Date>> getLastMatchDatesForLeagues(List<UUID> leagueUuids) {
         Map<UUID, Optional<Date>> lastMatchDatesByLeagueUuid = new HashMap<>();
         leagueUuids
                 .stream()
@@ -54,6 +54,17 @@ public class MatchDomainService {
                                 .findTopByLeagueIdOrderByStartedDesc(leagueUuid)
                                 .map(Match::getStarted)));
         return lastMatchDatesByLeagueUuid;
+    }
+
+    @Transactional
+    public Map<UUID, Optional<Date>> getLastMatchDatesForTeams(List<Team> teams) {
+        Map<UUID, Optional<Date>> lastMatchDatesByTeamUuid = new HashMap<>();
+        teams
+                .stream()
+                .forEach(team ->
+                        lastMatchDatesByTeamUuid.put(team.getId(), matchRepository
+                                .findTopByTeamsContainsOrderByStartedDesc(team).map(Match::getStarted)));
+        return lastMatchDatesByTeamUuid;
     }
 
     @Transactional
@@ -126,4 +137,5 @@ public class MatchDomainService {
         teamPopulator.populateTeam(apiTeam, team);
         return team;
     }
+
 }

@@ -104,22 +104,41 @@ public class CyanideApiService {
         return teams;
     }
 
-    public List<UUID> loadTeamMatches(Team team) {
+    public void loadTeamMatches(Team team, Optional<Date> earliestStartDate, Optional<Date> lastMatchDateKnown,
+            Optional<Date> lastMatchDateReported) {
         if (team == null || team.getId() == null) {
-            return Collections.emptyList();
+            return;
         }
-        team.getCreated();
-        team.getDateLastMatch();
+        log.info(
+                "Checking if matches to be loaded for team {} (earliestStart: {}, lastMatchDateKnown: {}, lastMatchDateReported: {}).",
+                team.getId(), earliestStartDate, lastMatchDateKnown, lastMatchDateReported);
+        Date startDate = lastMatchDateKnown.orElse(earliestStartDate.orElse(null));
+        if (startDate == null || (lastMatchDateReported.isPresent() && !startDate.before(
+                lastMatchDateReported.get()))) {
+            log.info("No matches to load.");
+            return;
+        }
+
         TeamMatchesRequest teamMatchesRequest = new TeamMatchesRequest();
-        teamMatchesRequest.setTeamId(team.getId());
+        teamMatchesRequest.setTeam(team.getId());
+        teamMatchesRequest.setStart(startDate);
+        log.info(
+                "Loading matches for team {} starting from {}.",
+                team.getId(), startDate);
         TeamMatchesResponse teamMatchesResponse = cyanideCachedRestApiClient.getFromCacheOrApi(teamMatchesRequest);
-        return ofNullable(teamMatchesResponse)
+        List<UUID> matchUuids = ofNullable(teamMatchesResponse)
                 .map(t -> Arrays.stream(
                         ofNullable(t.getMatchIds())
                                 .orElse(new TeamMatchesResponse.MatchId[0])))
                 .orElse(Stream.empty())
                 .map(TeamMatchesResponse.MatchId::getUuid)
                 .collect(Collectors.toList());
+        List<Match> matches = matchUuids
+                .stream()
+                .filter(Objects::nonNull)
+                .map(this::loadMatch)
+                .toList();
+        log.info("Loaded {} matches.", matches.size());
     }
 
     public Match loadMatch(UUID matchUuid) {
