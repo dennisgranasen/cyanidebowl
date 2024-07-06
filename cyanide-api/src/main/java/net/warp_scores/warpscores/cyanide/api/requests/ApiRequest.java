@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.cyanide.api.requests;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
@@ -13,11 +14,13 @@ import org.springframework.util.ReflectionUtils;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Getter
 @Setter
@@ -25,6 +28,8 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ApiRequest<RequestType, ResponseType> {
+
+    private static final SimpleDateFormat REQUEST_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
     private final String requestPath;
     private final Class<RequestType> requestClass;
@@ -56,7 +61,7 @@ public class ApiRequest<RequestType, ResponseType> {
     }
 
     public MultiValueMap<String, String> toQueryParams() {
-        Stream<Method> methods = relevantGetterMethodsAsStream();
+        List<Method> methods = relevantGetterMethodsAsStream();
         MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
         methods.forEach(method -> addQueryParamsFor(queryParams, method));
         return queryParams;
@@ -69,7 +74,7 @@ public class ApiRequest<RequestType, ResponseType> {
         try {
             Object value = method.invoke(this);
             if (value != null) {
-                String stringValue = String.valueOf(value);
+                String stringValue = stringValueFor(value);
                 if (!stringValue.trim().isEmpty()) {
                     queryParams.add(key, stringValue);
                 }
@@ -79,12 +84,21 @@ public class ApiRequest<RequestType, ResponseType> {
         }
     }
 
-    private Stream<Method> relevantGetterMethodsAsStream() {
+    private String stringValueFor(@NonNull Object value) {
+        if (value instanceof Date) {
+            return REQUEST_DATE_FORMAT.format((Date) value);
+        } else {
+            return value.toString();
+        }
+    }
+
+    private List<Method> relevantGetterMethodsAsStream() {
         Method[] allDeclaredMethods = ReflectionUtils.getAllDeclaredMethods(requestClass);
         return Arrays.stream(allDeclaredMethods)
                 .filter(method -> method.getName().startsWith("get"))
                 .filter(method -> !Arrays.asList("getClass", "getCacheValidity", "getReadTimeout", "getConnectTimeout",
-                                "getResponseClass", "getRequestPath", "getRequestClass")
-                        .contains(method.getName()));
+                                "getResponseClass", "getRequestPath", "getRequestClass", "getId_only")
+                        .contains(method.getName()))
+                .toList();
     }
 }

@@ -1,0 +1,27 @@
+package net.warp_scores.warpscores.cyanide.api.requests;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.util.MultiValueMap;
+
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Date;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class MatchesRequestTest {
+
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    @Test
+    public void requestUriParams() throws Exception {
+        MatchesRequest matchesRequest = new MatchesRequest();
+        Date start = dateFormat.parse("2024-06-01 23:20:05");
+        matchesRequest.setStart(start);
+        MultiValueMap<String, String> queryParams = matchesRequest.toQueryParams();
+
+        assertTrue(queryParams.containsKey("start"));
+        assertEquals(Arrays.asList("2024-06-01T23:20:05"), queryParams.get("start"));
+    }
+}

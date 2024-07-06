@@ -14,7 +14,6 @@ import java.util.UUID;
 @Getter
 @Setter
 public class ApiTeam {
-
     @JsonAlias({"idteamlisting", "_id"})
     private String id;
     @JsonAlias({"teamname", "team"})
@@ -40,10 +39,10 @@ public class ApiTeam {
 
     private Integer rerolls;
     private Integer apothecary;
-    @JsonAlias({"dedicated_fans"})
+    @JsonAlias({"dedicated_fans", "popularity"})
     private Integer dedicatedFans;
     private Integer cheerleaders;
-    @JsonAlias({"coach_assistants"})
+    @JsonAlias({"coach_assistants", "assistantcoaches"})
     private Integer coachAssistants;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
