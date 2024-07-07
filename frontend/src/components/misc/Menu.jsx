@@ -33,7 +33,7 @@ import timeUtil from '../../util/TimeUtil';
 import ImageUrls from '../../ImageUrls';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
 
-const { smallBoxSize } = config;
+const { smallBoxSize, isProduction } = config;
 
 function LastCheck({ status, textSize, statusOutdated }) {
   return (
@@ -114,11 +114,13 @@ function Menu() {
                     Home
                   </Link>
                 </Box>
-                <Box>
-                  <Link as={RouteLink} to="/admin" onClick={() => onClose()}>
-                    Admin
-                  </Link>
-                </Box>
+                {!isProduction && (
+                  <Box>
+                    <Link as={RouteLink} to="/admin" onClick={() => onClose()}>
+                      Admin
+                    </Link>
+                  </Box>
+                )}
                 {/*
               <Box>
                 <Link as={RouteLink} to="/coachPage" onClick={() => onClose()}>

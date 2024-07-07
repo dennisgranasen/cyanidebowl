@@ -20,6 +20,8 @@ const config = {
   useSystemColorMode: false,
 };
 
+const { isProduction } = config;
+
 const theme = extendTheme({
   config,
   components: {
@@ -63,7 +65,6 @@ function App() {
         <Router>
           <Routes>
             <Route path="/" element={<WarpScores />} />
-            <Route path="/admin" element={<AdminPage />} />
             <Route path="/statistics" element={<StatisticsPage />} />
             <Route path="/coachPage" element={<CoachPage />} />
             <Route path="/login" element={<LoginPage />} />
@@ -73,9 +74,13 @@ function App() {
             <Route path="/latestMatches/:leagueUuid/:limit" element={<LatestMatchesPage />} />
             <Route path="/liveMatches/:leagueUuid" element={<LiveMatchesPage />} />
             <Route path="/team/:teamUuid" element={<TeamPage />} />
-            <Route path="/admin" element={<AdminPage /> } />
-            <Route path="/admin/circuit/:circuitId" element={<CircuitPage /> } />
-            <Route path="/admin/circuit/:circuitId/leg/:legId" element={<CircuitLegPage />} />
+            {!isProduction && (
+              <>
+                <Route path="/admin" element={<AdminPage />} />
+                <Route path="/admin/circuit/:circuitId" element={<CircuitPage />} />
+                <Route path="/admin/circuit/:circuitId/leg/:legId" element={<CircuitLegPage />} />
+              </>
+            )}
             <Route path="/competition/:competitionUuid" element={<CompetitionPage />} />
             <Route path="/competition/:competitionUuid/team/:teamUuid" element={<TeamPage />} />
           </Routes>
