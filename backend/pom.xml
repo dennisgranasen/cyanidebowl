@@ -124,7 +124,6 @@
                     <executable>true</executable>
                     <mainClass>net.warp_scores.warpscores.WarpScoresApp</mainClass>
                     <addResources>true</addResources>
-                    <outputDirectory>${project.build.directory}/classes/</outputDirectory>
                 </configuration>
                 <executions>
                     <execution>
@@ -187,7 +186,6 @@
             <plugin>
                 <groupId>com.spotify</groupId>
                 <artifactId>dockerfile-maven-plugin</artifactId>
-                <version>1.4.13</version>
                 <configuration>
                     <dockerfile>${project.build.outputDirectory}/Dockerfile</dockerfile>
                     <contextDirectory>${project.build.directory}</contextDirectory>
