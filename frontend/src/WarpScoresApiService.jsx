@@ -17,23 +17,26 @@ const returnData = (result) => {
 export default {
   newCircuit: async (name) => axios.post(`/circuit/${name}/new`).then(returnData).catch(handleError),
   circuit: async (id) => axios(`/circuit/${id}`).then(returnData).catch(handleError),
-  circuits: async () => axios('/circuits' ).then(returnData).catch(handleError),
-  addLegToCircuit: async (circuitId, competitionId, legType, customLabel, game, platform, isCompleted, isKnockout) => 
-    axios.post(`/circuit/${circuitId}/addLeg`, {
-      competitionId: competitionId,
-      legType: legType,
-      label: customLabel,
-      game: game,
-      platform: platform,
-      isCompleted: isCompleted,
-      isKnockout: isKnockout
-    }).then(returnData).catch(handleError),
+  circuits: async () => axios('/circuits').then(returnData).catch(handleError),
+  addLegToCircuit: async (circuitId, competitionId, legType, customLabel, game, platform, isCompleted, isKnockout) =>
+    axios
+      .post(`/circuit/${circuitId}/addLeg`, {
+        competitionId,
+        legType,
+        label: customLabel,
+        game,
+        platform,
+        isCompleted,
+        isKnockout,
+      })
+      .then(returnData)
+      .catch(handleError),
   status: async () => axios(`/status`).then(returnData).catch(handleError),
   league: async (leagueUuid) =>
     axios(`/league${leagueUuid ? `/${leagueUuid}` : ''}`)
       .then(returnData)
       .catch(handleError),
-  leagueCollections: async () => axios("/leagueCollections").then(returnData).catch(handleError),
+  leagueCollections: async () => axios('/leagueCollections').then(returnData).catch(handleError),
   leagueCompetitions: async (leagueUuid) =>
     axios
       .post(`/competitions/league/${leagueUuid}`, ['Registration', 'InProgress', 'Finished'])

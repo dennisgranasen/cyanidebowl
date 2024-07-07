@@ -19,6 +19,13 @@ function Navigation({ currentPage, league, competition, team }) {
             Home
           </BreadcrumbLink>
         </BreadcrumbItem>
+        {isPage('admin', currentPage) && (
+          <BreadcrumbItem isCurrentPage flexWrap>
+            <BreadcrumbLink as={RouteLink} to="/admin">
+              Admin
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+        )}
         {league && (
           <BreadcrumbItem isCurrentPage={isPage('league', currentPage)} flexWrap>
             <BreadcrumbLink as={RouteLink} to={leagueLink}>
@@ -40,14 +47,6 @@ function Navigation({ currentPage, league, competition, team }) {
             </BreadcrumbLink>
           </BreadcrumbItem>
         )}
-      </Breadcrumb>
-      &nbsp;
-      <Breadcrumb>
-        <BreadcrumbItem isCurrentPage={isPage('admin', currentPage)} flexWrap>
-          <BreadcrumbLink as={RouteLink} to="/admin">
-              [Admin]
-            </BreadcrumbLink>
-          </BreadcrumbItem>
       </Breadcrumb>
       <Spacer />
       <Menu />

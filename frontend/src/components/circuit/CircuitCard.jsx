@@ -1,27 +1,8 @@
-import React, { useState } from 'react';
-import { 
-  Box, 
-  Button,
-  Card, 
-  CardBody, 
-  Center,
-  Grid,
-  GridItem,
-  HStack,
-  Heading, 
-  IconButton,
-  Image,
-  Progress,
-  Text,
-  VStack
-} from '@chakra-ui/react';
+import React from 'react';
+import { Box, Card, CardBody, Center, Grid, GridItem, Heading, HStack, Link, Text } from '@chakra-ui/react';
 import { Icon } from '@chakra-ui/icons';
-import { FaGear, FaTowerBroadcast } from 'react-icons/fa6';
-import config from '../../config';
-import { Link as ReactRouterLink } from 'react-router-dom'
-import { Link as ChakraLink, LinkProps } from '@chakra-ui/react'
-
-const { boxSize } = config;
+import { FaGear } from 'react-icons/fa6';
+import { Link as RouteLink } from 'react-router-dom';
 
 function CircuitCard({ circuit, showConfigureLink, noContentIcon, noContentHeading, noContentText, variant }) {
   return (
@@ -29,6 +10,7 @@ function CircuitCard({ circuit, showConfigureLink, noContentIcon, noContentHeadi
       {!circuit && noContentIcon && (
         <Center p="2">
           <Icon as={noContentIcon} boxSize="4em" />
+          {noContentText}
         </Center>
       )}
       <CardBody p={2}>
@@ -39,23 +21,25 @@ function CircuitCard({ circuit, showConfigureLink, noContentIcon, noContentHeadi
               <GridItem colSpan={8}>
                 <Center color="grey">
                   <HStack>
-                      <ChakraLink as={ReactRouterLink} to={`circuit/${circuit.circuitId}`}>{circuit.circuitName}</ChakraLink>
-                      <ChakraLink 
-                        as={ReactRouterLink}
-                        to={`circuit/${circuit.circuitId}`}>
-                        {showConfigureLink ? <FaGear /> : <></>}
-                      </ChakraLink>
+                    <Link as={RouteLink} to={`circuit/${circuit.circuitId}`}>
+                      {circuit.circuitName}
+                    </Link>
+                    <Link as={RouteLink} to={`circuit/${circuit.circuitId}`}>
+                      {showConfigureLink && <Icon as={FaGear} />}
+                    </Link>
                   </HStack>
                 </Center>
               </GridItem>
-              {
-                circuit.leagues && 
-                circuit.leagues.map((league) => 
-                    (<GridItem colSpan={8}>
-                        <Text>{league.label} ({league.id}) {league.platform}</Text>
-                    </GridItem>
-                    ))}
-            </Grid>)}
+              {circuit.leagues &&
+                circuit.leagues.map((league) => (
+                  <GridItem colSpan={8} key={league.id}>
+                    <Text>
+                      {league.label} ({league.id}) {league.platform}
+                    </Text>
+                  </GridItem>
+                ))}
+            </Grid>
+          )}
         </Box>
       </CardBody>
     </Card>
