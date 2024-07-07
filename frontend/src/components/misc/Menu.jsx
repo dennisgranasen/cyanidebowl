@@ -114,11 +114,12 @@ function Menu() {
                     Home
                   </Link>
                 </Box>
-                {/*              <Box>
-                <Link as={RouteLink} to="/admin" onClick={() => onClose()}>
-                  Admin
-                </Link>
-              </Box>
+                <Box>
+                  <Link as={RouteLink} to="/admin" onClick={() => onClose()}>
+                    Admin
+                  </Link>
+                </Box>
+                {/*
               <Box>
                 <Link as={RouteLink} to="/coachPage" onClick={() => onClose()}>
                   Coach-Page

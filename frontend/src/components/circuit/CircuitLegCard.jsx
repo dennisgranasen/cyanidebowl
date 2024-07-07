@@ -1,30 +1,8 @@
-import React, { useState } from 'react';
-import { 
-  Box, 
-  Button,
-  Card, 
-  CardBody, 
-  Center,
-  FormLabel,
-  Grid,
-  GridItem,
-  HStack,
-  Heading, 
-  IconButton,
-  Image,
-  Progress,
-  Text,
-  VStack
-} from '@chakra-ui/react';
-import { Icon } from '@chakra-ui/icons';
-import { FaGear, FaTowerBroadcast } from 'react-icons/fa6';
-import config from '../../config';
-import { Link as ReactRouterLink } from 'react-router-dom'
-import { Link as ChakraLink, LinkProps } from '@chakra-ui/react'
+import React from 'react';
+import { Box, Card, CardBody, Center, Grid, GridItem, HStack, Link } from '@chakra-ui/react';
+import { Link as RouteLink } from 'react-router-dom';
 
-const { boxSize } = config;
-
-function CircuitKegCard({ circuitLeg }) {
+function CircuitLegCard({ circuitLeg }) {
   return (
     <Card direction="row" overflow="hidden" align="center">
       <CardBody p={2}>
@@ -34,15 +12,15 @@ function CircuitKegCard({ circuitLeg }) {
               <GridItem colSpan={8}>
                 <Center color="grey">
                   <HStack>
-                      <ChakraLink as={ReactRouterLink} to={`competition/${circuitLeg.circuitLegId}`}>{circuitLeg.label}</ChakraLink>
-                      <ChakraLink 
-                        as={ReactRouterLink}
-                        to={`competition/${circuitLeg.circuitLegId}`}>                        
-                      </ChakraLink>
+                    <Link as={RouteLink} to={`competition/${circuitLeg.circuitLegId}`}>
+                      {circuitLeg.label}
+                    </Link>
+                    <Link as={RouteLink} to={`competition/${circuitLeg.circuitLegId}`} />
                   </HStack>
                 </Center>
               </GridItem>
-            </Grid>)}
+            </Grid>
+          )}
         </Box>
       </CardBody>
     </Card>
