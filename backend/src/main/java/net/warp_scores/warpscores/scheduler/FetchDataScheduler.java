@@ -51,7 +51,7 @@ public class FetchDataScheduler {
     private final MatchDomainService matchDomainService;
     private final CompetitionDomainService competitionDomainService;
 
-    @Scheduled(initialDelay = Schedules.TWENTY_SECONDS, fixedDelay = Schedules.TWENTY_MINUTES)
+    @Scheduled(initialDelay = Schedules.TWENTY_SECONDS, fixedDelay = Schedules.FIFTEEN_MINUTES)
     public void fetchLeagues() {
         if (!cyanideApiProperties.isSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchLeagues().");
@@ -65,7 +65,7 @@ public class FetchDataScheduler {
     }
 
     @Scheduled(initialDelay = Schedules.TWENTY_SECONDS, fixedDelay = Schedules.ONE_HOUR)
-    public void fetchCompetitionsAndContests() {
+    public void fetchCompetitions() {
         if (!cyanideApiProperties.isSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchCompetitionsAndContests().");
             return;
@@ -74,11 +74,24 @@ public class FetchDataScheduler {
 
         log.info("Will load competitions for {} leagues with active league collection.",
                 leaguesToCollect.size());
-        List<Competition> competitions = loadCompetitionsFor(leaguesToCollect);
-        loadContestsFor(competitions);
+        loadCompetitionsFor(leaguesToCollect);
     }
 
-    @Scheduled(initialDelay = Schedules.THREE_MINUTES, fixedDelay = Schedules.FIVE_MINUTES)
+    @Scheduled(initialDelay = Schedules.THREE_MINUTES, fixedDelay = Schedules.FIFTEEN_MINUTES)
+    public void fetchContests() {
+        if (!cyanideApiProperties.isSchedulerActive()) {
+            log.info("Scheduler deactivated by configuration. Skipping fetchCompetitionsAndContests().");
+            return;
+        }
+        List<LeagueCollection> leaguesToCollect = leagueCollectionRepository.findByCollectionActive(true);
+
+        log.info("Will load competitions for {} leagues with active league collection.",
+                leaguesToCollect.size());
+
+        loadContestsFor(leaguesToCollect);
+    }
+
+    @Scheduled(initialDelay = Schedules.THREE_MINUTES, fixedDelay = Schedules.FIFTEEN_MINUTES)
     public void fetchMatches() {
         if (!cyanideApiProperties.isSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchMatches().");
@@ -159,8 +172,8 @@ public class FetchDataScheduler {
         return competitions;
     }
 
-    private void loadContestsFor(List<Competition> competitions) {
-        List<Contest> contests = competitions
+    private void loadContestsFor(List<LeagueCollection> leagueCollections) {
+        List<Contest> contests = leagueCollections
                 .stream()
                 .map(cyanideApiService::loadContests)
                 .flatMap(List::stream)

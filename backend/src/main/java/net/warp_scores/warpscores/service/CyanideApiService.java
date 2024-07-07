@@ -31,6 +31,7 @@ import net.warp_scores.warpscores.domain.persistence.StatusRepository;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.League;
+import net.warp_scores.warpscores.model.LeagueCollection;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Status;
 import net.warp_scores.warpscores.model.Team;
@@ -180,21 +181,27 @@ public class CyanideApiService {
         return competitionDomainService.createOrUpdateCompetitions(competitionsResponse);
     }
 
+    public List<Contest> loadContests(LeagueCollection leagueCollection) {
+        ContestsRequest contestsRequest = new ContestsRequest();
+        contestsRequest.setLeague_id(leagueCollection.getLeagueId());
+        List<Contest> contests = new ArrayList<>();
+
+        contestsRequest.setStatus(ContestsRequest.Status.InProgress.name());
+        contests.addAll(loadContests(contestsRequest));
+
+        contestsRequest.setStatus(ContestsRequest.Status.Validated.name());
+        contestsRequest.setLimit(1000);
+        contests.addAll(loadContests(contestsRequest));
+
+        return contests;
+    }
+
     public List<Contest> loadContests(Competition competition) {
         ContestsRequest contestsRequest = new ContestsRequest();
         contestsRequest.setCompetition_id(competition.getUuid());
         contestsRequest.setLeague_id(competition.getLeagueId());
         contestsRequest.setStatus("*");
-        List<Contest> contests = new ArrayList<>();
-        if (competition.getRoundsCount() == null) {
-            contests.addAll(loadContests(contestsRequest));
-        } else {
-            for (int round = 1; round < competition.getRoundsCount(); round++) {
-                contestsRequest.setRound(round);
-                contests.addAll(loadContests(contestsRequest));
-            }
-        }
-        return contests;
+        return loadContests(contestsRequest);
     }
 
     private List<Contest> loadContests(ContestsRequest contestsRequest) {
