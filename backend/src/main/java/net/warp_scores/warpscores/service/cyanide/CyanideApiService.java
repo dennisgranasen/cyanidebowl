@@ -1,4 +1,4 @@
-package net.warp_scores.warpscores.service;
+package net.warp_scores.warpscores.service.cyanide;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +35,7 @@ import net.warp_scores.warpscores.model.LeagueCollection;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Status;
 import net.warp_scores.warpscores.model.Team;
+import net.warp_scores.warpscores.service.StatusModelConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.ResourceAccessException;
@@ -58,6 +59,8 @@ import static net.warp_scores.warpscores.cyanide.api.requests.StatusRequest.BB3_
 @RequiredArgsConstructor
 public class CyanideApiService {
     private final CyanideCachedRestApiClient cyanideCachedRestApiClient;
+
+    private final CyanideRestApiClient cyanideRestApiClient;
 
     private final StatusRepository statusRepository;
 
@@ -214,8 +217,7 @@ public class CyanideApiService {
     public void checkApiStatus() {
         Status status;
         try {
-            Optional<StatusResponse> statusResponse = ofNullable(
-                    cyanideCachedRestApiClient.getFromCacheOrApi(new StatusRequest(), true, true, true));
+            Optional<StatusResponse> statusResponse = ofNullable(cyanideRestApiClient.loadFromApi(new StatusRequest()));
             status = statusResponse
                     .map(sr -> Arrays.stream(sr.getGames()))
                     .orElse(Stream.empty())

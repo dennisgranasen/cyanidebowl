@@ -3,7 +3,7 @@ package net.warp_scores.warpscores.controller;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.cyanide.api.requests.LookupRequest;
 import net.warp_scores.warpscores.cyanide.api.responses.LookupResponse;
-import net.warp_scores.warpscores.service.CyanideApiService;
+import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
