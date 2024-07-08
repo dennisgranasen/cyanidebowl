@@ -3,7 +3,7 @@ package net.warp_scores.warpscores.scheduler;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.config.properties.CyanideApiProperties;
-import net.warp_scores.warpscores.service.CyanideApiService;
+import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 

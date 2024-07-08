@@ -14,7 +14,7 @@ import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.model.LeagueCollection;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Team;
-import net.warp_scores.warpscores.service.CyanideApiService;
+import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -138,7 +138,7 @@ public class FetchDataScheduler {
         loadMatchesForLeagues(leagues, lastMatchDateKnownByLeagueUuid, earliestStartDateByLeagueUuid);
     }
 
-    @Scheduled(initialDelay = Schedules.FIVE_MINUTES, fixedDelay = Schedules.TWO_HOURS)
+    @Scheduled(cron = "0 0 3 * * ?")
     public void fetchTeams() {
         if (!cyanideApiProperties.isSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchTeams().");

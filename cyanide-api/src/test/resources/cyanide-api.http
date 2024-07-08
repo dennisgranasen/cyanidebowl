@@ -37,8 +37,14 @@ GET https://web.cyanide-studio.com/ws/bb3/coaches/?competition=DBBL S1 Division 
 ### Get teams
 GET https://web.cyanide-studio.com/ws/bb3/teams/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=e8848221-a04e-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}&order=finished
 
-### Get contests *
-GET https://web.cyanide-studio.com/ws/bb3/contests/?status=*&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=558803fb-1878-11ef-895c-bc24112ec32e&platform=pc&key={{apiKey}}
+### Get contests * by league_id for status Played
+GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Played&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&key={{apiKey}}
+
+### Get contests * by league_id for status Validated
+GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Validated&order=finished&limit=5&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&key={{apiKey}}
+
+### Get contests * by competition_id
+GET https://web.cyanide-studio.com/ws/bb3/contests/?status=*&competition_id=558803fb-1878-11ef-895c-bc24112ec32e&platform=pc&key={{apiKey}}
 
 ### Get matches
 GET https://web.cyanide-studio.com/ws/bb3/matches/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&start=2024-07-04T13:04:46&platform=pc&key={{apiKey}}
