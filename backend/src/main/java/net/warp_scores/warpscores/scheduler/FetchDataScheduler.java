@@ -72,7 +72,7 @@ public class FetchDataScheduler {
         fetchMatchesIfNecessary(leagues, lastKnownMatchDateByLeagueId);
     }
 
-    @Scheduled(initialDelay = Schedules.TWENTY_SECONDS, fixedDelay = Schedules.ONE_HOUR)
+    @Scheduled(initialDelay = Schedules.FIVE_MINUTES, fixedDelay = Schedules.ONE_HOUR)
     public void fetchCompetitions() {
         if (!cyanideApiProperties.isSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchCompetitionsAndContests().");
@@ -100,9 +100,9 @@ public class FetchDataScheduler {
     }
 
     private void fetchMatchesIfNecessary(List<League> leagues, Map<UUID, Optional<Date>> lastKnownMatchDateByLeagueId) {
+        log.info("Checking for new matches for {} leagues.", leagues.size());
         Map<UUID, Date> lastReportedMatchDateByLeagueId = leagues.stream()
                 .collect(toMap(League::getUuid, League::getDateLastMatch));
-
         List<UUID> leagueIdsWithReportedNewMatches = lastReportedMatchDateByLeagueId
                 .entrySet()
                 .stream()
@@ -117,6 +117,7 @@ public class FetchDataScheduler {
                 })
                 .map(entry -> entry.getKey())
                 .toList();
+        log.info("Found {} leagues with reported new matches.", leagueIdsWithReportedNewMatches.size());
         if (!leagueIdsWithReportedNewMatches.isEmpty()) {
             fetchMatchesFor(leagueIdsWithReportedNewMatches);
         }
