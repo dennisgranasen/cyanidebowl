@@ -166,8 +166,8 @@
                         <phase>generate-resources</phase>
                         <configuration>
                             <target>
-                                <echo file="${project.build.outputDirectory}/public/version.json">
-                                    <![CDATA[{ "project": "${project.groupId}:${project.parent.artifactId}", "committish": "${buildNumber}", "projectVersion": "${project.version}", "timestamp": "${maven.build.timestamp}" }]]>
+                                <echo file="${project.build.outputDirectory}/version.json">
+                                    <![CDATA[{ "project": "${project.groupId}:${project.parent.artifactId}-${project.artifactId}", "committish": "${buildNumber}", "projectVersion": "${project.version}", "timestamp": "${maven.build.timestamp}" }]]>
                                 </echo>
                             </target>
                         </configuration>
