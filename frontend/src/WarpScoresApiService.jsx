@@ -58,7 +58,7 @@ export default {
     axios(`/contests/league/${leagueUuid}/latest${limit ? `/${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
-  backendVersion: async () => axios(`/public/version.json`).then(returnData).catch(handleError),
+  backendVersion: async () => axios(`/version.json`).then(returnData).catch(handleError),
 };
 
 // leagueTeams: async (leagueUuid) => axios(`/teams/league/${leagueUuid}`).then(returnData).catch(handleError),
