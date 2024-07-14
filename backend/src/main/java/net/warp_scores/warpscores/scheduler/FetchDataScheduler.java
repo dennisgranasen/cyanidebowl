@@ -75,7 +75,7 @@ public class FetchDataScheduler {
     @Scheduled(initialDelay = Schedules.FIVE_MINUTES, fixedDelay = Schedules.ONE_HOUR)
     public void fetchCompetitions() {
         if (!cyanideApiProperties.isSchedulerActive()) {
-            log.info("Scheduler deactivated by configuration. Skipping fetchCompetitionsAndContests().");
+            log.info("Scheduler deactivated by configuration. Skipping fetchCompetitions().");
             return;
         }
         List<LeagueCollection> leaguesToCollect = leagueCollectionRepository.findByCollectionActive(true);
@@ -88,7 +88,7 @@ public class FetchDataScheduler {
     @Scheduled(initialDelay = Schedules.THREE_MINUTES, fixedDelay = Schedules.FIFTEEN_MINUTES)
     public void fetchLeagueContests() {
         if (!cyanideApiProperties.isSchedulerActive()) {
-            log.info("Scheduler deactivated by configuration. Skipping fetchCompetitionsAndContests().");
+            log.info("Scheduler deactivated by configuration. Skipping fetchLeagueContests().");
             return;
         }
         List<LeagueCollection> leaguesToCollect = leagueCollectionRepository.findByCollectionActive(true);
@@ -115,7 +115,7 @@ public class FetchDataScheduler {
                     return lastReportedMatchDate.isPresent() && (lastKnownMatchDate.isEmpty() || lastKnownMatchDate.get()
                             .before(lastReportedMatchDate.get()));
                 })
-                .map(entry -> entry.getKey())
+                .map(Map.Entry::getKey)
                 .toList();
         log.info("Found {} leagues with reported new matches.", leagueIdsWithReportedNewMatches.size());
         if (!leagueIdsWithReportedNewMatches.isEmpty()) {
@@ -166,7 +166,7 @@ public class FetchDataScheduler {
                                 Team::getId,
                                 collectingAndThen(
                                         Collectors.minBy(nullsFirst(comparing(Team::getCreated))),
-                                        team -> Optional.ofNullable(team.get().getCreated()))));
+                                        team -> Optional.ofNullable(team.orElse(new Team()).getCreated()))));
         teams = teams.stream()
                 .filter(team -> teamHasMatchesAfterLastKnown(team,
                         lastMatchDateKnownByTeamUuid.get(team.getId())))
@@ -186,7 +186,7 @@ public class FetchDataScheduler {
         return leagues;
     }
 
-    private List<Competition> loadCompetitionsFor(List<LeagueCollection> leaguesToCollect) {
+    private void loadCompetitionsFor(List<LeagueCollection> leaguesToCollect) {
         List<Competition> competitions = leaguesToCollect
                 .stream()
                 .map(LeagueCollection::getLeagueId)
@@ -194,7 +194,6 @@ public class FetchDataScheduler {
                 .flatMap(List::stream)
                 .toList();
         log.info("Loaded {} competitions.", competitions.size());
-        return competitions;
     }
 
     private void loadContestsFor(List<LeagueCollection> leagueCollections) {
@@ -219,7 +218,7 @@ public class FetchDataScheduler {
                             lastMatchDateReported);
                 })
                 .flatMap(List::stream)
-                .collect(Collectors.toList());
+                .toList();
         log.info("Loaded {} (skeleton) matches.", matches.size());
 
         matches
