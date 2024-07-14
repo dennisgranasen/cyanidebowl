@@ -10,7 +10,7 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>warpscores-frontend</artifactId>
+    <artifactId>frontend</artifactId>
     <name>${project.artifactId}</name>
     <description>${project.artifactId}</description>
 
@@ -132,8 +132,8 @@
                         <configuration>
                             <target>
                                 <echo file="./public/version.json">
-                                    <![CDATA[{ "project": "${project.groupId}:${project.parent.artifactId}", "committish": "${buildNumber}", "projectVersion": "${project.version}", "timestamp": "${maven.build.timestamp}" }]]>
                                 </echo>
+                                <![CDATA[{ "project": "${project.groupId}:${project.parent.artifactId}-${project.artifactId}", "committish": "${buildNumber}", "projectVersion": "${project.version}", "timestamp": "${maven.build.timestamp}" }]]>
                             </target>
                         </configuration>
                     </execution>
