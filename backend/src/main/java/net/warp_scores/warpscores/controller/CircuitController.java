@@ -1,48 +1,33 @@
 package net.warp_scores.warpscores.controller;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.function.IntSupplier;
-import java.util.function.ToIntFunction;
-import java.util.stream.Collectors;
-
-import org.springframework.data.mongodb.core.aggregation.ArithmeticOperators.Log;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.model.Circuit;
+import net.warp_scores.warpscores.model.CircuitLeg;
+import net.warp_scores.warpscores.service.CircuitService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionStatus;
-import net.warp_scores.warpscores.cyanide.api.model.common.IdWithName;
-import net.warp_scores.warpscores.cyanide.api.requests.LookupRequest;
-import net.warp_scores.warpscores.cyanide.api.responses.LookupResponse;
-import net.warp_scores.warpscores.model.Competition;
-import net.warp_scores.warpscores.model.Circuit;
-import net.warp_scores.warpscores.model.CircuitLeg;
-import net.warp_scores.warpscores.domain.persistence.CircuitRepository;
-import net.warp_scores.warpscores.service.UUIDConverter;
+import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
 @Slf4j
 public class CircuitController {
-    
-    private final CircuitRepository circuitRepository;
+
+    private final CircuitService circuitService;
 
     @GetMapping("/circuits")
     public ResponseEntity<List<Circuit>> getCircuits() {
         try {
-            List<Circuit> circuits = circuitRepository.findAll();
+            List<Circuit> circuits = circuitService.loadAll();
             return ResponseEntity.ok(circuits);
         } catch (Exception ex) {
             log.error("Unable to retrieve circuits", ex);
@@ -50,51 +35,34 @@ public class CircuitController {
         }
     }
 
-    @GetMapping("/circuit/{circuitId}")
-    public ResponseEntity<Circuit> geCircuit(@PathVariable(name = "circuitId") Integer circuitId) {
+    @GetMapping("/circuits/{circuitId}")
+    public ResponseEntity<Circuit> getCircuit(@PathVariable(name = "circuitId") Integer circuitId) {
         try {
-            Circuit circuit = circuitRepository.findById(circuitId).orElseThrow();
-            return ResponseEntity.ok(circuit);
+            Optional<Circuit> circuit = circuitService.load(circuitId);
+            return circuit
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
         } catch (Exception ex) {
-            log.error("Unable to retrieve circuit " + circuitId, ex);
+            log.error("Unable to retrieve circuit for id {}.", circuitId, ex);
             return ResponseEntity.internalServerError().build();
         }
     }
 
-    @PostMapping("/circuit/{circuitName}/new")
-    @Transactional
-    public void createCircuit(@PathVariable(name = "circuitName") String circuitName) {
-        var c = newCircuit(circuitName);
-        log.info("Added circuit {}.", c);
-        circuitRepository.insert(c);
+    @PostMapping("/circuits")
+    public ResponseEntity<Circuit> createCircuit(@RequestBody Circuit circuit) {
+        circuit = circuitService.createCircuit(circuit);
+        return new ResponseEntity(circuit, HttpStatusCode.valueOf(HttpStatus.CREATED.value()));
     }
 
-
-    @PostMapping("/circuit/{circuitId}/addLeg")
-    @Transactional
+    @PostMapping("/circuits/{circuitId}/legs")
     public ResponseEntity<Circuit> addCircuitLeg(@PathVariable(name = "circuitId") Integer circuitId,
-                                       @RequestBody CircuitLeg circuitLeg) {
+            @RequestBody CircuitLeg circuitLeg) {
         try {
-            Circuit circuit = circuitRepository.findById(circuitId).orElseThrow();
-            log.info("adding cc: {}", circuitLeg);
-            Optional<Integer> maxId = circuit.getCircuitLegs()
-                .stream()
-                .map((cc) -> cc.getCircuitLegId())
-                .max(Integer::compare);
-            circuitLeg.setCircuitLegId(maxId.orElse(0) + 1);
-            circuit.addLeg(circuitLeg);
-            Circuit c2 = circuitRepository.save(circuit);
-
-            return ResponseEntity.ok(c2);
-/*
-            List<Competition> competitions = competitionService.loadForLeagueAndStatuses(leagueId, competitionStatuses);
-            competitions = competitions
-                    .stream()
-                    .filter(competitionService::competitionConsideredActive)
-                    .sorted()
-                    .collect(Collectors.toUnmodifiableList())                   ;
-            return ResponseEntity.ok(competitions);
-            */
+            Optional<Circuit> circuit = circuitService.load(circuitId);
+            return circuit
+                    .map(c ->
+                            ResponseEntity.ok(circuitService.createLeg(c, circuitLeg)))
+                    .orElse(ResponseEntity.badRequest().build());
         } catch (Exception ex) {
             log.error("Unable to modify circuit for id {} ", circuitId, ex);
             return ResponseEntity.internalServerError().build();
@@ -102,20 +70,4 @@ public class CircuitController {
 
     }
 
-    @SuppressWarnings("unchecked")
-    private Circuit newCircuit(String name) {
-        Circuit circuit = new Circuit();
-        var maxId = circuitRepository.findAll().stream().mapToInt(
-            new ToIntFunction<Circuit>() {
-                @Override
-                public int applyAsInt(Circuit lc) {
-                    return lc.getCircuitId();
-                }
-            }).max().orElse(0);
-        circuit.setCircuitId(maxId + 1);
-        circuit.setCircuitName(name);
-        circuit.setCircuitLegs(Collections.EMPTY_LIST);
-        log.info("Created circuit {}", circuit);
-        return circuit;
-    }
 }

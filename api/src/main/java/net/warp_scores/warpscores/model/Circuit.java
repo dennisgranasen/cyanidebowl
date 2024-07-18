@@ -4,8 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.ArrayList;
@@ -17,11 +17,12 @@ import java.util.List;
 @ToString
 public class Circuit {
     @Id
-    private Integer circuitId;
+    private Long circuitId;
 
+    @Indexed(unique = true)
     private String circuitName;
 
-    private List<CircuitLeg> circuitLegs = new ArrayList<CircuitLeg>();
+    private List<CircuitLeg> circuitLegs = new ArrayList<>();
 
     public void addLeg(CircuitLeg circuitLeg) {
         circuitLegs.add(circuitLeg);
