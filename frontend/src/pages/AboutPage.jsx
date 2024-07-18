@@ -62,9 +62,9 @@ function AboutPage() {
               </CardBody>
             </Card>
           )}
-          <SimpleGrid columns={2} spacing="1rem">
-            <Card direction={{ base: 'row' }} variant="outline" overflow="hidden">
-              <Image objectFit="cover" src={ImageUrls.dbbcLogoPng('small')} p="0.8rem" />
+          <SimpleGrid columns={{ base: 1, xl: 2 }} spacing="1rem">
+            <Card direction={{ base: 'column', md: 'row' }} variant="outline" overflow="hidden">
+              <Image objectFit="contain" maxW="100px" src={ImageUrls.dbbcLogoPng('small')} p="0.8rem" />
               <CardBody>
                 It was initially coded to support the{' '}
                 <Link href="http://dbbcev.de" isExternal>
@@ -77,7 +77,7 @@ function AboutPage() {
                 &quot; but is about to open to support other private leagues as well.
               </CardBody>
             </Card>
-            <Card direction={{ base: 'row' }} variant="outline">
+            <Card direction={{ base: 'column', md: 'row' }} variant="outline">
               <InfoOutlineIcon boxSize="100px" p="0.8rem"/>
               <CardBody>
                 <Disclaimer />
