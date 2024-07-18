@@ -1,29 +1,21 @@
-import React, { useState } from 'react';
-import { 
-  Box, 
-  Button,
-  Card, 
-  CardBody, 
+import React from 'react';
+import {
+  Box,
+  Card,
+  CardBody,
   Center,
   Grid,
   GridItem,
+  Heading,
   HStack,
-  Heading, 
-  IconButton,
-  Image,
-  Progress,
+  Link as ChakraLink,
   Text,
-  VStack
 } from '@chakra-ui/react';
 import { Icon } from '@chakra-ui/icons';
-import { FaGear, FaTowerBroadcast } from 'react-icons/fa6';
-import config from '../config';
-import { Link as ReactRouterLink } from 'react-router-dom'
-import { Link as ChakraLink, LinkProps } from '@chakra-ui/react'
+import { FaGear } from 'react-icons/fa6';
+import { Link as ReactRouterLink } from 'react-router-dom';
 
-const { boxSize } = config;
-
-function LeagueCollectionCard({ leagueCollection, showConfigureLink, noContentIcon, noContentHeading, noContentText, variant }) {
+function LeagueCollectionCard({ leagueCollection, showConfigureLink, noContentIcon, noContentHeading, variant }) {
   return (
     <Card direction="row" overflow="hidden" variant={variant} align="center">
       {!leagueCollection && noContentIcon && (
@@ -39,23 +31,25 @@ function LeagueCollectionCard({ leagueCollection, showConfigureLink, noContentIc
               <GridItem colSpan={8}>
                 <Center color="grey">
                   <HStack>
-                      <ChakraLink as={ReactRouterLink} to={`circuit/${leagueCollection.circuitId}`}>{leagueCollection.circuitName}-!!-</ChakraLink>
-                      <ChakraLink 
-                        as={ReactRouterLink}
-                        to={`configureCircuit/${leagueCollection.circuitId}`}>
-                        {showConfigureLink ? <FaGear /> : <></>}
-                      </ChakraLink>
+                    <ChakraLink as={ReactRouterLink} to={`circuit/${leagueCollection.circuitId}`}>
+                      {leagueCollection.circuitName}-!!-
+                    </ChakraLink>
+                    <ChakraLink as={ReactRouterLink} to={`configureCircuit/${leagueCollection.circuitId}`}>
+                      {showConfigureLink && <FaGear />}
+                    </ChakraLink>
                   </HStack>
                 </Center>
               </GridItem>
-              {
-                leagueCollection.leagues && 
-                  leagueCollection.leagues.map((league) => 
-                    (<GridItem colSpan={8}>
-                        <Text>{league.label} ({league.id}) {league.platform}</Text>
-                    </GridItem>
-                    ))}
-            </Grid>)}
+              {leagueCollection?.leagues &&
+                leagueCollection.leagues.map((league) => (
+                  <GridItem key={league.id} colSpan={8}>
+                    <Text>
+                      {league.label} ({league.id}) {league.platform}
+                    </Text>
+                  </GridItem>
+                ))}
+            </Grid>
+          )}
         </Box>
       </CardBody>
     </Card>

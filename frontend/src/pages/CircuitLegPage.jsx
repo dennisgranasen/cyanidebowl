@@ -21,7 +21,7 @@ function CircuitLegPage() {
 
   useEffect(() => {
     const fetchCircuit = () => {
-      WarpScoresApiService.circuit(circuitId)
+      WarpScoresApiService.circuits(circuitId)
         .then((data) => {
           setCircuit(data);
         })

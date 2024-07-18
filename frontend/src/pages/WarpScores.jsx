@@ -16,7 +16,7 @@ function WarpScores() {
   useEffect(() => {
     const fetchLeagues = () => {
       setLoading(true);
-      WarpScoresApiService.league()
+      WarpScoresApiService.leagues()
         .then((data) => {
           setLeagues(data);
         })

@@ -21,7 +21,7 @@ function LeaguePage() {
 
   useEffect(() => {
     const fetchLeague = () => {
-      WarpScoresApiService.league(leagueUuid)
+      WarpScoresApiService.leagues(leagueUuid)
         .then((data) => {
           setLeague(data);
         })

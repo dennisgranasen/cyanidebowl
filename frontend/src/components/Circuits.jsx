@@ -1,46 +1,38 @@
 import React, { useEffect, useState } from 'react';
 import { Heading, Button, FormLabel, Input, SimpleGrid, Spinner } from '@chakra-ui/react';
-import { FaRegFaceSadTear } from 'react-icons/fa6';
-import formatter from '../util/Formatter';
 import WarpScoresApiService from '../WarpScoresApiService';
 import CircuitCard from './circuit/CircuitCard';
-
 
 function Circuits() {
   const [circuits, setCircuits] = useState();
   const fetchCircuits = () => {
-    WarpScoresApiService.circuits().then((data) => {
-      setCircuits(data);
-    }).catch((reason) => console.log(reason));
+    WarpScoresApiService.circuits()
+      .then((data) => {
+        setCircuits(data);
+      })
+      .catch((reason) => console.log(reason));
   };
 
-  const [newCircuitName, setNewCircuitName] = useState("");
+  const [newCircuitName, setNewCircuitName] = useState('');
   const updateNewCircuitName = (e) => {
-    setNewCircuitName(e.target.value)
-  };    
+    setNewCircuitName(e.target.value);
+  };
   const addCircuit = (e) => {
-    WarpScoresApiService.newCircuit(newCircuitName).then((data) => 
-      fetchCircuits()
-  )};
+    WarpScoresApiService.newCircuit(newCircuitName).then((data) => fetchCircuits());
+  };
   useEffect(() => {
     fetchCircuits();
   }, []);
 
-  return (
-    circuits ? (
+  return circuits ? (
     <>
       <Heading size="md">Circuits</Heading>
-      { circuits && circuits.length > 0 && (
-          <SimpleGrid columns={{ lg: 3, sm: 1, md: 2 }} spacing="20px">
-            {circuits.map((circuit) => (
-              <CircuitCard
-                key={circuit.circuitId}
-                circuit={circuit}
-                showConfigureLink={true}
-                variant="outline"
-              />
-            ))}
-          </SimpleGrid>
+      {circuits && circuits.length > 0 && (
+        <SimpleGrid columns={{ lg: 3, sm: 1, md: 2 }} spacing="20px">
+          {circuits.map((circuit) => (
+            <CircuitCard key={circuit.circuitId} circuit={circuit} showConfigureLink variant="outline" />
+          ))}
+        </SimpleGrid>
       )}
 
       <FormLabel>Create Circuit</FormLabel>
@@ -48,8 +40,8 @@ function Circuits() {
       <Button onClick={addCircuit}>Add</Button>
     </>
   ) : (
-    <Spinner/>
-  ));
+    <Spinner />
+  );
 }
 
 export default Circuits;

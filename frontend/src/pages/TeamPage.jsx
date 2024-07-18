@@ -96,11 +96,11 @@ function TeamPage() {
           {team && (
             <>
               <HeaderCard
-                heading={team.name}
-                subHeading={`Coach: ${team.coachName}`}
+                heading={team?.name}
+                subHeading={`Coach: ${team?.coachName}`}
                 detailsHeading="Team details"
-                mainImageSrc={ImageUrls.logo(team.logo)}
-                additionalImageSrc={ImageUrls.race(team.race)}
+                mainImageSrc={ImageUrls.logo(team?.logo)}
+                additionalImageSrc={ImageUrls.race(team?.race)}
               >
                 <InfoArea>
                   <InfoItem key="race" label="Race" info={prettyPrint(team.race)} />

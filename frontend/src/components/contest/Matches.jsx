@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Box,
   Spinner,
   Table,
   TableContainer,
@@ -30,9 +31,11 @@ function Match({ match }) {
             <Tag size="sm">{formatter.formatAsDate(match.started)}</Tag>
           </Td>
           <Td textAlign="center">
-            <Tag size="sm" color="grey">
-              <RouteLink to={`/${match.leagueId}`}>{match.leagueName}</RouteLink>
-            </Tag>
+            <Box>
+              <Tag size="sm" color="grey">
+                <RouteLink to={`/${match.leagueId}`}>{match.leagueName}</RouteLink>
+              </Tag>
+            </Box>
           </Td>
           <Td textAlign="left">
             <Tag size="sm">

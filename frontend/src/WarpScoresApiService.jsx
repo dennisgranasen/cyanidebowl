@@ -19,7 +19,7 @@ export default {
   backendVersion: async () => axios(`/version.json`).then(returnData).catch(handleError),
   status: async () => axios(`/status`).then(returnData).catch(handleError),
   // circuits
-  newCircuit: async (name) => axios.post(`/circuits`, { name }).then(returnData).catch(handleError),
+  newCircuit: async (name) => axios.post(`/circuits`, { circuitName: name }).then(returnData).catch(handleError),
   circuits: async (circuitId) =>
     axios(`/circuits${circuitId ? `/${circuitId}` : ''}`)
       .then(returnData)
@@ -38,7 +38,7 @@ export default {
       .then(returnData)
       .catch(handleError),
   // leagues
-  league: async (leagueUuid) =>
+  leagues: async (leagueUuid) =>
     axios(`/leagues${leagueUuid ? `/${leagueUuid}` : ''}`)
       .then(returnData)
       .catch(handleError),
