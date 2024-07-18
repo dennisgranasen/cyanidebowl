@@ -11,6 +11,8 @@ import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Contest;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -90,10 +92,13 @@ public class CompetitionService {
 
         List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid());
         OptionalInt currentRound = contests.stream().mapToInt(Contest::getRound).max();
-
+        if ( competition.getTotalRounds() == null) {
+            competition.setTotalRounds(calcWissenTotalRounds(competition.getTeamsMax()));
+        }
         competition.setCurrentRound(currentRound.orElse(0));
         competition.setPlayedMatches(playedMatchesCount);
         competition.setValidatedMatches(validatedMatchesCount);
+        competition.setTotalMatches(competition.getTeamsMax()/2*competition.getTotalRounds());
         competition.setLiveMatches(liveMatches);
     }
 
@@ -118,4 +123,18 @@ public class CompetitionService {
                         Collectors.groupingBy(Competition::getStatus, Collectors.counting()));
         return collect;
     }
+
+    public Integer calcWissenTotalRounds(Integer teamsMax) {
+        int numTeams = teamsMax;
+        if (teamsMax % 2 == 1) {
+            numTeams += 1;
+        }
+        BigDecimal neededRounds = BigDecimal.valueOf(log2(numTeams));
+        return neededRounds.setScale(0, RoundingMode.DOWN).intValue();
+    }
+
+    private static double log2(int x) {
+        return (Math.log10(x) / Math.log10(2));
+    }
+
 }
