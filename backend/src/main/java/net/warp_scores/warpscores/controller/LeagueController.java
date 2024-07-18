@@ -25,14 +25,14 @@ public class LeagueController {
 
     private final CompetitionService competitionService;
 
-    @GetMapping("/league")
+    @GetMapping("/leagues")
     public ResponseEntity<List<League>> getLeagues() {
         List<League> all = leagueRepository.findAll();
         all.forEach(this::countCompetitions);
         return ResponseEntity.ok(all);
     }
 
-    @GetMapping("/league/{leagueUuid}")
+    @GetMapping("/leagues/{leagueUuid}")
     public ResponseEntity<League> getLeague(@PathVariable(name = "leagueUuid") UUID leagueUuid) {
         Optional<League> league = leagueRepository.findById(leagueUuid);
         league.ifPresent(this::countCompetitions);
