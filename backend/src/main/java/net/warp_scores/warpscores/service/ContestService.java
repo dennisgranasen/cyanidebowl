@@ -6,7 +6,6 @@ import net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus;
 import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
-import net.warp_scores.warpscores.domain.persistence.TeamRepository;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.Match;
@@ -25,7 +24,6 @@ import java.util.UUID;
 public class ContestService {
     private final MatchRepository matchRepository;
     private final ContestRepository contestRepository;
-    private final TeamRepository teamRepository;
     private final CompetitionService competitionService;
     private final ContestInitializationService contestInitializationService;
     private final TeamDomainService teamDomainService;
