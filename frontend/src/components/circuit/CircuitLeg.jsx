@@ -14,7 +14,7 @@ function CircuitLeg({ circuitLeg }) {
   const [error, setError] = useState(null);
 
   const fetchLeague = (compUuid, compType) => {
-    WarpScoresApiService.league(compUuid)
+    WarpScoresApiService.leagues(compUuid)
       .then((data) => {
         setCompetition(data);
       })

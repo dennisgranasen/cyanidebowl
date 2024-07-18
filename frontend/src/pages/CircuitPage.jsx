@@ -104,7 +104,7 @@ function CircuitPage() {
   };
 
   const fetchCircuit = (id) => {
-    WarpScoresApiService.circuit(id)
+    WarpScoresApiService.circuits(id)
       .then((res) => {
         if (res.circuitLegs == null) res.circuitLegs = [];
         else res.circuitLegs.sort(compareCC);

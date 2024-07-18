@@ -1,6 +1,5 @@
 import { SimpleGrid } from '@chakra-ui/react';
 import React from 'react';
-import { Link as RouteLink } from 'react-router-dom';
 import LeagueCollectionCard from './LeagueCollectionCard';
 
 function LeagueCollectionCards({ leagueCollections, noContentIcon, noContentHeading, noContentText }) {
@@ -10,13 +9,13 @@ function LeagueCollectionCards({ leagueCollections, noContentIcon, noContentHead
         <LeagueCollectionCard
           key={leagueCollection.circuitId}
           leagueCollection={leagueCollection}
-          showConfigureLink={true}
+          showConfigureLink
           variant="outline"
         />
       ))}
     </SimpleGrid>
   ) : (
-    <LeagueCollectionCard      
+    <LeagueCollectionCard
       noContentIcon={noContentIcon}
       noContentHeading={noContentHeading}
       noContentText={noContentText}
