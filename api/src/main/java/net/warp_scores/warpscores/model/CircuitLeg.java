@@ -8,8 +8,6 @@ import net.warp_scores.warpscores.cyanide.api.model.common.Platform;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Getter
@@ -17,7 +15,7 @@ import java.util.UUID;
 @Document
 public class CircuitLeg implements Comparable<CircuitLeg> {
     @Id
-    private Integer circuitLegId;
+    private Long circuitLegId;
     private UUID competitionId;
     private CircuitLegType legType;
     private String label;
@@ -37,7 +35,7 @@ public class CircuitLeg implements Comparable<CircuitLeg> {
         return result;
     }
 }
-/* 
+/*
 public class BB1CircuitCompetition extends CircuitCompetition {
     private Integer indexOfFirstMatch;
     private Integer indexOfLastMatch;
