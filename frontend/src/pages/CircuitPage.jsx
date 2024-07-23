@@ -2,12 +2,19 @@ import React, { useEffect, useState } from 'react';
 import {
   Box,
   Button,
-  Center,
+  Card,
+  CardBody,
+  CardFooter,
+  CardHeader,
   Checkbox,
   FormControl,
+  FormErrorMessage,
+  FormHelperText,
   FormLabel,
+  Heading,
   Input,
   Select,
+  SimpleGrid,
   Table,
   TableContainer,
   Tbody,
@@ -16,43 +23,39 @@ import {
   Thead,
   Tr,
   VStack,
-  Wrap,
-  WrapItem,
 } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
+import { Field, Form, Formik } from 'formik';
 import WarpScoresApiService from '../WarpScoresApiService';
 import Navigation from '../components/misc/Navigation';
 import CircuitLeg from '../components/circuit/CircuitLeg';
 import HeaderCard from '../components/common/HeaderCard';
+import prettyPrint from '../util/PrettyPrint';
+import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 
 function TableColumns() {
   return (
     <Tr>
       <Th />
-      <Th>
-        <Center>Label</Center>
-      </Th>
-      <Th>
-        <Center>League/Competition</Center>
-      </Th>
-      <Th>
-        <Center>LegType</Center>
-      </Th>
-      <Th>
-        <Center>Game version</Center>
-      </Th>
-      <Th>
-        <Center>Platform</Center>
-      </Th>
-      <Th>
-        <Center>Knockout?</Center>
-      </Th>
-      <Th>
-        <Center>Collect?</Center>
-      </Th>
+      <Th>Label</Th>
+      <Th>League/Competition</Th>
+      <Th>LegType</Th>
+      <Th>Game version</Th>
+      <Th>Platform</Th>
+      <Th>Knockout?</Th>
+      <Th>Collect?</Th>
     </Tr>
   );
 }
+
+const initialFormValues = {
+  leagueOrCompetitionId: '',
+  legType: '',
+  platform: '',
+  label: '',
+  isCollect: true,
+  isKnockout: false,
+};
 
 function CircuitPage() {
   const platforms = [
@@ -73,71 +76,46 @@ function CircuitPage() {
   ];
   const legTypes = ['League', 'Competition'];
   const { circuitId } = useParams();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState();
   const [circuit, setCircuit] = useState();
-  const [platform, setPlatform] = useState('bb3.cross');
-  const [competitionId, setCompetitionId] = useState(null);
-  const [legType, setLegType] = useState('Competition');
-  const [customLabel, setCustomLabel] = useState();
-  const [isKnockout, setIsKnockout] = useState(false);
-  const [isCollect, setIsCollect] = useState(true);
 
-  const changePlatform = (e) => {
-    const platformId = e.target.value;
-    setPlatform(platformId);
-  };
-
-  const changeLegType = (e) => {
-    const compType = e.target.value;
-    setLegType(compType);
-  };
-
-  const onCompetitionIdChanged = (e) => {
-    setCompetitionId(e.target.value);
-  };
-
-  const onCustomLabelChanged = (e) => {
-    setCustomLabel(e.target.value);
-  };
-
-  const compareCC = (a, b) => {
-    return a.label.localeCompare(b.label);
+  const compareLegs = (leg, otherLeg) => {
+    return leg.label.localeCompare(otherLeg.label);
   };
 
   const fetchCircuit = (id) => {
+    setLoading(true);
     WarpScoresApiService.circuits(id)
       .then((res) => {
         if (res.circuitLegs == null) res.circuitLegs = [];
-        else res.circuitLegs.sort(compareCC);
+        else res.circuitLegs.sort(compareLegs);
         setCircuit(res);
       })
-      .catch((err) => console.log(err));
+      .catch((reason) => setError(reason))
+      .finally(setLoading(false));
   };
 
-  const onCollectChanged = () => {
-    setIsCollect(!isCollect);
-  };
-
-  const onKnockoutChanged = () => {
-    setIsKnockout(!isKnockout);
-  };
-
-  const onAddLegClicked = () => {
-    const platformParts = platform.split('.');
+  const onAddLegClicked = (values, actions) => {
+    const platformParts = values.platform.split('.');
     const game = platformParts[0].toUpperCase();
     const p = platformParts[1].toUpperCase();
-
     WarpScoresApiService.addLegToCircuit(
       circuit.circuitId,
-      competitionId,
-      legType,
-      customLabel,
+      values.leagueOrCompetitionId,
+      values.legType,
+      values.label,
       game,
       p,
-      isCollect,
-      isKnockout
+      values.isCollect,
+      values.isKnockout
     )
       .then(() => fetchCircuit(circuitId))
-      .catch((err) => console.log(err));
+      .catch((err) => console.log(err))
+      .finally(() => {
+        values = initialFormValues;
+        actions.setSubmitting(false);
+      });
   };
 
   useEffect(() => {
@@ -147,82 +125,141 @@ function CircuitPage() {
   return (
     <VStack align="left">
       <Box>
-        <Navigation currentPage="Circuits" />
+        <Navigation currentPage="circuits" circuit={[circuitId, circuit?.circuitName]} />
       </Box>
-      {circuit && (
-        <>
-          <HeaderCard heading={circuit.circuitName} detailsHeading="Circuit details" />
-          <Box>
-            <FormControl>
-              <FormLabel>Circuit legs</FormLabel>
-              <TableContainer>
-                <Table variant="simpleClickable" size="sm">
-                  <Thead>
-                    <TableColumns />
-                  </Thead>
-                  <Tbody>
-                    {circuit.circuitLegs.map((cl) => {
-                      return <CircuitLeg key={cl.label} circuitLeg={cl} />;
-                    })}
-                  </Tbody>
-                  <Tfoot>
-                    <TableColumns />
-                  </Tfoot>
-                </Table>
-              </TableContainer>
-              <FormLabel marginTop={2}>Add leagues:</FormLabel>
-              <Wrap margin={1} borderWidth={1} padding={2} borderRadius={5}>
-                <WrapItem>
-                  <Input placeholder="Enter Cyanide league/comp. Id" onChange={onCompetitionIdChanged} width={300} />
-                </WrapItem>
-                <WrapItem>
-                  <Select
-                    variant="outlined"
-                    placeholder="Select leg type"
-                    onChange={changeLegType}
-                    value={legType || undefined}
-                  >
-                    {legTypes.map((p) => (
-                      <option value={p} key={p}>
-                        {p}
-                      </option>
-                    ))}
-                  </Select>
-                </WrapItem>
+      <HeaderCard heading={circuit ? circuit.circuitName : 'Circuit'} detailsHeading="Circuit details" />
+      <LoadingOrErrorWrapper loading={loading} error={error}>
+        <Heading size="md">Circuit legs</Heading>
+        <TableContainer mb="1rem">
+          <Table variant="simpleClickable" size="sm">
+            <Thead>
+              <TableColumns />
+            </Thead>
+            <Tbody>
+              {circuit?.circuitLegs.map((circuitLeg) => (
+                <CircuitLeg key={circuitLeg.circuitLegId} circuitLeg={circuitLeg} />
+              ))}
+            </Tbody>
+            <Tfoot>
+              <TableColumns />
+            </Tfoot>
+          </Table>
+        </TableContainer>
 
-                <WrapItem>
-                  <Select
-                    variant="outlined"
-                    placeholder="Select platform"
-                    onChange={changePlatform}
-                    value={platform || undefined}
+        <Heading size="md">Add Leg</Heading>
+        <Box mb="1rem">
+          A Circuit Leg is either a competition or a league (with all it&apos;s competitions), specified by leg type.
+          You may add a custom label and define, if data from Cyanide API should be collected periodically. If you
+          select &quot;treat Ladder as Knockout&quot;, all competitions of type ladder will be rendered as if they were
+          knockout tournaments.
+        </Box>
+        <Formik initialValues={initialFormValues} onSubmit={(values, actions) => onAddLegClicked(values, actions)}>
+          {(props) => (
+            <Card as={Form} variant="outline" size="sm">
+              <CardHeader>New Leg</CardHeader>
+              <SimpleGrid as={CardBody} columns={{ base: 1, md: 2, xl: 3 }} gap="1rem">
+                <Box>
+                  <Field
+                    name="competitionOrLeagueId"
+                    validate={(value) => (value?.trim().length > 0 ? null : 'Competition or League id required.')}
                   >
-                    {platforms.map((p) => (
-                      <option value={p} key={p}>
-                        {p.replace('.', ' ')}
-                      </option>
-                    ))}
-                  </Select>
-                </WrapItem>
-                <WrapItem>
-                  <Input placeholder="Enter custom label" onChange={onCustomLabelChanged} />
-                </WrapItem>
-                <WrapItem>
-                  <Checkbox name="Knockout" onChange={onKnockoutChanged} readOnly={false} />
-                  <FormLabel>Knockout?</FormLabel>
-                </WrapItem>
-                <WrapItem>
-                  <Checkbox name="Collect?" defaultChecked onChange={onCollectChanged} readOnly={false} />
-                  <FormLabel>Collect?</FormLabel>
-                </WrapItem>
-                <WrapItem>
-                  <Button onClick={onAddLegClicked}>Add leg</Button>
-                </WrapItem>
-              </Wrap>
-            </FormControl>
-          </Box>
-        </>
-      )}
+                    {({ field, form }) => (
+                      <FormControl isInvalid={form.errors.competitionOrLeagueId && form.touched.competitionOrLeagueId}>
+                        <FormLabel>Id</FormLabel>
+                        <Input {...field} placeholder="Competition/League Uuid" />
+                        <FormHelperText>Id of the Competition or League to add to Circuit</FormHelperText>
+                        <FormErrorMessage>{form.errors.competitionOrLeagueId}</FormErrorMessage>
+                      </FormControl>
+                    )}
+                  </Field>
+                </Box>
+                <Box>
+                  <Field name="label" validate={(value) => (value?.trim().length > 0 ? null : 'Enter a custom label')}>
+                    {({ field, form }) => (
+                      <FormControl isInvalid={form.errors.label && form.touched.label}>
+                        <FormLabel>Label</FormLabel>
+                        <Input {...field} placeholder="Enter custom label" />
+                        <FormHelperText>Custom name/label for this circuit leg</FormHelperText>
+                        <FormErrorMessage>{form.errors.label}</FormErrorMessage>
+                      </FormControl>
+                    )}
+                  </Field>
+                </Box>
+                <Box>
+                  <Field
+                    name="legType"
+                    validate={(value) => (value?.trim().length > 0 ? null : 'Select either League or Competition')}
+                  >
+                    {({ field, form }) => (
+                      <FormControl isInvalid={form.errors.legType && form.touched.legType}>
+                        <FormLabel>Type</FormLabel>
+                        <Select {...field} variant="outlined" placeholder="Select leg type">
+                          {legTypes.map((legTypeOption) => (
+                            <option value={legTypeOption} key={legTypeOption}>
+                              {legTypeOption}
+                            </option>
+                          ))}
+                        </Select>
+                        <FormHelperText>League or Competition?</FormHelperText>
+                        <FormErrorMessage>{form.errors.legType}</FormErrorMessage>
+                      </FormControl>
+                    )}
+                  </Field>
+                </Box>
+                <Box>
+                  <Field
+                    name="platform"
+                    validate={(value) => (value?.trim().length > 0 ? null : 'Specify platform (e.g. BB3 Cross)')}
+                  >
+                    {({ field, form }) => (
+                      <FormControl isInvalid={form.errors.platform && form.touched.platform}>
+                        <FormLabel>Platform</FormLabel>
+                        <Select {...field} variant="outlined" placeholder="Select platform">
+                          {platforms.map((platformOption) => (
+                            <option value={platformOption} key={platformOption}>
+                              {prettyPrint(platformOption)}
+                            </option>
+                          ))}
+                        </Select>
+                        <FormHelperText>Which platform?</FormHelperText>
+                        <FormErrorMessage>{form.errors.platform}</FormErrorMessage>
+                      </FormControl>
+                    )}
+                  </Field>
+                </Box>
+                <Box>
+                  <FormLabel>Misc</FormLabel>
+                  <Field name="treatLadderAsKnockout">
+                    {({ field }) => (
+                      <FormControl>
+                        <Checkbox {...field} readOnly={false}>
+                          Treat Ladder as Knockout?
+                        </Checkbox>
+                      </FormControl>
+                    )}
+                  </Field>
+                  <Field name="collectData">
+                    {({ field }) => (
+                      <FormControl>
+                        <Checkbox {...field} readOnly={false}>
+                          Collect data?
+                        </Checkbox>
+                      </FormControl>
+                    )}
+                  </Field>
+                </Box>
+              </SimpleGrid>
+              <CardFooter>
+                <Box>
+                  <Button mt="1rem" type="submit" isLoading={props.isSubmitting}>
+                    Add leg
+                  </Button>
+                </Box>
+              </CardFooter>
+            </Card>
+          )}
+        </Formik>
+      </LoadingOrErrorWrapper>
     </VStack>
   );
 }

@@ -37,6 +37,7 @@
     "axios": "^1.2.1",
     "chakra-ui-markdown": "^1.4.3",
     "core-js": "^3.37.1",
+    "formik": "2.4.6",
     "jest-cli": "^29.7.0",
     "markdown-to-jsx": "^7.4.7",
     "raw-loader": "^4.0.2",
