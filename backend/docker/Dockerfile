@@ -1,9 +1,11 @@
-FROM openjdk:17-jdk-slim
+FROM openjdk:17-jdk-alpine
 MAINTAINER naytsyrhc <naytsyrhc@gmx.org>
 
-HEALTHCHECK CMD curl -sSf http://localhost:8080/public/version.json
+RUN apk add --update curl && \
+    rm -rf /var/cache/apk/*
 
-# COPY ./backend.jar warpscores-backend.jar
+HEALTHCHECK --interval=60s --timeout=5s CMD curl -sSf http://localhost:8080/version.json || exit 1
+
 ADD backend.jar warpscores-backend.jar
 
 EXPOSE 8080
