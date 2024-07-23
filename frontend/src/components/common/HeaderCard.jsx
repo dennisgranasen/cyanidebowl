@@ -17,9 +17,9 @@ import config from '../../config';
 
 const { smallScreenBreakpointValues } = config;
 
-function StandardScreenHeaderCard(mainImageSrc, heading, subHeading, additionalImageSrc, children, ...props) {
+function StandardScreenHeaderCard(mainImageSrc, heading, subHeading, additionalImageSrc, children) {
   return (
-    <Card direction="row" {...props}>
+    <Card direction="row">
       <Box p="0.5rem">
         <Image objectFit="contain" maxW="140px" src={mainImageSrc} fallback={null} />
       </Box>
@@ -39,18 +39,10 @@ function StandardScreenHeaderCard(mainImageSrc, heading, subHeading, additionalI
   );
 }
 
-function SmallScreenHeaderCard(
-  mainImageSrc,
-  heading,
-  subHeading,
-  detailsHeading,
-  additionalImageSrc,
-  children,
-  ...props
-) {
+function SmallScreenHeaderCard(mainImageSrc, heading, subHeading, detailsHeading, additionalImageSrc, children) {
   const noAccordion = !detailsHeading;
   return (
-    <Card {...props}>
+    <Card>
       <Box p="0.5rem">
         <Image objectFit="contain" maxW="140px" src={mainImageSrc} />
       </Box>
@@ -80,13 +72,11 @@ function SmallScreenHeaderCard(
   );
 }
 
-function HeaderCard({ mainImageSrc, heading, subHeading, detailsHeading, additionalImageSrc, children, ...props }) {
+function HeaderCard({ mainImageSrc, heading, subHeading, detailsHeading, additionalImageSrc, children }) {
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
   return isSmallScreen
-    ? SmallScreenHeaderCard(mainImageSrc, heading, subHeading, detailsHeading, additionalImageSrc, children, {
-        ...props,
-      })
-    : StandardScreenHeaderCard(mainImageSrc, heading, subHeading, additionalImageSrc, children, { ...props });
+    ? SmallScreenHeaderCard(mainImageSrc, heading, subHeading, detailsHeading, additionalImageSrc, children)
+    : StandardScreenHeaderCard(mainImageSrc, heading, subHeading, additionalImageSrc, children);
 }
 
 export default HeaderCard;
