@@ -1,7 +1,12 @@
-FROM openjdk:17-jdk-slim
+FROM openjdk:17-jdk-alpine
 MAINTAINER naytsyrhc <naytsyrhc@gmx.org>
 
-COPY ./discord-bot.jar warpscores-discord-bot.jar
+RUN apk add --update curl && \
+    rm -rf /var/cache/apk/*
+
+HEALTHCHECK --interval=60s --timeout=5s CMD curl -sSf http://localhost:8080/version.json || exit 1
+
+ADD discord-bot.jar warpscores-discord-bot.jar
 
 EXPOSE 8081
 
