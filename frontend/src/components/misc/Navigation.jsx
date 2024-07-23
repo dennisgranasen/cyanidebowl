@@ -3,10 +3,11 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, Flex, Spacer } from '@chakr
 import { Link as RouteLink } from 'react-router-dom';
 import Menu from './Menu';
 
-function Navigation({ currentPage, league, competition, team }) {
+function Navigation({ currentPage, league, competition, circuit, team }) {
   const leagueLink = league ? `/${league[0]}` : '/';
   const competitionLink = competition ? `/competition/${competition[0]}` : '';
   const teamLink = team ? `${competitionLink}/team/${team[0]}` : '';
+  const circuitLink = circuit ? `/admin/circuit/${circuit[0]}` : '';
   const isPage = (pageName, currentPageName) => {
     return pageName === currentPageName;
   };
@@ -19,10 +20,17 @@ function Navigation({ currentPage, league, competition, team }) {
             Home
           </BreadcrumbLink>
         </BreadcrumbItem>
-        {isPage('admin', currentPage) && (
-          <BreadcrumbItem isCurrentPage flexWrap>
+        {(isPage('admin', currentPage) || isPage('circuits', currentPage)) && (
+          <BreadcrumbItem isCurrentPage={isPage('admin', currentPage)} flexWrap>
             <BreadcrumbLink as={RouteLink} to="/admin">
               Admin
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+        )}
+        {circuit && (
+          <BreadcrumbItem isCurrentPage={isPage('circuits', currentPage)} flexWrap>
+            <BreadcrumbLink as={RouteLink} to={circuitLink}>
+              {circuit[1]}
             </BreadcrumbLink>
           </BreadcrumbItem>
         )}
