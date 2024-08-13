@@ -20,12 +20,18 @@ function Version({ textSize, ...props }) {
       });
   };
 
+  const handleError = (response) => {
+    if (!response.ok) {
+      throw Error(response.statusText);
+    } else {
+      return response.json();
+    }
+  };
+
   const loadFrontendVersion = () => {
     fetch(`${frontendVersionFile}`, { headers: { 'Content-Type': 'application/json', Accept: 'application/json' } })
-      .then((response) => response.json())
-      .then((json) => {
-        setFrontendVersion(json);
-      })
+      .then(handleError)
+      .then(setFrontendVersion)
       .catch((reason) => {
         logger.debug('Could not load frontend version from file %s, %o.', frontendVersionFile, reason);
         setFrontendVersion(null);

@@ -4,7 +4,8 @@ import {
   Button,
   Card,
   CardBody,
-  CardFooter, CardHeader,
+  CardFooter,
+  CardHeader,
   FormControl,
   FormErrorMessage,
   FormHelperText,
@@ -15,12 +16,14 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { Field, Form, Formik } from 'formik';
+import { useAuth0 } from '@auth0/auth0-react';
 import WarpScoresApiService from '../WarpScoresApiService';
 import CircuitCard from './circuit/CircuitCard';
 import LoadingOrErrorWrapper from './common/LoadingOrErrorWrapper';
-import logger from '../util/Logger';
+import config from '../config';
 
 function Circuits() {
+  const { isAuthenticated, isLoading, getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const [circuits, setCircuits] = useState([]);
@@ -30,7 +33,7 @@ function Circuits() {
   };
 
   const addCircuit = (values, actions) => {
-    WarpScoresApiService.newCircuit(values.circuitName)
+    WarpScoresApiService.newCircuit(values.circuitName, getAccessTokenSilently, getAccessTokenWithPopup)
       .then((newCircuit) => {
         const newCircuits = circuits.concat([newCircuit]);
         newCircuits.sort((aCircuit, otherCircuit) => aCircuit.circuitName.localeCompare(otherCircuit.circuitName));
@@ -52,8 +55,7 @@ function Circuits() {
         setCircuits(data);
       })
       .catch((reason) => {
-        logger.error(reason);
-        setError(reason);
+        setError({ type: 'error', message: reason.toLocaleString(config.locale) });
       })
       .finally(() => {
         setLoading(false);
@@ -67,13 +69,15 @@ function Circuits() {
   return (
     <VStack align="left">
       <LoadingOrErrorWrapper loading={loading} error={error}>
-        <Heading size="md">Circuits</Heading>
         {circuits?.length > 0 && (
-          <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing="1rem" mb="1rem">
-            {circuits.map((circuit) => (
-              <CircuitCard key={circuit.circuitId} circuit={circuit} showConfigureLink variant="outline" />
-            ))}
-          </SimpleGrid>
+          <>
+            <Heading size="md">Circuits</Heading>
+            <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing="1rem" mb="1rem">
+              {circuits.map((circuit) => (
+                <CircuitCard key={circuit.circuitId} circuit={circuit} showConfigureLink variant="outline" />
+              ))}
+            </SimpleGrid>
+          </>
         )}
       </LoadingOrErrorWrapper>
       <Heading size="md">Create Circuit</Heading>
@@ -101,7 +105,12 @@ function Circuits() {
                 </Field>
               </CardBody>
               <CardFooter>
-                <Button mt="1rem" type="submit" isLoading={props.isSubmitting}>
+                <Button
+                  mt="1rem"
+                  type="submit"
+                  isLoading={props.isSubmitting}
+                  isDisabled={isLoading || !isAuthenticated}
+                >
                   Add Circuit
                 </Button>
               </CardFooter>

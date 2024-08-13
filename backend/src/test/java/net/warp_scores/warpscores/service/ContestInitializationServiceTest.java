@@ -198,7 +198,7 @@ public class ContestInitializationServiceTest {
         contest.setContestUuid(Generators.timeBasedGenerator().generate());
         Team teamA = createTeam(teamNameA);
         Team teamB = createTeam(teamNameB);
-        contest.setOpponents(Arrays.asList(teamA, teamB));
+        contest.setOpponents(List.of(teamA, teamB));
         contest.setRound(round);
         return contest;
     }

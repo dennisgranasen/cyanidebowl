@@ -96,7 +96,7 @@ public class ApiRequest<RequestType, ResponseType> {
         Method[] allDeclaredMethods = ReflectionUtils.getAllDeclaredMethods(requestClass);
         return Arrays.stream(allDeclaredMethods)
                 .filter(method -> method.getName().startsWith("get"))
-                .filter(method -> !Arrays.asList("getClass", "getCacheValidity", "getReadTimeout", "getConnectTimeout",
+                .filter(method -> !List.of("getClass", "getCacheValidity", "getReadTimeout", "getConnectTimeout",
                                 "getResponseClass", "getRequestPath", "getRequestClass", "getId_only")
                         .contains(method.getName()))
                 .toList();

@@ -1,8 +1,15 @@
 import axios from 'axios';
 import logger from './util/Logger';
 import config from './config';
+import { jwtDecode } from 'jwt-decode';
 
 axios.defaults.baseURL = config.backendUrl;
+
+const authorizationParams = {
+  authorizationParams: {
+    audience: config.auth0Audience,
+  },
+};
 
 const handleError = (reason) => {
   logger.error('Backend call failed.', reason);
@@ -14,19 +21,77 @@ const returnData = (result) => {
   return result?.data !== null ? result.data : [];
 };
 
+const getToken = async (getAccessTokenSilently, getAccessTokenWithPopup) => {
+  let token;
+  try {
+    token = await getAccessTokenSilently(authorizationParams);
+  } catch (e) {
+    token = await getAccessTokenWithPopup(authorizationParams);
+  }
+  return token;
+};
+
+const getAuthHeaders = async (getAccessTokenSilently, getAccessTokenWithPopup) => {
+  const token = await getToken(getAccessTokenSilently, getAccessTokenWithPopup);
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
+};
+
+const postDataWithAuthentication = async (endpoint, data, getAccessTokenSilently, getAccessTokenWithPopup) => {
+  const authHeaders = await getAuthHeaders(getAccessTokenSilently, getAccessTokenWithPopup);
+  const response = await axios.post(endpoint, data, authHeaders);
+  return response;
+};
+
+/*
+const getDataWithAuthentication = async (endpoint, getAccessTokenSilently, getAccessTokenWithPopup) => {
+  const authHeaders = await getAuthHeaders(getAccessTokenSilently, getAccessTokenWithPopup);
+  const response = await axios(endpoint, authHeaders);
+  return response;
+};
+*/
+
+const probeUserPermissions = async (getAccessTokenSilently, getAccessTokenWithPopup) => {
+  const token = await getToken(getAccessTokenSilently, getAccessTokenWithPopup);
+  const decoded = jwtDecode(token);
+  return {
+    readCurrentUser: decoded.permissions.includes('read:current_user'),
+    writeLeagueAdmin: decoded.permissions.includes('write:league_admin'),
+    writeSiteAdmin: decoded.permissions.includes('write:site_admin'),
+  };
+};
+
 export default {
   // misc
   backendVersion: async () => axios(`/version.json`).then(returnData).catch(handleError),
   status: async () => axios(`/status`).then(returnData).catch(handleError),
   // circuits
-  newCircuit: async (name) => axios.post(`/circuits`, { circuitName: name }).then(returnData).catch(handleError),
+  newCircuit: async (name, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication(`/circuits`, { circuitName: name }, getAccessTokenSilently, getAccessTokenWithPopup)
+      .then(returnData)
+      .catch(handleError),
   circuits: async (circuitId) =>
     axios(`/circuits${circuitId ? `/${circuitId}` : ''}`)
       .then(returnData)
       .catch(handleError),
-  addLegToCircuit: async (circuitId, competitionId, legType, customLabel, game, platform, isCompleted, isKnockout) =>
-    axios
-      .post(`/circuits/${circuitId}/legs`, {
+  addLegToCircuit: async (
+    circuitId,
+    competitionId,
+    legType,
+    customLabel,
+    game,
+    platform,
+    isCompleted,
+    isKnockout,
+    getAccessTokenSilently,
+    getAccessTokenWithPopup,
+  ) =>
+    postDataWithAuthentication(
+      `/circuits/${circuitId}/legs`,
+      {
         competitionId,
         legType,
         label: customLabel,
@@ -34,7 +99,10 @@ export default {
         platform,
         isCompleted,
         isKnockout,
-      })
+      },
+      getAccessTokenSilently,
+      getAccessTokenWithPopup,
+    )
       .then(returnData)
       .catch(handleError),
   // leagues
@@ -53,10 +121,7 @@ export default {
     axios(`/contests/competition/${competitionUuid}`).then(returnData).catch(handleError),
   // competitions
   leagueCompetitions: async (leagueUuid) =>
-    axios
-      .post(`/competitions/league/${leagueUuid}`, ['Registration', 'InProgress', 'Finished'])
-      .then(returnData)
-      .catch(handleError),
+    axios(`/competitions/league/${leagueUuid}`).then(returnData).catch(handleError),
   competition: async (competitionUuid) => axios(`/competitions/${competitionUuid}`).then(returnData).catch(handleError),
   competitionTeam: async (competitionUuid, teamUuid) =>
     axios(`/competitions/${competitionUuid}/team/${teamUuid}`).then(returnData).catch(handleError),
@@ -65,4 +130,7 @@ export default {
   // team
   team: async (teamUuid) => axios(`/teams/${teamUuid}`).then(returnData).catch(handleError),
   teamMatches: async (teamUuid) => axios(`/teams/${teamUuid}/matches`).then(returnData).catch(handleError),
+  // user
+  userPermissions: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
+    probeUserPermissions(getAccessTokenSilently, getAccessTokenWithPopup).catch(handleError),
 };

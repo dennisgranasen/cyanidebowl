@@ -20,6 +20,7 @@ import {
 import { FaTriangleExclamation } from 'react-icons/fa6';
 import { Link as RouteLink } from 'react-router-dom';
 import { ExternalLinkIcon, HamburgerIcon, Icon } from '@chakra-ui/icons';
+import { useAuth0 } from '@auth0/auth0-react';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import config from '../../config';
 import formatter from '../../util/Formatter';
@@ -32,8 +33,9 @@ import StatusIcon from './StatusIcon';
 import timeUtil from '../../util/TimeUtil';
 import ImageUrls from '../../ImageUrls';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
+import logger from '../../util/Logger';
 
-const { smallBoxSize, isProduction } = config;
+const { smallBoxSize } = config;
 
 function LastCheck({ status, textSize, statusOutdated }) {
   return (
@@ -61,9 +63,27 @@ function LastCheck({ status, textSize, statusOutdated }) {
 }
 
 function Menu() {
+  const { user, isAuthenticated, isLoading, loginWithPopup, logout, getAccessTokenSilently, getAccessTokenWithPopup } =
+    useAuth0();
+  const [userPermissions, setUserPermissions] = useState({
+    readCurrentUser: false,
+    writeLeagueAdmin: false,
+    writeSiteAdmin: false,
+  });
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [status, setStatus] = useState(null);
   const [statusOutdated, setStatusOutdated] = useState(false);
+
+  useEffect(() => {
+    const fetchUserPermissions = () => {
+      WarpScoresApiService.userPermissions(getAccessTokenSilently, getAccessTokenWithPopup)
+        .catch((reason) => {
+          logger.error(reason);
+        })
+        .then(setUserPermissions);
+    };
+    fetchUserPermissions();
+  }, [isLoading, isAuthenticated]);
 
   const fetchStatus = () => {
     WarpScoresApiService.status()
@@ -110,36 +130,52 @@ function Menu() {
             <VStack h="full" align="left">
               <VStack align="left" h="full">
                 <Box>
-                  <Link as={RouteLink} to="/" onClick={() => onClose()}>
+                  <Link variant="menu" as={RouteLink} to="/" onClick={() => onClose()}>
                     Home
                   </Link>
                 </Box>
-                {!isProduction && (
+                {!isLoading && isAuthenticated && userPermissions?.readCurrentUser && (
                   <Box>
-                    <Link as={RouteLink} to="/admin" onClick={() => onClose()}>
+                    <Link variant="menu" as={RouteLink} to="/coachPage" onClick={() => onClose()}>
+                      Coach-Page
+                    </Link>
+                  </Box>
+                )}
+                {!isLoading && isAuthenticated && userPermissions?.writeSiteAdmin && (
+                  <Box>
+                    <Link variant="menu" as={RouteLink} to="/admin" onClick={() => onClose()}>
                       Admin
                     </Link>
                   </Box>
                 )}
                 {/*
-              <Box>
-                <Link as={RouteLink} to="/coachPage" onClick={() => onClose()}>
-                  Coach-Page
-                </Link>
-              </Box>
-              <Box>
-                <Link as={RouteLink} to="/statistics" onClick={() => onClose()}>
-                  Statistics
-                </Link>
-              </Box>
-              <Box>
-                <Link as={RouteLink} to="/login" onClick={() => onClose()}>
-                  Login
-                </Link>
-              </Box>
-*/}
                 <Box>
-                  <Link as={RouteLink} to="/about" onClick={() => onClose()}>
+                  <Link variant="menu" as={RouteLink} to="/statistics" onClick={() => onClose()}>
+                    Statistics
+                  </Link>
+                </Box>
+                <Box>
+                  <Link variant="menu" as={RouteLink} to="/login" onClick={() => onClose()}>
+                    Login
+                  </Link>
+                </Box>
+                */}
+                {!isLoading && (
+                  <Box>
+                    {!isAuthenticated ? (
+                      <Link variant="menu" onClick={() => loginWithPopup()}>
+                        Login
+                      </Link>
+                    ) : (
+                      <Link
+                        variant="menu"
+                        onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
+                      >{`Logout ${user.name}`}</Link>
+                    )}
+                  </Box>
+                )}
+                <Box>
+                  <Link variant="menu" as={RouteLink} to="/about" onClick={() => onClose()}>
                     About
                   </Link>
                 </Box>

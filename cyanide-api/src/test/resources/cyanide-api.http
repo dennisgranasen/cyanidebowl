@@ -11,7 +11,7 @@ GET https://web.cyanide-studio.com/ws/cya/status/?key={{apiKey}}
 # Lookup #######################################################################
 
 ### Lookup league
-GET https://web.cyanide-studio.com/ws/bb3/lookup/?league=NAF BB3 Kickoff&platform=pc&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/lookup/?league=LOC Crossplay&key={{apiKey}}
 
 ### Lookup coach
 GET https://web.cyanide-studio.com/ws/bb3/lookup/?coach=naytsyrhc&platform=pc&key={{apiKey}}

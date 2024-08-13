@@ -28,27 +28,15 @@ public class CompetitionController {
 
     private final TeamDomainService teamDomainService;
 
-    @PostMapping("/competitions/league/{leagueId}")
-    public ResponseEntity<List<Competition>> getCompetitionsForLeagueAndStatus(@PathVariable(name = "leagueId") UUID leagueId,
-                                                                               @RequestBody CompetitionStatus... competitionStatuses) {
+    @GetMapping("/competitions/league/{leagueId}")
+    public ResponseEntity<List<Competition>> getActiveCompetitionsForLeague(@PathVariable(name = "leagueId") UUID leagueId) {
         try {
-            List<Competition> competitions = competitionService.loadForLeagueAndStatuses(leagueId, competitionStatuses);
+            List<Competition> competitions = competitionService.loadForLeague(leagueId);
             competitions = competitions
                     .stream()
                     .filter(competitionService::competitionConsideredActive)
                     .sorted()
-                    .collect(Collectors.toUnmodifiableList())                   ;
-            return ResponseEntity.ok(competitions);
-        } catch (Exception ex) {
-            log.error("Unable to get competitions for league id {} and statuses {}", leagueId, competitionStatuses, ex);
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    @GetMapping("/competitions/league/{leagueId}")
-    public ResponseEntity<List<Competition>> getCompetitionsForLeague(@PathVariable(name = "leagueId") UUID leagueId) {
-        try {
-            List<Competition> competitions = competitionService.loadForLeague(leagueId);
+                    .collect(Collectors.toUnmodifiableList());
             return ResponseEntity.ok(competitions);
         } catch (Exception ex) {
             log.error("Unable to get competitions for league id {}", leagueId, ex);
