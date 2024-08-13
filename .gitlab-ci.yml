@@ -1,9 +1,9 @@
 stages:
   - build
   - test
-  - integrate
-  - package
-  - deploy
+#  - integrate
+#  - package
+#  - deploy
 
 variables:
   MAVEN_OPTS: -Dmaven.repo.local=.m2/repository
