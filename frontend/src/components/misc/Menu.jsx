@@ -82,7 +82,9 @@ function Menu() {
         })
         .then(setUserPermissions);
     };
-    fetchUserPermissions();
+    if (!isLoading && isAuthenticated) {
+      fetchUserPermissions();
+    }
   }, [isLoading, isAuthenticated]);
 
   const fetchStatus = () => {
