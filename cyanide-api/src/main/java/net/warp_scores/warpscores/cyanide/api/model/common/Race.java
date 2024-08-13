@@ -8,8 +8,9 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
-import static java.util.Arrays.asList;
+import static java.util.List.of;
 import static java.util.Arrays.stream;
 
 @Getter
@@ -74,10 +75,8 @@ public enum Race {
         Predicate<Race> racePredicate;
         if (value instanceof Integer) {
             racePredicate = r -> ((Integer) value) == r.raceId;
-        } else if (value instanceof String) {
-            final String raceName = (String) value;
-            racePredicate = r -> asList(r.name(), r.raceName, r.imageName, r.alternativeRaceName)
-                    .stream()
+        } else if (value instanceof String raceName) {
+            racePredicate = r -> Stream.of(r.name(), r.raceName, r.imageName, r.alternativeRaceName)
                     .filter(Objects::nonNull)
                     .anyMatch(raceName::equalsIgnoreCase);
         } else {
