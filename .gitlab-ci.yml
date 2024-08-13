@@ -27,33 +27,33 @@ maven-test:
       junit:
         - "**/target/surefire-reports/TEST-*.xml"
 
-maven-package:
-  stage: package
-  only:
-    - /^dev$/
-  image: registry.hub.docker.com/library/maven:3.8-openjdk-17
-  script: "mvn install -DskipTests=true"
-
-tag-release-from-main:
-  stage: integrate
-  only:
-    - /^main$/
-  script:
-    - updateChangelog "${POM_BASE_VERSION}"
-    - git commit -a -m "Preparing release ${POM_BASE_VERSION}" && git push origin
-    - export COMMIT_HASH=`git log -1 --format="%H"`
-    - git tag -a -m "Release ${POM_BASE_VERSION}" "${POM_BASE_VERSION}" "${COMMIT_HASH}"
-    - git push origin ${POM_BASE_VERSION}
-    - git commit -a -m "New version after release is $NEW_VERSION" && git push origin
-    - git checkout dev
-    - git merge --no-ff ${CI_COMMIT_REF_NAME}
-    - git push origin dev
-
-
-maven-release:
-  stage: package
-  only:
-    - /^main$/
-  image: registry.hub.docker.com/library/maven:3.8-openjdk-17
-  script: "mvn release:prepare release:perform -DskipTests=true"
+#maven-package:
+#  stage: package
+#  only:
+#    - /^dev$/
+#  image: registry.hub.docker.com/library/maven:3.8-openjdk-17
+#  script: "mvn install -DskipTests=true"
+#
+#tag-release-from-main:
+#  stage: integrate
+#  only:
+#    - /^main$/
+#  script:
+#    - updateChangelog "${POM_BASE_VERSION}"
+#    - git commit -a -m "Preparing release ${POM_BASE_VERSION}" && git push origin
+#    - export COMMIT_HASH=`git log -1 --format="%H"`
+#    - git tag -a -m "Release ${POM_BASE_VERSION}" "${POM_BASE_VERSION}" "${COMMIT_HASH}"
+#    - git push origin ${POM_BASE_VERSION}
+#    - git commit -a -m "New version after release is $NEW_VERSION" && git push origin
+#    - git checkout dev
+#    - git merge --no-ff ${CI_COMMIT_REF_NAME}
+#    - git push origin dev
+#
+#
+#maven-release:
+#  stage: package
+#  only:
+#    - /^main$/
+#  image: registry.hub.docker.com/library/maven:3.8-openjdk-17
+#  script: "mvn release:prepare release:perform -DskipTests=true"
 
