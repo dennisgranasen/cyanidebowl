@@ -115,7 +115,7 @@ public class ContestInitializationService {
             contest.setLeagueName(competition.getLeagueName());
             contest.setStatus(MatchStatus.Calculated);
             contest.setContestUuid(Generators.timeBasedGenerator().generate());
-            contest.setOpponents(Arrays.asList(groupA.get(i), groupB.get(i)));
+            contest.setOpponents(List.of(groupA.get(i), groupB.get(i)));
             roundContests.add(contest);
         }
         return roundContests;

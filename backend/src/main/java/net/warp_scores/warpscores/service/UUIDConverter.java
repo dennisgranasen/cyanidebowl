@@ -49,7 +49,7 @@ public class UUIDConverter {
                 .distinct()
                 .toList();
         if (uniqueUuids.isEmpty()) {
-            throw new NoSuchElementException(String.format("All ids null (%s).", Arrays.asList(uuids)));
+            throw new NoSuchElementException(String.format("All ids null (%s).", List.of(uuids)));
         }
         if (uniqueUuids.size() > 1) {
             throw new IllegalArgumentException(String.format("Got ambiguous ids (%s).", uniqueUuids));

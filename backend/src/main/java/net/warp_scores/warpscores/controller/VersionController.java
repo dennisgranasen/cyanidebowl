@@ -34,6 +34,6 @@ public class VersionController {
             log.error("Can't load version.json from classpath (msg: {}).", ex.getMessage());
         }
         return Optional.of(
-                "{ \"project\": \"net.warp-scores:warpscores-backend\", \"committish\": \"n/a\", \"projectVersion\": \"dev\", \"timestamp\": \"n/\" }".getBytes());
+                "{ \"project\": \"net.warp-scores:warpscores-backend\", \"committish\": \"n/a\", \"projectVersion\": \"dev\", \"timestamp\": \"n/a\" }".getBytes());
     }
 }
