@@ -22,7 +22,7 @@ function WarpScores() {
         })
         .then(() => setLoading(false))
         .catch((reason) => {
-          setError(reason.toLocaleString(config.locale));
+          setError({ type: 'error', message: reason.toLocaleString(config.locale) });
         });
     };
     fetchLeagues();

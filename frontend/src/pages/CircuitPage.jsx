@@ -26,12 +26,14 @@ import {
 } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
 import { Field, Form, Formik } from 'formik';
+import { useAuth0 } from '@auth0/auth0-react';
 import WarpScoresApiService from '../WarpScoresApiService';
 import Navigation from '../components/misc/Navigation';
 import CircuitLeg from '../components/circuit/CircuitLeg';
 import HeaderCard from '../components/common/HeaderCard';
 import prettyPrint from '../util/PrettyPrint';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
+import config from '../config';
 
 function TableColumns() {
   return (
@@ -58,6 +60,8 @@ const initialFormValues = {
 };
 
 function CircuitPage() {
+  const { isAuthenticated, isLoading, getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0();
+
   const platforms = [
     'bb1.pc',
     'bb2.pc',
@@ -92,7 +96,7 @@ function CircuitPage() {
         else res.circuitLegs.sort(compareLegs);
         setCircuit(res);
       })
-      .catch((reason) => setError(reason))
+      .catch((reason) => setError({ type: 'error', message: reason.toLocaleString(config.locale) }))
       .finally(setLoading(false));
   };
 
@@ -108,7 +112,9 @@ function CircuitPage() {
       game,
       p,
       values.isCollect,
-      values.isKnockout
+      values.isKnockout,
+      getAccessTokenSilently,
+      getAccessTokenWithPopup
     )
       .then(() => fetchCircuit(circuitId))
       .catch((err) => console.log(err))
@@ -251,7 +257,12 @@ function CircuitPage() {
               </SimpleGrid>
               <CardFooter>
                 <Box>
-                  <Button mt="1rem" type="submit" isLoading={props.isSubmitting}>
+                  <Button
+                    mt="1rem"
+                    type="submit"
+                    isLoading={props.isSubmitting}
+                    isDisabled={isLoading || !isAuthenticated}
+                  >
                     Add leg
                   </Button>
                 </Box>

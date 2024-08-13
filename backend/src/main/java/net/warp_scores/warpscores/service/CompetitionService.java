@@ -20,8 +20,6 @@ import java.util.OptionalInt;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static java.util.Arrays.asList;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -30,7 +28,7 @@ public class CompetitionService {
     private final ContestRepository contestsRepository;
 
     public List<Competition> loadForLeagueAndStatuses(UUID leagueId, CompetitionStatus... statuses) {
-        List<Competition> competitions = competitionRepository.findByLeagueIdAndStatusIn(leagueId, asList(statuses));
+        List<Competition> competitions = competitionRepository.findByLeagueIdAndStatusIn(leagueId, List.of(statuses));
         return initializeForFormat(competitions);
     }
 
@@ -92,13 +90,13 @@ public class CompetitionService {
 
         List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid());
         OptionalInt currentRound = contests.stream().mapToInt(Contest::getRound).max();
-        if ( competition.getTotalRounds() == null) {
+        if (competition.getTotalRounds() == null) {
             competition.setTotalRounds(calcWissenTotalRounds(competition.getTeamsMax()));
         }
         competition.setCurrentRound(currentRound.orElse(0));
         competition.setPlayedMatches(playedMatchesCount);
         competition.setValidatedMatches(validatedMatchesCount);
-        competition.setTotalMatches(competition.getTeamsMax()/2*competition.getTotalRounds());
+        competition.setTotalMatches(competition.getTeamsMax() / 2 * competition.getTotalRounds());
         competition.setLiveMatches(liveMatches);
     }
 
@@ -107,7 +105,7 @@ public class CompetitionService {
     }
 
     public boolean competitionConsideredActive(Competition competition) {
-        boolean inRegistrationOrInProgress = asList(CompetitionStatus.Registration, CompetitionStatus.InProgress)
+        boolean inRegistrationOrInProgress = List.of(CompetitionStatus.Registration, CompetitionStatus.InProgress)
                 .contains(competition.getStatus());
         boolean finished = CompetitionStatus.Finished.equals(competition.getStatus());
         int matchCount = Optional.ofNullable(competition.getPlayedMatches()).orElse(0);

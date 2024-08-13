@@ -19,7 +19,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static java.util.Arrays.asList;
+import static java.util.List.of;
 import static java.util.Objects.requireNonNullElse;
 import static java.util.Optional.empty;
 import static java.util.Optional.ofNullable;
@@ -34,7 +34,7 @@ public class RankService {
     private final TeamDomainService teamDomainService;
     private final CompetitionService competitionService;
 
-    private final List<RankComparisons> defaultRankComparisons = asList(RankComparisons.SCORE_310, RankComparisons.WINS,
+    private final List<RankComparisons> defaultRankComparisons = List.of(RankComparisons.SCORE_310, RankComparisons.WINS,
             RankComparisons.INFLICTED_TOUCHDOWNS, RankComparisons.TOUCHDOWN_DIFFERENCE);
 
     public List<Rank> getRanksForCompetition(UUID competitionId, Optional<List<RankComparisons>> rankComparisons) {

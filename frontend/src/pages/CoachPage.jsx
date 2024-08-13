@@ -1,23 +1,67 @@
-import React from 'react';
-import { Box, Heading, HStack, Stack } from '@chakra-ui/react';
-import { FaRegFaceSadTear } from 'react-icons/fa6';
+import React, { useEffect, useState } from 'react';
+import { Box, VStack } from '@chakra-ui/react';
+import { useAuth0 } from '@auth0/auth0-react';
+import { FaRegCircleCheck, FaRegCircleStop } from 'react-icons/fa6';
 import { Icon } from '@chakra-ui/icons';
 import Navigation from '../components/misc/Navigation';
+import HeaderCard from '../components/common/HeaderCard';
+import WarpScoresApiService from '../WarpScoresApiService';
+import config from '../config';
+import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
+import logger from '../util/Logger';
+
+function PermissionIcon({ granted }) {
+  const color = granted ? 'green' : 'red';
+  const icon = granted ? FaRegCircleCheck : FaRegCircleStop;
+  return <Icon as={icon} color={color} />;
+}
 
 function CoachPage() {
+  const { user, isAuthenticated, isLoading, getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0();
+  const [error, setError] = useState();
+  const [loading, setLoading] = useState();
+  const [userPermissions, setUserPermissions] = useState({
+    readCurrentUser: false,
+    writeLeagueAdmin: false,
+    writeSiteAdmin: false,
+  });
+
+  useEffect(() => {
+    setLoading(true);
+    const fetchUserPermissions = () => {
+      WarpScoresApiService.userPermissions(getAccessTokenSilently, getAccessTokenWithPopup)
+        .catch((reason) => {
+          setError({ type: 'error', message: reason.toLocaleString(config.locale) });
+        })
+        .then(setUserPermissions)
+        .finally(() => setLoading(false));
+    };
+    fetchUserPermissions();
+  }, [isLoading, isAuthenticated]);
+
   return (
-    <Stack>
+    <VStack align="left">
       <Box>
-        <Navigation currentPage="home" />
+        <Navigation currentPage="coach" />
       </Box>
-      <Box>
-        <Heading size="md">Coach-Page</Heading>
-        <HStack spacing={2} mt="10" align="left">
-          <Icon as={FaRegFaceSadTear} size="lg" />
-          <Box>Not available yet...</Box>
-        </HStack>
-      </Box>
-    </Stack>
+      <LoadingOrErrorWrapper loading={loading} error={error}>
+        <HeaderCard
+          mainImageSrc={user?.picture}
+          mainImageBorderRadius="full"
+          heading="Coach-Page"
+          subHeading={user && `Authenticated as ${user?.name}`}
+        />
+        <Box>
+          <PermissionIcon granted={userPermissions?.readCurrentUser} /> User read permissions
+        </Box>
+        <Box>
+          <PermissionIcon granted={userPermissions?.writeLeagueAdmin} /> League admin permissions
+        </Box>
+        <Box>
+          <PermissionIcon granted={userPermissions?.writeSiteAdmin} /> Site admin permissions
+        </Box>
+      </LoadingOrErrorWrapper>
+    </VStack>
   );
 }
 

@@ -6,6 +6,7 @@ import net.warp_scores.warpscores.domain.ContestDomainService;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.service.ContestService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,6 +39,7 @@ public class ContestController {
     }
 
     @PostMapping("/contests/competition/{competitionUuid}")
+    @PreAuthorize("hasAuthority('COMPETITION_ADMIN')")
     public ResponseEntity<Void> addContest(@PathVariable(name = "competitionUuid") UUID competitionUuid,
             @RequestBody Contest contest) {
         try {
