@@ -102,6 +102,7 @@ public class FetchDataScheduler {
     private void fetchMatchesIfNecessary(List<League> leagues, Map<UUID, Optional<Date>> lastKnownMatchDateByLeagueId) {
         log.info("Checking for new matches for {} leagues.", leagues.size());
         Map<UUID, Date> lastReportedMatchDateByLeagueId = leagues.stream()
+                .filter(league -> league.getUuid() != null)
                 .collect(toMap(League::getUuid, League::getDateLastMatch));
         List<UUID> leagueIdsWithReportedNewMatches = lastReportedMatchDateByLeagueId
                 .entrySet()
