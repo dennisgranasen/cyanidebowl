@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.nullsFirst;
+import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
@@ -102,7 +103,8 @@ public class FetchDataScheduler {
     private void fetchMatchesIfNecessary(List<League> leagues, Map<UUID, Optional<Date>> lastKnownMatchDateByLeagueId) {
         log.info("Checking for new matches for {} leagues.", leagues.size());
         Map<UUID, Date> lastReportedMatchDateByLeagueId = leagues.stream()
-                .filter(league -> league.getUuid() != null)
+                .filter(Objects::nonNull)
+                .filter(league -> nonNull(league.getUuid()))
                 .collect(toMap(League::getUuid, League::getDateLastMatch));
         List<UUID> leagueIdsWithReportedNewMatches = lastReportedMatchDateByLeagueId
                 .entrySet()
