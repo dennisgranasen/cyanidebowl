@@ -7,25 +7,26 @@ import LeagueCard from '../components/league/LeagueCard';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import HeaderCard from '../components/common/HeaderCard';
 import ImageUrls from '../ImageUrls';
+import CircuitCard from '../components/circuit/CircuitCard';
 
 function WarpScores() {
-  const [leagues, setLeagues] = useState([]);
+  const [circuits, setCircuits] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(undefined);
 
   useEffect(() => {
-    const fetchLeagues = () => {
+    const fetchCircuits = () => {
       setLoading(true);
-      WarpScoresApiService.leagues()
+      WarpScoresApiService.circuits()
         .then((data) => {
-          setLeagues(data);
+          setCircuits(data);
         })
         .then(() => setLoading(false))
         .catch((reason) => {
           setError({ type: 'error', message: reason.toLocaleString(config.locale) });
         });
     };
-    fetchLeagues();
+    fetchCircuits();
   }, []);
 
   return (
@@ -40,10 +41,10 @@ function WarpScores() {
           subHeading="Welcome to warp-scores, a Spike-like facade to BB3 data provided by Cyanide's BB3-API."
         />
         <Box>
-          <Heading size="md">Leagues</Heading>
+          <Heading size="md">Circuits</Heading>
           <LoadingOrErrorWrapper loading={loading} error={error}>
-            {leagues.map((currLeague) => (
-              <LeagueCard mb={2} league={currLeague} key={currLeague.uuid} />
+            {circuits.map((currCircuit) => (
+              <CircuitCard mb={2} circuit={currCircuit} key={currCircuit.id} />
             ))}
           </LoadingOrErrorWrapper>
         </Box>

@@ -22,6 +22,8 @@ public class Circuit {
     @Indexed(unique = true)
     private String circuitName;
 
+    private String logo;
+
     private List<CircuitLeg> circuitLegs = new ArrayList<>();
 
     public void addLeg(CircuitLeg circuitLeg) {

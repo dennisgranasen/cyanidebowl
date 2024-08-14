@@ -1,18 +1,17 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 import {Box, ChakraProvider, CSSReset, DarkMode} from '@chakra-ui/react';
 import {HashRouter as Router, Route, Routes, useNavigate} from 'react-router-dom';
 import {Auth0Provider, withAuthenticationRequired} from '@auth0/auth0-react';
 import WarpScores from './pages/WarpScores';
 import TeamPage from './pages/TeamPage';
+import AdminCircuitPage from './pages/AdminCircuitPage';
 import CompetitionPage from './pages/CompetitionPage';
-import CircuitLegPage from './pages/CircuitLegPage';
 import AboutPage from './pages/AboutPage';
 import CoachPage from './pages/CoachPage';
 import AdminPage from './pages/AdminPage';
 import StatisticsPage from './pages/StatisticsPage';
 import LatestMatchesPage from './pages/LatestMatchesPage';
 import LiveMatchesPage from './pages/LiveMatchesPage';
-import CircuitPage from './pages/CircuitPage';
 import LeaguePage from './pages/LeaguePage';
 import config from './config';
 import MarkdownPage from "./pages/MarkdownPage";
@@ -22,7 +21,7 @@ const {isProduction} = config;
 
 const withoutAuthentication = (Component) => {
     return function WithoutAuthentication() {
-        return <Component />;
+        return <Component/>;
     };
 };
 
@@ -79,14 +78,15 @@ function App() {
                                 <Route path="/team/:teamUuid" element={<TeamPage/>}/>
                                 <Route path="/competition/:competitionUuid" element={<CompetitionPage/>}/>
                                 <Route path="/competition/:competitionUuid/team/:teamUuid" element={<TeamPage/>}/>
+                                <Route path="/circuit/:circuitId" element={<CircuitPage/>}/>
                                 {/* Protected Routes/Needing authentication */}
                                 <Route path="/coachPage" element={<ProtectedRoute component={CoachPage}/>}/>
                                 <Route path="/admin" element={<ProtectedRoute component={AdminPage}/>}/>
                                 <Route path="/admin/circuit/:circuitId"
-                                       element={<ProtectedRoute component={CircuitPage}/>}/>
+                                       element={<ProtectedRoute component={AdminCircuitPage}/>}/>
                                 <Route
                                     path="/admin/circuit/:circuitId/leg/:legId"
-                                    element={<ProtectedRoute component={CircuitLegPage}/>}
+                                    element={<ProtectedRoute component={AdminCircuitLegPage}/>}
                                 />
                             </Routes>
                         </Auth0ProviderWithRedirectCallback>

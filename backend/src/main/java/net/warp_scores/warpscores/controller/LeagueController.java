@@ -6,6 +6,7 @@ import net.warp_scores.warpscores.model.CompetitionStatus;
 import net.warp_scores.warpscores.domain.persistence.LeagueRepository;
 import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.service.CompetitionService;
+import net.warp_scores.warpscores.service.LeagueService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,28 +22,19 @@ import java.util.UUID;
 @Slf4j
 public class LeagueController {
 
-    private final LeagueRepository leagueRepository;
-
-    private final CompetitionService competitionService;
+    private final LeagueService leagueService;
 
     @GetMapping("/leagues")
     public ResponseEntity<List<League>> getLeagues() {
-        List<League> all = leagueRepository.findAll();
-        all.forEach(this::countCompetitions);
+        List<League> all = leagueService.loadAll();
         return ResponseEntity.ok(all);
     }
 
     @GetMapping("/leagues/{leagueUuid}")
     public ResponseEntity<League> getLeague(@PathVariable(name = "leagueUuid") UUID leagueUuid) {
-        Optional<League> league = leagueRepository.findById(leagueUuid);
-        league.ifPresent(this::countCompetitions);
+        Optional<League> league = leagueService.loadById(leagueUuid);
         return league
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
-    }
-
-    private void countCompetitions(League league) {
-        Map<CompetitionStatus, Long> countsByStatus = competitionService.countForLeague(league.getUuid());
-        league.setCountsByCompetitionStatus(countsByStatus);
     }
 }

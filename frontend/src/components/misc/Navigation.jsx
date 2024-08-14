@@ -8,14 +8,15 @@ import ToggleColorModeButton from './ToggleColorModeButton';
 
 const { isProduction } = config;
 
-function Navigation({ currentPage, league, competition, circuit, team }) {
-  const leagueLink = league ? `/${league[0]}` : '/';
-  const competitionLink = competition ? `/competition/${competition[0]}` : '';
-  const teamLink = team ? `${competitionLink}/team/${team[0]}` : '';
-  const circuitLink = circuit ? `/admin/circuit/${circuit[0]}` : '';
+function Navigation({ currentPage, parentPage, league, competition, circuit, team }) {
   const isPage = (pageName, currentPageName) => {
     return pageName === currentPageName;
   };
+
+  const leagueLink = league ? `/${league[0]}` : '/';
+  const competitionLink = competition ? `/competition/${competition[0]}` : '';
+  const teamLink = team ? `${competitionLink}/team/${team[0]}` : '';
+  const circuitLink = circuit ? `${isPage('admin', parentPage) ? '/admin' : ''}/circuit/${circuit[0]}` : '';
 
   return (
     <Flex>
@@ -25,7 +26,7 @@ function Navigation({ currentPage, league, competition, circuit, team }) {
             Home
           </BreadcrumbLink>
         </BreadcrumbItem>
-        {(isPage('admin', currentPage) || isPage('circuits', currentPage)) && (
+        {(isPage('admin', currentPage) || isPage('admin', parentPage)) && (
           <BreadcrumbItem isCurrentPage={isPage('admin', currentPage)} flexWrap>
             <BreadcrumbLink variant="menu" as={RouteLink} to="/admin">
               Admin
