@@ -1,8 +1,11 @@
 import React from 'react';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, Flex, Spacer} from '@chakra-ui/react';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, Flex, Spacer } from '@chakra-ui/react';
 import { Link as RouteLink } from 'react-router-dom';
 import Menu from './Menu';
 import AuthButton from './AuthButton';
+import config from '../../config';
+
+const { isProduction } = config;
 
 function Navigation({ currentPage, league, competition, circuit, team }) {
   const leagueLink = league ? `/${league[0]}` : '/';
@@ -58,7 +61,7 @@ function Navigation({ currentPage, league, competition, circuit, team }) {
         )}
       </Breadcrumb>
       <Spacer />
-      <AuthButton mr="0.5rem" />
+      {isProduction && <AuthButton mr="0.5rem" />}
       <Menu />
     </Flex>
   );

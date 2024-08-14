@@ -112,6 +112,7 @@
                                     <directory>${project.basedir}/../</directory>
                                     <includes>
                                         <include>README.md</include>
+                                        <include>CHANGELOG.md</include>
                                     </includes>
                                 </resource>
                             </resources>
@@ -134,6 +135,7 @@
                             <tasks>
                                 <delete>
                                     <fileset dir="${project.basedir}/public" includes="README.md"/>
+                                    <fileset dir="${project.basedir}/public" includes="CHANGELOG.md"/>
                                     <fileset dir="${project.basedir}/public" includes="version.json"/>
                                 </delete>
                             </tasks>

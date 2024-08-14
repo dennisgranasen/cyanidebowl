@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,6 +20,8 @@ import net.warp_scores.warpscores.model.LeagueCollection;
 import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
 import net.warp_scores.warpscores.service.UUIDConverter;
 
+import static net.warp_scores.warpscores.controller.Authorizations.WRITE_LEAGUE_ADMIN;
+
 @RestController
 @RequiredArgsConstructor
 @Slf4j
@@ -31,6 +34,7 @@ public class LeagueCollectionController {
     private final UUIDConverter uuidConverter;
 
     @PostMapping("/leagueCollection/{leagueId}")
+    @PreAuthorize(WRITE_LEAGUE_ADMIN) // ✨
     public void createLeagueCollection(@PathVariable(name = "leagueId") UUID leagueId) {
         doCreateLeagueCollection(leagueId);
     }
