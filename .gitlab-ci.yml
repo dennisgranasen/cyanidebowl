@@ -31,7 +31,7 @@ maven-package:
   only:
     - /^dev$/
   image: registry.hub.docker.com/library/maven:3.8-openjdk-17
-  script: "mvn -DskipTests=true install"
+  script: "mvn -DskipTests=true -Ddockerfile.skip install"
 
 maven-deploy:
   stage: deploy
