@@ -6,6 +6,7 @@ import org.springframework.util.MultiValueMap;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -22,6 +23,6 @@ public class MatchesRequestTest {
         MultiValueMap<String, String> queryParams = matchesRequest.toQueryParams();
 
         assertTrue(queryParams.containsKey("start"));
-        assertEquals(Arrays.asList("2024-06-01T23:20:05"), queryParams.get("start"));
+        assertEquals(List.of("2024-06-01T23:20:05"), queryParams.get("start"));
     }
 }

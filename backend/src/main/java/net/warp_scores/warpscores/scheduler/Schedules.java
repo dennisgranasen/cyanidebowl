@@ -5,6 +5,7 @@ public interface Schedules {
     long TWENTY_SECONDS = 20 * 1_000L;
     long THREE_MINUTES = 3 * 60 * 1_000L;
     long FIVE_MINUTES = 5 * 60 * 1_000L;
+    long TEN_MINUTES = 10 * 60 * 1_000L;
     long FIFTEEN_MINUTES = 15 * 60 * 1_000L;
     long TWENTY_MINUTES = 20 * 60 * 1_000L;
     long THIRTY_MINUTES = 30 * 60 * 1_000L;

@@ -49,6 +49,37 @@
             <artifactId>spring-boot-starter-web</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- OAuth -->
+        <dependency>
+            <groupId>com.okta.spring</groupId>
+            <artifactId>okta-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.okta.spring</groupId>
+            <artifactId>okta-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thymeleaf.extras</groupId>
+            <artifactId>thymeleaf-extras-springsecurity6</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>nz.net.ultraq.thymeleaf</groupId>
+            <artifactId>thymeleaf-layout-dialect</artifactId>
+        </dependency>
 
         <!-- retry and load balancing -->
         <dependency>
@@ -166,8 +197,8 @@
                         <phase>generate-resources</phase>
                         <configuration>
                             <target>
-                                <echo file="${project.build.directory}/classes/public/version.json">
-                                    <![CDATA[{ "project": "${project.groupId}:${project.parent.artifactId}", "committish": "${buildNumber}", "projectVersion": "${project.version}", "timestamp": "${maven.build.timestamp}" }]]>
+                                <echo file="${project.build.outputDirectory}/version.json">
+                                    <![CDATA[{ "project": "${project.groupId}:${project.parent.artifactId}-${project.artifactId}", "committish": "${buildNumber}", "projectVersion": "${project.version}", "timestamp": "${maven.build.timestamp}" }]]>
                                 </echo>
                             </target>
                         </configuration>

@@ -41,6 +41,9 @@ http-client.env.json
 application.yml
 
 frontend/coverage
+frontend/public/README.md
+frontend/public/version.json
+
 backend/src/main/resources/img/bb3
 
 /data
@@ -49,3 +52,11 @@ sync.sh
 fetchMongoData.sh
 
 warpscores-*.tar
+cyanide-api/maven-build.xml
+cyanide-api/maven-build.properties
+backend/maven-build.xml
+backend/maven-build.properties
+cyanide-api/build.xml
+backend/build.xml
+docker-compose-production.yaml
+my-compose.yaml

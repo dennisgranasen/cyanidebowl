@@ -56,6 +56,17 @@ public class ContestDomainService {
         return contest;
     }
 
+    public Contest addContest(Contest contest) {
+        if (contest.getContestUuid() == null) {
+            contest.setContestUuid(UUID.randomUUID());
+        }
+        Optional<Contest> byId = contestRepository.findById(contest.getContestUuid());
+        if (byId.isPresent()) {
+            throw new IllegalArgumentException("Contest with uuid " + contest.getContestUuid() + " already exists");
+        }
+        return contestRepository.save(contest);
+    }
+
     private Contest newContestOrFromDb(UUID uuid) {
         if (uuid == null) {
             log.error("Can't convert contest. Need an UUID.");

@@ -10,7 +10,7 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>warpscores-frontend</artifactId>
+    <artifactId>frontend</artifactId>
     <name>${project.artifactId}</name>
     <description>${project.artifactId}</description>
 
@@ -97,19 +97,58 @@
                 </executions>
             </plugin>
             <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.basedir}/public</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/../</directory>
+                                    <includes>
+                                        <include>README.md</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <version>1.7</version>
                 <executions>
                     <execution>
+                        <id>clean-resources</id>
+                        <phase>clean</phase>
                         <goals>
                             <goal>run</goal>
                         </goals>
+                        <configuration>
+                            <tasks>
+                                <delete>
+                                    <fileset dir="${project.basedir}/public" includes="README.md"/>
+                                    <fileset dir="${project.basedir}/public" includes="version.json"/>
+                                </delete>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-resources</id>
                         <phase>generate-resources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
                         <configuration>
                             <target>
-                                <echo file="${project.build.directory}/public/version.json">
-                                    <![CDATA[{ "project": "${project.groupId}:${project.parent.artifactId}", "committish": "${buildNumber}", "projectVersion": "${project.version}", "timestamp": "${maven.build.timestamp}" }]]>
+                                <echo file="${project.basedir}/public/version.json">
+                                    <![CDATA[{ "project": "${project.groupId}:${project.parent.artifactId}-${project.artifactId}", "committish": "${buildNumber}", "projectVersion": "${project.version}", "timestamp": "${maven.build.timestamp}" }]]>
                                 </echo>
                             </target>
                         </configuration>

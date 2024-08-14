@@ -11,7 +11,7 @@ GET https://web.cyanide-studio.com/ws/cya/status/?key={{apiKey}}
 # Lookup #######################################################################
 
 ### Lookup league
-GET https://web.cyanide-studio.com/ws/bb3/lookup/?league=NAF BB3 Kickoff&platform=pc&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/lookup/?league=LOC Crossplay&key={{apiKey}}
 
 ### Lookup coach
 GET https://web.cyanide-studio.com/ws/bb3/lookup/?coach=naytsyrhc&platform=pc&key={{apiKey}}
@@ -37,8 +37,14 @@ GET https://web.cyanide-studio.com/ws/bb3/coaches/?competition=DBBL S1 Division 
 ### Get teams
 GET https://web.cyanide-studio.com/ws/bb3/teams/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=e8848221-a04e-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}&order=finished
 
-### Get contests *
-GET https://web.cyanide-studio.com/ws/bb3/contests/?status=*&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=558803fb-1878-11ef-895c-bc24112ec32e&platform=pc&key={{apiKey}}
+### Get contests * by league_id for status Played
+GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Played&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&key={{apiKey}}
+
+### Get contests * by league_id for status Validated
+GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Validated&order=finished&limit=5&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&key={{apiKey}}
+
+### Get contests * by competition_id
+GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Validated&competition_id=bd275ca6-1877-11ef-895c-bc24112ec32e&key={{apiKey}}
 
 ### Get matches
 GET https://web.cyanide-studio.com/ws/bb3/matches/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&start=2024-07-04T13:04:46&platform=pc&key={{apiKey}}
@@ -49,7 +55,7 @@ GET https://web.cyanide-studio.com/ws/bb3/matches/?league_id=94dd6ae4-83fa-11ee-
 GET https://web.cyanide-studio.com/ws/bb3/matches/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&startDate=2023-12-01&platform=pc&key={{apiKey}}&order=finished
 
 ### Get match by id
-GET https://web.cyanide-studio.com/ws/bb3/match/?match_id=bcc5e39e-1de0-11ef-895c-bc24112ec32e&platform=pc&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/match/?match_id=de74d363-4537-11ef-9e7e-bc24112ec32e&key={{apiKey}}
 
 # ##############################################################################
 # Team #########################################################################
@@ -58,7 +64,7 @@ GET https://web.cyanide-studio.com/ws/bb3/match/?match_id=bcc5e39e-1de0-11ef-895
 GET https://web.cyanide-studio.com/ws/bb3/team/?id=1749c704-e328-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}
 
 ### Get team matches
-GET https://web.cyanide-studio.com/ws/bb3/teammatches/?team_id=7e69a4ba-87f1-11ee-b910-02000090a64f&platform=pc&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/teammatches/?team_id=736410bc-9b9f-11ee-a745-02000090a64f&key={{apiKey}}
 
 # ##############################################################################
 # Others #######################################################################

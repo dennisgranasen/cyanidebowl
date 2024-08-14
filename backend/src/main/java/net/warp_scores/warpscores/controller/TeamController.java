@@ -26,7 +26,7 @@ public class TeamController {
     private final MatchDomainService matchDomainService;
     private final CompetitionTeamsDomainService competitionTeamsDomainService;
 
-    @GetMapping("/team/{teamId}")
+    @GetMapping("/teams/{teamId}")
     public ResponseEntity<Team> getTeam(@PathVariable(name = "teamId") UUID teamId) {
         try {
             Optional<Team> team = teamDomainService.findTeam(teamId, Optional.empty());
@@ -39,7 +39,7 @@ public class TeamController {
         }
     }
 
-    @GetMapping("/team/{teamId}/matches")
+    @GetMapping("/teams/{teamId}/matches")
     public ResponseEntity<List<Match>> getMatches(@PathVariable(name = "teamId") UUID teamId) {
         try {
             Optional<List<Match>> matchesForTeam = Optional.ofNullable(matchDomainService.findMatchesForTeam(teamId));
@@ -48,31 +48,6 @@ public class TeamController {
                     .orElse(ResponseEntity.notFound().build());
         } catch (Exception ex) {
             log.error("Unable to get matches for team uuid {}.", teamId, ex);
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    @GetMapping("/competition/{competitionId}/teams")
-    public ResponseEntity<List<Team>> getTeamsForCompetition(@PathVariable(name = "competitionId") UUID competitionId) {
-        try {
-            List<Team> teams = teamDomainService.findByCompetitionId(competitionId);
-            return ResponseEntity.ok(teams);
-        } catch (Exception ex) {
-            log.error("Unable to get teams for competition uuid {}.", competitionId, ex);
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    @GetMapping("/competition/{competitionUuid}/team/{teamUuid}")
-    public ResponseEntity<Team> getTeam(@PathVariable(name = "competitionUuid") UUID competitionUuid,
-            @PathVariable(name = "teamUuid") UUID teamUuid) {
-        try {
-            Optional<Team> team = teamDomainService.findTeam(teamUuid, Optional.of(competitionUuid));
-            return team
-                    .map(ResponseEntity::ok)
-                    .orElse(ResponseEntity.notFound().build());
-        } catch (Exception ex) {
-            log.error("Unable to get team for competition {} (teamId: {})", competitionUuid, teamUuid, ex);
             return ResponseEntity.internalServerError().build();
         }
     }

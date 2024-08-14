@@ -1,4 +1,4 @@
-package net.warp_scores.warpscores.service;
+package net.warp_scores.warpscores.service.cyanide;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,9 +31,11 @@ import net.warp_scores.warpscores.domain.persistence.StatusRepository;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.League;
+import net.warp_scores.warpscores.model.LeagueCollection;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Status;
 import net.warp_scores.warpscores.model.Team;
+import net.warp_scores.warpscores.service.StatusModelConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.ResourceAccessException;
@@ -57,6 +59,8 @@ import static net.warp_scores.warpscores.cyanide.api.requests.StatusRequest.BB3_
 @RequiredArgsConstructor
 public class CyanideApiService {
     private final CyanideCachedRestApiClient cyanideCachedRestApiClient;
+
+    private final CyanideRestApiClient cyanideRestApiClient;
 
     private final StatusRepository statusRepository;
 
@@ -180,21 +184,27 @@ public class CyanideApiService {
         return competitionDomainService.createOrUpdateCompetitions(competitionsResponse);
     }
 
+    public List<Contest> loadContests(LeagueCollection leagueCollection) {
+        ContestsRequest contestsRequest = new ContestsRequest();
+        contestsRequest.setLeague_id(leagueCollection.getLeagueId());
+        List<Contest> contests = new ArrayList<>();
+
+        contestsRequest.setStatus(ContestsRequest.Status.InProgress.name());
+        contests.addAll(loadContests(contestsRequest));
+
+        contestsRequest.setStatus(ContestsRequest.Status.Validated.name());
+        contestsRequest.setLimit(1000);
+        contests.addAll(loadContests(contestsRequest));
+
+        return contests;
+    }
+
     public List<Contest> loadContests(Competition competition) {
         ContestsRequest contestsRequest = new ContestsRequest();
         contestsRequest.setCompetition_id(competition.getUuid());
         contestsRequest.setLeague_id(competition.getLeagueId());
         contestsRequest.setStatus("*");
-        List<Contest> contests = new ArrayList<>();
-        if (competition.getRoundsCount() == null) {
-            contests.addAll(loadContests(contestsRequest));
-        } else {
-            for (int round = 1; round < competition.getRoundsCount(); round++) {
-                contestsRequest.setRound(round);
-                contests.addAll(loadContests(contestsRequest));
-            }
-        }
-        return contests;
+        return loadContests(contestsRequest);
     }
 
     private List<Contest> loadContests(ContestsRequest contestsRequest) {
@@ -207,8 +217,8 @@ public class CyanideApiService {
     public void checkApiStatus() {
         Status status;
         try {
-            Optional<StatusResponse> statusResponse = ofNullable(
-                    cyanideCachedRestApiClient.getFromCacheOrApi(new StatusRequest(), true, true, true));
+
+            Optional<StatusResponse> statusResponse = ofNullable(cyanideRestApiClient.loadFromApi(new StatusRequest()));
             status = statusResponse
                     .map(sr -> Arrays.stream(sr.getGames()))
                     .orElse(Stream.empty())

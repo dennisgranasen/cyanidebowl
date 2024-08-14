@@ -10,6 +10,10 @@ function removeUnderscores(myText) {
   return myText.replace(/_/g, ' ');
 }
 
+function removeDots(myText) {
+  return myText.replace(/\./g, ' ');
+}
+
 function removeLeadingSpaces(myText) {
   return myText.replace(/^ +/, '');
 }
@@ -29,6 +33,7 @@ const prettyPrint = (text, optionalPrefixSeparator) => {
   if (!text) return text;
   let myText = removeFirstElementSeparatedBy(text, optionalPrefixSeparator);
   myText = removeUnderscores(myText);
+  myText = removeDots(myText);
   myText = capitalizeEachWord(myText);
   myText = removeLeadingSpaces(myText);
   return splitCamelCase(myText);
