@@ -2,10 +2,10 @@ import React, {useEffect} from 'react';
 import { Box, VStack } from '@chakra-ui/react';
 import Navigation from '../components/misc/Navigation';
 import HeaderCard from '../components/common/HeaderCard';
-import Circuits from '../components/Circuits';
 import ImageUrls from '../ImageUrls';
 import {useAuth0WithUserPermissions} from "../hooks/useAuth0WithUserPermissions";
 import {useNavigate} from "react-router-dom";
+import AdminCircuits from '../components/circuit/AdminCircuits';
 
 function AdminPage() {
     const {
@@ -33,7 +33,7 @@ function AdminPage() {
         subHeading="Configure circuits for collecting data..."
       />
       <Box>
-        <Circuits />
+        <AdminCircuits />
       </Box>
     </VStack>
   );

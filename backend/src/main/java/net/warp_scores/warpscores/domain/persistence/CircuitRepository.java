@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 
 
 @Repository
-public interface CircuitRepository extends MongoRepository<Circuit, Integer> {
-    
+public interface CircuitRepository extends MongoRepository<Circuit, Long> {
+
 }
 

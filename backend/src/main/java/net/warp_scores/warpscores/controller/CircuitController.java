@@ -31,6 +31,7 @@ public class CircuitController {
     public ResponseEntity<List<Circuit>> getCircuits() {
         try {
             List<Circuit> circuits = circuitService.loadAll();
+
             return ResponseEntity.ok(circuits);
         } catch (Exception ex) {
             log.error("Unable to retrieve circuits", ex);
@@ -39,7 +40,7 @@ public class CircuitController {
     }
 
     @GetMapping("/circuits/{circuitId}")
-    public ResponseEntity<Circuit> getCircuit(@PathVariable(name = "circuitId") Integer circuitId) {
+    public ResponseEntity<Circuit> getCircuit(@PathVariable(name = "circuitId") Long circuitId) {
         try {
             Optional<Circuit> circuit = circuitService.load(circuitId);
             return circuit

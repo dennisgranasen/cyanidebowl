@@ -9,7 +9,7 @@ import config from '../config';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import {useAuth0WithUserPermissions} from "../hooks/useAuth0WithUserPermissions";
 
-function CircuitLegPage() {
+function AdminCircuitLegPage() {
   const { circuitId, legId } = useParams();
   const [circuit, setCircuit] = useState();
   const [circuitLeg, setCircuitLeg] = useState();
@@ -103,4 +103,4 @@ function CircuitLegPage() {
   );
 }
 
-export default CircuitLegPage;
+export default AdminCircuitLegPage;

@@ -22,7 +22,7 @@ import LoadingOrErrorWrapper from './common/LoadingOrErrorWrapper';
 import config from '../config';
 import {useAuth0WithUserPermissions} from "../hooks/useAuth0WithUserPermissions";
 
-function Circuits() {
+function AdminCircuits() {
     const {
         authenticationReady,
         userPermissions,
@@ -131,4 +131,4 @@ function Circuits() {
     );
 }
 
-export default Circuits;
+export default AdminCircuits;

@@ -13,8 +13,8 @@ import java.util.UUID;
 public class CircuitLeg implements Comparable<CircuitLeg> {
     @Id
     private Long circuitLegId;
-    private UUID competitionId;
     private CircuitLegType legType;
+    private String competitionId;
     private String label;
     private GameType game;
     private Platform platform;
