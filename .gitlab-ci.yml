@@ -25,6 +25,7 @@ maven-test:
     reports:
       junit:
         - "**/target/surefire-reports/TEST-*.xml"
+        - "**/target/junit.xml"
 
 maven-package:
   stage: package
@@ -38,7 +39,7 @@ maven-deploy:
   only:
     - /^dev$/
   image: registry.hub.docker.com/library/maven:3.8-openjdk-17
-  script: "mvn deploy -s ci_settings.xml"
+  script: "mvn -DskipTests=true -Ddockerfile.skip deploy -s ci_settings.xml"
 
 #tag-release-from-main:
 #  stage: integrate
