@@ -53,12 +53,10 @@ maven-release:
     - git config --global user.email "${GIT_USER_EMAIL:-$GITLAB_USER_EMAIL}"
     - git config --global user.name "${GIT_USER_NAME:-$GITLAB_USER_NAME}"
     - cd "${CI_COMMIT_SHA}"
+    - nextReleaseVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec | sed 's/-SNAPSHOT//')
   script:
-    - ./updateChangelog.sh "${POM_BASE_VERSION}"
-    - git commit -a -m "Preparing release ${POM_BASE_VERSION}" && git push origin
-    - export COMMIT_HASH=`git log -1 --format="%H"`
-    - git tag -a -m "Release ${POM_BASE_VERSION}" "${POM_BASE_VERSION}" "${COMMIT_HASH}"
-    - git push origin ${POM_BASE_VERSION}
+    - ./updateChangelog.sh "${nextReleaseVersion}"
+    - git commit -a -m "Preparing release ${nextReleaseVersion}" && git push origin
     - mvn -DskipTests=true -Ddockerfile.skip release:prepare release:perform --batch-mode -s ci_settings.xml
 #    - git checkout dev
 #    - git merge --no-ff ${CI_COMMIT_REF_NAME}
