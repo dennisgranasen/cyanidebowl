@@ -39,9 +39,9 @@ frontend/public/index.js.LICENSE.txt
 
 http-client.env.json
 application.yml
-
 frontend/coverage
 frontend/public/README.md
+frontend/public/CHANGELOG.md
 frontend/public/version.json
 
 backend/src/main/resources/img/bb3

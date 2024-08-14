@@ -46,8 +46,15 @@ maven-release:
   stage: release
   only:
     - /^main$/
+  before_script:
+    # Clone the repository via HTTPS inside a new directory
+    - git clone "https://${GITLAB_USERNAME}:${GITLAB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" "${CI_COMMIT_SHA}"
+    # Set the displayed user with the commits that are about to be made
+    - git config --global user.email "${GIT_USER_EMAIL:-$GITLAB_USER_EMAIL}"
+    - git config --global user.name "${GIT_USER_NAME:-$GITLAB_USER_NAME}"
+    - cd "${CI_COMMIT_SHA}"
   script:
-#    - ./updateChangelog.sh "${POM_BASE_VERSION}"
+    - ./updateChangelog.sh "${POM_BASE_VERSION}"
     - git commit -a -m "Preparing release ${POM_BASE_VERSION}" && git push origin
     - export COMMIT_HASH=`git log -1 --format="%H"`
     - git tag -a -m "Release ${POM_BASE_VERSION}" "${POM_BASE_VERSION}" "${COMMIT_HASH}"
