@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.nullsFirst;
 import static java.util.Objects.nonNull;
+import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
@@ -63,7 +64,7 @@ public class FetchDataScheduler {
 
         List<League> existingLeagues = leagueRepository.findAll();
         Map<UUID, Optional<Date>> lastKnownMatchDateByLeagueId = existingLeagues.stream()
-                .collect(toMap(League::getUuid, league -> Optional.ofNullable(league.getDateLastMatch())));
+                .collect(toMap(League::getUuid, league -> ofNullable(league.getDateLastMatch())));
 
         log.info("Will load leagues for {} leagues with active league collection.",
                 leaguesToCollect.size());
@@ -102,17 +103,17 @@ public class FetchDataScheduler {
 
     private void fetchMatchesIfNecessary(List<League> leagues, Map<UUID, Optional<Date>> lastKnownMatchDateByLeagueId) {
         log.info("Checking for new matches for {} leagues.", leagues.size());
-        Map<UUID, Date> lastReportedMatchDateByLeagueId = leagues.stream()
+        Map<UUID, Optional<Date>> lastReportedMatchDateByLeagueId = leagues.stream()
                 .filter(Objects::nonNull)
                 .filter(league -> nonNull(league.getUuid()))
-                .collect(toMap(League::getUuid, League::getDateLastMatch));
+                .collect(toMap(League::getUuid, league -> ofNullable(league.getDateLastMatch())));
         List<UUID> leagueIdsWithReportedNewMatches = lastReportedMatchDateByLeagueId
                 .entrySet()
                 .stream()
                 .filter(entry ->
                 {
                     UUID key = entry.getKey();
-                    Optional<Date> lastReportedMatchDate = Optional.ofNullable(entry.getValue());
+                    Optional<Date> lastReportedMatchDate = entry.getValue();
                     Optional<Date> lastKnownMatchDate = lastKnownMatchDateByLeagueId.getOrDefault(key,
                             Optional.empty());
                     return lastReportedMatchDate.isPresent() && (lastKnownMatchDate.isEmpty() || lastKnownMatchDate.get()
@@ -169,7 +170,7 @@ public class FetchDataScheduler {
                                 Team::getId,
                                 collectingAndThen(
                                         Collectors.minBy(nullsFirst(comparing(Team::getCreated))),
-                                        team -> Optional.ofNullable(team.orElse(new Team()).getCreated()))));
+                                        team -> ofNullable(team.orElse(new Team()).getCreated()))));
         teams = teams.stream()
                 .filter(team -> teamHasMatchesAfterLastKnown(team,
                         lastMatchDateKnownByTeamUuid.get(team.getId())))
@@ -216,7 +217,7 @@ public class FetchDataScheduler {
                 .map(l -> {
                     Optional<Date> earliestStartDate = earliestStartDateByLeagueUuid.get(l.getUuid());
                     Optional<Date> lastMatchDateKnown = lastMatchDateKnownByLeagueUuid.get(l.getUuid());
-                    Optional<Date> lastMatchDateReported = Optional.ofNullable(l.getDateLastMatch());
+                    Optional<Date> lastMatchDateReported = ofNullable(l.getDateLastMatch());
                     return cyanideApiService.loadMatches(l, earliestStartDate, lastMatchDateKnown,
                             lastMatchDateReported);
                 })
@@ -240,14 +241,14 @@ public class FetchDataScheduler {
                 .forEach(team -> {
                     Optional<Date> earliestStartDate = earliestStartDateByTeamUuid.get(team.getId());
                     Optional<Date> lastMatchDateKnown = lastMatchDateKnownByTeamUuid.get(team.getId());
-                    Optional<Date> lastMatchDateReported = Optional.ofNullable(team.getDateLastMatch());
+                    Optional<Date> lastMatchDateReported = ofNullable(team.getDateLastMatch());
                     cyanideApiService.loadTeamMatches(team, earliestStartDate, lastMatchDateKnown,
                             lastMatchDateReported);
                 });
     }
 
     private boolean teamHasMatchesAfterLastKnown(Team team, Optional<Date> lastMatchDateKnown) {
-        Optional<Date> lastMatchDateReported = Optional.ofNullable(team.getDateLastMatch());
+        Optional<Date> lastMatchDateReported = ofNullable(team.getDateLastMatch());
         log.info(
                 "Checking team {} for having matches reported after last known date (lastMatchDateKnown: {}, lastMatchDateReported: {}).",
                 team.getId(), lastMatchDateKnown, lastMatchDateReported);
@@ -256,7 +257,7 @@ public class FetchDataScheduler {
     }
 
     private boolean leagueHasMatchesAfterLastKnown(League league, Optional<Date> lastMatchDateKnown) {
-        Optional<Date> lastMatchDateReported = Optional.ofNullable(league.getDateLastMatch());
+        Optional<Date> lastMatchDateReported = ofNullable(league.getDateLastMatch());
         log.info(
                 "Checking league {} for having matches reported after last known date (lastMatchDateKnown: {}, lastMatchDateReported: {}).",
                 league.getUuid(), lastMatchDateKnown, lastMatchDateReported);
