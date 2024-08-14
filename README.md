@@ -11,12 +11,12 @@ This is a Spike-like web page to show match results and data from BB3 obtained t
 
 ## Roadmap
 
-- 🟢 [Increase Mobile UI/UX](https://gitlab.com/warp-scores/warp-scores/-/issues/3) 
-- 🟢 Generate Round Robin Schedules  
 - 🟢 Show last matches
 - 🟢 Show live matches
+- 🟢 Generate Round Robin Schedules
 - 🟢 Support Swiss (Wissen) Tournaments  
-- 🟡 [Support Knockout Tournaments](https://gitlab.com/warp-scores/warp-scores/-/issues/4)
+- 🟢 [Support Knockout Tournaments](https://gitlab.com/warp-scores/warp-scores/-/issues/4)
+- 🟢 [Increase Mobile UI/UX](https://gitlab.com/warp-scores/warp-scores/-/issues/3)
 - 🟡 [Match-Details](https://gitlab.com/warp-scores/warp-scores/-/issues/5)
 - 🟡 [Coach page](https://gitlab.com/warp-scores/warp-scores/-/issues/6)
 - [League-Statistics](https://gitlab.com/warp-scores/warp-scores/-/issues/7)
@@ -25,7 +25,7 @@ This is a Spike-like web page to show match results and data from BB3 obtained t
 - 🟡 [Authentication (Discord-, NAF-OAuth)](https://gitlab.com/warp-scores/warp-scores/-/issues/10)
 - [NAF Data export for tournaments](https://gitlab.com/warp-scores/warp-scores/-/issues/11)
 - [Admin/Edit results? Win/Tiebreaker editor?](https://gitlab.com/warp-scores/warp-scores/-/issues/12)
- Others: -> See https://gitlab.com/warp-scores/warp-scores/-/issues/
+- Others: -> See https://gitlab.com/warp-scores/warp-scores/-/issues/
 
 ### Legend
 - 🟢 Finished
