@@ -1,0 +1,22 @@
+const MAX_AGE_FOR_STATUS_IN_MILLIS = 35 * 60 * 1_000;
+const isProduction = process.env.NODE_ENV === 'production';
+const backendUrl = isProduction ? 'Your-Backend-Url' : 'http://localhost:18080';
+const auth0ClientId = 'Auth0-Client-Id';
+const auth0Domain = 'Auth0-Domain';
+const auth0Audience = 'Auth0-Audience';
+
+const config = {
+  MAX_AGE_FOR_STATUS_IN_MILLIS,
+  backendUrl,
+  isProduction,
+  auth0ClientId,
+  auth0Domain,
+  auth0Audience,
+  locale: 'en-UK',
+  boxSize: '2rem',
+  smallBoxSize: '1.5rem',
+  hoverBoxShadow: 'inset 0 0 0 2000px rgba(255, 0, 150, 0.3);',
+  smallScreenBreakpointValues: { base: true, sm: true, md: false },
+};
+
+export default config;

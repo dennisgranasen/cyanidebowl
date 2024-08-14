@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Spinner,
+  Box,
   Table,
   TableContainer,
   Tag,
@@ -27,17 +27,23 @@ function Match({ match }) {
       {isSmallScreen && (
         <Tr>
           <Td textAlign="right">
-            <Tag size="sm">{formatter.formatAsDate(match.started)}</Tag>
+            <Box>
+              <Tag size="sm">{formatter.formatAsDate(match.started)}</Tag>
+            </Box>
           </Td>
           <Td textAlign="center">
-            <Tag size="sm" color="grey">
-              <RouteLink to={`/${match.leagueId}`}>{match.leagueName}</RouteLink>
-            </Tag>
+            <Box>
+              <Tag size="sm" color="grey">
+                <RouteLink to={`/${match.leagueId}`}>{match.leagueName}</RouteLink>
+              </Tag>
+            </Box>
           </Td>
           <Td textAlign="left">
-            <Tag size="sm">
-              <RouteLink to={`/competition/${match.competitionId}`}>{match.competitionName}</RouteLink>
-            </Tag>
+            <Box>
+              <Tag size="sm">
+                <RouteLink to={`/competition/${match.competitionId}`}>{match.competitionName}</RouteLink>
+              </Tag>
+            </Box>
           </Td>
         </Tr>
       )}
@@ -97,16 +103,10 @@ function Matches({ matches }) {
         <Thead>
           <TableColumns />
         </Thead>
-        <Tbody>
-          {matches ? (
-            matches.map((match) => {
-              return <Match key={match.matchId} match={match} />;
-            })
-          ) : (
-            <Spinner />
-          )}
-        </Tbody>
-        <Tfoot>{TableColumns}</Tfoot>
+        <Tbody>{matches && matches.map((match) => <Match key={match.matchId} match={match} />)}</Tbody>
+        <Tfoot>
+          <TableColumns />
+        </Tfoot>
       </Table>
     </TableContainer>
   );

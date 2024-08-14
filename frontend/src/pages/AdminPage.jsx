@@ -1,23 +1,25 @@
 import React from 'react';
-import { Box, Heading, HStack, Stack } from '@chakra-ui/react';
-import { FaRegFaceSadTear } from 'react-icons/fa6';
-import { Icon } from '@chakra-ui/icons';
+import { Box, VStack } from '@chakra-ui/react';
 import Navigation from '../components/misc/Navigation';
+import HeaderCard from '../components/common/HeaderCard';
+import Circuits from '../components/Circuits';
+import ImageUrls from '../ImageUrls';
 
 function AdminPage() {
   return (
-    <Stack>
+    <VStack align="left">
       <Box>
-        <Navigation currentPage="home" />
+        <Navigation currentPage="admin" />
       </Box>
+      <HeaderCard
+        mainImageSrc={ImageUrls.warpscoresLogoPng('medium')}
+        heading="Admin"
+        subHeading="Configure circuits for collecting data..."
+      />
       <Box>
-        <Heading size="md">Admin-Page</Heading>
-        <HStack spacing={2} mt="10" align="left">
-          <Icon as={FaRegFaceSadTear} size="lg" />
-          <Box>Not available yet...</Box>
-        </HStack>
+        <Circuits />
       </Box>
-    </Stack>
+    </VStack>
   );
 }
 

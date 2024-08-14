@@ -57,22 +57,22 @@ function Rank({ rank }) {
         </>
       )}
       <Td>
-        <Center> {Formatter.formatAsNumber(rank.gamesPlayed)}</Center>
+        <Center>{Formatter.formatAsNumber(rank.score)}</Center>
       </Td>
       <Td>
-        <Center>{Formatter.formatAsNumber(rank.score)}</Center>
+        <Center>{Formatter.formatAsNumber(rank.gamesWon)}</Center>
+      </Td>
+      <Td>
+        <Center>{Formatter.formatAsNumber(rank.gamesDrawn)}</Center>
+      </Td>
+      <Td>
+        <Center>{Formatter.formatAsNumber(rank.gamesLost)}</Center>
+      </Td>
+      <Td>
+        <Center> {Formatter.formatAsNumber(rank.gamesPlayed)}</Center>
       </Td>
       {!isSmallScreen && (
         <>
-          <Td>
-            <Center>{Formatter.formatAsNumber(rank.gamesWon)}</Center>
-          </Td>
-          <Td>
-            <Center>{Formatter.formatAsNumber(rank.gamesDrawn)}</Center>
-          </Td>
-          <Td>
-            <Center>{Formatter.formatAsNumber(rank.gamesLost)}</Center>
-          </Td>
           <Td>
             <Center>{Formatter.formatAsNumber(rank.inflictedTouchdowns)}</Center>
           </Td>

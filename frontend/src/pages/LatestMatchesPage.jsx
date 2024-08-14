@@ -14,13 +14,13 @@ function LatestMatchesPage() {
 
   useEffect(() => {
     const fetchLeague = () => {
-      WarpScoresApiService.league(leagueUuid)
+      WarpScoresApiService.leagues(leagueUuid)
         .then((data) => {
           setLeague(data);
         })
         .then(() => setLoading(false))
         .catch((reason) => {
-          setError(reason.toLocaleString(config.locale));
+          setError({ type: 'error', message: reason.toLocaleString(config.locale) });
         });
     };
     fetchLeague();

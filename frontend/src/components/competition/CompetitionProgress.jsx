@@ -43,9 +43,7 @@ function RoundRobinProgresses({
   );
 }
 
-function WissenProgresses({ playedMatches, liveMatches, validatedMatches, teamsMax, status }) {
-  const roundLength = teamsMax / 2;
-  const totalMatches = roundLength * 6; // FIXME how many really?
+function WissenProgresses({ playedMatches, liveMatches, validatedMatches, totalMatches, status }) {
   const finishedMatches = Math.max(playedMatches, validatedMatches);
   const needsValidation = validatedMatches + liveMatches < playedMatches;
   const live = liveMatches > 0;
@@ -86,11 +84,10 @@ function Progresses({
     case 'Wissen':
       return (
         <WissenProgresses
-          currentRound={currentRound}
-          teamsMax={teamsMax}
           playedMatches={playedMatches}
-          validatedMatches={validatedMatches}
           liveMatches={liveMatches}
+          validatedMatches={validatedMatches}
+          totalMatches={totalMatches}
           status={status}
         />
       );

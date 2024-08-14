@@ -1,9 +1,17 @@
 const MAX_AGE_FOR_STATUS_IN_MILLIS = 35 * 60 * 1_000;
-const backendUrl = process.env.NODE_ENV === 'production' ? 'https://warp-scores.net/api' : 'http://localhost:18080';
+const isProduction = process.env.NODE_ENV === 'production';
+const backendUrl = isProduction ? 'https://warp-scores.net/api' : 'http://localhost:18080';
+const auth0ClientId = 'vds4UOVhMmdut8kNXOQ0XJ1s5st95vdu';
+const auth0Domain = 'warp-scores.eu.auth0.com';
+const auth0Audience = 'warp-scores-backend';
 
 const config = {
   MAX_AGE_FOR_STATUS_IN_MILLIS,
   backendUrl,
+  isProduction,
+  auth0ClientId,
+  auth0Domain,
+  auth0Audience,
   locale: 'en-UK',
   boxSize: '2rem',
   smallBoxSize: '1.5rem',

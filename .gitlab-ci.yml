@@ -3,6 +3,7 @@ stages:
   - test
   - package
   - deploy
+  - release
 
 variables:
   MAVEN_OPTS: -Dmaven.repo.local=.m2/repository
@@ -25,3 +26,45 @@ maven-test:
     reports:
       junit:
         - "**/target/surefire-reports/TEST-*.xml"
+        - "**/target/junit.xml"
+
+maven-package:
+  stage: package
+  only:
+    - /^dev$/
+  image: registry.hub.docker.com/library/maven:3.8-openjdk-17
+  script: "mvn -DskipTests=true -Ddockerfile.skip install"
+
+maven-deploy:
+  stage: deploy
+  only:
+    - /^dev$/
+  image: registry.hub.docker.com/library/maven:3.8-openjdk-17
+  script: "mvn -DskipTests=true -Ddockerfile.skip deploy -s ci_settings.xml"
+
+maven-release:
+  stage: release
+  only:
+    - /^main$/
+  script:
+#    - ./updateChangelog.sh "${POM_BASE_VERSION}"
+    - git commit -a -m "Preparing release ${POM_BASE_VERSION}" && git push origin
+    - export COMMIT_HASH=`git log -1 --format="%H"`
+    - git tag -a -m "Release ${POM_BASE_VERSION}" "${POM_BASE_VERSION}" "${COMMIT_HASH}"
+    - git push origin ${POM_BASE_VERSION}
+    - mvn -DskipTests=true -Ddockerfile.skip release:prepare release:perform --batch-mode -s ci_settings.xml
+#    - git checkout dev
+#    - git merge --no-ff ${CI_COMMIT_REF_NAME}
+#    - git push origin dev
+
+
+
+#
+#
+#maven-release:
+#  stage: package
+#  only:
+#    - /^main$/
+#  image: registry.hub.docker.com/library/maven:3.8-openjdk-17
+#  script: "mvn release:prepare release:perform -DskipTests=true"
+

@@ -37,22 +37,22 @@ function TableColumns() {
         </>
       )}
       <Th>
-        <Center>{isSmallScreen ? 'GP' : 'Games played'}</Center>
+        <Center>{isSmallScreen ? 'Sc.' : 'Score'}</Center>
       </Th>
       <Th>
-        <Center>{isSmallScreen ? 'Sc.' : 'Score'}</Center>
+        <Center>W</Center>
+      </Th>
+      <Th>
+        <Center>D</Center>
+      </Th>
+      <Th>
+        <Center>L</Center>
+      </Th>
+      <Th>
+        <Center>{isSmallScreen ? 'GP' : 'Games'}</Center>
       </Th>
       {!isSmallScreen && (
         <>
-          <Th>
-            <Center>W</Center>
-          </Th>
-          <Th>
-            <Center>D</Center>
-          </Th>
-          <Th>
-            <Center>L</Center>
-          </Th>
           <Th>
             <Center>TD+</Center>
           </Th>

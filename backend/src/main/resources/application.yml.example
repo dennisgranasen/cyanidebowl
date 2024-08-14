@@ -9,6 +9,19 @@ spring:
     resources:
       static-locations: classpath=/public
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://YOUR_DOMAIN/
+          jwk-set-uri: https://YOUR_DOMAIN/.well-known/jwks.json
+          jws-algorithms: RS256
+
+okta:
+  oauth2:
+    issuer: https://YOUR_DOMAIN/
+    audience: YOUR_AUDIENCE
+
 cyanide:
   check-api-status-cron: '0 */15 * * * ?'
   scheduler-active: true

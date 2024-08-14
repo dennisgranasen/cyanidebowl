@@ -1,5 +1,14 @@
 package net.warp_scores.warpscores.controller;
 
+import java.util.Arrays;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.cyanide.api.model.common.IdWithName;
@@ -7,16 +16,8 @@ import net.warp_scores.warpscores.cyanide.api.requests.LookupRequest;
 import net.warp_scores.warpscores.cyanide.api.responses.LookupResponse;
 import net.warp_scores.warpscores.domain.persistence.LeagueCollectionRepository;
 import net.warp_scores.warpscores.model.LeagueCollection;
-import net.warp_scores.warpscores.service.CyanideApiService;
+import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
 import net.warp_scores.warpscores.service.UUIDConverter;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Arrays;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor

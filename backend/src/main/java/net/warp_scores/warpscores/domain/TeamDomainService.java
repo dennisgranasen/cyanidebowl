@@ -72,7 +72,7 @@ public class TeamDomainService {
 
     @Transactional
     public Optional<Team> findTeam(UUID teamUuid, Optional<UUID> competitionUuid) {
-        List<Team> teams = teamRepository.findAllById(Arrays.asList(teamUuid));
+        List<Team> teams = teamRepository.findAllById(List.of(teamUuid));
         if (teams.size() == 1) {
             competitionUuid.ifPresent((uuid) -> setRelevantCompetition(teams, uuid));
             return Optional.of(teams.get(0));
