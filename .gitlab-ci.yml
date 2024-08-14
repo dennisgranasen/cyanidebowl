@@ -46,6 +46,7 @@ maven-release:
   stage: release
   only:
     - /^main$/
+  image: registry.hub.docker.com/library/maven:3.8-openjdk-17
   before_script:
     # Clone the repository via HTTPS inside a new directory
     - git clone "https://${GITLAB_USERNAME}:${GITLAB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" "${CI_COMMIT_SHA}"
