@@ -1,9 +1,8 @@
 stages:
   - build
   - test
-#  - integrate
-#  - package
-#  - deploy
+  - package
+  - deploy
 
 variables:
   MAVEN_OPTS: -Dmaven.repo.local=.m2/repository
@@ -27,13 +26,20 @@ maven-test:
       junit:
         - "**/target/surefire-reports/TEST-*.xml"
 
-#maven-package:
-#  stage: package
-#  only:
-#    - /^dev$/
-#  image: registry.hub.docker.com/library/maven:3.8-openjdk-17
-#  script: "mvn install -DskipTests=true"
-#
+maven-package:
+  stage: package
+  only:
+    - /^dev$/
+  image: registry.hub.docker.com/library/maven:3.8-openjdk-17
+  script: "mvn -DskipTests=true install"
+
+maven-deploy:
+  stage: deploy
+  only:
+    - /^dev$/
+  image: registry.hub.docker.com/library/maven:3.8-openjdk-17
+  script: "mvn deploy -s ci_settings.xml"
+
 #tag-release-from-main:
 #  stage: integrate
 #  only:
