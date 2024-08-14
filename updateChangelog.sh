@@ -31,12 +31,12 @@ fi
 echo "Found ${CHANGELOG_FILE}..."
 
 TEST_FOR_UNRELEASED=$(grep -F "## Unreleased" "${CHANGELOG_FILE}")
-if [ -n "${TEST_FOR_UNRELEASED}" ]; then
+if [ -z "${TEST_FOR_UNRELEASED}" ]; then
   echo "${CHANGELOG_FILE} contains no Unreleased headline. Skipping update."
   exit 0
 fi
 TEST_FOR_VERSION=$(grep -F "## ${CHANGELOG_VERSION}" "./CHANGELOG.md")
-if [ -n "$TEST_FOR_VERSION" ]; then
+if [ -n "${TEST_FOR_VERSION}" ]; then
   echo "${CHANGELOG_FILE} already contains headline for this version (${CHANGELOG_VERSION}). Skipping update."
   exit 0
 fi
