@@ -38,6 +38,7 @@
     "core-js": "^3.38.0",
     "formik": "2.4.6",
     "jest-cli": "^29.7.0",
+    "jest-junit": "^16.0.0",
     "jwt-decode": "^4.0.0",
     "markdown-to-jsx": "^7.4.7",
     "raw-loader": "^4.0.2",
@@ -52,7 +53,7 @@
   "scripts": {
     "build": "webpack --mode production --config webpack.prod.js",
     "dev": "webpack-dev-server --devtool inline-source-map --mode development --config webpack.dev.js",
-    "test": "jest"
+    "test": "jest --ci"
   },
   "eslintConfig": {
     "parser": "@babel/eslint-parser",
