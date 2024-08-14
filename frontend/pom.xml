@@ -101,15 +101,15 @@
                 <executions>
                     <execution>
                         <id>copy-resources</id>
-                        <phase>install</phase>
+                        <phase>generate-resources</phase>
                         <goals>
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>./public</outputDirectory>
+                            <outputDirectory>${project.basedir}/public</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>../</directory>
+                                    <directory>${project.basedir}/../</directory>
                                     <includes>
                                         <include>README.md</include>
                                     </includes>
@@ -125,15 +125,31 @@
                 <version>1.7</version>
                 <executions>
                     <execution>
+                        <id>clean-resources</id>
+                        <phase>clean</phase>
                         <goals>
                             <goal>run</goal>
                         </goals>
+                        <configuration>
+                            <tasks>
+                                <delete>
+                                    <fileset dir="${project.basedir}/public" includes="README.md"/>
+                                    <fileset dir="${project.basedir}/public" includes="version.json"/>
+                                </delete>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-resources</id>
                         <phase>generate-resources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
                         <configuration>
                             <target>
                                 <echo file="${project.basedir}/public/version.json">
+                                    <![CDATA[{ "project": "${project.groupId}:${project.parent.artifactId}-${project.artifactId}", "committish": "${buildNumber}", "projectVersion": "${project.version}", "timestamp": "${maven.build.timestamp}" }]]>
                                 </echo>
-                                <![CDATA[{ "project": "${project.groupId}:${project.parent.artifactId}-${project.artifactId}", "committish": "${buildNumber}", "projectVersion": "${project.version}", "timestamp": "${maven.build.timestamp}" }]]>
                             </target>
                         </configuration>
                     </execution>
