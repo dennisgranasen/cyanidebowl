@@ -19,7 +19,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <scm>
-        <connection>scm:git:https://gitlab.com/warp-scores/warp-scores.git</connection>
+        <developerConnection>scm:git:git@gitlab.com:warpscores/warp-scores.git</developerConnection>
+        <connection>scm:git:git@gitlab.com:warpscores/warp-scores.git</connection>
         <url>https://gitlab.com/warp-scores/warp-scores/</url>
         <tag>HEAD</tag>
     </scm>
