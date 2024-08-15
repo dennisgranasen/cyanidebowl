@@ -54,9 +54,10 @@ maven-release:
   only:
     - /^main$/
   before_script:
-    - ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+    - REPO_URL="https://${GITLAB_USERNAME}:${GITLAB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
     # Clone the repository via HTTPS inside a new directory
-    - git clone "https://${GITLAB_USERNAME}:${GITLAB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" "${CI_COMMIT_SHORT_SHA}"
+    - git clone "${REPO_URL}" "${CI_COMMIT_SHORT_SHA}"
+    - git remote set-url origin "${REPO_URL}"
     # Set the displayed user with the commits that are about to be made
     - git config --global user.email "${GIT_USER_EMAIL:-$GITLAB_USER_EMAIL}"
     - git config --global user.name "${GIT_USER_NAME:-$GITLAB_USER_NAME}"
@@ -68,7 +69,9 @@ maven-release:
   script:
     - ./updateChangelog.sh "${nextReleaseVersion}"
     - git commit -a -m "Updated changelog for release ${nextReleaseVersion} (${CI_COMMIT_SHORT_SHA})" && git push origin
-    - mvn -DskipTests=true release:prepare release:perform --batch-mode -s ci_settings.xml
+    - mvn -DskipTests=true release:prepare --batch-mode -s ci_settings.xml
+    - mvn -DskipTests=true release:perform -DconnectionUrl="${REPO_URL}" -Dusername="${GITLAB_USERNAME}" -Dpassword="${GITLAB_TOKEN}" --batch-mode -s ci_settings.xml
+
 #    - git checkout dev
 #    - git merge --no-ff ${CI_COMMIT_REF_NAME}
 #    - git push origin dev
