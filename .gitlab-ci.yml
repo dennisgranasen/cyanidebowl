@@ -62,9 +62,10 @@ maven-release:
     - git config --global user.email "${GIT_USER_EMAIL:-$GITLAB_USER_EMAIL}"
     - git config --global user.name "${GIT_USER_NAME:-$GITLAB_USER_NAME}"
     # Create a new branch to work on
-    - releaseBranchName="release-${nextReleaseVersion}-${CI_COMMIT_SHORT_SHA}"
-    - git checkout -B "${releaseBranchName}"
     - nextReleaseVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec | sed 's/-SNAPSHOT//')
+    - releaseBranchName="release-${nextReleaseVersion}-${CI_COMMIT_SHORT_SHA}"
+    - git remote --set-url origin "https://${GITLAB_USERNAME}:${GITLAB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+    - git checkout -B "${releaseBranchName}"
   script:
     - ./updateChangelog.sh "${nextReleaseVersion}"
     - git commit -a -m "Updated changelog for release ${nextReleaseVersion} (${CI_COMMIT_SHORT_SHA})"
