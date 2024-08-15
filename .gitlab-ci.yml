@@ -64,7 +64,7 @@ maven-release:
     # Create a new branch to work on
     - nextReleaseVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec | sed 's/-SNAPSHOT//')
     - releaseBranchName="release-${nextReleaseVersion}-${CI_COMMIT_SHORT_SHA}"
-    - git remote --set-url origin "https://${GITLAB_USERNAME}:${GITLAB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+    - git remote set-url origin "https://${GITLAB_USERNAME}:${GITLAB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
     - git checkout -B "${releaseBranchName}"
   script:
     - ./updateChangelog.sh "${nextReleaseVersion}"
