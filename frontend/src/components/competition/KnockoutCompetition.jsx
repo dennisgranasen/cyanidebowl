@@ -76,7 +76,19 @@ function toBracketMatches(contests) {
   return matches;
 }
 
-function Participant({ party, won, hovered, teamNameFallback, resultFallback, onMouseEnter, connectorColor }) {
+function Participant({
+  match,
+  party,
+  won,
+  hovered,
+  connectorColor,
+  teamNameFallback,
+  resultFallback,
+  onMouseEnter,
+  onMouseLeave,
+  onMatchClick,
+  onPartyClick,
+}) {
   let borderColor = hovered ? 'gray.600' : connectorColor;
   const backgroundColor = hovered ? 'gray.600' : null;
   if (won) {
@@ -91,10 +103,12 @@ function Participant({ party, won, hovered, teamNameFallback, resultFallback, on
       overflow="hidden"
       backgroundColor={backgroundColor}
       onMouseEnter={() => onMouseEnter(party.id)}
+      onMouseLeave={() => onMouseLeave(party.id)}
+      onPartyClick={onPartyClick}
+      onMatchClick={onMatchClick}
     >
       <Grid
         w="100%"
-        onMouseEnter={() => onMouseEnter(party.id)}
         templateAreas={`"image team score"
                   "image coach score"`}
         gridTemplateColumns="32px 1fr 32px"
@@ -121,8 +135,7 @@ function Participant({ party, won, hovered, teamNameFallback, resultFallback, on
 }
 
 function MatchComponent({
-  onPartyClick,
-  onMouseEnter,
+  match,
   topParty,
   bottomParty,
   topWon,
@@ -133,6 +146,10 @@ function MatchComponent({
   connectorColor,
   teamNameFallback,
   resultFallback,
+  onPartyClick,
+  onMatchClick,
+  onMouseEnter,
+  onMouseLeave,
 }) {
   return (
     <DelayedIconTooltip label={topText ? `Played ${topText}` : 'Scheduled'}>
@@ -143,6 +160,7 @@ function MatchComponent({
         }}
       >
         <Participant
+          match={match}
           party={topParty}
           won={topWon}
           hovered={topHovered}
@@ -150,9 +168,12 @@ function MatchComponent({
           resultFallback={resultFallback}
           connectorColor={connectorColor}
           onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
           onPartyClick={onPartyClick}
+          onMatchClick={onMatchClick}
         />
         <Participant
+          match={match}
           party={bottomParty}
           won={bottomWon}
           hovered={bottomHovered}
@@ -160,7 +181,9 @@ function MatchComponent({
           resultFallback={resultFallback}
           connectorColor={connectorColor}
           onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
           onPartyClick={onPartyClick}
+          onMatchClick={onMatchClick}
         />
       </div>
     </DelayedIconTooltip>
