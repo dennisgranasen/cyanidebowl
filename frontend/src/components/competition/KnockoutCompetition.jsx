@@ -1,4 +1,17 @@
-import { Box, Center, Grid, GridItem, Heading, Image } from '@chakra-ui/react';
+import {
+  Accordion,
+  AccordionButton,
+  AccordionIcon,
+  AccordionItem,
+  AccordionPanel,
+  Box,
+  Center,
+  Grid,
+  GridItem,
+  Heading,
+  Image,
+  Spinner,
+} from '@chakra-ui/react';
 import { SingleEliminationBracket } from 'react-tournament-brackets/dist/esm';
 import React from 'react';
 import logger from '../../util/Logger';
@@ -6,6 +19,7 @@ import ImageUrls from '../../ImageUrls';
 import prettyPrint from '../../util/PrettyPrint';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
 import formatter from '../../util/Formatter';
+import Ranks from './Ranks';
 
 function toParticipant(opponent, winner) {
   return {
@@ -153,7 +167,7 @@ function MatchComponent({
   );
 }
 
-function KnockoutCompetition({ contests, competition }) {
+function KnockoutCompetition({ ranks, contests, competition }) {
   logger.debug('Contests: %o', contests);
   const matches = toBracketMatches(contests, competition.teamsMax);
   logger.debug('Matches: %o', matches);
@@ -163,6 +177,17 @@ function KnockoutCompetition({ contests, competition }) {
       <Box align="center" height="100%" width="100%" overflowX="scroll">
         {matches && <SingleEliminationBracket matches={matches} matchComponent={MatchComponent} />}
       </Box>
+      <Accordion allowMultiple>
+        <AccordionItem>
+          <AccordionButton>
+            <Box as="span" flex="1" textAlign="left">
+              <Heading size="md">Ranks</Heading>
+            </Box>
+            <AccordionIcon />
+          </AccordionButton>
+          <AccordionPanel>{ranks ? <Ranks ranks={ranks} /> : <Spinner />}</AccordionPanel>
+        </AccordionItem>
+      </Accordion>
     </>
   );
 }
