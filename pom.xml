@@ -20,7 +20,6 @@
     </properties>
     <scm>
         <developerConnection>scm:git:git@gitlab.com:warpscores/warp-scores.git</developerConnection>
-        <connection>scm:git:git@gitlab.com:warpscores/warp-scores.git</connection>
         <tag>HEAD</tag>
     </scm>
     <modules>
