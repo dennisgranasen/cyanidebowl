@@ -71,6 +71,7 @@ maven-release:
     - git commit -a -m "Updated changelog for release ${nextReleaseVersion} (${CI_COMMIT_SHORT_SHA})"
     - git push --set-upstream origin "${releaseBranchName}"
     - mvn -DskipTests=true release:prepare release:perform --batch-mode -s ci_settings.xml -DpushChanges=false
+    - git commit -a -m "Performed release ${nextReleaseVersion} (${CI_COMMIT_SHORT_SHA})"
     - git push origin "${releaseBranchName}"
 #    - git checkout dev
 #    - git merge --no-ff ${CI_COMMIT_REF_NAME}
