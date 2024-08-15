@@ -81,6 +81,8 @@ function Participant({
   party,
   won,
   hovered,
+  borderTopRadius,
+  borderBottomRadius,
   connectorColor,
   teamNameFallback,
   resultFallback,
@@ -89,17 +91,16 @@ function Participant({
   onMatchClick,
   onPartyClick,
 }) {
-  let borderColor = hovered ? 'gray.600' : connectorColor;
+  const borderColor = hovered ? 'gray.600' : connectorColor;
   const backgroundColor = hovered ? 'gray.600' : null;
-  if (won) {
-    borderColor = 'white';
-  }
   return (
     <Box
       m="0"
-      p="0"
+      p="2px"
       borderColor={borderColor}
       borderWidth="1px"
+      borderTopRadius={borderTopRadius}
+      borderBottomRadius={borderBottomRadius}
       overflow="hidden"
       backgroundColor={backgroundColor}
       onMouseEnter={() => onMouseEnter(party.id)}
@@ -111,20 +112,20 @@ function Participant({
         w="100%"
         templateAreas={`"image team score"
                   "image coach score"`}
-        gridTemplateColumns="32px 1fr 32px"
+        gridTemplateColumns="40px 1fr 32px"
       >
-        <GridItem p="2px" area="image" textAlign="center">
+        <GridItem pl="4px" pr="4px" area="image" textAlign="center">
           <Center w="100%" h="100%">
             <Image src={ImageUrls.logo(party.picture)} objectFit="contain" />
           </Center>
         </GridItem>
-        <GridItem pl="2px" area="team" w="100%" textAlign="left">
+        <GridItem pl="4px" area="team" w="100%" textAlign="left" fontWeight={won ? 'bold' : null}>
           {party.teamName || teamNameFallback}
         </GridItem>
-        <GridItem pl="2px" area="coach" textAlign="left" color="grey">
+        <GridItem pl="4px" area="coach" textAlign="left" fontSize="sm" color="grey">
           {`${party.coachName}, ${prettyPrint(party.race)}`}
         </GridItem>
-        <GridItem area="score" textAlign="center" fontWeight="bold">
+        <GridItem area="score" textAlign="center" fontWeight={won ? 'bold' : null}>
           <Center w="100%" h="100%">
             {party.resultText ?? resultFallback(party)}
           </Center>
@@ -156,7 +157,7 @@ function MatchComponent({
       <div
         style={{
           cursor: 'pointer',
-          marginTop: '5px',
+          marginTop: '4px',
         }}
       >
         <Participant
@@ -164,6 +165,7 @@ function MatchComponent({
           party={topParty}
           won={topWon}
           hovered={topHovered}
+          borderTopRadius="sm"
           teamNameFallback={teamNameFallback}
           resultFallback={resultFallback}
           connectorColor={connectorColor}
@@ -177,6 +179,7 @@ function MatchComponent({
           party={bottomParty}
           won={bottomWon}
           hovered={bottomHovered}
+          borderBottomRadius="sm"
           teamNameFallback={teamNameFallback}
           resultFallback={resultFallback}
           connectorColor={connectorColor}
