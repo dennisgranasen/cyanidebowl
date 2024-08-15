@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Heading, Spinner, VStack } from '@chakra-ui/react';
+import { Box, Spinner, VStack } from '@chakra-ui/react';
 import { Link as RouteLink, useParams } from 'react-router-dom';
-import { SingleEliminationBracket, SVGViewer, Match } from 'react-tournament-brackets/dist/esm';
 import WarpScoresApiService from '../WarpScoresApiService';
 import Navigation from '../components/misc/Navigation';
 import comparators from '../util/Comparators';
@@ -26,13 +25,13 @@ function CompetitionPage() {
   const [contests, setContests] = useState();
 
   useEffect(() => {
-    const fetchCompetition = () => {
+    const fetchCompetition = async () => {
       WarpScoresApiService.competition(competitionUuid).then((data) => {
         setCompetition(data);
       });
     };
 
-    const fetchContests = () => {
+    const fetchContests = async () => {
       WarpScoresApiService.competitionContests(competitionUuid).then((data) => {
         data.sort((compA, compB) => comparators.compareAsDates(compA.matchDate, compB.matchDate));
         setContests(data);
@@ -44,15 +43,13 @@ function CompetitionPage() {
   }, []);
 
   useEffect(() => {
-    const fetchRanks = () => {
+    const fetchRanks = async () => {
       WarpScoresApiService.competitionRanks(competitionUuid).then((data) => {
         data.sort((rankA, rankB) => rankA.rank - rankB.rank);
         setRanks(data);
       });
     };
-    if (!isKnockout(competition)) {
-      fetchRanks();
-    }
+    fetchRanks();
   }, [competition]);
 
   return (
@@ -105,7 +102,7 @@ function CompetitionPage() {
         <Spinner />
       )}
       {isKnockout(competition) ? (
-        contests && <KnockoutCompetition contests={contests} competition={competition} />
+        contests && <KnockoutCompetition ranks={ranks} contests={contests} competition={competition} />
       ) : (
         <RoundRobinCompetition ranks={ranks} contests={contests} competition={competition} />
       )}
