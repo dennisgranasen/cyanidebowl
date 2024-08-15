@@ -17,8 +17,10 @@ maven-build:
   stage: build
   image: registry.hub.docker.com/library/maven:3.8-openjdk-17
   rules:
-    - if: $CI_COMMIT_BRANCH =~ /^release-/
+    - if: $CI_COMMIT_BRANCH =~ /^release-.*/
       when: never
+    - if: $CI_COMMIT_BRANCH
+      when: always
   script: "mvn -Ddockerfile.skip clean compile --batch-mode"
 
 maven-test:
@@ -27,6 +29,8 @@ maven-test:
   rules:
     - if: $CI_COMMIT_BRANCH =~ /^release-/
       when: never
+    - if: $CI_COMMIT_BRANCH
+      when: always
   script: "mvn test --fail-at-end --batch-mode"
   artifacts:
     reports:
@@ -54,24 +58,19 @@ maven-release:
   only:
     - /^main$/
   before_script:
-    - REPO_URL="https://${GITLAB_USERNAME}:${GITLAB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
-    # Clone the repository via HTTPS inside a new directory
-    - git clone "${REPO_URL}" "${CI_COMMIT_SHORT_SHA}"
-    - git remote set-url origin "${REPO_URL}"
     # Set the displayed user with the commits that are about to be made
     - git config --global user.email "${GIT_USER_EMAIL:-$GITLAB_USER_EMAIL}"
     - git config --global user.name "${GIT_USER_NAME:-$GITLAB_USER_NAME}"
-    - cd "${CI_COMMIT_SHORT_SHA}"
-    - nextReleaseVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec | sed 's/-SNAPSHOT//')
+    # Create a new branch to work on
     - releaseBranchName="release-${nextReleaseVersion}-${CI_COMMIT_SHORT_SHA}"
-    - git checkout -b "${releaseBranchName}"
-    - git push --set-upstream origin "${releaseBranchName}"
+    - git checkout -B "${releaseBranchName}"
+    - nextReleaseVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec | sed 's/-SNAPSHOT//')
   script:
     - ./updateChangelog.sh "${nextReleaseVersion}"
-    - git commit -a -m "Updated changelog for release ${nextReleaseVersion} (${CI_COMMIT_SHORT_SHA})" && git push origin
+    - git commit -a -m "Updated changelog for release ${nextReleaseVersion} (${CI_COMMIT_SHORT_SHA})"
+    - git push --set-upstream origin "${releaseBranchName}"
     - mvn -DskipTests=true release:prepare --batch-mode -s ci_settings.xml
-    - mvn -DskipTests=true release:perform -DconnectionUrl="${REPO_URL}" -Dusername="${GITLAB_USERNAME}" -Dpassword="${GITLAB_TOKEN}" --batch-mode -s ci_settings.xml
-
+    - mvn -DskipTests=true release:perform -Dusername="${GITLAB_USERNAME}" -Dpassword="${GITLAB_TOKEN}" --batch-mode -s ci_settings.xml
 #    - git checkout dev
 #    - git merge --no-ff ${CI_COMMIT_REF_NAME}
 #    - git push origin dev
