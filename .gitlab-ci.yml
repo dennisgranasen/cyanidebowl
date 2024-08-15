@@ -54,6 +54,7 @@ maven-release:
   only:
     - /^main$/
   before_script:
+    - ssh-keyscan -H github.com >> ~/.ssh/known_hosts
     # Clone the repository via HTTPS inside a new directory
     - git clone "https://${GITLAB_USERNAME}:${GITLAB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" "${CI_COMMIT_SHORT_SHA}"
     # Set the displayed user with the commits that are about to be made
