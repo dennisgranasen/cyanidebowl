@@ -58,6 +58,8 @@ maven-release:
   only:
     - /^main$/
   before_script:
+    - ssh-keyscan gitlab.com > /tmp/ssh_known_hosts
+    - GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/tmp/ssh_known_hosts"
     # Set the displayed user with the commits that are about to be made
     - git config --global user.email "${GIT_USER_EMAIL:-$GITLAB_USER_EMAIL}"
     - git config --global user.name "${GIT_USER_NAME:-$GITLAB_USER_NAME}"
