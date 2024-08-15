@@ -1,8 +1,25 @@
-import { Box, Center, Heading } from '@chakra-ui/react';
-import { Match, SingleEliminationBracket } from 'react-tournament-brackets/dist/esm';
+import {
+  Accordion,
+  AccordionButton,
+  AccordionIcon,
+  AccordionItem,
+  AccordionPanel,
+  Box,
+  Center,
+  Grid,
+  GridItem,
+  Heading,
+  Image,
+  Spinner,
+} from '@chakra-ui/react';
+import { SingleEliminationBracket } from 'react-tournament-brackets/dist/esm';
 import React from 'react';
 import logger from '../../util/Logger';
 import ImageUrls from '../../ImageUrls';
+import prettyPrint from '../../util/PrettyPrint';
+import DelayedIconTooltip from '../common/DelayedIconTooltip';
+import formatter from '../../util/Formatter';
+import Ranks from './Ranks';
 
 function toParticipant(opponent, winner) {
   return {
@@ -10,8 +27,10 @@ function toParticipant(opponent, winner) {
     resultText: opponent ? `${opponent.score}` : null,
     isWinner: winner?.team?.id === opponent?.id,
     status: opponent ? 'PLAYED' : null,
-    name: opponent?.name,
-    picture: opponent ? ImageUrls.logo(opponent.logo) : null,
+    teamName: opponent?.name,
+    coachName: opponent?.coachName,
+    race: opponent?.race,
+    picture: opponent?.logo,
   };
 }
 
@@ -43,7 +62,7 @@ function toBracketMatch(contest, contests) {
     id: contest?.contestUuid,
     nextMatchId: getNextMatchId(contest?.winner?.team?.id, contest?.round, contests),
     participants: toParticipants(contest?.opponents, contest?.winner),
-    startTime: contest?.matchDate,
+    startTime: formatter.formatAsDate(contest?.matchDate),
     state: contest?.matchDate ? 'DONE' : null,
     tournamentRoundText: `${contest?.round}`,
   };
@@ -57,14 +76,144 @@ function toBracketMatches(contests) {
   return matches;
 }
 
-function KnockoutCompetition({ contests, competition }) {
+function Participant({
+  match,
+  party,
+  won,
+  hovered,
+  borderTopRadius,
+  borderBottomRadius,
+  connectorColor,
+  teamNameFallback,
+  resultFallback,
+  onMouseEnter,
+  onMouseLeave,
+  onMatchClick,
+  onPartyClick,
+}) {
+  const borderColor = hovered ? 'gray.600' : connectorColor;
+  const backgroundColor = hovered ? 'gray.600' : null;
+  return (
+    <Box
+      m="0"
+      p="2px"
+      borderColor={borderColor}
+      borderWidth="1px"
+      borderTopRadius={borderTopRadius}
+      borderBottomRadius={borderBottomRadius}
+      overflow="hidden"
+      backgroundColor={backgroundColor}
+      onMouseEnter={() => onMouseEnter(party.id)}
+      onMouseLeave={() => onMouseLeave(party.id)}
+      onPartyClick={onPartyClick}
+      onMatchClick={onMatchClick}
+    >
+      <Grid
+        w="100%"
+        templateAreas={`"image team score"
+                  "image coach score"`}
+        gridTemplateColumns="40px 1fr 32px"
+      >
+        <GridItem pl="4px" pr="4px" area="image" textAlign="center">
+          <Center w="100%" h="100%">
+            <Image src={ImageUrls.logo(party.picture)} objectFit="contain" />
+          </Center>
+        </GridItem>
+        <GridItem pl="4px" area="team" w="100%" textAlign="left" fontWeight={won ? 'bold' : null}>
+          {party.teamName || teamNameFallback}
+        </GridItem>
+        <GridItem pl="4px" area="coach" textAlign="left" fontSize="sm" color="grey">
+          {`${party.coachName}, ${prettyPrint(party.race)}`}
+        </GridItem>
+        <GridItem area="score" textAlign="center" fontWeight={won ? 'bold' : null}>
+          <Center w="100%" h="100%">
+            {party.resultText ?? resultFallback(party)}
+          </Center>
+        </GridItem>
+      </Grid>
+    </Box>
+  );
+}
+
+function MatchComponent({
+  match,
+  topParty,
+  bottomParty,
+  topWon,
+  bottomWon,
+  topHovered,
+  bottomHovered,
+  topText,
+  connectorColor,
+  teamNameFallback,
+  resultFallback,
+  onPartyClick,
+  onMatchClick,
+  onMouseEnter,
+  onMouseLeave,
+}) {
+  return (
+    <DelayedIconTooltip label={topText ? `Played ${topText}` : 'Scheduled'}>
+      <div
+        style={{
+          cursor: 'pointer',
+          marginTop: '4px',
+        }}
+      >
+        <Participant
+          match={match}
+          party={topParty}
+          won={topWon}
+          hovered={topHovered}
+          borderTopRadius="sm"
+          teamNameFallback={teamNameFallback}
+          resultFallback={resultFallback}
+          connectorColor={connectorColor}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+          onPartyClick={onPartyClick}
+          onMatchClick={onMatchClick}
+        />
+        <Participant
+          match={match}
+          party={bottomParty}
+          won={bottomWon}
+          hovered={bottomHovered}
+          borderBottomRadius="sm"
+          teamNameFallback={teamNameFallback}
+          resultFallback={resultFallback}
+          connectorColor={connectorColor}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+          onPartyClick={onPartyClick}
+          onMatchClick={onMatchClick}
+        />
+      </div>
+    </DelayedIconTooltip>
+  );
+}
+
+function KnockoutCompetition({ ranks, contests, competition }) {
   logger.debug('Contests: %o', contests);
   const matches = toBracketMatches(contests, competition.teamsMax);
   logger.debug('Matches: %o', matches);
   return (
     <>
       <Heading size="md">Knockout-Bracket</Heading>
-      <Box align="center">{matches && <SingleEliminationBracket matches={matches} matchComponent={Match} />}</Box>
+      <Box align="center" height="100%" width="100%" overflowX="scroll">
+        {matches && <SingleEliminationBracket matches={matches} matchComponent={MatchComponent} />}
+      </Box>
+      <Accordion allowMultiple>
+        <AccordionItem>
+          <AccordionButton>
+            <Box as="span" flex="1" textAlign="left">
+              <Heading size="md">Ranks</Heading>
+            </Box>
+            <AccordionIcon />
+          </AccordionButton>
+          <AccordionPanel>{ranks ? <Ranks ranks={ranks} /> : <Spinner />}</AccordionPanel>
+        </AccordionItem>
+      </Accordion>
     </>
   );
 }
