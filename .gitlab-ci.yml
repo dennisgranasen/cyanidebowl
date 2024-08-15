@@ -27,7 +27,7 @@ maven-test:
   rules:
     - if: $CI_COMMIT_BRANCH =~ /^release-/
       when: never
-  script: "mvn -Ddockerfile.skip test --fail-at-end --batch-mode"
+  script: "mvn test --fail-at-end --batch-mode"
   artifacts:
     reports:
       junit:
@@ -39,14 +39,14 @@ maven-package:
   image: registry.hub.docker.com/library/maven:3.8-openjdk-17
   only:
     - /^dev$/
-  script: "mvn -DskipTests=true -Ddockerfile.skip install"
+  script: "mvn -DskipTests=true install"
 
 maven-deploy:
   stage: deploy
   image: registry.hub.docker.com/library/maven:3.8-openjdk-17
   only:
     - /^dev$/
-  script: "mvn -DskipTests=true -Ddockerfile.skip deploy -s ci_settings.xml"
+  script: "mvn -DskipTests=true deploy -s ci_settings.xml"
 
 maven-release:
   stage: release
@@ -67,7 +67,7 @@ maven-release:
   script:
     - ./updateChangelog.sh "${nextReleaseVersion}"
     - git commit -a -m "Updated changelog for release ${nextReleaseVersion} (${CI_COMMIT_SHORT_SHA})" && git push origin
-    - mvn -DskipTests=true -Ddockerfile.skip release:prepare release:perform --batch-mode -s ci_settings.xml
+    - mvn -DskipTests=true release:prepare release:perform --batch-mode -s ci_settings.xml
 #    - git checkout dev
 #    - git merge --no-ff ${CI_COMMIT_REF_NAME}
 #    - git push origin dev
