@@ -2,7 +2,6 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionStatus;
 import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Team;
@@ -10,8 +9,6 @@ import net.warp_scores.warpscores.service.CompetitionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;

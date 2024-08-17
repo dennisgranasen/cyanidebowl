@@ -21,10 +21,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>net.warp-scores</groupId>
-            <artifactId>cyanide-api</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
         </dependency>
 
         <!-- for laziness -->
