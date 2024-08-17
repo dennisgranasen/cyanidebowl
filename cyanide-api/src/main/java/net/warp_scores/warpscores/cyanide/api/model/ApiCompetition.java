@@ -1,8 +1,8 @@
 package net.warp_scores.warpscores.cyanide.api.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionFormat;
-import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionStatus;
+import net.warp_scores.warpscores.model.CompetitionFormat;
+import net.warp_scores.warpscores.model.CompetitionStatus;
 import net.warp_scores.warpscores.cyanide.api.model.common.IdWithName;
 import lombok.Getter;
 import lombok.Setter;

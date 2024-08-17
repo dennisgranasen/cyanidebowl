@@ -1,6 +1,6 @@
 package net.warp_scores.warpscores.domain.persistence;
 
-import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionStatus;
+import net.warp_scores.warpscores.model.CompetitionStatus;
 import net.warp_scores.warpscores.model.Competition;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;

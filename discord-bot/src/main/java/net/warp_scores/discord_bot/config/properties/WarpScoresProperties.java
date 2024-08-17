@@ -1,0 +1,29 @@
+package net.warp_scores.discord_bot.config.properties;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.checkerframework.checker.units.qual.N;
+
+@Getter
+@Setter
+public class WarpScoresProperties {
+
+    private BaseUrls baseUrls;
+
+    private DiscordConfig discord;
+
+    @Getter
+    @Setter
+    public static class BaseUrls {
+        private String frontend;
+        private String apiBackend;
+        private String imgBackend;
+    }
+
+    @Getter
+    @Setter
+    public static class DiscordConfig {
+        private String token;
+    }
+}

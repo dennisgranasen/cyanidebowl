@@ -1,4 +1,4 @@
-package net.warp_scores.warpscores.cyanide.api.model.common;
+package net.warp_scores.warpscores.model;
 
 public enum CompetitionStatus implements Comparable<CompetitionStatus> {
     InProgress, Registration, Finished;
