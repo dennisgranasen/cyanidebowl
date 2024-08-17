@@ -45,9 +45,9 @@ function Auth0ProviderWithRedirectCallback({ children, ...props }) {
 
 function App() {
   return (
-    <ChakraProvider theme={theme}>
-      <CSSReset />
-      <DarkMode>
+    <DarkMode>
+      <ChakraProvider theme={theme}>
+        <CSSReset />
         <Box padding="4">
           <Router>
             <Auth0ProviderWithRedirectCallback
@@ -81,8 +81,8 @@ function App() {
             </Auth0ProviderWithRedirectCallback>
           </Router>
         </Box>
-      </DarkMode>
-    </ChakraProvider>
+      </ChakraProvider>
+    </DarkMode>
   );
 }
 
