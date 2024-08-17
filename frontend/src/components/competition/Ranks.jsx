@@ -13,6 +13,7 @@ import {
 } from '@chakra-ui/react';
 import Rank from './Rank';
 import config from '../../config';
+import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 
 const { smallScreenBreakpointValues } = config;
 
@@ -77,27 +78,29 @@ function TableColumns() {
   );
 }
 
-function Ranks({ ranks }) {
+function Ranks({ ranks, loading }) {
   return (
-    <TableContainer>
-      <Table variant="stripedClickable" size="sm">
-        <Thead>
-          <TableColumns />
-        </Thead>
-        <Tbody>
-          {ranks ? (
-            ranks.map((rank) => {
-              return <Rank rank={rank} key={rank.team.id} />;
-            })
-          ) : (
-            <Spinner />
-          )}
-        </Tbody>
-        <Tfoot>
-          <TableColumns />
-        </Tfoot>
-      </Table>
-    </TableContainer>
+    <LoadingOrErrorWrapper loading={loading}>
+      <TableContainer>
+        <Table variant="stripedClickable" size="sm">
+          <Thead>
+            <TableColumns />
+          </Thead>
+          <Tbody>
+            {ranks ? (
+              ranks.map((rank) => {
+                return <Rank rank={rank} key={rank.team.id} />;
+              })
+            ) : (
+              <Spinner />
+            )}
+          </Tbody>
+          <Tfoot>
+            <TableColumns />
+          </Tfoot>
+        </Table>
+      </TableContainer>
+    </LoadingOrErrorWrapper>
   );
 }
 
