@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, ChakraProvider, CSSReset, extendTheme } from '@chakra-ui/react';
+import { Box, ChakraProvider, CSSReset, DarkMode, extendTheme } from '@chakra-ui/react';
 import { HashRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
 import { Auth0Provider, withAuthenticationRequired } from '@auth0/auth0-react';
 import WarpScores from './pages/WarpScores';
@@ -18,13 +18,7 @@ import config from './config';
 import linkTheme from './theme/components/Link';
 import tableTheme from './theme/components/Table';
 
-const themeConfig = {
-  initialColorMode: 'dark',
-  useSystemColorMode: false,
-};
-
 const theme = extendTheme({
-  themeConfig,
   components: {
     Link: linkTheme,
     RouteLink: linkTheme,
@@ -53,39 +47,41 @@ function App() {
   return (
     <ChakraProvider theme={theme}>
       <CSSReset />
-      <Box padding="4">
-        <Router>
-          <Auth0ProviderWithRedirectCallback
-            domain={config.auth0Domain}
-            clientId={config.auth0ClientId}
-            authorizationParams={{
-              redirect_uri: window.location.origin,
-            }}
-          >
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<WarpScores />} />
-              <Route path="/statistics" element={<StatisticsPage />} />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/:leagueUuid" element={<LeaguePage />} />
-              <Route path="/latestMatches/:leagueUuid" element={<LatestMatchesPage />} />
-              <Route path="/latestMatches/:leagueUuid/:limit" element={<LatestMatchesPage />} />
-              <Route path="/liveMatches/:leagueUuid" element={<LiveMatchesPage />} />
-              <Route path="/team/:teamUuid" element={<TeamPage />} />
-              <Route path="/competition/:competitionUuid" element={<CompetitionPage />} />
-              <Route path="/competition/:competitionUuid/team/:teamUuid" element={<TeamPage />} />
-              {/* Protected Routes/Needing authentication */}
-              <Route path="/coachPage" element={<ProtectedRoute component={CoachPage} />} />
-              <Route path="/admin" element={<ProtectedRoute component={AdminPage} />} />
-              <Route path="/admin/circuit/:circuitId" element={<ProtectedRoute component={CircuitPage} />} />
-              <Route
-                path="/admin/circuit/:circuitId/leg/:legId"
-                element={<ProtectedRoute component={CircuitLegPage} />}
-              />
-            </Routes>
-          </Auth0ProviderWithRedirectCallback>
-        </Router>
-      </Box>
+      <DarkMode>
+        <Box padding="4">
+          <Router>
+            <Auth0ProviderWithRedirectCallback
+              domain={config.auth0Domain}
+              clientId={config.auth0ClientId}
+              authorizationParams={{
+                redirect_uri: window.location.origin,
+              }}
+            >
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<WarpScores />} />
+                <Route path="/statistics" element={<StatisticsPage />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/:leagueUuid" element={<LeaguePage />} />
+                <Route path="/latestMatches/:leagueUuid" element={<LatestMatchesPage />} />
+                <Route path="/latestMatches/:leagueUuid/:limit" element={<LatestMatchesPage />} />
+                <Route path="/liveMatches/:leagueUuid" element={<LiveMatchesPage />} />
+                <Route path="/team/:teamUuid" element={<TeamPage />} />
+                <Route path="/competition/:competitionUuid" element={<CompetitionPage />} />
+                <Route path="/competition/:competitionUuid/team/:teamUuid" element={<TeamPage />} />
+                {/* Protected Routes/Needing authentication */}
+                <Route path="/coachPage" element={<ProtectedRoute component={CoachPage} />} />
+                <Route path="/admin" element={<ProtectedRoute component={AdminPage} />} />
+                <Route path="/admin/circuit/:circuitId" element={<ProtectedRoute component={CircuitPage} />} />
+                <Route
+                  path="/admin/circuit/:circuitId/leg/:legId"
+                  element={<ProtectedRoute component={CircuitLegPage} />}
+                />
+              </Routes>
+            </Auth0ProviderWithRedirectCallback>
+          </Router>
+        </Box>
+      </DarkMode>
     </ChakraProvider>
   );
 }
