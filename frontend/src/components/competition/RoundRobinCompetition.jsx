@@ -1,15 +1,20 @@
-import { Heading, Spinner } from '@chakra-ui/react';
+import { Heading } from '@chakra-ui/react';
 import React from 'react';
 import Ranks from './Ranks';
 import Contests from '../contest/Contests';
 
-function RoundRobinCompetition({ ranks, contests, competition }) {
+function RoundRobinCompetition({ ranks, contests, competition, ranksLoading, contestsLoading, competitionLoading }) {
   return (
     <>
       <Heading size="md">Ranking</Heading>
-      {ranks ? <Ranks ranks={ranks} /> : <Spinner />}
+      <Ranks loading={ranksLoading} ranks={ranks} />
       <Heading size="md">Contests</Heading>
-      {contests ? <Contests contests={contests} currentRound={competition.currentRound} /> : <Spinner />}
+      <Contests
+        contestsLoading={contestsLoading}
+        contests={contests}
+        competitionLoading={competitionLoading}
+        competition={competition}
+      />
     </>
   );
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Center,
   Tab,
@@ -18,6 +18,7 @@ import {
 import Contest from './Contest';
 import comparators from '../../util/Comparators';
 import config from '../../config';
+import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 
 const { smallScreenBreakpointValues } = config;
 
@@ -71,16 +72,13 @@ function getDateFromUUID(uuid) {
 function getRobinFrom(contests) {
   if (!contests || contests[0].format !== 'RoundRobin' || contests[0].format !== 'Ladder') return null;
   contests.sort((contestA, contestB) =>
-    comparators.compareAsDates(getDateFromUUID(contestA.contestUuid), getDateFromUUID(contestB.contestUuid))
+    comparators.compareAsDates(getDateFromUUID(contestA.contestUuid), getDateFromUUID(contestB.contestUuid)),
   );
   const { coachName } = contests[0].opponents[0];
   return coachName;
 }
 
-function Contests({ contests, currentRound }) {
-  const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
-  if (!(contests && currentRound))
-    return <></>;
+function toTabData(contests, isSmallScreen) {
   const groupedContests = contests ? Map.groupBy(contests, (contest) => contest.round) : null;
   const tabData = [];
   const robin = groupedContests ? getRobinFrom(groupedContests.get(1)) : null;
@@ -125,20 +123,42 @@ function Contests({ contests, currentRound }) {
       ),
     });
   });
+  return tabData;
+}
+
+function Contests({ contests, contestsLoading, competition, competitionLoading }) {
+  const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
+  const [tabData, setTabData] = useState([]);
+  const [activatedTab, setActivatedTab] = useState(0);
+
+  useEffect(() => {
+    if (contests) {
+      const data = toTabData(contests, isSmallScreen);
+      setTabData(data);
+    }
+  }, [contests]);
+
+  useEffect(() => {
+    if (!competitionLoading && competition) {
+      setActivatedTab(competition.currentRound - 1);
+    }
+  }, [competitionLoading, competition]);
 
   return (
-    <Tabs isFitted defaultIndex={currentRound - 1}>
-      <TabList>
-        {tabData.map((tab) => (
-          <Tab key={tab.round}>{tab.label}</Tab>
-        ))}
-      </TabList>
-      <TabPanels>
-        {tabData.map((tab) => (
-          <TabPanel key={tab.round}>{tab.content}</TabPanel>
-        ))}
-      </TabPanels>
-    </Tabs>
+    <LoadingOrErrorWrapper loading={contestsLoading || competitionLoading}>
+      <Tabs isFitted defaultIndex={activatedTab}>
+        <TabList>
+          {tabData.map((tab) => (
+            <Tab key={tab.round}>{tab.label}</Tab>
+          ))}
+        </TabList>
+        <TabPanels>
+          {tabData.map((tab) => (
+            <TabPanel key={tab.round}>{tab.content}</TabPanel>
+          ))}
+        </TabPanels>
+      </Tabs>
+    </LoadingOrErrorWrapper>
   );
 }
 

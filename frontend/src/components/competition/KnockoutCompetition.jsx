@@ -10,16 +10,16 @@ import {
   GridItem,
   Heading,
   Image,
-  Spinner,
 } from '@chakra-ui/react';
 import { SingleEliminationBracket } from 'react-tournament-brackets/dist/esm';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import logger from '../../util/Logger';
 import ImageUrls from '../../ImageUrls';
 import prettyPrint from '../../util/PrettyPrint';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
 import formatter from '../../util/Formatter';
 import Ranks from './Ranks';
+import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 
 function toParticipant(opponent, winner) {
   return {
@@ -193,15 +193,23 @@ function MatchComponent({
   );
 }
 
-function KnockoutCompetition({ ranks, contests, competition }) {
-  logger.debug('Contests: %o', contests);
-  const matches = toBracketMatches(contests, competition.teamsMax);
-  logger.debug('Matches: %o', matches);
+function KnockoutCompetition({ ranks, contests, competition, ranksLoading, contestsLoading, competitionLoading }) {
+  const [matches, setMatches] = useState([]);
+
+  useEffect(() => {
+    const bracketMatches =
+      !competitionLoading && contests && competition ? toBracketMatches(contests, competition?.teamsMax) : [];
+    setMatches(bracketMatches);
+  }, [competition, competitionLoading, contests]);
   return (
     <>
       <Heading size="md">Knockout-Bracket</Heading>
       <Box align="center" height="100%" width="100%" overflowX="scroll">
-        {matches && <SingleEliminationBracket matches={matches} matchComponent={MatchComponent} />}
+        <LoadingOrErrorWrapper loading={contestsLoading}>
+          {matches && matches.length > 0 && (
+            <SingleEliminationBracket matches={matches} matchComponent={MatchComponent} />
+          )}
+        </LoadingOrErrorWrapper>
       </Box>
       <Accordion allowMultiple>
         <AccordionItem>
@@ -211,7 +219,9 @@ function KnockoutCompetition({ ranks, contests, competition }) {
             </Box>
             <AccordionIcon />
           </AccordionButton>
-          <AccordionPanel>{ranks ? <Ranks ranks={ranks} /> : <Spinner />}</AccordionPanel>
+          <AccordionPanel>
+            <Ranks loading={ranksLoading} ranks={ranks} />
+          </AccordionPanel>
         </AccordionItem>
       </Accordion>
     </>
