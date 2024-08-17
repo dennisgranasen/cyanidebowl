@@ -14,12 +14,13 @@ import {
   Link,
   Spacer,
   Spinner,
+  useColorMode,
   useDisclosure,
   VStack,
 } from '@chakra-ui/react';
 import { FaTriangleExclamation } from 'react-icons/fa6';
 import { Link as RouteLink } from 'react-router-dom';
-import { ExternalLinkIcon, HamburgerIcon, Icon } from '@chakra-ui/icons';
+import { ExternalLinkIcon, HamburgerIcon, Icon, MoonIcon, SunIcon } from '@chakra-ui/icons';
 import { useAuth0 } from '@auth0/auth0-react';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import config from '../../config';
@@ -63,6 +64,7 @@ function LastCheck({ status, textSize, statusOutdated }) {
 }
 
 function Menu() {
+  const { colorMode, toggleColorMode } = useColorMode();
   const { user, isAuthenticated, isLoading, loginWithPopup, logout, getAccessTokenSilently, getAccessTokenWithPopup } =
     useAuth0();
   const [userPermissions, setUserPermissions] = useState({
@@ -131,6 +133,16 @@ function Menu() {
           >
             <VStack h="full" align="left">
               <VStack align="left" h="full">
+                <Box w="100%" textAlign="right">
+                  <DelayedIconTooltip label={`Change color mode to ${colorMode === 'dark' ? 'light (beta)' : 'dark'}`}>
+                    <Icon
+                      as={colorMode === 'dark' ? MoonIcon : SunIcon}
+                      boxSize={smallBoxSize}
+                      onClick={toggleColorMode}
+                      color="white"
+                    />
+                  </DelayedIconTooltip>
+                </Box>
                 <Box>
                   <Link variant="menu" as={RouteLink} to="/" onClick={() => onClose()}>
                     Home
