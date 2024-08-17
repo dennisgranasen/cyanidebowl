@@ -1,4 +1,4 @@
-package net.warp_scores.warpscores.cyanide.api.model.common;
+package net.warp_scores.warpscores.model;
 
 public enum Platform {
     PC, XBOX, PS, TT, SWITCH, CROSS

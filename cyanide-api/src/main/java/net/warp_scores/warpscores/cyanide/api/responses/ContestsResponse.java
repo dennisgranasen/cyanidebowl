@@ -5,7 +5,7 @@ import lombok.Setter;
 import net.warp_scores.warpscores.cyanide.api.DateUtil;
 import net.warp_scores.warpscores.cyanide.api.model.ApiContest;
 import net.warp_scores.warpscores.cyanide.api.model.common.Context;
-import net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus;
+import net.warp_scores.warpscores.model.MatchStatus;
 
 import java.util.Arrays;
 import java.util.List;

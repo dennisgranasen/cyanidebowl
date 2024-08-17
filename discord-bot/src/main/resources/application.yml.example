@@ -2,3 +2,9 @@ server:
   port: 8081
 
 token: '[REDACTED]'
+
+warp-scores:
+  base-urls:
+    frontend: http://localhost:8022
+    api-backend: http://localhost:18080
+    img-backend: https://warp-scores.net/img

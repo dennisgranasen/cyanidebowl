@@ -3,7 +3,7 @@ package net.warp_scores.warpscores.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.config.properties.CyanideApiProperties;
-import net.warp_scores.warpscores.cyanide.api.model.common.Race;
+import net.warp_scores.warpscores.model.Race;
 import net.warp_scores.warpscores.cyanide.api.model.common.Skill;
 import net.warp_scores.warpscores.service.ImageService;
 import org.springframework.http.MediaType;
@@ -26,7 +26,7 @@ public class ImageController {
     private final ImageService imageService;
 
     @GetMapping("/logo/{name}")
-    public ResponseEntity<byte[]> getLogoImage(@PathVariable(name = "name") String name) {  
+    public ResponseEntity<byte[]> getLogoImage(@PathVariable(name = "name") String name) {
         if (!name.startsWith("Logo_")) {
             name = name.equals("null") ? null : String.format("Logo_%s", name);
         }

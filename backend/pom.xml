@@ -20,6 +20,7 @@
     </properties>
 
     <dependencies>
+        <!-- project -->
         <dependency>
             <groupId>net.warp-scores</groupId>
             <artifactId>cyanide-api</artifactId>
@@ -31,6 +32,8 @@
             <artifactId>api</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <!-- spring -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure</artifactId>
@@ -213,6 +216,39 @@
                         <include>**/*Test.java</include>
                     </includes>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>dockerfile-maven-plugin</artifactId>
+                <configuration>
+                    <dockerfile>${project.build.outputDirectory}/Dockerfile</dockerfile>
+                    <contextDirectory>${project.build.directory}</contextDirectory>
+                    <repository>warpscores/warpscores-backend</repository>
+                    <tag>${project.version}</tag>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>build-image</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>tag-image</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>tag</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>push-image</id>
+                        <phase>deploy</phase>
+                        <goals>
+                            <goal>push</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

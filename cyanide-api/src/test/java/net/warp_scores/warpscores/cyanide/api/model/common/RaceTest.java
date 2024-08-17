@@ -1,5 +1,6 @@
 package net.warp_scores.warpscores.cyanide.api.model.common;
 
+import net.warp_scores.warpscores.model.Race;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;

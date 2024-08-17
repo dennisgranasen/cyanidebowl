@@ -1,10 +1,9 @@
 ### Status
-POST http://localhost:8080/status
+GET {{backendBaseUrl}}/status
 Accept: application/json
-Content-Type: application/json
 
 ### Lookup
-POST http://localhost:8080/lookup
+POST {{backendBaseUrl}}/lookup
 Accept: application/json
 Content-Type: application/json
 
@@ -12,8 +11,13 @@ Content-Type: application/json
   "league_name": "DBBL  BB3"
 }
 
+
+### League
+GET {{backendBaseUrl}}/leagues/94dd6ae4-83fa-11ee-b910-02000090a64f
+Accept: application/json
+
 ### Image
-GET http://localhost:8080/img/logo/Logo_Community_Supported_Competitions
+GET {{backendBaseUrl}}/img/logo/Logo_Community_Supported_Competitions
 
 Accept: application/json
 Content-Type: application/json
@@ -23,11 +27,11 @@ Content-Type: application/json
 }
 
 ###
-GET http://localhost:8080/contests/competition/6307c66a-a04e-11ee-a745-02000090a64f
+GET {{backendBaseUrl}}/contests/competition/6307c66a-a04e-11ee-a745-02000090a64f
 Accept: application/json
 Content-Type: application/json
 
 ### Create league collection
-POST http://localhost:8080/leagueCollection/94dd6ae4-83fa-11ee-b910-02000090a64f
+POST {{backendBaseUrl}}/leagueCollection/94dd6ae4-83fa-11ee-b910-02000090a64f
 
 

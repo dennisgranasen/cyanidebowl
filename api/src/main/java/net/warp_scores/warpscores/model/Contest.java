@@ -4,9 +4,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
 import net.warp_scores.warpscores.UUIDUtil;
-import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionFormat;
-import net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus;
-import net.warp_scores.warpscores.cyanide.api.model.common.MatchType;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
