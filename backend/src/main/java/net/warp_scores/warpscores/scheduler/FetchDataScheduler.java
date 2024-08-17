@@ -33,8 +33,8 @@ import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
-import static net.warp_scores.warpscores.cyanide.api.model.common.CompetitionStatus.Finished;
-import static net.warp_scores.warpscores.cyanide.api.model.common.CompetitionStatus.InProgress;
+import static net.warp_scores.warpscores.model.CompetitionStatus.Finished;
+import static net.warp_scores.warpscores.model.CompetitionStatus.InProgress;
 
 @Slf4j
 @Service

@@ -1,6 +1,6 @@
-package net.warp_scores.warpscores.cyanide.api.model.common;
+package net.warp_scores.warpscores.model;
 
-          
+
 public enum CircuitLegType implements Comparable<CircuitLegType> {
     League, Competition
 }
