@@ -37,7 +37,6 @@ public class Contest implements Comparable {
     private boolean adminResult;
     private Match match;
 
-
     @Override
     public String toString() {
         String teamA = Optional.ofNullable(opponents).map(o -> o.get(0)).map(Team::getName).orElse("n/a");

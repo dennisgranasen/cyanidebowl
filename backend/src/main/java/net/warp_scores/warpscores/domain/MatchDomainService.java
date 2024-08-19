@@ -51,8 +51,8 @@ public class MatchDomainService {
                 .stream()
                 .forEach(leagueUuid ->
                         lastMatchDatesByLeagueUuid.put(leagueUuid, matchRepository
-                                .findTopByLeagueIdOrderByStartedDesc(leagueUuid)
-                                .map(Match::getStarted)));
+                                .findTopByLeagueIdOrderByFinishedDesc(leagueUuid)
+                                .map(Match::getFinished)));
         return lastMatchDatesByLeagueUuid;
     }
 
