@@ -6,6 +6,7 @@ import net.warp_scores.warpscores.config.properties.CyanideApiProperties;
 import net.warp_scores.warpscores.domain.CompetitionDomainService;
 import net.warp_scores.warpscores.domain.MatchDomainService;
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
+import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.LeagueCollectionRepository;
 import net.warp_scores.warpscores.domain.persistence.LeagueRepository;
 import net.warp_scores.warpscores.model.Competition;
@@ -52,7 +53,9 @@ public class FetchDataScheduler {
     private final CompetitionRepository competitionRepository;
 
     private final MatchDomainService matchDomainService;
+
     private final CompetitionDomainService competitionDomainService;
+    private final ContestRepository contestRepository;
 
     @Scheduled(initialDelay = Schedules.TWENTY_SECONDS, fixedDelay = Schedules.TEN_MINUTES)
     public void fetchLeagues() {
@@ -99,6 +102,25 @@ public class FetchDataScheduler {
                 leaguesToCollect.size());
 
         loadContestsFor(leaguesToCollect);
+    }
+
+    @Scheduled(initialDelay = Schedules.THREE_MINUTES, fixedDelay = Schedules.ONE_HOUR)
+    public void fetchMissingMatches() {
+        if (!cyanideApiProperties.isSchedulerActive()) {
+            log.info("Scheduler deactivated by configuration. Skipping fetchMissingMatches().");
+            return;
+        }
+
+        List<Contest> contests = contestRepository.findContestsWithoutMatches();
+        log.info("Found {} contests with missing matches.", contests.size());
+
+        List<UUID> matchUuids = contests
+                .stream()
+                .map(Contest::getMatchUuid)
+                .filter(Objects::nonNull)
+                .toList();
+
+        loadMatches(matchUuids);
     }
 
     private void fetchMatchesIfNecessary(List<League> leagues, Map<UUID, Optional<Date>> lastKnownMatchDateByLeagueId) {
@@ -225,12 +247,18 @@ public class FetchDataScheduler {
                 .toList();
         log.info("Loaded {} (skeleton) matches.", matches.size());
 
-        matches
+        List<UUID> matchUuids = matches
                 .stream()
                 .filter(Objects::nonNull)
                 .map(Match::getMatchId)
-                .forEach(cyanideApiService::loadMatch);
-        log.info("Loaded {} matches.", matches.size());
+                .toList();
+
+        loadMatches(matchUuids);
+    }
+
+    private void loadMatches(List<UUID> matchUuids) {
+        matchUuids.forEach(cyanideApiService::loadMatch);
+        log.info("Loaded {} matches.", matchUuids.size());
     }
 
     private void loadMatchesForTeams(List<Team> teams, Map<UUID, Optional<Date>> lastMatchDateKnownByTeamUuid,
