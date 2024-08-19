@@ -50,7 +50,7 @@ public class ContestDomainService {
 
     public Contest internalCreateOrUpdateContest(ApiContest apiContest) {
         Contest contest = newContestOrFromDb(apiContest.getContest_id());
-        if (contest != null) {
+        if (contest != null && !contest.isAdminResult()) {
             populateContest(apiContest, contest);
         }
         return contest;
