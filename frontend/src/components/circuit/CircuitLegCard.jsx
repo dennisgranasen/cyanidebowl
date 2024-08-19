@@ -4,7 +4,7 @@ import { Link as RouteLink } from 'react-router-dom';
 
 function CircuitLegCard({ circuitLeg }) {
   return (
-    <Card direction="row" overflow="hidden" align="center">
+    <Card backgroundColor="warpScoresBackgroundColor" direction="row" overflow="hidden" align="center">
       <CardBody p={2}>
         <Box w="100%">
           {circuitLeg && (

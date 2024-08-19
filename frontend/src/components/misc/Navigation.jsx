@@ -4,6 +4,7 @@ import { Link as RouteLink } from 'react-router-dom';
 import Menu from './Menu';
 import AuthButton from './AuthButton';
 import config from '../../config';
+import ToggleColorModeButton from './ToggleColorModeButton';
 
 const { isProduction } = config;
 
@@ -61,6 +62,7 @@ function Navigation({ currentPage, league, competition, circuit, team }) {
         )}
       </Breadcrumb>
       <Spacer />
+      <ToggleColorModeButton />
       {isProduction && <AuthButton mr="0.5rem" />}
       <Menu />
     </Flex>

@@ -19,6 +19,7 @@ import Contest from './Contest';
 import comparators from '../../util/Comparators';
 import config from '../../config';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
+import logger from '../../util/Logger';
 
 const { smallScreenBreakpointValues } = config;
 
@@ -129,14 +130,17 @@ function toTabData(contests, isSmallScreen) {
 function Contests({ contests, contestsLoading, competition, competitionLoading }) {
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
   const [tabData, setTabData] = useState([]);
-  const [activatedTab, setActivatedTab] = useState(0);
+  const [activatedTab, setActivatedTab] = useState();
+  const handleTabsChange = (index) => {
+    setActivatedTab(index);
+  };
 
   useEffect(() => {
     if (contests) {
       const data = toTabData(contests, isSmallScreen);
       setTabData(data);
     }
-  }, [contests]);
+  }, [contests, isSmallScreen]);
 
   useEffect(() => {
     if (!competitionLoading && competition) {
@@ -144,9 +148,13 @@ function Contests({ contests, contestsLoading, competition, competitionLoading }
     }
   }, [competitionLoading, competition]);
 
+  useEffect(() => {
+    logger.debug('Activated tab: %s, Current round: %s', activatedTab, competition?.currentRound);
+  }, [activatedTab]);
+
   return (
     <LoadingOrErrorWrapper loading={contestsLoading || competitionLoading}>
-      <Tabs isFitted defaultIndex={activatedTab}>
+      <Tabs isFitted align="center" index={activatedTab} onChange={handleTabsChange}>
         <TabList>
           {tabData.map((tab) => (
             <Tab key={tab.round}>{tab.label}</Tab>

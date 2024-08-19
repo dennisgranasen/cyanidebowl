@@ -91,8 +91,8 @@ function Participant({
   onMatchClick,
   onPartyClick,
 }) {
-  const borderColor = hovered ? 'gray.600' : connectorColor;
-  const backgroundColor = hovered ? 'gray.600' : null;
+  const borderColor = hovered ? 'warpScoresHoverColor' : connectorColor;
+  const backgroundColor = hovered ? 'warpScoresHoverColor' : null;
   return (
     <Box
       m="0"

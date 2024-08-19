@@ -6,10 +6,10 @@ const tableTheme = defineStyleConfig({
       tbody: {
         tr: {
           borderBlock: 'thin solid',
-          borderColor: 'gray.700',
+          borderColor: 'warpScoresBorderColor',
           cursor: 'pointer',
           _hover: {
-            background: 'gray.600',
+            background: 'warpScoresHoverColor',
           },
         },
       },
@@ -19,10 +19,10 @@ const tableTheme = defineStyleConfig({
         tr: {
           cursor: 'pointer',
           _odd: {
-            background: 'gray.700',
+            background: 'warpScoresAlternativeBackgroundColor',
           },
           _hover: {
-            background: 'gray.600',
+            background: 'warpScoresHoverColor',
           },
         },
       },

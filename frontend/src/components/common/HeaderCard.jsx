@@ -26,7 +26,7 @@ function StandardScreenHeaderCard(
   children
 ) {
   return (
-    <Card direction="row">
+    <Card direction="row" backgroundColor="warpScoresBackgroundColor">
       <Box p="0.5rem">
         <Image
           objectFit="contain"
