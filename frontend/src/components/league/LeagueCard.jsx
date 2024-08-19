@@ -11,8 +11,9 @@ function LeagueCard({ league, ...props }) {
   };
   return (
     <Card
+      backgroundColor="warpScoresBackgroundColor"
       direction={{ base: 'column', sm: 'row' }}
-      _hover={{ background: 'gray.600' }}
+      _hover={{ background: 'warpScoresHoverColor' }}
       cursor="pointer"
       onClick={goToLeague}
       {...props}

@@ -20,7 +20,7 @@ import {
 } from '@chakra-ui/react';
 import { FaTriangleExclamation } from 'react-icons/fa6';
 import { Link as RouteLink } from 'react-router-dom';
-import { ExternalLinkIcon, HamburgerIcon, Icon, MoonIcon, SunIcon } from '@chakra-ui/icons';
+import { ExternalLinkIcon, HamburgerIcon, Icon } from '@chakra-ui/icons';
 import { useAuth0 } from '@auth0/auth0-react';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import config from '../../config';
@@ -64,7 +64,7 @@ function LastCheck({ status, textSize, statusOutdated }) {
 }
 
 function Menu() {
-  const { colorMode, toggleColorMode } = useColorMode();
+  const { colorMode } = useColorMode();
   const { user, isAuthenticated, isLoading, loginWithPopup, logout, getAccessTokenSilently, getAccessTokenWithPopup } =
     useAuth0();
   const [userPermissions, setUserPermissions] = useState({
@@ -120,29 +120,29 @@ function Menu() {
       <Drawer size={{ base: 'full', sm: 'xs' }} isOpen={isOpen} placement="right" onClose={onClose}>
         <DrawerOverlay />
         <DrawerContent>
-          <DrawerHeader borderBottomWidth="1px">Menu</DrawerHeader>
+          <DrawerHeader backgroundColor="warpScoresBackgroundColor" borderBottomWidth="1px">
+            Menu
+          </DrawerHeader>
           <DrawerCloseButton />
           <DrawerBody
-            display="block"
+            p={0}
             backgroundImage={ImageUrls.warpscoresLogoPng()}
             backgroundRepeat="no-repeat"
             backgroundSize="cover"
-            backgroundColor="gray.700"
-            backgroundBlendMode="multiply"
             borderBottomWidth="1px"
           >
-            <VStack h="full" align="left">
+            <VStack
+              background="warpScoresBackgroundColor"
+              h="full"
+              w="full"
+              align="left"
+              paddingLeft="6"
+              paddingRight="6"
+              paddingTop="2"
+              paddingBottom="2"
+              opacity="0.9"
+            >
               <VStack align="left" h="full">
-                <Box w="100%" textAlign="right">
-                  <DelayedIconTooltip label={`Change color mode to ${colorMode === 'dark' ? 'light (beta)' : 'dark'}`}>
-                    <Icon
-                      as={colorMode === 'dark' ? MoonIcon : SunIcon}
-                      boxSize={smallBoxSize}
-                      onClick={toggleColorMode}
-                      color="white"
-                    />
-                  </DelayedIconTooltip>
-                </Box>
                 <Box>
                   <Link variant="menu" as={RouteLink} to="/" onClick={() => onClose()}>
                     Home
@@ -207,7 +207,7 @@ function Menu() {
               </VStack>
             </VStack>
           </DrawerBody>
-          <DrawerFooter mt={0} pt={0} align="left" color="grey">
+          <DrawerFooter backgroundColor="warpScoresBackgroundColor" color="gray" mt={0} pt={0} align="left">
             <VStack m={0} p={0} align="left" w="full">
               <Version mt={2} textSize="xs" color="grey" />
               <Status status={status} headerSize="md" textSize="sm" mt={2} />

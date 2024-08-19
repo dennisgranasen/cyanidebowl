@@ -25,7 +25,12 @@ function ContestMatchCard({ contest, contestHeader, noContentIcon, noContentHead
     finished = contest.match && !contest.live ? contest.match.finished : null;
   }
   return (
-    <Card direction="row" overflow="hidden" variant={variant} align="center">
+    <Card
+      direction="row"
+      overflow="hidden"
+      variant={variant}
+      align="center"
+    >
       {!contest && noContentIcon && (
         <Center p="2">
           <Icon as={noContentIcon} boxSize="4em" />

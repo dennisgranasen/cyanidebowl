@@ -9,7 +9,7 @@ const baseStyle = defineStyle({
 });
 
 const menuStyle = defineStyle({
-  textColor: 'white',
+  textColor: 'warpScoresMenuTextColor',
   textDecoration: 'none',
 });
 

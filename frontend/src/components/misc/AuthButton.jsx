@@ -23,7 +23,7 @@ function AuthButton({ ...props }) {
   }, [isLoading, isAuthenticated]);
 
   return (
-    <DelayedIconTooltip label={status}>
+    <DelayedIconTooltip shouldWrapChildren label={status}>
       <Avatar {...props} name={name} src={image}>
         {isLoading && (
           <AvatarBadge boxSize={smallBoxSize} bg="black">
