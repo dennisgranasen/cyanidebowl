@@ -63,8 +63,8 @@ public class FetchDataScheduler {
         List<LeagueCollection> leaguesToCollect = leagueCollectionRepository.findByCollectionActive(true);
 
         List<League> existingLeagues = leagueRepository.findAll();
-        Map<UUID, Optional<Date>> lastKnownMatchDateByLeagueId = existingLeagues.stream()
-                .collect(toMap(League::getUuid, league -> ofNullable(league.getDateLastMatch())));
+        Map<UUID, Optional<Date>> lastKnownMatchDateByLeagueId = matchDomainService.getLastMatchDatesForLeagues(
+                existingLeagues.stream().map(League::getUuid).toList());
 
         log.info("Will load leagues for {} leagues with active league collection.",
                 leaguesToCollect.size());
