@@ -6,7 +6,13 @@ import { Link as RouteLink } from 'react-router-dom';
 
 function CircuitCard({ circuit, showConfigureLink, noContentIcon, noContentHeading, noContentText, variant }) {
   return (
-    <Card direction="row" overflow="hidden" variant={variant} align="center">
+    <Card
+      backgroundColor="warpScoresBackgroundColor"
+      direction="row"
+      overflow="hidden"
+      variant={variant}
+      align="center"
+    >
       {!circuit && noContentIcon && (
         <Center p="2">
           <Icon as={noContentIcon} boxSize="4em" />
