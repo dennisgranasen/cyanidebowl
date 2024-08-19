@@ -33,7 +33,7 @@ function MatchModal({ isOpen, onClose, contest }) {
   return (
     <Modal size={{ base: 'full', md: 'xl' }} isOpen={isOpen} onClose={onClose}>
       <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(5px)" />
-      <ModalContent>
+      <ModalContent backgroundColor="warpScoresBackgroundColor">
         <ModalCloseButton />
         <ModalHeader>
           <Center>{contest.competitionName}</Center>

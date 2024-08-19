@@ -31,12 +31,16 @@ function RoundRobinProgresses({
     }
     roundProgresses.push({ name: `round${round + 1}`, progress, active });
   }
-  const color = needsValidation ? 'orange' : null;
   return (
     <SimpleGrid columns={totalRounds} spacing="0.25rem">
       {roundProgresses.map(({ name, progress, active }) => (
         <GridItem key={name}>
-          <Progress value={progress} isIndeterminate={active && live} hasStripe={active} colorScheme={color} />
+          <Progress
+            value={progress}
+            isIndeterminate={active && live}
+            hasStripe={active}
+            variant={needsValidation ? 'validationNeeded' : null}
+          />
         </GridItem>
       ))}
     </SimpleGrid>
@@ -62,7 +66,6 @@ function Progresses({
   totalMatches,
   validatedMatches,
   liveMatches,
-  teamsMax,
   status,
   format,
 }) {
@@ -116,7 +119,6 @@ function CompetitionProgress({
   totalMatches,
   validatedMatches,
   liveMatches,
-  teamsMax,
 }) {
   const currentRoundText = currentRound ? `, Round ${currentRound}` : '';
   const totalRoundsText = currentRound && totalRounds ? `of ${totalRounds}` : '';
@@ -130,10 +132,12 @@ function CompetitionProgress({
     : undefined;
   return (
     <Box p="0.25rem">
-      <DelayedIconTooltip label={<ProgressLabel text={progressText} additionalText={progressAdditionalText} />}>
+      <DelayedIconTooltip
+        p="0.4rem"
+        label={<ProgressLabel text={progressText} additionalText={progressAdditionalText} />}
+      >
         <Box>
           <Progresses
-            teamsMax={teamsMax}
             currentRound={currentRound}
             totalRounds={totalRounds}
             totalMatches={totalMatches}
