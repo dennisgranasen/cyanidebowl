@@ -26,6 +26,10 @@ public class LatestMatchesMessageBuilder {
     private final MatchMessageBuilder matchMessageBuilder;
 
     public EmbedCreateSpec.Builder builder(League league, List<Contest> contests, boolean spoiler) {
+        if (contests != null && contests.size() == 1) {
+            return matchMessageBuilder.builder(league, contests.get(0), spoiler);
+        }
+
         EmbedCreateSpec.Builder builder = warpScoresDiscordMessageBuilder
                 .builder(league.getName(), "Showing latest matches.", Optional.of(league.getLogo()))
                 .color(Color.MEDIUM_SEA_GREEN)
