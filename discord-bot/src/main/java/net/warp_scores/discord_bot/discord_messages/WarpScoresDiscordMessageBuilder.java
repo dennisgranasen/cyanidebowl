@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import net.warp_scores.discord_bot.config.properties.WarpScoresProperties;
 import org.springframework.stereotype.Service;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Optional;
 
@@ -13,6 +15,7 @@ import static java.lang.String.format;
 @Service
 @RequiredArgsConstructor
 public class WarpScoresDiscordMessageBuilder {
+    public static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd, HH:mm");
 
     private final WarpScoresProperties warpScoresProperties;
 

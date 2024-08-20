@@ -3,7 +3,7 @@ import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import { Avatar } from '@chakra-ui/react';
 import ImageUrls from '../../ImageUrls';
 import prettyPrint from '../../util/PrettyPrint';
-import formatter from '../../util/Formatter';
+import Formatter from '../../util/Formatter';
 import MatchStatusIcon from './MatchStatusIcon';
 import config from '../../config';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
@@ -30,7 +30,7 @@ function StatusAsIcon({ status, stadium }) {
 
 function MatchStatus({ status, matchDate, stadium }) {
   return (
-    <DelayedIconTooltip label={`${prettyPrint(status)} ${formatter.formatAsDate(matchDate)}`}>
+    <DelayedIconTooltip label={`${prettyPrint(status)} ${Formatter.formatAsDate(matchDate, '')}`}>
       <StatusAsIcon status={status} stadium={stadium} />
     </DelayedIconTooltip>
   );

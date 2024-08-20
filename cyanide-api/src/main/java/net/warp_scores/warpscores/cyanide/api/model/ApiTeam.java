@@ -59,7 +59,7 @@ public class ApiTeam {
     private String competitionName;
     private String bb3_competition_id;
 
-    private ApiPlayer roster;
+    private ApiPlayer[] roster;
 
     private BigDecimal nbsupporters;
 

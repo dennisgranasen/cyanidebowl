@@ -34,7 +34,7 @@ public class Competition implements Comparable<Competition> {
     private Integer currentRound;
     private Integer totalRounds;
 
-    private Integer validatedMatches;
+    private Integer notValidatedMatches;
     private Integer liveMatches;
     private Integer playedMatches;
     private Integer totalMatches;

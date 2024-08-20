@@ -17,7 +17,7 @@ import logger from '../../util/Logger';
 import ImageUrls from '../../ImageUrls';
 import prettyPrint from '../../util/PrettyPrint';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
-import formatter from '../../util/Formatter';
+import Formatter from '../../util/Formatter';
 import Ranks from './Ranks';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 
@@ -62,7 +62,7 @@ function toBracketMatch(contest, contests) {
     id: contest?.contestUuid,
     nextMatchId: getNextMatchId(contest?.winner?.team?.id, contest?.round, contests),
     participants: toParticipants(contest?.opponents, contest?.winner),
-    startTime: formatter.formatAsDate(contest?.matchDate),
+    startTime: Formatter.formatAsDate(contest?.matchDate, '-'),
     state: contest?.matchDate ? 'DONE' : null,
     tournamentRoundText: `${contest?.round}`,
   };
