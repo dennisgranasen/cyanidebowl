@@ -119,7 +119,7 @@ public class CyanideApiService {
         Date startDate = lastMatchDateKnown.orElse(earliestStartDate.orElse(null));
         if (startDate == null || (lastMatchDateReported.isPresent() && !startDate.before(
                 lastMatchDateReported.get()))) {
-            log.info("No matches to load.");
+            log.info("No matches to load for team {}.", team.getId());
             return;
         }
 
@@ -142,7 +142,7 @@ public class CyanideApiService {
                 .filter(Objects::nonNull)
                 .map(this::loadMatch)
                 .toList();
-        log.info("Loaded {} matches.", matches.size());
+        log.info("Loaded {} matches for team {}.", matches.size(), team.getId());
     }
 
     public Match loadMatch(UUID matchUuid) {
@@ -173,7 +173,7 @@ public class CyanideApiService {
             MatchesResponse matchesResponse = cyanideCachedRestApiClient.getFromCacheOrApi(matchesRequest);
             return matchDomainService.createOrUpdateMatches(matchesResponse);
         }
-        log.info("No matches to load.");
+        log.info("No matches to load for league {}.", league.getUuid());
         return Collections.emptyList();
     }
 
@@ -199,17 +199,12 @@ public class CyanideApiService {
         return contests;
     }
 
-    public List<Contest> loadContests(Competition competition) {
-        ContestsRequest contestsRequest = new ContestsRequest();
-        contestsRequest.setCompetition_id(competition.getUuid());
-        contestsRequest.setLeague_id(competition.getLeagueId());
-        contestsRequest.setStatus("*");
-        return loadContests(contestsRequest);
-    }
-
     private List<Contest> loadContests(ContestsRequest contestsRequest) {
         ContestsResponse contestsResponse = cyanideCachedRestApiClient.getFromCacheOrApi(contestsRequest);
         List<Contest> allContests = contestDomainService.createOrUpdateContests(contestsResponse);
+        if (allContests.size() == 1000) {
+            log.warn("Contest loaded with one request reached 1000 mark. TODO: Implement pagination!");
+        }
         return allContests;
     }
 
