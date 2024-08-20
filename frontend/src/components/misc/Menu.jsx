@@ -14,7 +14,6 @@ import {
   Link,
   Spacer,
   Spinner,
-  useColorMode,
   useDisclosure,
   VStack,
 } from '@chakra-ui/react';
@@ -24,7 +23,7 @@ import { ExternalLinkIcon, HamburgerIcon, Icon } from '@chakra-ui/icons';
 import { useAuth0 } from '@auth0/auth0-react';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import config from '../../config';
-import formatter from '../../util/Formatter';
+import Formatter from '../../util/Formatter';
 import NewsList from './NewsList';
 import SocialLinks from './SocialLinks';
 import Disclaimer from './Disclaimer';
@@ -45,7 +44,7 @@ function LastCheck({ status, textSize, statusOutdated }) {
         <Box>Last check:</Box>
         <Box>
           {status ? (
-            `${status.lastCheck ? formatter.formatAsDate(status.lastCheck) : 'unknown'}`
+            `${Formatter.formatAsDate(status.lastCheck, 'unknown')}`
           ) : (
             <Spinner size={textSize} color="orange" />
           )}
@@ -64,7 +63,6 @@ function LastCheck({ status, textSize, statusOutdated }) {
 }
 
 function Menu() {
-  const { colorMode } = useColorMode();
   const { user, isAuthenticated, isLoading, loginWithPopup, logout, getAccessTokenSilently, getAccessTokenWithPopup } =
     useAuth0();
   const [userPermissions, setUserPermissions] = useState({
@@ -120,7 +118,7 @@ function Menu() {
       <Drawer size={{ base: 'full', sm: 'xs' }} isOpen={isOpen} placement="right" onClose={onClose}>
         <DrawerOverlay />
         <DrawerContent>
-          <DrawerHeader backgroundColor="warpScoresBackgroundColor" borderBottomWidth="1px">
+          <DrawerHeader backgroundColor="warpScoresBackgroundColor">
             Menu
           </DrawerHeader>
           <DrawerCloseButton />
@@ -129,7 +127,6 @@ function Menu() {
             backgroundImage={ImageUrls.warpscoresLogoPng()}
             backgroundRepeat="no-repeat"
             backgroundSize="cover"
-            borderBottomWidth="1px"
           >
             <VStack
               background="warpScoresBackgroundColor"
@@ -141,6 +138,7 @@ function Menu() {
               paddingTop="2"
               paddingBottom="2"
               opacity="0.9"
+              overflowX="scroll"
             >
               <VStack align="left" h="full">
                 <Box>

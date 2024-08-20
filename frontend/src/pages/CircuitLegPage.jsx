@@ -47,7 +47,7 @@ function CircuitLegPage() {
           {/*
               <InfoArea
                 infoItems={[
-                  <InfoItem key="Created" label="Created" info={formatter.formatAsDate(competition.dateCreated)} />,
+                  <InfoItem key="Created" label="Created" info={Formatter.formatAsDate(competition.dateCreated, '-')} />,
                   <InfoItem key="Format" label="Format" info={prettyPrint(competition.format)} />,
                   <InfoItem
                     key="Progress"
@@ -61,17 +61,17 @@ function CircuitLegPage() {
                         totalRounds={competition.totalRounds}
                         totalMatches={competition.totalMatches}
                         playedMatches={competition.playedMatches}
-                        validatedMatches={competition.validatedMatches}
+                        notValidatedMatches={competition.notValidatedMatches}
                         liveMatches={competition.liveMatches}
                       />
                     }
                   />,
-                  <InfoItem key="Teams" label="Teams" info={formatter.formatAsNumber(competition.teamsMax)} />,
+                  <InfoItem key="Teams" label="Teams" info={Formatter.formatAsNumber(competition.teamsMax)} />,
                   <InfoItem
                     key="TimeSettings"
                     label="Time settings"
-                    info={`Turn: ${formatter.formatAsNumber(competition.turnDuration / 60)}m`}
-                    additionalInfo={`Bonus: ${formatter.formatAsNumber(competition.timeBonusDuration / 60)}m`}
+                    info={`Turn: ${Formatter.formatAsNumber(competition.turnDuration / 60)}m`}
+                    additionalInfo={`Bonus: ${Formatter.formatAsNumber(competition.timeBonusDuration / 60)}m`}
                   />,
                 ]}
               />

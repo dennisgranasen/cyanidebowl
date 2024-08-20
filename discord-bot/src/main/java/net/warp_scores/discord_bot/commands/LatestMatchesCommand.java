@@ -55,6 +55,10 @@ public class LatestMatchesCommand implements SlashCommand {
         return event
                 .reply()
                 .withEmbeds(createEmbedCreateSpec(latestLeagueContests, spoiler.orElse(false)))
+                .doOnError(error -> {
+                    log.error("Error during creating message ({}).", error.getMessage(), error.getCause());
+                })
+                .onErrorResume(error -> event.reply(":warning: Something went wrong..."))
                 .then();
     }
 

@@ -29,7 +29,7 @@ function Competition({ competition }) {
           totalRounds={competition.totalRounds}
           totalMatches={competition.totalMatches}
           playedMatches={competition.playedMatches}
-          validatedMatches={competition.validatedMatches}
+          notValidatedMatches={competition.notValidatedMatches}
           liveMatches={competition.liveMatches}
         />
       </Td>

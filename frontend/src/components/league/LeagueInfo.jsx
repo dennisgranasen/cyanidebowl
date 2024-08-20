@@ -19,7 +19,7 @@ function LeagueInfo({ league }) {
           info={league.countsByCompetitionStatus.Registration || 0}
         />
         <InfoItem key="finished" label="Finished competitions" info={league.countsByCompetitionStatus.Finished || 0} />
-        <InfoItem key="lastMatch" label="Last match" info={Formatter.formatAsDate(league.dateLastMatch)} />
+        <InfoItem key="lastMatch" label="Last match" info={Formatter.formatAsDate(league.dateLastMatch, '-')} />
       </InfoArea>
     )
   );

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Heading } from '@chakra-ui/react';
 import { FaRegMoon } from 'react-icons/fa6';
-import formatter from '../../util/Formatter';
+import Formatter from '../../util/Formatter';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import comparators from '../../util/Comparators';
 import ContestMatchCards from './ContestMatchCards';
@@ -30,7 +30,7 @@ function LiveContests({ league, embeddable }) {
         contests={contests}
         noContentIcon={FaRegMoon}
         noContentHeading="No matches live currently..."
-        noContentText={league ? `Last match was ${formatter.formatAsDate(league.dateLastMatch)}` : null}
+        noContentText={league ? `Last match was ${Formatter.formatAsDate(league.dateLastMatch, '-')}` : null}
       />
     </>
   );

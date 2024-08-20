@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Heading } from '@chakra-ui/react';
 import { FaRegFaceSadTear } from 'react-icons/fa6';
-import formatter from '../../util/Formatter';
+import Formatter from '../../util/Formatter';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import comparators from '../../util/Comparators';
 import ContestMatchCards from './ContestMatchCards';
@@ -29,7 +29,7 @@ function LatestContests({ league, embeddable, limit }) {
         contests={contests}
         noContentIcon={FaRegFaceSadTear}
         noContentHeading="No matches played (yet?)..."
-        noContentText={league ? `Last match was ${formatter.formatAsDate(league.dateLastMatch)}` : null}
+        noContentText={league ? `Last match was ${Formatter.formatAsDate(league.dateLastMatch, '-')}` : null}
       />
     </>
   );
