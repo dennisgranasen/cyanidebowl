@@ -1,5 +1,6 @@
 package net.warp_scores.discord_bot.commands;
 
+import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.command.ApplicationCommandInteractionOption;
 import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
@@ -8,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.discord_bot.discord_messages.LatestMatchesMessageBuilder;
 import net.warp_scores.discord_bot.discord_messages.WarpScoresDiscordMessageBuilder;
+import net.warp_scores.discord_bot.domain.ChannelLeagueRegistration;
+import net.warp_scores.discord_bot.domain.ChannelLeagueRegistrationDomainService;
 import net.warp_scores.discord_bot.service.QueryBackendService;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.League;
@@ -20,6 +23,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 
 @Component
 @RequiredArgsConstructor
@@ -31,6 +35,8 @@ public class LatestMatchesCommand implements SlashCommand {
     private final WarpScoresDiscordMessageBuilder warpScoresDiscordMessageBuilder;
 
     private final LatestMatchesMessageBuilder latestMatchesMessageBuilder;
+
+    private final ChannelLeagueRegistrationDomainService channelLeagueRegistrationDomainService;
 
     @Override
     public String getName() {
@@ -50,14 +56,22 @@ public class LatestMatchesCommand implements SlashCommand {
     }
 
     private Mono<Void> loadMatches(ChatInputInteractionEvent event, Optional<Boolean> spoiler, Optional<Long> count) {
-        Map<League, List<Contest>> latestLeagueContests = queryBackendService.getLatestLeagueContests(count);
-
+        Snowflake channelId = event.getInteraction().getChannelId();
+        List<ChannelLeagueRegistration> byChannelId = channelLeagueRegistrationDomainService.findByChannelId(channelId);
+        Optional<UUID> leagueUuid = Optional.empty();
+        if (byChannelId != null && !byChannelId.isEmpty()) {
+            leagueUuid = Optional.ofNullable(UUID.fromString(byChannelId.get(0).getLeagueUuid()));
+        }
+        Map<League, List<Contest>> latestLeagueContests = emptyMap();
+        if (leagueUuid.isPresent()) {
+            latestLeagueContests = queryBackendService.loadLatestLeagueContests(
+                    leagueUuid.get(), count);
+        }
         return event
                 .reply()
                 .withEmbeds(createEmbedCreateSpec(latestLeagueContests, spoiler.orElse(false)))
-                .doOnError(error -> {
-                    log.error("Error during creating message ({}).", error.getMessage(), error.getCause());
-                })
+                .doOnError(error -> log.error("Error during creating message ({}).", error.getMessage(),
+                        error.getCause()))
                 .onErrorResume(error -> event.reply(":warning: Something went wrong..."))
                 .then();
     }
