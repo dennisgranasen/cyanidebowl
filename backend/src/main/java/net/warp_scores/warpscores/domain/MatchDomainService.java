@@ -48,7 +48,6 @@ public class MatchDomainService {
     public Map<UUID, Optional<Date>> getLastMatchDatesForLeagues(List<UUID> leagueUuids) {
         Map<UUID, Optional<Date>> lastMatchDatesByLeagueUuid = new HashMap<>();
         leagueUuids
-                .stream()
                 .forEach(leagueUuid ->
                         lastMatchDatesByLeagueUuid.put(leagueUuid, matchRepository
                                 .findTopByLeagueIdOrderByFinishedDesc(leagueUuid)
@@ -60,7 +59,6 @@ public class MatchDomainService {
     public Map<UUID, Optional<Date>> getLastMatchDatesForTeams(List<Team> teams) {
         Map<UUID, Optional<Date>> lastMatchDatesByTeamUuid = new HashMap<>();
         teams
-                .stream()
                 .forEach(team ->
                         lastMatchDatesByTeamUuid.put(team.getId(), matchRepository
                                 .findTopByTeamsContainsOrderByStartedDesc(team).map(Match::getStarted)));
@@ -76,7 +74,7 @@ public class MatchDomainService {
         List<Match> matches = Arrays
                 .stream(matchesResponse.getMatches())
                 .map(this::internalCreateOrUpdateMatch)
-                .collect(Collectors.toList());
+                .toList();
         return matchRepository.saveAll(matches);
     }
 
@@ -86,23 +84,22 @@ public class MatchDomainService {
             return null;
         }
 
-        Match match = internalCreateOrUpdateMatch(matchResponse.getMatch());
-        return matchRepository.save(match);
+        Optional<ApiMatch> apiMatch = Optional.ofNullable(matchResponse.getMatch());
+        Optional<Match> match = apiMatch.map(this::internalCreateOrUpdateMatch);
+        return match.map(matchRepository::save).orElse(null);
     }
 
     private boolean teamWithIdInList(UUID teamUuid, List<Team> teams) {
         return teams
                 .stream()
-                .map(team -> team.getId())
+                .map(Team::getId)
                 .anyMatch(uuid -> uuid.equals(teamUuid));
     }
 
     private Match internalCreateOrUpdateMatch(ApiMatch apiMatch) {
         Match match = newMatchOrFromDb(
                 uuidConverter.getNonNull(apiMatch.getMatchId(), uuidConverter.toUuid(apiMatch.getId()).orElse(null)));
-        if (match != null) {
-            populateMatch(apiMatch, match);
-        }
+        populateMatch(apiMatch, match);
         return match;
     }
 
