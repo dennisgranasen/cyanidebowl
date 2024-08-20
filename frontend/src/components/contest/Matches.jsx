@@ -14,7 +14,7 @@ import {
   useBreakpointValue,
 } from '@chakra-ui/react';
 import { Link as RouteLink } from 'react-router-dom';
-import formatter from '../../util/Formatter';
+import Formatter from '../../util/Formatter';
 import config from '../../config';
 
 const { smallScreenBreakpointValues } = config;
@@ -28,7 +28,7 @@ function Match({ match }) {
         <Tr>
           <Td textAlign="right">
             <Box>
-              <Tag size="sm">{formatter.formatAsDate(match.started)}</Tag>
+              <Tag size="sm">{Formatter.formatAsDate(match.started, '-')}</Tag>
             </Box>
           </Td>
           <Td textAlign="center">
@@ -48,7 +48,7 @@ function Match({ match }) {
         </Tr>
       )}
       <Tr>
-        {!isSmallScreen && <Td>{formatter.formatAsDate(match.started)}</Td>}
+        {!isSmallScreen && <Td>{Formatter.formatAsDate(match.started, '-')}</Td>}
         {!isSmallScreen && (
           <Td>
             <Text>

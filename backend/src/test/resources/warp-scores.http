@@ -11,6 +11,9 @@ Content-Type: application/json
   "league_name": "DBBL  BB3"
 }
 
+### Relaod matches
+GET {{backendBaseUrl}}/matches/reload
+
 
 ### League
 GET {{backendBaseUrl}}/leagues/94dd6ae4-83fa-11ee-b910-02000090a64f
