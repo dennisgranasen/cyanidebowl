@@ -11,7 +11,6 @@ import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.CompetitionTeams;
 import net.warp_scores.warpscores.model.Player;
 import net.warp_scores.warpscores.model.Team;
-import net.warp_scores.warpscores.service.PopulatorUtil;
 import net.warp_scores.warpscores.service.TeamPopulator;
 import net.warp_scores.warpscores.service.UUIDConverter;
 import org.springframework.stereotype.Service;
@@ -53,10 +52,7 @@ public class TeamDomainService {
         if (teamResponse == null || teamResponse.isEmpty()) {
             return null;
         }
-        Team team = internalCreateOrUpdateTeam(teamResponse.getTeam());
-        TeamResponse.Player[] apiPlayers = teamResponse.getRoster();
-        List<Player> players = toPlayers(apiPlayers);
-        team.setPlayers(players);
+        Team team = internalCreateOrUpdateTeam(teamResponse.getTeam(), teamResponse.getRoster());
         return teamRepository.save(team);
     }
 
@@ -94,7 +90,15 @@ public class TeamDomainService {
     private Team internalCreateOrUpdateTeam(ApiTeam apiTeam) {
         Team team = newTeamOrFromDb(uuidConverter.toUuid(apiTeam.getId()), apiTeam.getName());
         if (team != null) {
-            teamPopulator.populateTeam(apiTeam, team);
+            teamPopulator.populateTeamTeam(apiTeam, new TeamResponse.Player[0], team);
+        }
+        return team;
+    }
+
+    private Team internalCreateOrUpdateTeam(ApiTeam apiTeam, TeamResponse.Player[] players) {
+        Team team = newTeamOrFromDb(uuidConverter.toUuid(apiTeam.getId()), apiTeam.getName());
+        if (team != null) {
+            teamPopulator.populateTeamTeam(apiTeam, players, team);
         }
         return team;
     }
@@ -109,40 +113,4 @@ public class TeamDomainService {
         team.setId(uuid.get());
         return team;
     }
-
-    private List<Player> toPlayers(TeamResponse.Player[] apiPlayers) {
-        if (apiPlayers == null) {
-            return Collections.emptyList();
-        }
-        return Arrays.stream(apiPlayers).map(this::toPlayer).collect(Collectors.toList());
-    }
-
-    private Player toPlayer(TeamResponse.Player apiPlayer) {
-        Player player = new Player();
-        PopulatorUtil.copyNonNullProperties(apiPlayer, player);
-        player.setId(uuidConverter.toUuid(apiPlayer.getId()).orElse(null));
-        player.setRaceId(apiPlayer.getIdraces());
-        player.setSuspendedNextMatch(apiPlayer.getSuspended_next_match());
-        player.setAttributes(toAttributes(apiPlayer.getAttributes()));
-        player.setExtendedAttributes(toExtendedAttributes(apiPlayer.getExtendedAttributes()));
-        player.setCasualtiesStateIds(apiPlayer.getCasualties_state_id());
-        player.setCasualtiesStates(apiPlayer.getCasualties_state());
-        return player;
-    }
-
-    private Player.Attributes toAttributes(TeamResponse.Player.Attributes apiAttributes) {
-        Player.Attributes attributes = new Player.Attributes();
-        PopulatorUtil.copyNonNullProperties(apiAttributes, attributes);
-        return attributes;
-    }
-
-    private Player.ExtendedAttributes toExtendedAttributes(TeamResponse.Player.ExtendedAttributes apiExtendedAttributes) {
-        Player.ExtendedAttributes extendedAttributes = new Player.ExtendedAttributes();
-
-        Player.Attributes defaultAttributes = toAttributes(apiExtendedAttributes.getDefaultAttributes());
-        extendedAttributes.setDefaultAttributes(defaultAttributes);
-        PopulatorUtil.copyNonNullProperties(apiExtendedAttributes, extendedAttributes);
-        return extendedAttributes;
-    }
-
 }

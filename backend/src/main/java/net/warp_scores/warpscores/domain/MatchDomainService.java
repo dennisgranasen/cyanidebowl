@@ -110,7 +110,7 @@ public class MatchDomainService {
         return match;
     }
 
-    private void populateMatch(ApiMatch sourceApiMatch, Match targetMatch) {
+    public void populateMatch(ApiMatch sourceApiMatch, Match targetMatch) {
         PopulatorUtil.copyNonNullProperties(sourceApiMatch, targetMatch);
 
         targetMatch.setCoaches(
@@ -131,7 +131,7 @@ public class MatchDomainService {
 
     private Team toTeam(ApiTeam apiTeam) {
         Team team = new Team();
-        teamPopulator.populateTeam(apiTeam, team);
+        teamPopulator.populateMatchTeam(apiTeam, team);
         return team;
     }
 

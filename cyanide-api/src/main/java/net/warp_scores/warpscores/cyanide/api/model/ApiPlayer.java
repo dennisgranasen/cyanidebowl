@@ -1,15 +1,10 @@
 package net.warp_scores.warpscores.cyanide.api.model;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.Setter;
 import net.warp_scores.warpscores.cyanide.api.model.common.IdWithName;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 /*
 {
@@ -103,34 +98,63 @@ public class ApiPlayer extends IdWithName {
     private String[] casualties_state;
     private Boolean suspended_next_match;
     private Stats stats;
+
     private Skills skills;
     private Casualties casualties;
 
     @Getter
     @Setter
     public static class Skills {
-        private String[] AcquiredSkills;
-        private String[] InnateSkills;
+        @JsonAlias({"AcquiredSkills"})
+        private String[] acquiredSkills;
+        @JsonAlias({"InnateSkills"})
+        private String[] innateSkills;
     }
 
     @Getter
     @Setter
     public static class Casualties {
-        private String[] PreviousCasualty;
-        private String[] NewCasualty;
+        @JsonAlias({"PreviousCasualty"})
+        private String[] previousCasualty;
+        @JsonAlias({"NewCasualty"})
+        private String[] newCasualty;
     }
 
     @Getter
     @Setter
     public static class Stats {
         private Integer spp_gained;
-        private Integer blitz_done;
-        private Integer casualties_inflicted;
-        private Integer kills_inflicted;
-        private Integer injuries_inflicted;
+        private Integer touchdowns_scored;
+        private Integer yards_running;
+        private Integer yards_rushing;
+        private Integer hand_off_try;
+        private Integer hand_off_success;
+        private Integer catch_up_ball_try;
+        private Integer catch_up_ball_success;
+        private Integer rush_try;
+        private Integer rush_success;
+        private Integer dodge_try;
+        private Integer dodge_success;
+        private Integer pick_up_try;
+        private Integer pick_up_success;
         private Integer blocks_succeeded;
+        private Integer blocks_sustained;
+        private Integer blitz_done;
         private Integer armour_breaks;
+        private Integer injuries_inflicted;
+        private Integer injuries_sustained;
         private Integer stun_inflicted;
+        private Integer stun_sustained;
+        private Integer ko_inflicted;
+        private Integer ko_sustained;
+        private Integer casualties_inflicted;
+        private Integer casualties_sustained;
+        private Integer kills_inflicted;
+        private Integer deaths_sustained;
+        private Integer foul_done;
+        private Integer foul_sustained;
+        private Integer throw_team_mate_try;
+        private Integer throw_team_mate_success;
     }
 
     @Getter
@@ -146,27 +170,18 @@ public class ApiPlayer extends IdWithName {
     @Getter
     @Setter
     public static class ExtendedAttributes {
-        @JsonAlias({"default"})
-        private Attributes defaultAttributes;
-        private List<LinkedHashMap<String, Integer>> bonus = new ArrayList<>();
-        private List<LinkedHashMap<String, Integer>> malus = new ArrayList<>();
+        private ExtendedAttribute ma;
+        private ExtendedAttribute pa;
+        private ExtendedAttribute st;
+        private ExtendedAttribute ag;
+        private ExtendedAttribute av;
 
-        @JsonAnySetter
-        public void setBonus(Object bonus) {
-            if (bonus instanceof ArrayList) {
-                this.bonus.addAll((ArrayList) bonus);
-            } else if (bonus instanceof Map) {
-                this.bonus.add((LinkedHashMap<String, Integer>) bonus);
-            }
-        }
-
-        @JsonAnySetter
-        public void setMalus(Object malus) {
-            if (malus instanceof ArrayList) {
-                this.malus.addAll((ArrayList) malus);
-            } else if (malus instanceof Map) {
-                this.malus.add((LinkedHashMap<String, Integer>) malus);
-            }
+        @Getter
+        @Setter
+        public static class ExtendedAttribute {
+            private Integer value;
+            private Integer bonuses;
+            private Integer maluses;
         }
     }
 }

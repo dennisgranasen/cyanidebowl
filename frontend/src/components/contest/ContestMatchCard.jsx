@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Card, CardBody, Center, Grid, GridItem, Heading, Image, Text } from '@chakra-ui/react';
 import { Icon } from '@chakra-ui/icons';
 import ImageUrls from '../../ImageUrls';
-import formatter from '../../util/Formatter';
+import Formatter from '../../util/Formatter';
 import config from '../../config';
 import ScoreOrIcon from './ScoreOrIcon';
 
@@ -64,9 +64,9 @@ function ContestMatchCard({ contest, contestHeader, noContentIcon, noContentHead
                 </Center>
               </GridItem>
               <GridItem colSpan={8}>
-                <Center color="grey">{`Started: ${formatter.formatAsDate(started)}`}</Center>
+                <Center color="grey">{`Started: ${Formatter.formatAsDate(started, '-')}`}</Center>
                 <Center color="grey">
-                  {`${contest.live ? 'Live since:' : 'Duration:'} ${formatter.formatAsDuration(started, finished)}`}
+                  {`${contest.live ? 'Live since:' : 'Duration:'} ${Formatter.formatAsDuration(started, finished)}`}
                 </Center>
               </GridItem>
             </Grid>
