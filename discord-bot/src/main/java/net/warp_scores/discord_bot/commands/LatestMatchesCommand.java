@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.discord_bot.discord_messages.LatestMatchesMessageBuilder;
 import net.warp_scores.discord_bot.discord_messages.WarpScoresDiscordMessageBuilder;
-import net.warp_scores.discord_bot.services.QueryBackendService;
+import net.warp_scores.discord_bot.service.QueryBackendService;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.League;
 import org.springframework.stereotype.Component;
