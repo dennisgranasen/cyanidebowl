@@ -4,7 +4,7 @@ import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.spec.EmbedCreateSpec;
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.discord_bot.discord_messages.WarpScoresDiscordMessageBuilder;
-import net.warp_scores.discord_bot.services.QueryBackendService;
+import net.warp_scores.discord_bot.service.QueryBackendService;
 import net.warp_scores.warpscores.model.Status;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;

@@ -1,4 +1,4 @@
-package net.warp_scores.discord_bot.services;
+package net.warp_scores.discord_bot.service;
 
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.discord_bot.config.properties.WarpScoresProperties;
