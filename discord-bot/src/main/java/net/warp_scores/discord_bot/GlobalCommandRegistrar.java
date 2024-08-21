@@ -43,15 +43,11 @@ public class GlobalCommandRegistrar implements ApplicationRunner {
             commands.add(request);
         }
 
-        List<ApplicationCommandRequest> globalCommands = commands.stream().filter(cmd -> "help".equals(cmd.name()))
-                .toList();
-        List<ApplicationCommandRequest> guildCommands = commands.stream().filter(cmd -> !"help".equals(cmd.name()))
-                .toList();
         /* Bulk overwrite commands. This is now idempotent, so it is safe to use this even when only 1 command
         is changed/added/removed
         */
         applicationService.bulkOverwriteGlobalApplicationCommand(applicationId,
-                        globalCommands)
+                        commands)
                 .doOnNext(ignore -> log.debug("Successfully registered global commands"))
                 .doOnError(e -> log.error("Failed to register global commands", e))
                 .subscribe();
