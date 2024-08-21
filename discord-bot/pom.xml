@@ -103,7 +103,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <executable>true</executable>
-                    <mainClass>net.warp_scores.warpscores.WarpScoresDiscordBot</mainClass>
+                    <mainClass>net.warp_scores.discord_bot.WarpScoresDiscordBot</mainClass>
                     <addResources>true</addResources>
                 </configuration>
                 <executions>
@@ -147,7 +147,7 @@
                         <phase>generate-resources</phase>
                         <configuration>
                             <target>
-                                <echo file="${project.build.directory}/version.json">
+                                <echo file="${project.build.outputDirectory}/version.json">
                                     <![CDATA[{ "project": "${project.groupId}:${project.parent.artifactId}-${project.artifactId}", "committish": "${buildNumber}", "projectVersion": "${project.version}", "timestamp": "${maven.build.timestamp}" }]]>
                                 </echo>
                             </target>
