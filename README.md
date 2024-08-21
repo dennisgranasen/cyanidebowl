@@ -32,6 +32,10 @@ This is a Spike-like web page to show match results and data from BB3 obtained t
 - 🟡 Currently in work
 - 🔴 Obsolete/Canceled
 
+## Discord Bot
+
+Please refer to [Discord Bot](discord-bot.md).
+
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md).

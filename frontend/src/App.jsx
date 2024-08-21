@@ -107,6 +107,7 @@ function App() {
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/terms.md" element={<MarkdownPage markdownDocument='/terms.md' title='Terms' />} />
                 <Route path="/privacy.md" element={<MarkdownPage markdownDocument='/privacy.md' title='Privacy Policy' />} />
+                <Route path="/discord-bot.md" element={<MarkdownPage markdownDocument='/discord-bot.md' title='Discord Bot' />} />
                 <Route path="/README.md" element={<MarkdownPage markdownDocument='/README.md' title='Readme' />} />
                 <Route path="/CHANGELOG.md" element={<MarkdownPage markdownDocument='/CHANGELOG.md' title='Changelog' />} />
                 <Route path="/:leagueUuid" element={<LeaguePage />} />
