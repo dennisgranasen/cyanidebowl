@@ -1,26 +1,29 @@
 package net.warp_scores.warpscores.controller;
 
-import java.util.Arrays;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.cyanide.api.model.common.IdWithName;
 import net.warp_scores.warpscores.cyanide.api.requests.LookupRequest;
 import net.warp_scores.warpscores.cyanide.api.responses.LookupResponse;
 import net.warp_scores.warpscores.domain.persistence.LeagueCollectionRepository;
+import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.model.LeagueCollection;
-import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
 import net.warp_scores.warpscores.service.UUIDConverter;
+import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import static net.warp_scores.warpscores.controller.Authorizations.WRITE_LEAGUE_ADMIN;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static net.warp_scores.warpscores.controller.Authorizations.WRITE_REGISTER_LEAGUE;
 
 @RestController
 @RequiredArgsConstructor
@@ -34,27 +37,40 @@ public class LeagueCollectionController {
     private final UUIDConverter uuidConverter;
 
     @PostMapping("/leagueCollection/{leagueId}")
-    @PreAuthorize(WRITE_LEAGUE_ADMIN) // ✨
-    public void createLeagueCollection(@PathVariable(name = "leagueId") UUID leagueId) {
-        doCreateLeagueCollection(leagueId);
+    @PreAuthorize(WRITE_REGISTER_LEAGUE) // ✨
+    public ResponseEntity<List<League>> createLeagueCollection(@PathVariable(name = "leagueId") UUID leagueId) {
+        List<League> leagues = doCreateLeagueCollection(leagueId);
+        return ResponseEntity.ok(leagues);
     }
 
-    private void doCreateLeagueCollection(UUID leagueId) {
+    private List<League> doCreateLeagueCollection(UUID leagueId) {
         LookupRequest lookupRequest = new LookupRequest();
         lookupRequest.setLeague_id(leagueId);
         LookupResponse lookup = cyanideApiService.lookup(lookupRequest);
-        Set<LeagueCollection> leagueCollections = Arrays.stream(lookup.getLeagues())
+        List<LeagueCollection> leagueCollections = Arrays.stream(lookup.getLeagues())
                 .map(this::newLeagueCollection)
-                .collect(Collectors.toSet());
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        leagueCollections = leagueCollectionRepository.saveAll(leagueCollections);
         log.info("Added league collections {}.", leagueCollections);
-        leagueCollectionRepository.saveAll(leagueCollections);
+
+        List<League> leagues = leagueCollections
+                .stream()
+                .map(LeagueCollection::getLeagueId)
+                .map(cyanideApiService::loadLeague)
+                .toList();
+        return leagues;
     }
 
     private LeagueCollection newLeagueCollection(IdWithName idWithName) {
-        LeagueCollection leagueCollection = new LeagueCollection();
-        leagueCollection.setCollectionActive(true);
-        leagueCollection.setLeagueName(idWithName.getName());
-        leagueCollection.setLeagueId(uuidConverter.toUuid(idWithName.getId()).get());
-        return leagueCollection;
+        Optional<UUID> uuid = uuidConverter.toUuid(idWithName.getId());
+        return uuid.map(id -> {
+            LeagueCollection leagueCollection = new LeagueCollection();
+            leagueCollection.setCollectionActive(true);
+            leagueCollection.setLeagueName(idWithName.getName());
+            leagueCollection.setLeagueId(id);
+            return leagueCollection;
+        }).orElse(null);
     }
 }

@@ -13,6 +13,17 @@ public class WarpScoresProperties {
 
     private DiscordConfig discord;
 
+    private Authentication authentication;
+
+    @Getter
+    @Setter
+    public static class Authentication {
+        private String issuer;
+        private String clientId;
+        private String clientSecret;
+        private String audience;
+    }
+
     @Getter
     @Setter
     public static class BaseUrls {

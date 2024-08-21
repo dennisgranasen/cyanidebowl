@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.discord_bot.discord_messages.WarpScoresDiscordMessageBuilder;
 import net.warp_scores.discord_bot.domain.ChannelLeagueRegistration;
 import net.warp_scores.discord_bot.domain.ChannelLeagueRegistrationDomainService;
-import net.warp_scores.discord_bot.service.QueryBackendService;
+import net.warp_scores.discord_bot.service.WarpScoresBackendService;
 import net.warp_scores.warpscores.model.League;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -26,7 +26,7 @@ import java.util.UUID;
 @Slf4j
 public class LeagueCommand implements SlashCommand {
 
-    private final QueryBackendService queryBackendService;
+    private final WarpScoresBackendService warpScoresBackendService;
     private final WarpScoresDiscordMessageBuilder warpScoresDiscordMessageBuilder;
     private final ChannelLeagueRegistrationDomainService channelLeagueRegistrationDomainService;
 
@@ -67,22 +67,23 @@ public class LeagueCommand implements SlashCommand {
 
         List<ChannelLeagueRegistration> byChannelId = channelLeagueRegistrationDomainService.findByChannelId(channelId);
 
-        Map<ChannelLeagueRegistration, League> leagueByChannelLeagueRegistration = new HashMap<>();
+        Map<ChannelLeagueRegistration, Optional<League>> leagueByChannelLeagueRegistration = new HashMap<>();
         byChannelId
                 .forEach(channelLeagueRegistration ->
-                        leagueByChannelLeagueRegistration.put(channelLeagueRegistration, queryBackendService.loadLeague(
-                                UUID.fromString(channelLeagueRegistration.getLeagueUuid()))));
+                        leagueByChannelLeagueRegistration.put(channelLeagueRegistration,
+                                warpScoresBackendService.loadLeague(
+                                        UUID.fromString(channelLeagueRegistration.getLeagueUuid()))));
 
         EmbedCreateSpec.Builder builder = warpScoresDiscordMessageBuilder
                 .builder("Register league",
                         String.format(
                                 ":information_source: Current league registration for this channel."),
                         Optional.empty());
-        for (Map.Entry<ChannelLeagueRegistration, League> entry : leagueByChannelLeagueRegistration.entrySet()) {
+        for (Map.Entry<ChannelLeagueRegistration, Optional<League>> entry : leagueByChannelLeagueRegistration.entrySet()) {
             ChannelLeagueRegistration channelLeagueRegistration = entry.getKey();
-            League league = entry.getValue();
-            builder = builder.addField("League", league.getName(), false);
-            builder = builder.addField("League UUID", league.getUuid().toString(), false);
+            Optional<League> league = entry.getValue();
+            builder = builder.addField("League", league.map(League::getName).orElse("n/a"), false);
+            builder = builder.addField("League UUID", league.map(l -> l.getUuid().toString()).orElse("n/a"), false);
             builder = builder.addField("Spoiler",
                     channelLeagueRegistration.getSpoiler() ? ":white_check_mark:" : ":x:",
                     true);
@@ -140,24 +141,41 @@ public class LeagueCommand implements SlashCommand {
         Snowflake channelId = event.getInteraction().getChannelId();
 
         Optional<UUID> leagueUuid = leagueUuidValue.map(UUID::fromString);
-        Optional<League> league = leagueUuid.map(queryBackendService::loadLeague);
+        Optional<League> league = leagueUuid.flatMap(warpScoresBackendService::loadLeague);
+        if (league.isEmpty()) {
+            league = createLeagueCollection(leagueUuid);
+        }
+
         Optional<ChannelLeagueRegistration> channelLeagueRegistration = league.map(
                 l -> channelLeagueRegistrationDomainService.createOrUpdateChannelLeagueRegistration(
                         channelId, l, spoiler));
-
+        String leagueName = league.map(League::getName).orElse("n/a");
+        Optional<String> leagueLogo = league.map(League::getLogo);
         return event.reply()
                 .withEphemeral(true)
                 .withEmbeds(warpScoresDiscordMessageBuilder.builder("Register league",
-                        String.format(
-                                ":white_check_mark: Successfully registered league %s with this channel (Option Spoiler: %s).",
-                                league.get().getName(),
-                                channelLeagueRegistration.get().getSpoiler()),
-                        league.map(League::getLogo)).build())
+                        channelLeagueRegistration.map(clr -> String.format(
+                                        ":white_check_mark: Successfully registered league %s with this channel (Option Spoiler: %s).",
+                                        leagueName,
+                                        clr.getSpoiler()))
+                                .orElse(String.format(":x: Unable to register league with this channel. %s not found.",
+                                        leagueUuid.map(UUID::toString).orElse("n/a"))),
+                        leagueLogo).build())
                 .doOnError(
                         error -> log.error(
                                 "Error during league registration (leagueUuid: {}, channelId: {}) message ({}).",
                                 leagueUuid, channelId, error.getMessage(), error.getCause()))
                 .onErrorResume(error -> event.reply(":warning: Something went wrong... :cry:"))
                 .then();
+    }
+
+    private Optional<League> createLeagueCollection(Optional<UUID> leagueUuid) {
+        try {
+            return leagueUuid
+                    .flatMap(warpScoresBackendService::createLeagueCollection);
+        } catch (Exception e) {
+            log.error("Unable to create league collection.", e);
+            return Optional.empty();
+        }
     }
 }
