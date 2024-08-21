@@ -23,7 +23,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static net.warp_scores.warpscores.controller.Authorizations.WRITE_REGISTER_LEAGUE;
+import static net.warp_scores.warpscores.controller.Authorities.AUTHORITY_WRITE_REGISTER_LEAGUE;
 
 @RestController
 @RequiredArgsConstructor
@@ -37,7 +37,7 @@ public class LeagueCollectionController {
     private final UUIDConverter uuidConverter;
 
     @PostMapping("/leagueCollection/{leagueId}")
-    @PreAuthorize(WRITE_REGISTER_LEAGUE) // ✨
+    @PreAuthorize(AUTHORITY_WRITE_REGISTER_LEAGUE) // ✨
     public ResponseEntity<List<League>> createLeagueCollection(@PathVariable(name = "leagueId") UUID leagueId) {
         List<League> leagues = doCreateLeagueCollection(leagueId);
         return ResponseEntity.ok(leagues);

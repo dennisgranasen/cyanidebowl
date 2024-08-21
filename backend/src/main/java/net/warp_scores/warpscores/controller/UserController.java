@@ -11,10 +11,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static net.warp_scores.warpscores.controller.Authorizations.READ_CURRENT_USER;
-import static net.warp_scores.warpscores.controller.Authorizations.WRITE_LEAGUE_ADMIN;
-import static net.warp_scores.warpscores.controller.Authorizations.WRITE_REGISTER_LEAGUE;
-import static net.warp_scores.warpscores.controller.Authorizations.WRITE_SITE_ADMIN;
+import static net.warp_scores.warpscores.controller.Permissions.READ_CURRENT_USER;
+import static net.warp_scores.warpscores.controller.Permissions.WRITE_LEAGUE_ADMIN;
+import static net.warp_scores.warpscores.controller.Permissions.WRITE_REGISTER_LEAGUE;
+import static net.warp_scores.warpscores.controller.Permissions.WRITE_SITE_ADMIN;
 
 @RestController
 @RequiredArgsConstructor
