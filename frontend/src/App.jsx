@@ -18,6 +18,7 @@ import config from './config';
 import linkTheme from './theme/components/Link';
 import tableTheme from './theme/components/Table';
 import progressTheme from './theme/components/Progress';
+import MarkdownPage from "./pages/MarkdownPage";
 
 const theme = extendTheme({
   semanticTokens: {
@@ -104,6 +105,10 @@ function App() {
                 <Route path="/" element={<WarpScores />} />
                 <Route path="/statistics" element={<StatisticsPage />} />
                 <Route path="/about" element={<AboutPage />} />
+                <Route path="/terms.md" element={<MarkdownPage markdownDocument='/terms.md' title='Terms' />} />
+                <Route path="/privacy.md" element={<MarkdownPage markdownDocument='/privacy.md' title='Privacy Policy' />} />
+                <Route path="/README.md" element={<MarkdownPage markdownDocument='/README.md' title='Readme' />} />
+                <Route path="/CHANGELOG.md" element={<MarkdownPage markdownDocument='/CHANGELOG.md' title='Changelog' />} />
                 <Route path="/:leagueUuid" element={<LeaguePage />} />
                 <Route path="/latestMatches/:leagueUuid" element={<LatestMatchesPage />} />
                 <Route path="/latestMatches/:leagueUuid/:limit" element={<LatestMatchesPage />} />

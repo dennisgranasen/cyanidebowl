@@ -1,4 +1,5 @@
 import { Box, Link, Text, VStack } from '@chakra-ui/react';
+import { Link as RouteLink } from 'react-router-dom'
 import React from 'react';
 
 function Disclaimer({ headerSize, textSize, ...props }) {
@@ -18,6 +19,9 @@ function Disclaimer({ headerSize, textSize, ...props }) {
           <Link href="mailto:naytsyrhc@gmx.org" isExternal>
             Naytsyrhc
           </Link>
+        </Text>
+        <Text fontSize={textSize}>
+          Please also check <Link as={RouteLink} to="/terms.md">Terms</Link> and <Link as={RouteLink} to="/privacy.md">Privacy Policy</Link>.
         </Text>
       </VStack>
     </Box>

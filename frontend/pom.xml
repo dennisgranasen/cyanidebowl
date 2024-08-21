@@ -111,8 +111,7 @@
                                 <resource>
                                     <directory>${project.basedir}/../</directory>
                                     <includes>
-                                        <include>README.md</include>
-                                        <include>CHANGELOG.md</include>
+                                        <include>*.md</include>
                                     </includes>
                                 </resource>
                             </resources>
