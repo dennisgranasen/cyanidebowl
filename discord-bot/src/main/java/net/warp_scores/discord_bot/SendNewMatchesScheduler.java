@@ -10,7 +10,7 @@ import net.warp_scores.discord_bot.discord_messages.MatchMessageBuilder;
 import net.warp_scores.discord_bot.domain.ChannelLeagueRegistration;
 import net.warp_scores.discord_bot.domain.ChannelLeagueRegistrationDomainService;
 import net.warp_scores.discord_bot.domain.ChannelLeagueRegistrationRepository;
-import net.warp_scores.discord_bot.service.QueryBackendService;
+import net.warp_scores.discord_bot.service.WarpScoresBackendService;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.League;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -33,7 +33,7 @@ public class SendNewMatchesScheduler {
 
     private final ChannelLeagueRegistrationDomainService channelLeagueRegistrationDomainService;
     private final ChannelLeagueRegistrationRepository channelLeagueRegistrationRepository;
-    private final QueryBackendService queryBackendService;
+    private final WarpScoresBackendService warpScoresBackendService;
     private final MatchMessageBuilder matchMessageBuilder;
 
     @Scheduled(cron = "0 */2 * * * *")
@@ -92,6 +92,6 @@ public class SendNewMatchesScheduler {
 
     private Map<League, List<Contest>> getLatestMatchesFor(List<String> leagueUuidValues) {
         List<UUID> leagueUuids = leagueUuidValues.stream().map(UUID::fromString).toList();
-        return queryBackendService.loadLatestLeaguesContests(leagueUuids);
+        return warpScoresBackendService.loadLatestLeaguesContests(leagueUuids);
     }
 }
