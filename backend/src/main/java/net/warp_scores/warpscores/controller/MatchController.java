@@ -63,32 +63,6 @@ public class MatchController {
         }
     }
 
-    @GetMapping("/matches/reload")
-    public ResponseEntity<Void> reloadMatchesFromCache() {
-        List<Match> matches = matchRepository.findAll();
-        List<Match> reloadedMatches = matches
-                .stream()
-                .map(Match::getMatchId)
-                .map(cyanideApiService::loadMatch)
-                .toList();
-        log.info("Reloaded {} matches from.", reloadedMatches.size());
-        int matchesWithPlayersCount = reloadedMatches.stream().filter(this::hasPlayers).toList().size();
-        log.info("Got {} matches with players from.", matchesWithPlayersCount);
-        return ResponseEntity.ok().build();
-    }
-
-    private boolean hasPlayers(Match match) {
-        return match != null && match.getTeams().stream().flatMap(t -> Optional.ofNullable(t.getPlayers()).map(List::stream).orElse(
-                Stream.empty())).collect(Collectors.toList()).size() > 0;
-    }
-
-    private MatchRequest createMatchRequest(Match match) {
-        MatchRequest matchRequest = new MatchRequest();
-        matchRequest.setMatch_id(match.getMatchId());
-        matchRequest.setRosters(1);
-        return matchRequest;
-    }
-
     private List<Match> initializeForCompetition(List<Match> matches, Optional<Competition> competition) {
         Stream<Match> sorted = matches
                 .stream()
