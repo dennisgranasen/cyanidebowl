@@ -46,22 +46,11 @@ const postDataWithAuthentication = async (endpoint, data, getAccessTokenSilently
   return response;
 };
 
-/*
+
 const getDataWithAuthentication = async (endpoint, getAccessTokenSilently, getAccessTokenWithPopup) => {
   const authHeaders = await getAuthHeaders(getAccessTokenSilently, getAccessTokenWithPopup);
   const response = await axios(endpoint, authHeaders);
   return response;
-};
-*/
-
-const probeUserPermissions = async (getAccessTokenSilently, getAccessTokenWithPopup) => {
-  const token = await getToken(getAccessTokenSilently, getAccessTokenWithPopup);
-  const decoded = jwtDecode(token);
-  return {
-    readCurrentUser: decoded.permissions.includes('read:current_user'),
-    writeLeagueAdmin: decoded.permissions.includes('write:league_admin'),
-    writeSiteAdmin: decoded.permissions.includes('write:site_admin'),
-  };
 };
 
 export default {
@@ -132,5 +121,5 @@ export default {
   teamMatches: async (teamUuid) => axios(`/teams/${teamUuid}/matches`).then(returnData).catch(handleError),
   // user
   userPermissions: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
-    probeUserPermissions(getAccessTokenSilently, getAccessTokenWithPopup).catch(handleError),
+      getDataWithAuthentication("/userPermissions", getAccessTokenSilently, getAccessTokenWithPopup).catch(handleError),
 };

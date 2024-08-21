@@ -11,7 +11,7 @@ import net.warp_scores.discord_bot.discord_messages.LatestMatchesMessageBuilder;
 import net.warp_scores.discord_bot.discord_messages.WarpScoresDiscordMessageBuilder;
 import net.warp_scores.discord_bot.domain.ChannelLeagueRegistration;
 import net.warp_scores.discord_bot.domain.ChannelLeagueRegistrationDomainService;
-import net.warp_scores.discord_bot.service.QueryBackendService;
+import net.warp_scores.discord_bot.service.WarpScoresBackendService;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.League;
 import org.springframework.stereotype.Component;
@@ -30,7 +30,7 @@ import static java.util.Collections.emptyMap;
 @Slf4j
 public class LatestMatchesCommand implements SlashCommand {
 
-    private final QueryBackendService queryBackendService;
+    private final WarpScoresBackendService warpScoresBackendService;
 
     private final WarpScoresDiscordMessageBuilder warpScoresDiscordMessageBuilder;
 
@@ -64,7 +64,7 @@ public class LatestMatchesCommand implements SlashCommand {
         }
         Map<League, List<Contest>> latestLeagueContests = emptyMap();
         if (leagueUuid.isPresent()) {
-            latestLeagueContests = queryBackendService.loadLatestLeagueContests(
+            latestLeagueContests = warpScoresBackendService.loadLatestLeagueContests(
                     leagueUuid.get(), count);
         }
         return event
