@@ -8,6 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Getter
@@ -24,4 +25,9 @@ public class League {
     private Date dateLastMatch;
 
     private Map<CompetitionStatus, Long> countsByCompetitionStatus;
+
+    @Override
+    public String toString() {
+        return String.format("League[%s] %s", uuid, name);
+    }
 }
