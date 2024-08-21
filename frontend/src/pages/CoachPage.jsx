@@ -8,7 +8,6 @@ import HeaderCard from '../components/common/HeaderCard';
 import WarpScoresApiService from '../WarpScoresApiService';
 import config from '../config';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
-import logger from '../util/Logger';
 
 function PermissionIcon({ granted }) {
   const color = granted ? 'green' : 'red';
@@ -24,19 +23,29 @@ function CoachPage() {
     readCurrentUser: false,
     writeLeagueAdmin: false,
     writeSiteAdmin: false,
+    writeRegisterLeague: false
   });
+  const [userName, setUserName] = useState();
 
   useEffect(() => {
     setLoading(true);
     const fetchUserPermissions = () => {
       WarpScoresApiService.userPermissions(getAccessTokenSilently, getAccessTokenWithPopup)
-        .catch((reason) => {
-          setError({ type: 'error', message: reason.toLocaleString(config.locale) });
-        })
-        .then(setUserPermissions)
-        .finally(() => setLoading(false));
+          .catch((reason) => {
+            setError({ type: 'error', message: reason.toLocaleString(config.locale) });
+          })
+          .then(setUserPermissions)
+          .finally(() => setLoading(false));
+    };
+    const fetchUser = () => {
+      WarpScoresApiService.user(getAccessTokenSilently, getAccessTokenWithPopup)
+          .catch((reason) => {
+            setError({ type: 'error', message: reason.toLocaleString(config.locale) });
+          })
+          .then(setUserName);
     };
     fetchUserPermissions();
+    fetchUser();
   }, [isLoading, isAuthenticated]);
 
   return (
@@ -53,6 +62,9 @@ function CoachPage() {
         />
         <Box>
           <PermissionIcon granted={userPermissions?.readCurrentUser} /> User read permissions
+        </Box>
+        <Box>
+          <PermissionIcon granted={userPermissions?.writeRegisterLeague} /> Permission to register leagues
         </Box>
         <Box>
           <PermissionIcon granted={userPermissions?.writeLeagueAdmin} /> League admin permissions
