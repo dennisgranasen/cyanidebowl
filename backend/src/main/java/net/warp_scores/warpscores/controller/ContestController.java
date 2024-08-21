@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static net.warp_scores.warpscores.controller.Authorizations.WRITE_LEAGUE_ADMIN;
+import static net.warp_scores.warpscores.controller.Authorities.AUTHORITY_WRITE_LEAGUE_ADMIN;
 
 @Slf4j
 @RestController
@@ -41,7 +41,7 @@ public class ContestController {
     }
 
     @PostMapping("/contests/competition/{competitionUuid}")
-    @PreAuthorize(WRITE_LEAGUE_ADMIN) // ✨
+    @PreAuthorize(AUTHORITY_WRITE_LEAGUE_ADMIN) // ✨
     public ResponseEntity<Void> addContest(@PathVariable(name = "competitionUuid") UUID competitionUuid,
             @RequestBody Contest contest) {
         try {
