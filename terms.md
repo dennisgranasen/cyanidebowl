@@ -1,6 +1,6 @@
 # Terms of Service 
 
-Please read these terms of service (“terms”, “terms of service”) carefully before using [warp-scores](https://warp-scores.net) website (the “service”) or the Discord Bot operated by [naytsyrhc](mailto:naytsyrhc@gmx.org) (“us”, ‘we”, “our”).
+Please read these terms of service (“terms”, “terms of service”) carefully before using [warp-scores](https://warp-scores.net) website (the “service”) or the [Discord Bot](discord-bot.md) operated by [naytsyrhc](mailto:naytsyrhc@gmx.org) (“us”, ‘we”, “our”).
 
 ## Conditions of Use
 
@@ -8,7 +8,7 @@ We will provide our services to you, which are subject to the conditions stated 
 
 ## Privacy Policy
 
-Before you continue using our website or the Discord Bot we advise you to read our [privacy policy](privacy.md) regarding our user data collection. It will help you better understand our practices.
+Before you continue using our website or the [Discord Bot](discord-bot.md) we advise you to read our [privacy policy](privacy.md) regarding our user data collection. It will help you better understand our practices.
 
 ## Communications
 
@@ -20,11 +20,11 @@ By visiting this website, you agree that the laws of Germany, without regard to 
 
 ## Disputes
 
-Any dispute related in any way to your visit to this website or the use of the Discord Bot from us shall be arbitrated by state or federal court in Germany and you consent to exclusive jurisdiction and venue of such courts.
+Any dispute related in any way to your visit to this website or the use of the [Discord Bot](discord-bot.md) from us shall be arbitrated by state or federal court in Germany and you consent to exclusive jurisdiction and venue of such courts.
 
 ## License and Site Access
 
-We grant you a limited license to access and make personal use of this website or the Discord Bot. You are not allowed to download or modify it. This may be done only with written consent from us.
+We grant you a limited license to access and make personal use of this website or the [Discord Bot](discord-bot.md). You are not allowed to download or modify it. This may be done only with written consent from us.
 
 ## User Account
 
