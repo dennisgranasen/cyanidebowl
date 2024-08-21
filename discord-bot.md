@@ -11,15 +11,19 @@ The bot has the scopes `application.commands` and `bot` and needs the permission
 
 After you have invited the bot to your Discord server, you get access to the bot's commands as decribed below: 
 
-### `/help`
+### Command "Help"
+
+#### `/help`
 
 Will send you a message with similar content as this.
 
-### `/apistatus`
+### Command "Api-Status"
+
+#### `/apistatus`
 
 Shows the current known status of Cyanides API.
 
-### `/league`
+### Command "League"
 
 You have three possible use cases with this command:
 
@@ -43,7 +47,9 @@ Unregister the league with given `[UUID]` from publishing to current channel.
 
 Show all leagues currently registered to publish to current channel.
 
-### `/latestmatches`
+### Command "Latest Matches"
+
+#### `/latestmatches`
 
 Show latest matches of current leagues registered to this channel.
 
