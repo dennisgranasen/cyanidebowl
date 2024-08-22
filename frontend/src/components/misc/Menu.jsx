@@ -20,7 +20,6 @@ import {
 import {FaTriangleExclamation} from 'react-icons/fa6';
 import {Link as RouteLink} from 'react-router-dom';
 import {ExternalLinkIcon, HamburgerIcon, Icon} from '@chakra-ui/icons';
-import {useAuth0} from '@auth0/auth0-react';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import config from '../../config';
 import Formatter from '../../util/Formatter';
@@ -33,7 +32,7 @@ import StatusIcon from './StatusIcon';
 import timeUtil from '../../util/TimeUtil';
 import ImageUrls from '../../ImageUrls';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
-import logger from '../../util/Logger';
+import {useAuth0WithUserPermissions} from "../../hooks/useAuth0WithUserPermissions";
 
 const {smallBoxSize, isProduction} = config;
 
@@ -63,35 +62,12 @@ function LastCheck({status, textSize, statusOutdated}) {
 }
 
 function Menu() {
-    const {user, isAuthenticated, isLoading, loginWithPopup, logout, getAccessTokenSilently, getAccessTokenWithPopup} =
-        useAuth0();
-    const [userPermissions, setUserPermissions] = useState({
-        readCurrentUser: false,
-        writeLeagueAdmin: false,
-        writeSiteAdmin: false,
-        writeRegisterLeague: false
-    });
-    const [ checkPermissions, setCheckPermissions] = useState(false);
+    const {user, authenticationReady, checkPermissions, userPermissions, isAuthenticated, loginWithPopup, logout, getAccessTokenSilently, getAccessTokenWithPopup} =
+        useAuth0WithUserPermissions();
     const {isOpen, onOpen, onClose} = useDisclosure();
     const [status, setStatus] = useState(null);
     const [statusOutdated, setStatusOutdated] = useState(false);
 
-    useEffect( () => {
-        const fetchUserPermissions = () => {
-            WarpScoresApiService.userPermissions(getAccessTokenSilently, getAccessTokenWithPopup)
-                .catch((reason) => {
-                    logger.error(reason);
-                })
-                .then(setUserPermissions);
-        };
-        if (checkPermissions) {
-            fetchUserPermissions();
-        }
-    }, [checkPermissions])
-
-    useEffect(() => {
-        setCheckPermissions(!isProduction || (!isLoading && isAuthenticated));
-    }, [isLoading, isAuthenticated]);
 
     const fetchStatus = () => {
         WarpScoresApiService.status()
