@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.config.properties.CyanideApiProperties;
 import net.warp_scores.warpscores.domain.CompetitionDomainService;
 import net.warp_scores.warpscores.domain.MatchDomainService;
+import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.LeagueCollectionRepository;
@@ -56,6 +57,7 @@ public class FetchDataScheduler {
 
     private final CompetitionDomainService competitionDomainService;
     private final ContestRepository contestRepository;
+    private final TeamDomainService teamDomainService;
 
     @Scheduled(initialDelay = Schedules.TWENTY_SECONDS, fixedDelay = Schedules.TEN_MINUTES)
     public void fetchLeagues() {
@@ -87,7 +89,17 @@ public class FetchDataScheduler {
 
         log.info("Will load competitions for {} leagues with active league collection.",
                 leaguesToCollect.size());
-        loadCompetitionsFor(leaguesToCollect);
+        List<Competition> competitions = loadCompetitionsFor(leaguesToCollect);
+
+        competitions
+                .forEach(this::fetchTeamsForCompetitionIfNoneYetAvailable);
+    }
+
+    private void fetchTeamsForCompetitionIfNoneYetAvailable(Competition competition) {
+        List<Team> byCompetitionId = teamDomainService.findByCompetitionId(competition.getUuid());
+        if (byCompetitionId.isEmpty()) {
+            cyanideApiService.loadTeams(competition);
+        }
     }
 
     @Scheduled(initialDelay = Schedules.THREE_MINUTES, fixedDelay = Schedules.FIFTEEN_MINUTES)
@@ -212,7 +224,7 @@ public class FetchDataScheduler {
         return leagues;
     }
 
-    private void loadCompetitionsFor(List<LeagueCollection> leaguesToCollect) {
+    private List<Competition> loadCompetitionsFor(List<LeagueCollection> leaguesToCollect) {
         List<Competition> competitions = leaguesToCollect
                 .stream()
                 .map(LeagueCollection::getLeagueId)
@@ -220,6 +232,7 @@ public class FetchDataScheduler {
                 .flatMap(List::stream)
                 .toList();
         log.info("Loaded {} competitions.", competitions.size());
+        return competitions;
     }
 
     private void loadContestsFor(List<LeagueCollection> leagueCollections) {
@@ -245,7 +258,7 @@ public class FetchDataScheduler {
                 })
                 .flatMap(List::stream)
                 .toList();
-        log.info("Loaded {} (skeleton) matches.", matches.size());
+        log.info("Got {} (skeleton) matches.", matches.size());
 
         List<UUID> matchUuids = matches
                 .stream()
