@@ -36,7 +36,7 @@ public class SecurityConfiguration {
                         .requestMatchers(GET, "/matches/**").permitAll()
                         .requestMatchers(GET, "/ranks/**").permitAll()
                         .requestMatchers(GET, "/teams/**").permitAll()
-                        .requestMatchers(GET, "/userPermissions").permitAll() //authenticated()
+                        .requestMatchers(GET, "/userPermissions").permitAll()
                         // endpoints needing authentication
                         .requestMatchers(POST, "/circuits/**").authenticated()
                         .requestMatchers(POST, "/contests/**").authenticated()

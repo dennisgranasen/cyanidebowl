@@ -1,4 +1,4 @@
-package net.warp_scores.warpscores.controller;
+package net.warp_scores.warpscores.model;
 
 public interface Permissions {
     String READ_CURRENT_USER = "read:current_user";

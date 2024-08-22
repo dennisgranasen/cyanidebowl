@@ -24,7 +24,7 @@ import {
   Tr,
   VStack,
 } from '@chakra-ui/react';
-import { useParams } from 'react-router-dom';
+import {useNavigate, useParams} from 'react-router-dom';
 import { Field, Form, Formik } from 'formik';
 import { useAuth0 } from '@auth0/auth0-react';
 import WarpScoresApiService from '../WarpScoresApiService';
@@ -34,6 +34,7 @@ import HeaderCard from '../components/common/HeaderCard';
 import prettyPrint from '../util/PrettyPrint';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import config from '../config';
+import {useAuth0WithUserPermissions} from "../hooks/useAuth0WithUserPermissions";
 
 function TableColumns() {
   return (
@@ -60,7 +61,22 @@ const initialFormValues = {
 };
 
 function CircuitPage() {
-  const { isAuthenticated, isLoading, getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0();
+  const {
+    authenticationReady,
+      checkPermissions,
+    userPermissions,
+    getAccessTokenSilently,
+    getAccessTokenWithPopup
+  } = useAuth0WithUserPermissions();
+
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if ( authenticationReady && checkPermissions && !userPermissions.readCurrentUser)
+    {
+      navigate("/");
+    }
+  }, [authenticationReady, checkPermissions, userPermissions]);
 
   const platforms = [
     'bb1.pc',
@@ -261,7 +277,7 @@ function CircuitPage() {
                     mt="1rem"
                     type="submit"
                     isLoading={props.isSubmitting}
-                    isDisabled={isLoading || !isAuthenticated}
+                    isDisabled={!authenticationReady || !userPermissions.writeLeagueAdmin}
                   >
                     Add leg
                   </Button>

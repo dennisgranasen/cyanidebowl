@@ -36,5 +36,6 @@ public class WarpScoresProperties {
     @Setter
     public static class DiscordConfig {
         private String token;
+        private Long testGuildId;
     }
 }
