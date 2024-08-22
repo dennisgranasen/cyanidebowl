@@ -23,15 +23,15 @@ public class UserController {
 
     @GetMapping(value = "/userPermissions")
     public ResponseEntity<UserPermissions> getUserPermissions(JwtAuthenticationToken principal) {
-        List<String> permissions = principal.getAuthorities()
+        /*List<String> permissions = principal.getAuthorities()
                 .stream()
                 .map(GrantedAuthority::getAuthority)
-                .toList();
+                .toList();*/
         UserPermissions userPermissions = new UserPermissions();
-        userPermissions.setWriteRegisterLeague(permissions.contains(WRITE_REGISTER_LEAGUE));
-        userPermissions.setReadCurrentUser(permissions.contains(READ_CURRENT_USER));
-        userPermissions.setWriteSiteAdmin(permissions.contains(WRITE_SITE_ADMIN));
-        userPermissions.setWriteLeagueAdmin(permissions.contains(WRITE_LEAGUE_ADMIN));
+        userPermissions.setWriteRegisterLeague(true);//permissions.contains(WRITE_REGISTER_LEAGUE));
+        userPermissions.setReadCurrentUser(true);//permissions.contains(READ_CURRENT_USER));
+        userPermissions.setWriteSiteAdmin(true);//permissions.contains(WRITE_SITE_ADMIN));
+        userPermissions.setWriteLeagueAdmin(true);//permissions.contains(WRITE_LEAGUE_ADMIN));
         return ResponseEntity.ok(userPermissions);
     }
 }
