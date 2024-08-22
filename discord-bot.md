@@ -23,6 +23,15 @@ Will send you a message with similar content as this.
 
 Shows the current known status of Cyanides API.
 
+### Command "Lookup"
+
+#### `/lookup leaguename [NAME]`
+
+Does a lookup in Cyanide API for a league with given `[NAME]` (returns UUID).
+
+Options:
+- `leaguename`: The name of the league you want to lookup. Must be the exact name as in BB3.
+
 ### Command "League"
 
 You have three possible use cases with this command:
