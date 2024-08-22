@@ -1,7 +1,7 @@
-import React from 'react';
-import { Box, ChakraProvider, CSSReset, DarkMode, extendTheme } from '@chakra-ui/react';
-import { HashRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
-import { Auth0Provider, withAuthenticationRequired } from '@auth0/auth0-react';
+import React, {useEffect} from 'react';
+import {Box, ChakraProvider, CSSReset, DarkMode} from '@chakra-ui/react';
+import {HashRouter as Router, Route, Routes, useNavigate} from 'react-router-dom';
+import {Auth0Provider, withAuthenticationRequired} from '@auth0/auth0-react';
 import WarpScores from './pages/WarpScores';
 import TeamPage from './pages/TeamPage';
 import CompetitionPage from './pages/CompetitionPage';
@@ -15,123 +15,86 @@ import LiveMatchesPage from './pages/LiveMatchesPage';
 import CircuitPage from './pages/CircuitPage';
 import LeaguePage from './pages/LeaguePage';
 import config from './config';
-import linkTheme from './theme/components/Link';
-import tableTheme from './theme/components/Table';
-import progressTheme from './theme/components/Progress';
 import MarkdownPage from "./pages/MarkdownPage";
+import {warpScoresTheme} from "./theme/WarpScoresTheme";
 
-const theme = extendTheme({
-  semanticTokens: {
-    colors: {
-      warpScoresMenuTextColor: {
-        default: 'black',
-        _dark: 'white',
-      },
-      warpScoresBackgroundColor: {
-        default: 'gray.100',
-        _dark: 'gray.700',
-      },
-      warpScoresBorderColor: {
-        default: 'gray.100',
-        _dark: 'gray.700',
-      },
-      warpScoresHoverColor: {
-        default: 'green.100',
-        _dark: 'green.700',
-      },
-      warpScoresTooltipBackground: {
-        default: 'green.200',
-        _dark: 'green.800',
-      },
-      warpScoresAlternativeBackgroundColor: {
-        default: 'gray.100',
-        _dark: 'gray.700',
-      },
-      warpScoresProgressBackgroundColor: {
-        default: 'blackAlpha.300',
-        _dark: 'whiteAlpha.300',
-      },
-      warpScoresProgressColor: {
-        default: 'blue.500',
-        _dark: 'blue.200',
-      },
-      warpScoresValidationNeededProgressColor: {
-        default: 'orange.400',
-        _dark: 'orange.200',
-      },
-    },
-  },
-  components: {
-    Link: linkTheme,
-    RouteLink: linkTheme,
-    Table: tableTheme,
-    Progress: progressTheme,
-  },
-});
+const {isProduction} = config;
 
-function ProtectedRoute({ component, ...args }) {
-  const Component = withAuthenticationRequired(component, args);
-  return <Component />;
+const withoutAuthentication = (Component) => {
+    return function WithoutAuthentication() {
+        return <Component />;
+    };
+};
+
+function ProtectedRoute({component, ...args}) {
+    const Component = isProduction ? withAuthenticationRequired(component, args) : withoutAuthentication(component);
+    return <Component/>;
 }
 
-function Auth0ProviderWithRedirectCallback({ children, ...props }) {
-  const navigate = useNavigate();
-  const onRedirectCallback = (appState) => {
-    navigate((appState && appState.returnTo) || window.location.pathname);
-  };
-  return (
-    <Auth0Provider onRedirectCallback={onRedirectCallback} {...props}>
-      {children}
-    </Auth0Provider>
-  );
+function Auth0ProviderWithRedirectCallback({children, ...props}) {
+    const navigate = useNavigate();
+    const onRedirectCallback = (appState) => {
+        navigate((appState && appState.returnTo) || window.location.pathname);
+    };
+    return (
+        <Auth0Provider onRedirectCallback={onRedirectCallback} {...props}>
+            {children}
+        </Auth0Provider>
+    );
 }
 
 function App() {
-  return (
-    <DarkMode>
-      <ChakraProvider theme={theme}>
-        <CSSReset />
-        <Box padding="4">
-          <Router>
-            <Auth0ProviderWithRedirectCallback
-              domain={config.auth0Domain}
-              clientId={config.auth0ClientId}
-              authorizationParams={{
-                redirect_uri: window.location.origin,
-              }}
-            >
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={<WarpScores />} />
-                <Route path="/statistics" element={<StatisticsPage />} />
-                <Route path="/about" element={<AboutPage />} />
-                <Route path="/terms.md" element={<MarkdownPage markdownDocument='/terms.md' title='Terms' />} />
-                <Route path="/privacy.md" element={<MarkdownPage markdownDocument='/privacy.md' title='Privacy Policy' />} />
-                <Route path="/discord-bot.md" element={<MarkdownPage markdownDocument='/discord-bot.md' title='Discord Bot' />} />
-                <Route path="/README.md" element={<MarkdownPage markdownDocument='/README.md' title='Readme' />} />
-                <Route path="/CHANGELOG.md" element={<MarkdownPage markdownDocument='/CHANGELOG.md' title='Changelog' />} />
-                <Route path="/:leagueUuid" element={<LeaguePage />} />
-                <Route path="/latestMatches/:leagueUuid" element={<LatestMatchesPage />} />
-                <Route path="/latestMatches/:leagueUuid/:limit" element={<LatestMatchesPage />} />
-                <Route path="/liveMatches/:leagueUuid" element={<LiveMatchesPage />} />
-                <Route path="/team/:teamUuid" element={<TeamPage />} />
-                <Route path="/competition/:competitionUuid" element={<CompetitionPage />} />
-                <Route path="/competition/:competitionUuid/team/:teamUuid" element={<TeamPage />} />
-                {/* Protected Routes/Needing authentication */}
-                <Route path="/coachPage" element={<ProtectedRoute component={CoachPage} />} />
-                <Route path="/admin" element={<ProtectedRoute component={AdminPage} />} />
-                <Route path="/admin/circuit/:circuitId" element={<ProtectedRoute component={CircuitPage} />} />
-                <Route
-                  path="/admin/circuit/:circuitId/leg/:legId"
-                  element={<ProtectedRoute component={CircuitLegPage} />}
-                />
-              </Routes>
-            </Auth0ProviderWithRedirectCallback>
-          </Router>
-        </Box>
-      </ChakraProvider>
-    </DarkMode>
-  );
+    return (
+        <DarkMode>
+            <ChakraProvider theme={warpScoresTheme}>
+                <CSSReset/>
+                <Box padding="4">
+                    <Router>
+                        <Auth0ProviderWithRedirectCallback
+                            domain={config.auth0Domain}
+                            clientId={config.auth0ClientId}
+                            authorizationParams={{
+                                redirect_uri: window.location.origin,
+                            }}
+                        >
+                            <Routes>
+                                {/* Public Routes */}
+                                <Route path="/" element={<WarpScores/>}/>
+                                <Route path="/statistics" element={<StatisticsPage/>}/>
+                                <Route path="/about" element={<AboutPage/>}/>
+                                <Route path="/terms.md"
+                                       element={<MarkdownPage markdownDocument='/terms.md' title='Terms'/>}/>
+                                <Route path="/privacy.md"
+                                       element={<MarkdownPage markdownDocument='/privacy.md' title='Privacy Policy'/>}/>
+                                <Route path="/discord-bot.md" element={<MarkdownPage markdownDocument='/discord-bot.md'
+                                                                                     title='Discord Bot'/>}/>
+                                <Route path="/README.md"
+                                       element={<MarkdownPage markdownDocument='/README.md' title='Readme'/>}/>
+                                <Route path="/CHANGELOG.md"
+                                       element={<MarkdownPage markdownDocument='/CHANGELOG.md' title='Changelog'/>}/>
+                                <Route path="/:leagueUuid" element={<LeaguePage/>}/>
+                                <Route path="/latestMatches/:leagueUuid" element={<LatestMatchesPage/>}/>
+                                <Route path="/latestMatches/:leagueUuid/:limit" element={<LatestMatchesPage/>}/>
+                                <Route path="/liveMatches/:leagueUuid" element={<LiveMatchesPage/>}/>
+                                <Route path="/team/:teamUuid" element={<TeamPage/>}/>
+                                <Route path="/competition/:competitionUuid" element={<CompetitionPage/>}/>
+                                <Route path="/competition/:competitionUuid/team/:teamUuid" element={<TeamPage/>}/>
+                                {/* Protected Routes/Needing authentication */}
+                                <Route path="/coachPage" element={<ProtectedRoute component={CoachPage}/>}/>
+                                <Route path="/admin" element={<ProtectedRoute component={AdminPage}/>}/>
+                                <Route path="/admin/circuit/:circuitId"
+                                       element={<ProtectedRoute component={CircuitPage}/>}/>
+                                <Route
+                                    path="/admin/circuit/:circuitId/leg/:legId"
+                                    element={<ProtectedRoute component={CircuitLegPage}/>}
+                                />
+                            </Routes>
+                        </Auth0ProviderWithRedirectCallback>
+                    </Router>
+                </Box>
+            </ChakraProvider>
+        </DarkMode>
+    );
 }
 
 export default App;

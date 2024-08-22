@@ -40,7 +40,7 @@ public class SecurityConfiguration {
                         .requestMatchers(POST, "/circuits/**").authenticated()
                         .requestMatchers(POST, "/contests/**").authenticated()
                         .requestMatchers(POST, "/leagueCollection/**").authenticated()
-                        .requestMatchers(GET, "/userPermissions").authenticated()
+                        .requestMatchers(GET, "/userPermissions").permitAll() //authenticated()
                         // rest
                         .anyRequest().denyAll()
                 )

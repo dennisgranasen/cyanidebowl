@@ -1,7 +1,8 @@
 import axios from 'axios';
 import logger from './util/Logger';
 import config from './config';
-import { jwtDecode } from 'jwt-decode';
+
+const { isProduction } = config;
 
 axios.defaults.baseURL = config.backendUrl;
 
@@ -32,6 +33,10 @@ const getToken = async (getAccessTokenSilently, getAccessTokenWithPopup) => {
 };
 
 const getAuthHeaders = async (getAccessTokenSilently, getAccessTokenWithPopup) => {
+  if ( !isProduction )
+  {
+    return null;
+  }
   const token = await getToken(getAccessTokenSilently, getAccessTokenWithPopup);
   return {
     headers: {
@@ -121,5 +126,5 @@ export default {
   teamMatches: async (teamUuid) => axios(`/teams/${teamUuid}/matches`).then(returnData).catch(handleError),
   // user
   userPermissions: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
-      getDataWithAuthentication("/userPermissions", getAccessTokenSilently, getAccessTokenWithPopup).catch(handleError),
+      getDataWithAuthentication("/userPermissions", getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
 };
