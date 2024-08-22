@@ -119,10 +119,10 @@ function Participant({
             <Image src={ImageUrls.logo(party.picture)} objectFit="contain" />
           </Center>
         </GridItem>
-        <GridItem pl="4px" area="team" w="100%" textAlign="left" fontWeight={won ? 'bold' : null}>
-          {party.teamName || teamNameFallback}
+        <GridItem pl="4px" area="team" w="100%" textAlign="left" fontWeight={won ? 'bold' : null} style={{ whiteSpace: 'nowrap' }}>
+          <Box>{party.teamName || teamNameFallback}</Box>
         </GridItem>
-        <GridItem pl="4px" area="coach" textAlign="left" fontSize="sm" color="grey">
+        <GridItem pl="4px" area="coach" textAlign="left" fontSize="sm" color="grey" style={{ whiteSpace: 'nowrap' }}>
           {`${party.coachName}, ${prettyPrint(party.race)}`}
         </GridItem>
         <GridItem area="score" textAlign="center" fontWeight={won ? 'bold' : null}>
