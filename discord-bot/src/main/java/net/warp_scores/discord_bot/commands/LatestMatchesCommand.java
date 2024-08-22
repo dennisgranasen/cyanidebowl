@@ -52,7 +52,8 @@ public class LatestMatchesCommand implements SlashCommand {
                 .flatMap(ApplicationCommandInteractionOption::getValue)
                 .map(ApplicationCommandInteractionOptionValue::asLong);
 
-        return loadMatches(event, spoiler, count);
+
+        return event.deferReply().then(loadMatches(event, spoiler, count));
     }
 
     private Mono<Void> loadMatches(ChatInputInteractionEvent event, Optional<Boolean> spoiler, Optional<Long> count) {
@@ -68,11 +69,11 @@ public class LatestMatchesCommand implements SlashCommand {
                     leagueUuid.get(), count);
         }
         return event
-                .reply()
+                .createFollowup()
                 .withEmbeds(createEmbedCreateSpec(latestLeagueContests, spoiler.orElse(false)))
                 .doOnError(error -> log.error("Error during creating message ({}).", error.getMessage(),
                         error.getCause()))
-                .onErrorResume(error -> event.reply(":warning: Something went wrong..."))
+                .onErrorResume(error -> event.createFollowup(":warning: Something went wrong..."))
                 .then();
     }
 

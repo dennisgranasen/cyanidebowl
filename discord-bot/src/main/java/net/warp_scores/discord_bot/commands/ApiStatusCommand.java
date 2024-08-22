@@ -34,7 +34,6 @@ public class ApiStatusCommand implements SlashCommand {
     }
 
     public EmbedCreateSpec createEmbedCreateSpec(Status status) {
-
         EmbedCreateSpec.Builder builder = warpScoresDiscordMessageBuilder.builder("Cyanide API Status",
                 "Showing latest known status of Cyanide API.");
         builder.addField("Overall", toEmoji(status.isOverall()), false);
