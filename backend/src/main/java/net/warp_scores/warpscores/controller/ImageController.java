@@ -27,9 +27,9 @@ public class ImageController {
 
     @GetMapping("/logo/{name}")
     public ResponseEntity<byte[]> getLogoImage(@PathVariable(name = "name") String name) {
-        if (!name.startsWith("Logo_")) {
+        if (name != null && !name.startsWith("Logo_")) {
             name = name.equals("null") ? null : String.format("Logo_%s", StringUtils.capitalize(name));
-        } else if (name.startsWith("Logo_")) {
+        } else if (name != null && name.startsWith("Logo_")) {
             name = "Logo_" + StringUtils.capitalize(name.substring("Logo_".length()));
         }
         Optional<String> imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getLogos(), name);
