@@ -36,11 +36,12 @@ public class SecurityConfiguration {
                         .requestMatchers(GET, "/matches/**").permitAll()
                         .requestMatchers(GET, "/ranks/**").permitAll()
                         .requestMatchers(GET, "/teams/**").permitAll()
-                        // admin only writable endpoints
+                        .requestMatchers(GET, "/userPermissions").permitAll() //authenticated()
+                        // endpoints needing authentication
                         .requestMatchers(POST, "/circuits/**").authenticated()
                         .requestMatchers(POST, "/contests/**").authenticated()
                         .requestMatchers(POST, "/leagueCollection/**").authenticated()
-                        .requestMatchers(GET, "/userPermissions").permitAll() //authenticated()
+                        .requestMatchers(POST, "/lookup").authenticated()
                         // rest
                         .anyRequest().denyAll()
                 )
