@@ -40,7 +40,10 @@ public class HelpCommand implements SlashCommand {
                 .addField("General", "This bot is ment to post new matches of a BB3 league to a channel.", false)
                 .addField("Command 'Help'", getCommandDescription("/help", "Shows this help message."), false)
                 .addField("Command 'ApiStatus'",
-                        getCommandDescription("/apistatus", "Shows the current known status of Cyanides API."), false)
+                        getCommandDescription("/apistatus", "Shows the current known status of Cyanide API."), false)
+                .addField("Command 'Lookup'",
+                        getCommandDescription("/lookup leaguename [NAME]", "Does a lookup in Cyanide API for a league with given `[NAME]` (returns UUID).",
+                        "leaguename","The name of the league you want to lookup. Must be the exact name as in BB3."), false)
                 .addField("Command register 'League'", getCommandDescription(
                         "/league uuid [UUID] spoiler [true|false]",
                         "Register a league (or update registration options) with given `[UUID]` to publish to current channel.",
