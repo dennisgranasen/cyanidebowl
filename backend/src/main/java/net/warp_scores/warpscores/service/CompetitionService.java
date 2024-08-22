@@ -21,9 +21,13 @@ import java.util.OptionalInt;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static java.util.Comparator.comparing;
+import static java.util.Comparator.nullsFirst;
+import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 
 @Slf4j
 @Service
@@ -69,6 +73,15 @@ public class CompetitionService {
         boolean isOdd = teams % 2 == 1;
         Integer contestCount = contestsRepository.countByCompetitionId(competition.getUuid());
         List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid());
+        Map<UUID, Optional<Contest>> uniqueContests = contests
+                .stream()
+                .collect(
+                        groupingBy(
+                                Contest::getContestUuid,
+                                collectingAndThen(toList(), this::getLatest)));
+        if ( contests.size() !=  uniqueContests.keySet().size() ) {
+            log.info("Contests: {}, uniqueContests: {}.", contests.size(), uniqueContests.keySet().size());
+        }
         Integer playedMatchesCount = contestsRepository.countByCompetitionIdAndMatchDateNotNull(competition.getUuid());
         Integer liveMatches = contestsRepository.countByCompetitionIdAndLive(competition.getUuid(), 1);
         int totalRounds = isOdd ? teams : teams - 1;
@@ -97,6 +110,13 @@ public class CompetitionService {
         competition.setNotValidatedMatches(notValidatedCount);
         competition.setTotalMatches(competition.getTeamsMax() / 2 * competition.getTotalRounds());
         competition.setLiveMatches(liveMatches);
+    }
+
+    private Optional<Contest> getLatest(List<Contest> contests) {
+        return contests
+                .stream()
+                .sorted(nullsFirst(comparing(Contest::getMatchDate).reversed()))
+                .findFirst();
     }
 
     private void initializeKnockout(Competition competition) {

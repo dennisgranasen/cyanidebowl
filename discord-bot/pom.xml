@@ -46,12 +46,6 @@
             <version>3.2.6</version>
         </dependency>
 
-        <!-- OAuth -->
-        <dependency>
-            <groupId>com.okta.spring</groupId>
-            <artifactId>okta-spring-boot-starter</artifactId>
-        </dependency>
-
         <!-- json -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
