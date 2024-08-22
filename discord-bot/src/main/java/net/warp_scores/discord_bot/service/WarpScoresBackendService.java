@@ -1,5 +1,6 @@
 package net.warp_scores.discord_bot.service;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,18 +35,13 @@ public class WarpScoresBackendService {
     private final WarpScoresProperties warpScoresProperties;
 
     public Optional<League> createLeagueCollection(UUID leagueUuid) {
-        AuthenticationToken authenticationToken = getAuthenticationToken();
-        HttpHeaders headers = new HttpHeaders();
-        headers.set(HttpHeaders.AUTHORIZATION,
-                String.format("%s %s", authenticationToken.token_type, authenticationToken.access_token));
-        HttpEntity emptyRequest = new HttpEntity<>(headers);
-
+        AuthenticatedHttpEntity<Void> authenticatedHttpEntity = new AuthenticatedHttpEntity<>(Optional.empty());
         RestTemplate restTemplate = new RestTemplate();
         ParameterizedTypeReference<List<League>> leagueTypeRef = new ParameterizedTypeReference<>() {};
         ResponseEntity<List<League>> leagueCollectionResponse = restTemplate.exchange(
                 String.format("%s/leagueCollection/%s", warpScoresProperties.getBaseUrls().getApiBackend(), leagueUuid),
                 HttpMethod.POST,
-                emptyRequest, leagueTypeRef);
+                authenticatedHttpEntity.create(), leagueTypeRef);
         List<League> leagues = leagueCollectionResponse.getBody();
         if (leagues == null || leagues.isEmpty()) {
             return Optional.empty();
@@ -66,7 +63,7 @@ public class WarpScoresBackendService {
             return Optional.ofNullable(leagueResponse.getBody());
         } catch (HttpClientErrorException e) {
             if (404 == e.getStatusCode().value()) {
-                log.warn("Error {} while loading league.", e.getStatusCode());
+                log.warn("League {} not found {}.", leagueUuid, e.getStatusCode());
             } else {
                 log.error("Error {} while loading league.", e.getStatusCode());
             }
@@ -112,6 +109,22 @@ public class WarpScoresBackendService {
         return response.getBody();
     }
 
+    @RequiredArgsConstructor
+    private class AuthenticatedHttpEntity<Type> extends HttpEntity<Type> {
+        private final Optional<Type> body;
+
+        public HttpEntity<Type> create() {
+            AuthenticationToken authenticationToken = getAuthenticationToken();
+            HttpHeaders headers = new HttpHeaders();
+            headers.set(HttpHeaders.AUTHORIZATION,
+                    String.format("%s %s", authenticationToken.token_type, authenticationToken.access_token));
+
+            return body
+                    .map(b -> new HttpEntity<>(b, headers))
+                    .orElse(new HttpEntity<>(headers));
+        }
+    }
+
     private AuthenticationToken getAuthenticationToken() {
         RestTemplate restTemplate = new RestTemplate();
         WarpScoresProperties.Authentication authentication = warpScoresProperties.getAuthentication();
@@ -119,13 +132,70 @@ public class WarpScoresBackendService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         ParameterizedTypeReference<AuthenticationToken> authenticationTokenRef = new ParameterizedTypeReference<>() {};
-        String body = String.format(
-                "{\"client_id\":\"%s\",\"client_secret\":\"%s\",\"audience\":\"%s\",\"grant_type\":\"client_credentials\"}",
-                authentication.getClientId(), authentication.getClientSecret(), authentication.getAudience());
-        HttpEntity<String> request = new HttpEntity<>(body, headers);
+        AuthRequest authRequest = new AuthRequest();
+        authRequest.setClient_id(authentication.getClientId());
+        authRequest.setClient_secret(authentication.getClientSecret());
+        authRequest.setAudience(authentication.getAudience());
+        authRequest.setGrant_type("client_credentials");
+        HttpEntity<AuthRequest> request = new HttpEntity<>(authRequest, headers);
         ResponseEntity<AuthenticationToken> exchange = restTemplate.exchange(authentication.getIssuer(),
                 HttpMethod.POST, request, authenticationTokenRef);
         return exchange.getBody();
+    }
+
+    public List<IdWithName> lookupLeague(Optional<String> leagueName) {
+        if (leagueName.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        LookupRequest lookupRequest = new LookupRequest();
+        lookupRequest.setLeague_name(leagueName.get());
+        AuthenticatedHttpEntity<LookupRequest> authenticatedHttpEntity = new AuthenticatedHttpEntity<>(
+                Optional.of(lookupRequest));
+
+        RestTemplate restTemplate = new RestTemplate();
+        ParameterizedTypeReference<LookupResponse> lookupResponseRef = new ParameterizedTypeReference<>() {};
+        ResponseEntity<LookupResponse> lookupResponse = restTemplate.exchange(
+                String.format("%s/lookup", warpScoresProperties.getBaseUrls().getApiBackend()),
+                HttpMethod.POST,
+                authenticatedHttpEntity.create(), lookupResponseRef);
+        IdWithName[] leagues = Optional.ofNullable(lookupResponse.getBody())
+                .map(LookupResponse::getLeagues)
+                .orElse(null);
+        if (leagues == null || leagues.length == 0) {
+            return Collections.emptyList();
+        } else {
+            return List.of(leagues);
+        }
+    }
+
+    @Getter
+    @Setter
+    private static class LookupResponse {
+        private IdWithName[] leagues;
+    }
+
+    @Getter
+    @Setter
+    public static class IdWithName {
+        @JsonAlias({"_id"})
+        private String id;
+        private String name;
+    }
+
+    @Getter
+    @Setter
+    private static class LookupRequest {
+        private String league_name;
+    }
+
+    @Getter
+    @Setter
+    private static class AuthRequest {
+        private String client_id;
+        private String client_secret;
+        private String audience;
+        private String grant_type;
     }
 
     @Getter
