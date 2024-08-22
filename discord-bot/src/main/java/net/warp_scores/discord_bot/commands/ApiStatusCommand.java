@@ -37,8 +37,10 @@ public class ApiStatusCommand implements SlashCommand {
         EmbedCreateSpec.Builder builder = warpScoresDiscordMessageBuilder.builder("Cyanide API Status",
                 "Showing latest known status of Cyanide API.");
         builder.addField("Overall", toEmoji(status.isOverall()), false);
-        for (Status.Platform platform : status.getPlatforms()) {
-            builder = builder.addField(platform.getCodename(), toEmoji(platform.isOk()), true);
+        if (status.getPlatforms() != null) {
+            for (Status.Platform platform : status.getPlatforms()) {
+                builder = builder.addField(platform.getCodename(), toEmoji(platform.isOk()), true);
+            }
         }
         builder = builder.footer("Last check", "")
                 .timestamp(status.getLastCheck().toInstant());
