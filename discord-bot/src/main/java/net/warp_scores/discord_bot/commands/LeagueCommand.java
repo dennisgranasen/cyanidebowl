@@ -52,13 +52,13 @@ public class LeagueCommand implements SlashCommand {
                 .orElse(false);
 
         if (leagueUuidValue.isEmpty()) {
-            return showCurrentRegistrations(event);
+            return event.deferReply().then(showCurrentRegistrations(event));
         }
 
         if (unregister) {
-            return unregister(event, leagueUuidValue);
+            return event.deferReply().then(unregister(event, leagueUuidValue));
         } else {
-            return register(event, leagueUuidValue, spoiler);
+            return event.deferReply().then(register(event, leagueUuidValue, spoiler));
         }
     }
 
@@ -92,14 +92,14 @@ public class LeagueCommand implements SlashCommand {
                             channelLeagueRegistration.getLastPublishedMatchDate()) : "n/a", true);
         }
 
-        return event.reply()
+        return event.createFollowup()
                 .withEphemeral(true)
                 .withEmbeds(builder.build())
                 .doOnError(
                         error -> log.error(
                                 "Error during getting information about league registrations (channelId: {}) message ({}).",
                                 channelId, error.getMessage(), error.getCause()))
-                .onErrorResume(error -> event.reply(":warning: Something went wrong... :cry:"))
+                .onErrorResume(error -> event.createFollowup(":warning: Something went wrong... :cry:"))
                 .then();
     }
 
@@ -111,7 +111,7 @@ public class LeagueCommand implements SlashCommand {
                 .orElse(false);
 
         if (removed) {
-            return event.reply()
+            return event.createFollowup()
                     .withEphemeral(true)
                     .withEmbeds(warpScoresDiscordMessageBuilder.builder("Register league",
                             String.format(":wastebasket: Successfully unregistered league from this channel."),
@@ -120,10 +120,10 @@ public class LeagueCommand implements SlashCommand {
                             error -> log.error(
                                     "Error during league registration (leagueUuid: {}, channelId: {}) message ({}).",
                                     leagueUuid, channelId, error.getMessage(), error.getCause()))
-                    .onErrorResume(error -> event.reply(":warning: Something went wrong... :cry:"))
+                    .onErrorResume(error -> event.createFollowup(":warning: Something went wrong... :cry:"))
                     .then();
         } else {
-            return event.reply()
+            return event.createFollowup()
                     .withEphemeral(true)
                     .withEmbeds(warpScoresDiscordMessageBuilder.builder("Register league",
                             String.format(":warning: Unable to unregister league from this channel."),
@@ -132,7 +132,7 @@ public class LeagueCommand implements SlashCommand {
                             error -> log.error(
                                     "Error during league unregistration (leagueUuid: {}, channelId: {}) message ({}).",
                                     leagueUuid, channelId, error.getMessage(), error.getCause()))
-                    .onErrorResume(error -> event.reply(":warning: Something went wrong... :cry:"))
+                    .onErrorResume(error -> event.createFollowup(":warning: Something went wrong... :cry:"))
                     .then();
         }
     }
@@ -151,7 +151,7 @@ public class LeagueCommand implements SlashCommand {
                         channelId, l, spoiler));
         String leagueName = league.map(League::getName).orElse("n/a");
         Optional<String> leagueLogo = league.map(League::getLogo);
-        return event.reply()
+        return event.createFollowup()
                 .withEphemeral(true)
                 .withEmbeds(warpScoresDiscordMessageBuilder.builder("Register league",
                         channelLeagueRegistration.map(clr -> String.format(
@@ -165,7 +165,7 @@ public class LeagueCommand implements SlashCommand {
                         error -> log.error(
                                 "Error during league registration (leagueUuid: {}, channelId: {}) message ({}).",
                                 leagueUuid, channelId, error.getMessage(), error.getCause()))
-                .onErrorResume(error -> event.reply(":warning: Something went wrong... :cry:"))
+                .onErrorResume(error -> event.createFollowup(":warning: Something went wrong... :cry:"))
                 .then();
     }
 
