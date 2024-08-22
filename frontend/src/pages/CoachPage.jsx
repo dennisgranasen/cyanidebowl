@@ -8,6 +8,9 @@ import HeaderCard from '../components/common/HeaderCard';
 import WarpScoresApiService from '../WarpScoresApiService';
 import config from '../config';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
+import ImageUrls from "../ImageUrls";
+
+const { isProduction } = config;
 
 function PermissionIcon({ granted }) {
   const color = granted ? 'green' : 'red';
@@ -17,15 +20,14 @@ function PermissionIcon({ granted }) {
 
 function CoachPage() {
   const { user, isAuthenticated, isLoading, getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0();
-  const [error, setError] = useState();
-  const [loading, setLoading] = useState();
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [userPermissions, setUserPermissions] = useState({
     readCurrentUser: false,
     writeLeagueAdmin: false,
     writeSiteAdmin: false,
     writeRegisterLeague: false
   });
-  const [userName, setUserName] = useState();
 
   useEffect(() => {
     setLoading(true);
@@ -37,15 +39,9 @@ function CoachPage() {
           .then(setUserPermissions)
           .finally(() => setLoading(false));
     };
-    const fetchUser = () => {
-      WarpScoresApiService.user(getAccessTokenSilently, getAccessTokenWithPopup)
-          .catch((reason) => {
-            setError({ type: 'error', message: reason.toLocaleString(config.locale) });
-          })
-          .then(setUserName);
-    };
-    fetchUserPermissions();
-    fetchUser();
+    if (!isProduction || (!isLoading && isAuthenticated)) {
+      fetchUserPermissions();
+    }
   }, [isLoading, isAuthenticated]);
 
   return (
@@ -55,10 +51,10 @@ function CoachPage() {
       </Box>
       <LoadingOrErrorWrapper loading={loading} error={error}>
         <HeaderCard
-          mainImageSrc={user?.picture}
+          mainImageSrc={isProduction ? (!isLoading && user) && user.picture : ImageUrls.warpscoresLogoPng('medium')}
           mainImageBorderRadius="full"
           heading="Coach-Page"
-          subHeading={user && `Authenticated as ${user?.name}`}
+          subHeading={isProduction ? (!isLoading && user) && `Authenticated as ${user.name}` : 'No real User in dev environment.'}
         />
         <Box>
           <PermissionIcon granted={userPermissions?.readCurrentUser} /> User read permissions
