@@ -155,13 +155,23 @@ public class WarpScoresBackendService {
 
         RestTemplate restTemplate = new RestTemplate();
         ParameterizedTypeReference<LookupResponse> lookupResponseRef = new ParameterizedTypeReference<>() {};
-        ResponseEntity<LookupResponse> lookupResponse = restTemplate.exchange(
-                String.format("%s/lookup", warpScoresProperties.getBaseUrls().getApiBackend()),
-                HttpMethod.POST,
-                authenticatedHttpEntity.create(), lookupResponseRef);
-        IdWithName[] leagues = Optional.ofNullable(lookupResponse.getBody())
-                .map(LookupResponse::getLeagues)
-                .orElse(null);
+
+        IdWithName[] leagues = null;
+        try {
+            ResponseEntity<LookupResponse> lookupResponse = restTemplate.exchange(
+                    String.format("%s/lookup", warpScoresProperties.getBaseUrls().getApiBackend()),
+                    HttpMethod.POST,
+                    authenticatedHttpEntity.create(), lookupResponseRef);
+            leagues = Optional.ofNullable(lookupResponse.getBody())
+                    .map(LookupResponse::getLeagues)
+                    .orElse(null);
+        }  catch (HttpClientErrorException e) {
+            if (404 == e.getStatusCode().value()) {
+                log.warn("Lookup for {} did return {}.", leagueName, e.getStatusCode());
+            } else {
+                log.error("Error {} while lookup.", e.getStatusCode());
+            }
+        }
         if (leagues == null || leagues.length == 0) {
             return Collections.emptyList();
         } else {

@@ -30,7 +30,7 @@ public class LookupCommand implements SlashCommand {
 
     @Override
     public Mono<Void> handle(ChatInputInteractionEvent event) {
-        Optional<String> leagueName = event.getOption("leagueName")
+        Optional<String> leagueName = event.getOption("leaguename")
                 .flatMap(ApplicationCommandInteractionOption::getValue)
                 .map(ApplicationCommandInteractionOptionValue::asString);
 
@@ -40,6 +40,7 @@ public class LookupCommand implements SlashCommand {
     private Mono<Void> lookupLeague(ChatInputInteractionEvent event, Optional<String> leagueName) {
         return event
                 .createFollowup()
+                .withEphemeral(true)
                 .withEmbeds(createEmbedCreateSpec(leagueName))
                 .doOnError(error -> log.error("Error during looking up league ({}).", error.getMessage(),
                         error.getCause()))
