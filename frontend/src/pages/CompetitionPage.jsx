@@ -15,6 +15,7 @@ import RoundRobinCompetition from '../components/competition/RoundRobinCompetiti
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import KnockoutCompetition from '../components/competition/KnockoutCompetition';
 import config from '../config';
+import logger from "../util/Logger";
 
 function isKnockout(competition) {
     return competition?.format.toLowerCase() === 'knockout';
@@ -31,6 +32,11 @@ function CompetitionPage() {
     const [error, setError] = useState(null);
 
     useEffect(() => {
+        logger.debug("++++++ Ranks loading: %s, contestsLoading: %s, competitionLoading: %s, ", ranksLoading, contestsLoading, competitionLoading);
+    }, [ranksLoading, contestsLoading, competitionLoading]);
+
+
+    useEffect(() => {
         const fetchCompetition = () => {
             setCompetitionLoading(true);
             WarpScoresApiService.competition(competitionUuid)
@@ -38,7 +44,7 @@ function CompetitionPage() {
                     setCompetition(data);
                 })
                 .catch((reason) => setError({type: 'error', message: reason.toLocaleString(config.locale)}))
-                .finally(setCompetitionLoading(false));
+                .finally(() => setCompetitionLoading(false));
         };
 
         fetchCompetition();
@@ -53,7 +59,7 @@ function CompetitionPage() {
                     setContests(data);
                 })
                 .catch((reason) => setError({type: 'error', message: reason.toLocaleString(config.locale)}))
-                .finally(setContestsLoading(false));
+                .finally(() => setContestsLoading(false));
         };
         fetchContests();
     }, [competition]);
@@ -67,7 +73,7 @@ function CompetitionPage() {
                     setRanks(data);
                 })
                 .catch((reason) => setError({type: 'error', message: reason.toLocaleString(config.locale)}))
-                .finally(setRanksLoading(false));
+                .finally(() => setRanksLoading(false));
         };
         if (competition) {
             fetchRanks();

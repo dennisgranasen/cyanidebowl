@@ -4,11 +4,14 @@ const backendUrl = isProduction ? 'https://warp-scores.net/api' : 'http://localh
 const auth0ClientId = 'vds4UOVhMmdut8kNXOQ0XJ1s5st95vdu';
 const auth0Domain = 'warp-scores.eu.auth0.com';
 const auth0Audience = 'warp-scores-backend';
+const devDelay = isProduction ? 0 : 1000;
+
 
 const config = {
   MAX_AGE_FOR_STATUS_IN_MILLIS,
   backendUrl,
   isProduction,
+  devDelay,
   auth0ClientId,
   auth0Domain,
   auth0Audience,
