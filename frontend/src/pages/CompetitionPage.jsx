@@ -32,11 +32,6 @@ function CompetitionPage() {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        logger.debug("++++++ Ranks loading: %s, contestsLoading: %s, competitionLoading: %s, ", ranksLoading, contestsLoading, competitionLoading);
-    }, [ranksLoading, contestsLoading, competitionLoading]);
-
-
-    useEffect(() => {
         const fetchCompetition = () => {
             setCompetitionLoading(true);
             WarpScoresApiService.competition(competitionUuid)

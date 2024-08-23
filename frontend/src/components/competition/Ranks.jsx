@@ -69,10 +69,6 @@ function TableColumns() {
 }
 
 function Ranks({ranks, loading}) {
-    useEffect(() => {
-        logger.debug("Ranks loading: %s", loading);
-    }, [loading]);
-
     return (
         <LoadingOrErrorWrapper loading={loading}>
             <TableContainer>
