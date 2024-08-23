@@ -301,7 +301,7 @@ public class FetchDataScheduler {
         Optional<Date> lastMatchDateReported = ofNullable(league.getDateLastMatch());
         log.info(
                 "Checking league {} for having matches reported after last known date (lastMatchDateKnown: {}, lastMatchDateReported: {}).",
-                league.getUuid(), lastMatchDateKnown, lastMatchDateReported);
+                league, lastMatchDateKnown, lastMatchDateReported);
         return lastMatchDateReported.isPresent() && (lastMatchDateKnown.isEmpty() || lastMatchDateKnown.get()
                 .before(lastMatchDateReported.get()));
     }

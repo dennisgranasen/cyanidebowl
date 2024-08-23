@@ -131,9 +131,14 @@ function Contests({ contests, contestsLoading, competition, competitionLoading }
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
   const [tabData, setTabData] = useState([]);
   const [activatedTab, setActivatedTab] = useState();
+  const [loading, setLoading] = useState(contestsLoading || competitionLoading);
   const handleTabsChange = (index) => {
     setActivatedTab(index);
   };
+
+  useEffect(() => {
+    setLoading(contestsLoading || competitionLoading);
+  }, [contestsLoading, competitionLoading]);
 
   useEffect(() => {
     if (contests) {
@@ -148,12 +153,8 @@ function Contests({ contests, contestsLoading, competition, competitionLoading }
     }
   }, [competitionLoading, competition]);
 
-  useEffect(() => {
-    logger.debug('Activated tab: %s, Current round: %s', activatedTab, competition?.currentRound);
-  }, [activatedTab]);
-
   return (
-    <LoadingOrErrorWrapper loading={contestsLoading || competitionLoading}>
+    <LoadingOrErrorWrapper loading={loading}>
       <Tabs isFitted align="center" index={activatedTab} onChange={handleTabsChange}>
         <TabList>
           {tabData.map((tab) => (

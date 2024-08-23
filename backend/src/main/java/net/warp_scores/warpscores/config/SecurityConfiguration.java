@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
@@ -36,6 +37,7 @@ public class SecurityConfiguration {
                         .requestMatchers(GET, "/matches/**").permitAll()
                         .requestMatchers(GET, "/ranks/**").permitAll()
                         .requestMatchers(GET, "/teams/**").permitAll()
+                        // user endpoint
                         .requestMatchers(GET, "/userPermissions").permitAll()
                         // endpoints needing authentication
                         .requestMatchers(POST, "/circuits/**").authenticated()
