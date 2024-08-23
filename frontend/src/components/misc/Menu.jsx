@@ -149,7 +149,7 @@ function Menu() {
                                             Statistics
                                         </Link>
                                     </Box>)}
-                                {isProduction && !isLoading && (
+                                {isProduction && authenticationReady && (
                                     <Box>
                                         {!isAuthenticated ? (
                                             <Link variant="menu" onClick={() => loginWithPopup()}>

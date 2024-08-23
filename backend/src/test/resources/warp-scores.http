@@ -3,12 +3,14 @@ POST https://warp-scores.eu.auth0.com/oauth/token
 Content-Type: application/json
 
 {
-  "client_id": "",
-  "client_secret": "",
+  "client_id": "{{clientId}}",
+  "client_secret": "{{clientSecret}}",
   "audience": "warp-scores-backend",
   "grant_type":"client_credentials"
 }
-
+> {%
+    client.global.set("auth_token", response.body.access_token);
+%}
 
 
 ### Status
@@ -49,10 +51,12 @@ Content-Type: application/json
 
 ### Create league collection
 POST {{backendBaseUrl}}/leagueCollection/94dd6ae4-83fa-11ee-b910-02000090a64f
-Authorization: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Ii1wSVpiblFvNGF6TXU4Y1VjaU9zQSJ9.eyJpc3MiOiJodHRwczovL3dhcnAtc2NvcmVzLmV1LmF1dGgwLmNvbS8iLCJzdWIiOiJ2Q2NBQnkwQm5lcEc1bGpxYnBnM2gwbGN1MVR4S3FLcUBjbGllbnRzIiwiYXVkIjoid2FycC1zY29yZXMtYmFja2VuZCIsImlhdCI6MTcyNDI3NTEzMCwiZXhwIjoxNzI0MzYxNTMwLCJzY29wZSI6IndyaXRlOnJlZ2lzdGVyX2xlYWd1ZSIsImd0eSI6ImNsaWVudC1jcmVkZW50aWFscyIsImF6cCI6InZDY0FCeTBCbmVwRzVsanFicGczaDBsY3UxVHhLcUtxIiwicGVybWlzc2lvbnMiOlsid3JpdGU6cmVnaXN0ZXJfbGVhZ3VlIl19.JpP1Ii_FtrqBSZbYpUjmBAUfxgd1oAU2GijqePkylIyo8dVi51_5GiEofTpfSeaFmBsR3ergu_a0kGQ_6Aifc-CTWN57TcxlL0SS4yobQbgW1Cb5hmnUSLI7yE3AGhSNESSXOl1ZME4vqAiLCup_PWKCIdYouhNK98XE9yO_BFXh3aRXD7kQ68LTkwXLV71J5sAx8LoL1KxJmtQh7IIdbMTO1pzeG-N2uv5ch9gaWMiKpZFwZtDBDHd5-Uj9xMpTJ1soT5q4xECVLcAXmSb3_1pEi-Z6XrpP37OMhw1m-Tl1Njmb52JM9eTjVxcoaPb7Br9yAty7La853j0hoW3btQ"
+Authorization: Bearer {{auth_token}}
 
 ### Create league collection
 GET {{backendBaseUrl}}/userPermissions
-Authorization: Bearer xxx
+Authorization: Bearer {{auth_token}}
 
 
+### Create league collection
+GET {{backendBaseUrl}}/userPermissions

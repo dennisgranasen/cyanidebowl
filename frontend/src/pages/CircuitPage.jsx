@@ -113,7 +113,7 @@ function CircuitPage() {
         setCircuit(res);
       })
       .catch((reason) => setError({ type: 'error', message: reason.toLocaleString(config.locale) }))
-      .finally(setLoading(false));
+      .finally(() => setLoading(false));
   };
 
   const onAddLegClicked = (values, actions) => {

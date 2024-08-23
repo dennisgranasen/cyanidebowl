@@ -22,11 +22,11 @@ export function useAuth0WithUserPermissions() {
     useEffect(() => {
         const fetchUserPermissions = () => {
             setPermissionsLoading(true);
-            WarpScoresApiService.userPermissions(getAccessTokenSilently, getAccessTokenWithPopup)
+            WarpScoresApiService.userPermissions(getAccessTokenSilently, getAccessTokenWithPopup, !isLoading && isAuthenticated)
                 .catch((reason) => {
                     logger.error("Unable to get permissions from backend.", reason);
                 })
-                .finally(setPermissionsLoading(false))
+                .finally(() => setPermissionsLoading(false))
                 .then(setUserPermissions);
         };
         if (checkPermissions) {
@@ -35,8 +35,8 @@ export function useAuth0WithUserPermissions() {
     }, [checkPermissions])
 
     useEffect(() => {
-        setCheckPermissions(!isProduction || (!isLoading && isAuthenticated));
-    }, [isLoading, isAuthenticated]);
+        setCheckPermissions(!isProduction || !isLoading);
+    }, [isLoading]);
 
     useEffect(() => {
         setAuthenticationReady(!isLoading && !permissionsLoading);

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,6 +27,9 @@ public class UserController {
     }
 
     private UserPermissions getUserPermissionsFor(JwtAuthenticationToken principal) {
+        log.info("Got user {}...",
+                Optional.ofNullable(principal).map(JwtAuthenticationToken::getName).orElse("<anonymous>"));
+
         if (principal == null) {
             List<String> activeProfiles = List.of(environment.getActiveProfiles());
             if (activeProfiles.contains("dev") && !activeProfiles.contains("prod")) {
