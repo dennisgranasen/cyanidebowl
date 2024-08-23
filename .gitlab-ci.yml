@@ -41,6 +41,12 @@ maven-test:
 maven-package:
   stage: package
   image: registry.hub.docker.com/library/maven:3.8-openjdk-17
+
+  services:
+  - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_DRIVER: overlay2
   only:
     - /^dev$/
   script: "mvn -DskipTests=true install"
@@ -50,7 +56,7 @@ maven-deploy:
   image: registry.hub.docker.com/library/maven:3.8-openjdk-17
   only:
     - /^dev$/
-  script: "mvn -DskipTests=true deploy -s ci_settings.xml"
+  script: "mvn -DskipTests=true -Ddockerfile.skip deploy -s ci_settings.xml"
 
 maven-release:
   stage: release
@@ -70,9 +76,10 @@ maven-release:
     - git checkout -B "${releaseBranchName}"
   script:
     - ./updateChangelog.sh "${nextReleaseVersion}"
-    - git commit -a -m "Updated changelog for release ${nextReleaseVersion} (${CI_COMMIT_SHORT_SHA})"
+    - mvn versions:set -DnewVersion="${nextReleaseVersion}"
+    - git commit -a -m "Updated changelog and version for release ${nextReleaseVersion} (${CI_COMMIT_SHORT_SHA})"
     - git push --set-upstream origin "${releaseBranchName}"
-    - mvn -DskipTests=true release:prepare release:perform --batch-mode -s ci_settings.xml -DpushChanges=false
+    - mvn -DskipTests=true -Ddockerfile.skip deploy -s ci_settings.xml
     - git commit -a -m "Performed release ${nextReleaseVersion} (${CI_COMMIT_SHORT_SHA})"
     - git push origin "${releaseBranchName}"
 #    - git checkout dev
