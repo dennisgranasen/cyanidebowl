@@ -96,6 +96,8 @@ function Progresses({
             );
         case 'Knockout':
             return `${currentRound} of ${totalRounds}`;
+        case 'Ladder':
+            return `${playedMatches || 0} played match${playedMatches !== 1 ? 'es' : ''}`;
         default:
             return <QuestionIcon/>;
     }
