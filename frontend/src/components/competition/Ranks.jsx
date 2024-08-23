@@ -1,8 +1,9 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {Center, Table, TableContainer, Tbody, Tfoot, Th, Thead, Tr, useBreakpointValue,} from '@chakra-ui/react';
 import Rank from './Rank';
 import config from '../../config';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
+import logger from "../../util/Logger";
 
 const {smallScreenBreakpointValues} = config;
 
@@ -68,6 +69,10 @@ function TableColumns() {
 }
 
 function Ranks({ranks, loading}) {
+    useEffect(() => {
+        logger.debug("Ranks loading: %s", loading);
+    }, [loading]);
+
     return (
         <LoadingOrErrorWrapper loading={loading}>
             <TableContainer>

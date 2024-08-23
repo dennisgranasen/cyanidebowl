@@ -41,10 +41,10 @@ function CoachPage() {
             </Box>
             <LoadingOrErrorWrapper loading={!authenticationReady}>
                 <HeaderCard
-                    mainImageSrc={isProduction ? (!isLoading && user) && user.picture : ImageUrls.warpscoresLogoPng('medium')}
+                    mainImageSrc={isProduction ? (authenticationReady && user) && user.picture : ImageUrls.warpscoresLogoPng('medium')}
                     mainImageBorderRadius="full"
                     heading="Coach-Page"
-                    subHeading={isProduction ? (!isLoading && user) && `Authenticated as ${user.name}` : 'No real User in dev environment.'}
+                    subHeading={isProduction ? (authenticationReady && user) && `Authenticated as ${user.name}` : 'No real User in dev environment.'}
                 />
                 <Box>
                     <PermissionIcon granted={userPermissions?.readCurrentUser}/> User read permissions
