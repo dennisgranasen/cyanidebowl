@@ -16,7 +16,7 @@ We are collecting your data for several reasons:
 - To better understand your needs.
 - To improve our services and products.
 - To customize our site according to your online behavior and personal preferences.
- 
+
 ## Safeguarding and Securing the Data
 warp-scores ist committed to securing your data and keeping it confidential. We have done all in our power to prevent data theft, unauthorized access, and disclosure by implementing the latest technologies and software, which help us safeguard all the information we collect online.
 
