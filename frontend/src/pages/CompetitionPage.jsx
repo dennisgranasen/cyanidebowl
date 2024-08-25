@@ -11,11 +11,10 @@ import InfoArea from '../components/common/InfoArea';
 import InfoItem from '../components/common/InfoItem';
 import HeaderCard from '../components/common/HeaderCard';
 import formatter from '../util/Formatter';
-import RoundRobinCompetition from '../components/competition/RoundRobinCompetition';
+import NoneKnockoutCompetition from '../components/competition/NoneKnockoutCompetition';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import KnockoutCompetition from '../components/competition/KnockoutCompetition';
 import config from '../config';
-import logger from "../util/Logger";
 
 function isKnockout(competition) {
     return competition?.format.toLowerCase() === 'knockout';
@@ -134,7 +133,7 @@ function CompetitionPage() {
                         competitionLoading={competitionLoading}
                     />
                 ) : (
-                    <RoundRobinCompetition
+                    <NoneKnockoutCompetition
                         ranks={ranks}
                         ranksLoading={competitionLoading || ranksLoading}
                         contests={contests}
