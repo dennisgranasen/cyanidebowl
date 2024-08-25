@@ -31,7 +31,7 @@ function toTabData(contests, isSmallScreen) {
     const robin = groupedContests ? getRobinFrom(groupedContests.get(1)) : null;
     groupedContests?.forEach((contestsForGroup, key) => {
         contestsForGroup.sort((contestA, contestB) => {
-            let comparison = 0;
+            let comparison;
             if (robin) {
                 comparison =
                     robin === contestA.opponents[0].coachName
@@ -62,7 +62,7 @@ function toTabData(contests, isSmallScreen) {
 function TabbedContests({contests, contestsLoading, competition, competitionLoading}) {
     const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
     const [tabData, setTabData] = useState([]);
-    const [activatedTab, setActivatedTab] = useState();
+    const [activatedTab, setActivatedTab] = useState(0);
     const [loading, setLoading] = useState(contestsLoading || competitionLoading);
     const handleTabsChange = (index) => {
         setActivatedTab(index);
