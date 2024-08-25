@@ -60,8 +60,7 @@ maven-deploy-snapshot:
     DOCKER_DRIVER: overlay2
   only:
     - /^dev$/
-  when:
-    - manual
+  when: manual
   before_script:
     - version=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec
   script:
@@ -95,8 +94,7 @@ maven-deploy:
     DOCKER_DRIVER: overlay2
   only:
     - /^main$/
-  when:
-    - manual
+  when: manual
   before_script:
     - version=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec
   script:
