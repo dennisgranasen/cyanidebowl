@@ -45,7 +45,7 @@ You have three possible use cases with this command:
 Register a league or update registration options.
 
 Options:
-- `uuid [UUID]`: The UUID of the league. You can copy that from URL in warp-scores.
+- `uuid [UUID]`: The UUID of the league. You can copy that from URL previously issued `/lookup` command (see above).
 - `spoiler [true]`: If `true` the results in messages for new matches will be hidden as spoiler.
 
 #### `/league uuid [UUID] unregister true`
