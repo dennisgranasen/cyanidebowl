@@ -15,12 +15,23 @@ import NoneKnockoutCompetition from '../components/competition/NoneKnockoutCompe
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import KnockoutCompetition from '../components/competition/KnockoutCompetition';
 import config from '../config';
+import {useAuth0WithUserPermissions} from "../hooks/useAuth0WithUserPermissions";
+import NafExportButton from "../components/misc/NafExportButton";
 
 function isKnockout(competition) {
     return competition?.format.toLowerCase() === 'knockout';
 }
 
+
 function CompetitionPage() {
+    const {
+        authenticationReady,
+        isAuthenticated,
+        checkPermissions,
+        userPermissions,
+        getAccessTokenSilently,
+        getAccessTokenWithPopup
+    } = useAuth0WithUserPermissions();
     const {competitionUuid} = useParams();
     const [competition, setCompetition] = useState(null);
     const [ranks, setRanks] = useState([]);
@@ -120,6 +131,19 @@ function CompetitionPage() {
                                 info={`Turn: ${formatter.formatAsNumber(competition.turnDuration / 60)}m`}
                                 additionalInfo={`Bonus: ${formatter.formatAsNumber(competition.timeBonusDuration / 60)}m`}
                             />
+                            {
+                                'Finished' === competition.status && (!checkPermissions || (authenticationReady && userPermissions.writeLeagueAdmin)) && (
+                                    <InfoItem
+                                        key="NafDataExport"
+                                        label="Export"
+                                        info={<NafExportButton authenticationReady={authenticationReady}
+                                                               checkPermissions={checkPermissions}
+                                                               isAuthenticated={isAuthenticated}
+                                                               getAccessTokenSilently={getAccessTokenSilently}
+                                                               getAccessTokenWithPopup={getAccessTokenWithPopup}
+                                                               competitionUuid={competition.uuid}/>}/>
+                                )
+                            }
                         </InfoArea>
                     </HeaderCard>
                 )}

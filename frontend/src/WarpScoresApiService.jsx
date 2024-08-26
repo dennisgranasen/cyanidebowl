@@ -22,6 +22,16 @@ const returnData = async (result) => {
     return result?.data !== null ? result.data : [];
 };
 
+const offerDownloadData = (result, filename, contentType) => {
+    if ( !result )
+        return;
+    const link = document.createElement('a');
+    const blob =  new Blob([result.data], {'type': contentType});
+    link.href = window.URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+}
+
 const getToken = async (getAccessTokenSilently, getAccessTokenWithPopup) => {
     let token;
     try {
@@ -53,9 +63,9 @@ const postDataWithAuthentication = async (endpoint, data, getAccessTokenSilently
 
 const getDataWithAuthentication = async (endpoint, getAccessTokenSilently, getAccessTokenWithPopup, requestToken) => {
     let authHeaders;
-        if ( requestToken ) {
-            authHeaders = await getAuthHeaders(getAccessTokenSilently, getAccessTokenWithPopup);
-        }
+    if ( requestToken ) {
+        authHeaders = await getAuthHeaders(getAccessTokenSilently, getAccessTokenWithPopup);
+    }
     const response = await axios(endpoint, authHeaders);
     return response;
 };
@@ -129,4 +139,6 @@ export default {
     // user
     userPermissions: async (getAccessTokenSilently, getAccessTokenWithPopup, requestToken) =>
         getDataWithAuthentication("/userPermissions", getAccessTokenSilently, getAccessTokenWithPopup, requestToken).then(returnData).catch(handleError),
+    exportNafXml: async (competitionUuid, getAccessTokenSilently, getAccessTokenWithPopup) =>
+        getDataWithAuthentication(`/competitions/${competitionUuid}/exportNafData`, getAccessTokenSilently, getAccessTokenWithPopup).then((result) => offerDownloadData(result, `${competitionUuid}-nafReport.xml`, 'application/xml')).catch(handleError),
 };

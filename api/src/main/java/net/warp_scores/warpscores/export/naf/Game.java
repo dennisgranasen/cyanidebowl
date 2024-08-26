@@ -1,5 +1,6 @@
 package net.warp_scores.warpscores.export.naf;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import lombok.Getter;
@@ -20,6 +21,7 @@ import java.util.List;
 @Getter
 @Setter
 public class Game {
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
     private Date timeStamp;
 
     @JacksonXmlElementWrapper(useWrapping = false)

@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.export.naf;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,7 +11,7 @@ import java.util.List;
 /*
 <![CDATA[
     <?xml version="1.0" encoding="UTF-8"?>
-    <nafReport xmlns:blo="http://www.bloodbowl.net">
+    <nafReport>
         <organiser>me</organiser>
         <coaches>
             <coach>...</coach>
@@ -26,8 +27,11 @@ import java.util.List;
 */
 @Getter
 @Setter
+@JacksonXmlRootElement(localName = "nafReport")
 public class NafReport {
-    private String organizer;
+    private String organiser;
+    @JacksonXmlElementWrapper(localName = "coaches")
+    @JacksonXmlProperty(localName = "coach")
     private List<Coach> coaches;
     @JacksonXmlElementWrapper(useWrapping = false)
     @JacksonXmlProperty(localName = "game")
