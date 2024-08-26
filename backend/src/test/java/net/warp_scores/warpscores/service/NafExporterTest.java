@@ -7,17 +7,12 @@ import net.warp_scores.warpscores.model.Team;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -65,18 +60,16 @@ public class NafExporterTest {
 
         whenExported();
 
-        thenAssertExportToBe("/expectedNafExport.xml");
+        thenAssertExportToBe(
+                "<?xml version='1.0' encoding='UTF-8'?><nafReport><organiser>warp-scores.net//Test</organiser><coaches><coach><name>HumanCoach</name><number>42</number><team>Human</team></coach><coach><name>OrcCoach</name><number>23</number><team>Orc</team></coach></coaches><game><timeStamp>2024-02-26 14:00</timeStamp><playerRecord><name>HumanCoach</name><number>42</number><team>Human</team><teamRating>100</teamRating><touchDowns>2</touchDowns><badlyHurt>1</badlyHurt></playerRecord><playerRecord><name>OrcCoach</name><number>23</number><team>Orc</team><teamRating>100</teamRating><touchDowns>1</touchDowns><badlyHurt>3</badlyHurt></playerRecord></game></nafReport>");
     }
 
-    private void whenExported() throws IOException {
+    private void whenExported() {
         nafReport = nafExporter.export(contests, "Test");
     }
 
-    private void thenAssertExportToBe(String nafReportFile) {
+    private void thenAssertExportToBe(String expectedNafReport) {
         try {
-            String expectedNafReport = Files.readString(Paths.get(this.getClass().getResource(nafReportFile).toURI()),
-                    Charset.defaultCharset());
-
             String nafReportAsString = nafXmlCreator.writeAsXml(this.nafReport);
 
             assertEquals(expectedNafReport.trim(), nafReportAsString.trim());

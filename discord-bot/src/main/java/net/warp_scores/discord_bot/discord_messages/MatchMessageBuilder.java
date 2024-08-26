@@ -127,7 +127,7 @@ public class MatchMessageBuilder {
         Integer scoreA = teamA.getScore();
         Integer scoreB = teamB.getScore();
 
-        if (contest.getMatch() != null) {
+        if (contest.getMatch() != null && contest.getMatch().getTeams() != null) {
             teamA = contest.getMatch().getTeams().get(0);
             teamB = contest.getMatch().getTeams().get(1);
         }
