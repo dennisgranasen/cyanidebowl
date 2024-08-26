@@ -3,10 +3,14 @@ package net.warp_scores.warpscores.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.domain.TeamDomainService;
+import net.warp_scores.warpscores.export.naf.NafReport;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Team;
 import net.warp_scores.warpscores.service.CompetitionService;
+import net.warp_scores.warpscores.service.NafExporter;
+import net.warp_scores.warpscores.service.NafXmlCreator;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,6 +28,8 @@ public class CompetitionController {
     private final CompetitionService competitionService;
 
     private final TeamDomainService teamDomainService;
+    private final NafExporter nafExporter;
+    private final NafXmlCreator nafXmlCreator;
 
     @GetMapping("/competitions/league/{leagueId}")
     public ResponseEntity<List<Competition>> getActiveCompetitionsForLeague(@PathVariable(name = "leagueId") UUID leagueId) {
@@ -48,6 +54,22 @@ public class CompetitionController {
             return competition
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
+        } catch (Exception ex) {
+            log.error("Unable to get competition {}", competitionId, ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/competitions/{competitionId}/exportNafData")
+    public ResponseEntity<byte[]> exportNafData(@PathVariable(name = "competitionId") UUID competitionId,
+            JwtAuthenticationToken principal) {
+        try {
+            Optional<NafReport> nafReport = nafExporter.export(competitionId,
+                    Optional.ofNullable(principal).map(JwtAuthenticationToken::getName).orElse("unknown"));
+            Optional<String> xml = nafReport.map(nafXmlCreator::writeAsXml);
+            return xml
+                    .map(data -> ResponseEntity.ok(data.getBytes()))
+                    .orElse(ResponseEntity.noContent().build());
         } catch (Exception ex) {
             log.error("Unable to get competition {}", competitionId, ex);
             return ResponseEntity.internalServerError().build();
