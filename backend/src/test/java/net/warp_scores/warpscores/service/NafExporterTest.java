@@ -4,10 +4,14 @@ import net.warp_scores.warpscores.export.naf.NafReport;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.Race;
 import net.warp_scores.warpscores.model.Team;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
@@ -23,6 +27,7 @@ import java.util.List;
 import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.eq;
 
 @ExtendWith(MockitoExtension.class)
 public class NafExporterTest {
@@ -36,10 +41,23 @@ public class NafExporterTest {
     @Mock
     private ContestService contestService;
 
+    @Mock
+    private NafCoachLookupClient nafCoachLookupClient;
+
     private NafXmlCreator nafXmlCreator = new NafXmlCreator();
 
     @InjectMocks
     private NafExporter nafExporter;
+
+    @BeforeEach
+    public void setup() throws IOException {
+        Mockito.when(nafCoachLookupClient.lookupNafCoach(eq("HumanCoach")))
+                .thenReturn(new NafCoachLookupClient.NafCoach(
+                        "HumanCoach", 42, null));
+        Mockito.when(nafCoachLookupClient.lookupNafCoach(eq("OrcCoach")))
+                .thenReturn(new NafCoachLookupClient.NafCoach(
+                        "OrcCoach", 23, null));
+    }
 
     @Test
     public void testExportContests() throws IOException {

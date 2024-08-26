@@ -14,6 +14,7 @@ import net.warp_scores.warpscores.model.Team;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -127,6 +128,7 @@ public class NafExporter {
         return raceNameByCoachName
                 .entrySet()
                 .stream()
+                .sorted(Comparator.comparing(e -> e.getKey().getNaf_name()))
                 .map(entry -> toCoach(entry.getKey(), entry.getValue()))
                 .toList();
     }
