@@ -8,4 +8,5 @@ import lombok.Setter;
 public class ApplicationProperties {
     private String clientOriginUrl;
     private String backendOriginUrl;
+    private String nafCoachLookupUrlTemplate;
 }

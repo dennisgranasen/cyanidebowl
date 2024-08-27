@@ -25,7 +25,7 @@ function NafExportButton({
     return <DelayedIconTooltip label={error ? error.message : 'Create NAF style report data XML file.'}
                                icon={error ? WarningIcon : null} shouldWrapChildren>
         <Button colorScheme={error ? 'red' : null}
-                onClick={() => exportNafReport(competitionUuid, getAccessTokenSilently, getAccessTokenWithPopup)}
+                onClick={() => exportNafReport(competitionUuid, getAccessTokenSilently, getAccessTokenWithPopup, !checkPermissions || (authenticationReady && isAuthenticated))}
                 isLoading={exporting}
                 loadingText={exporting && 'Exporting'}
                 isDisabled={error || exporting}>

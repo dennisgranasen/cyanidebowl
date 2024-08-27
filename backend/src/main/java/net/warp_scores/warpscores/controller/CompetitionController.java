@@ -14,10 +14,13 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.async.DeferredResult;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -30,6 +33,8 @@ public class CompetitionController {
     private final TeamDomainService teamDomainService;
     private final NafExporter nafExporter;
     private final NafXmlCreator nafXmlCreator;
+
+    private final ExecutorService nafExporterExecutor = Executors.newFixedThreadPool(5);
 
     @GetMapping("/competitions/league/{leagueId}")
     public ResponseEntity<List<Competition>> getActiveCompetitionsForLeague(@PathVariable(name = "leagueId") UUID leagueId) {
@@ -61,18 +66,23 @@ public class CompetitionController {
     }
 
     @GetMapping("/competitions/{competitionId}/exportNafData")
-    public ResponseEntity<byte[]> exportNafData(@PathVariable(name = "competitionId") UUID competitionId,
+    public DeferredResult<byte[]> exportNafData(@PathVariable(name = "competitionId") UUID competitionId,
             JwtAuthenticationToken principal) {
+        String exporterName = Optional.ofNullable(principal).map(JwtAuthenticationToken::getName).orElse("unknown");
+        DeferredResult<byte[]> output = new DeferredResult<>();
+        nafExporterExecutor.execute(() -> createNafExportData(competitionId, exporterName, output));
+        return output;
+    }
+
+    private void createNafExportData(UUID competitionId, String exporterName, DeferredResult<byte[]> output) {
         try {
-            Optional<NafReport> nafReport = nafExporter.export(competitionId,
-                    Optional.ofNullable(principal).map(JwtAuthenticationToken::getName).orElse("unknown"));
+            Optional<NafReport> nafReport = nafExporter.export(competitionId, exporterName);
             Optional<String> xml = nafReport.map(nafXmlCreator::writeAsXml);
-            return xml
-                    .map(data -> ResponseEntity.ok(data.getBytes()))
-                    .orElse(ResponseEntity.noContent().build());
+            byte[] result = xml.map(data -> data.getBytes()).orElse(null);
+            output.setResult(result);
         } catch (Exception ex) {
-            log.error("Unable to get competition {}", competitionId, ex);
-            return ResponseEntity.internalServerError().build();
+            log.error("Unable to export naf data for {}.", competitionId, ex);
+            output.setErrorResult("Error while exporting naf data.");
         }
     }
 
