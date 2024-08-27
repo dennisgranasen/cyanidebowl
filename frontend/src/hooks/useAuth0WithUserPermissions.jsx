@@ -17,6 +17,7 @@ export function useAuth0WithUserPermissions() {
     });
     const [permissionsLoading, setPermissionsLoading] = useState(true);
     const [authenticationReady, setAuthenticationReady] = useState(false);
+    const [loadUserPermissions, setLoadUserPermissions] = useState(false);
     const [checkPermissions, setCheckPermissions] = useState(false);
 
     useEffect(() => {
@@ -29,10 +30,14 @@ export function useAuth0WithUserPermissions() {
                 .finally(() => setPermissionsLoading(false))
                 .then(setUserPermissions);
         };
-        if (checkPermissions) {
+        if (loadUserPermissions) {
             fetchUserPermissions();
         }
-    }, [checkPermissions])
+    }, [loadUserPermissions])
+
+    useEffect(() => {
+        setLoadUserPermissions(checkPermissions);
+    }, [checkPermissions]);
 
     useEffect(() => {
         setCheckPermissions(!isProduction || !isLoading);
@@ -46,6 +51,7 @@ export function useAuth0WithUserPermissions() {
         user,
         authenticationReady,
         checkPermissions,
+        loadUserPermissions,
         userPermissions,
         isAuthenticated,
         loginWithPopup,

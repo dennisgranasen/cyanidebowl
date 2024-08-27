@@ -9,13 +9,12 @@ import net.warp_scores.warpscores.export.naf.PlayerRecord;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.CompetitionStatus;
 import net.warp_scores.warpscores.model.Contest;
+import net.warp_scores.warpscores.model.NafCoach;
 import net.warp_scores.warpscores.model.Race;
 import net.warp_scores.warpscores.model.Team;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,6 +23,7 @@ import java.util.UUID;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
+import static net.warp_scores.warpscores.service.NafCoachService.BB3_AI_COACH_NAME;
 
 @Service
 @Slf4j
@@ -31,17 +31,12 @@ import static java.util.stream.Collectors.toList;
 public class NafExporter {
     public static final int DEFAULT_TEAM_RATING = 100;
 
-    public static final String AI_COACH_NAME = "ARTIFICIAL_INTELLIGENCE";
-
-    public static final NafCoachLookupClient.NafCoach NONE_NAF_COACH = new NafCoachLookupClient.NafCoach("Non-NAF", 9,
-            null);
     public static final String MULTIPLE_RACES = "Multiple Races";
 
     private final ContestService contestService;
     private final CompetitionService competitionService;
-    private final NafCoachLookupClient nafCoachLookupClient;
+    private final NafCoachService nafCoachService;
 
-    private final Map<String, NafCoachLookupClient.NafCoach> nafCoachNameCache = new HashMap<>();
 
     public Optional<NafReport> export(UUID competitionUuid, String exporterName) {
         Optional<Competition> competition = competitionService.loadCompetition(competitionUuid);
@@ -81,7 +76,7 @@ public class NafExporter {
                 .getOpponents()
                 .stream()
                 .map(Team::getCoachName)
-                .filter(AI_COACH_NAME::equals)
+                .filter(BB3_AI_COACH_NAME::equals)
                 .findFirst()
                 .isEmpty();
     }
@@ -102,9 +97,9 @@ public class NafExporter {
     private PlayerRecord toPlayerRecord(Team team) {
         PlayerRecord playerRecord = new PlayerRecord();
         playerRecord.setTeam(team.getRace().getNafRaceName());
-        playerRecord.setName(lookupNafName(team.getCoachName()));
+        playerRecord.setName(nafCoachService.lookupCoach(team.getCoachName()).getNafName());
         playerRecord.setTeamRating(DEFAULT_TEAM_RATING);
-        playerRecord.setNumber(lookupNafNumber(team.getCoachName()));
+        playerRecord.setNumber(nafCoachService.lookupCoach(team.getCoachName()).getNafId());
         playerRecord.setTouchDowns(team.getScore());
         playerRecord.setBadlyHurt(team.getInflictedcasualties());
         return playerRecord;
@@ -121,14 +116,14 @@ public class NafExporter {
     }
 
     private List<Coach> toCoachesFromTeams(List<Team> teams) {
-        Map<NafCoachLookupClient.NafCoach, String> raceNameByCoachName = teams.stream().collect(
-                groupingBy(team -> lookupNafCoach(team.getCoachName()),
+        Map<NafCoach, String> raceNameByCoachName = teams.stream().collect(
+                groupingBy(team -> nafCoachService.lookupCoach(team.getCoachName()),
                         collectingAndThen(toList(), this::uniqueOrMultipleRacesQualifier)));
 
         return raceNameByCoachName
                 .entrySet()
                 .stream()
-                .sorted(Comparator.comparing(e -> e.getKey().getNaf_name()))
+                .sorted(Comparator.comparing(e -> e.getKey().getNafName()))
                 .map(entry -> toCoach(entry.getKey(), entry.getValue()))
                 .toList();
     }
@@ -142,43 +137,11 @@ public class NafExporter {
         return distinctRaces.size() == 1 ? distinctRaces.get(0).getNafRaceName() : MULTIPLE_RACES;
     }
 
-    private Coach toCoach(NafCoachLookupClient.NafCoach nafCoach, String raceName) {
+    private Coach toCoach(NafCoach nafCoach, String raceName) {
         Coach coach = new Coach();
-        coach.setName(nafCoach.getNaf_name());
+        coach.setName(nafCoach.getNafName());
         coach.setTeam(raceName);
-        coach.setNumber(nafCoach.getNaf_id());
+        coach.setNumber(nafCoach.getNafId());
         return coach;
-    }
-
-    private String lookupNafName(String coachName) {
-        if (AI_COACH_NAME.equals(coachName)) {
-            return NONE_NAF_COACH.getNaf_name();
-        } else {
-            return lookupNafCoach(coachName).getNaf_name();
-        }
-    }
-
-    private Integer lookupNafNumber(String coachName) {
-        if (AI_COACH_NAME.equals(coachName)) {
-            return NONE_NAF_COACH.getNaf_id();
-        } else {
-            return lookupNafCoach(coachName).getNaf_id();
-        }
-    }
-
-    private NafCoachLookupClient.NafCoach lookupNafCoach(String coachName) {
-        return nafCoachNameCache.computeIfAbsent(coachName, this::loadNafCoach);
-    }
-
-    private NafCoachLookupClient.NafCoach loadNafCoach(String coachName) {
-        log.info("Looking up {}...", coachName);
-        NafCoachLookupClient.NafCoach nafCoach = nafCoachLookupClient.lookupNafCoach(coachName);
-        if (StringUtils.hasText(nafCoach.getError()) || nafCoach.getNaf_id() == null) {
-            log.info("No coach found...");
-            return NONE_NAF_COACH;
-        } else {
-            log.info("Found {}...", nafCoach.getNaf_id());
-            return nafCoach;
-        }
     }
 }

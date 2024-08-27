@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.service;
 
 import net.warp_scores.warpscores.export.naf.NafReport;
 import net.warp_scores.warpscores.model.Contest;
+import net.warp_scores.warpscores.model.NafCoach;
 import net.warp_scores.warpscores.model.Race;
 import net.warp_scores.warpscores.model.Team;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,7 +38,7 @@ public class NafExporterTest {
     private ContestService contestService;
 
     @Mock
-    private NafCoachLookupClient nafCoachLookupClient;
+    private NafCoachService nafCoachService;
 
     private NafXmlCreator nafXmlCreator = new NafXmlCreator();
 
@@ -46,12 +47,12 @@ public class NafExporterTest {
 
     @BeforeEach
     public void setup() throws IOException {
-        Mockito.when(nafCoachLookupClient.lookupNafCoach(eq("HumanCoach")))
-                .thenReturn(new NafCoachLookupClient.NafCoach(
-                        "HumanCoach", 42, null));
-        Mockito.when(nafCoachLookupClient.lookupNafCoach(eq("OrcCoach")))
-                .thenReturn(new NafCoachLookupClient.NafCoach(
-                        "OrcCoach", 23, null));
+        Mockito.when(nafCoachService.lookupCoach(eq("HumanCoach")))
+                .thenReturn(new NafCoach(
+                        42, "HumanCoach", null));
+        Mockito.when(nafCoachService.lookupCoach(eq("OrcCoach")))
+                .thenReturn(new NafCoach(
+                        23, "OrcCoach", null));
     }
 
     @Test

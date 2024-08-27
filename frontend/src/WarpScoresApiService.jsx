@@ -139,6 +139,6 @@ export default {
     // user
     userPermissions: async (getAccessTokenSilently, getAccessTokenWithPopup, requestToken) =>
         getDataWithAuthentication("/userPermissions", getAccessTokenSilently, getAccessTokenWithPopup, requestToken).then(returnData).catch(handleError),
-    exportNafXml: async (competitionUuid, getAccessTokenSilently, getAccessTokenWithPopup) =>
-        getDataWithAuthentication(`/competitions/${competitionUuid}/exportNafData`, getAccessTokenSilently, getAccessTokenWithPopup, true).then((result) => offerDownloadData(result, `${competitionUuid}-nafReport.xml`, 'application/xml')).catch(handleError),
+    exportNafXml: async (competitionUuid, getAccessTokenSilently, getAccessTokenWithPopup, requestToken) =>
+        getDataWithAuthentication(`/competitions/${competitionUuid}/exportNafData`, getAccessTokenSilently, getAccessTokenWithPopup, requestToken).then((result) => offerDownloadData(result, `${competitionUuid}-nafReport.xml`, 'application/xml')).catch(handleError),
 };
