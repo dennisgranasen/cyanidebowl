@@ -27,7 +27,6 @@ import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
 
 @Slf4j
 @Service
@@ -79,37 +78,16 @@ public class CompetitionService {
                         groupingBy(
                                 Contest::getContestUuid,
                                 collectingAndThen(toList(), this::getLatest)));
-        if ( contests.size() !=  uniqueContests.keySet().size() ) {
+        if (contests.size() != uniqueContests.keySet().size()) {
             log.info("Contests: {}, uniqueContests: {}.", contests.size(), uniqueContests.keySet().size());
         }
-        Integer playedMatchesCount = contestsRepository.countByCompetitionIdAndMatchDateNotNull(competition.getUuid());
-        Integer liveMatches = contestsRepository.countByCompetitionIdAndLive(competition.getUuid(), 1);
         int totalRounds = isOdd ? teams : teams - 1;
         int contestsPerRound = isOdd ? (teams - 1) / 2 : teams / 2;
         competition.setTotalRounds(totalRounds);
         competition.setCurrentRound(contestCount > 0 ? contestCount / contestsPerRound : 1);
         competition.setTotalMatches(totalRounds * contestsPerRound);
-        competition.setPlayedMatches(playedMatchesCount);
-        competition.setLiveMatches(liveMatches);
-        Integer notValidatedCount = getNotValidatedMatchesCount(contests);
-        competition.setNotValidatedMatches(notValidatedCount);
-    }
 
-    private void initializeWissen(Competition competition) {
-        List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid());
-        Integer playedMatchesCount = contestsRepository.countByCompetitionIdAndMatchDateNotNull(competition.getUuid());
-        Integer liveMatches = contestsRepository.countByCompetitionIdAndLive(competition.getUuid(), 1);
-
-        OptionalInt currentRound = contests.stream().mapToInt(Contest::getRound).max();
-        if (competition.getTotalRounds() == null) {
-            competition.setTotalRounds(calcWissenTotalRounds(competition.getTeamsMax()));
-        }
-        competition.setCurrentRound(currentRound.orElse(0));
-        competition.setPlayedMatches(playedMatchesCount);
-        Integer notValidatedCount = getNotValidatedMatchesCount(contests);
-        competition.setNotValidatedMatches(notValidatedCount);
-        competition.setTotalMatches(competition.getTeamsMax() / 2 * competition.getTotalRounds());
-        competition.setLiveMatches(liveMatches);
+        initializeMatchCount(competition, contests);
     }
 
     private Optional<Contest> getLatest(List<Contest> contests) {
@@ -119,29 +97,43 @@ public class CompetitionService {
                 .findFirst();
     }
 
+    private void initializeWissen(Competition competition) {
+        List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid());
+        OptionalInt currentRound = contests.stream().mapToInt(Contest::getRound).max();
+        if (competition.getTotalRounds() == null) {
+            competition.setTotalRounds(calcWissenTotalRounds(competition.getTeamsMax()));
+        }
+        competition.setCurrentRound(currentRound.orElse(0));
+        competition.setTotalMatches(competition.getTeamsMax() / 2 * competition.getTotalRounds());
+        initializeMatchCount(competition, contests);
+    }
+
     private void initializeKnockout(Competition competition) {
         Integer teams = competition.getTeamsMax();
-        int totalRounds = 0;
-        for (int players = 2; players <= teams; players *= 2) {
+        int totalRounds = 1;
+        int players = 2;
+        for (; players < teams; players *= 2) {
             totalRounds++;
         }
-        List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid());
-        Integer playedMatchesCount = contestsRepository.countByCompetitionIdAndMatchDateNotNull(competition.getUuid());
-        Integer liveMatches = contestsRepository.countByCompetitionIdAndLive(competition.getUuid(), 1);
         competition.setTotalRounds(totalRounds);
-        competition.setPlayedMatches(playedMatchesCount);
-        competition.setLiveMatches(liveMatches);
-        Integer notValidatedCount = getNotValidatedMatchesCount(contests);
-        competition.setNotValidatedMatches(notValidatedCount);
+        int byes = players - teams;
+        competition.setTotalMatches(teams - 1 - byes);
+        List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid());
+        initializeMatchCount(competition, contests);
     }
 
     private void initializeLadder(Competition competition) {
         List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid());
+        initializeMatchCount(competition, contests);
+    }
+
+    private void initializeMatchCount(Competition competition, List<Contest> contests) {
         Integer playedMatchesCount = contestsRepository.countByCompetitionIdAndMatchDateNotNull(competition.getUuid());
         Integer liveMatches = contestsRepository.countByCompetitionIdAndLive(competition.getUuid(), 1);
-        competition.setPlayedMatches(playedMatchesCount);
-        competition.setLiveMatches(liveMatches);
+        Integer notPlayedAdministratedCount = getNotPlayedAdministratedMatchesCount(contests);
         Integer notValidatedCount = getNotValidatedMatchesCount(contests);
+        competition.setPlayedMatches(playedMatchesCount + notPlayedAdministratedCount);
+        competition.setLiveMatches(liveMatches);
         competition.setNotValidatedMatches(notValidatedCount);
     }
 
@@ -157,6 +149,15 @@ public class CompetitionService {
                 .filter(entry -> !entry.getValue().contains(MatchStatus.Validated))
                 .count();
         return Long.valueOf(notValidatedCount).intValue();
+    }
+
+    private static Integer getNotPlayedAdministratedMatchesCount(List<Contest> contests) {
+        long count = contests
+                .stream()
+                .filter(contest -> Objects.isNull(contest.getMatchUuid()))
+                .filter(contest -> MatchStatus.Validated.equals(contest.getStatus()))
+                .count();
+        return Long.valueOf(count).intValue();
     }
 
     public boolean competitionConsideredActive(Competition competition) {
