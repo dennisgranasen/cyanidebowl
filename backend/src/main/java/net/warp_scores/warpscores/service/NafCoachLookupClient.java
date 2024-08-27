@@ -4,10 +4,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.config.properties.ApplicationProperties;
 import net.warp_scores.warpscores.model.NafCoach;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
@@ -23,7 +25,13 @@ public class NafCoachLookupClient {
 
     private final ApplicationProperties applicationProperties;
 
-    @Cacheable("NafCoach")
+    @CacheEvict(value = "RestNafCoach", allEntries = true)
+    @Scheduled(fixedRateString = "${application.default-spring-cache-ttl}")
+    public void emptyCache() {
+        log.info("Emptied 'RestNafCoach' cache.");
+    }
+
+    @Cacheable("RestNafCoach")
     public NafCoach lookupNafCoach(String name) {
         RestTemplate restTemplate = new RestTemplate();
         ParameterizedTypeReference<NafCoach> nafCoachResult = new ParameterizedTypeReference<>() {};

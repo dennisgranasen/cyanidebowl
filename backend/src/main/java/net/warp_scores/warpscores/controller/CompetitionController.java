@@ -10,6 +10,7 @@ import net.warp_scores.warpscores.service.CompetitionService;
 import net.warp_scores.warpscores.service.NafExporter;
 import net.warp_scores.warpscores.service.NafXmlCreator;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,6 +23,8 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+
+import static net.warp_scores.warpscores.controller.Authorities.AUTHORITY_WRITE_LEAGUE_ADMIN;
 
 @Slf4j
 @RestController
@@ -66,6 +69,7 @@ public class CompetitionController {
     }
 
     @GetMapping("/competitions/{competitionId}/exportNafData")
+    @PreAuthorize(AUTHORITY_WRITE_LEAGUE_ADMIN) // ✨
     public DeferredResult<byte[]> exportNafData(@PathVariable(name = "competitionId") UUID competitionId,
             JwtAuthenticationToken principal) {
         String exporterName = Optional.ofNullable(principal).map(JwtAuthenticationToken::getName).orElse("unknown");
