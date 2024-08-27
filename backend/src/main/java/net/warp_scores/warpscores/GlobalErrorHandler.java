@@ -27,13 +27,11 @@ public class GlobalErrorHandler {
         return ErrorMessage.from("Not Found");
     }
 
-    @Cacheable
     public ServerResponse handleInternalError(final Throwable error, final ServerRequest request) {
         return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ErrorMessage.from(error.getMessage()));
     }
 
-    @Cacheable
     public void handleAuthenticationError(
             final HttpServletRequest request,
             final HttpServletResponse response,
@@ -47,7 +45,6 @@ public class GlobalErrorHandler {
         response.flushBuffer();
     }
 
-    @Cacheable
     public ServerResponse handleAccessDenied(final Throwable error, final ServerRequest request) {
         return ServerResponse.status(HttpStatus.FORBIDDEN)
                 .body(ErrorMessage.from("Permission denied"));
