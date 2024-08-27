@@ -25,13 +25,7 @@ public class NafCoachLookupClient {
 
     private final ApplicationProperties applicationProperties;
 
-    @CacheEvict(value = "RestNafCoach", allEntries = true)
-    @Scheduled(fixedRateString = "${application.default-spring-cache-ttl}")
-    public void emptyCache() {
-        log.info("Emptied 'RestNafCoach' cache.");
-    }
-
-    @Cacheable("RestNafCoach")
+    @Cacheable(value="NafCoach", unless="#result == null")
     public NafCoach lookupNafCoach(String name) {
         RestTemplate restTemplate = new RestTemplate();
         ParameterizedTypeReference<NafCoach> nafCoachResult = new ParameterizedTypeReference<>() {};

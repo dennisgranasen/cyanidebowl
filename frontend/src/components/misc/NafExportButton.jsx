@@ -14,10 +14,10 @@ function NafExportButton({
                          }) {
     const [exporting, setExporting] = useState(false);
     const [error, setError] = useState(null);
-    const exportNafReport = (competitionUuid, getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const exportNafReport = (competitionUuid, getAccessTokenSilently, getAccessTokenWithPopup, requestToken) => {
         setExporting(true);
         WarpScoresApiService
-            .exportNafXml(competitionUuid, getAccessTokenSilently, getAccessTokenWithPopup)
+            .exportNafXml(competitionUuid, getAccessTokenSilently, getAccessTokenWithPopup, requestToken)
             .catch((reason) => setError({type: 'error', message: reason.toLocaleString()}))
             .finally(() => setExporting(false));
     }

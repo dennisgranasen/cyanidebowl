@@ -8,7 +8,10 @@ spring:
   web:
     resources:
       static-locations: classpath=/public
-
+  cache:
+    cache-names: "NafCoach"
+    caffeine:
+      spec: "maximumSize=500,expireAfterAccess=6000s"
   security:
     oauth2:
       resourceserver:
