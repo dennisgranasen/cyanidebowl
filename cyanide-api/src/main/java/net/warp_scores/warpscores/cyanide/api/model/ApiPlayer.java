@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 import net.warp_scores.warpscores.cyanide.api.model.common.IdWithName;
 
+import java.util.UUID;
+
 /*
 {
   "id": "1952c7c1-992c-11ee-a745-02000090a64f",
@@ -80,11 +82,13 @@ import net.warp_scores.warpscores.cyanide.api.model.common.IdWithName;
 @Getter
 @Setter
 public class ApiPlayer extends IdWithName {
+    private UUID id;
     private Integer idraces;
     private Integer number;
     private Integer value;
     private Integer xp;
-    private Integer xp_gain;
+    @JsonAlias({"xp_gain"})
+    private Integer xpGain;
     private Integer level;
     private Integer matchplayed;
     private Boolean mvp;
