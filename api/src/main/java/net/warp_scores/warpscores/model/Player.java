@@ -20,6 +20,7 @@ public class Player {
     private Integer number;
     private Integer value;
     private Integer xp;
+    private Integer xpGain;
     private Integer level;
     private Attributes attributes;
     private ExtendedAttributes extendedAttributes;
