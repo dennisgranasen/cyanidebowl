@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Optional;
 
-import static net.warp_scores.warpscores.controller.Authorizations.WRITE_LEAGUE_ADMIN;
+import static net.warp_scores.warpscores.controller.Authorities.AUTHORITY_WRITE_LEAGUE_ADMIN;
 
 @RestController
 @RequiredArgsConstructor
@@ -52,14 +52,14 @@ public class CircuitController {
     }
 
     @PostMapping("/circuits")
-    @PreAuthorize(WRITE_LEAGUE_ADMIN) // ✨
+    @PreAuthorize(AUTHORITY_WRITE_LEAGUE_ADMIN) // ✨
     public ResponseEntity<Circuit> createCircuit(@RequestBody Circuit circuit) {
         circuit = circuitService.createCircuit(circuit);
         return new ResponseEntity(circuit, HttpStatusCode.valueOf(HttpStatus.CREATED.value()));
     }
 
     @PostMapping("/circuits/{circuitId}/legs")
-    @PreAuthorize(WRITE_LEAGUE_ADMIN) // ✨
+    @PreAuthorize(AUTHORITY_WRITE_LEAGUE_ADMIN) // ✨
     public ResponseEntity<Circuit> addCircuitLeg(@PathVariable(name = "circuitId") Integer circuitId,
             @RequestBody CircuitLeg circuitLeg) {
         try {

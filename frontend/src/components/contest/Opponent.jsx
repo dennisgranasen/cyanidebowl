@@ -3,6 +3,7 @@ import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import { Box, Image, Td, Text, useBreakpointValue } from '@chakra-ui/react';
 import ImageUrls from '../../ImageUrls';
 import config from '../../config';
+import prettyPrint from "../../util/PrettyPrint";
 
 const { boxSize, smallScreenBreakpointValues } = config;
 
@@ -18,14 +19,14 @@ const Boxes = (opponent, reverse, winner) => {
           {opponent.name}
         </Text>
         <Text fontWeight={fontWeight} textAlign={textAlign} color="grey" fontSize="xs">
-          {opponent.coachName}
+          {reverse ? `(${opponent.coachName}) ${prettyPrint(opponent.race)}` : `${prettyPrint(opponent.race)} (${opponent.coachName})`}
         </Text>
       </Td>,
     ]
     : [
       <Td key={opponent.coachName}>
         <Text fontWeight={fontWeight} textAlign={textAlign}>
-          {opponent.coachName}
+          {reverse ? `(${opponent.coachName}) ${prettyPrint(opponent.race)}` : `${prettyPrint(opponent.race)} (${opponent.coachName})`}
         </Text>
       </Td>,
       <Td key={opponent.name}>

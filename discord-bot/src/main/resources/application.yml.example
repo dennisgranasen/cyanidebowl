@@ -2,3 +2,15 @@ server:
   port: 8081
 
 token: 'discord-public-token-here'
+
+warp-scores:
+  base-urls:
+    frontend: http://localhost:8022
+    api-backend: http://localhost:18080
+    img-backend: https://warp-scores.net/img
+
+  authentication:
+    issuer: [oauthtokenissuer]
+    client-id: [clientid]
+    client-secret: [clientsecret]
+    audience: [audience]

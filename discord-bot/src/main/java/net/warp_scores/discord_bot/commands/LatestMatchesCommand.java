@@ -1,26 +1,42 @@
 package net.warp_scores.discord_bot.commands;
 
+import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
+import discord4j.core.object.command.ApplicationCommandInteractionOption;
+import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
 import discord4j.core.spec.EmbedCreateSpec;
-import discord4j.core.spec.InteractionApplicationCommandCallbackReplyMono;
 import lombok.RequiredArgsConstructor;
-import net.warp_scores.discord_bot.services.QueryBackendService;
-import net.warp_scores.warpscores.model.Match;
-import net.warp_scores.warpscores.model.Team;
+import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.discord_bot.discord_messages.LatestMatchesMessageBuilder;
+import net.warp_scores.discord_bot.discord_messages.WarpScoresDiscordMessageBuilder;
+import net.warp_scores.discord_bot.domain.ChannelLeagueRegistration;
+import net.warp_scores.discord_bot.domain.ChannelLeagueRegistrationDomainService;
+import net.warp_scores.discord_bot.service.WarpScoresBackendService;
+import net.warp_scores.warpscores.model.Contest;
+import net.warp_scores.warpscores.model.League;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-import java.text.DateFormat;
-import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
+
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class LatestMatchesCommand implements SlashCommand {
 
-    private final QueryBackendService queryBackendService;
+    private final WarpScoresBackendService warpScoresBackendService;
+
+    private final WarpScoresDiscordMessageBuilder warpScoresDiscordMessageBuilder;
+
+    private final LatestMatchesMessageBuilder latestMatchesMessageBuilder;
+
+    private final ChannelLeagueRegistrationDomainService channelLeagueRegistrationDomainService;
 
     @Override
     public String getName() {
@@ -29,61 +45,59 @@ public class LatestMatchesCommand implements SlashCommand {
 
     @Override
     public Mono<Void> handle(ChatInputInteractionEvent event) {
-        return loadMatches(event);
+        Optional<Boolean> spoiler = event.getOption("spoiler")
+                .flatMap(ApplicationCommandInteractionOption::getValue)
+                .map(ApplicationCommandInteractionOptionValue::asBoolean);
+        Optional<Long> count = event.getOption("count")
+                .flatMap(ApplicationCommandInteractionOption::getValue)
+                .map(ApplicationCommandInteractionOptionValue::asLong);
+
+
+        return event.deferReply().then(loadMatches(event, spoiler, count));
     }
 
-    private Mono<Void> loadMatches(ChatInputInteractionEvent event) {
-        List<Match> latestLeagueContests = queryBackendService.getLatestLeagueContests();
-        Optional<EmbedCreateSpec> embedCreateSpec = createEmbedCreateSpec(latestLeagueContests);
-        InteractionApplicationCommandCallbackReplyMono replyMono = embedCreateSpec.map(
-                spec -> event.reply().withEmbeds(spec)).orElse(event.reply("No matches found."));
-        return replyMono.then();
+    private Mono<Void> loadMatches(ChatInputInteractionEvent event, Optional<Boolean> spoiler, Optional<Long> count) {
+        Snowflake channelId = event.getInteraction().getChannelId();
+        List<ChannelLeagueRegistration> byChannelId = channelLeagueRegistrationDomainService.findByChannelId(channelId);
+        Optional<UUID> leagueUuid = Optional.empty();
+        if (byChannelId != null && !byChannelId.isEmpty()) {
+            leagueUuid = Optional.ofNullable(UUID.fromString(byChannelId.get(0).getLeagueUuid()));
+        }
+        Map<League, List<Contest>> latestLeagueContests = emptyMap();
+        if (leagueUuid.isPresent()) {
+            latestLeagueContests = warpScoresBackendService.loadLatestLeagueContests(
+                    leagueUuid.get(), count);
+        }
+        return event
+                .createFollowup()
+                .withEmbeds(createEmbedCreateSpec(latestLeagueContests, spoiler.orElse(false)))
+                .doOnError(error -> log.error("Error during creating message ({}).", error.getMessage(),
+                        error.getCause()))
+                .onErrorResume(error -> event.createFollowup(":warning: Something went wrong..."))
+                .then();
     }
 
-    public Optional<EmbedCreateSpec> createEmbedCreateSpec(List<Match> latestMatches) {
-        if (latestMatches == null || latestMatches.isEmpty()) {
-            return Optional.empty();
+    public EmbedCreateSpec createEmbedCreateSpec(Map<League, List<Contest>> latestLeagueContests, boolean spoiler) {
+        if (latestLeagueContests == null || latestLeagueContests.isEmpty()) {
+            return warpScoresDiscordMessageBuilder
+                    .builder("Latest matches.", "Showing latest matches.")
+                    .addField("Error", "No matches found.", false)
+                    .build();
         }
 
-        Optional<Match> anyMatch = latestMatches.stream().findFirst();
-        Optional<UUID> leagueId = anyMatch.map(Match::getLeagueId);
-        Optional<String> leagueName = anyMatch.map(Match::getLeagueName);
-
+        Optional<League> league = latestLeagueContests.keySet().stream().findFirst();
+        Optional<UUID> leagueId = league.map(League::getUuid);
         if (leagueId.isEmpty()) {
-            return Optional.empty();
+            return warpScoresDiscordMessageBuilder
+                    .builder(league.map(League::getName).orElse("Latest matches."), "Showing latest matches.")
+                    .addField("Error", "League does not have an id.", false)
+                    .build();
         }
 
-        EmbedCreateSpec.Builder builder = EmbedCreateSpec.builder()
-                .title(String.format("Latest matches for league '%s'", leagueName.get()))
-                .url(String.format("https://warp-scores.net/#/%s", leagueId.get()))
-                .author("warp-scores", "https://warp-scores.net", "https://warp-scores.net/api/img/warpscores.png")
-                .description("Showing latest matches.");
-        for (Match match : latestMatches) {
-            builder = builder.addField("Competition", match.getCompetitionName(), false);
-            if (match.getTeams() != null && !match.getTeams().isEmpty()) {
-                Team teamA = match.getTeams().get(0);
-                Team teamB = match.getTeams().get(1);
-                Match.Coach coachA = match.getCoaches().get(0);
-                Match.Coach coachB = match.getCoaches().get(1);
-                builder = builder
-                        .addField(
-                                String.format("%s vs %s", teamA.getName(), teamB.getName()),
-                                String.format("%s vs %s", coachA.getName(), coachB.getName()), false);
-                builder = builder
-                        .addField(
-                                String.format("%s - %s", teamA.getScore(), teamB.getScore()),
-                                String.format("(CAS: %s - %s)", teamA.getInflictedcasualties(),
-                                        teamB.getInflictedcasualties()), false);
-                builder = builder
-                        .addField(
-                                String.format("Played"),
-                                DateFormat.getDateInstance().format(match.getFinished()),
-                                true);
-            }
-        }
-        builder = builder
-                .footer("Queried", "")
-                .timestamp(Instant.now());
-        return Optional.of(builder.build());
+        EmbedCreateSpec.Builder builder = latestMatchesMessageBuilder.builder(league.get(),
+                league.map(latestLeagueContests::get).orElse(emptyList()), spoiler);
+        return builder.build();
     }
+
 }
+

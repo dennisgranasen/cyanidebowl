@@ -6,6 +6,7 @@ import net.warp_scores.warpscores.cyanide.api.responses.LookupResponse;
 import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,6 +18,7 @@ public class LookupController {
     private final CyanideApiService cyanideApiService;
 
     @PostMapping("/lookup")
+    @PreAuthorize(Authorities.AUTHORITY_WRITE_REGISTER_LEAGUE)
     public ResponseEntity<LookupResponse> performLookup(@RequestBody LookupRequest lookupRequest) {
         try {
             LookupResponse lookup = cyanideApiService.lookup(lookupRequest);

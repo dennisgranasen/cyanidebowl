@@ -2,23 +2,31 @@ package net.warp_scores.warpscores.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionFormat;
-import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionStatus;
-import net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus;
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.model.Competition;
+import net.warp_scores.warpscores.model.CompetitionFormat;
+import net.warp_scores.warpscores.model.CompetitionStatus;
 import net.warp_scores.warpscores.model.Contest;
+import net.warp_scores.warpscores.model.MatchStatus;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static java.util.Comparator.comparing;
+import static java.util.Comparator.nullsFirst;
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toList;
 
 @Slf4j
 @Service
@@ -27,11 +35,6 @@ public class CompetitionService {
     private final CompetitionRepository competitionRepository;
     private final ContestRepository contestsRepository;
 
-    public List<Competition> loadForLeagueAndStatuses(UUID leagueId, CompetitionStatus... statuses) {
-        List<Competition> competitions = competitionRepository.findByLeagueIdAndStatusIn(leagueId, List.of(statuses));
-        return initializeForFormat(competitions);
-    }
-
     public List<Competition> loadForLeague(UUID leagueId) {
         List<Competition> competitions = competitionRepository.findByLeagueId(leagueId);
         return initializeForFormat(competitions);
@@ -39,15 +42,14 @@ public class CompetitionService {
     }
 
     public Optional<Competition> loadCompetition(UUID competitionId) {
-        return Optional.ofNullable(competitionRepository.findById(competitionId)
-                .map(this::initializeForFormat)
-                .orElse(null));
+        return competitionRepository.findById(competitionId)
+                .map(this::initializeForFormat);
     }
 
     private List<Competition> initializeForFormat(List<Competition> competitions) {
         return competitions.stream()
                 .map(this::initializeForFormat)
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     private Competition initializeForFormat(Competition competition) {
@@ -55,6 +57,7 @@ public class CompetitionService {
             case RoundRobin -> initializeRoundRobin(competition);
             case Wissen -> initializeWissen(competition);
             case Knockout -> initializeKnockout(competition);
+            case Ladder -> initializeLadder(competition);
             default -> notYetImplemented(competition.getFormat());
         }
         return competition;
@@ -68,40 +71,93 @@ public class CompetitionService {
         Integer teams = competition.getTeamsMax();
         boolean isOdd = teams % 2 == 1;
         Integer contestCount = contestsRepository.countByCompetitionId(competition.getUuid());
-        Integer validatedMatchesCount = contestsRepository.countByCompetitionIdAndStatus(competition.getUuid(),
-                MatchStatus.Validated);
-        Integer playedMatchesCount = contestsRepository.countByCompetitionIdAndMatchDateNotNull(competition.getUuid());
-        Integer liveMatches = contestsRepository.countByCompetitionIdAndLive(competition.getUuid(), 1);
+        List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid());
+        Map<UUID, Optional<Contest>> uniqueContests = contests
+                .stream()
+                .collect(
+                        groupingBy(
+                                Contest::getContestUuid,
+                                collectingAndThen(toList(), this::getLatest)));
+        if (contests.size() != uniqueContests.keySet().size()) {
+            log.info("Contests: {}, uniqueContests: {}.", contests.size(), uniqueContests.keySet().size());
+        }
         int totalRounds = isOdd ? teams : teams - 1;
         int contestsPerRound = isOdd ? (teams - 1) / 2 : teams / 2;
         competition.setTotalRounds(totalRounds);
         competition.setCurrentRound(contestCount > 0 ? contestCount / contestsPerRound : 1);
         competition.setTotalMatches(totalRounds * contestsPerRound);
-        competition.setPlayedMatches(playedMatchesCount);
-        competition.setLiveMatches(liveMatches);
-        competition.setValidatedMatches(validatedMatchesCount);
+
+        initializeMatchCount(competition, contests);
+    }
+
+    private Optional<Contest> getLatest(List<Contest> contests) {
+        return contests
+                .stream()
+                .sorted(nullsFirst(comparing(Contest::getMatchDate).reversed()))
+                .findFirst();
     }
 
     private void initializeWissen(Competition competition) {
-        Integer validatedMatchesCount = contestsRepository.countByCompetitionIdAndStatus(competition.getUuid(),
-                MatchStatus.Validated);
-        Integer playedMatchesCount = contestsRepository.countByCompetitionIdAndMatchDateNotNull(competition.getUuid());
-        Integer liveMatches = contestsRepository.countByCompetitionIdAndLive(competition.getUuid(), 1);
-
         List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid());
         OptionalInt currentRound = contests.stream().mapToInt(Contest::getRound).max();
         if (competition.getTotalRounds() == null) {
             competition.setTotalRounds(calcWissenTotalRounds(competition.getTeamsMax()));
         }
         competition.setCurrentRound(currentRound.orElse(0));
-        competition.setPlayedMatches(playedMatchesCount);
-        competition.setValidatedMatches(validatedMatchesCount);
         competition.setTotalMatches(competition.getTeamsMax() / 2 * competition.getTotalRounds());
-        competition.setLiveMatches(liveMatches);
+        initializeMatchCount(competition, contests);
     }
 
     private void initializeKnockout(Competition competition) {
-        log.warn("Nothing to be done for Knockout (yet?).");
+        Integer teams = competition.getTeamsMax();
+        int totalRounds = 1;
+        int players = 2;
+        for (; players < teams; players *= 2) {
+            totalRounds++;
+        }
+        competition.setTotalRounds(totalRounds);
+        int byes = players - teams;
+        competition.setTotalMatches(teams - 1 - byes);
+        List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid());
+        initializeMatchCount(competition, contests);
+    }
+
+    private void initializeLadder(Competition competition) {
+        List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid());
+        initializeMatchCount(competition, contests);
+    }
+
+    private void initializeMatchCount(Competition competition, List<Contest> contests) {
+        Integer playedMatchesCount = contestsRepository.countByCompetitionIdAndMatchDateNotNull(competition.getUuid());
+        Integer liveMatches = contestsRepository.countByCompetitionIdAndLive(competition.getUuid(), 1);
+        Integer notPlayedAdministratedCount = getNotPlayedAdministratedMatchesCount(contests);
+        Integer notValidatedCount = getNotValidatedMatchesCount(contests);
+        competition.setPlayedMatches(playedMatchesCount + notPlayedAdministratedCount);
+        competition.setLiveMatches(liveMatches);
+        competition.setNotValidatedMatches(notValidatedCount);
+    }
+
+    private static Integer getNotValidatedMatchesCount(List<Contest> contests) {
+        Map<UUID, List<MatchStatus>> matchStatuses = contests
+                .stream()
+                .filter(contest -> Objects.nonNull(contest.getMatchUuid()))
+                .collect(groupingBy(Contest::getMatchUuid,
+                        mapping(Contest::getStatus, toList())));
+        long notValidatedCount = matchStatuses
+                .entrySet()
+                .stream()
+                .filter(entry -> !entry.getValue().contains(MatchStatus.Validated))
+                .count();
+        return Long.valueOf(notValidatedCount).intValue();
+    }
+
+    private static Integer getNotPlayedAdministratedMatchesCount(List<Contest> contests) {
+        long count = contests
+                .stream()
+                .filter(contest -> Objects.isNull(contest.getMatchUuid()))
+                .filter(contest -> MatchStatus.Validated.equals(contest.getStatus()))
+                .count();
+        return Long.valueOf(count).intValue();
     }
 
     public boolean competitionConsideredActive(Competition competition) {
@@ -114,12 +170,11 @@ public class CompetitionService {
 
     public Map<CompetitionStatus, Long> countForLeague(UUID leagueUuid) {
         List<Competition> competitions = loadForLeague(leagueUuid);
-        Map<CompetitionStatus, Long> collect = competitions
+        return competitions
                 .stream()
                 .filter(this::competitionConsideredActive)
                 .collect(
-                        Collectors.groupingBy(Competition::getStatus, Collectors.counting()));
-        return collect;
+                        groupingBy(Competition::getStatus, Collectors.counting()));
     }
 
     public Integer calcWissenTotalRounds(Integer teamsMax) {

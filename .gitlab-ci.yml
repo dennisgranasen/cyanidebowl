@@ -41,52 +41,67 @@ maven-test:
 maven-package:
   stage: package
   image: registry.hub.docker.com/library/maven:3.8-openjdk-17
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_DRIVER: overlay2
   only:
     - /^dev$/
   script: "mvn -DskipTests=true install"
 
-maven-deploy:
+maven-deploy-snapshot:
   stage: deploy
   image: registry.hub.docker.com/library/maven:3.8-openjdk-17
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_DRIVER: overlay2
   only:
     - /^dev$/
-  script: "mvn -DskipTests=true deploy -s ci_settings.xml"
+  when: manual
+  before_script:
+    - version=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec
+  script:
+    - "mvn -DskipTests=true -Ddockerfile.skip deploy -s ci_settings.xml"
+    - echo "Logging in to registry..."
+    - docker login registry.gitlab.com
+    - echo "Tagging docker images..."
+    - for project in frontend backend discord-bot; do docker tag warpscores/warpscores-${project}:${version} registry.gitlab.com/warp-scores/warp-scores-${project}:${version}; done
+    - echo "Pushing docker images..."
+    - for project in frontend backend discord-bot; do docker push registry.gitlab.com/warp-scores/warp-scores-${project}:${version}; done
 
 maven-release:
   stage: release
   image: registry.hub.docker.com/library/maven:3.8-openjdk-17
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_DRIVER: overlay2
   only:
     - /^main$/
+  script: "mvn -DskipTests=true release:prepare release:perform --batch-mode -s ci_settings.xml"
+
+maven-deploy:
+  stage: package
+  image: registry.hub.docker.com/library/maven:3.8-openjdk-17
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_DRIVER: overlay2
+  only:
+    - /^main$/
+  when: manual
   before_script:
-    - ssh-keyscan gitlab.com > /tmp/ssh_known_hosts
-    - GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/tmp/ssh_known_hosts"
-    # Set the displayed user with the commits that are about to be made
-    - git config --global user.email "${GIT_USER_EMAIL:-$GITLAB_USER_EMAIL}"
-    - git config --global user.name "${GIT_USER_NAME:-$GITLAB_USER_NAME}"
-    # Create a new branch to work on
-    - nextReleaseVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec | sed 's/-SNAPSHOT//')
-    - releaseBranchName="release-${nextReleaseVersion}-${CI_COMMIT_SHORT_SHA}"
-    - git remote set-url origin "https://${GITLAB_USERNAME}:${GITLAB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
-    - git checkout -B "${releaseBranchName}"
+    - version=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec
   script:
-    - ./updateChangelog.sh "${nextReleaseVersion}"
-    - git commit -a -m "Updated changelog for release ${nextReleaseVersion} (${CI_COMMIT_SHORT_SHA})"
-    - git push --set-upstream origin "${releaseBranchName}"
-    - mvn -DskipTests=true release:prepare release:perform --batch-mode -s ci_settings.xml -DpushChanges=false
-    - git commit -a -m "Performed release ${nextReleaseVersion} (${CI_COMMIT_SHORT_SHA})"
-    - git push origin "${releaseBranchName}"
-#    - git checkout dev
-#    - git merge --no-ff ${CI_COMMIT_REF_NAME}
-#    - git push origin dev
-
-
-
-#
-#
-#maven-release:
-#  stage: package
-#  only:
-#    - /^main$/
-#  image: registry.hub.docker.com/library/maven:3.8-openjdk-17
-#  script: "mvn release:prepare release:perform -DskipTests=true"
-
+    - "mvn -DskipTests=true -Ddockerfile.skip deploy -s ci_settings.xml"
+    - echo "Logging in to registry..."
+    - docker login registry.gitlab.com
+    - echo "Tagging docker images..."
+    - for project in frontend backend discord-bot; do docker tag warpscores/warpscores-${project}:${version} registry.gitlab.com/warp-scores/warp-scores-${project}:${version}; done
+    - echo "Pushing docker images..."
+    - for project in frontend backend discord-bot; do docker push registry.gitlab.com/warp-scores/warp-scores-${project}:${version}; done

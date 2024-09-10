@@ -2,6 +2,10 @@ package net.warp_scores.warpscores.service.cyanide;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.bucket4j.Bandwidth;
+import io.github.bucket4j.Bucket;
+import io.github.bucket4j.Refill;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +24,7 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.Optional;
 
 import static net.warp_scores.warpscores.cyanide.api.requests.StatusRequest.BB3_GAME_NAME;
@@ -37,6 +42,20 @@ public class CyanideRestApiClient {
 
     private final ObjectMapper objectMapper;
 
+    private Refill refill;
+    private Bandwidth limit;
+    private Bucket bucket;
+
+    @PostConstruct
+    public void initialize() {
+        long capacity = cyanideApiProperties.getRequestLimit().getCapacity();
+        long periodInSeconds = cyanideApiProperties.getRequestLimit().getPeriodInSeconds();
+        refill = Refill.intervally(capacity, Duration.ofSeconds(periodInSeconds));
+        limit = Bandwidth.classic(capacity, refill);
+        bucket = Bucket.builder().addLimit(limit).build();
+        log.info("Initialized bucket for request limit with capacity {} within {} seconds.", capacity, periodInSeconds);
+    }
+
     public <RequestType, ResponseType> ResponseType loadFromApi(ApiRequest<RequestType, ResponseType> apiRequest) {
         Object rawResponse = loadRawFromApi(apiRequest);
         return responseConverter.convertRawResponseToResponseObject(rawResponse, apiRequest.getResponseClass());
@@ -52,6 +71,20 @@ public class CyanideRestApiClient {
                 return null;
             }
         }
+
+        boolean waitingForRateLimit = false;
+        while (!bucket.tryConsume(1)) {
+            if (!waitingForRateLimit) {
+                log.info("Rate limit ({}) exceeded, waiting to be refilled (refills every {})...",
+                        limit.getCapacity(), refill);
+                waitingForRateLimit = true;
+            }
+            waitIgnoringExceptions(1000);
+        }
+        if (waitingForRateLimit) {
+            log.info("Bucket refilled, resuming...");
+        }
+
         log.info("Loading from real api (request: {}).", apiRequest);
         RestTemplate restTemplate = new RestTemplateBuilder()
                 .setConnectTimeout(apiRequest.getConnectTimeout())
@@ -62,12 +95,13 @@ public class CyanideRestApiClient {
         try {
             response = restTemplate.getForEntity(uri, Object.class);
             log.debug("Got response: [{}].", objectMapper.writeValueAsString(response));
+            Object body = response.getBody();
             if (!response.getStatusCode().
-                    is2xxSuccessful()) {
+                    is2xxSuccessful() || (body instanceof Boolean && !(Boolean) body)) {
                 log.warn("Got no successful response. Response: [{}]. Returning null.", response);
                 return null;
             } else {
-                return response.getBody();
+                return body;
             }
         } catch (RestClientException | JsonProcessingException ex) {
             log.error("Unable to process response as json.", ex);
@@ -85,5 +119,13 @@ public class CyanideRestApiClient {
         UriComponents uriComponents = uriComponentsBuilder.build();
 
         return uriComponents.encode().toUri();
+    }
+
+    private static void waitIgnoringExceptions(int millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException ex) {
+            // ignored
+        }
     }
 }

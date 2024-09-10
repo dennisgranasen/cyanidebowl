@@ -2,10 +2,9 @@ package net.warp_scores.warpscores.cyanide.api.model;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
-import net.warp_scores.warpscores.cyanide.api.model.common.Race;
+import net.warp_scores.warpscores.model.Race;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -59,6 +58,8 @@ public class ApiTeam {
     @JsonAlias({"bb3_competition"})
     private String competitionName;
     private String bb3_competition_id;
+
+    private ApiPlayer[] roster;
 
     private BigDecimal nbsupporters;
 

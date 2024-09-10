@@ -2,17 +2,18 @@ import React from 'react';
 import { Box, Card, CardBody, Center, Grid, GridItem, Heading, Image, Text } from '@chakra-ui/react';
 import { Icon } from '@chakra-ui/icons';
 import ImageUrls from '../../ImageUrls';
-import formatter from '../../util/Formatter';
+import Formatter from '../../util/Formatter';
 import config from '../../config';
 import ScoreOrIcon from './ScoreOrIcon';
+import prettyPrint from "../../util/PrettyPrint";
 
 const { boxSize } = config;
 
-function TeamAndCoach({ teamName, coachName }) {
+function TeamAndCoach({ teamName, coachName, race, reverse }) {
   return (
     <Box>
       <Heading size="sm">{teamName}</Heading>
-      <Text color="grey">{coachName}</Text>
+      <Text color="grey">{reverse ? `(${coachName}) ${prettyPrint(race)}` : `${prettyPrint(race)} (${coachName})`}</Text>
     </Box>
   );
 }
@@ -25,7 +26,12 @@ function ContestMatchCard({ contest, contestHeader, noContentIcon, noContentHead
     finished = contest.match && !contest.live ? contest.match.finished : null;
   }
   return (
-    <Card direction="row" overflow="hidden" variant={variant} align="center">
+    <Card
+      direction="row"
+      overflow="hidden"
+      variant={variant}
+      align="center"
+    >
       {!contest && noContentIcon && (
         <Center p="2">
           <Icon as={noContentIcon} boxSize="4em" />
@@ -40,10 +46,10 @@ function ContestMatchCard({ contest, contestHeader, noContentIcon, noContentHead
                 <Center color="grey">{contestHeader}</Center>
               </GridItem>
               <GridItem colSpan={4}>
-                <TeamAndCoach teamName={contest.opponents[0].name} coachName={contest.opponents[0].coachName} />
+                <TeamAndCoach teamName={contest.opponents[0].name} coachName={contest.opponents[0].coachName} race={contest.opponents[0].race}/>
               </GridItem>
               <GridItem colSpan={4} align="right">
-                <TeamAndCoach teamName={contest.opponents[1].name} coachName={contest.opponents[1].coachName} />
+                <TeamAndCoach teamName={contest.opponents[1].name} coachName={contest.opponents[1].coachName} race={contest.opponents[1].race} reverse/>
               </GridItem>
               <GridItem colSpan={3}>
                 <Center>
@@ -59,9 +65,9 @@ function ContestMatchCard({ contest, contestHeader, noContentIcon, noContentHead
                 </Center>
               </GridItem>
               <GridItem colSpan={8}>
-                <Center color="grey">{`Started: ${formatter.formatAsDate(started)}`}</Center>
+                <Center color="grey">{`Started: ${Formatter.formatAsDate(started, '-')}`}</Center>
                 <Center color="grey">
-                  {`${contest.live ? 'Live since:' : 'Duration:'} ${formatter.formatAsDuration(started, finished)}`}
+                  {`${contest.live ? 'Live since:' : 'Duration:'} ${Formatter.formatAsDuration(started, finished)}`}
                 </Center>
               </GridItem>
             </Grid>

@@ -2,10 +2,10 @@ package net.warp_scores.warpscores.cyanide.api.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionFormat;
-import net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus;
-import net.warp_scores.warpscores.cyanide.api.model.common.MatchType;
-import net.warp_scores.warpscores.cyanide.api.model.common.Race;
+import net.warp_scores.warpscores.model.CompetitionFormat;
+import net.warp_scores.warpscores.model.MatchStatus;
+import net.warp_scores.warpscores.model.MatchType;
+import net.warp_scores.warpscores.model.Race;
 import lombok.Getter;
 import lombok.Setter;
 
