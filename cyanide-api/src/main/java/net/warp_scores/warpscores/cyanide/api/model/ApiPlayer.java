@@ -82,7 +82,6 @@ import java.util.UUID;
 @Getter
 @Setter
 public class ApiPlayer extends IdWithName {
-    private UUID id;
     private Integer idraces;
     private Integer number;
     private Integer value;
