@@ -95,12 +95,13 @@ public class CyanideRestApiClient {
         try {
             response = restTemplate.getForEntity(uri, Object.class);
             log.debug("Got response: [{}].", objectMapper.writeValueAsString(response));
+            Object body = response.getBody();
             if (!response.getStatusCode().
-                    is2xxSuccessful()) {
+                    is2xxSuccessful() || (body instanceof Boolean && !(Boolean) body)) {
                 log.warn("Got no successful response. Response: [{}]. Returning null.", response);
                 return null;
             } else {
-                return response.getBody();
+                return body;
             }
         } catch (RestClientException | JsonProcessingException ex) {
             log.error("Unable to process response as json.", ex);
