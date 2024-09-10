@@ -5,14 +5,15 @@ import ImageUrls from '../../ImageUrls';
 import Formatter from '../../util/Formatter';
 import config from '../../config';
 import ScoreOrIcon from './ScoreOrIcon';
+import prettyPrint from "../../util/PrettyPrint";
 
 const { boxSize } = config;
 
-function TeamAndCoach({ teamName, coachName }) {
+function TeamAndCoach({ teamName, coachName, race, reverse }) {
   return (
     <Box>
       <Heading size="sm">{teamName}</Heading>
-      <Text color="grey">{coachName}</Text>
+      <Text color="grey">{reverse ? `(${coachName}) ${prettyPrint(race)}` : `${prettyPrint(race)} (${coachName})`}</Text>
     </Box>
   );
 }
@@ -45,10 +46,10 @@ function ContestMatchCard({ contest, contestHeader, noContentIcon, noContentHead
                 <Center color="grey">{contestHeader}</Center>
               </GridItem>
               <GridItem colSpan={4}>
-                <TeamAndCoach teamName={contest.opponents[0].name} coachName={contest.opponents[0].coachName} />
+                <TeamAndCoach teamName={contest.opponents[0].name} coachName={contest.opponents[0].coachName} race={contest.opponents[0].race}/>
               </GridItem>
               <GridItem colSpan={4} align="right">
-                <TeamAndCoach teamName={contest.opponents[1].name} coachName={contest.opponents[1].coachName} />
+                <TeamAndCoach teamName={contest.opponents[1].name} coachName={contest.opponents[1].coachName} race={contest.opponents[1].race} reverse/>
               </GridItem>
               <GridItem colSpan={3}>
                 <Center>
