@@ -1,0 +1,24 @@
+{
+  "name": "league",
+  "description": "Register/Unregister league for current channel match publications.",
+  "options": [
+    {
+      "name": "uuid",
+      "description": "The leagueUuid you want to get new match publications for.",
+      "type": 3,
+      "required": false
+    },
+    {
+      "name": "spoiler",
+      "description": "If set to 'true', matches will hide results with 'spoiler'.",
+      "type": 5,
+      "required": false
+    },
+    {
+      "name": "unregister",
+      "description": "If set to 'true', league gets unregistered from channel.",
+      "type": 5,
+      "required": false
+    }
+  ]
+}

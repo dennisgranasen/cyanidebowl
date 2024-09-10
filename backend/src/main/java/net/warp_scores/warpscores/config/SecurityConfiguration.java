@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
@@ -27,6 +26,14 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(requests -> requests
                         // status/misc
                         .requestMatchers(GET, "/version.json", "/status").permitAll()
+                        // user endpoint
+                        .requestMatchers(GET, "/userPermissions").permitAll()
+                        // endpoints needing authentication
+                        .requestMatchers(POST, "/circuits/**").authenticated()
+                        .requestMatchers(POST, "/contests/**").authenticated()
+                        .requestMatchers(POST, "/leagueCollection/**").authenticated()
+                        .requestMatchers(POST, "/lookup").authenticated()
+                        .requestMatchers(GET, "/competitions/*/exportNafData").authenticated()
                         // public api read only endpoints
                         .requestMatchers(GET, "/circuits/**").permitAll()
                         .requestMatchers(GET, "/competitions/**").permitAll()
@@ -36,11 +43,6 @@ public class SecurityConfiguration {
                         .requestMatchers(GET, "/matches/**").permitAll()
                         .requestMatchers(GET, "/ranks/**").permitAll()
                         .requestMatchers(GET, "/teams/**").permitAll()
-                        // admin only writable endpoints
-                        .requestMatchers(POST, "/circuits/**").authenticated()
-                        .requestMatchers(POST, "/contests/**").authenticated()
-                        .requestMatchers(POST, "/leagueCollection/**").authenticated()
-                        .requestMatchers(GET, "/user").authenticated()
                         // rest
                         .anyRequest().denyAll()
                 )

@@ -20,12 +20,15 @@
     </properties>
 
     <dependencies>
+        <!-- project -->
         <dependency>
             <groupId>net.warp-scores</groupId>
             <artifactId>api</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
+
+        <!-- spring -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure</artifactId>
@@ -34,6 +37,13 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
             <scope>provided</scope>
+        </dependency>
+
+        <!-- discord -->
+        <dependency>
+            <groupId>com.discord4j</groupId>
+            <artifactId>discord4j-core</artifactId>
+            <version>3.2.6</version>
         </dependency>
 
         <!-- json -->
@@ -50,12 +60,6 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.discord4j</groupId>
-            <artifactId>discord4j-core</artifactId>
-            <version>3.2.6</version>
         </dependency>
 
         <!-- test dependencies -->
@@ -99,7 +103,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <executable>true</executable>
-                    <mainClass>net.warp_scores.warpscores.WarpScoresDiscordBot</mainClass>
+                    <mainClass>net.warp_scores.discord_bot.WarpScoresDiscordBot</mainClass>
                     <addResources>true</addResources>
                 </configuration>
                 <executions>
@@ -143,7 +147,7 @@
                         <phase>generate-resources</phase>
                         <configuration>
                             <target>
-                                <echo file="${project.build.directory}/version.json">
+                                <echo file="${project.build.outputDirectory}/version.json">
                                     <![CDATA[{ "project": "${project.groupId}:${project.parent.artifactId}-${project.artifactId}", "committish": "${buildNumber}", "projectVersion": "${project.version}", "timestamp": "${maven.build.timestamp}" }]]>
                                 </echo>
                             </target>
@@ -159,6 +163,39 @@
                         <include>**/*Test.java</include>
                     </includes>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>dockerfile-maven-plugin</artifactId>
+                <configuration>
+                    <dockerfile>${project.build.outputDirectory}/Dockerfile</dockerfile>
+                    <contextDirectory>${project.build.directory}</contextDirectory>
+                    <repository>warpscores/warpscores-discord-bot</repository>
+                    <tag>${project.version}</tag>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>build-image</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>tag-image</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>tag</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>push-image</id>
+                        <phase>deploy</phase>
+                        <goals>
+                            <goal>push</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

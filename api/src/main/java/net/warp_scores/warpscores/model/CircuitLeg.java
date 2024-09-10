@@ -2,9 +2,6 @@ package net.warp_scores.warpscores.model;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.warp_scores.warpscores.cyanide.api.model.common.CircuitLegType;
-import net.warp_scores.warpscores.cyanide.api.model.common.GameType;
-import net.warp_scores.warpscores.cyanide.api.model.common.Platform;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 

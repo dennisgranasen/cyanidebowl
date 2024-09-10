@@ -16,18 +16,20 @@ public class Player {
     @Id
     private UUID id;
     private String name;
-    private int raceId;
-    private int number;
-    private int value;
-    private int xp;
-    private int level;
+    private Integer raceId;
+    private Integer number;
+    private Integer value;
+    private Integer xp;
+    private Integer xpGain;
+    private Integer level;
     private Attributes attributes;
     private ExtendedAttributes extendedAttributes;
     private String type;
     private Integer[] casualtiesStateIds;
     private String[] casualtiesStates;
-    private boolean suspendedNextMatch;
+    private Boolean suspendedNextMatch;
     private String[] skills;
+    private Integer matchplayed;
 
     @Getter
     @Setter

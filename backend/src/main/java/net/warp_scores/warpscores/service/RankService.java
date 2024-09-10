@@ -23,7 +23,7 @@ import static java.util.List.of;
 import static java.util.Objects.requireNonNullElse;
 import static java.util.Optional.empty;
 import static java.util.Optional.ofNullable;
-import static net.warp_scores.warpscores.cyanide.api.model.common.MatchStatus.Validated;
+import static net.warp_scores.warpscores.model.MatchStatus.Validated;
 
 @Service
 @Slf4j

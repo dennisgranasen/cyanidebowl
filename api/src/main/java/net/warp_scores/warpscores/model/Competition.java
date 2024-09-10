@@ -3,8 +3,6 @@ package net.warp_scores.warpscores.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
-import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionFormat;
-import net.warp_scores.warpscores.cyanide.api.model.common.CompetitionStatus;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -36,7 +34,7 @@ public class Competition implements Comparable<Competition> {
     private Integer currentRound;
     private Integer totalRounds;
 
-    private Integer validatedMatches;
+    private Integer notValidatedMatches;
     private Integer liveMatches;
     private Integer playedMatches;
     private Integer totalMatches;

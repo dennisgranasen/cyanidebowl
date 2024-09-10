@@ -13,7 +13,7 @@ import java.util.UUID;
 public interface MatchRepository extends MongoRepository<Match, UUID> {
     List<Match> findByCompetitionId(UUID competitionId);
 
-    Optional<Match> findTopByLeagueIdOrderByStartedDesc(UUID leagueId);
+    Optional<Match> findTopByLeagueIdOrderByFinishedDesc(UUID leagueId);
 
     Optional<Match> findTopByTeamsContainsOrderByStartedDesc(Team team);
 }

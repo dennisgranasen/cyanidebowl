@@ -1,6 +1,7 @@
 package net.warp_scores.warpscores.service.cyanide;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ public class ResponseConverter {
 
     public <ResponseType> ResponseType convertRawResponseToResponseObject(Object rawResponse,
             Class<ResponseType> responseClass) {
+        objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT, true);
         if (rawResponse == null) {
             return null;
         }

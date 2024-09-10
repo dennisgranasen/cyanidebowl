@@ -1,18 +1,33 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Heading, VStack } from '@chakra-ui/react';
-import { Link as RouteLink, useParams } from 'react-router-dom';
+import {Link as RouteLink, useNavigate, useParams} from 'react-router-dom';
 import WarpScoresApiService from '../WarpScoresApiService';
 import Navigation from '../components/misc/Navigation';
 import CircuitLeg from '../components/circuit/CircuitLeg';
 import HeaderCard from '../components/common/HeaderCard';
 import config from '../config';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
+import {useAuth0WithUserPermissions} from "../hooks/useAuth0WithUserPermissions";
 
 function CircuitLegPage() {
   const { circuitId, legId } = useParams();
   const [circuit, setCircuit] = useState();
   const [circuitLeg, setCircuitLeg] = useState();
   const [error, setError] = useState();
+  const {
+    authenticationReady,
+    checkPermissions,
+    userPermissions,
+  } = useAuth0WithUserPermissions();
+
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if ( authenticationReady && checkPermissions && !userPermissions.readCurrentUser)
+    {
+      navigate("/");
+    }
+  }, [authenticationReady, checkPermissions, userPermissions]);
 
   useEffect(() => {
     const leg = circuit.circuitLegs.find((data) => data.circuitLegId === legId);
@@ -47,7 +62,7 @@ function CircuitLegPage() {
           {/*
               <InfoArea
                 infoItems={[
-                  <InfoItem key="Created" label="Created" info={formatter.formatAsDate(competition.dateCreated)} />,
+                  <InfoItem key="Created" label="Created" info={Formatter.formatAsDate(competition.dateCreated, '-')} />,
                   <InfoItem key="Format" label="Format" info={prettyPrint(competition.format)} />,
                   <InfoItem
                     key="Progress"
@@ -61,17 +76,17 @@ function CircuitLegPage() {
                         totalRounds={competition.totalRounds}
                         totalMatches={competition.totalMatches}
                         playedMatches={competition.playedMatches}
-                        validatedMatches={competition.validatedMatches}
+                        notValidatedMatches={competition.notValidatedMatches}
                         liveMatches={competition.liveMatches}
                       />
                     }
                   />,
-                  <InfoItem key="Teams" label="Teams" info={formatter.formatAsNumber(competition.teamsMax)} />,
+                  <InfoItem key="Teams" label="Teams" info={Formatter.formatAsNumber(competition.teamsMax)} />,
                   <InfoItem
                     key="TimeSettings"
                     label="Time settings"
-                    info={`Turn: ${formatter.formatAsNumber(competition.turnDuration / 60)}m`}
-                    additionalInfo={`Bonus: ${formatter.formatAsNumber(competition.timeBonusDuration / 60)}m`}
+                    info={`Turn: ${Formatter.formatAsNumber(competition.turnDuration / 60)}m`}
+                    additionalInfo={`Bonus: ${Formatter.formatAsNumber(competition.timeBonusDuration / 60)}m`}
                   />,
                 ]}
               />

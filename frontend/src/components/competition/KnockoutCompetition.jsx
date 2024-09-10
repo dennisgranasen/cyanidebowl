@@ -10,16 +10,16 @@ import {
   GridItem,
   Heading,
   Image,
-  Spinner,
 } from '@chakra-ui/react';
 import { SingleEliminationBracket } from 'react-tournament-brackets/dist/esm';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import logger from '../../util/Logger';
 import ImageUrls from '../../ImageUrls';
 import prettyPrint from '../../util/PrettyPrint';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
-import formatter from '../../util/Formatter';
+import Formatter from '../../util/Formatter';
 import Ranks from './Ranks';
+import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 
 function toParticipant(opponent, winner) {
   return {
@@ -62,7 +62,7 @@ function toBracketMatch(contest, contests) {
     id: contest?.contestUuid,
     nextMatchId: getNextMatchId(contest?.winner?.team?.id, contest?.round, contests),
     participants: toParticipants(contest?.opponents, contest?.winner),
-    startTime: formatter.formatAsDate(contest?.matchDate),
+    startTime: Formatter.formatAsDate(contest?.matchDate, '-'),
     state: contest?.matchDate ? 'DONE' : null,
     tournamentRoundText: `${contest?.round}`,
   };
@@ -91,8 +91,8 @@ function Participant({
   onMatchClick,
   onPartyClick,
 }) {
-  const borderColor = hovered ? 'gray.600' : connectorColor;
-  const backgroundColor = hovered ? 'gray.600' : null;
+  const borderColor = hovered ? 'warpScoresHoverColor' : connectorColor;
+  const backgroundColor = hovered ? 'warpScoresHoverColor' : null;
   return (
     <Box
       m="0"
@@ -119,10 +119,10 @@ function Participant({
             <Image src={ImageUrls.logo(party.picture)} objectFit="contain" />
           </Center>
         </GridItem>
-        <GridItem pl="4px" area="team" w="100%" textAlign="left" fontWeight={won ? 'bold' : null}>
-          {party.teamName || teamNameFallback}
+        <GridItem pl="4px" area="team" w="100%" textAlign="left" fontWeight={won ? 'bold' : null} style={{ whiteSpace: 'nowrap' }}>
+          <Box>{party.teamName || teamNameFallback}</Box>
         </GridItem>
-        <GridItem pl="4px" area="coach" textAlign="left" fontSize="sm" color="grey">
+        <GridItem pl="4px" area="coach" textAlign="left" fontSize="sm" color="grey" style={{ whiteSpace: 'nowrap' }}>
           {`${party.coachName}, ${prettyPrint(party.race)}`}
         </GridItem>
         <GridItem area="score" textAlign="center" fontWeight={won ? 'bold' : null}>
@@ -193,15 +193,23 @@ function MatchComponent({
   );
 }
 
-function KnockoutCompetition({ ranks, contests, competition }) {
-  logger.debug('Contests: %o', contests);
-  const matches = toBracketMatches(contests, competition.teamsMax);
-  logger.debug('Matches: %o', matches);
+function KnockoutCompetition({ ranks, contests, competition, ranksLoading, contestsLoading, competitionLoading }) {
+  const [matches, setMatches] = useState([]);
+
+  useEffect(() => {
+    const bracketMatches =
+      !competitionLoading && contests && competition ? toBracketMatches(contests, competition?.teamsMax) : [];
+    setMatches(bracketMatches);
+  }, [competition, competitionLoading, contests]);
   return (
     <>
       <Heading size="md">Knockout-Bracket</Heading>
       <Box align="center" height="100%" width="100%" overflowX="scroll">
-        {matches && <SingleEliminationBracket matches={matches} matchComponent={MatchComponent} />}
+        <LoadingOrErrorWrapper loading={contestsLoading}>
+          {matches && matches.length > 0 && (
+            <SingleEliminationBracket matches={matches} matchComponent={MatchComponent} />
+          )}
+        </LoadingOrErrorWrapper>
       </Box>
       <Accordion allowMultiple>
         <AccordionItem>
@@ -211,7 +219,9 @@ function KnockoutCompetition({ ranks, contests, competition }) {
             </Box>
             <AccordionIcon />
           </AccordionButton>
-          <AccordionPanel>{ranks ? <Ranks ranks={ranks} /> : <Spinner />}</AccordionPanel>
+          <AccordionPanel>
+            <Ranks loading={ranksLoading} ranks={ranks} />
+          </AccordionPanel>
         </AccordionItem>
       </Accordion>
     </>

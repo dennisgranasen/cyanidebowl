@@ -3,7 +3,6 @@ package net.warp_scores.warpscores.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
-import net.warp_scores.warpscores.cyanide.api.model.common.Race;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 

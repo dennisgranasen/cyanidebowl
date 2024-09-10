@@ -2,7 +2,7 @@ package net.warp_scores.warpscores.cyanide.api.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.warp_scores.warpscores.cyanide.api.model.common.Race;
+import net.warp_scores.warpscores.model.Race;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

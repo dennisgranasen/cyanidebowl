@@ -1,0 +1,12 @@
+{
+  "name": "lookup",
+  "description": "Find leagues in BB3.",
+  "options": [
+    {
+      "name": "leaguename",
+      "description": "The leagueName you are looking for.",
+      "type": 3,
+      "required": true
+    }
+  ]
+}

@@ -2,10 +2,6 @@ package net.warp_scores.warpscores.service.cyanide;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.bucket4j.Bandwidth;
-import io.github.bucket4j.Bucket;
-import io.github.bucket4j.Refill;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.config.properties.CyanideApiProperties;
@@ -20,7 +16,6 @@ import org.springframework.stereotype.Service;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
@@ -42,26 +37,7 @@ public class CyanideCachedRestApiClient {
 
     private final ObjectMapper objectMapper;
 
-    private Refill refill;
-    private Bandwidth limit;
-    private Bucket bucket;
-
-    @PostConstruct
-    public void initialize() {
-        long capacity = cyanideApiProperties.getRequestLimit().getCapacity();
-        long periodInSeconds = cyanideApiProperties.getRequestLimit().getPeriodInSeconds();
-        refill = Refill.intervally(capacity, Duration.ofSeconds(periodInSeconds));
-        limit = Bandwidth.classic(capacity, refill);
-        bucket = Bucket.builder().addLimit(limit).build();
-        log.info("Initialized bucket for request limit with capacity {} within {} seconds.", capacity, periodInSeconds);
-    }
-
     public <RequestType, ResponseType> ResponseType getFromCacheOrApi(ApiRequest<RequestType, ResponseType> apiRequest) {
-        return getFromCacheOrApi(apiRequest, true, false, false);
-    }
-
-    public <RequestType, ResponseType> ResponseType getFromCacheOrApi(ApiRequest<RequestType, ResponseType> apiRequest,
-            boolean getCachedValueAsFallback, boolean overrideFetchActive, boolean forceRefresh) {
         ApiRequestKey apiRequestKey = ApiRequestKey.newFor(apiRequest);
 
         log.debug("Looking up '{}' in cache for key [{}] (requestParams: {}).", apiRequest.getRequestPath(),
@@ -81,17 +57,17 @@ public class CyanideCachedRestApiClient {
                 .map(response -> ((ApiResponse) response).isChangeableResponse())
                 .orElse(true);
 
-        boolean fetchActive = overrideFetchActive || cyanideApiProperties.isFetchActive();
+        boolean fetchActive = cyanideApiProperties.isFetchActive();
         log.debug(
-                "Trying to get for '{}'. Last api access was [{}] (outdated: {}, changeable: {}, apiFetchActive: {}, overrideFetchActive: {}, forceRefresh: {}).",
+                "Trying to get for '{}'. Last api access was [{}] (outdated: {}, changeable: {}, apiFetchActive: {}.).",
                 apiRequest.getRequestPath(),
-                lastCacheAccess, cacheOutdated, changeable, fetchActive, overrideFetchActive, forceRefresh);
+                lastCacheAccess, cacheOutdated, changeable, fetchActive);
         Object rawResponse;
-        if (forceRefresh || (cacheOutdated && changeable && fetchActive)) {
-            rawResponse = loadRawFromApi(apiRequest, forceRefresh);
+        if (cacheOutdated && changeable && fetchActive) {
+            rawResponse = cyanideRestApiClient.loadRawFromApi(apiRequest);
             if (rawResponse != null) {
                 cacheRawResponse(apiRequestKey, apiRequest, rawResponse);
-            } else if (getCachedValueAsFallback) {
+            } else {
                 rawResponse = cachedRestApiResponse.map(RestApiResponseCache::getResponse).orElse(null);
             }
         } else {
@@ -130,38 +106,5 @@ public class CyanideCachedRestApiClient {
         Instant cacheInvalidAfter = Instant.now()
                 .minus(restApiResponseCache.getCacheValidityDuration());
         return cacheInvalidAfter.isAfter(restApiResponseCache.getLastAccess().toInstant());
-    }
-
-    private <RequestType, ResponseType> Object loadRawFromApi(ApiRequest<RequestType, ResponseType> apiRequest,
-            boolean forceRefresh) {
-        if (forceRefresh) {
-            return cyanideRestApiClient.loadRawFromApi(apiRequest);
-        } else {
-            return loadRawFromApiRespectingRateLimitAndStatus(apiRequest);
-        }
-    }
-
-    private <RequestType, ResponseType> Object loadRawFromApiRespectingRateLimitAndStatus(ApiRequest<RequestType, ResponseType> apiRequest) {
-        boolean waitingForRateLimit = false;
-        while (!bucket.tryConsume(1)) {
-            if (!waitingForRateLimit) {
-                log.info("Rate limit ({}) exceeded, waiting to be refilled (refills every {})...",
-                        limit.getCapacity(), refill);
-                waitingForRateLimit = true;
-            }
-            waitIgnoringExceptions(1000);
-        }
-        if (waitingForRateLimit) {
-            log.info("Bucket refilled, resuming...");
-        }
-        return cyanideRestApiClient.loadRawFromApi(apiRequest);
-    }
-
-    private static void waitIgnoringExceptions(int millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException ex) {
-            // ignored
-        }
     }
 }

@@ -32,6 +32,7 @@ public class ApiMatch {
     private String winner;
     private ApiCoach[] coaches;
     private ApiTeam[] teams;
+    private String platform;
 }
 
 
