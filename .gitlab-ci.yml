@@ -2,8 +2,8 @@ stages:
   - build
   - test
   - package
-  - deploy
   - release
+  - deploy
 
 variables:
   MAVEN_OPTS: -Dmaven.repo.local=.m2/repository
@@ -82,10 +82,13 @@ maven-release:
     DOCKER_DRIVER: overlay2
   only:
     - /^main$/
+  before_script:
+    - git config --global user.email "no-reply@warp-scores.net"
+    - git config --global user.name "Gitlab-Pipeline"
   script: "mvn -DskipTests=true release:prepare release:perform --batch-mode -s ci_settings.xml"
 
 maven-deploy:
-  stage: package
+  stage: deploy
   image: registry.hub.docker.com/library/maven:3.8-openjdk-17
   services:
     - docker:dind
@@ -96,7 +99,7 @@ maven-deploy:
     - /^main$/
   when: manual
   before_script:
-    - version=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec
+    - version=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
   script:
     - "mvn -DskipTests=true -Ddockerfile.skip deploy -s ci_settings.xml"
     - echo "Logging in to registry..."
