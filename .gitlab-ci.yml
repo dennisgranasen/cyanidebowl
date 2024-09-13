@@ -62,7 +62,7 @@ maven-deploy-snapshot:
     - /^dev$/
   when: manual
   before_script:
-    - version=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec
+    - version=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
   script:
     - "mvn -DskipTests=true -Ddockerfile.skip deploy -s ci_settings.xml"
     - echo "Logging in to registry..."
@@ -85,9 +85,6 @@ maven-release:
   before_script:
     - git config --global user.email "no-reply@warp-scores.net"
     - git config --global user.name "Gitlab-Pipeline"
-    - which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )
-    - eval $(ssh-agent -s)
-    - ssh-add <(echo "$SSH_PRIVATE_KEY")
   script:
     - git checkout -B "$CI_BUILD_REF_NAME"
     - mvn -DskipTests=true release:prepare --batch-mode --settings ci_settings.xml
@@ -107,7 +104,7 @@ maven-deploy:
   before_script:
     - version=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
   script:
-    - "mvn -DskipTests=true -Ddockerfile.skip deploy -s ci_settings.xml"
+    - mvn -DskipTests=true -Ddockerfile.skip deploy -s ci_settings.xml
     - echo "Logging in to registry..."
     - docker login registry.gitlab.com
     - echo "Tagging docker images..."
