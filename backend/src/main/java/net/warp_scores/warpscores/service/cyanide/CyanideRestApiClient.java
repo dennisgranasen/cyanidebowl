@@ -66,7 +66,7 @@ public class CyanideRestApiClient {
         if (!StatusRequest.class.equals(apiRequest.getRequestClass())) {
             Optional<Status> status = statusRepository.findById(BB3_GAME_NAME);
             boolean serviceAvailable = status.map(Status::isOverall).orElse(false);
-            if (!serviceAvailable) {
+            if (!serviceAvailable && cyanideApiProperties.isRespectApiStatus()) {
                 log.warn("API seems to be down. Will not attempt to fetch data from api.");
                 return null;
             }

@@ -13,6 +13,7 @@ public class CyanideApiProperties {
     private Urls urls;
     private boolean schedulerActive;
     private boolean fetchActive;
+    private boolean respectApiStatus;
     private String checkApiStatusCron;
 
     @Getter
