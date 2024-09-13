@@ -66,9 +66,12 @@ public class CyanideRestApiClient {
         if (!StatusRequest.class.equals(apiRequest.getRequestClass())) {
             Optional<Status> status = statusRepository.findById(BB3_GAME_NAME);
             boolean serviceAvailable = status.map(Status::isOverall).orElse(false);
-            if (!serviceAvailable && cyanideApiProperties.isRespectApiStatus()) {
-                log.warn("API seems to be down. Will not attempt to fetch data from api.");
-                return null;
+            if (!serviceAvailable) {
+                if (cyanideApiProperties.isRespectApiStatus()) {
+                    log.warn("API seems to be down. Will not attempt to fetch data from api.");
+                    return null;
+                }
+                log.warn("API seems to be down, but status will be ignored due to config.");
             }
         }
 
@@ -109,7 +112,8 @@ public class CyanideRestApiClient {
         }
     }
 
-    public <RequestType, ResponseType> URI createUri(ApiRequest<RequestType, ResponseType> apiRequest, String apiKey) {
+    public <RequestType, ResponseType> URI
+    createUri(ApiRequest<RequestType, ResponseType> apiRequest, String apiKey) {
         MultiValueMap<String, String> queryParams = apiRequest.toQueryParams();
         queryParams.add("key", apiKey);
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder
