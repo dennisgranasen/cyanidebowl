@@ -11,7 +11,7 @@ GET https://web.cyanide-studio.com/ws/cya/status/?key={{apiKey}}
 # Lookup #######################################################################
 
 ### Lookup league
-GET https://web.cyanide-studio.com/ws/bb3/lookup/?league=LOC Crossplay&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/lookup/?league=Official&exact=0&key={{apiKey}}
 
 ### Lookup coach
 GET https://web.cyanide-studio.com/ws/bb3/lookup/?coach=naytsyrhc&platform=pc&key={{apiKey}}
@@ -20,7 +20,10 @@ GET https://web.cyanide-studio.com/ws/bb3/lookup/?coach=naytsyrhc&platform=pc&ke
 # League #######################################################################
 
 ### Get leagues
-GET https://web.cyanide-studio.com/ws/bb3/leagues/?league=DBBL  BB3&limit=100&platform=pc&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/leagues/?league=Official&limit=100&platform=pc&key={{apiKey}}
+
+### Get leagues
+GET https://web.cyanide-studio.com/ws/bb3/competitions/?league_id=30000000-0000-0000-0000-000000000025&limit=100&platform=pc&key={{apiKey}}
 
 ### Get league
 GET https://web.cyanide-studio.com/ws/bb3/league/?id=94dd6ae4-83fa-11ee-b910-02000090a64f&key={{apiKey}}
