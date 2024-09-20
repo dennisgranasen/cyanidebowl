@@ -37,11 +37,13 @@ public class Contest implements Comparable {
     private boolean adminResult;
     private Match match;
 
+    private UUID nextContestUuid;
+
     @Override
     public String toString() {
         String teamA = Optional.ofNullable(opponents).map(o -> o.get(0)).map(Team::getName).orElse("n/a");
         String teamB = Optional.ofNullable(opponents).map(o -> o.get(1)).map(Team::getName).orElse("n/a");
-        return String.format("Contest[%s] Round: %s -> %s vs %s", contestUuid, round, teamA, teamB);
+        return String.format("Contest[%s] Round: %s -> %s vs %s (next: %s)", contestUuid, round, teamA, teamB, nextContestUuid);
     }
 
     public int compareTo(Object other) {

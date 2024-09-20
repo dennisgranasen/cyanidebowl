@@ -13,6 +13,7 @@ function RoundRobinProgresses({
                                   totalMatches,
                                   notValidatedMatches,
                                   status,
+                                  withPadding,
                               }) {
     const roundLength = totalMatches ? totalMatches / totalRounds : 1;
     const finishedMatches = playedMatches - notValidatedMatches;
@@ -32,7 +33,7 @@ function RoundRobinProgresses({
         roundProgresses.push({name: `round${round + 1}`, progress, active});
     }
     return (
-        <SimpleGrid columns={totalRounds} spacing="0.25rem">
+        <SimpleGrid columns={totalRounds} spacing="0.25rem" paddingTop={withPadding ? '0.25rem' : null}>
             {roundProgresses.map(({name, progress, active}) => (
                 <GridItem key={name}>
                     <Progress
@@ -47,7 +48,7 @@ function RoundRobinProgresses({
     );
 }
 
-function WissenProgresses({playedMatches, liveMatches, notValidatedMatches, totalMatches, status}) {
+function WissenProgresses({playedMatches, liveMatches, notValidatedMatches, totalMatches, status, withPadding}) {
     const finishedMatches = playedMatches - notValidatedMatches;
     const needsValidation = notValidatedMatches - liveMatches > 0;
     const live = liveMatches > 0;
@@ -56,7 +57,8 @@ function WissenProgresses({playedMatches, liveMatches, notValidatedMatches, tota
         finishedMatches > 0 && finishedMatches === totalMatches
             ? 100
             : (100 * (finishedMatches % totalMatches)) / totalMatches;
-    return <Progress value={progress} isIndeterminate={live} hasStripe={status === 'InProgress'} colorScheme={color}/>;
+    return <Progress paddingTop={withPadding ? '0.25rem' : null} value={progress} isIndeterminate={live}
+                     hasStripe={status === 'InProgress'} colorScheme={color}/>;
 }
 
 function Progresses({
@@ -68,6 +70,7 @@ function Progresses({
                         liveMatches,
                         status,
                         format,
+                        withPadding,
                     }) {
     if (status === 'Finished') return <FaFlagCheckered/>;
     if (status === 'Registration') return <CalendarIcon/>;
@@ -82,6 +85,7 @@ function Progresses({
                     notValidatedMatches={notValidatedMatches}
                     liveMatches={liveMatches}
                     status={status}
+                    withPadding={withPadding ? 'withPadding' : null}
                 />
             );
         case 'Wissen':
@@ -92,10 +96,11 @@ function Progresses({
                     notValidatedMatches={notValidatedMatches}
                     totalMatches={totalMatches}
                     status={status}
+                    withPadding={withPadding ? 'withPadding' : null}
                 />
             );
         case 'Knockout':
-            return `${currentRound} of ${totalRounds}`;
+            return `Round ${currentRound} of ${totalRounds}`;
         case 'Ladder':
             return `${playedMatches || 0} played match${playedMatches !== 1 ? 'es' : ''}`;
         default:
@@ -121,18 +126,19 @@ function CompetitionProgress({
                                  totalMatches,
                                  notValidatedMatches,
                                  liveMatches,
+                                 withPadding,
                              }) {
     const currentRoundText = currentRound ? `, Round ${currentRound}` : '';
     const totalRoundsText = currentRound && totalRounds ? `of ${totalRounds}` : '';
     const progressText = `${prettyPrint(status)}${currentRoundText} ${totalRoundsText}`;
     const finishedMatches = playedMatches - notValidatedMatches;
-    const notYetValidatedMatches =  notValidatedMatches > 0 ? ` (${notValidatedMatches} not yet validated)` : '';
+    const notYetValidatedMatches = notValidatedMatches > 0 ? ` (${notValidatedMatches} not yet validated)` : '';
     const outOfTotalMatchesText = totalMatches ? ` out of ${totalMatches}` : '';
     const progressAdditionalText = playedMatches
         ? `Finished ${finishedMatches}${outOfTotalMatchesText} matches${notYetValidatedMatches}`
         : undefined;
     return (
-        <Box p="0.25rem">
+        <Box>
             <DelayedIconTooltip
                 p="0.4rem"
                 label={<ProgressLabel text={progressText} additionalText={progressAdditionalText}/>}
@@ -147,6 +153,7 @@ function CompetitionProgress({
                         liveMatches={liveMatches}
                         status={status}
                         format={format}
+                        withPadding={withPadding ? 'withPadding' : null}
                     />
                 </Box>
             </DelayedIconTooltip>

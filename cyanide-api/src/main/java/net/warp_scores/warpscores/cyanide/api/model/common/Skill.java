@@ -67,7 +67,7 @@ public enum Skill {
     Pass("Pass"),
     PileDriver("PileDriver", "Pile-Driver", "Pile driver"),
     PlagueRidden("PlagueRidden", "Plague ridden"),
-    PogoStick("PogoStick", "Pogo-Stick"),
+    PogoStick("PogoStick", "Pogo-Stick", "pogo stick"),
     PrehensileTail("PrehensileTail", "Prehensile tail"),
     Pro("Pro"),
     ProjectileVomit("ProjectileVomit", "Projectile Vomit"),
