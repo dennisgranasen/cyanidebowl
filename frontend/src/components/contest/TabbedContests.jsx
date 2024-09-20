@@ -56,6 +56,7 @@ function toTabData(contests, isSmallScreen) {
             ),
         });
     });
+    tabData.sort((tab1, tab2) => tab1.round - tab2.round);
     return tabData;
 }
 
