@@ -237,8 +237,10 @@ public class ContestInitializationService {
                 .filter(team -> !awayTeams.contains(team))
                 .findFirst();
 
-        homeTeams.add(0, byeTeam.get());
-        awayTeams.add(0, DUMMY_TEAM);
+        byeTeam.ifPresent(team -> {
+            homeTeams.add(0, byeTeam.get());
+            awayTeams.add(0, DUMMY_TEAM);
+        });
     }
 
     private Collection<Contest> generateScheduledContests(Competition competition,
