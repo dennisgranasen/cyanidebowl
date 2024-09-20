@@ -121,6 +121,7 @@ function CompetitionPage() {
                                         playedMatches={competition.playedMatches}
                                         notValidatedMatches={competition.notValidatedMatches}
                                         liveMatches={competition.liveMatches}
+                                        withPadding
                                     />
                                 }
                             />

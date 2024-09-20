@@ -48,6 +48,9 @@ maven-package:
     DOCKER_DRIVER: overlay2
   only:
     - /^dev$/
+  before_script:
+    - git config --global user.email "${GIT_USER_EMAIL:-$GITLAB_USER_EMAIL}"
+    - git config --global user.name "${GIT_USER_NAME:-$GITLAB_USER_NAME}"
   script: "mvn -DskipTests=true install"
 
 maven-deploy-snapshot:
@@ -83,8 +86,10 @@ maven-release:
   only:
     - /^main$/
   before_script:
-    - git config --global user.email "no-reply@warp-scores.net"
-    - git config --global user.name "Gitlab-Pipeline"
+    - ssh-keyscan gitlab.com > /tmp/ssh_known_hosts
+    - GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/tmp/ssh_known_hosts"
+    - git config --global user.email "${GIT_USER_EMAIL:-$GITLAB_USER_EMAIL}"
+    - git config --global user.name "${GIT_USER_NAME:-$GITLAB_USER_NAME}"
   script:
     - git checkout -B "$CI_BUILD_REF_NAME"
     - mvn -DskipTests=true release:prepare --batch-mode --settings ci_settings.xml

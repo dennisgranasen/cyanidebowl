@@ -117,8 +117,10 @@ public class CompetitionService {
         }
         competition.setTotalRounds(totalRounds);
         int byes = players - teams;
-        competition.setTotalMatches(teams - 1 - byes);
+        int totalMatches = teams - 1 - byes;
+        competition.setTotalMatches(totalMatches);
         List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid());
+        competition.setCurrentRound(contests.stream().mapToInt(Contest::getRound).max().orElse(0));
         initializeMatchCount(competition, contests);
     }
 

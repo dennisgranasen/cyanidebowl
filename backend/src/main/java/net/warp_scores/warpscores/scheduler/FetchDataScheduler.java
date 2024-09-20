@@ -35,7 +35,6 @@ import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
-import static net.warp_scores.warpscores.model.CompetitionStatus.Finished;
 import static net.warp_scores.warpscores.model.CompetitionStatus.InProgress;
 
 @Slf4j
@@ -184,7 +183,7 @@ public class FetchDataScheduler {
             return;
         }
 
-        List<Competition> competitions = competitionRepository.findByStatusIn(List.of(InProgress, Finished));
+        List<Competition> competitions = competitionRepository.findByStatusIn(List.of(InProgress));
         log.info("Will load teams for {} competitions in progress.",
                 competitions.size());
         List<Team> teams = competitions

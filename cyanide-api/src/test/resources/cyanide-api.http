@@ -35,7 +35,7 @@ GET https://web.cyanide-studio.com/ws/bb3/competitions/?league_id=c9c30e36-5ca5-
 # Competition ##################################################################
 
 ### Get coaches
-GET https://web.cyanide-studio.com/ws/bb3/coaches/?competition=DBBL S1 Division 1&limit=10&platform=pc&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/coaches/?league_uuid=94dd6ae4-83fa-11ee-b910-02000090a64f&limit=100&platform=pc&key={{apiKey}}
 
 ### Get teams
 GET https://web.cyanide-studio.com/ws/bb3/teams/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=e8848221-a04e-11ee-a745-02000090a64f&platform=pc&key={{apiKey}}&order=finished

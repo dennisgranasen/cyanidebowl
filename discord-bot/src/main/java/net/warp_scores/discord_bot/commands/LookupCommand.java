@@ -55,9 +55,9 @@ public class LookupCommand implements SlashCommand {
             messageContent = String.format(":cry: Nothing found for `%s`...", leagueName.orElse(""));
         } else {
             StringBuilder sb = new StringBuilder();
-            sb.append(String.format(":partying_face: Found %s league%s for '%s'...", leagues.size(),
+            sb.append(String.format("### :partying_face: Found %s league%s for '%s'...", leagues.size(),
                     leagues.size() > 1 ? "s" : "", leagueName.orElse(""))).append("\n");
-            leagues.forEach(league -> sb.append(String.format("**%s**: `%s`", league.getName(), league.getId())));
+            leagues.forEach(league -> sb.append(String.format("- **%s**: `%s`\n", league.getName(), league.getId())));
             messageContent = sb.toString();
         }
         return warpScoresDiscordMessageBuilder
