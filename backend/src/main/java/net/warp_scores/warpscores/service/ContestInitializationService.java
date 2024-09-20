@@ -59,7 +59,7 @@ public class ContestInitializationService {
             totalRounds++;
         }
         int byes = players - teamCount;
-        int totalMatches = teamCount - 1 - byes;
+        int totalMatches = Integer.max(teamCount - 1 - byes, contests.size());
         List<Contest> initializedContests = new ArrayList<>(contests);
         initializedContests.addAll(createEmptyFutureContests(contests, totalMatches, totalRounds));
 
