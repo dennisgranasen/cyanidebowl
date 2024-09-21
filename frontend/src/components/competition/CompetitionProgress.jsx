@@ -1,9 +1,22 @@
 import React from 'react';
-import {Box, GridItem, Progress, SimpleGrid, VStack} from '@chakra-ui/react';
+import {Box, Flex, GridItem, Progress, SimpleGrid, VStack} from '@chakra-ui/react';
 import {CalendarIcon, QuestionIcon} from '@chakra-ui/icons';
 import {FaFlagCheckered} from 'react-icons/fa6';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
 import prettyPrint from '../../util/PrettyPrint';
+
+function extractRoundData(currentRound, round, finishedMatches, roundLength, status) {
+    let progress = 0;
+    let active = false;
+    if (currentRound > round + 1) {
+        progress = 100;
+    } else if (currentRound === round + 1) {
+        progress =
+            finishedMatches >= roundLength * currentRound ? 100 : (100 * (finishedMatches % roundLength)) / roundLength;
+        active = status === 'InProgress';
+    }
+    return {progress, active};
+}
 
 function RoundRobinProgresses({
                                   currentRound,
@@ -21,15 +34,7 @@ function RoundRobinProgresses({
     const live = liveMatches > 0;
     const roundProgresses = [];
     for (let round = 0; round < totalRounds; round += 1) {
-        let progress = 0;
-        let active = false;
-        if (currentRound > round + 1) {
-            progress = 100;
-        } else if (currentRound === round + 1) {
-            progress =
-                finishedMatches >= roundLength * currentRound ? 100 : (100 * (finishedMatches % roundLength)) / roundLength;
-            active = status === 'InProgress';
-        }
+        const {progress, active} = extractRoundData(currentRound, round, finishedMatches, roundLength, status);
         roundProgresses.push({name: `round${round + 1}`, progress, active});
     }
     return (
@@ -48,6 +53,42 @@ function RoundRobinProgresses({
     );
 }
 
+function KnockoutProgresses({
+                                currentRound,
+                                totalRounds,
+                                liveMatches,
+                                playedMatches,
+                                totalMatches,
+                                notValidatedMatches,
+                                status,
+                                withPadding,
+                            }) {
+    const participants = totalMatches + 1;
+    const finishedMatches = playedMatches - notValidatedMatches;
+    const needsValidation = notValidatedMatches - liveMatches > 0;
+    const live = liveMatches > 0;
+    const roundProgresses = [];
+    for (let round = 0; round < totalRounds; round += 1) {
+        const roundLength = participants / (2 * (round + 1));
+        const {progress, active} = extractRoundData(currentRound, round, finishedMatches, roundLength, status);
+        const width = Math.max(Math.floor(roundLength / totalMatches * 95), 5);
+        roundProgresses.push({name: `round${round + 1}`, progress, active, width});
+    }
+    return (
+        <Flex paddingTop={withPadding ? '0.25rem' : null}>
+            {roundProgresses.map(({name, progress, active, width}, index) => (
+                <Box key={name} width={`${width}%`} padding="0" paddingLeft={index > 0 ? '0.25rem' : ''}>
+                    <Progress value={progress}
+                              isIndeterminate={active && live}
+                              hasStripe={active}
+                              variant={needsValidation ? 'validationNeeded' : null}
+                    />
+                </Box>
+            ))}
+        </Flex>
+    );
+}
+
 function WissenProgresses({playedMatches, liveMatches, notValidatedMatches, totalMatches, status, withPadding}) {
     const finishedMatches = playedMatches - notValidatedMatches;
     const needsValidation = notValidatedMatches - liveMatches > 0;
@@ -57,8 +98,11 @@ function WissenProgresses({playedMatches, liveMatches, notValidatedMatches, tota
         finishedMatches > 0 && finishedMatches === totalMatches
             ? 100
             : (100 * (finishedMatches % totalMatches)) / totalMatches;
-    return <Progress paddingTop={withPadding ? '0.25rem' : null} value={progress} isIndeterminate={live}
-                     hasStripe={status === 'InProgress'} colorScheme={color}/>;
+    return <Box paddingTop={withPadding ? '0.25rem' : null}>
+        <Progress value={progress} isIndeterminate={live}
+                  hasStripe={status === 'InProgress'}
+                  colorScheme={color}/>
+    </Box>;
 }
 
 function Progresses({
@@ -88,6 +132,19 @@ function Progresses({
                     withPadding={withPadding ? 'withPadding' : null}
                 />
             );
+        case 'Knockout':
+            return (
+                <KnockoutProgresses
+                    currentRound={currentRound}
+                    totalRounds={totalRounds}
+                    totalMatches={totalMatches}
+                    playedMatches={playedMatches}
+                    notValidatedMatches={notValidatedMatches}
+                    liveMatches={liveMatches}
+                    status={status}
+                    withPadding={withPadding ? 'withPadding' : null}
+                />
+            );
         case 'Wissen':
             return (
                 <WissenProgresses
@@ -99,8 +156,6 @@ function Progresses({
                     withPadding={withPadding ? 'withPadding' : null}
                 />
             );
-        case 'Knockout':
-            return `Round ${currentRound} of ${totalRounds}`;
         case 'Ladder':
             return `${playedMatches || 0} played match${playedMatches !== 1 ? 'es' : ''}`;
         default:

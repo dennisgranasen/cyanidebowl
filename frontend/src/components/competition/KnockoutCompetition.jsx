@@ -48,34 +48,6 @@ function toParticipants(opponents, index, winner) {
     return participants;
 }
 
-function getNextMatchId(teamId, currentRound, teamsCount, totalMatches, currentMatchIndex, contests) {
-    logger.debug('Trying to get next match for teamId: %s, currentRound: %s, currentMatchIndex: %s', teamId, currentRound, currentMatchIndex);
-    let nextMatch = null;
-    let nextMatchIndex = undefined;
-    let previousMatchesCount = 0;
-    for (let i = 0; i < currentRound; i++) {
-        previousMatchesCount += teamsCount / (2 ^ i);
-    }
-
-    if (contests) {
-        contests.forEach((contest, index) => {
-            if (contest.round === currentRound + 1) {
-                if (contest.status === 'Calculated') {
-                    if (currentMatchIndex - Math.ceil(previousMatchesCount / 2) === 0) {
-                        nextMatch = contest;
-                        nextMatchIndex = index;
-                    }
-                } else if (contest.opponents.map((opponent) => opponent.id).includes(teamId)) {
-                    nextMatch = contest;
-                    nextMatchIndex = index;
-                }
-            }
-        });
-    }
-    logger.debug('Next match: #%s, %o', nextMatchIndex, nextMatch);
-    return nextMatch?.contestUuid;
-}
-
 function toBracketMatch(contest) {
     return {
         id: contest?.contestUuid,
