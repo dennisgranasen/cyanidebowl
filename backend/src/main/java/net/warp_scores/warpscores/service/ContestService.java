@@ -2,13 +2,14 @@ package net.warp_scores.warpscores.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.warp_scores.warpscores.model.MatchStatus;
 import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.model.Competition;
+import net.warp_scores.warpscores.model.CompetitionFormat;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.Match;
+import net.warp_scores.warpscores.model.MatchStatus;
 import net.warp_scores.warpscores.model.Team;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -34,8 +35,11 @@ public class ContestService {
         List<Contest> contests = contestRepository.findByCompetitionId(competitionUuid);
         contests.stream().forEach(this::loadMatchInto);
 
+        if (CompetitionFormat.RoundRobin.equals(competition.map(Competition::getFormat).orElse(null))) {
+            log.warn("Generating future rounds for RoundRobin competition currently disabled.");
+        }
         List<Contest> initializedContests = contestInitializationService.initializeContestsScheduleForFormat(
-                competition, teams, contests);
+                competition, teams, contests, false);
         return initializedContests;
     }
 
