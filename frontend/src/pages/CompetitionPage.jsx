@@ -48,7 +48,7 @@ function CompetitionPage() {
                 .then((data) => {
                     setCompetition(data);
                 })
-                .catch((reason) => setError({type: 'error', message: reason.toLocaleString(config.locale)}))
+                .catch((reason) => setError({type: 'error', message: reason.toLocaleString()}))
                 .finally(() => setCompetitionLoading(false));
         };
 
@@ -63,7 +63,7 @@ function CompetitionPage() {
                     data.sort((compA, compB) => comparators.compareAsDates(compA.matchDate, compB.matchDate));
                     setContests(data);
                 })
-                .catch((reason) => setError({type: 'error', message: reason.toLocaleString(config.locale)}))
+                .catch((reason) => setError({type: 'error', message: reason.toLocaleString()}))
                 .finally(() => setContestsLoading(false));
         };
         fetchContests();
@@ -77,7 +77,7 @@ function CompetitionPage() {
                     data.sort((rankA, rankB) => rankA.rank - rankB.rank);
                     setRanks(data);
                 })
-                .catch((reason) => setError({type: 'error', message: reason.toLocaleString(config.locale)}))
+                .catch((reason) => setError({type: 'error', message: reason.toLocaleString()}))
                 .finally(() => setRanksLoading(false));
         };
         if (competition) {

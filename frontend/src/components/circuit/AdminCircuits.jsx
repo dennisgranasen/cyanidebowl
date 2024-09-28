@@ -16,11 +16,10 @@ import {
     VStack,
 } from '@chakra-ui/react';
 import {Field, Form, Formik} from 'formik';
-import WarpScoresApiService from '../WarpScoresApiService';
-import CircuitCard from './circuit/CircuitCard';
-import LoadingOrErrorWrapper from './common/LoadingOrErrorWrapper';
-import config from '../config';
-import {useAuth0WithUserPermissions} from "../hooks/useAuth0WithUserPermissions";
+import WarpScoresApiService from '../../WarpScoresApiService';
+import CircuitCard from './CircuitCard';
+import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
+import {useAuth0WithUserPermissions} from "../../hooks/useAuth0WithUserPermissions";
 
 function AdminCircuits() {
     const {
@@ -30,7 +29,7 @@ function AdminCircuits() {
         getAccessTokenWithPopup
     } = useAuth0WithUserPermissions();
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState();
+    const [error, setError] = useState({});
     const [circuits, setCircuits] = useState([]);
 
     const validateCircuitName = (value) => {
@@ -60,7 +59,7 @@ function AdminCircuits() {
                 setCircuits(data);
             })
             .catch((reason) => {
-                setError({type: 'error', message: reason.toLocaleString(config.locale)});
+                setError({type: 'error', message: reason.toLocaleString()});
             })
             .finally(() => {
                 setLoading(false);

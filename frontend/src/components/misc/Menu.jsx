@@ -75,7 +75,7 @@ function Menu() {
                 setStatus(data);
             })
             .catch((reason) => {
-                setStatus(reason.toLocaleString(config.locale));
+                setStatus(reason.toLocaleString());
             });
     };
 

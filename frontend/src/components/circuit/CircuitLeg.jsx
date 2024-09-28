@@ -19,7 +19,7 @@ function CircuitLeg({ circuitLeg }) {
         setCompetition(data);
       })
       .catch((reason) => {
-        setError({ type: 'error', message: reason.toLocaleString(config.locale) });
+        setError({ type: 'error', message: reason.toLocaleString() });
       });
   };
 
@@ -29,7 +29,7 @@ function CircuitLeg({ circuitLeg }) {
         setCompetition(data);
       })
       .catch((reason) => {
-        setError({ type: 'error', message: reason.toLocaleString(config.locale) });
+        setError({ type: 'error', message: reason.toLocaleString() });
       });
   };
 

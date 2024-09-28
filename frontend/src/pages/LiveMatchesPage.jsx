@@ -20,7 +20,7 @@ function LiveMatchesPage() {
         })
         .then(() => setLoading(false))
         .catch((reason) => {
-          setError({ type: 'error', message: reason.toLocaleString(config.locale) });
+          setError({ type: 'error', message: reason.toLocaleString() });
         });
     };
     fetchLeague();

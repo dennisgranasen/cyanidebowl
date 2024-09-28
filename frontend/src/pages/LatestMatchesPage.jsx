@@ -20,7 +20,7 @@ function LatestMatchesPage() {
                     setLeague(data);
                 })
                 .catch((reason) => {
-                    setError({type: 'error', message: reason.toLocaleString(config.locale)});
+                    setError({type: 'error', message: reason.toLocaleString()});
                 })
                 .finally(() => setLoading(false))
             ;
