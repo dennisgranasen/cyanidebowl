@@ -37,6 +37,11 @@ public class ContestInitializationService {
 
     public List<Contest> initializeContestsScheduleForFormat(Optional<Competition> competition, List<Team> teams,
             List<Contest> contests) {
+        return initializeContestsScheduleForFormat(competition, teams, contests, true);
+    }
+
+    public List<Contest> initializeContestsScheduleForFormat(Optional<Competition> competition, List<Team> teams,
+            List<Contest> contests, boolean generateFutureRoundRobinRounds) {
 
         Optional<CompetitionFormat> competitionFormat = competition.map(Competition::getFormat);
         if (teams.isEmpty() || competitionFormat.isEmpty()) {
@@ -44,9 +49,11 @@ public class ContestInitializationService {
         }
 
         return switch (competitionFormat.get()) {
-            case RoundRobin -> initializeRoundRobinContests(unmodifiableList(contests), competition, teams);
+            case RoundRobin -> generateFutureRoundRobinRounds ?
+                    initializeRoundRobinContests(unmodifiableList(contests), competition, teams) :
+                    contests;
             case Knockout -> initializeKnockoutContests(unmodifiableList(contests), teams);
-            default -> contests;
+            case Wissen, Ladder -> contests;
         };
     }
 
@@ -175,12 +182,6 @@ public class ContestInitializationService {
         contest.setOpponents(new ArrayList<>());
         contest.setStatus(MatchStatus.Calculated);
         return contest;
-    }
-
-    private Team emptyTeam() {
-        Team team = new Team();
-        team.setName("tbd");
-        return team;
     }
 
     private List<Contest> initializeRoundRobinContests(List<Contest> contests,
