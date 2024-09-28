@@ -16,6 +16,8 @@ import LeaguePage from './pages/LeaguePage';
 import config from './config';
 import MarkdownPage from "./pages/MarkdownPage";
 import {warpScoresTheme} from "./theme/WarpScoresTheme";
+import CircuitPage from "./pages/CircuitPage";
+import AdminCircuitLegPage from "./pages/AdminCircuitLegPage";
 
 const {isProduction} = config;
 

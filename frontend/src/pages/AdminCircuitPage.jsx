@@ -96,7 +96,7 @@ function AdminCircuitPage() {
         else res.circuitLegs.sort(compareLegs);
         setCircuit(res);
       })
-      .catch((reason) => setError({ type: 'error', message: reason.toLocaleString(config.locale) }))
+      .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
       .finally(setLoading(false));
   };
 

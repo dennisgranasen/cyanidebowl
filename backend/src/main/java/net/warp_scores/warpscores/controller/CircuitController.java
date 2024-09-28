@@ -61,7 +61,7 @@ public class CircuitController {
 
     @PostMapping("/circuits/{circuitId}/legs")
     @PreAuthorize(AUTHORITY_WRITE_LEAGUE_ADMIN) // ✨
-    public ResponseEntity<Circuit> addCircuitLeg(@PathVariable(name = "circuitId") Integer circuitId,
+    public ResponseEntity<Circuit> addCircuitLeg(@PathVariable(name = "circuitId") Long circuitId,
             @RequestBody CircuitLeg circuitLeg) {
         try {
             Optional<Circuit> circuit = circuitService.load(circuitId);

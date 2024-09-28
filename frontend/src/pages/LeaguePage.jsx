@@ -27,7 +27,7 @@ function LeaguePage() {
         })
         .then(() => setLoading(false))
         .catch((reason) => {
-          setError({ type: 'error', message: reason.toLocaleString(config.locale) });
+          setError({ type: 'error', message: reason.toLocaleString() });
         });
     };
     fetchLeague();
@@ -47,7 +47,7 @@ function LeaguePage() {
         .then(setCompetitions)
         .then(() => setLoading(false))
         .catch((reason) => {
-          setError({ type: 'error', message: reason.toLocaleString(config.locale) });
+          setError({ type: 'error', message: reason.toLocaleString() });
         });
     };
     const leagueId = league && league !== null ? league.uuid : null;

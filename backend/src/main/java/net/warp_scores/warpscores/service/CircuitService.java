@@ -2,14 +2,14 @@ package net.warp_scores.warpscores.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.warp_scores.warpscores.cyanide.api.model.common.CircuitLegType;
-import net.warp_scores.warpscores.cyanide.api.model.common.GameType;
-import net.warp_scores.warpscores.cyanide.api.model.common.Platform;
 import net.warp_scores.warpscores.domain.SequenceGenerator;
 import net.warp_scores.warpscores.domain.persistence.CircuitRepository;
 import net.warp_scores.warpscores.model.Circuit;
 import net.warp_scores.warpscores.model.CircuitLeg;
+import net.warp_scores.warpscores.model.CircuitLegType;
+import net.warp_scores.warpscores.model.GameType;
 import net.warp_scores.warpscores.model.League;
+import net.warp_scores.warpscores.model.Platform;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
