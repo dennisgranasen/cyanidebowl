@@ -29,7 +29,7 @@ public class Contest implements Comparable {
     private Integer round;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date matchDate;
-    private String matchId;
+    private String gameId;
     private UUID matchUuid;
     private Integer live;
     private List<Team> opponents;

@@ -83,6 +83,17 @@ public class ContestInitializationServiceTest {
     }
 
     @Test
+    public void roundRobinCompetitionContestsAreGeneratedForGalentio() {
+        givenCompetition(CompetitionFormat.RoundRobin);
+        givenTeams("Olgrot", "Frano Selak", "Lokistar", "Cam", "munkeychunks", "Maron", "Khanthiilas", "Jim Johnson", "Head Coach");
+        givenSeedContests(new String[]{"Frano Selak", "Lokistar", "Cam", "munkeychunks", "Maron", "Khanthiilas", "Jim Johnson", "Head Coach"});
+
+        whenContestsInitialized();
+
+        initializedContests.forEach(contest -> System.out.println(contest));
+    }
+
+    @Test
     public void generationForWissenDoesNothing() {
         givenCompetition(CompetitionFormat.Wissen);
         givenTeams();

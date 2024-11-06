@@ -35,11 +35,8 @@ public class ContestService {
         List<Contest> contests = contestRepository.findByCompetitionId(competitionUuid);
         contests.stream().forEach(this::loadMatchInto);
 
-        if (CompetitionFormat.RoundRobin.equals(competition.map(Competition::getFormat).orElse(null))) {
-            log.warn("Generating future rounds for RoundRobin competition currently disabled.");
-        }
         List<Contest> initializedContests = contestInitializationService.initializeContestsScheduleForFormat(
-                competition, teams, contests, false);
+                competition, teams, contests);
         return initializedContests;
     }
 

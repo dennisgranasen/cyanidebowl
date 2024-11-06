@@ -1,7 +1,7 @@
 {
   "size": [
-    1615,
-    14277,
+    1690,
+    15183,
     176,
     5
   ],
@@ -20,6 +20,8 @@
     "We kindly ask for a controlled usage of it on your side. Meaning no abuse nor excessive usage of it.",
     "Please cache the data\/results on your side and do not make all the requests at the same time.",
     "Also note that we apply daily quotas on your usage. Any request exeeding those quotas will fail.",
+    "",
+    "Your current quotas: 1000 requests per hour \/ 10000 requests per day",
     "",
     "We expect from you that",
     "- you communicate to us the addresses of the websites, discord channels, tools, apps or",
@@ -96,6 +98,7 @@
         "exact": "Exact league name match 0|1"
       },
       "history": [
+        "2024\/10\/25 : Upcoming_matches key deprecated. BB3:Optimization, 'round' key deprecated soon and splitted into 'competition_round' and 'contest_round', 'status' and 'format' keys depprecated soon, use 'contest_status' and 'competition_format'",
         "2024\/02\/06 : (BB3) Contests status: update enumeration: Now having Played AND Validated",
         "2024\/02\/06 : 'upcoming_matches' key will be DEPRECATED. Please start to use 'contests'",
         "2024\/01\/30 : (BB3) Fix contests status",
@@ -142,9 +145,22 @@
         "league|league_id": "League ID (default = Official League)",
         "competition|competition_name": "Competition name (default : Open Ladder)",
         "competition|competition_id": "Competition ID (default : Open Ladder)",
-        "ladder_size|size|limit": "Ladder size [0,+oo["
+        "ladder_size|size|limit": "Ladder size [0,+oo[",
+        "tv_min|tvmin": "minimum team value desired",
+        "tv_max|tvmax": "maximum team value desired",
+        "concede_min|concedemin": "minimum concede rate %",
+        "concede_max|concedemax": "maximum concede rate %",
+        "match_min|matchmin": "minimum number of match",
+        "match_max|matchmax": "maximum number of match",
+        "winrate_min|winratemin": "minimum winrate %",
+        "winrate_max|winratemax": "maximum winrate %",
+        "lossrate_min|lossratemin": "minimum lossrate %",
+        "lossrate_max|lossratemax": "maximum lossrate %",
+        "drawrate_min|drawratemin": "minimum drawrate %",
+        "drawrate_max|drawratemax": "maximum drawrate %"
       },
       "history": [
+        "2024\/08\/22 : Add params for BB3",
         "2022\/01\/31 : BB3 Compatibility",
         "2018\/06\/04 : Convert race field to race + race_id fields",
         "2018\/06\/04 : Adding v2. v1 still accessible via v=1 URL parameter",
@@ -222,6 +238,7 @@
         "rosters": "Show rosters 0|1 (Default: 1)"
       },
       "history": [
+        "2024\/10\/02 : Fix Player aggregated stats if only 1 stat",
         "2023\/07\/25 : Fix away team KO and injuries stats",
         "2023\/05\/31 : BB3 Compatibility",
         "2018\/04\/30 : Add match contest round info",
@@ -451,5 +468,12 @@
         "2022\/04\/15 : Live race leaderboard first draft"
       ]
     }
-  ]
+  ],
+  "meta": {
+    "user": "DBBL - warp-scores.net (Christian Wagner)",
+    "method": "ws",
+    "format": "json",
+    "services": "https:\/\/web.cyanide-studio.com\/ws\/?key={{apiKey}}&bb=3"
+  },
+  "promotional_content": false
 }
