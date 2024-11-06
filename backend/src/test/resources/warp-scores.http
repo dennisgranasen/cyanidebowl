@@ -62,37 +62,85 @@ Authorization: Bearer {{auth_token}}
 GET {{backendBaseUrl}}/userPermissions
 
 ### Create an admin contest
-POST {{backendBaseUrl}}/contests/competition/9416a62b-194f-11ef-895c-bc24112ec32e
+POST {{backendBaseUrl}}/contests/competition/a2122195-38af-11ef-9e7e-bc24112ec32e
 Content-Type: application/json
 Authorization: Bearer {{auth_token}}
 
 {
-  "format": "Wissen",
+  "format": "RoundRobin",
   "leagueId": "94dd6ae4-83fa-11ee-b910-02000090a64f",
   "leagueName": "DBBL  BB3",
-  "competitionId": "9416a62b-194f-11ef-895c-bc24112ec32e",
-  "competitionName": "DBBL 24WorldCupQualifiers",
+  "competitionId": "a2122195-38af-11ef-9e7e-bc24112ec32e",
+  "competitionName": "DBBL S2 L3 Div3",
   "stadium": "Generic_Grandstands",
   "type": "single_match",
   "status": "Validated",
-  "round": 6,
+  "round": 7,
+  "matchDate": "2024-09-22 10:51:12",
+  "matchId": "9527efd4-78d0-11ef-be7b-bc24112ec32e",
+  "matchUuid": "9527efd4-78d0-11ef-be7b-bc24112ec32e",
+  "live": 0,
   "opponents": [
     {
-      "id": "6076abb3-1b8c-11ef-895c-bc24112ec32e",
+      "id": "cda04f4f-37d4-11ef-9e7e-bc24112ec32e",
       "created": null,
-      "name": "[WCO] Typisch Deutsch",
-      "logo": "Human_01",
+      "name": "[DBBL] Tea Time Troopers",
+      "logo": "ImperialNobility_07",
       "race": "human",
-      "motto": "",
-      "value": 1300,
+      "motto": "Time for a proper brew",
+      "value": 1265,
       "cash": null,
       "rerolls": null,
       "apothecary": null,
       "dedicatedFans": null,
       "cheerleaders": null,
       "coachAssistants": null,
-      "coachId": "d7a3f985-b3a6-11ed-8d38-020000a4d571",
-      "coachName": "Eliphas II",
+      "coachId": "ac9ca25c-b48f-11ed-8b9e-0200005f7675",
+      "coachName": "Bazdi",
+      "leagueIds": null,
+      "leagueName": null,
+      "competitionIds": null,
+      "competitionName": null,
+      "dateLastMatch": null,
+      "score": 0,
+      "rank": null,
+      "death": null,
+      "players": null,
+      "inflictedpasses": null,
+      "inflictedcatches": null,
+      "inflictedinterceptions": null,
+      "inflictedtouchdowns": null,
+      "inflictedcasualties": null,
+      "inflictedtackles": null,
+      "inflictedko": null,
+      "inflictedinjuries": null,
+      "inflicteddead": null,
+      "inflictedmetersrunning": null,
+      "inflictedmeterspassing": null,
+      "inflictedpushouts": null,
+      "sustainedexpulsions": null,
+      "sustainedtouchdowns": null,
+      "sustainedcasualties": null,
+      "sustainedko": null,
+      "sustainedinjuries": null,
+      "sustaineddead": null
+    },
+    {
+      "id": "51de5ff4-3323-11ef-9e7e-bc24112ec32e",
+      "created": null,
+      "name": "[DBBL] Death Watch",
+      "logo": "ChaosChosen_18",
+      "race": "chaosChosen",
+      "motto": "",
+      "value": 1345,
+      "cash": null,
+      "rerolls": null,
+      "apothecary": null,
+      "dedicatedFans": null,
+      "cheerleaders": null,
+      "coachAssistants": null,
+      "coachId": "6f76938b-b142-11ed-8b9e-0200005f7675",
+      "coachName": "Oddball",
       "leagueIds": null,
       "leagueName": null,
       "competitionIds": null,
@@ -120,57 +168,13 @@ Authorization: Bearer {{auth_token}}
       "sustainedko": null,
       "sustainedinjuries": null,
       "sustaineddead": null
-    },
-    {
-      "id": "cf9d3148-21cc-11ef-895c-bc24112ec32e",
-      "created": null,
-      "name": "[WCQ] Lets get Dangerous",
-      "logo": "Human_18",
-      "race": "elvenUnion",
-      "motto": "",
-      "value": 1330,
-      "cash": null,
-      "rerolls": null,
-      "apothecary": null,
-      "dedicatedFans": null,
-      "cheerleaders": null,
-      "coachAssistants": null,
-      "coachId": "444729dc-b1d6-11ed-b1d4-020000a4d571",
-      "coachName": "Kaneeda",
-      "leagueIds": null,
-      "leagueName": null,
-      "competitionIds": null,
-      "competitionName": null,
-      "dateLastMatch": null,
-      "score": 2,
-      "rank": null,
-      "death": null,
-      "players": null,
-      "inflictedpasses": null,
-      "inflictedcatches": null,
-      "inflictedinterceptions": null,
-      "inflictedtouchdowns": null,
-      "inflictedcasualties": null,
-      "inflictedtackles": null,
-      "inflictedko": null,
-      "inflictedinjuries": null,
-      "inflicteddead": null,
-      "inflictedmetersrunning": null,
-      "inflictedmeterspassing": null,
-      "inflictedpushouts": null,
-      "sustainedexpulsions": null,
-      "sustainedtouchdowns": null,
-      "sustainedcasualties": null,
-      "sustainedko": null,
-      "sustainedinjuries": null,
-      "sustaineddead": null
     }
   ],
   "winner": {
     "index": 1,
     "coach": {
-      "id": "444729dc-b1d6-11ed-b1d4-020000a4d571",
-      "name": "Kaneeda",
+      "id": "6f76938b-b142-11ed-8b9e-0200005f7675",
+      "name": "Oddball",
       "twitch": null,
       "youtube": null,
       "country": null,
@@ -178,42 +182,43 @@ Authorization: Bearer {{auth_token}}
       "match_validation": 1
     },
     "team": {
-      "id": "cf9d3148-21cc-11ef-895c-bc24112ec32e",
-      "name": "[WCQ] Lets get Dangerous",
-      "logo": "Human_18",
-      "value": "1330.0000",
+      "id": "51de5ff4-3323-11ef-9e7e-bc24112ec32e",
+      "name": "[DBBL] Death Watch",
+      "logo": "ChaosChosen_18",
+      "value": "1345.0000",
       "motto": "",
-      "score": 2,
+      "score": 1,
       "death": null,
-      "race": "elvenUnion"
+      "race": "chaosChosen"
     }
   },
-  "adminResult": true,
+  "adminResult": false,
   "match": {
-    "competitionId": "9416a62b-194f-11ef-895c-bc24112ec32e",
-    "competitionName": "DBBL 24WorldCupQualifiers",
-    "started": "2024-08-23 10:59:09",
-    "finished": "2024-08-23 12:10:08",
+    "matchId": "9527efd4-78d0-11ef-be7b-bc24112ec32e",
+    "competitionId": "48c800b9-7696-11ef-be7b-bc24112ec32e",
+    "competitionName": "DBBL S2 L3 Div3 ST7 S1",
+    "started": "2024-09-22 10:51:12",
+    "finished": "2024-09-22 12:03:38",
     "leagueId": "94dd6ae4-83fa-11ee-b910-02000090a64f",
     "leagueName": "DBBL  BB3",
     "stadium": null,
-    "round": 6,
+    "round": 1,
     "coaches": [
       {
-        "id": "d7a3f985-b3a6-11ed-8d38-020000a4d571",
-        "name": "Eliphas II"
+        "id": "ac9ca25c-b48f-11ed-8b9e-0200005f7675",
+        "name": "Bazdi"
       },
       {
-        "id": "444729dc-b1d6-11ed-b1d4-020000a4d571",
-        "name": "Kaneeda"
+        "id": "6f76938b-b142-11ed-8b9e-0200005f7675",
+        "name": "Oddball"
       }
     ],
     "teams": [
       {
-        "id": "6076abb3-1b8c-11ef-895c-bc24112ec32e",
+        "id": "cda04f4f-37d4-11ef-9e7e-bc24112ec32e",
         "created": null,
-        "name": "[WCO] Typisch Deutsch",
-        "logo": "Logo_Human_01",
+        "name": "[DBBL] Tea Time Troopers",
+        "logo": "Logo_ImperialNobility_07",
         "race": "human",
         "motto": null,
         "value": 1300,
@@ -230,17 +235,348 @@ Authorization: Bearer {{auth_token}}
         "competitionIds": null,
         "competitionName": null,
         "dateLastMatch": null,
-        "score": 1,
+        "score": 0,
         "rank": null,
         "death": null,
         "players": [
           {
-            "id": "7209bb4e-1b8c-11ef-895c-bc24112ec32e",
-            "name": "Max Mustermann",
+            "id": "fba99f6c-37d4-11ef-9e7e-bc24112ec32e",
+            "name": "Barry 'To You' Chuckle",
             "raceId": null,
             "number": 1,
             "value": null,
+            "xp": 3,
+            "xpGain": 0,
+            "level": 2,
+            "attributes": {
+              "pa": 2,
+              "ma": 6,
+              "st": 3,
+              "ag": 3,
+              "av": 9
+            },
+            "extendedAttributes": {
+              "defaultAttributes": {
+                "pa": 2,
+                "ma": 6,
+                "st": 3,
+                "ag": 3,
+                "av": 9
+              },
+              "bonus": [
+                {
+                  "ma": 0
+                },
+                {
+                  "st": 0
+                },
+                {
+                  "ag": 0
+                },
+                {
+                  "pa": 0
+                },
+                {
+                  "av": 0
+                }
+              ],
+              "malus": [
+                {
+                  "ma": 0
+                },
+                {
+                  "st": 0
+                },
+                {
+                  "ag": 0
+                },
+                {
+                  "pa": 0
+                },
+                {
+                  "av": 0
+                }
+              ]
+            },
+            "type": "human_humanThrower",
+            "casualtiesStateIds": null,
+            "casualtiesStates": null,
+            "suspendedNextMatch": null,
+            "skills": null,
+            "matchplayed": 1
+          },
+          {
+            "id": "fd09acd7-37d4-11ef-9e7e-bc24112ec32e",
+            "name": "Geoffroi 'Born killer'",
+            "raceId": null,
+            "number": 2,
+            "value": null,
             "xp": 0,
+            "xpGain": 0,
+            "level": 1,
+            "attributes": {
+              "pa": 4,
+              "ma": 7,
+              "st": 3,
+              "ag": 3,
+              "av": 9
+            },
+            "extendedAttributes": {
+              "defaultAttributes": {
+                "pa": 4,
+                "ma": 7,
+                "st": 3,
+                "ag": 3,
+                "av": 9
+              },
+              "bonus": [
+                {
+                  "ma": 0
+                },
+                {
+                  "st": 0
+                },
+                {
+                  "ag": 0
+                },
+                {
+                  "pa": 0
+                },
+                {
+                  "av": 0
+                }
+              ],
+              "malus": [
+                {
+                  "ma": 0
+                },
+                {
+                  "st": 0
+                },
+                {
+                  "ag": 0
+                },
+                {
+                  "pa": 0
+                },
+                {
+                  "av": 0
+                }
+              ]
+            },
+            "type": "human_humanBlitzer",
+            "casualtiesStateIds": null,
+            "casualtiesStates": null,
+            "suspendedNextMatch": null,
+            "skills": null,
+            "matchplayed": 1
+          },
+          {
+            "id": "b1241e12-3868-11ef-9e7e-bc24112ec32e",
+            "name": "Merry 'Fatal melody'",
+            "raceId": null,
+            "number": 3,
+            "value": null,
+            "xp": 3,
+            "xpGain": 0,
+            "level": 2,
+            "attributes": {
+              "pa": 4,
+              "ma": 7,
+              "st": 3,
+              "ag": 3,
+              "av": 9
+            },
+            "extendedAttributes": {
+              "defaultAttributes": {
+                "pa": 4,
+                "ma": 7,
+                "st": 3,
+                "ag": 3,
+                "av": 9
+              },
+              "bonus": [
+                {
+                  "ma": 0
+                },
+                {
+                  "st": 0
+                },
+                {
+                  "ag": 0
+                },
+                {
+                  "pa": 0
+                },
+                {
+                  "av": 0
+                }
+              ],
+              "malus": [
+                {
+                  "ma": 0
+                },
+                {
+                  "st": 0
+                },
+                {
+                  "ag": 0
+                },
+                {
+                  "pa": 0
+                },
+                {
+                  "av": 0
+                }
+              ]
+            },
+            "type": "human_humanBlitzer",
+            "casualtiesStateIds": null,
+            "casualtiesStates": null,
+            "suspendedNextMatch": null,
+            "skills": null,
+            "matchplayed": 1
+          },
+          {
+            "id": "fc4b8af5-37d4-11ef-9e7e-bc24112ec32e",
+            "name": "Wealdstone Raider",
+            "raceId": null,
+            "number": 4,
+            "value": null,
+            "xp": 2,
+            "xpGain": 2,
+            "level": 2,
+            "attributes": {
+              "pa": 4,
+              "ma": 7,
+              "st": 3,
+              "ag": 3,
+              "av": 9
+            },
+            "extendedAttributes": {
+              "defaultAttributes": {
+                "pa": 4,
+                "ma": 7,
+                "st": 3,
+                "ag": 3,
+                "av": 9
+              },
+              "bonus": [
+                {
+                  "ma": 0
+                },
+                {
+                  "st": 0
+                },
+                {
+                  "ag": 0
+                },
+                {
+                  "pa": 0
+                },
+                {
+                  "av": 0
+                }
+              ],
+              "malus": [
+                {
+                  "ma": 0
+                },
+                {
+                  "st": 0
+                },
+                {
+                  "ag": 0
+                },
+                {
+                  "pa": 0
+                },
+                {
+                  "av": 0
+                }
+              ]
+            },
+            "type": "human_humanBlitzer",
+            "casualtiesStateIds": null,
+            "casualtiesStates": null,
+            "suspendedNextMatch": null,
+            "skills": null,
+            "matchplayed": 1
+          },
+          {
+            "id": "fca7661a-37d4-11ef-9e7e-bc24112ec32e",
+            "name": "Billy Big Bolloggs",
+            "raceId": null,
+            "number": 5,
+            "value": null,
+            "xp": 0,
+            "xpGain": 0,
+            "level": 2,
+            "attributes": {
+              "pa": 4,
+              "ma": 7,
+              "st": 3,
+              "ag": 3,
+              "av": 9
+            },
+            "extendedAttributes": {
+              "defaultAttributes": {
+                "pa": 4,
+                "ma": 7,
+                "st": 3,
+                "ag": 3,
+                "av": 9
+              },
+              "bonus": [
+                {
+                  "ma": 0
+                },
+                {
+                  "st": 0
+                },
+                {
+                  "ag": 0
+                },
+                {
+                  "pa": 0
+                },
+                {
+                  "av": 0
+                }
+              ],
+              "malus": [
+                {
+                  "ma": 0
+                },
+                {
+                  "st": 0
+                },
+                {
+                  "ag": 0
+                },
+                {
+                  "pa": 0
+                },
+                {
+                  "av": 0
+                }
+              ]
+            },
+            "type": "human_humanBlitzer",
+            "casualtiesStateIds": null,
+            "casualtiesStates": null,
+            "suspendedNextMatch": null,
+            "skills": null,
+            "matchplayed": 1
+          },
+          {
+            "id": "fb609045-37d4-11ef-9e7e-bc24112ec32e",
+            "name": "Ronnie 'Bareknuckle' Pickering ",
+            "raceId": null,
+            "number": 6,
+            "value": null,
+            "xp": 2,
+            "xpGain": 2,
             "level": 2,
             "attributes": {
               "pa": 5,
@@ -300,467 +636,13 @@ Authorization: Bearer {{auth_token}}
             "matchplayed": 1
           },
           {
-            "id": "7219adff-1b8c-11ef-895c-bc24112ec32e",
-            "name": "Hans Heinrich",
-            "raceId": null,
-            "number": 2,
-            "value": null,
-            "xp": 0,
-            "level": 2,
-            "attributes": {
-              "pa": 4,
-              "ma": 7,
-              "st": 3,
-              "ag": 3,
-              "av": 9
-            },
-            "extendedAttributes": {
-              "defaultAttributes": {
-                "pa": 4,
-                "ma": 7,
-                "st": 3,
-                "ag": 3,
-                "av": 9
-              },
-              "bonus": [
-                {
-                  "ma": 0
-                },
-                {
-                  "st": 0
-                },
-                {
-                  "ag": 0
-                },
-                {
-                  "pa": 0
-                },
-                {
-                  "av": 0
-                }
-              ],
-              "malus": [
-                {
-                  "ma": 0
-                },
-                {
-                  "st": 0
-                },
-                {
-                  "ag": 0
-                },
-                {
-                  "pa": 0
-                },
-                {
-                  "av": 0
-                }
-              ]
-            },
-            "type": "human_humanBlitzer",
-            "casualtiesStateIds": null,
-            "casualtiesStates": null,
-            "suspendedNextMatch": null,
-            "skills": null,
-            "matchplayed": 1
-          },
-          {
-            "id": "72291e8d-1b8c-11ef-895c-bc24112ec32e",
-            "name": "Manfred Meier",
-            "raceId": null,
-            "number": 3,
-            "value": null,
-            "xp": 0,
-            "level": 2,
-            "attributes": {
-              "pa": 4,
-              "ma": 7,
-              "st": 3,
-              "ag": 3,
-              "av": 9
-            },
-            "extendedAttributes": {
-              "defaultAttributes": {
-                "pa": 4,
-                "ma": 7,
-                "st": 3,
-                "ag": 3,
-                "av": 9
-              },
-              "bonus": [
-                {
-                  "ma": 0
-                },
-                {
-                  "st": 0
-                },
-                {
-                  "ag": 0
-                },
-                {
-                  "pa": 0
-                },
-                {
-                  "av": 0
-                }
-              ],
-              "malus": [
-                {
-                  "ma": 0
-                },
-                {
-                  "st": 0
-                },
-                {
-                  "ag": 0
-                },
-                {
-                  "pa": 0
-                },
-                {
-                  "av": 0
-                }
-              ]
-            },
-            "type": "human_humanBlitzer",
-            "casualtiesStateIds": null,
-            "casualtiesStates": null,
-            "suspendedNextMatch": null,
-            "skills": null,
-            "matchplayed": 1
-          },
-          {
-            "id": "f92cb0f3-1c56-11ef-895c-bc24112ec32e",
-            "name": "Louis Lange",
-            "raceId": null,
-            "number": 4,
-            "value": null,
-            "xp": 0,
-            "level": 2,
-            "attributes": {
-              "pa": 4,
-              "ma": 7,
-              "st": 3,
-              "ag": 3,
-              "av": 9
-            },
-            "extendedAttributes": {
-              "defaultAttributes": {
-                "pa": 4,
-                "ma": 7,
-                "st": 3,
-                "ag": 3,
-                "av": 9
-              },
-              "bonus": [
-                {
-                  "ma": 0
-                },
-                {
-                  "st": 0
-                },
-                {
-                  "ag": 0
-                },
-                {
-                  "pa": 0
-                },
-                {
-                  "av": 0
-                }
-              ],
-              "malus": [
-                {
-                  "ma": 0
-                },
-                {
-                  "st": 0
-                },
-                {
-                  "ag": 0
-                },
-                {
-                  "pa": 0
-                },
-                {
-                  "av": 0
-                }
-              ]
-            },
-            "type": "human_humanBlitzer",
-            "casualtiesStateIds": null,
-            "casualtiesStates": null,
-            "suspendedNextMatch": null,
-            "skills": null,
-            "matchplayed": 1
-          },
-          {
-            "id": "72487749-1b8c-11ef-895c-bc24112ec32e",
-            "name": "Ralf Richter",
-            "raceId": null,
-            "number": 5,
-            "value": null,
-            "xp": 0,
-            "level": 2,
-            "attributes": {
-              "pa": 4,
-              "ma": 7,
-              "st": 3,
-              "ag": 3,
-              "av": 9
-            },
-            "extendedAttributes": {
-              "defaultAttributes": {
-                "pa": 4,
-                "ma": 7,
-                "st": 3,
-                "ag": 3,
-                "av": 9
-              },
-              "bonus": [
-                {
-                  "ma": 0
-                },
-                {
-                  "st": 0
-                },
-                {
-                  "ag": 0
-                },
-                {
-                  "pa": 0
-                },
-                {
-                  "av": 0
-                }
-              ],
-              "malus": [
-                {
-                  "ma": 0
-                },
-                {
-                  "st": 0
-                },
-                {
-                  "ag": 0
-                },
-                {
-                  "pa": 0
-                },
-                {
-                  "av": 0
-                }
-              ]
-            },
-            "type": "human_humanBlitzer",
-            "casualtiesStateIds": null,
-            "casualtiesStates": null,
-            "suspendedNextMatch": null,
-            "skills": null,
-            "matchplayed": 1
-          },
-          {
-            "id": "72588ff3-1b8c-11ef-895c-bc24112ec32e",
-            "name": "Konrad Koch",
-            "raceId": null,
-            "number": 6,
-            "value": null,
-            "xp": 0,
-            "level": 1,
-            "attributes": {
-              "pa": 2,
-              "ma": 6,
-              "st": 3,
-              "ag": 3,
-              "av": 9
-            },
-            "extendedAttributes": {
-              "defaultAttributes": {
-                "pa": 2,
-                "ma": 6,
-                "st": 3,
-                "ag": 3,
-                "av": 9
-              },
-              "bonus": [
-                {
-                  "ma": 0
-                },
-                {
-                  "st": 0
-                },
-                {
-                  "ag": 0
-                },
-                {
-                  "pa": 0
-                },
-                {
-                  "av": 0
-                }
-              ],
-              "malus": [
-                {
-                  "ma": 0
-                },
-                {
-                  "st": 0
-                },
-                {
-                  "ag": 0
-                },
-                {
-                  "pa": 0
-                },
-                {
-                  "av": 0
-                }
-              ]
-            },
-            "type": "human_humanThrower",
-            "casualtiesStateIds": null,
-            "casualtiesStates": null,
-            "suspendedNextMatch": null,
-            "skills": null,
-            "matchplayed": 1
-          },
-          {
-            "id": "727876c4-1b8c-11ef-895c-bc24112ec32e",
-            "name": "Sebastian Schlösser",
+            "id": "ff5a6c58-37d4-11ef-9e7e-bc24112ec32e",
+            "name": "Punchy McPunchface",
             "raceId": null,
             "number": 7,
             "value": null,
-            "xp": 0,
-            "level": 2,
-            "attributes": {
-              "pa": 5,
-              "ma": 8,
-              "st": 2,
-              "ag": 3,
-              "av": 8
-            },
-            "extendedAttributes": {
-              "defaultAttributes": {
-                "pa": 5,
-                "ma": 8,
-                "st": 2,
-                "ag": 3,
-                "av": 8
-              },
-              "bonus": [
-                {
-                  "ma": 0
-                },
-                {
-                  "st": 0
-                },
-                {
-                  "ag": 0
-                },
-                {
-                  "pa": 0
-                },
-                {
-                  "av": 0
-                }
-              ],
-              "malus": [
-                {
-                  "ma": 0
-                },
-                {
-                  "st": 0
-                },
-                {
-                  "ag": 0
-                },
-                {
-                  "pa": 0
-                },
-                {
-                  "av": 0
-                }
-              ]
-            },
-            "type": "human_humanCatcher",
-            "casualtiesStateIds": null,
-            "casualtiesStates": null,
-            "suspendedNextMatch": null,
-            "skills": null,
-            "matchplayed": 1
-          },
-          {
-            "id": "728b82b7-1b8c-11ef-895c-bc24112ec32e",
-            "name": "Felix Fischer",
-            "raceId": null,
-            "number": 8,
-            "value": null,
-            "xp": 0,
-            "level": 2,
-            "attributes": {
-              "pa": 5,
-              "ma": 8,
-              "st": 2,
-              "ag": 3,
-              "av": 8
-            },
-            "extendedAttributes": {
-              "defaultAttributes": {
-                "pa": 5,
-                "ma": 8,
-                "st": 2,
-                "ag": 3,
-                "av": 8
-              },
-              "bonus": [
-                {
-                  "ma": 0
-                },
-                {
-                  "st": 0
-                },
-                {
-                  "ag": 0
-                },
-                {
-                  "pa": 0
-                },
-                {
-                  "av": 0
-                }
-              ],
-              "malus": [
-                {
-                  "ma": 0
-                },
-                {
-                  "st": 0
-                },
-                {
-                  "ag": 0
-                },
-                {
-                  "pa": 0
-                },
-                {
-                  "av": 0
-                }
-              ]
-            },
-            "type": "human_humanCatcher",
-            "casualtiesStateIds": null,
-            "casualtiesStates": null,
-            "suspendedNextMatch": null,
-            "skills": null,
-            "matchplayed": 1
-          },
-          {
-            "id": "72a13e82-1b8c-11ef-895c-bc24112ec32e",
-            "name": "Klemens Klein",
-            "raceId": null,
-            "number": 9,
-            "value": null,
-            "xp": 0,
+            "xp": 2,
+            "xpGain": 0,
             "level": 1,
             "attributes": {
               "pa": 4,
@@ -820,13 +702,146 @@ Authorization: Bearer {{auth_token}}
             "matchplayed": 1
           },
           {
-            "id": "72b6a9a2-1b8c-11ef-895c-bc24112ec32e",
-            "name": "Marius Müller",
+            "id": "fde19eae-37d4-11ef-9e7e-bc24112ec32e",
+            "name": "Harry 'I wanna be real Boy' Kane",
+            "raceId": null,
+            "number": 8,
+            "value": null,
+            "xp": 4,
+            "xpGain": 0,
+            "level": 1,
+            "attributes": {
+              "pa": 4,
+              "ma": 6,
+              "st": 3,
+              "ag": 3,
+              "av": 9
+            },
+            "extendedAttributes": {
+              "defaultAttributes": {
+                "pa": 4,
+                "ma": 6,
+                "st": 3,
+                "ag": 3,
+                "av": 9
+              },
+              "bonus": [
+                {
+                  "ma": 0
+                },
+                {
+                  "st": 0
+                },
+                {
+                  "ag": 0
+                },
+                {
+                  "pa": 0
+                },
+                {
+                  "av": 0
+                }
+              ],
+              "malus": [
+                {
+                  "ma": 0
+                },
+                {
+                  "st": 0
+                },
+                {
+                  "ag": 0
+                },
+                {
+                  "pa": 0
+                },
+                {
+                  "av": 0
+                }
+              ]
+            },
+            "type": "human_humanLineman",
+            "casualtiesStateIds": null,
+            "casualtiesStates": null,
+            "suspendedNextMatch": null,
+            "skills": null,
+            "matchplayed": 1
+          },
+          {
+            "id": "fed617a3-37d4-11ef-9e7e-bc24112ec32e",
+            "name": "Timmy Tiny Testies",
+            "raceId": null,
+            "number": 9,
+            "value": null,
+            "xp": 2,
+            "xpGain": 0,
+            "level": 1,
+            "attributes": {
+              "pa": 4,
+              "ma": 6,
+              "st": 3,
+              "ag": 3,
+              "av": 9
+            },
+            "extendedAttributes": {
+              "defaultAttributes": {
+                "pa": 4,
+                "ma": 6,
+                "st": 3,
+                "ag": 3,
+                "av": 9
+              },
+              "bonus": [
+                {
+                  "ma": 0
+                },
+                {
+                  "st": 0
+                },
+                {
+                  "ag": 0
+                },
+                {
+                  "pa": 0
+                },
+                {
+                  "av": 0
+                }
+              ],
+              "malus": [
+                {
+                  "ma": 0
+                },
+                {
+                  "st": 0
+                },
+                {
+                  "ag": 0
+                },
+                {
+                  "pa": 0
+                },
+                {
+                  "av": 0
+                }
+              ]
+            },
+            "type": "human_humanLineman",
+            "casualtiesStateIds": null,
+            "casualtiesStates": null,
+            "suspendedNextMatch": null,
+            "skills": null,
+            "matchplayed": 1
+          },
+          {
+            "id": "fe583e20-37d4-11ef-9e7e-bc24112ec32e",
+            "name": "Gunter 'The Warped'",
             "raceId": null,
             "number": 10,
             "value": null,
             "xp": 0,
-            "level": 1,
+            "xpGain": 0,
+            "level": 2,
             "attributes": {
               "pa": 4,
               "ma": 6,
@@ -885,12 +900,145 @@ Authorization: Bearer {{auth_token}}
             "matchplayed": 1
           },
           {
-            "id": "72d57bae-1b8c-11ef-895c-bc24112ec32e",
-            "name": "Karl Krüger",
+            "id": "fbf72be9-37d4-11ef-9e7e-bc24112ec32e",
+            "name": "Paul 'To Me' Chuckle",
             "raceId": null,
             "number": 11,
             "value": null,
-            "xp": 0,
+            "xp": 3,
+            "xpGain": 0,
+            "level": 2,
+            "attributes": {
+              "pa": 5,
+              "ma": 8,
+              "st": 2,
+              "ag": 3,
+              "av": 8
+            },
+            "extendedAttributes": {
+              "defaultAttributes": {
+                "pa": 5,
+                "ma": 8,
+                "st": 2,
+                "ag": 3,
+                "av": 8
+              },
+              "bonus": [
+                {
+                  "ma": 0
+                },
+                {
+                  "st": 0
+                },
+                {
+                  "ag": 0
+                },
+                {
+                  "pa": 0
+                },
+                {
+                  "av": 0
+                }
+              ],
+              "malus": [
+                {
+                  "ma": 0
+                },
+                {
+                  "st": 0
+                },
+                {
+                  "ag": 0
+                },
+                {
+                  "pa": 0
+                },
+                {
+                  "av": 0
+                }
+              ]
+            },
+            "type": "human_humanCatcher",
+            "casualtiesStateIds": null,
+            "casualtiesStates": null,
+            "suspendedNextMatch": null,
+            "skills": null,
+            "matchplayed": 1
+          },
+          {
+            "id": "836c8fe0-47b3-11ef-9e7e-bc24112ec32e",
+            "name": "Carlos 'The GOAT' Kaiser",
+            "raceId": null,
+            "number": 12,
+            "value": null,
+            "xp": 4,
+            "xpGain": 4,
+            "level": 2,
+            "attributes": {
+              "pa": 5,
+              "ma": 8,
+              "st": 2,
+              "ag": 3,
+              "av": 8
+            },
+            "extendedAttributes": {
+              "defaultAttributes": {
+                "pa": 5,
+                "ma": 8,
+                "st": 2,
+                "ag": 3,
+                "av": 8
+              },
+              "bonus": [
+                {
+                  "ma": 0
+                },
+                {
+                  "st": 0
+                },
+                {
+                  "ag": 0
+                },
+                {
+                  "pa": 0
+                },
+                {
+                  "av": 0
+                }
+              ],
+              "malus": [
+                {
+                  "ma": 0
+                },
+                {
+                  "st": 0
+                },
+                {
+                  "ag": 0
+                },
+                {
+                  "pa": 0
+                },
+                {
+                  "av": 0
+                }
+              ]
+            },
+            "type": "human_humanCatcher",
+            "casualtiesStateIds": null,
+            "casualtiesStates": null,
+            "suspendedNextMatch": null,
+            "skills": null,
+            "matchplayed": 1
+          },
+          {
+            "id": "4b7558f0-6c37-11ef-be7b-bc24112ec32e",
+            "name": "Constance 'Nutcracker'",
+            "raceId": null,
+            "number": 13,
+            "value": null,
+            "xp": 4,
+            "xpGain": 0,
             "level": 1,
             "attributes": {
               "pa": 4,
@@ -943,136 +1091,6 @@ Authorization: Bearer {{auth_token}}
               ]
             },
             "type": "human_humanLineman",
-            "casualtiesStateIds": null,
-            "casualtiesStates": null,
-            "suspendedNextMatch": null,
-            "skills": null,
-            "matchplayed": 1
-          },
-          {
-            "id": "72eb594d-1b8c-11ef-895c-bc24112ec32e",
-            "name": "Bernhard Braun",
-            "raceId": null,
-            "number": 12,
-            "value": null,
-            "xp": 0,
-            "level": 1,
-            "attributes": {
-              "pa": 4,
-              "ma": 5,
-              "st": 2,
-              "ag": 3,
-              "av": 7
-            },
-            "extendedAttributes": {
-              "defaultAttributes": {
-                "pa": 4,
-                "ma": 5,
-                "st": 2,
-                "ag": 3,
-                "av": 7
-              },
-              "bonus": [
-                {
-                  "ma": 0
-                },
-                {
-                  "st": 0
-                },
-                {
-                  "ag": 0
-                },
-                {
-                  "pa": 0
-                },
-                {
-                  "av": 0
-                }
-              ],
-              "malus": [
-                {
-                  "ma": 0
-                },
-                {
-                  "st": 0
-                },
-                {
-                  "ag": 0
-                },
-                {
-                  "pa": 0
-                },
-                {
-                  "av": 0
-                }
-              ]
-            },
-            "type": "human_halflingHopeful",
-            "casualtiesStateIds": null,
-            "casualtiesStates": null,
-            "suspendedNextMatch": null,
-            "skills": null,
-            "matchplayed": 1
-          },
-          {
-            "id": "7301f67b-1b8c-11ef-895c-bc24112ec32e",
-            "name": "Helmut Hoffmann",
-            "raceId": null,
-            "number": 13,
-            "value": null,
-            "xp": 0,
-            "level": 1,
-            "attributes": {
-              "pa": 4,
-              "ma": 5,
-              "st": 2,
-              "ag": 3,
-              "av": 7
-            },
-            "extendedAttributes": {
-              "defaultAttributes": {
-                "pa": 4,
-                "ma": 5,
-                "st": 2,
-                "ag": 3,
-                "av": 7
-              },
-              "bonus": [
-                {
-                  "ma": 0
-                },
-                {
-                  "st": 0
-                },
-                {
-                  "ag": 0
-                },
-                {
-                  "pa": 0
-                },
-                {
-                  "av": 0
-                }
-              ],
-              "malus": [
-                {
-                  "ma": 0
-                },
-                {
-                  "st": 0
-                },
-                {
-                  "ag": 0
-                },
-                {
-                  "pa": 0
-                },
-                {
-                  "av": 0
-                }
-              ]
-            },
-            "type": "human_halflingHopeful",
             "casualtiesStateIds": null,
             "casualtiesStates": null,
             "suspendedNextMatch": null,
@@ -1080,33 +1098,33 @@ Authorization: Bearer {{auth_token}}
             "matchplayed": 1
           }
         ],
-        "inflictedpasses": 1,
-        "inflictedcatches": 3,
+        "inflictedpasses": 0,
+        "inflictedcatches": 0,
         "inflictedinterceptions": 0,
-        "inflictedtouchdowns": 1,
-        "inflictedcasualties": 3,
-        "inflictedtackles": 3,
-        "inflictedko": 2,
-        "inflictedinjuries": 18,
-        "inflicteddead": 0,
-        "inflictedmetersrunning": 30,
-        "inflictedmeterspassing": 7,
+        "inflictedtouchdowns": 0,
+        "inflictedcasualties": 1,
+        "inflictedtackles": 0,
+        "inflictedko": 3,
+        "inflictedinjuries": 8,
+        "inflicteddead": 1,
+        "inflictedmetersrunning": 32,
+        "inflictedmeterspassing": 0,
         "inflictedpushouts": 0,
         "sustainedexpulsions": 0,
         "sustainedtouchdowns": null,
-        "sustainedcasualties": 2,
-        "sustainedko": 1,
-        "sustainedinjuries": 7,
+        "sustainedcasualties": 3,
+        "sustainedko": 3,
+        "sustainedinjuries": 20,
         "sustaineddead": 0
       },
       {
-        "id": "cf9d3148-21cc-11ef-895c-bc24112ec32e",
+        "id": "51de5ff4-3323-11ef-9e7e-bc24112ec32e",
         "created": null,
-        "name": "[WCQ] Lets get Dangerous",
-        "logo": "Logo_Human_18",
-        "race": "elvenUnion",
+        "name": "[DBBL] Death Watch",
+        "logo": "Logo_ChaosChosen_18",
+        "race": "chaosChosen",
         "motto": null,
-        "value": 1330,
+        "value": 1305,
         "cash": null,
         "rerolls": null,
         "apothecary": null,
@@ -1120,32 +1138,33 @@ Authorization: Bearer {{auth_token}}
         "competitionIds": null,
         "competitionName": null,
         "dateLastMatch": null,
-        "score": 2,
+        "score": 1,
         "rank": null,
         "death": null,
         "players": [
           {
-            "id": "4105e02c-21ce-11ef-895c-bc24112ec32e",
-            "name": "Darkwing Duck",
+            "id": "59230e50-3323-11ef-9e7e-bc24112ec32e",
+            "name": "Tot",
             "raceId": null,
             "number": 1,
             "value": null,
-            "xp": 0,
+            "xp": 1,
+            "xpGain": 2,
             "level": 2,
             "attributes": {
-              "pa": 3,
-              "ma": 7,
-              "st": 3,
-              "ag": 2,
-              "av": 9
+              "pa": 5,
+              "ma": 5,
+              "st": 4,
+              "ag": 3,
+              "av": 10
             },
             "extendedAttributes": {
               "defaultAttributes": {
-                "pa": 3,
-                "ma": 7,
-                "st": 3,
-                "ag": 2,
-                "av": 9
+                "pa": 5,
+                "ma": 5,
+                "st": 4,
+                "ag": 3,
+                "av": 10
               },
               "bonus": [
                 {
@@ -1182,7 +1201,7 @@ Authorization: Bearer {{auth_token}}
                 }
               ]
             },
-            "type": "elvenUnion_elfBlitzer",
+            "type": "chaosChosen_chosenBlocker",
             "casualtiesStateIds": null,
             "casualtiesStates": null,
             "suspendedNextMatch": null,
@@ -1190,26 +1209,225 @@ Authorization: Bearer {{auth_token}}
             "matchplayed": 1
           },
           {
-            "id": "14a0fd99-21cd-11ef-895c-bc24112ec32e",
-            "name": "Lunchpad McQuack",
+            "id": "58aaf635-3323-11ef-9e7e-bc24112ec32e",
+            "name": "Pest",
             "raceId": null,
             "number": 2,
             "value": null,
             "xp": 0,
+            "xpGain": 2,
+            "level": 1,
+            "attributes": {
+              "pa": 5,
+              "ma": 5,
+              "st": 4,
+              "ag": 3,
+              "av": 10
+            },
+            "extendedAttributes": {
+              "defaultAttributes": {
+                "pa": 5,
+                "ma": 5,
+                "st": 4,
+                "ag": 3,
+                "av": 10
+              },
+              "bonus": [
+                {
+                  "ma": 0
+                },
+                {
+                  "st": 0
+                },
+                {
+                  "ag": 0
+                },
+                {
+                  "pa": 0
+                },
+                {
+                  "av": 0
+                }
+              ],
+              "malus": [
+                {
+                  "ma": 0
+                },
+                {
+                  "st": 0
+                },
+                {
+                  "ag": 0
+                },
+                {
+                  "pa": 0
+                },
+                {
+                  "av": 0
+                }
+              ]
+            },
+            "type": "chaosChosen_chosenBlocker",
+            "casualtiesStateIds": null,
+            "casualtiesStates": null,
+            "suspendedNextMatch": null,
+            "skills": null,
+            "matchplayed": 1
+          },
+          {
+            "id": "59657d91-3323-11ef-9e7e-bc24112ec32e",
+            "name": "Krieg",
+            "raceId": null,
+            "number": 3,
+            "value": null,
+            "xp": 5,
+            "xpGain": 0,
+            "level": 1,
+            "attributes": {
+              "pa": 5,
+              "ma": 5,
+              "st": 4,
+              "ag": 3,
+              "av": 10
+            },
+            "extendedAttributes": {
+              "defaultAttributes": {
+                "pa": 5,
+                "ma": 5,
+                "st": 4,
+                "ag": 3,
+                "av": 10
+              },
+              "bonus": [
+                {
+                  "ma": 0
+                },
+                {
+                  "st": 0
+                },
+                {
+                  "ag": 0
+                },
+                {
+                  "pa": 0
+                },
+                {
+                  "av": 0
+                }
+              ],
+              "malus": [
+                {
+                  "ma": 0
+                },
+                {
+                  "st": 0
+                },
+                {
+                  "ag": 0
+                },
+                {
+                  "pa": 0
+                },
+                {
+                  "av": 0
+                }
+              ]
+            },
+            "type": "chaosChosen_chosenBlocker",
+            "casualtiesStateIds": null,
+            "casualtiesStates": null,
+            "suspendedNextMatch": null,
+            "skills": null,
+            "matchplayed": 1
+          },
+          {
+            "id": "58e9ae67-3323-11ef-9e7e-bc24112ec32e",
+            "name": "Hunger",
+            "raceId": null,
+            "number": 4,
+            "value": null,
+            "xp": 2,
+            "xpGain": 0,
+            "level": 1,
+            "attributes": {
+              "pa": 5,
+              "ma": 5,
+              "st": 4,
+              "ag": 3,
+              "av": 10
+            },
+            "extendedAttributes": {
+              "defaultAttributes": {
+                "pa": 5,
+                "ma": 5,
+                "st": 4,
+                "ag": 3,
+                "av": 10
+              },
+              "bonus": [
+                {
+                  "ma": 0
+                },
+                {
+                  "st": 0
+                },
+                {
+                  "ag": 0
+                },
+                {
+                  "pa": 0
+                },
+                {
+                  "av": 0
+                }
+              ],
+              "malus": [
+                {
+                  "ma": 0
+                },
+                {
+                  "st": 0
+                },
+                {
+                  "ag": 0
+                },
+                {
+                  "pa": 0
+                },
+                {
+                  "av": 0
+                }
+              ]
+            },
+            "type": "chaosChosen_chosenBlocker",
+            "casualtiesStateIds": null,
+            "casualtiesStates": null,
+            "suspendedNextMatch": null,
+            "skills": null,
+            "matchplayed": 1
+          },
+          {
+            "id": "59ac615c-3323-11ef-9e7e-bc24112ec32e",
+            "name": "Morghur ‚Gemetzel‘",
+            "raceId": null,
+            "number": 5,
+            "value": null,
+            "xp": 3,
+            "xpGain": 3,
             "level": 2,
             "attributes": {
-              "pa": 3,
-              "ma": 7,
+              "pa": 4,
+              "ma": 6,
               "st": 3,
-              "ag": 2,
+              "ag": 3,
               "av": 9
             },
             "extendedAttributes": {
               "defaultAttributes": {
-                "pa": 3,
-                "ma": 7,
+                "pa": 4,
+                "ma": 6,
                 "st": 3,
-                "ag": 2,
+                "ag": 3,
                 "av": 9
               },
               "bonus": [
@@ -1247,7 +1465,7 @@ Authorization: Bearer {{auth_token}}
                 }
               ]
             },
-            "type": "elvenUnion_elfBlitzer",
+            "type": "chaosChosen_beastmanRunner",
             "casualtiesStateIds": null,
             "casualtiesStates": null,
             "suspendedNextMatch": null,
@@ -1255,222 +1473,28 @@ Authorization: Bearer {{auth_token}}
             "matchplayed": 1
           },
           {
-            "id": "14dc893c-21cd-11ef-895c-bc24112ec32e",
-            "name": "Dr. Bushroot",
-            "raceId": null,
-            "number": 3,
-            "value": null,
-            "xp": 0,
-            "level": 2,
-            "attributes": {
-              "pa": 2,
-              "ma": 6,
-              "st": 3,
-              "ag": 2,
-              "av": 8
-            },
-            "extendedAttributes": {
-              "defaultAttributes": {
-                "pa": 2,
-                "ma": 6,
-                "st": 3,
-                "ag": 2,
-                "av": 8
-              },
-              "bonus": [
-                {
-                  "ma": 0
-                },
-                {
-                  "st": 0
-                },
-                {
-                  "ag": 0
-                },
-                {
-                  "pa": 0
-                },
-                {
-                  "av": 0
-                }
-              ],
-              "malus": [
-                {
-                  "ma": 0
-                },
-                {
-                  "st": 0
-                },
-                {
-                  "ag": 0
-                },
-                {
-                  "pa": 0
-                },
-                {
-                  "av": 0
-                }
-              ]
-            },
-            "type": "elvenUnion_elfThrower",
-            "casualtiesStateIds": null,
-            "casualtiesStates": null,
-            "suspendedNextMatch": null,
-            "skills": null,
-            "matchplayed": 1
-          },
-          {
-            "id": "7bbe3684-21d3-11ef-895c-bc24112ec32e",
-            "name": "Taurus Bulba",
-            "raceId": null,
-            "number": 4,
-            "value": null,
-            "xp": 0,
-            "level": 2,
-            "attributes": {
-              "pa": 2,
-              "ma": 6,
-              "st": 3,
-              "ag": 2,
-              "av": 8
-            },
-            "extendedAttributes": {
-              "defaultAttributes": {
-                "pa": 2,
-                "ma": 6,
-                "st": 3,
-                "ag": 2,
-                "av": 8
-              },
-              "bonus": [
-                {
-                  "ma": 0
-                },
-                {
-                  "st": 0
-                },
-                {
-                  "ag": 0
-                },
-                {
-                  "pa": 0
-                },
-                {
-                  "av": 0
-                }
-              ],
-              "malus": [
-                {
-                  "ma": 0
-                },
-                {
-                  "st": 0
-                },
-                {
-                  "ag": 0
-                },
-                {
-                  "pa": 0
-                },
-                {
-                  "av": 0
-                }
-              ]
-            },
-            "type": "elvenUnion_elfThrower",
-            "casualtiesStateIds": null,
-            "casualtiesStates": null,
-            "suspendedNextMatch": null,
-            "skills": null,
-            "matchplayed": 1
-          },
-          {
-            "id": "15701337-21cd-11ef-895c-bc24112ec32e",
-            "name": "Megavolt",
-            "raceId": null,
-            "number": 5,
-            "value": null,
-            "xp": 0,
-            "level": 2,
-            "attributes": {
-              "pa": 4,
-              "ma": 8,
-              "st": 3,
-              "ag": 2,
-              "av": 8
-            },
-            "extendedAttributes": {
-              "defaultAttributes": {
-                "pa": 4,
-                "ma": 8,
-                "st": 3,
-                "ag": 2,
-                "av": 8
-              },
-              "bonus": [
-                {
-                  "ma": 0
-                },
-                {
-                  "st": 0
-                },
-                {
-                  "ag": 0
-                },
-                {
-                  "pa": 0
-                },
-                {
-                  "av": 0
-                }
-              ],
-              "malus": [
-                {
-                  "ma": 0
-                },
-                {
-                  "st": 0
-                },
-                {
-                  "ag": 0
-                },
-                {
-                  "pa": 0
-                },
-                {
-                  "av": 0
-                }
-              ]
-            },
-            "type": "elvenUnion_elfCatcher",
-            "casualtiesStateIds": null,
-            "casualtiesStates": null,
-            "suspendedNextMatch": null,
-            "skills": null,
-            "matchplayed": 1
-          },
-          {
-            "id": "15c3b147-21cd-11ef-895c-bc24112ec32e",
-            "name": "Quackerjack",
+            "id": "5af668e8-3323-11ef-9e7e-bc24112ec32e",
+            "name": "Licroz ‚Dreifinger‘",
             "raceId": null,
             "number": 6,
             "value": null,
-            "xp": 0,
-            "level": 2,
+            "xp": 1,
+            "xpGain": 2,
+            "level": 4,
             "attributes": {
               "pa": 4,
-              "ma": 8,
+              "ma": 6,
               "st": 3,
-              "ag": 2,
-              "av": 8
+              "ag": 3,
+              "av": 9
             },
             "extendedAttributes": {
               "defaultAttributes": {
                 "pa": 4,
-                "ma": 8,
+                "ma": 6,
                 "st": 3,
-                "ag": 2,
-                "av": 8
+                "ag": 3,
+                "av": 9
               },
               "bonus": [
                 {
@@ -1507,7 +1531,7 @@ Authorization: Bearer {{auth_token}}
                 }
               ]
             },
-            "type": "elvenUnion_elfCatcher",
+            "type": "chaosChosen_beastmanRunner",
             "casualtiesStateIds": null,
             "casualtiesStates": null,
             "suspendedNextMatch": null,
@@ -1515,27 +1539,28 @@ Authorization: Bearer {{auth_token}}
             "matchplayed": 1
           },
           {
-            "id": "1616bb6f-21cd-11ef-895c-bc24112ec32e",
-            "name": "Stealbeak",
+            "id": "59f83361-3323-11ef-9e7e-bc24112ec32e",
+            "name": "Ghokoz ‚Blinder‘",
             "raceId": null,
             "number": 7,
             "value": null,
             "xp": 0,
-            "level": 2,
+            "xpGain": 0,
+            "level": 3,
             "attributes": {
               "pa": 4,
-              "ma": 8,
+              "ma": 6,
               "st": 3,
-              "ag": 2,
-              "av": 8
+              "ag": 3,
+              "av": 9
             },
             "extendedAttributes": {
               "defaultAttributes": {
                 "pa": 4,
-                "ma": 8,
+                "ma": 6,
                 "st": 3,
-                "ag": 2,
-                "av": 8
+                "ag": 3,
+                "av": 9
               },
               "bonus": [
                 {
@@ -1572,7 +1597,7 @@ Authorization: Bearer {{auth_token}}
                 }
               ]
             },
-            "type": "elvenUnion_elfCatcher",
+            "type": "chaosChosen_beastmanRunner",
             "casualtiesStateIds": null,
             "casualtiesStates": null,
             "suspendedNextMatch": null,
@@ -1580,27 +1605,28 @@ Authorization: Bearer {{auth_token}}
             "matchplayed": 1
           },
           {
-            "id": "151e5ea0-21cd-11ef-895c-bc24112ec32e",
-            "name": "The Liquidator",
+            "id": "b608c55b-4914-11ef-be7b-bc24112ec32e",
+            "name": "Licroz",
             "raceId": null,
             "number": 8,
             "value": null,
-            "xp": 0,
-            "level": 2,
+            "xp": 4,
+            "xpGain": 2,
+            "level": 1,
             "attributes": {
               "pa": 4,
-              "ma": 8,
+              "ma": 6,
               "st": 3,
-              "ag": 2,
-              "av": 8
+              "ag": 3,
+              "av": 9
             },
             "extendedAttributes": {
               "defaultAttributes": {
                 "pa": 4,
-                "ma": 8,
+                "ma": 6,
                 "st": 3,
-                "ag": 2,
-                "av": 8
+                "ag": 3,
+                "av": 9
               },
               "bonus": [
                 {
@@ -1637,7 +1663,7 @@ Authorization: Bearer {{auth_token}}
                 }
               ]
             },
-            "type": "elvenUnion_elfCatcher",
+            "type": "chaosChosen_beastmanRunner",
             "casualtiesStateIds": null,
             "casualtiesStates": null,
             "suspendedNextMatch": null,
@@ -1645,27 +1671,28 @@ Authorization: Bearer {{auth_token}}
             "matchplayed": 1
           },
           {
-            "id": "16e34ffb-21cd-11ef-895c-bc24112ec32e",
-            "name": "Tuskernini",
+            "id": "5a491819-3323-11ef-9e7e-bc24112ec32e",
+            "name": "Kingor ‚Der aus der Tiefe‘",
             "raceId": null,
             "number": 9,
             "value": null,
-            "xp": 0,
+            "xp": 4,
+            "xpGain": 4,
             "level": 1,
             "attributes": {
               "pa": 4,
               "ma": 6,
               "st": 3,
-              "ag": 2,
-              "av": 8
+              "ag": 3,
+              "av": 9
             },
             "extendedAttributes": {
               "defaultAttributes": {
                 "pa": 4,
                 "ma": 6,
                 "st": 3,
-                "ag": 2,
-                "av": 8
+                "ag": 3,
+                "av": 9
               },
               "bonus": [
                 {
@@ -1702,7 +1729,7 @@ Authorization: Bearer {{auth_token}}
                 }
               ]
             },
-            "type": "elvenUnion_elfLineman",
+            "type": "chaosChosen_beastmanRunner",
             "casualtiesStateIds": null,
             "casualtiesStates": null,
             "suspendedNextMatch": null,
@@ -1710,27 +1737,28 @@ Authorization: Bearer {{auth_token}}
             "matchplayed": 1
           },
           {
-            "id": "17520262-21cd-11ef-895c-bc24112ec32e",
-            "name": "Darkwarrior Duck",
+            "id": "5a9f340d-3323-11ef-9e7e-bc24112ec32e",
+            "name": "Ghokoz ‚Dreifinger‘",
             "raceId": null,
             "number": 10,
             "value": null,
-            "xp": 0,
+            "xp": 4,
+            "xpGain": 0,
             "level": 1,
             "attributes": {
               "pa": 4,
               "ma": 6,
               "st": 3,
-              "ag": 2,
-              "av": 8
+              "ag": 3,
+              "av": 9
             },
             "extendedAttributes": {
               "defaultAttributes": {
                 "pa": 4,
                 "ma": 6,
                 "st": 3,
-                "ag": 2,
-                "av": 8
+                "ag": 3,
+                "av": 9
               },
               "bonus": [
                 {
@@ -1767,7 +1795,7 @@ Authorization: Bearer {{auth_token}}
                 }
               ]
             },
-            "type": "elvenUnion_elfLineman",
+            "type": "chaosChosen_beastmanRunner",
             "casualtiesStateIds": null,
             "casualtiesStates": null,
             "suspendedNextMatch": null,
@@ -1775,27 +1803,28 @@ Authorization: Bearer {{auth_token}}
             "matchplayed": 1
           },
           {
-            "id": "17bfc8c5-21cd-11ef-895c-bc24112ec32e",
-            "name": "Mr. Bananabrain",
+            "id": "5b521696-3323-11ef-9e7e-bc24112ec32e",
+            "name": "Gafnir ‚Skorpion‘",
             "raceId": null,
             "number": 11,
             "value": null,
-            "xp": 0,
+            "xp": 2,
+            "xpGain": 0,
             "level": 1,
             "attributes": {
               "pa": 4,
               "ma": 6,
               "st": 3,
-              "ag": 2,
-              "av": 8
+              "ag": 3,
+              "av": 9
             },
             "extendedAttributes": {
               "defaultAttributes": {
                 "pa": 4,
                 "ma": 6,
                 "st": 3,
-                "ag": 2,
-                "av": 8
+                "ag": 3,
+                "av": 9
               },
               "bonus": [
                 {
@@ -1832,7 +1861,7 @@ Authorization: Bearer {{auth_token}}
                 }
               ]
             },
-            "type": "elvenUnion_elfLineman",
+            "type": "chaosChosen_beastmanRunner",
             "casualtiesStateIds": null,
             "casualtiesStates": null,
             "suspendedNextMatch": null,
@@ -1840,27 +1869,28 @@ Authorization: Bearer {{auth_token}}
             "matchplayed": 1
           },
           {
-            "id": "182b4e81-21cd-11ef-895c-bc24112ec32e",
-            "name": "Grizzlikof",
+            "id": "7375b6e2-6571-11ef-be7b-bc24112ec32e",
+            "name": "Ootek ‚Tölpel‘",
             "raceId": null,
             "number": 12,
             "value": null,
             "xp": 0,
+            "xpGain": 0,
             "level": 1,
             "attributes": {
-              "pa": 4,
-              "ma": 6,
-              "st": 3,
-              "ag": 2,
-              "av": 8
+              "pa": 5,
+              "ma": 4,
+              "st": 5,
+              "ag": 5,
+              "av": 10
             },
             "extendedAttributes": {
               "defaultAttributes": {
-                "pa": 4,
-                "ma": 6,
-                "st": 3,
-                "ag": 2,
-                "av": 8
+                "pa": 5,
+                "ma": 4,
+                "st": 5,
+                "ag": 5,
+                "av": 10
               },
               "bonus": [
                 {
@@ -1897,7 +1927,7 @@ Authorization: Bearer {{auth_token}}
                 }
               ]
             },
-            "type": "elvenUnion_elfLineman",
+            "type": "chaosChosen_troll",
             "casualtiesStateIds": null,
             "casualtiesStates": null,
             "suspendedNextMatch": null,
@@ -1906,25 +1936,26 @@ Authorization: Bearer {{auth_token}}
           }
         ],
         "inflictedpasses": 0,
-        "inflictedcatches": 5,
+        "inflictedcatches": 0,
         "inflictedinterceptions": 0,
-        "inflictedtouchdowns": 2,
-        "inflictedcasualties": 2,
-        "inflictedtackles": 5,
-        "inflictedko": 1,
-        "inflictedinjuries": 5,
+        "inflictedtouchdowns": 1,
+        "inflictedcasualties": 3,
+        "inflictedtackles": 2,
+        "inflictedko": 3,
+        "inflictedinjuries": 19,
         "inflicteddead": 0,
-        "inflictedmetersrunning": 54,
-        "inflictedmeterspassing": 6,
+        "inflictedmetersrunning": 19,
+        "inflictedmeterspassing": 0,
         "inflictedpushouts": 0,
-        "sustainedexpulsions": 0,
+        "sustainedexpulsions": 1,
         "sustainedtouchdowns": null,
-        "sustainedcasualties": 3,
-        "sustainedko": 2,
-        "sustainedinjuries": 18,
-        "sustaineddead": 0
+        "sustainedcasualties": 1,
+        "sustainedko": 3,
+        "sustainedinjuries": 8,
+        "sustaineddead": 1
       }
     ],
-    "adminResult": true
-  }
+    "adminResult": false
+  },
+  "nextContestUuid": null
 }

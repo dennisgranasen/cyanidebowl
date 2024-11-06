@@ -189,10 +189,7 @@ public class CyanideApiService {
         contestsRequest.setLeague_id(leagueCollection.getLeagueId());
         List<Contest> contests = new ArrayList<>();
 
-        contestsRequest.setStatus(ContestsRequest.Status.InProgress.name());
-        contests.addAll(loadContests(contestsRequest));
-
-        contestsRequest.setStatus(ContestsRequest.Status.Validated.name());
+        contestsRequest.setStatus("*");
         contestsRequest.setLimit(1000);
         contests.addAll(loadContests(contestsRequest));
 

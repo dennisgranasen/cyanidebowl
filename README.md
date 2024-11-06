@@ -43,3 +43,7 @@ See [CHANGELOG.md](CHANGELOG.md).
 ## Contribute/Get involved
 
 - [Discord](https://discord.gg/hZDU6ymyrj)
+
+## Donations
+
+If you like my work, you may buy me a coffee if we meet in person or [online](https://buymeacoffee.com/naytsyrhc).

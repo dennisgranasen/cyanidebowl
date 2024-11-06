@@ -44,13 +44,26 @@ public class MatchMessageBuilder {
                 .color(Color.MEDIUM_SEA_GREEN)
                 .url(String.format("%s/#/competition/%s", warpScoresProperties.getBaseUrls().getFrontend(),
                         contest.getCompetitionId()))
-                .footer(
-                        Optional.of(contest.getMatchDate())
-                                .map(matchDate -> format("Match played: %s",
-                                        DATE_FORMAT.format(matchDate)))
-                                .orElse("No match date."), null);
-        addFields(builder, contest, spoiler);
-        return builder;
+                .footer(format("Match played: %s", getMatchDateAsString(contest)), null);
+        return addFields(builder, contest, spoiler);
+    }
+
+    private String getMatchDateAsString(Contest contest) {
+        Date startDate = Optional
+                .ofNullable(contest.getMatch())
+                .map(Match::getStarted)
+                .orElse(contest.getMatchDate());
+        Date finishedDate = Optional
+                .ofNullable(contest.getMatch())
+                .map(Match::getFinished)
+                .orElse(contest.getMatchDate());
+        if (startDate == null) {
+            return "no match date.";
+        } else if (startDate.equals(finishedDate)) {
+            return String.format("started: %s", DATE_FORMAT.format(startDate));
+        } else {
+            return String.format("finished: %s", DATE_FORMAT.format(finishedDate));
+        }
     }
 
     private EmbedCreateSpec.Builder addFields(EmbedCreateSpec.Builder builder, Contest contest, boolean spoiler) {
