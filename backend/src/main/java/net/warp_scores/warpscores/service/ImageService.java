@@ -47,7 +47,7 @@ public class ImageService {
         }
         image.data = maxWidth.map(width -> rescaleImage(image.data, width)).orElse(image.data);
         image.data.ifPresent(bytes -> cacheImage(imageUrl, bytes));
-        return image.data;
+        return image.data.isPresent() ? image.data : imageCache.map(ImageCache::getImageData);
     }
 
     private Optional<byte[]> loadImageFromCyanide(String imageUrl) {
