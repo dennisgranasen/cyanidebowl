@@ -43,7 +43,7 @@ public class ImageController {
 
     @GetMapping("/dbbc.png/{size}")
     public ResponseEntity<byte[]> getDbbcLogoPng(@PathVariable(name = "size", required = false) String size) {
-        Optional<byte[]> imageData = Optional.empty();
+        Optional<byte[]> imageData;
         imageData = imageService.loadFromClassPath("/dbbc.png");
         int width = 256;
         if ("small".equalsIgnoreCase(size)) {
@@ -64,7 +64,7 @@ public class ImageController {
 
     @GetMapping("/warpscores.png/{size}")
     public ResponseEntity<byte[]> getWarpScoresLogoPng(@PathVariable(name = "size", required = false) String size) {
-        Optional<byte[]> imageData = Optional.empty();
+        Optional<byte[]> imageData;
         if (size != null && !size.equalsIgnoreCase("original")) {
             imageData = imageService.loadFromClassPath("/warpscores.png");
             int width = 256;

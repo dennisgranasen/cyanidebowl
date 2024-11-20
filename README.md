@@ -47,3 +47,7 @@ See [CHANGELOG.md](CHANGELOG.md).
 ## Donations
 
 If you like my work, you may buy me a coffee if we meet in person or [online](https://buymeacoffee.com/naytsyrhc).
+
+## Other work
+
+If you are not only playing Blood Bowl online with BB3 but also attend tournaments, you might like my Scoreboard and Clock for Blood Bowl [bbclock](https://bbclock.warp-scores.net).
