@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Box, Stack } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
 import WarpScoresApiService from '../WarpScoresApiService';
-import config from '../config';
 import Navigation from '../components/misc/Navigation';
 import Competitions from '../components/competition/Competitions';
 import ImageUrls from '../ImageUrls';
