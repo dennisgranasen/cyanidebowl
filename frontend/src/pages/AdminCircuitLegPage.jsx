@@ -1,31 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Heading, VStack } from '@chakra-ui/react';
-import {Link as RouteLink, useNavigate, useParams} from 'react-router-dom';
+import { Link as RouteLink, useNavigate, useParams } from 'react-router-dom';
 import WarpScoresApiService from '../WarpScoresApiService';
 import Navigation from '../components/misc/Navigation';
 import CircuitLeg from '../components/circuit/CircuitLeg';
 import HeaderCard from '../components/common/HeaderCard';
-import config from '../config';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
-import {useAuth0WithUserPermissions} from "../hooks/useAuth0WithUserPermissions";
+import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 
 function AdminCircuitLegPage() {
   const { circuitId, legId } = useParams();
   const [circuit, setCircuit] = useState();
   const [circuitLeg, setCircuitLeg] = useState();
   const [error, setError] = useState();
-  const {
-    authenticationReady,
-    checkPermissions,
-    userPermissions,
-  } = useAuth0WithUserPermissions();
+  const { authenticationReady, checkPermissions, userPermissions } = useAuth0WithUserPermissions();
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if ( authenticationReady && checkPermissions && !userPermissions.readCurrentUser)
-    {
-      navigate("/");
+    if (authenticationReady && checkPermissions && !userPermissions.readCurrentUser) {
+      navigate('/');
     }
   }, [authenticationReady, checkPermissions, userPermissions]);
 

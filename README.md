@@ -1,20 +1,20 @@
-# warp-scores.net
+# Warp Scores
 
-Welcome to [warp-scores](https://warp-scores.net), a Spike-like facade for Cyanide's BB3 API.
+Welcome to [Warp Scores](https://warp-scores.net), a Spike-like facade for Cyanide's BB3 API.
 
-## Description
-This is a Spike-like web page to show match results and data from BB3 obtained through Cyanide's API. 
+## Overview
 
-## Build Status
+### Description
+This is a Spike-like web page to show match results and data from BB3 obtained through Cyanide's API.
 
+### Build Status
 [![dev](https://gitlab.com/warp-scores/warp-scores/badges/dev/pipeline.svg?key_text=dev&key_width=50)](https://gitlab.com/warp-scores/warp-scores/-/pipelines?page=1&scope=branches&ref=dev) [![main](https://gitlab.com/warp-scores/warp-scores/badges/main/pipeline.svg?key_text=main&key_width=50)](https://gitlab.com/warp-scores/warp-scores/-/pipelines?page=1&scope=branches&ref=main)
 
-## Roadmap
-
+### Roadmap
 - 🟢 Show last matches
 - 🟢 Show live matches
 - 🟢 Generate Round Robin Schedules
-- 🟢 Support Swiss (Wissen) Tournaments  
+- 🟢 Support Swiss (Wissen) Tournaments
 - 🟢 [Support Knockout Tournaments](https://gitlab.com/warp-scores/warp-scores/-/issues/4)
 - 🟢 [Increase Mobile UI/UX](https://gitlab.com/warp-scores/warp-scores/-/issues/3)
 - 🟡 [Match-Details](https://gitlab.com/warp-scores/warp-scores/-/issues/5)
@@ -25,29 +25,40 @@ This is a Spike-like web page to show match results and data from BB3 obtained t
 - 🟢 [Authentication (🟢 Discord-,🟢 NAF-OAuth)](https://gitlab.com/warp-scores/warp-scores/-/issues/10)
 - 🟢 [NAF Data export for tournaments](https://gitlab.com/warp-scores/warp-scores/-/issues/11)
 - [Admin/Edit results? Win/Tiebreaker editor?](https://gitlab.com/warp-scores/warp-scores/-/issues/12)
-- Others: -> See https://gitlab.com/warp-scores/warp-scores/-/issues/
+- Others: -> See [Issues on GitLab](https://gitlab.com/warp-scores/warp-scores/-/issues/)
 
 ### Legend
 - 🟢 Finished
-- 🟡 Currently in work
+- 🟡 In Progress
 - 🔴 Obsolete/Canceled
 
-## Discord Bot
+### Discord Bot
+Please refer to the [Discord Bot documentation](discord-bot.md).
 
-Please refer to [Discord Bot](discord-bot.md).
+### Changelog
+See the [Changelog](CHANGELOG.md).
 
-## Changelog
+## Contribute / Get Involved
+- [Join Discord](https://discord.gg/hZDU6ymyrj)
 
-See [CHANGELOG.md](CHANGELOG.md).
+## Support & Donations
+If you appreciate my work, you can buy me a coffee in person or [online](https://buymeacoffee.com/naytsyrhc).
 
-## Contribute/Get involved
+## Additional Projects
+- **Scoreboard and Clock for Blood Bowl**: [bbclock](https://bbclock.warp-scores.net)
+- **Blood Bowl Reference Sheet**: [YaRSfBB2020](https://gitlab.com/naytsyrhc/YaRSfBB2020)
+- **3D Models**: [Cults](https://cults3d.com/en/users/naytsyrhc)
 
-- [Discord](https://discord.gg/hZDU6ymyrj)
+## Similar / Related Projects
 
-## Donations
+### Blood Bowl 3
+- [nuffle.xyz](https://nuffle.xyz) by galentio
+- [Nuffles Numbers](https://www.nufflesnumbers.net) by trev
+- [Bloodbowl 3 statistics](https://spike.bugeat.com) by thierry
+- [rebbl.net](https://rebbl.net) by majorbyte
+- [bb3replay](https://bb3replay.com/) by TinTuna
+- [dicedornot](https://huggingface.co/spaces/mrMesmer/dicedornot) by mrMesmer (based on work by raspel and TinTuna)
 
-If you like my work, you may buy me a coffee if we meet in person or [online](https://buymeacoffee.com/naytsyrhc).
-
-## Other work
-
-If you are not only playing Blood Bowl online with BB3 but also attend tournaments, you might like my Scoreboard and Clock for Blood Bowl [bbclock](https://bbclock.warp-scores.net).
+### Blood Bowl (General)
+- [Dave's Action Calculator](https://www.bloodbowldave.com/) by dave
+- [Dadidimerda](https://www.dadidimerda.it/) by Gherardo/Steel

@@ -23,7 +23,6 @@ public class LeagueService {
 
     public List<League> loadAll() {
         List<League> all = leagueRepository.findAll();
-        all.forEach(this::countCompetitions);
         return all;
     }
 
@@ -36,5 +35,6 @@ public class LeagueService {
     private void countCompetitions(League league) {
         Map<CompetitionStatus, Long> countsByStatus = competitionService.countForLeague(league.getUuid());
         league.setCountsByCompetitionStatus(countsByStatus);
+        leagueRepository.save(league);
     }
 }
