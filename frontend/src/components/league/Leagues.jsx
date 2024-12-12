@@ -1,0 +1,41 @@
+import React from 'react';
+import { Accordion, AccordionButton, AccordionItem, AccordionPanel, Heading } from '@chakra-ui/react';
+import LeagueCard from './LeagueCard';
+
+function LeaguesAccordionItem({ leagues, header }) {
+  return (
+    leagues?.length > 0 && (
+      <AccordionItem>
+        <AccordionButton>
+          <Heading size="md">{`${header} (${leagues.length})`}</Heading>
+        </AccordionButton>
+        <AccordionPanel>
+          {leagues.map((currLeague) => (
+            <LeagueCard mb={2} league={currLeague} key={currLeague.uuid} />
+          ))}
+        </AccordionPanel>
+      </AccordionItem>
+    )
+  );
+}
+
+function Leagues({ leagues }) {
+  return (
+    <Accordion variant="simple" allowMultiple defaultIndex={[0]}>
+      <LeaguesAccordionItem
+        key="Active"
+        header="Active Leagues"
+        leagues={leagues?.filter((league) => league.teamCount > 0 && league.countsByCompetitionStatus?.InProgress > 0)}
+      />
+      <LeaguesAccordionItem
+        key="Inactive"
+        header="Inactive Leagues"
+        leagues={leagues?.filter(
+          (league) => league.teamCount === 0 || league.countsByCompetitionStatus?.InProgress === 0
+        )}
+      />
+    </Accordion>
+  );
+}
+
+export default Leagues;

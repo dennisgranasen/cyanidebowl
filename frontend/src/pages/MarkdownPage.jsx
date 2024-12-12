@@ -1,5 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Box, Card, CardBody, Stack, VStack } from '@chakra-ui/react';
+import {
+  Box,
+  Card,
+  CardBody,
+  Heading,
+  Image,
+  Link,
+  ListItem,
+  Stack,
+  Text,
+  UnorderedList,
+  VStack,
+} from '@chakra-ui/react';
 import { Link as RouteLink } from 'react-router-dom';
 import ReactMarkdown from 'markdown-to-jsx';
 import { ChakraUIRenderer } from 'chakra-ui-markdown';
@@ -8,6 +20,7 @@ import ImageUrls from '../ImageUrls';
 import HeaderCard from '../components/common/HeaderCard';
 import logger from '../util/Logger';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
+import markDownTheme from '../theme/components/Markdown';
 
 const getContentAdjustingMarkdownLinks = (text) => {
   const markdownLinkRegex = /(\[[^\]]*\])\((?:https?:\/\/){0}([^:)]*)\)/g;
@@ -23,7 +36,7 @@ const handleError = (response) => {
 };
 
 function MarkdownPage({ markdownDocument, title }) {
-  const renderer = useMemo(() => ChakraUIRenderer(), []);
+  const renderer = useMemo(() => ChakraUIRenderer(markDownTheme, true), []);
   const [content, setContent] = useState();
   const [error, setError] = useState(null);
 

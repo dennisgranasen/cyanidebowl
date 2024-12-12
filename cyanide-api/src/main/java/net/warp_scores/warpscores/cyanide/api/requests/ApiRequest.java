@@ -40,12 +40,17 @@ public class ApiRequest<RequestType, ResponseType> {
     public enum Order {ID, LastMatchDate, CreationDate}
 
     private Platform platform = Platform.pc;
-    private Integer limit;
+    private Integer limitOffset = 0;
+    private Integer limitSize = 500;
     private Integer exact;
 
     private Duration cacheValidity = CacheValidityDurations.TWO_HOURS;
     private Duration readTimeout = null;
     private Duration connectTimeout = Duration.ofSeconds(1);
+
+    public String getLimit() {
+        return String.format("%d,+%d", limitOffset, limitSize);
+    }
 
     public String md5Sum() {
         MultiValueMap<String, String> queryParams = toQueryParams();
@@ -97,7 +102,8 @@ public class ApiRequest<RequestType, ResponseType> {
         return Arrays.stream(allDeclaredMethods)
                 .filter(method -> method.getName().startsWith("get"))
                 .filter(method -> !List.of("getClass", "getCacheValidity", "getReadTimeout", "getConnectTimeout",
-                                "getResponseClass", "getRequestPath", "getRequestClass", "getId_only")
+                                "getResponseClass", "getRequestPath", "getRequestClass", "getId_only", "getLimitOffset",
+                                "getLimitSize")
                         .contains(method.getName()))
                 .toList();
     }

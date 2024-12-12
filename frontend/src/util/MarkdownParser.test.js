@@ -6,13 +6,19 @@ test('parseMarkdownAdjustingLinks adjusts simple markdown links', () => {
 });
 
 test('parseMarkdownAdjustingLinks does not change http links', () => {
-  expect(parseMarkdownPrefixingLinks('Hello [markdown](http://link)', '/prefix/')).toBe('Hello [markdown](http://link)');
+  expect(parseMarkdownPrefixingLinks('Hello [markdown](http://link)', '/prefix/')).toBe(
+    'Hello [markdown](http://link)'
+  );
 });
 
 test('parseMarkdownAdjustingLinks does not change https links', () => {
-  expect(parseMarkdownPrefixingLinks('Hello [markdown](https://link)', '/prefix/')).toBe('Hello [markdown](https://link)');
+  expect(parseMarkdownPrefixingLinks('Hello [markdown](https://link)', '/prefix/')).toBe(
+    'Hello [markdown](https://link)'
+  );
 });
 
 test('parseMarkdownAdjustingLinks does not change mailto links', () => {
-  expect(parseMarkdownPrefixingLinks('Hello [markdown](mailto:mail)', '/prefix/')).toBe('Hello [markdown](mailto:mail)');
+  expect(parseMarkdownPrefixingLinks('Hello [markdown](mailto:mail)', '/prefix/')).toBe(
+    'Hello [markdown](mailto:mail)'
+  );
 });

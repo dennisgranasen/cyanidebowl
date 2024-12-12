@@ -9,6 +9,7 @@ import net.warp_scores.warpscores.model.CompetitionFormat;
 import net.warp_scores.warpscores.model.CompetitionStatus;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.MatchStatus;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -71,7 +72,7 @@ public class CompetitionService {
         Integer teams = competition.getTeamsMax();
         boolean isOdd = teams % 2 == 1;
         Integer contestCount = contestsRepository.countByCompetitionId(competition.getUuid());
-        List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid());
+        List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid(), Pageable.unpaged());
         Map<UUID, Optional<Contest>> uniqueContests = contests
                 .stream()
                 .collect(
@@ -98,7 +99,7 @@ public class CompetitionService {
     }
 
     private void initializeWissen(Competition competition) {
-        List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid());
+        List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid(), Pageable.unpaged());
         OptionalInt currentRound = contests.stream().mapToInt(Contest::getRound).max();
         if (competition.getTotalRounds() == null) {
             competition.setTotalRounds(calcWissenTotalRounds(competition.getTeamsMax()));
@@ -119,13 +120,13 @@ public class CompetitionService {
         int byes = players - teams;
         int totalMatches = teams - 1 - byes;
         competition.setTotalMatches(totalMatches);
-        List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid());
+        List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid(), Pageable.unpaged());
         competition.setCurrentRound(contests.stream().mapToInt(Contest::getRound).max().orElse(0));
         initializeMatchCount(competition, contests);
     }
 
     private void initializeLadder(Competition competition) {
-        List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid());
+        List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid(), Pageable.unpaged());
         initializeMatchCount(competition, contests);
     }
 

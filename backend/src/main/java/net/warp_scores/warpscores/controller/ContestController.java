@@ -26,13 +26,20 @@ public class ContestController {
 
     public static final int MAX_LIMIT_FOR_LATEST_CONTESTS = 12;
     public static final int DEFAULT_LIMIT_FOR_LATEST_CONTESTS = 6;
+    public static final int DEFAULT_LIMIT_FOR_LIVE_CONTESTS = 15;
+    public static final int DEFAULT_LIMIT_FOR_CONTESTS = 100;
     private final ContestService contestService;
     private final ContestDomainService contestDomainService;
 
     @GetMapping("/contests/competition/{competitionUuid}")
     public ResponseEntity<List<Contest>> getCompetitionContests(@PathVariable(name = "competitionUuid") UUID competitionUuid) {
+        return getCompetitionContests(competitionUuid, null);
+    }
+
+    @GetMapping("/contests/competition/{competitionUuid}/{limit}")
+    public ResponseEntity<List<Contest>> getCompetitionContests(@PathVariable(name = "competitionUuid") UUID competitionUuid, @PathVariable(name = "limit") Integer limit) {
         try {
-            List<Contest> contests = contestService.getCompetitionContests(competitionUuid);
+            List<Contest> contests = contestService.getCompetitionContests(competitionUuid, Optional.ofNullable(limit));
             return ResponseEntity.ok(contests);
         } catch (Exception ex) {
             log.error("Unable to retrieve contests", ex);
@@ -74,8 +81,15 @@ public class ContestController {
 
     @GetMapping("/contests/league/{leagueUuid}/live")
     public ResponseEntity<List<Contest>> getLiveLeagueContests(@PathVariable(name = "leagueUuid") UUID leagueUuid) {
+        return getLiveLeagueContests(leagueUuid, null);
+    }
+
+    @GetMapping("/contests/league/{leagueUuid}/live/{limit}")
+    public ResponseEntity<List<Contest>> getLiveLeagueContests(@PathVariable(name = "leagueUuid") UUID leagueUuid,
+            @PathVariable(name = "limit") Integer limit) {
         try {
-            List<Contest> contests = contestService.getLiveLeagueContests(leagueUuid);
+            limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT_FOR_LIVE_CONTESTS);
+            List<Contest> contests = contestService.getLiveLeagueContests(leagueUuid, limit);
             return ResponseEntity.ok(contests);
         } catch (Exception ex) {
             log.error("Unable to retrieve contests", ex);

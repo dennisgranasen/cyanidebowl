@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Heading, VStack } from '@chakra-ui/react';
+import { Box, VStack } from '@chakra-ui/react';
 import WarpScoresApiService from '../WarpScoresApiService';
 import Navigation from '../components/misc/Navigation';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
@@ -7,8 +7,8 @@ import HeaderCard from '../components/common/HeaderCard';
 import ImageUrls from '../ImageUrls';
 import CircuitCard from '../components/circuit/CircuitCard';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
-import LeagueCard from '../components/league/LeagueCard';
 import config from '../config';
+import Leagues from '../components/league/Leagues';
 
 const { showCircuitsFeature } = config;
 
@@ -68,11 +68,12 @@ function WarpScores() {
           subHeading="Welcome to warp-scores, a Spike-like facade to BB3 data provided by Cyanide's BB3-API."
         />
         <Box>
-          <Heading size="md">{showCircuits ? 'Circuits' : 'Leagues'}</Heading>
           <LoadingOrErrorWrapper loading={loading} error={error}>
-            {showCircuits
-              ? circuits.map((currCircuit) => <CircuitCard mb={2} circuit={currCircuit} key={currCircuit.id} />)
-              : leagues.map((currLeague) => <LeagueCard mb={2} league={currLeague} key={currLeague.uuid} />)}
+            {showCircuits ? (
+              circuits.map((currCircuit) => <CircuitCard mb={2} circuit={currCircuit} key={currCircuit.id} />)
+            ) : (
+              <Leagues leagues={leagues} />
+            )}
           </LoadingOrErrorWrapper>
         </Box>
       </>

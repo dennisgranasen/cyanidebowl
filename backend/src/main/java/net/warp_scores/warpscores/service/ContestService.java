@@ -6,12 +6,12 @@ import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.model.Competition;
-import net.warp_scores.warpscores.model.CompetitionFormat;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.MatchStatus;
 import net.warp_scores.warpscores.model.Team;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -29,27 +29,29 @@ public class ContestService {
     private final ContestInitializationService contestInitializationService;
     private final TeamDomainService teamDomainService;
 
-    public List<Contest> getCompetitionContests(UUID competitionUuid) {
+    public List<Contest> getCompetitionContests(UUID competitionUuid, Optional<Integer> limit) {
         Optional<Competition> competition = competitionService.loadCompetition(competitionUuid);
         List<Team> teams = teamDomainService.findByCompetitionId(competitionUuid);
-        List<Contest> contests = contestRepository.findByCompetitionId(competitionUuid);
-        contests.stream().forEach(this::loadMatchInto);
+        Pageable pageable = limit.map(l -> (Pageable) PageRequest.of(0, l, Sort.by(Sort.Direction.DESC, "matchDate")))
+                .orElse(Pageable.unpaged());
+        List<Contest> contests = contestRepository.findByCompetitionId(competitionUuid, pageable);
+        contests.forEach(this::loadMatchInto);
 
-        List<Contest> initializedContests = contestInitializationService.initializeContestsScheduleForFormat(
+        return contestInitializationService.initializeContestsScheduleForFormat(
                 competition, teams, contests);
-        return initializedContests;
     }
 
     public List<Contest> getLatestLeagueContests(UUID leagueUuid, int limit) {
         List<Contest> contests = contestRepository.findByLeagueIdAndStatusOrderByMatchDateDesc(leagueUuid,
                 MatchStatus.Validated, PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "matchDate")));
-        contests.stream().forEach(this::loadMatchInto);
+        contests.forEach(this::loadMatchInto);
         return contests;
     }
 
-    public List<Contest> getLiveLeagueContests(UUID leagueUuid) {
-        List<Contest> contests = contestRepository.findByLeagueIdAndLive(leagueUuid, 1);
-        contests.stream().forEach(this::loadMatchInto);
+    public List<Contest> getLiveLeagueContests(UUID leagueUuid, int limit) {
+        List<Contest> contests = contestRepository.findByLeagueIdAndLiveOrderByMatchDateDesc(leagueUuid, 1,
+                PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "matchDate")));
+        contests.forEach(this::loadMatchInto);
         return contests;
     }
 
