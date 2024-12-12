@@ -121,16 +121,20 @@ export default {
     axios(`/contests/league/${leagueUuid}/latest${limit ? `/${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
-  competitionContests: async (competitionUuid) =>
-    axios(`/contests/competition/${competitionUuid}`).then(returnData).catch(handleError),
+  competitionContests: async (competitionUuid, limit) =>
+    axios(`/contests/competition/${competitionUuid}${limit ? `/${limit}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
   // competitions
   leagueCompetitions: async (leagueUuid) =>
     axios(`/competitions/league/${leagueUuid}`).then(returnData).catch(handleError),
   competition: async (competitionUuid) => axios(`/competitions/${competitionUuid}`).then(returnData).catch(handleError),
   competitionTeam: async (competitionUuid, teamUuid) =>
     axios(`/competitions/${competitionUuid}/team/${teamUuid}`).then(returnData).catch(handleError),
-  competitionRanks: async (competitionUuid) =>
-    axios(`/ranks/competition/${competitionUuid}`).then(returnData).catch(handleError),
+  competitionRanks: async (competitionUuid, limit) =>
+    axios(`/ranks/competition/${competitionUuid}${limit ? `/${limit}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
   // team
   team: async (teamUuid) => axios(`/teams/${teamUuid}`).then(returnData).catch(handleError),
   teamMatches: async (teamUuid) => axios(`/teams/${teamUuid}/matches`).then(returnData).catch(handleError),

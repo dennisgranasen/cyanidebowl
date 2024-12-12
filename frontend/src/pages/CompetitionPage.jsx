@@ -16,6 +16,7 @@ import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import KnockoutCompetition from '../components/competition/KnockoutCompetition';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 import NafExportButton from '../components/misc/NafExportButton';
+import logger from '../util/Logger';
 
 function isKnockout(competition) {
   return competition?.format.toLowerCase() === 'knockout';
@@ -56,21 +57,30 @@ function CompetitionPage() {
   useEffect(() => {
     const fetchContests = () => {
       setContestsLoading(true);
-      WarpScoresApiService.competitionContests(competitionUuid)
+      logger.debug('Fetching contests for competition: %o', competition);
+      WarpScoresApiService.competitionContests(
+        competitionUuid,
+        competition?.format?.toLowerCase() === 'ladder' ? 20 : null
+      )
         .then((data) => {
-          data.sort((compA, compB) => comparators.compareAsDates(compA.matchDate, compB.matchDate));
+          data.sort((compA, compB) => comparators.compareAsDatesDesc(compA.matchDate, compB.matchDate));
           setContests(data);
         })
         .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
         .finally(() => setContestsLoading(false));
     };
-    fetchContests();
+    if (competition) {
+      fetchContests();
+    }
   }, [competition]);
 
   useEffect(() => {
     const fetchRanks = () => {
       setRanksLoading(true);
-      WarpScoresApiService.competitionRanks(competitionUuid)
+      WarpScoresApiService.competitionRanks(
+        competitionUuid,
+        competition?.format?.toLowerCase() === 'ladder' ? 20 : null
+      )
         .then((data) => {
           data.sort((rankA, rankB) => rankA.rank - rankB.rank);
           setRanks(data);

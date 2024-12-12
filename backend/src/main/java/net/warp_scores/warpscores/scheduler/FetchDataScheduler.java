@@ -11,11 +11,14 @@ import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.LeagueCollectionRepository;
 import net.warp_scores.warpscores.domain.persistence.LeagueRepository;
 import net.warp_scores.warpscores.model.Competition;
+import net.warp_scores.warpscores.model.CompetitionFormat;
+import net.warp_scores.warpscores.model.CompetitionStatus;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.model.LeagueCollection;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Team;
+import net.warp_scores.warpscores.service.CompetitionService;
 import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -50,6 +53,8 @@ public class FetchDataScheduler {
 
     private final LeagueRepository leagueRepository;
 
+    private final CompetitionService competitionService;
+
     private final CompetitionRepository competitionRepository;
 
     private final MatchDomainService matchDomainService;
@@ -74,7 +79,9 @@ public class FetchDataScheduler {
                 leaguesToCollect.size());
 
         List<League> leagues = loadLeaguesFor(leaguesToCollect);
-
+        if (leaguesToCollect.size() > existingLeagues.size()) {
+            fetchCompetitions();
+        }
         fetchMatchesIfNecessary(leagues, lastKnownMatchDateByLeagueId);
     }
 
@@ -91,28 +98,48 @@ public class FetchDataScheduler {
         List<Competition> competitions = loadCompetitionsFor(leaguesToCollect);
 
         competitions
-                .forEach(this::fetchTeamsForCompetitionIfNoneYetAvailable);
+                .forEach(this::fetchTeamsForCompetitionIfTeamsMissing);
     }
 
-    private void fetchTeamsForCompetitionIfNoneYetAvailable(Competition competition) {
+    private void fetchTeamsForCompetitionIfTeamsMissing(Competition competition) {
         List<Team> byCompetitionId = teamDomainService.findByCompetitionId(competition.getUuid());
-        if (byCompetitionId.isEmpty()) {
+        if (competition.getTeamsMax() != null && competition.getTeamsMax() > byCompetitionId.size()) {
+            log.info("Loading teams for competition {} as maxTeams ({}) > availableTeams ({}).", competition.getUuid(),
+                    competition.getTeamsMax(), byCompetitionId.size());
             cyanideApiService.loadTeams(competition);
         }
     }
 
     @Scheduled(initialDelay = Schedules.THREE_MINUTES, fixedDelay = Schedules.FIFTEEN_MINUTES)
-    public void fetchLeagueContests() {
+    public void fetchCompetitionContests() {
         if (!cyanideApiProperties.isSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchLeagueContests().");
             return;
         }
-        List<LeagueCollection> leaguesToCollect = leagueCollectionRepository.findByCollectionActive(true);
+        List<UUID> leagueIdsToCollect = leagueCollectionRepository.findByCollectionActive(true).stream()
+                .map(LeagueCollection::getLeagueId).toList();
+        List<Competition> competitions = competitionRepository.findAll();
+        List<Competition> activeNonLadderCompetitions = competitions
+                .stream()
+                .filter(competition -> leagueIdsToCollect.contains(competition.getLeagueId()))
+                .filter(this::isActive)
+                .filter(this::isNotLadder)
+                .toList();
 
-        log.info("Will load contests for {} leagues with active league collection.",
-                leaguesToCollect.size());
+        long distinctLeagueCount = activeNonLadderCompetitions.stream().map(Competition::getLeagueId).distinct()
+                .count();
+        log.info("Will load contests for {} active non ladder competitions of {} different leagues.",
+                activeNonLadderCompetitions.size(), distinctLeagueCount);
 
-        loadContestsFor(leaguesToCollect);
+        loadContestsFor(activeNonLadderCompetitions);
+    }
+
+    private boolean isNotLadder(Competition competition) {
+        return !CompetitionFormat.Ladder.equals(competition.getFormat());
+    }
+
+    private boolean isActive(Competition competition) {
+        return CompetitionStatus.InProgress.equals(competition.getStatus());
     }
 
     @Scheduled(initialDelay = Schedules.THREE_MINUTES, fixedDelay = Schedules.ONE_HOUR)
@@ -183,8 +210,9 @@ public class FetchDataScheduler {
             return;
         }
 
-        List<Competition> competitions = competitionRepository.findByStatusIn(List.of(InProgress));
-        log.info("Will load teams for {} competitions in progress.",
+        List<Competition> competitions = competitionRepository.findByStatusInAndFormatIn(List.of(InProgress), List.of(
+                CompetitionFormat.RoundRobin));
+        log.info("Will load teams for {} round robin competitions in progress.",
                 competitions.size());
         List<Team> teams = competitions
                 .stream()
@@ -230,12 +258,20 @@ public class FetchDataScheduler {
                 .map(cyanideApiService::loadCompetitions)
                 .flatMap(List::stream)
                 .toList();
+        List<League> leagues = leagueRepository.findAll();
+        leagues.forEach(this::countCompetitions);
         log.info("Loaded {} competitions.", competitions.size());
         return competitions;
     }
 
-    private void loadContestsFor(List<LeagueCollection> leagueCollections) {
-        List<Contest> contests = leagueCollections
+    private void countCompetitions(League league) {
+        Map<CompetitionStatus, Long> countsByStatus = competitionService.countForLeague(league.getUuid());
+        league.setCountsByCompetitionStatus(countsByStatus);
+        leagueRepository.save(league);
+    }
+
+    private void loadContestsFor(List<Competition> competitions) {
+        List<Contest> contests = competitions
                 .stream()
                 .map(cyanideApiService::loadContests)
                 .flatMap(List::stream)

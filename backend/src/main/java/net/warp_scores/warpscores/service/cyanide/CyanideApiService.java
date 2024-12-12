@@ -27,11 +27,11 @@ import net.warp_scores.warpscores.domain.ContestDomainService;
 import net.warp_scores.warpscores.domain.LeagueDomainService;
 import net.warp_scores.warpscores.domain.MatchDomainService;
 import net.warp_scores.warpscores.domain.TeamDomainService;
+import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.StatusRepository;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.League;
-import net.warp_scores.warpscores.model.LeagueCollection;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Status;
 import net.warp_scores.warpscores.model.Team;
@@ -49,7 +49,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
 import static net.warp_scores.warpscores.cyanide.api.requests.StatusRequest.BB3_GAME_NAME;
@@ -77,10 +76,10 @@ public class CyanideApiService {
     private final CompetitionDomainService competitionDomainService;
 
     private final CompetitionTeamsDomainService competitionTeamsDomainService;
+    private final ContestRepository contestRepository;
 
     public LookupResponse lookup(LookupRequest lookupRequest) {
-        LookupResponse lookupResponse = cyanideCachedRestApiClient.getFromCacheOrApi(lookupRequest);
-        return lookupResponse;
+        return cyanideCachedRestApiClient.getFromCacheOrApi(lookupRequest);
     }
 
     public League loadLeague(UUID leagueId) {
@@ -131,12 +130,12 @@ public class CyanideApiService {
                 team.getId(), startDate);
         TeamMatchesResponse teamMatchesResponse = cyanideCachedRestApiClient.getFromCacheOrApi(teamMatchesRequest);
         List<UUID> matchUuids = ofNullable(teamMatchesResponse)
-                .map(t -> Arrays.stream(
+                .stream()
+                .flatMap(t -> Arrays.stream(
                         ofNullable(t.getMatchIds())
                                 .orElse(new TeamMatchesResponse.MatchId[0])))
-                .orElse(Stream.empty())
                 .map(TeamMatchesResponse.MatchId::getUuid)
-                .collect(Collectors.toList());
+                .toList();
         List<Match> matches = matchUuids
                 .stream()
                 .filter(Objects::nonNull)
@@ -184,25 +183,19 @@ public class CyanideApiService {
         return competitionDomainService.createOrUpdateCompetitions(competitionsResponse);
     }
 
-    public List<Contest> loadContests(LeagueCollection leagueCollection) {
+    public List<Contest> loadContests(Competition competition) {
+        Integer contestCount = contestRepository.countByCompetitionId(competition.getUuid());
         ContestsRequest contestsRequest = new ContestsRequest();
-        contestsRequest.setLeague_id(leagueCollection.getLeagueId());
-        List<Contest> contests = new ArrayList<>();
+        contestsRequest.setCompetition_id(competition.getUuid());
 
         contestsRequest.setStatus("*");
-        contestsRequest.setLimit(1000);
-        contests.addAll(loadContests(contestsRequest));
-
-        return contests;
+        contestsRequest.setLimitOffset(contestCount);
+        return new ArrayList<>(loadContests(contestsRequest));
     }
 
     private List<Contest> loadContests(ContestsRequest contestsRequest) {
         ContestsResponse contestsResponse = cyanideCachedRestApiClient.getFromCacheOrApi(contestsRequest);
-        List<Contest> allContests = contestDomainService.createOrUpdateContests(contestsResponse);
-        if (allContests.size() == 1000) {
-            log.warn("Contest loaded with one request reached 1000 mark. TODO: Implement pagination!");
-        }
-        return allContests;
+        return contestDomainService.createOrUpdateContests(contestsResponse);
     }
 
     @Transactional
@@ -212,8 +205,8 @@ public class CyanideApiService {
 
             Optional<StatusResponse> statusResponse = ofNullable(cyanideRestApiClient.loadFromApi(new StatusRequest()));
             status = statusResponse
-                    .map(sr -> Arrays.stream(sr.getGames()))
-                    .orElse(Stream.empty())
+                    .stream()
+                    .flatMap(sr -> Arrays.stream(sr.getGames()))
                     .filter(game -> BB3_GAME_NAME.equals(game.getName()))
                     .findFirst()
                     .map(statusModelConverter::toStatus)

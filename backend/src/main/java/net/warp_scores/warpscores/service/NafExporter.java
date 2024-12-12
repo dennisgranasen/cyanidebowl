@@ -37,7 +37,6 @@ public class NafExporter {
     private final CompetitionService competitionService;
     private final NafCoachService nafCoachService;
 
-
     public Optional<NafReport> export(UUID competitionUuid, String exporterName) {
         Optional<Competition> competition = competitionService.loadCompetition(competitionUuid);
         return competition.flatMap(comp -> export(comp, exporterName));
@@ -50,7 +49,8 @@ public class NafExporter {
             return Optional.empty();
         }
 
-        List<Contest> competitionContests = contestService.getCompetitionContests(competition.getUuid());
+        List<Contest> competitionContests = contestService.getCompetitionContests(competition.getUuid(),
+                Optional.empty());
         return Optional.of(export(competitionContests, exporterName));
     }
 

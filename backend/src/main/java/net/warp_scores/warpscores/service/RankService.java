@@ -19,7 +19,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static java.util.List.of;
 import static java.util.Objects.requireNonNullElse;
 import static java.util.Optional.empty;
 import static java.util.Optional.ofNullable;
@@ -34,17 +33,21 @@ public class RankService {
     private final TeamDomainService teamDomainService;
     private final CompetitionService competitionService;
 
-    private final List<RankComparisons> defaultRankComparisons = List.of(RankComparisons.SCORE_310, RankComparisons.WINS,
+    private final List<RankComparisons> defaultRankComparisons = List.of(RankComparisons.SCORE_310,
+            RankComparisons.WINS,
             RankComparisons.INFLICTED_TOUCHDOWNS, RankComparisons.TOUCHDOWN_DIFFERENCE);
 
-    public List<Rank> getRanksForCompetition(UUID competitionId, Optional<List<RankComparisons>> rankComparisons) {
+    public List<Rank> getRanksForCompetition(UUID competitionId,
+            Optional<List<RankComparisons>> rankComparisons,
+            Optional<Integer> limit) {
         Competition competition = competitionService.loadCompetition(competitionId)
                 .orElseThrow(NoSuchElementException::new);
 
         List<Team> teams = teamDomainService.findByCompetitionId(competitionId);
+        List<Contest> contests = contestRepository.findByCompetitionIdAndStatus(competition.getUuid(), Validated);
 
         return teams.stream()
-                .map(team -> toRank(team, competition, rankComparisons.orElse(defaultRankComparisons)))
+                .map(team -> toRank(team, contests, rankComparisons.orElse(defaultRankComparisons)))
                 .sorted(
                         (rankA, rankB) -> {
                             int result = 0;
@@ -57,6 +60,7 @@ public class RankService {
                             return result;
                         }
                 )
+                .limit(limit.orElse(Integer.MAX_VALUE))
                 .collect(HashMap<Rank, Integer>::new, (map, rank) -> map.put(rank, map.size() + 1), (map, map2) -> {})
                 .entrySet()
                 .stream()
@@ -67,10 +71,9 @@ public class RankService {
                 .collect(Collectors.toList());
     }
 
-    private Rank toRank(Team team, Competition competition, List<RankComparisons> rankComparisons) {
+    private Rank toRank(Team team, List<Contest> contests, List<RankComparisons> rankComparisons) {
         Rank rank = new Rank();
         rank.setTeam(team);
-        List<Contest> contests = contestRepository.findByCompetitionIdAndStatus(competition.getUuid(), Validated);
         int gamesPlayed = 0;
         int gamesWon = 0;
         int gamesDrawn = 0;
@@ -80,9 +83,7 @@ public class RankService {
         int inflictedCasualties = 0;
         int sustainedCasualties = 0;
         for (Contest contest : contests) {
-            Optional<Match> match = ofNullable(contest.getMatchUuid()).flatMap(matchRepository::findById);
-
-            List<Team> teamResults = match.map(Match::getTeams).orElse(contest.getOpponents());
+            List<Team> teamResults = contest.getOpponents();
             Optional<Team> ownTeam = getTeam(teamResults, team.getId());
             Optional<Team> otherTeam = getOtherTeam(teamResults, ownTeam);
             if (ownTeam.isPresent() && otherTeam.isPresent()) {

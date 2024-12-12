@@ -81,6 +81,7 @@ const traitSkills = [
   'BoneHead',
   'Chainsaw',
   'Decay',
+  'Drunkard',
   'HypnoticGaze',
   'NoHands',
   'Loner',

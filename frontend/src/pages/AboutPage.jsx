@@ -12,11 +12,12 @@ import HeaderCard from '../components/common/HeaderCard';
 import logger from '../util/Logger';
 import DisclaimerCard from './aboutCards/DisclaimerCard';
 import parseMarkdownPrefixingLinks from '../util/MarkdownParser';
+import markDownTheme from '../theme/components/Markdown';
 
 const readmeFile = '/README.md';
 
 function AboutPage() {
-  const renderer = useMemo(() => ChakraUIRenderer(), []);
+  const renderer = useMemo(() => ChakraUIRenderer(markDownTheme, true), []);
   const [readme, setReadme] = useState();
 
   const handleError = (response) => {

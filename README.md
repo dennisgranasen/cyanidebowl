@@ -54,10 +54,11 @@ If you appreciate my work, you can buy me a coffee in person or [online](https:/
 ### Blood Bowl 3
 - [nuffle.xyz](https://nuffle.xyz) by galentio
 - [Nuffles Numbers](https://www.nufflesnumbers.net) by trev
-- [Bloodbowl 3 statistics](https://spike.bugeat.com) by thierry
+- [Bloodbowl 3 statistics](https://spike.bugeat.com/en/stats) by thierry
 - [rebbl.net](https://rebbl.net) by majorbyte
 - [bb3replay](https://bb3replay.com/) by TinTuna
 - [dicedornot](https://huggingface.co/spaces/mrMesmer/dicedornot) by mrMesmer (based on work by raspel and TinTuna)
+- [Ladder Result Predictor](https://huggingface.co/spaces/raspel/BB_predictions) by raspel
 
 ### Blood Bowl (General)
 - [Dave's Action Calculator](https://www.bloodbowldave.com/) by dave
