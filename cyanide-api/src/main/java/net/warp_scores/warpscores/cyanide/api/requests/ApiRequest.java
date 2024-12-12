@@ -35,11 +35,8 @@ public class ApiRequest<RequestType, ResponseType> {
     private final Class<RequestType> requestClass;
     private final Class<ResponseType> responseClass;
 
-    public enum Platform {pc, playstation, xbox}
-
     public enum Order {ID, LastMatchDate, CreationDate}
 
-    private Platform platform = Platform.pc;
     private Integer limitOffset = 0;
     private Integer limitSize = 500;
     private Integer exact;
