@@ -119,23 +119,18 @@ public class FetchDataScheduler {
         List<UUID> leagueIdsToCollect = leagueCollectionRepository.findByCollectionActive(true).stream()
                 .map(LeagueCollection::getLeagueId).toList();
         List<Competition> competitions = competitionRepository.findAll();
-        List<Competition> activeNonLadderCompetitions = competitions
+        List<Competition> activeCompetitions = competitions
                 .stream()
                 .filter(competition -> leagueIdsToCollect.contains(competition.getLeagueId()))
                 .filter(this::isActive)
-                .filter(this::isNotLadder)
                 .toList();
 
-        long distinctLeagueCount = activeNonLadderCompetitions.stream().map(Competition::getLeagueId).distinct()
+        long distinctLeagueCount = activeCompetitions.stream().map(Competition::getLeagueId).distinct()
                 .count();
-        log.info("Will load contests for {} active non ladder competitions of {} different leagues.",
-                activeNonLadderCompetitions.size(), distinctLeagueCount);
+        log.info("Will load contests for {} active competitions of {} different leagues.",
+                activeCompetitions.size(), distinctLeagueCount);
 
-        loadContestsFor(activeNonLadderCompetitions);
-    }
-
-    private boolean isNotLadder(Competition competition) {
-        return !CompetitionFormat.Ladder.equals(competition.getFormat());
+        loadContestsFor(activeCompetitions);
     }
 
     private boolean isActive(Competition competition) {

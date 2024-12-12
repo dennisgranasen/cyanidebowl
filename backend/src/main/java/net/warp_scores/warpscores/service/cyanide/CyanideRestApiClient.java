@@ -82,7 +82,7 @@ public class CyanideRestApiClient {
                         limit.getCapacity(), refill);
                 waitingForRateLimit = true;
             }
-            waitIgnoringExceptions(1000);
+            waitOneSecondIgnoringExceptions();
         }
         if (waitingForRateLimit) {
             log.info("Bucket refilled, resuming...");
@@ -125,9 +125,9 @@ public class CyanideRestApiClient {
         return uriComponents.encode().toUri();
     }
 
-    private static void waitIgnoringExceptions(int millis) {
+    private static void waitOneSecondIgnoringExceptions() {
         try {
-            Thread.sleep(millis);
+            Thread.sleep(1000);
         } catch (InterruptedException ex) {
             // ignored
         }

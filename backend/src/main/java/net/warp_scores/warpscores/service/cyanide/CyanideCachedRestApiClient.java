@@ -14,8 +14,6 @@ import net.warp_scores.warpscores.domain.cache.RestApiResponseCacheRepository;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
-import java.net.URLDecoder;
-import java.nio.charset.Charset;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
@@ -83,8 +81,8 @@ public class CyanideCachedRestApiClient {
             RestApiResponseCache restApiResponseCache = new RestApiResponseCache();
             restApiResponseCache.setApiRequestKey(apiRequestKey.asString());
             restApiResponseCache.setApiRequestAsString(objectMapper.writeValueAsString(apiRequest));
-            URI uri = cyanideRestApiClient.createUri(apiRequest, "{{apiKey}}");
-            restApiResponseCache.setApiRequestUrl(URLDecoder.decode(uri.toString(), Charset.defaultCharset()));
+            URI uri = cyanideRestApiClient.createUri(apiRequest, "API_KEY");
+            restApiResponseCache.setApiRequestUrl(uri.toString().replace("API_KEY", "{{apiKey}}"));
             restApiResponseCache.setLastAccess(new Date());
             restApiResponseCache.setCacheValidityDuration(apiRequest.getCacheValidity());
             String responseClassName = getResponseClassName(apiRequest);
