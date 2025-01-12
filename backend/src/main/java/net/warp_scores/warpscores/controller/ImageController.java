@@ -136,7 +136,7 @@ public class ImageController {
     }
 
     private String translateSkillToImageName(String name) {
-        return Skill.forCaseInsensitiveName(name).getImageName();
+        return Skill.forCaseInsensitiveName(name).map(Skill::getImageName).orElse(null);
     }
 
     private String translateRaceToImageName(String name) {

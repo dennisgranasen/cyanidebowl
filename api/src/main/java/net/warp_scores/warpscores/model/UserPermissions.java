@@ -41,17 +41,12 @@ public class UserPermissions {
     }
 
     public UserPermissions with(String permission) {
-        switch (permission) {
-            case READ_CURRENT_USER:
-                return this.withReadCurrentUser();
-            case WRITE_REGISTER_LEAGUE:
-                return this.withWriteRegisterLeague();
-            case WRITE_LEAGUE_ADMIN:
-                return this.withWriteLeagueAdmin();
-            case WRITE_SITE_ADMIN:
-                return this.withWriteSiteAdmin();
-            default:
-                return this;
-        }
+        return switch (permission) {
+            case READ_CURRENT_USER -> this.withReadCurrentUser();
+            case WRITE_REGISTER_LEAGUE -> this.withWriteRegisterLeague();
+            case WRITE_LEAGUE_ADMIN -> this.withWriteLeagueAdmin();
+            case WRITE_SITE_ADMIN -> this.withWriteSiteAdmin();
+            default -> this;
+        };
     }
 }

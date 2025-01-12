@@ -10,6 +10,6 @@ services:
       - 'MONGO_INITDB_ROOT_PASSWORD=some password'
       - 'MONGO_INITDB_ROOT_USERNAME=root'
     ports:
-      - '32768:27017'
+      - '32769:27017'
     volumes:
       - ./data:/data/db

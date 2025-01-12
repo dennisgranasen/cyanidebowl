@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -91,15 +92,22 @@ public class NafExporter {
     private List<PlayerRecord> toPlayerRecords(List<Team> opponents) {
         return opponents
                 .stream()
-                .map(this::toPlayerRecord).toList();
+                .map(this::toPlayerRecord)
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     private PlayerRecord toPlayerRecord(Team team) {
+        Optional<NafCoach> nafCoach = nafCoachService.lookupCoach(team.getCoachName());
+        return nafCoach.map(coach -> toPlayerRecord(team, coach)).orElse(null);
+    }
+
+    private PlayerRecord toPlayerRecord(Team team, NafCoach nafCoach) {
         PlayerRecord playerRecord = new PlayerRecord();
         playerRecord.setTeam(team.getRace().getNafRaceName());
-        playerRecord.setName(nafCoachService.lookupCoach(team.getCoachName()).getNafName());
+        playerRecord.setName(nafCoach.getNafName());
         playerRecord.setTeamRating(DEFAULT_TEAM_RATING);
-        playerRecord.setNumber(nafCoachService.lookupCoach(team.getCoachName()).getNafId());
+        playerRecord.setNumber(nafCoach.getNafId());
         playerRecord.setTouchDowns(team.getScore());
         playerRecord.setBadlyHurt(team.getInflictedcasualties());
         return playerRecord;
@@ -116,15 +124,17 @@ public class NafExporter {
     }
 
     private List<Coach> toCoachesFromTeams(List<Team> teams) {
-        Map<NafCoach, String> raceNameByCoachName = teams.stream().collect(
-                groupingBy(team -> nafCoachService.lookupCoach(team.getCoachName()),
+        Map<Optional<NafCoach>, String> raceNameByCoachName = teams
+                .stream()
+                .collect(groupingBy(team -> nafCoachService.lookupCoach(team.getCoachName()),
                         collectingAndThen(toList(), this::uniqueOrMultipleRacesQualifier)));
 
         return raceNameByCoachName
                 .entrySet()
                 .stream()
-                .sorted(Comparator.comparing(e -> e.getKey().getNafName()))
-                .map(entry -> toCoach(entry.getKey(), entry.getValue()))
+                .filter(entry -> entry.getKey().isPresent())
+                .sorted(Comparator.comparing(e -> e.getKey().get().getNafName()))
+                .map(entry -> toCoach(entry.getKey().get(), entry.getValue()))
                 .toList();
     }
 

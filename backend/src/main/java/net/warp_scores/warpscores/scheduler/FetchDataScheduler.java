@@ -10,6 +10,7 @@ import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.LeagueCollectionRepository;
 import net.warp_scores.warpscores.domain.persistence.LeagueRepository;
+import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.CompetitionFormat;
 import net.warp_scores.warpscores.model.CompetitionStatus;
@@ -17,13 +18,16 @@ import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.model.LeagueCollection;
 import net.warp_scores.warpscores.model.Match;
+import net.warp_scores.warpscores.model.MatchStatus;
 import net.warp_scores.warpscores.model.Team;
 import net.warp_scores.warpscores.service.CompetitionService;
 import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -62,10 +66,11 @@ public class FetchDataScheduler {
     private final CompetitionDomainService competitionDomainService;
     private final ContestRepository contestRepository;
     private final TeamDomainService teamDomainService;
+    private final MatchRepository matchRepository;
 
     @Scheduled(initialDelay = Schedules.TWENTY_SECONDS, fixedDelay = Schedules.TEN_MINUTES)
     public void fetchLeagues() {
-        if (!cyanideApiProperties.isSchedulerActive()) {
+        if (!cyanideApiProperties.isJobCreationSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchLeagues().");
             return;
         }
@@ -87,7 +92,7 @@ public class FetchDataScheduler {
 
     @Scheduled(initialDelay = Schedules.FIVE_MINUTES, fixedDelay = Schedules.ONE_HOUR)
     public void fetchCompetitions() {
-        if (!cyanideApiProperties.isSchedulerActive()) {
+        if (!cyanideApiProperties.isJobCreationSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchCompetitions().");
             return;
         }
@@ -103,7 +108,8 @@ public class FetchDataScheduler {
 
     private void fetchTeamsForCompetitionIfTeamsMissing(Competition competition) {
         List<Team> byCompetitionId = teamDomainService.findByCompetitionId(competition.getUuid());
-        if (competition.getTeamsMax() != null && competition.getTeamsMax() > byCompetitionId.size()) {
+        if (!competition.getFormat()
+                .equals(CompetitionFormat.Ladder) && competition.getTeamsMax() != null && competition.getTeamsMax() > byCompetitionId.size()) {
             log.info("Loading teams for competition {} as maxTeams ({}) > availableTeams ({}).", competition.getUuid(),
                     competition.getTeamsMax(), byCompetitionId.size());
             cyanideApiService.loadTeams(competition);
@@ -112,7 +118,7 @@ public class FetchDataScheduler {
 
     @Scheduled(initialDelay = Schedules.THREE_MINUTES, fixedDelay = Schedules.FIFTEEN_MINUTES)
     public void fetchCompetitionContests() {
-        if (!cyanideApiProperties.isSchedulerActive()) {
+        if (!cyanideApiProperties.isJobCreationSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchLeagueContests().");
             return;
         }
@@ -139,21 +145,30 @@ public class FetchDataScheduler {
 
     @Scheduled(initialDelay = Schedules.THREE_MINUTES, fixedDelay = Schedules.ONE_HOUR)
     public void fetchMissingMatches() {
-        if (!cyanideApiProperties.isSchedulerActive()) {
+        if (!cyanideApiProperties.isJobCreationSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchMissingMatches().");
             return;
         }
 
         List<Contest> contests = contestRepository.findContestsWithoutMatches();
-        log.info("Found {} contests with missing matches.", contests.size());
+        List<Contest> playedContests = contests
+                .stream()
+                .filter(contest -> contest.getLive() != 1)
+                .filter(contest -> !List.of(MatchStatus.Scheduled, MatchStatus.InProgress, MatchStatus.Calculated)
+                        .contains(contest.getStatus()))
+                .toList();
 
-        List<UUID> matchUuids = contests
+        log.info("Found {} contests ({} played) with missing matches.", contests.size(),
+                playedContests.size());
+
+        List<UUID> matchUuids = playedContests
                 .stream()
                 .map(Contest::getMatchUuid)
                 .filter(Objects::nonNull)
                 .toList();
 
         loadMatches(matchUuids);
+        updateTeams(matchUuids);
     }
 
     private void fetchMatchesIfNecessary(List<League> leagues, Map<UUID, Optional<Date>> lastKnownMatchDateByLeagueId) {
@@ -200,7 +215,7 @@ public class FetchDataScheduler {
 
     @Scheduled(cron = "0 0 3 * * ?")
     public void fetchTeams() {
-        if (!cyanideApiProperties.isSchedulerActive()) {
+        if (!cyanideApiProperties.isJobCreationSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchTeams().");
             return;
         }
@@ -214,7 +229,7 @@ public class FetchDataScheduler {
                 .filter(Objects::nonNull)
                 .map(cyanideApiService::loadTeams)
                 .flatMap(List::stream)
-                .collect(Collectors.toList());
+                .toList();
 
         log.info("Loaded {} teams.", teams.size());
 
@@ -297,6 +312,40 @@ public class FetchDataScheduler {
                 .toList();
 
         loadMatches(matchUuids);
+    }
+
+    private void updateTeams(List<UUID> matchUuids) {
+        List<Match> matches = matchRepository.findAllById(matchUuids);
+        Map<UUID, List<Match>> matchesByTeam = new HashMap<>();
+        matches.forEach(m -> {
+            UUID teamAUuid = m.getTeams().get(0).getId();
+            UUID teamBUuid = m.getTeams().get(1).getId();
+            matchesByTeam.putIfAbsent(teamAUuid, new ArrayList<>());
+            matchesByTeam.putIfAbsent(teamBUuid, new ArrayList<>());
+            matchesByTeam.get(teamAUuid).add(m);
+            matchesByTeam.get(teamBUuid).add(m);
+        });
+        Map<UUID, Optional<Team>> latestTeamByTeam = new HashMap<>();
+        matchesByTeam.forEach((uuid, currMatches) ->
+                latestTeamByTeam.putIfAbsent(uuid, getTeamFromLatestMatch(uuid, currMatches)));
+
+        log.info("Creating/Updating {} teams.", latestTeamByTeam.size());
+        latestTeamByTeam
+                .values()
+                .stream()
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .forEach(teamDomainService::createOrUpdateTeam);
+    }
+
+    private Optional<Team> getTeamFromLatestMatch(UUID uuid, List<Match> currMatches) {
+        Optional<Match> latestMatch = currMatches.stream().min((m1, m2) ->
+                m2.getFinished().compareTo(m1.getFinished()));
+        return latestMatch.flatMap(m -> getTeamFromMatch(uuid, m));
+    }
+
+    private Optional<Team> getTeamFromMatch(UUID uuid, Match match) {
+        return match.getTeams().stream().filter(t -> t.getId().equals(uuid)).findFirst();
     }
 
     private void loadMatches(List<UUID> matchUuids) {

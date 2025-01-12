@@ -22,16 +22,16 @@ function ScoreOrIcon({ contest, size, boxSize }) {
 
   if (matchPlayed && !contest.live && !matchValidated) color = 'grey';
   if (contest.adminResult) color = 'orange';
+  if (contest.concede) color = 'red';
+
+  const scoreA = contest.match?.teams ? contest.match.teams[0].score : contest.opponents[0].score;
+  const scoreB = contest.match?.teams ? contest.match.teams[1].score : contest.opponents[1].score;
+  const scoreText = `${scoreA} - ${scoreB}`;
 
   return (
     <Center w="100%" color={color}>
       <VStack>
-        {matchPlayed && contest.match && (
-          <Heading size={size}>{`${contest.match.teams[0].score} - ${contest.match.teams[1].score}`}</Heading>
-        )}
-        {matchPlayed && !contest.match && (
-          <Heading size={size}>{`${contest.opponents[0].score} - ${contest.opponents[1].score}`}</Heading>
-        )}
+        {matchPlayed && <Heading size={size}>{scoreText}</Heading>}
         {!matchPlayed && <MatchStatusIcon status={contest.status} live={contest.live} boxSize={boxSize} />}
       </VStack>
     </Center>

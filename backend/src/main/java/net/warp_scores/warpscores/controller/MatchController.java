@@ -2,27 +2,21 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.warp_scores.warpscores.cyanide.api.requests.MatchRequest;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Match;
-import net.warp_scores.warpscores.model.Player;
 import net.warp_scores.warpscores.service.CompetitionService;
-import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
-import net.warp_scores.warpscores.service.cyanide.CyanideCachedRestApiClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @RestController
 @RequiredArgsConstructor
@@ -31,8 +25,6 @@ public class MatchController {
 
     private final MatchRepository matchRepository;
     private final CompetitionService competitionService;
-    private final CyanideCachedRestApiClient cyanideCachedRestApiClient;
-    private final CyanideApiService cyanideApiService;
 
     @GetMapping("/matches/team/{teamUuid}")
     public ResponseEntity<List<Match>> getTeamMatches(@PathVariable(name = "teamUuid") UUID teamUuid) {
@@ -40,7 +32,7 @@ public class MatchController {
             List<Match> byTeamId = matchRepository
                     .findAll()
                     .stream()
-                    .filter(t -> t.getTeams().contains(teamUuid))
+                    .filter(t -> t.getTeams().stream().anyMatch(team -> team.getId().equals(teamUuid)))
                     .collect(Collectors.toList());
             return ResponseEntity.ok(byTeamId);
         } catch (Exception ex) {
@@ -64,12 +56,13 @@ public class MatchController {
     }
 
     private List<Match> initializeForCompetition(List<Match> matches, Optional<Competition> competition) {
-        Stream<Match> sorted = matches
+        List<Match> sorted = matches
                 .stream()
-                .sorted(Comparator.nullsLast(Comparator.comparing(Match::getStarted)));
+                .sorted(Comparator.nullsLast(Comparator.comparing(Match::getStarted)))
+                .toList();
         AtomicInteger matchNumber = new AtomicInteger(1);
         sorted.forEach(m -> setRound(m, matchNumber.getAndIncrement(), competition));
-        return sorted.collect(Collectors.toList());
+        return sorted;
     }
 
     private void setRound(Match match, Integer currentMatchNumber, Optional<Competition> competition) {

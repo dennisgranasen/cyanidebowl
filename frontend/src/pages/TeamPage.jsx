@@ -78,14 +78,14 @@ function TeamPage() {
   }, [competitionUuid, teamUuid]);
 
   const navCompetition =
-    team && team.competitionIds.length === 1 ? [team.competitionIds[0], team.competitionName] : null;
+    team && team.competitionIds?.length === 1 ? [team.competitionIds[0], team.competitionName] : null;
 
   return (
     <VStack align="left">
       <Box>
         <Navigation
           currentPage="team"
-          league={team ? [team.leagueIds[0], team.leagueName] : []}
+          league={team && team.leagueIds ? [team.leagueIds[0], team.leagueName] : []}
           competition={navCompetition}
           team={team ? [teamUuid, team.name] : []}
         />

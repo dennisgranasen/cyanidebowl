@@ -9,8 +9,8 @@ import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
 import net.warp_scores.warpscores.domain.persistence.TeamRepository;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.CompetitionTeams;
-import net.warp_scores.warpscores.model.Player;
 import net.warp_scores.warpscores.model.Team;
+import net.warp_scores.warpscores.service.PopulatorUtil;
 import net.warp_scores.warpscores.service.TeamPopulator;
 import net.warp_scores.warpscores.service.UUIDConverter;
 import org.springframework.stereotype.Service;
@@ -60,7 +60,7 @@ public class TeamDomainService {
     public List<Team> findByCompetitionId(UUID competitionUuid) {
         Optional<CompetitionTeams> competitionTeams = competitionTeamsDomainService.findByCompetitionId(
                 competitionUuid);
-        List<UUID> teamUuids = competitionTeams.map(ct -> ct.getTeamUuids()).orElse(Collections.emptyList());
+        List<UUID> teamUuids = competitionTeams.map(CompetitionTeams::getTeamUuids).orElse(Collections.emptyList());
         List<Team> teams = this.teamRepository.findAllById(teamUuids);
         setRelevantCompetition(teams, competitionUuid);
         return teams;
@@ -80,7 +80,6 @@ public class TeamDomainService {
     private void setRelevantCompetition(List<Team> teams, UUID competitionUuid) {
         Optional<Competition> competition = this.competitionRepository.findById(competitionUuid);
         teams
-                .stream()
                 .forEach(team -> {
                     team.setCompetitionIds(new UUID[]{competitionUuid});
                     competition.ifPresent(c -> team.setCompetitionName(c.getName()));
@@ -112,5 +111,17 @@ public class TeamDomainService {
         Team team = teamFromDb.orElse(new Team());
         team.setId(uuid.get());
         return team;
+    }
+
+    public void createOrUpdateTeam(Team team) {
+        Optional<Team> teamFromDb = teamRepository.findById(team.getId());
+        if (teamFromDb.isEmpty()) {
+            teamRepository.save(team);
+        } else {
+            Team oldTeam = teamFromDb.get();
+            oldTeam.setPlayers(team.getPlayers());
+            PopulatorUtil.copyNonNullProperties(team, oldTeam);
+            teamRepository.save(oldTeam);
+        }
     }
 }

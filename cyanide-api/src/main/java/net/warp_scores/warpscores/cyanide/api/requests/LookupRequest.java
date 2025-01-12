@@ -56,5 +56,6 @@ public class LookupRequest extends ApiRequest<LookupRequest, LookupResponse> {
     public LookupRequest() {
         super("bb3/lookup", LookupRequest.class, LookupResponse.class);
         setCacheValidity(CacheValidityDurations.FIVE_MINUTES);
+        setLimitSize(null);
     }
 }

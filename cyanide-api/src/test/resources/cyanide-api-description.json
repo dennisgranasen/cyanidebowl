@@ -21,7 +21,7 @@
     "Please cache the data\/results on your side and do not make all the requests at the same time.",
     "Also note that we apply daily quotas on your usage. Any request exeeding those quotas will fail.",
     "",
-    "Your current quotas: 1000 requests per hour \/ 10000 requests per day",
+    "Your current quotas: xxx requests per hour \/ xxx requests per day",
     "",
     "We expect from you that",
     "- you communicate to us the addresses of the websites, discord channels, tools, apps or",
@@ -470,7 +470,7 @@
     }
   ],
   "meta": {
-    "user": "DBBL - warp-scores.net (Christian Wagner)",
+    "user": "xxx",
     "method": "ws",
     "format": "json",
     "services": "https:\/\/web.cyanide-studio.com\/ws\/?key={{apiKey}}&bb=3"

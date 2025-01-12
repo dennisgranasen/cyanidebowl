@@ -44,7 +44,6 @@ public class CompetitionDomainService {
     public Map<UUID, Optional<Date>> getEarliestStartDatesFor(List<UUID> leagueUuids) {
         Map<UUID, Optional<Date>> earliestStartDatesByLeagueUuid = new HashMap<>();
         leagueUuids
-                .stream()
                 .forEach(leagueUuid ->
                         earliestStartDatesByLeagueUuid.put(leagueUuid, competitionRepository
                                 .findTopByLeagueIdOrderByDateCreatedAsc(leagueUuid)

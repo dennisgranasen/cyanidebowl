@@ -15,7 +15,9 @@ import static java.lang.String.format;
 @Service
 @RequiredArgsConstructor
 public class WarpScoresDiscordMessageBuilder {
-    public static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd, HH:mm");
+    public static final DateFormat DATE_AND_TIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd, HH:mm");
+    public static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+    public static final DateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm");
 
     private final WarpScoresProperties warpScoresProperties;
 

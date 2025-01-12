@@ -166,6 +166,7 @@ public class CyanideApiService {
             MatchesRequest matchesRequest = new MatchesRequest();
             matchesRequest.setLeague_id(league.getUuid());
             matchesRequest.setStart(startDate);
+            matchesRequest.setLimitSize(null);
             log.info(
                     "Loading matches for league {} starting from {}.",
                     league.getUuid(), startDate);
@@ -188,8 +189,12 @@ public class CyanideApiService {
         ContestsRequest contestsRequest = new ContestsRequest();
         contestsRequest.setCompetition_id(competition.getUuid());
 
+        int limitOffset = contestCount - 100;
+        if (limitOffset < 0) {
+            limitOffset = 0;
+        }
         contestsRequest.setStatus("*");
-        contestsRequest.setLimitOffset(contestCount);
+        contestsRequest.setLimitOffset(limitOffset);
         return new ArrayList<>(loadContests(contestsRequest));
     }
 
@@ -203,7 +208,8 @@ public class CyanideApiService {
         Status status;
         try {
 
-            Optional<StatusResponse> statusResponse = ofNullable(cyanideRestApiClient.loadFromApi(new StatusRequest()));
+            Optional<StatusResponse> statusResponse = ofNullable(
+                    cyanideRestApiClient.loadFromApi(new StatusRequest()));
             status = statusResponse
                     .stream()
                     .flatMap(sr -> Arrays.stream(sr.getGames()))

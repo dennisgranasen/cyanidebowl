@@ -25,9 +25,13 @@ public class LatestMatchesMessageBuilder {
     private final WarpScoresDiscordMessageBuilder warpScoresDiscordMessageBuilder;
     private final MatchMessageBuilder matchMessageBuilder;
 
-    public EmbedCreateSpec.Builder builder(League league, List<Contest> contests, boolean spoiler) {
+    public EmbedCreateSpec.Builder builder(League league,
+            List<Contest> contests,
+            Optional<Long> count,
+            boolean spoiler) {
         if (contests != null && contests.size() == 1) {
-            return matchMessageBuilder.builder(league, contests.get(0), spoiler);
+            Contest contest = contests.get(0);
+            return matchMessageBuilder.builder(league, contest.getMatch(), contest.isConcede(), spoiler);
         }
 
         EmbedCreateSpec.Builder builder = warpScoresDiscordMessageBuilder
@@ -42,9 +46,12 @@ public class LatestMatchesMessageBuilder {
                                 .orElse("No matches played yet."), null);
         if (contests == null || contests.isEmpty()) {
             builder = builder.addField("Matches", ":cry: No matches played yet.", false);
-        }
-        for (Contest contest : contests) {
-            builder = addContest(builder, contest, spoiler);
+        } else {
+            List<Contest> limitedContests = count
+                    .map(c -> contests.stream().limit(c).toList()).orElse(contests);
+            for (Contest contest : limitedContests) {
+                builder = addContest(builder, contest, spoiler);
+            }
         }
         return builder;
     }
@@ -63,17 +70,18 @@ public class LatestMatchesMessageBuilder {
         Team teamA = contest.getOpponents().get(0);
         Team teamB = contest.getOpponents().get(1);
 
-        StringBuilder sb = new StringBuilder();
-        sb.append(matchMessageBuilder.getFrontendMarkupLink(contest.getCompetitionName(), "/#/competition/%s",
-                contest.getCompetitionId())).append("\n");
-        sb.append(matchMessageBuilder.getVsDetails(teamA, teamB, true, false, team ->
-                matchMessageBuilder.getFrontendMarkupLink(team.getName(), "/#/competition/%s/team/%s",
-                        contest.getCompetitionId(),
-                        team.getId()))).append("\n");
-        sb.append(matchMessageBuilder.getVsDetails(teamA, teamB, false, false, Team::getCoachName)).append(" ")
-                .append(matchMessageBuilder.getVsDetails(teamA, teamB, true, spoiler,
-                        team -> String.format("`%s`", team.getScore()))).append("\n\n");
-        return sb.toString();
+        return matchMessageBuilder.getFrontendMarkupLink(contest.getCompetitionName(), "/#/competition/%s",
+                contest.getCompetitionId()) +
+                "\n" +
+                matchMessageBuilder.getVsDetails(teamA, teamB, true, false, team ->
+                        matchMessageBuilder.getFrontendMarkupLink(team.getName(), "/#/competition/%s/team/%s",
+                                contest.getCompetitionId(),
+                                team.getId())) +
+                "\n" +
+                matchMessageBuilder.getVsDetails(teamA, teamB, false, false, Team::getCoachName) + " " +
+                matchMessageBuilder.getVsDetails(teamA, teamB, true, spoiler,
+                        team -> String.format("`%s`", team.getScore())) +
+                "\n\n";
     }
 }
 
