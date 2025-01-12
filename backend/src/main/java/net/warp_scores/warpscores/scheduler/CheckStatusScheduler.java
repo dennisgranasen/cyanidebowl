@@ -23,7 +23,7 @@ public class CheckStatusScheduler {
 
     @Scheduled(cron = "${cyanide.check-api-status-cron}")
     public void checkApiStatusPeriodically() {
-        if (!cyanideApiProperties.isSchedulerActive()) {
+        if (!cyanideApiProperties.isJobCreationSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping checkApiStatus().");
             return;
         }

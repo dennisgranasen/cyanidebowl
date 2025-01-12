@@ -55,12 +55,11 @@ public class LeagueCollectionController {
         leagueCollections = leagueCollectionRepository.saveAll(leagueCollections);
         log.info("Added league collections {}.", leagueCollections);
 
-        List<League> leagues = leagueCollections
+        return leagueCollections
                 .stream()
                 .map(LeagueCollection::getLeagueId)
                 .map(cyanideApiService::loadLeague)
                 .toList();
-        return leagues;
     }
 
     private LeagueCollection newLeagueCollection(IdWithName idWithName) {

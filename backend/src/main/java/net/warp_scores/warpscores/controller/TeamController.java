@@ -24,7 +24,6 @@ public class TeamController {
     private final TeamDomainService teamDomainService;
 
     private final MatchDomainService matchDomainService;
-    private final CompetitionTeamsDomainService competitionTeamsDomainService;
 
     @GetMapping("/teams/{teamId}")
     public ResponseEntity<Team> getTeam(@PathVariable(name = "teamId") UUID teamId) {

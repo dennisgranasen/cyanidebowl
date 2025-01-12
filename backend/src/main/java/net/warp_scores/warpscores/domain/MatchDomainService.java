@@ -37,9 +37,8 @@ public class MatchDomainService {
 
     @Transactional
     public List<Match> findMatchesForTeam(UUID teamUuid) {
-        List<Match> all = matchRepository.findAll();
-        return all.stream()
-                .filter(m -> teamWithIdInList(teamUuid, m.getTeams()))
+        List<Match> teamMatches = matchRepository.findMatchesByTeamId(teamUuid);
+        return teamMatches.stream()
                 .sorted(Comparator.comparing(Match::getStarted).reversed())
                 .collect(Collectors.toList());
     }

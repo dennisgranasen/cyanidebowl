@@ -10,14 +10,14 @@ import java.util.UUID;
 public class Rank {
     private UUID competitionId;
     private Team team;
-    private Integer rank;
-    private Integer gamesPlayed;
-    private Integer score;
-    private Integer gamesWon;
-    private Integer gamesDrawn;
-    private Integer gamesLost;
-    private Integer inflictedTouchdowns;
-    private Integer sustainedTouchdowns;
-    private Integer inflictedCasualties;
-    private Integer sustainedCasualties;
+    private Integer rank = 0;
+    private Integer gamesPlayed = 0;
+    private Integer score = 0;
+    private Integer gamesWon = 0;
+    private Integer gamesDrawn = 0;
+    private Integer gamesLost = 0;
+    private Integer inflictedTouchdowns = 0;
+    private Integer sustainedTouchdowns = 0;
+    private Integer inflictedCasualties = 0;
+    private Integer sustainedCasualties = 0;
 }

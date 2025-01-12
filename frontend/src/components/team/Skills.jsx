@@ -77,14 +77,17 @@ const traitSkills = [
   'AnimalSavagery',
   'Animosity',
   'BallChain',
+  'Bloodlust',
   'Bombardier',
   'BoneHead',
   'Chainsaw',
   'Decay',
   'Drunkard',
+  'HitAndRun',
   'HypnoticGaze',
-  'NoHands',
   'Loner',
+  'NoHands',
+  'PickMeUp',
   'PlagueRidden',
   'PogoStick',
   'ProjectileVomit',
@@ -104,13 +107,8 @@ const traitSkills = [
 ];
 
 const isInList = (skill, listOfSkills) => {
-  for (const curr of listOfSkills) {
-    const normalizedSkill = skill.toLowerCase().replace(/[^a-z]/g, '');
-    if (normalizedSkill.startsWith(curr.toLowerCase())) {
-      return true;
-    }
-  }
-  return false;
+  const normalizedSkill = skill.toLowerCase().replace(/[^a-z]/g, '');
+  return listOfSkills.some((curr) => normalizedSkill.startsWith(curr.toLowerCase()));
 };
 
 const isMutation = (skill) => {
@@ -137,13 +135,6 @@ const isGeneral = (skill) => {
   return isInList(skill, generalSkills);
 };
 
-const skillComparator = (skillA, skillB) => {
-  const compareResult = orderBySkillGroup(skillA) - orderBySkillGroup(skillB);
-  if (compareResult !== 0) {
-    return compareResult;
-  }
-  return skillA.localeCompare(skillB);
-};
 const orderBySkillGroup = (skill) => {
   if (isTrait(skill)) return 0;
   if (isGeneral(skill)) return 1;
@@ -154,8 +145,27 @@ const orderBySkillGroup = (skill) => {
   return 6;
 };
 
+const skillComparator = (skillA, skillB) => {
+  const compareResult = orderBySkillGroup(skillA) - orderBySkillGroup(skillB);
+  if (compareResult !== 0) {
+    return compareResult;
+  }
+  return skillA.localeCompare(skillB);
+};
+
+const getAsSimpleArray = (skills) => {
+  let result = [];
+  if (skills?.innateSkills) {
+    result = result.concat(skills?.innateSkills);
+    result = result.concat(skills?.acquiredSkills);
+  } else if (skills?.length > 0) {
+    result = result.concat(skills);
+  }
+  return result;
+};
+
 function Skills({ skills }) {
-  const mySkills = [].concat(skills);
+  const mySkills = getAsSimpleArray(skills);
   mySkills.sort(skillComparator);
 
   return (

@@ -22,7 +22,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 import static net.warp_scores.warpscores.controller.Authorities.AUTHORITY_WRITE_LEAGUE_ADMIN;
 
@@ -47,7 +46,7 @@ public class CompetitionController {
                     .stream()
                     .filter(competitionService::competitionConsideredActive)
                     .sorted()
-                    .collect(Collectors.toUnmodifiableList());
+                    .toList();
             return ResponseEntity.ok(competitions);
         } catch (Exception ex) {
             log.error("Unable to get competitions for league id {}", leagueId, ex);
@@ -82,7 +81,7 @@ public class CompetitionController {
         try {
             Optional<NafReport> nafReport = nafExporter.export(competitionId, exporterName);
             Optional<String> xml = nafReport.map(nafXmlCreator::writeAsXml);
-            byte[] result = xml.map(data -> data.getBytes()).orElse(null);
+            byte[] result = xml.map(String::getBytes).orElse(null);
             output.setResult(result);
         } catch (Exception ex) {
             log.error("Unable to export naf data for {}.", competitionId, ex);

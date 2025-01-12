@@ -12,6 +12,7 @@ public class ApiRequestKey {
     private String requestClassName;
     private String apiRequestMd5Sum;
 
+    @SuppressWarnings("rawtypes")
     public static ApiRequestKey newFor(ApiRequest requestObject) {
         return new ApiRequestKey(requestObject.getClass().getCanonicalName(), requestObject.md5Sum());
     }

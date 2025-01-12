@@ -11,7 +11,8 @@ public class CyanideApiProperties {
     private RequestLimit requestLimit;
     private Cache imagesCache;
     private Urls urls;
-    private boolean schedulerActive;
+    private boolean jobCreationSchedulerActive;
+    private boolean jobExecutionSchedulerActive;
     private boolean fetchActive;
     private boolean respectApiStatus;
     private String checkApiStatusCron;

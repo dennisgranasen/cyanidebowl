@@ -5,7 +5,6 @@ import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.rest.util.Color;
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.discord_bot.config.properties.WarpScoresProperties;
-import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Player;
@@ -15,7 +14,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -23,7 +22,9 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import static java.lang.String.format;
+import static net.warp_scores.discord_bot.discord_messages.WarpScoresDiscordMessageBuilder.DATE_AND_TIME_FORMAT;
 import static net.warp_scores.discord_bot.discord_messages.WarpScoresDiscordMessageBuilder.DATE_FORMAT;
+import static net.warp_scores.discord_bot.discord_messages.WarpScoresDiscordMessageBuilder.TIME_FORMAT;
 
 @Service
 @RequiredArgsConstructor
@@ -32,72 +33,74 @@ public class MatchMessageBuilder {
     private final WarpScoresProperties warpScoresProperties;
     private final WarpScoresDiscordMessageBuilder warpScoresDiscordMessageBuilder;
 
-    public EmbedCreateSpec.Builder builder(League league, Contest contest, boolean spoiler) {
-        Team teamA = contest.getOpponents().get(0);
-        Team teamB = contest.getOpponents().get(1);
+    public EmbedCreateSpec.Builder builder(League league, Match match, boolean isConcede, boolean spoiler) {
+        Team teamA = match.getTeams().get(0);
+        Team teamB = match.getTeams().get(1);
 
         EmbedCreateSpec.Builder builder = warpScoresDiscordMessageBuilder
-                .builder(contest.getCompetitionName(), getVsDetails(teamA, teamB, true, false, team ->
+                .builder(match.getCompetitionName(), getVsDetails(teamA, teamB, true, false, team ->
                         getFrontendMarkupLink(team.getName(), "/#/competition/%s/team/%s",
-                                contest.getCompetitionId(),
+                                match.getCompetitionId(),
                                 team.getId())), Optional.ofNullable(league.getLogo()))
                 .color(Color.MEDIUM_SEA_GREEN)
                 .url(String.format("%s/#/competition/%s", warpScoresProperties.getBaseUrls().getFrontend(),
-                        contest.getCompetitionId()))
-                .footer(format("Match played: %s", getMatchDateAsString(contest)), null);
-        return addFields(builder, contest, spoiler);
+                        match.getCompetitionId()))
+                .footer(format("Match played: %s", getMatchDateAsString(match)), null);
+        return addFields(builder, match, isConcede, spoiler);
     }
 
-    private String getMatchDateAsString(Contest contest) {
-        Date startDate = Optional
-                .ofNullable(contest.getMatch())
-                .map(Match::getStarted)
-                .orElse(contest.getMatchDate());
-        Date finishedDate = Optional
-                .ofNullable(contest.getMatch())
-                .map(Match::getFinished)
-                .orElse(contest.getMatchDate());
-        if (startDate == null) {
+    private String getMatchDateAsString(Match match) {
+        Optional<Date> startDate = Optional.ofNullable(match.getStarted());
+        Optional<Date> finishedDate = Optional.ofNullable(match.getFinished());
+        if (startDate.isEmpty() && finishedDate.isEmpty()) {
             return "no match date.";
-        } else if (startDate.equals(finishedDate)) {
-            return String.format("started: %s", DATE_FORMAT.format(startDate));
         } else {
-            return String.format("finished: %s", DATE_FORMAT.format(finishedDate));
+            return finishedDate
+                    .map(value -> startDate
+                            .map(date -> String.format("%s %s - %s", DATE_FORMAT.format(date), TIME_FORMAT.format(date),
+                                    TIME_FORMAT.format(value)))
+                            .orElseGet(() -> String.format("finished: %s", DATE_AND_TIME_FORMAT.format(value))))
+                    .orElseGet(() -> String.format("started: %s", DATE_AND_TIME_FORMAT.format(startDate.get())));
         }
     }
 
-    private EmbedCreateSpec.Builder addFields(EmbedCreateSpec.Builder builder, Contest contest, boolean spoiler) {
-        Team teamA = contest.getOpponents().get(0);
-        Team teamB = contest.getOpponents().get(1);
+    private EmbedCreateSpec.Builder addFields(EmbedCreateSpec.Builder builder,
+            Match match,
+            boolean isConcede,
+            boolean spoiler) {
+        Team teamA = match.getTeams().get(0);
+        Team teamB = match.getTeams().get(1);
+        Match.Coach coachA = match.getCoaches().get(0);
+        Match.Coach coachB = match.getCoaches().get(1);
 
-        Date matchDate = Optional
-                .ofNullable(contest.getMatch())
-                .map(Match::getStarted)
-                .orElse(contest.getMatchDate());
+        Date matchDate = match.getStarted();
+
+        if (isConcede) {
+            builder = builder.addField("Conceded", "", false);
+        }
 
         return builder
                 .addField("Races",
                         getVsDetails(teamA, teamB, false, false, team -> team.getRace().getRaceName()),
                         false)
-                .addField("Coaches", getVsDetails(teamA, teamB, false, false, Team::getCoachName), false)
+                .addField("Coaches", getVsDetails(coachA, coachB, false, false, Match.Coach::getName), false)
                 .addField("Result",
                         getVsDetails(teamA, teamB, true, spoiler, team -> String.valueOf(team.getScore())),
                         false)
-                .addField("Statistics", ToggableSpoiler.format(spoiler, getStatistics(contest)),
+                .addField("Statistics", ToggableSpoiler.format(spoiler, getStatistics(match)),
                         true)
                 .addField(EmbedCreateFields.Field.of("Impact Players",
-                        ToggableSpoiler.format(spoiler, getImpactPlayers(contest)), true))
-                .addField(EmbedCreateFields.Field.of("Match played", DATE_FORMAT.format(matchDate), false));
+                        ToggableSpoiler.format(spoiler, getImpactPlayers(match)), true))
+                .addField(EmbedCreateFields.Field.of("Match played", DATE_AND_TIME_FORMAT.format(matchDate), false));
     }
 
-    private String getImpactPlayers(Contest contest) {
-        Match match = contest.getMatch();
-        if (match == null) {
+    private String getImpactPlayers(Match match) {
+        if (match == null || match.getTeams() == null || match.getTeams().isEmpty()) {
             return "n/a";
         }
         StringBuilder builder = new StringBuilder();
-        addTeamNameAndImpactPlayers(contest.getMatch().getTeams().get(0), builder);
-        addTeamNameAndImpactPlayers(contest.getMatch().getTeams().get(1), builder);
+        addTeamNameAndImpactPlayers(match.getTeams().get(0), builder);
+        addTeamNameAndImpactPlayers(match.getTeams().get(1), builder);
         return builder.toString();
     }
 
@@ -107,12 +110,17 @@ public class MatchMessageBuilder {
     }
 
     private void addImpactPlayers(Team team, StringBuilder builder) {
-        List<Player> players = team.getPlayers();
-        List<Player> impactPlayers = players != null ? players.stream()
-                .sorted(Comparator.comparingInt(Player::getXp).reversed()).toList() : Collections.emptyList();
+        Optional<List<Player>> players = Optional.ofNullable(team.getPlayers());
+        List<Player> impactPlayers = players
+                .stream()
+                .flatMap(Collection::stream)
+                .filter(p -> p.getMatchplayed() != 0)
+                .sorted(Comparator.comparingInt(Player::getXpGain).reversed())
+                .toList();
         int playersAdded = 0;
         for (Player player : impactPlayers) {
-            builder.append(String.format("*%s* (%s SPP)", player.getName(), player.getXp())).append("\n");
+            builder.append(String.format("*%s* (+%s SPP)%s", player.getName(), player.getXpGain(), iconIfMvp(player)))
+                    .append("\n");
             playersAdded++;
             if (playersAdded >= 3) {
                 break;
@@ -123,27 +131,29 @@ public class MatchMessageBuilder {
         }
     }
 
-    public String getVsDetails(Team teamA,
-            Team teamB,
-            boolean bold,
-            boolean spoiler,
-            Function<Team, String> detailsProvider) {
-        return ToggableSpoiler.format(spoiler,
-                String.format(bold ? "**%s** - **%s**" : "%s - %s", detailsProvider.apply(teamA),
-                        detailsProvider.apply(teamB)));
+    private String iconIfMvp(Player player) {
+        return Optional
+                .ofNullable(player.getMvp())
+                .map(mvp -> String.format("%s", mvp ? ":star:" : ""))
+                .orElse("");
     }
 
-    private String getStatistics(Contest contest) {
-        Team teamA = contest.getOpponents().get(0);
-        Team teamB = contest.getOpponents().get(1);
+    public <Type> String getVsDetails(Type typeA,
+            Type typeB,
+            boolean bold,
+            boolean spoiler,
+            Function<Type, String> detailsProvider) {
+        return ToggableSpoiler.format(spoiler,
+                String.format(bold ? "**%s** - **%s**" : "%s - %s", detailsProvider.apply(typeA),
+                        detailsProvider.apply(typeB)));
+    }
+
+    private String getStatistics(Match match) {
+        Team teamA = match.getTeams().get(0);
+        Team teamB = match.getTeams().get(1);
 
         Integer scoreA = teamA.getScore();
         Integer scoreB = teamB.getScore();
-
-        if (contest.getMatch() != null && contest.getMatch().getTeams() != null) {
-            teamA = contest.getMatch().getTeams().get(0);
-            teamB = contest.getMatch().getTeams().get(1);
-        }
 
         List<Statistics.StatPair> statPairs = new ArrayList<>();
         statPairs.add(new Statistics.StatPair("Score", scoreA, scoreB));

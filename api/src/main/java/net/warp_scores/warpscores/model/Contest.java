@@ -1,6 +1,7 @@
 package net.warp_scores.warpscores.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.mongodb.lang.Nullable;
 import lombok.Getter;
 import lombok.Setter;
 import net.warp_scores.warpscores.UUIDUtil;
@@ -15,7 +16,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Document
-public class Contest implements Comparable {
+public class Contest implements Comparable<Contest> {
     @Id
     private UUID contestUuid;
     private CompetitionFormat format;
@@ -36,6 +37,8 @@ public class Contest implements Comparable {
     private Object winner;
     private boolean adminResult;
     private Match match;
+    private boolean concede;
+    private boolean overtime;
 
     private UUID nextContestUuid;
 
@@ -43,15 +46,15 @@ public class Contest implements Comparable {
     public String toString() {
         String teamA = Optional.ofNullable(opponents).map(o -> o.get(0)).map(Team::getName).orElse("n/a");
         String teamB = Optional.ofNullable(opponents).map(o -> o.get(1)).map(Team::getName).orElse("n/a");
-        return String.format("Contest[%s] Round: %s -> %s vs %s (next: %s)", contestUuid, round, teamA, teamB, nextContestUuid);
+        return String.format("Contest[%s] Round: %s -> %s vs %s (next: %s)", contestUuid, round, teamA, teamB,
+                nextContestUuid);
     }
 
-    public int compareTo(Object other) {
-        if (other == null || !Contest.class.isInstance(other)) {
+    public int compareTo(@Nullable Contest otherContest) {
+        if (otherContest == null) {
             return -1;
         }
 
-        Contest otherContest = (Contest) other;
         int compare = round != null && otherContest.round != null ? Integer.compare(round, otherContest.round) : 0;
         if (compare == 0) {
             compare = UUIDUtil.getInstantFromUUID(contestUuid)

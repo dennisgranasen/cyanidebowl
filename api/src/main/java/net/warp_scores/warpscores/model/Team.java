@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Getter
@@ -73,14 +74,13 @@ public class Team {
 
     @Override
     public boolean equals(Object other) {
-        if (other == null || !Team.class.isInstance(other)) {
+        if (!(other instanceof Team otherTeam)) {
             return false;
         }
-        Team otherTeam = (Team) other;
         if (id != null || otherTeam.id != null) {
-            return id.equals(otherTeam.id);
+            return Objects.equals(id, otherTeam.id);
         } else if (name != null || otherTeam.name != null) {
-            return name.equals(otherTeam.name);
+            return Objects.equals(name, otherTeam.name);
         } else {
             return false;
         }

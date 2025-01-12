@@ -47,6 +47,8 @@ public class TeamPopulator {
         player.setRaceId(apiPlayer.getIdraces());
         player.setSuspendedNextMatch(apiPlayer.getSuspended_next_match());
         player.setMatchplayed(apiPlayer.getMatchplayed());
+        player.setStats(toStats(apiPlayer.getStats()));
+        player.setMvp(apiPlayer.getMvp());
         player.setAttributes(toAttributes(apiPlayer.getAttributes()));
         player.setExtendedAttributes(toExtendedAttributes(apiPlayer.getExtendedAttributes()));
         player.setCasualtiesStateIds(apiPlayer.getCasualties_state_id());
@@ -62,7 +64,6 @@ public class TeamPopulator {
         targetTeam.setLeagueIds(
                 uuidConverter.toUuids(targetTeam.getLeagueIds(), sourceApiTeam.getLeagueId()));
     }
-
 
     private List<Player> toPlayersFromTeamTeam(TeamResponse.Player[] apiPlayers) {
         if (apiPlayers == null) {
@@ -116,15 +117,27 @@ public class TeamPopulator {
         defaultAttributes.setSt(apiExtendedAttributes.getSt().getValue());
         extendedAttributes.setDefaultAttributes(defaultAttributes);
 
-        List<LinkedHashMap<String, Integer>> maluses = collect(apiExtendedAttributes, ApiPlayer.ExtendedAttributes.ExtendedAttribute::getMaluses);
-        List<LinkedHashMap<String, Integer>> bonuses = collect(apiExtendedAttributes, ApiPlayer.ExtendedAttributes.ExtendedAttribute::getBonuses);
+        List<LinkedHashMap<String, Integer>> maluses = collect(apiExtendedAttributes,
+                ApiPlayer.ExtendedAttributes.ExtendedAttribute::getMaluses);
+        List<LinkedHashMap<String, Integer>> bonuses = collect(apiExtendedAttributes,
+                ApiPlayer.ExtendedAttributes.ExtendedAttribute::getBonuses);
         extendedAttributes.setMalus(maluses);
         extendedAttributes.setBonus(bonuses);
         PopulatorUtil.copyNonNullProperties(apiExtendedAttributes, extendedAttributes);
         return extendedAttributes;
     }
 
-    private List<LinkedHashMap<String, Integer>> collect(ApiPlayer.ExtendedAttributes apiExtendedAttributes, Function<ApiPlayer.ExtendedAttributes.ExtendedAttribute, Integer> getter) {
+    private Player.Stats toStats(ApiPlayer.Stats apiStats) {
+        if ( apiStats == null ) {
+            return null;
+        }
+        Player.Stats stats = new Player.Stats();
+        PopulatorUtil.copyNonNullProperties(apiStats, stats);
+        return stats;
+    }
+
+    private List<LinkedHashMap<String, Integer>> collect(ApiPlayer.ExtendedAttributes apiExtendedAttributes,
+            Function<ApiPlayer.ExtendedAttributes.ExtendedAttribute, Integer> getter) {
         List<LinkedHashMap<String, Integer>> collected = new ArrayList<>();
         collected.add(toMap("ma", getter.apply(apiExtendedAttributes.getMa())));
         collected.add(toMap("st", getter.apply(apiExtendedAttributes.getSt())));

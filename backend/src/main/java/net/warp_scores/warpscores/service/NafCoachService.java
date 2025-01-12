@@ -21,22 +21,25 @@ public class NafCoachService {
     private final NafCoachDomainService nafCoachDomainService;
     private final NafCoachLookupClient nafCoachLookupClient;
 
-    @Cacheable(value = "NafCoach", unless="#result == null")
-    public NafCoach lookupCoach(String coachName) {
+    @Cacheable(value = "NafCoach", unless = "#result == null")
+    public Optional<NafCoach> lookupCoach(String coachName) {
         if (BB3_AI_COACH_NAME.equals(coachName)) {
-            return NONE_NAF_COACH;
+            return Optional.empty();
         }
         String lowerCaseCoachNameWithoutWhitespaces = coachName.trim().toLowerCase().replaceAll("\\s", "");
         Optional<NafCoach> nafCoach = nafCoachDomainService.findByName(lowerCaseCoachNameWithoutWhitespaces);
-        return nafCoach.orElseGet(() -> nafLookupCoach(lowerCaseCoachNameWithoutWhitespaces));
+        if (nafCoach.isEmpty()) {
+            nafCoach = nafLookupCoach(lowerCaseCoachNameWithoutWhitespaces);
+        }
+        return nafCoach;
     }
 
-    private NafCoach nafLookupCoach(String lowerCaseCoachNameWithoutWhitespaces) {
+    private Optional<NafCoach> nafLookupCoach(String lowerCaseCoachNameWithoutWhitespaces) {
         NafCoach nafCoach = nafCoachLookupClient.lookupNafCoach(lowerCaseCoachNameWithoutWhitespaces);
         if (!NONE_NAF_COACH.equals(nafCoach)) {
             nafCoach = nafCoachDomainService.store(nafCoach);
         }
-        return nafCoach;
+        return Optional.ofNullable(nafCoach);
     }
 }
 

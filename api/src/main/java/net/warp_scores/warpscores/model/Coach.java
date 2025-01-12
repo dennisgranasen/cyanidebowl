@@ -26,4 +26,9 @@ public class Coach {
     private String lastLang;
     private String status;
     private Boolean matchValidation;
+
+    @Override
+    public String toString() {
+            return String.format("Coach[%s] %s", id, name);
+    }
 }

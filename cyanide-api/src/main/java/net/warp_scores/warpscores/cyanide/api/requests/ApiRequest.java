@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Getter
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
 public class ApiRequest<RequestType, ResponseType> {
 
     private static final SimpleDateFormat REQUEST_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+    public static final int DEFAULT_FETCH_LIMIT = 1000;
 
     private final String requestPath;
     private final Class<RequestType> requestClass;
@@ -38,7 +40,7 @@ public class ApiRequest<RequestType, ResponseType> {
     public enum Order {ID, LastMatchDate, CreationDate}
 
     private Integer limitOffset = 0;
-    private Integer limitSize = 500;
+    private Integer limitSize = DEFAULT_FETCH_LIMIT;
     private Integer exact;
 
     private Duration cacheValidity = CacheValidityDurations.TWO_HOURS;
@@ -46,7 +48,10 @@ public class ApiRequest<RequestType, ResponseType> {
     private Duration connectTimeout = Duration.ofSeconds(1);
 
     public String getLimit() {
-        return String.format("%d,+%d", limitOffset, limitSize);
+        return Optional
+                .ofNullable(getLimitSize())
+                .map(limitSize -> String.format("%d,+%d", limitOffset, limitSize))
+                .orElse(null);
     }
 
     public String md5Sum() {

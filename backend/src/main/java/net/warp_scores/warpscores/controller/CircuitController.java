@@ -56,7 +56,7 @@ public class CircuitController {
     @PreAuthorize(AUTHORITY_WRITE_LEAGUE_ADMIN) // ✨
     public ResponseEntity<Circuit> createCircuit(@RequestBody Circuit circuit) {
         circuit = circuitService.createCircuit(circuit);
-        return new ResponseEntity(circuit, HttpStatusCode.valueOf(HttpStatus.CREATED.value()));
+        return new ResponseEntity<>(circuit, HttpStatusCode.valueOf(HttpStatus.CREATED.value()));
     }
 
     @PostMapping("/circuits/{circuitId}/legs")

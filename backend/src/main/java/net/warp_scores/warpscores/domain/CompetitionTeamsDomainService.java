@@ -20,8 +20,6 @@ import java.util.UUID;
 public class CompetitionTeamsDomainService {
     private final CompetitionTeamsRepository competitionTeamsRepository;
 
-    private final UUIDConverter uuidConverter;
-
     @Transactional
     public CompetitionTeams createOrUpdateCompetitionTeams(Competition competition, List<Team> teams) {
 

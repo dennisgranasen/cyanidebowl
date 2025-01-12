@@ -40,5 +40,6 @@ public class LeaguesRequest extends ApiRequest<LeaguesRequest, LeaguesResponse> 
 
     public LeaguesRequest() {
         super("bb3/leagues", LeaguesRequest.class, LeaguesResponse.class);
+        setLimitSize(null);
     }
 }

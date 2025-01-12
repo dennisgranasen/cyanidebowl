@@ -13,15 +13,15 @@ import static java.util.Optional.ofNullable;
 
 @Getter
 public enum RankComparisons {
-    SCORE_310("3:1:0", "By score, won games giving 3, draws 1, losses 0 score.",
+    SCORE_310("3:1:0", "By score, won games giving 3, draws 1, losses 0 score.", 3, 1, 0,
             (rankA, rankB) -> ofNullable(rankB.getGamesWon()).orElse(0) * 3
-                    + ofNullable(rankB.getGamesDrawn()).orElse(0) * 1
+                    + ofNullable(rankB.getGamesDrawn()).orElse(0)
                     - ofNullable(rankA.getGamesWon()).orElse(0) * 3
                     - ofNullable(rankA.getGamesDrawn()).orElse(0)
     ),
-    SCORE_210("2:1:0", "By score, won games giving 2, draws 1, losses 0 score.",
+    SCORE_210("2:1:0", "By score, won games giving 2, draws 1, losses 0 score.", 2, 1, 0,
             (rankA, rankB) -> ofNullable(rankB.getGamesWon()).orElse(0) * 2
-                    + ofNullable(rankB.getGamesDrawn()).orElse(0) * 1
+                    + ofNullable(rankB.getGamesDrawn()).orElse(0)
                     - ofNullable(rankA.getGamesWon()).orElse(0) * 2
                     - ofNullable(rankA.getGamesDrawn()).orElse(0)
     ),
@@ -61,11 +61,26 @@ public enum RankComparisons {
 
     private final String abbreviation;
     private final String description;
+    private final Integer winScore;
+    private final Integer drawScore;
+    private final Integer lostScore;
     private final Comparator<Rank> comparator;
 
     RankComparisons(String abbreviation, String description, Comparator<Rank> comparator) {
+        this(abbreviation, description, null, null, null, comparator);
+    }
+
+    RankComparisons(String abbreviation,
+            String description,
+            Integer winScore,
+            Integer drawScore,
+            Integer lostScore,
+            Comparator<Rank> comparator) {
         this.abbreviation = abbreviation;
         this.description = description;
+        this.winScore = winScore;
+        this.drawScore = drawScore;
+        this.lostScore = lostScore;
         this.comparator = comparator;
     }
 }
