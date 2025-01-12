@@ -20,7 +20,7 @@ function Navigation({ currentPage, parentPage, league, competition, circuit, tea
 
   return (
     <Flex>
-      <Breadcrumb spacing={1}>
+      <Breadcrumb fontFamily="bigStar" spacing={1}>
         <BreadcrumbItem isCurrentPage={isPage('home', currentPage)}>
           <BreadcrumbLink variant="menu" as={RouteLink} to="/">
             Home
