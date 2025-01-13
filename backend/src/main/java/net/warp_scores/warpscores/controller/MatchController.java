@@ -6,6 +6,7 @@ import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.service.CompetitionService;
+import net.warp_scores.warpscores.service.OfficialLeagueAndCompetitions;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,6 +26,7 @@ public class MatchController {
 
     private final MatchRepository matchRepository;
     private final CompetitionService competitionService;
+    private final OfficialLeagueAndCompetitions officialLeagueAndCompetitions;
 
     @GetMapping("/matches/team/{teamUuid}")
     public ResponseEntity<List<Match>> getTeamMatches(@PathVariable(name = "teamUuid") UUID teamUuid) {
@@ -32,8 +34,12 @@ public class MatchController {
             List<Match> byTeamId = matchRepository
                     .findAll()
                     .stream()
-                    .filter(t -> t.getTeams().stream().anyMatch(team -> team.getId().equals(teamUuid)))
+                    .filter(match -> match.getTeams().stream().anyMatch(team -> team.getId().equals(teamUuid)))
                     .collect(Collectors.toList());
+
+            byTeamId.forEach(match ->
+                    officialLeagueAndCompetitions.adjustCompetitionName(match.getLeagueId(), match.getCompetitionName(),
+                            match::setCompetitionName));
             return ResponseEntity.ok(byTeamId);
         } catch (Exception ex) {
             log.error("Unable to retrieve matches for team {}", teamUuid, ex);

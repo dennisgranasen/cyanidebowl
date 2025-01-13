@@ -14,7 +14,6 @@ import {
 import { SingleEliminationBracket } from 'react-tournament-brackets/dist/esm';
 import React, { useEffect, useState } from 'react';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
-import logger from '../../util/Logger';
 import ImageUrls from '../../ImageUrls';
 import prettyPrint from '../../util/PrettyPrint';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
@@ -22,6 +21,8 @@ import Formatter from '../../util/Formatter';
 import Ranks from './Ranks';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 import config from '../../config';
+import useFetchContests from '../../hooks/useFetchContests';
+import useFetchRanks from '../../hooks/useFetchRanks';
 
 const { boxSize } = config;
 
@@ -39,12 +40,10 @@ function toParticipant(opponent, winner) {
 }
 
 function toParticipants(opponents, index, winner) {
-  logger.debug('Opponents: %o', opponents);
   const participants = [];
   if (opponents) {
     opponents.forEach((opponent) => participants.push(toParticipant(opponent, winner)));
   }
-  logger.debug('Participants: %o', participants);
   return participants;
 }
 
@@ -62,7 +61,7 @@ function toBracketMatch(contest) {
 function toBracketMatches(contests) {
   const matches = [];
   if (contests) {
-    contests.forEach((contest, index) => matches.push(toBracketMatch(contest)));
+    contests.forEach((contest) => matches.push(toBracketMatch(contest)));
   }
   return matches;
 }
@@ -154,7 +153,6 @@ function MatchComponent({
   onMouseEnter,
   onMouseLeave,
 }) {
-  logger.debug('Match %o', match);
   return (
     <DelayedIconTooltip label={match.state === 'DONE' ? `Played ${topText}` : 'Scheduled'}>
       <div
@@ -196,18 +194,32 @@ function MatchComponent({
   );
 }
 
-function KnockoutCompetition({ ranks, contests, competition, ranksLoading, contestsLoading, competitionLoading }) {
+function KnockoutCompetition({ competition, competitionLoading }) {
+  const { fetchContests, contests, contestsLoading, error: contestError } = useFetchContests();
+  const { fetchRanks, ranks, ranksLoading, error: ranksError } = useFetchRanks();
   const [matches, setMatches] = useState([]);
 
   useEffect(() => {
-    const bracketMatches = !competitionLoading && contests && competition ? toBracketMatches(contests) : [];
-    setMatches(bracketMatches);
-  }, [competition, competitionLoading, contests]);
+    if (competition) {
+      fetchContests(competition);
+      fetchRanks(competition);
+    }
+  }, [competition]);
+
+  useEffect(() => {
+    if (!competitionLoading && competition && !contestsLoading && contests) {
+      const bracketMatches = toBracketMatches(contests);
+      setMatches(bracketMatches);
+    } else {
+      setMatches([]);
+    }
+  }, [competition, competitionLoading, contests, contestsLoading]);
+
   return (
     <>
       <Heading size="md">Knockout-Bracket</Heading>
       <Box align="center" height="100%" width="100%" overflowX="scroll">
-        <LoadingOrErrorWrapper loading={contestsLoading}>
+        <LoadingOrErrorWrapper loading={competitionLoading || contestsLoading} error={contestError}>
           {matches && matches.length > 0 && (
             <SingleEliminationBracket matches={matches} matchComponent={MatchComponent} />
           )}
@@ -222,7 +234,7 @@ function KnockoutCompetition({ ranks, contests, competition, ranksLoading, conte
             <AccordionIcon />
           </AccordionButton>
           <AccordionPanel>
-            <Ranks loading={ranksLoading} ranks={ranks} />
+            <Ranks loading={competitionLoading || ranksLoading} ranks={ranks} error={ranksError} />
           </AccordionPanel>
         </AccordionItem>
       </Accordion>

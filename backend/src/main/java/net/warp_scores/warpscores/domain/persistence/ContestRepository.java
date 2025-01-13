@@ -1,12 +1,13 @@
 package net.warp_scores.warpscores.domain.persistence;
 
+import net.warp_scores.warpscores.model.ArenaTeam;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.MatchStatus;
 import net.warp_scores.warpscores.model.Race;
-import net.warp_scores.warpscores.service.ArenaTeam;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -24,6 +25,12 @@ public interface ContestRepository extends MongoRepository<Contest, UUID> {
             MatchStatus matchStatus,
             Pageable pageable);
 
+    List<Contest> findByCompetitionIdAndLiveOrderByMatchDateDesc(UUID competitionId, Integer live, Pageable pageable);
+
+    List<Contest> findByCompetitionIdAndStatusOrderByMatchDateDesc(UUID leagueId,
+            MatchStatus matchStatus,
+            Pageable pageable);
+
     Integer countByCompetitionId(UUID competitionId);
 
     Integer countByCompetitionIdAndMatchDateNotNull(UUID competitionId);
@@ -38,20 +45,33 @@ public interface ContestRepository extends MongoRepository<Contest, UUID> {
 
     @Aggregation(pipeline = {
             // Match contests for a specific competition
-            "{ $match: { $and: [ {competitionId: ?0 }, { 'opponents.race': ?1 } ] } }",
+            "{ $match: { $and: [ { status: 'Validated' }, {competitionId: ?0 }, { $or: [ { $expr: { $eq: [?1, null] } }, {'opponents.race': ?1 } ] }, { $or: [ { $expr: { $eq: [?2, null] } }, { 'opponents.coachId': ?2 } ] } ] } }",
             // Unwind the opponents array to separate each team
             "{ $addFields: { unwoundOpponents: \"$opponents\" } }",
             "{ $unwind: \"$unwoundOpponents\" }",
             // Determine win or loss for each opponent
-            "{ $addFields: { matchUuid: \"$matchUuid\", result: { $cond: [{ $eq: [\"$unwoundOpponents.coachId\", \"$winner.coach.id\"] }, \"win\", \"loss\" ] } } }",
+            "    { $addFields: { matchUuid: \"$matchUuid\", result: { $cond: [{ $eq: [\"$unwoundOpponents.coachId\", \"$winner.coach.id\"] }, \"win\", \"loss\" ] } } }",
             // Group by team name and result to count wins and losses
-            "{ $group: { _id: { teamUuid: \"$unwoundOpponents._id\", teamName: \"$unwoundOpponents.name\", race: \"$unwoundOpponents.race\", coachName: \"$unwoundOpponents.coachName\", coachUuid: \"$unwoundOpponents.coachId\", result: \"$result\" }, count: { $sum: 1 }, contests: { $addToSet: \"$$ROOT\" } } }",
+            "{ $group: { _id: { teamUuid: \"$unwoundOpponents._id\", race: \"$unwoundOpponents.race\", coachName: \"$unwoundOpponents.coachName\", coachUuid: \"$unwoundOpponents.coachId\", result: \"$result\" }, count: { $sum: 1 }, contests: { $addToSet: \"$$ROOT\" } } }",
             // Reshape the result into total games for each team
-            "{ $group: { _id: { teamName: \"$_id.teamName\", teamUuid: \"$_id.teamUuid\", race: \"$_id.race\", coachName: \"$_id.coachName\", coachUuid: \"$_id.coachUuid\" }, totalGames: { $sum: \"$count\" }, results: { $push: { result: \"$_id.result\", count: \"$count\" } }, contests: { $addToSet: \"$contests\" } } }",
-            // Filter teams with more than 7 total games
-            "{ $match: { totalGames: { $gt: ?2 } } }",
+            "{ $group: { _id: { teamUuid: \"$_id.teamUuid\", race: \"$_id.race\", coachName: \"$_id.coachName\", coachUuid: \"$_id.coachUuid\" }, totalGames: { $sum: \"$count\" }, results: { $push: { result: \"$_id.result\", count: \"$count\" } }, contests: { $addToSet: \"$contests\" } } }",
             // Add a more readable structure for the output
-            "{ $project: { coachName: \"$_id.coachName\", coachUuid: \"$_id.coachUuid\", teamName: \"$_id.teamName\", teamUuid: \"$_id.teamUuid\",  race: \"$_id.race\", totalGames: 1, results: 1, contests: { $reduce: { input: \"$contests\", initialValue: [], in: { $concatArrays: [ \"$$value\", \"$$this\" ] } } } } }",
+            "{ $project: { coachName: \"$_id.coachName\", coachUuid: \"$_id.coachUuid\", teamUuid: \"$_id.teamUuid\",  race: \"$_id.race\", totalGames: 1, results: 1, contests: { $reduce: { input: \"$contests\", initialValue: [], in: { $concatArrays: [ \"$$value\", \"$$this\" ] } } } } }",
     })
-    List<ArenaTeam> getTeamsWithGamesMoreThan(UUID competitionId, Race race, int minNumberOfGames, Pageable pageable);
+    List<ArenaTeam> queryArenaTeamsFor(UUID competitionId,
+            @Nullable Race race,
+            @Nullable String coachId,
+            Pageable pageable);
+
+    @Aggregation(pipeline = {
+            // Match contests for a specific competition
+            "{ $match: { competitionId: ?0 } }",
+            // Unwind the opponents array
+            "{ $unwind: \"$opponents\" }",
+            // Group by race to collect all distinct races
+            "{ $group: { _id: \"$opponents.race\" } }",
+            // Project only the races
+            "{ $project: { race: \"$_id\", _id: 0 } }"
+    })
+    List<Race> getUsedRacesForCompetition(UUID competitionId);
 }

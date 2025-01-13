@@ -21,6 +21,7 @@ import java.util.OptionalInt;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Comparator.comparing;
 
@@ -53,10 +54,11 @@ public class ContestInitializationService {
                     initializeRoundRobinContests(unmodifiableList(contests), competition, teams) :
                     contests;
             case Knockout -> initializeKnockoutContests(unmodifiableList(contests), teams);
-            case Wissen, Ladder -> contests;
+            case Wissen, Ladder, Arena -> contests;
         };
     }
 
+    @SuppressWarnings("rawtypes")
     private List<Contest> initializeKnockoutContests(List<Contest> contests,
             List<Team> teams) {
         int totalRounds = 1;
@@ -90,7 +92,7 @@ public class ContestInitializationService {
             int nextRoundOffset = currRoundOffset + roundMatches[currRound];
             for (int matchIndex = currRoundOffset; matchIndex < nextRoundOffset; matchIndex++) {
                 Contest currContest = initializedContests.get(matchIndex);
-                int nextMatchIndexWithinRound = (int) Math.ceil((matchIndex - currRoundOffset) / 2);
+                int nextMatchIndexWithinRound = (int) Math.ceil((double) (matchIndex - currRoundOffset) / 2);
                 Contest nextContest = findNextContestByIndex(nextRoundOffset,
                         nextMatchIndexWithinRound, initializedContests);
                 if (nextContest != null && !MatchStatus.Calculated.equals(nextContest.getStatus())) {
@@ -114,9 +116,8 @@ public class ContestInitializationService {
     private static Contest findNextContestByIndex(int nextRoundOffset,
             int nextMatchIndexWithinRound,
             List<Contest> initializedContests) {
-        Contest nextContest = nextRoundOffset + nextMatchIndexWithinRound < initializedContests.size() ? initializedContests.get(
+        return nextRoundOffset + nextMatchIndexWithinRound < initializedContests.size() ? initializedContests.get(
                 nextRoundOffset + nextMatchIndexWithinRound) : null;
-        return nextContest;
     }
 
     private static Contest findNextContestByWinner(Contest currContest,
@@ -135,12 +136,14 @@ public class ContestInitializationService {
         if (contest == null || contest.getWinner() == null) {
             return Optional.empty();
         }
+        @SuppressWarnings("rawtypes")
         Map team = (Map) ((Map) contest.getWinner()).get("team");
         String winnerTeamUuidValue = (String) team.get("id");
         UUID winnerTeamUuid = UUID.fromString(winnerTeamUuidValue);
         return Optional.of(winnerTeamUuid);
     }
 
+    @SuppressWarnings("rawtypes")
     private Team createTeamFor(Map winner) {
         Map teamMap = (Map) winner.get("team");
         Map coachMap = (Map) winner.get("coach");
@@ -197,11 +200,13 @@ public class ContestInitializationService {
         extractFirstRoundTeams(contests, homeTeams, awayTeams);
         addDummyTeamIfOddParticipants(teams, homeTeams, awayTeams);
 
-        List<Contest> scheduledContests = generateScheduledContests(competition.get(), homeTeams, awayTeams)
-                .stream()
-                .filter(this::doesNotContainDummyTeam)
-                .filter(c -> c.getRound() > currentRound.orElse(0))
-                .toList();
+        List<Contest> scheduledContests = competition.map(comp ->
+                        generateScheduledContests(comp, homeTeams, awayTeams)
+                                .stream()
+                                .filter(this::doesNotContainDummyTeam)
+                                .filter(contest -> contest.getRound() > currentRound.orElse(0))
+                                .toList())
+                .orElse(emptyList());
 
         List<Contest> initializedContests = new ArrayList<>(contests);
         initializedContests.addAll(scheduledContests);

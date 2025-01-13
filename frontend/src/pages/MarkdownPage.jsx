@@ -1,17 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  Box,
-  Card,
-  CardBody,
-  Heading,
-  Image,
-  Link,
-  ListItem,
-  Stack,
-  Text,
-  UnorderedList,
-  VStack,
-} from '@chakra-ui/react';
+import { Box, Card, CardBody, Stack, VStack } from '@chakra-ui/react';
 import { Link as RouteLink } from 'react-router-dom';
 import ReactMarkdown from 'markdown-to-jsx';
 import { ChakraUIRenderer } from 'chakra-ui-markdown';

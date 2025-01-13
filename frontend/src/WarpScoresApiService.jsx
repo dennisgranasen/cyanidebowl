@@ -55,8 +55,7 @@ const getAuthHeaders = async (getAccessTokenSilently, getAccessTokenWithPopup) =
 
 const postDataWithAuthentication = async (endpoint, data, getAccessTokenSilently, getAccessTokenWithPopup) => {
   const authHeaders = await getAuthHeaders(getAccessTokenSilently, getAccessTokenWithPopup);
-  const response = await axios.post(endpoint, data, authHeaders);
-  return response;
+  return axios.post(endpoint, data, authHeaders);
 };
 
 const getDataWithAuthentication = async (endpoint, getAccessTokenSilently, getAccessTokenWithPopup, requestToken) => {
@@ -64,8 +63,7 @@ const getDataWithAuthentication = async (endpoint, getAccessTokenSilently, getAc
   if (requestToken) {
     authHeaders = await getAuthHeaders(getAccessTokenSilently, getAccessTokenWithPopup);
   }
-  const response = await axios(endpoint, authHeaders);
-  return response;
+  return axios(endpoint, authHeaders);
 };
 
 export default {
@@ -115,16 +113,34 @@ export default {
       .then(returnData)
       .catch(handleError),
   // contests
-  liveLeagueContests: async (leagueUuid) =>
-    axios(`/contests/league/${leagueUuid}/live`).then(returnData).catch(handleError),
+  liveLeagueContests: async (leagueUuid, limit) =>
+    axios(`/contests/league/${leagueUuid}/live${limit ? `/${limit}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
   latestLeagueContests: async (leagueUuid, limit) =>
     axios(`/contests/league/${leagueUuid}/latest${limit ? `/${limit}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
+  liveCompetitionContests: async (competitionUuid, limit) =>
+    axios(`/contests/competition/${competitionUuid}/live${limit ? `/${limit}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
+  latestCompetitionContests: async (competitionUuid, limit) =>
+    axios(`/contests/competition/${competitionUuid}/latest${limit ? `/${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
   competitionContests: async (competitionUuid, limit) =>
     axios(`/contests/competition/${competitionUuid}${limit ? `/${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
+  arenaInfos: async (competitionUuid, race) =>
+    axios(`/arena/${competitionUuid}/info${race ? `/${race}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
+  arenaTeams: async (competitionUuid, race, runType) =>
+    axios(`/arena/${competitionUuid}/race/${race}/${runType}`).then(returnData).catch(handleError),
+  arenaCoachTeams: async (competitionUuid, coachUuid) =>
+    axios(`/arena/${competitionUuid}/coach/${coachUuid}`).then(returnData).catch(handleError),
   // competitions
   leagueCompetitions: async (leagueUuid) =>
     axios(`/competitions/league/${leagueUuid}`).then(returnData).catch(handleError),

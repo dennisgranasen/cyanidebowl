@@ -2,7 +2,6 @@ package net.warp_scores.warpscores.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.warp_scores.warpscores.config.OfficialLeagueCompetitionNameProperties;
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.model.Competition;
@@ -34,11 +33,9 @@ import static java.util.stream.Collectors.toList;
 @Service
 @RequiredArgsConstructor
 public class CompetitionService {
-    public static final UUID OFFICIAL_LEAGUE_UUID = UUID.fromString("00000000-0000-0000-0000-000000000025");
-
     private final CompetitionRepository competitionRepository;
     private final ContestRepository contestsRepository;
-    private final OfficialLeagueCompetitionNameProperties competitionNameProperties;
+    private final OfficialLeagueAndCompetitions officialLeagueCompetitions;
 
     public List<Competition> loadForLeague(UUID leagueId) {
         List<Competition> competitions = competitionRepository.findByLeagueId(leagueId);
@@ -61,12 +58,11 @@ public class CompetitionService {
             case RoundRobin -> initializeRoundRobin(competition);
             case Wissen -> initializeWissen(competition);
             case Knockout -> initializeKnockout(competition);
-            case Ladder -> initializeLadder(competition);
+            case Ladder, Arena -> initializeLadder(competition);
             default -> notYetImplemented(competition.getFormat());
         }
-        if (OFFICIAL_LEAGUE_UUID.equals(competition.getLeagueId())) {
-            competition.setName(competitionNameProperties.getCompetitionName(competition.getName()));
-        }
+        List.of(competition)
+                .forEach(c -> officialLeagueCompetitions.adjustCompetitionName(c.getLeagueId(), c.getName(), c::setName));
         return competition;
     }
 

@@ -1,6 +1,5 @@
 package net.warp_scores.warpscores.service;
 
-import net.warp_scores.warpscores.config.OfficialLeagueCompetitionNameProperties;
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,10 +23,11 @@ class CompetitionServiceTest {
     private ContestRepository contestRepository;
 
     @Mock
-    private OfficialLeagueCompetitionNameProperties officialLeagueCompetitionNameProperties;
+    private OfficialLeagueAndCompetitions officialLeagueCompetitions;
 
-    private CompetitionService competitionService = new CompetitionService(competitionRepository, contestRepository,
-            officialLeagueCompetitionNameProperties);
+    private final CompetitionService competitionService = new CompetitionService(competitionRepository,
+            contestRepository,
+            officialLeagueCompetitions);
 
     @ParameterizedTest(name = "Expecting {1} rounds for {0} players.")
     @MethodSource("provideTestData")

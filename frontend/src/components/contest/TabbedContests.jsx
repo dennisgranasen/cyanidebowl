@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Tab, TabList, TabPanel, TabPanels, Tabs, useBreakpointValue } from '@chakra-ui/react';
 import comparators from '../../util/Comparators';
 import config from '../../config';
-import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 import Contests from './Contests';
+import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 
 const { smallScreenBreakpointValues } = config;
 
@@ -58,18 +58,13 @@ function toTabData(contests, isSmallScreen) {
   return tabData;
 }
 
-function TabbedContests({ contests, contestsLoading, competition, competitionLoading }) {
+function TabbedContests({ contests, currentRound, loading, error }) {
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
   const [tabData, setTabData] = useState([]);
-  const [activatedTab, setActivatedTab] = useState(0);
-  const [loading, setLoading] = useState(contestsLoading || competitionLoading);
+  const [activatedTab, setActivatedTab] = useState(currentRound ? currentRound - 1 : 0);
   const handleTabsChange = (index) => {
     setActivatedTab(index);
   };
-
-  useEffect(() => {
-    setLoading(contestsLoading || competitionLoading);
-  }, [contestsLoading, competitionLoading]);
 
   useEffect(() => {
     if (contests) {
@@ -78,22 +73,16 @@ function TabbedContests({ contests, contestsLoading, competition, competitionLoa
     }
   }, [contests, isSmallScreen]);
 
-  useEffect(() => {
-    if (!competitionLoading && competition) {
-      setActivatedTab(competition.currentRound - 1);
-    }
-  }, [competitionLoading, competition]);
-
   return (
-    <LoadingOrErrorWrapper loading={loading}>
+    <LoadingOrErrorWrapper loading={loading} error={error}>
       <Tabs isFitted align="center" index={activatedTab} onChange={handleTabsChange}>
         <TabList>
-          {tabData.map((tab) => (
+          {tabData?.map((tab) => (
             <Tab key={tab.round}>{tab.label}</Tab>
           ))}
         </TabList>
         <TabPanels>
-          {tabData.map((tab) => (
+          {tabData?.map((tab) => (
             <TabPanel key={tab.round}>{tab.content}</TabPanel>
           ))}
         </TabPanels>
