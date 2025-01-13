@@ -7,14 +7,25 @@ import comparators from '../../util/Comparators';
 import ContestMatchCards from './ContestMatchCards';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 
-function LiveContests({ league, embeddable }) {
+function LiveContests({ league, competition, embeddable, limit }) {
   const [contests, setContests] = useState();
   const [loading, setLoading] = useState();
   const [error, setError] = useState();
 
-  const fetchLiveContests = (leagueUuid) => {
+  const fetchLiveLeagueContests = (leagueUuid, contestLimit) => {
     setLoading(true);
-    WarpScoresApiService.liveLeagueContests(leagueUuid)
+    WarpScoresApiService.liveLeagueContests(leagueUuid, contestLimit)
+      .then((data) => {
+        data.sort((compA, compB) => comparators.compareAsDatesAsc(compB.matchDate, compA.matchDate));
+        setContests(data);
+      })
+      .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
+      .finally(() => setLoading(false));
+  };
+
+  const fetchLiveCompetitionContests = (competitionUuid, contestLimit) => {
+    setLoading(true);
+    WarpScoresApiService.liveCompetitionContests(competitionUuid, contestLimit)
       .then((data) => {
         data.sort((compA, compB) => comparators.compareAsDatesAsc(compB.matchDate, compA.matchDate));
         setContests(data);
@@ -25,9 +36,11 @@ function LiveContests({ league, embeddable }) {
 
   useEffect(() => {
     if (league) {
-      fetchLiveContests(league.uuid);
+      fetchLiveLeagueContests(league.uuid, limit);
+    } else if (competition) {
+      fetchLiveCompetitionContests(competition.uuid, limit);
     }
-  }, [league]);
+  }, [league, competition]);
 
   return (
     <>

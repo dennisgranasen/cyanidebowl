@@ -61,12 +61,17 @@ Authorization: Bearer {{auth_token}}
 ### check user permission
 GET {{backendBaseUrl}}/userPermissions
 
-### get arena contests
-GET {{backendBaseUrl}}/contests/competition/fdcd5dde-e529-11ee-bbf2-0200000e1421/arena
+### get arena races
+GET {{backendBaseUrl}}/arena/fdcd5dde-e529-11ee-bbf2-0200000e1421/info
 
-### get arena contests
-GET {{backendBaseUrl}}/contests/competition/fdcd5dde-e529-11ee-bbf2-0200000e1421/arena/underworldDenizen/100/700
+### get arena races
+GET {{backendBaseUrl}}/arena/fdcd5dde-e529-11ee-bbf2-0200000e1421/info/goblin
 
+### get arena contests for race and runtype
+GET {{backendBaseUrl}}/arena/fdcd5dde-e529-11ee-bbf2-0200000e1421/race/underworldDenizen/completed
+
+### get arena contests for coach
+GET {{backendBaseUrl}}/arena/fdcd5dde-e529-11ee-bbf2-0200000e1421/coach/naytsyrhc
 
 ### Create an admin contest
 POST {{backendBaseUrl}}/contests/competition/72fbe403-a786-11ef-aaf1-bc24112ec32e

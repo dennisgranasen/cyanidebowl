@@ -10,6 +10,7 @@ import net.warp_scores.warpscores.domain.persistence.TeamRepository;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.CompetitionTeams;
 import net.warp_scores.warpscores.model.Team;
+import net.warp_scores.warpscores.service.OfficialLeagueAndCompetitions;
 import net.warp_scores.warpscores.service.PopulatorUtil;
 import net.warp_scores.warpscores.service.TeamPopulator;
 import net.warp_scores.warpscores.service.UUIDConverter;
@@ -35,6 +36,8 @@ public class TeamDomainService {
 
     private final UUIDConverter uuidConverter;
     private final CompetitionTeamsDomainService competitionTeamsDomainService;
+    private final OfficialLeagueAndCompetitions officialLeagueCompetitions;
+    private final OfficialLeagueAndCompetitions officialLeagueAndCompetitions;
 
     @Transactional
     public List<Team> createOrUpdateTeams(TeamsResponse teamsResponse) {
@@ -71,7 +74,16 @@ public class TeamDomainService {
         List<Team> teams = teamRepository.findAllById(List.of(teamUuid));
         if (teams.size() == 1) {
             competitionUuid.ifPresent((uuid) -> setRelevantCompetition(teams, uuid));
-            return Optional.of(teams.get(0));
+            Team team = teams.get(0);
+            UUID competitionId = team.getCompetitionIds()[0];
+            Optional<Competition> competition = competitionRepository.findById(competitionId);
+            team.setLeagueName(competition.map(Competition::getLeagueName).orElse(null));
+            Optional<UUID> leagueId = competition.map(Competition::getLeagueId);
+            team.setLeagueIds(leagueId.map(id -> new UUID[]{id}).orElse(null));
+            leagueId.ifPresent(id ->
+                    officialLeagueAndCompetitions.adjustCompetitionName(id, team.getCompetitionName(),
+                            team::setCompetitionName));
+            return Optional.of(team);
         } else {
             return Optional.empty();
         }

@@ -5,10 +5,11 @@ import Menu from './Menu';
 import AuthButton from './AuthButton';
 import config from '../../config';
 import ToggleColorModeButton from './ToggleColorModeButton';
+import prettyPrint from '../../util/PrettyPrint';
 
 const { isProduction } = config;
 
-function Navigation({ currentPage, parentPage, league, competition, circuit, team }) {
+function Navigation({ currentPage, parentPage, league, competition, circuit, team, race, coach }) {
   const isPage = (pageName, currentPageName) => {
     return pageName === currentPageName;
   };
@@ -59,6 +60,16 @@ function Navigation({ currentPage, parentPage, league, competition, circuit, tea
             <BreadcrumbLink variant="menu" as={RouteLink} to={teamLink}>
               {team[1]}
             </BreadcrumbLink>
+          </BreadcrumbItem>
+        )}
+        {race && (
+          <BreadcrumbItem isCurrentPage={isPage('race', currentPage)} flexWrap>
+            <BreadcrumbLink variant="menu">{prettyPrint(race)}</BreadcrumbLink>
+          </BreadcrumbItem>
+        )}
+        {coach && (
+          <BreadcrumbItem isCurrentPage={isPage('coach', currentPage)} flexWrap>
+            <BreadcrumbLink variant="menu">{coach}</BreadcrumbLink>
           </BreadcrumbItem>
         )}
       </Breadcrumb>

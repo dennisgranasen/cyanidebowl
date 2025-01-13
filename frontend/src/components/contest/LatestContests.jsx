@@ -7,12 +7,12 @@ import comparators from '../../util/Comparators';
 import ContestMatchCards from './ContestMatchCards';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 
-function LatestContests({ league, embeddable, limit }) {
+function LatestContests({ league, competition, embeddable, limit }) {
   const [contests, setContests] = useState();
   const [loading, setLoading] = useState();
   const [error, setError] = useState();
 
-  const fetchLatestContests = (leagueUuid, contestLimit) => {
+  const fetchLatestLeagueContests = (leagueUuid, contestLimit) => {
     setLoading(true);
     WarpScoresApiService.latestLeagueContests(leagueUuid, contestLimit)
       .then((data) => {
@@ -23,11 +23,25 @@ function LatestContests({ league, embeddable, limit }) {
       .finally(() => setLoading(false));
   };
 
+  const fetchLatestCompetitionContests = (competitionUuid, contestLimit) => {
+    setLoading(true);
+    WarpScoresApiService.latestCompetitionContests(competitionUuid, contestLimit)
+      .then((data) => {
+        data.sort((compA, compB) => comparators.compareAsDatesAsc(compB.matchDate, compA.matchDate));
+        setContests(data);
+      })
+      .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
+      .finally(() => setLoading(false));
+  };
+
   useEffect(() => {
     if (league) {
-      fetchLatestContests(league.uuid, limit);
+      fetchLatestLeagueContests(league.uuid, limit);
     }
-  }, [league]);
+    if (competition) {
+      fetchLatestCompetitionContests(competition.uuid, limit);
+    }
+  }, [league, competition]);
 
   return (
     <>

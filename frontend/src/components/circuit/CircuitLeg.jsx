@@ -6,27 +6,19 @@ import ImageUrls from '../../ImageUrls';
 import config from '../../config';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 import logger from '../../util/Logger';
+import useFetchCompetition from '../../hooks/useFetchCompetition';
 
 const { boxSize } = config;
 
 function CircuitLeg({ circuitLeg }) {
-  const [competition, setCompetition] = useState(null);
+  const { fetchCompetition, competition, competitionLoading, error: competitionError } = useFetchCompetition();
+  const [league, setLeague] = useState(null);
   const [error, setError] = useState(null);
 
   const fetchLeague = (compUuid, compType) => {
     WarpScoresApiService.leagues(compUuid)
       .then((data) => {
-        setCompetition(data);
-      })
-      .catch((reason) => {
-        setError({ type: 'error', message: reason.toLocaleString() });
-      });
-  };
-
-  const fetchCompetition = (compUuid) => {
-    WarpScoresApiService.competition(compUuid)
-      .then((data) => {
-        setCompetition(data);
+        setLeague(data);
       })
       .catch((reason) => {
         setError({ type: 'error', message: reason.toLocaleString() });
@@ -43,12 +35,12 @@ function CircuitLeg({ circuitLeg }) {
   }, []);
 
   return (
-    <LoadingOrErrorWrapper loading={circuitLeg === null} error={error}>
+    <LoadingOrErrorWrapper loading={competitionLoading} error={error || competitionError}>
       <Tr>
         <Td>
-          {(competition?.logo || competition?.leagueLogo) && (
+          {(competition?.logo || competition?.leagueLogo || league?.logo) && (
             <Image
-              src={`${ImageUrls.logo(competition.logo || competition.leagueLogo)}`}
+              src={`${ImageUrls.logo(competition.logo || competition.leagueLogo || league?.logo)}`}
               boxSize={boxSize}
               fallback={<QuestionOutlineIcon boxSize={boxSize} />}
               objectFit="scale-down"

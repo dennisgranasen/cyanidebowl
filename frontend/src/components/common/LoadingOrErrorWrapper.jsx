@@ -6,7 +6,7 @@ function LoadingOrErrorWrapper({ loading, error, children }) {
     return (
       <Alert status={error.type}>
         <AlertIcon />
-        <AlertDescription>{error.message}</AlertDescription>
+        <AlertDescription>{`Error: ${error.message}`}</AlertDescription>
       </Alert>
     );
   }

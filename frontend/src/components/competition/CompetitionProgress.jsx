@@ -159,6 +159,7 @@ function Progresses({
         />
       );
     case 'Ladder':
+    case 'Arena':
       return `${playedMatches || 0} played match${playedMatches !== 1 ? 'es' : ''}`;
     default:
       return <QuestionIcon />;

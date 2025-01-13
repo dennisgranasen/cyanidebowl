@@ -2,11 +2,11 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.warp_scores.warpscores.domain.CompetitionTeamsDomainService;
 import net.warp_scores.warpscores.domain.MatchDomainService;
 import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Team;
+import net.warp_scores.warpscores.service.OfficialLeagueAndCompetitions;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,6 +25,8 @@ public class TeamController {
 
     private final MatchDomainService matchDomainService;
 
+    private final OfficialLeagueAndCompetitions officialLeagueAndCompetitions;
+
     @GetMapping("/teams/{teamId}")
     public ResponseEntity<Team> getTeam(@PathVariable(name = "teamId") UUID teamId) {
         try {
@@ -41,10 +43,10 @@ public class TeamController {
     @GetMapping("/teams/{teamId}/matches")
     public ResponseEntity<List<Match>> getMatches(@PathVariable(name = "teamId") UUID teamId) {
         try {
-            Optional<List<Match>> matchesForTeam = Optional.ofNullable(matchDomainService.findMatchesForTeam(teamId));
-            return matchesForTeam
-                    .map(ResponseEntity::ok)
-                    .orElse(ResponseEntity.notFound().build());
+            List<Match> matchesForTeam = matchDomainService.findMatchesForTeam(teamId);
+            matchesForTeam.forEach(match -> officialLeagueAndCompetitions.adjustCompetitionName(match.getLeagueId(),
+                    match.getCompetitionName(), match::setCompetitionName));
+            return ResponseEntity.ok(matchesForTeam);
         } catch (Exception ex) {
             log.error("Unable to get matches for team uuid {}.", teamId, ex);
             return ResponseEntity.internalServerError().build();

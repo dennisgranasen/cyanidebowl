@@ -6,6 +6,7 @@ import net.warp_scores.warpscores.cyanide.api.model.ApiCompetition;
 import net.warp_scores.warpscores.cyanide.api.responses.CompetitionsResponse;
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
 import net.warp_scores.warpscores.model.Competition;
+import net.warp_scores.warpscores.service.OfficialLeagueAndCompetitions;
 import net.warp_scores.warpscores.service.PopulatorUtil;
 import net.warp_scores.warpscores.service.UUIDConverter;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,8 @@ public class CompetitionDomainService {
     private final CompetitionRepository competitionRepository;
 
     private final UUIDConverter uuidConverter;
+
+    private final OfficialLeagueAndCompetitions officialLeagueAndCompetitions;
 
     @Transactional
     public List<Competition> createOrUpdateCompetitions(CompetitionsResponse competitionsResponse) {
@@ -56,6 +59,9 @@ public class CompetitionDomainService {
                 apiCompetition.getName());
         if (competition != null) {
             populateCompetition(apiCompetition, competition);
+
+            officialLeagueAndCompetitions.adjustCompetitionFormat(competition.getLeagueId(), competition.getName(),
+                    competition::setFormat);
         }
         return competition;
     }
