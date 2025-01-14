@@ -31,8 +31,10 @@ import WarpScoresApiService from '../WarpScoresApiService';
 import config from '../config';
 import DelayedIconTooltip from '../components/common/DelayedIconTooltip';
 import Formatter from '../util/Formatter';
+import formatter from '../util/Formatter';
 import Navigation from '../components/misc/Navigation';
 import InfoItem from '../components/common/InfoItem';
+import comparators from '../util/Comparators';
 
 const { boxSize } = config;
 
@@ -57,19 +59,16 @@ function ContestLabel({ teamUuid, contest }) {
   );
 }
 
-const contestByMatchDate = (c1, c2) => {
-  return c1.matchDate - c2.matchDate;
-};
-
 function getLastContest(contests) {
-  const sortedContests = [].concat(contests.sort(contestByMatchDate));
+  const sortedContests = [].concat(contests);
+  sortedContests.sort(comparators.compareContestsByMatchOrContestUuidAsDatesAsc);
   return sortedContests.pop();
 }
 
-const teamByLastMatchDate = (team1, team2) => {
+const teamsByLastMatchDateDesc = (team1, team2) => {
   const contest1 = getLastContest(team1.contests);
   const contest2 = getLastContest(team2.contests);
-  return contestByMatchDate(contest1, contest2);
+  return comparators.compareContestsByMatchOrContestUuidAsDatesDesc(contest1, contest2);
 };
 
 function Score({ contest, teamUuid }) {
@@ -124,7 +123,10 @@ const clusterContests = (teamUuid, contests) => {
       currContests = [];
     }
   });
-  return clusteredContests.sort((c1, c2) => contestByMatchDate(getLastContest(c1), getLastContest(c2)));
+  if (currContests.length > 0 && (wins > 0 || losses > 0)) clusteredContests.push(currContests);
+  return clusteredContests.sort((c1, c2) =>
+    comparators.compareContestsByMatchOrContestUuidAsDatesAsc(getLastContest(c1), getLastContest(c2))
+  );
 };
 
 function ArenaProgress({ contests, teamUuid }) {
@@ -142,7 +144,10 @@ function TeamRow({ competitionUuid, arenaTeam }) {
   const goToTeam = () => {
     navigate(`/competition/${competitionUuid}/team/${arenaTeam.teamUuid}`);
   };
-  const sortedContests = arenaTeam?.contests?.sort(contestByMatchDate) ?? [];
+  const sortedContests = [].concat(arenaTeam?.contests ?? []);
+  sortedContests.sort((c1, c2) => {
+    return comparators.compareContestsByMatchOrContestUuidAsDatesAsc(c1, c2);
+  });
   const clusteredSortedContests = clusterContests(arenaTeam.teamUuid, sortedContests);
   return (
     <Tr>
@@ -161,7 +166,10 @@ function TeamRow({ competitionUuid, arenaTeam }) {
         </HStack>
       </Td>
       <Td>{prettyPrint(arenaTeam.race)}</Td>
+      <Td>{formatter.formatAsDate(sortedContests[0].matchDate)}</Td>
+      <Td>{formatter.formatAsDate(sortedContests[sortedContests.length - 1].matchDate)}</Td>
       <Td>{sortedContests.length}</Td>
+      <Td>{clusteredSortedContests.length}</Td>
       <Td>
         <HStack spacing="0.8rem">
           {clusteredSortedContests.map((clusteredContests) => (
@@ -192,7 +200,10 @@ function RunAccordionItem({ competitionUuid, label, loading, error, arenaTeams }
                   <Tr>
                     <Th>Team</Th>
                     <Th>Race</Th>
+                    <Th>First game</Th>
+                    <Th>Last game</Th>
                     <Th>Games played</Th>
+                    <Th>Runs</Th>
                     <Th>Progress</Th>
                   </Tr>
                 </Thead>
@@ -205,7 +216,10 @@ function RunAccordionItem({ competitionUuid, label, loading, error, arenaTeams }
                   <Tr>
                     <Th>Team</Th>
                     <Th>Race</Th>
+                    <Th>First game</Th>
+                    <Th>Last game</Th>
                     <Th>Games played</Th>
+                    <Th>Runs</Th>
                     <Th>Progress</Th>
                   </Tr>
                 </Tfoot>
@@ -235,8 +249,13 @@ function ArenaCoachPage() {
     const fetchArenaCoachTeams = (competitionId, coachId) => {
       setArenaCoachTeamsLoading(true);
       WarpScoresApiService.arenaCoachTeams(competitionId, coachId)
-        .then((teams) => teams.sort(teamByLastMatchDate))
-        .then(setArenaCoachTeams)
+        .then((teams) => {
+          teams.sort((team1, team2) => {
+            const comparison = team1.race.localeCompare(team2.race);
+            return comparison || teamsByLastMatchDateDesc(team1, team2);
+          });
+          setArenaCoachTeams(teams);
+        })
         .catch((reason) => setArenaCoachTeamsError({ type: 'error', message: reason.toLocaleString() }))
         .finally(() => setArenaCoachTeamsLoading(false));
     };

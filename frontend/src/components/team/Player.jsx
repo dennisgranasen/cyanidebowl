@@ -1,10 +1,11 @@
 import React from 'react';
 import { Center, Image, Tag, Td, Text, Tr } from '@chakra-ui/react';
-import { FaBandage } from 'react-icons/fa6';
+import { FaBandage, FaStar } from 'react-icons/fa6';
 import Skills from './Skills';
 import prettyPrint from '../../util/PrettyPrint';
 import Injuries from './Injuries';
 import config from '../../config';
+import { Icon } from '@chakra-ui/icons';
 
 const { smallBoxSize } = config;
 
@@ -95,18 +96,31 @@ function romanize(num) {
   return roman;
 }
 
+function lookupStarPlayerName(name) {
+  const nameWithoutPrefix = name.replace('name_sp_', '');
+  return `"${prettyPrint(nameWithoutPrefix)}" (Starplayer)`;
+}
+
+function PlayerLevel({ level, starPlayer }) {
+  if (!level && !starPlayer) return null;
+  if (starPlayer) return <Icon as={FaStar} boxSize={smallBoxSize} color="yellow.500" />;
+
+  return <Tag variant="outline" size="sm" borderRadius="full">{`${romanize(level)}`}</Tag>;
+}
+
 function Player({ player }) {
   const defaultAttributes = player.extendedAttributes ? player.extendedAttributes.defaultAttributes : player.attributes;
   const bonus = player.extendedAttributes ? player.extendedAttributes.bonus : [];
   const malus = player.extendedAttributes ? player.extendedAttributes.malus : [];
+  const isStarplayer = player.type.endsWith('Star');
   return (
     <Tr>
       <Td>{player.number}</Td>
-      <Td>{player.name}</Td>
+      <Td>{isStarplayer ? lookupStarPlayerName(player.name) : player.name}</Td>
       <Td>{prettyPrint(player.type, '_')}</Td>
       <Td>
         <Center>
-          {player.level > 0 && <Tag variant="outline" size="sm" borderRadius="full">{`${romanize(player.level)}`}</Tag>}
+          <PlayerLevel level={player.level} starPlayer={isStarplayer} />
         </Center>
       </Td>
       <Td>
