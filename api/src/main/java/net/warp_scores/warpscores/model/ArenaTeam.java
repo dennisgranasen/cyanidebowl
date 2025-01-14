@@ -19,7 +19,7 @@ public class ArenaTeam {
     private Race race;
     private int totalGames;
     private List<Result> results;
-    private List<Contest> contests;
+    private List<Match> matches;
 
     @Getter
     @Setter

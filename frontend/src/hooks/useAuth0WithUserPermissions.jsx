@@ -1,7 +1,7 @@
 import { useAuth0 } from '@auth0/auth0-react';
 import { useEffect, useState } from 'react';
 import WarpScoresApiService from '../WarpScoresApiService';
-import logger from '../util/Logger';
+import logger from '../util/logger';
 import config from '../config';
 
 const { isProduction } = config;

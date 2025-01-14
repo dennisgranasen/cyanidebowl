@@ -6,7 +6,7 @@ import LatestContests from '../contest/LatestContests';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 import ImageUrls from '../../ImageUrls';
-import prettyPrint from '../../util/PrettyPrint';
+import prettyPrint from '../../util/prettyPrint';
 import useFetchArenaInfo from '../../hooks/useFetchArenaInfo';
 
 function ArenaInfoCard({ competitionUuid, race }) {

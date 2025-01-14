@@ -5,7 +5,7 @@ import WarpScoresApiService from '../../WarpScoresApiService';
 import ImageUrls from '../../ImageUrls';
 import config from '../../config';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
-import logger from '../../util/Logger';
+import logger from '../../util/logger';
 import useFetchCompetition from '../../hooks/useFetchCompetition';
 
 const { boxSize } = config;

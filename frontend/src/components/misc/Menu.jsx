@@ -22,14 +22,14 @@ import { Link as RouteLink } from 'react-router-dom';
 import { ExternalLinkIcon, HamburgerIcon, Icon } from '@chakra-ui/icons';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import config from '../../config';
-import Formatter from '../../util/Formatter';
+import formatter from '../../util/formatter';
 import NewsList from './NewsList';
 import SocialLinks from './SocialLinks';
 import Disclaimer from './Disclaimer';
 import Version from './Version';
 import Status from './Status';
 import StatusIcon from './StatusIcon';
-import timeUtil from '../../util/TimeUtil';
+import timeUtil from '../../util/timeUtil';
 import ImageUrls from '../../ImageUrls';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
 import useAuth0WithUserPermissions from '../../hooks/useAuth0WithUserPermissions';
@@ -43,7 +43,7 @@ function LastCheck({ status, textSize, statusOutdated }) {
         <Box>Last check:</Box>
         <Box>
           {status ? (
-            `${Formatter.formatAsDate(status.lastCheck, 'unknown')}`
+            `${formatter.formatAsDate(status.lastCheck, 'unknown')}`
           ) : (
             <Spinner size={textSize} color="orange" />
           )}

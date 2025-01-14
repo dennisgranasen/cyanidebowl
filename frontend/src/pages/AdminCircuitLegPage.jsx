@@ -56,7 +56,7 @@ function AdminCircuitLegPage() {
           {/*
               <InfoArea
                 infoItems={[
-                  <InfoItem key="Created" label="Created" info={Formatter.formatAsDate(competition.dateCreated, '-')} />,
+                  <InfoItem key="Created" label="Created" info={formatter.formatAsDate(competition.dateCreated, '-')} />,
                   <InfoItem key="Format" label="Format" info={prettyPrint(competition.format)} />,
                   <InfoItem
                     key="Progress"
@@ -75,12 +75,12 @@ function AdminCircuitLegPage() {
                       />
                     }
                   />,
-                  <InfoItem key="Teams" label="Teams" info={Formatter.formatAsNumber(competition.teamsMax)} />,
+                  <InfoItem key="Teams" label="Teams" info={formatter.formatAsNumber(competition.teamsMax)} />,
                   <InfoItem
                     key="TimeSettings"
                     label="Time settings"
-                    info={`Turn: ${Formatter.formatAsNumber(competition.turnDuration / 60)}m`}
-                    additionalInfo={`Bonus: ${Formatter.formatAsNumber(competition.timeBonusDuration / 60)}m`}
+                    info={`Turn: ${formatter.formatAsNumber(competition.turnDuration / 60)}m`}
+                    additionalInfo={`Bonus: ${formatter.formatAsNumber(competition.timeBonusDuration / 60)}m`}
                   />,
                 ]}
               />

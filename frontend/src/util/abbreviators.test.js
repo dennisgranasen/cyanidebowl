@@ -1,5 +1,5 @@
 import { expect, test } from '@jest/globals';
-import abbreviators from './Abbreviators';
+import abbreviators from './abbreviators';
 
 test('abbreviate coach name works for "null" or "undefined".', () => {
   expect(abbreviators.abbreviateCoachName(null)).toBeNull();

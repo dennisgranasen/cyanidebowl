@@ -5,7 +5,6 @@ import {
   AccordionItem,
   AccordionPanel,
   Box,
-  Center,
   Heading,
   HStack,
   Image,
@@ -27,115 +26,17 @@ import InfoArea from '../components/common/InfoArea';
 import HeaderCard from '../components/common/HeaderCard';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import useFetchCompetition from '../hooks/useFetchCompetition';
-import prettyPrint from '../util/PrettyPrint';
+import prettyPrint from '../util/prettyPrint';
 import useFetchArenaInfo from '../hooks/useFetchArenaInfo';
 import InfoItem from '../components/common/InfoItem';
 import WarpScoresApiService from '../WarpScoresApiService';
 import config from '../config';
-import DelayedIconTooltip from '../components/common/DelayedIconTooltip';
-import Formatter from '../util/Formatter';
-import comparators from '../util/Comparators';
+import formatter from '../util/formatter';
+import comparators from '../util/comparators';
+import arenaHelpers from '../components/arena/arenaHelpers';
+import ArenaProgress from '../components/arena/ArenaProgress';
 
 const { boxSize } = config;
-
-function ContestLabel({ teamUuid, contest }) {
-  const opponent = contest.opponents.find((opp) => opp.id !== teamUuid);
-  return (
-    <VStack align="left">
-      <HStack>
-        <Image
-          src={`${ImageUrls.logo(opponent.logo)}`}
-          boxSize={boxSize}
-          fallback={<QuestionOutlineIcon boxSize={boxSize} />}
-        />
-        <Heading>{opponent.name}</Heading>
-      </HStack>
-      <VStack align="left">
-        <Box>Coach: {opponent.coachName}</Box>
-        <Box>Race: {prettyPrint(opponent.race)}</Box>
-        <Box>Played: {Formatter.formatAsDate(contest.matchDate)}</Box>
-      </VStack>
-    </VStack>
-  );
-}
-
-function getLastContest(contests) {
-  const sortedContests = [].concat(contests.sort(comparators.compareContestsByMatchOrContestUuidAsDatesAsc));
-  return sortedContests.pop();
-}
-
-const teamByLastMatchDate = (team1, team2) => {
-  const contest1 = getLastContest(team1.contests);
-  const contest2 = getLastContest(team2.contests);
-  return comparators.compareContestsByMatchOrContestUuidAsDatesAsc(contest1, contest2);
-};
-
-function Score({ contest, teamUuid }) {
-  const team = contest.opponents.find((opp) => opp.id === teamUuid);
-  const opponent = contest.opponents.find((opp) => opp.id !== teamUuid);
-  const teamScore = team?.score ?? 0;
-  const opponentScore = opponent?.score ?? 0;
-  return (
-    <Center height={boxSize} width={boxSize}>
-      {teamScore}:{opponentScore}
-    </Center>
-  );
-}
-
-function ArenaContest({ contest, teamUuid }) {
-  const win = teamUuid === contest?.winner?.team?.id;
-  return (
-    <DelayedIconTooltip label={<ContestLabel teamUuid={teamUuid} contest={contest} />}>
-      <Box
-        borderRadius="0.5rem"
-        boxSize={boxSize}
-        background={win ? 'green.500' : 'red.500'}
-        fontFamily="EmbeddedBigStarRegular"
-        height={boxSize}
-      >
-        <Score teamUuid={teamUuid} contest={contest} />
-      </Box>
-    </DelayedIconTooltip>
-  );
-}
-
-function isWinner(teamUuid, contest) {
-  return teamUuid === contest.winner?.team?.id;
-}
-
-const clusterContests = (teamUuid, contests) => {
-  let wins = 0;
-  let losses = 0;
-  const clusteredContests = [];
-  let currContests = [];
-  contests.forEach((contest) => {
-    currContests.push(contest);
-    if (isWinner(teamUuid, contest)) {
-      wins += 1;
-    } else {
-      losses += 1;
-    }
-    if (wins === 7 || losses === 2) {
-      clusteredContests.push(currContests);
-      wins = 0;
-      losses = 0;
-      currContests = [];
-    }
-  });
-  return clusteredContests.sort((c1, c2) =>
-    comparators.compareContestsByMatchOrContestUuidAsDatesAsc(getLastContest(c1), getLastContest(c2))
-  );
-};
-
-function ArenaProgress({ contests, teamUuid }) {
-  return (
-    <HStack height={boxSize} spacing="0.2rem">
-      {contests?.map((contest) => (
-        <ArenaContest key={`arenaContest-${contest.contestUuid}`} teamUuid={teamUuid} contest={contest} />
-      ))}
-    </HStack>
-  );
-}
 
 function TeamRow({ competitionUuid, arenaTeam }) {
   const navigate = useNavigate();
@@ -145,9 +46,9 @@ function TeamRow({ competitionUuid, arenaTeam }) {
   const goToCoach = () => {
     navigate(`/competition/${competitionUuid}/arena/coach/${arenaTeam.coachUuid}`);
   };
-  const sortedContests = [].concat(arenaTeam?.contests ?? []);
-  sortedContests.sort(comparators.compareContestsByMatchOrContestUuidAsDatesAsc);
-  const clusteredSortedContests = clusterContests(arenaTeam.teamUuid, sortedContests);
+  const sortedMatches = [].concat(arenaTeam?.matches ?? []);
+  sortedMatches.sort(comparators.compareContestsByMatchOrContestUuidAsDatesAsc);
+  const clusteredSortedMatches = arenaHelpers.clusterMatches(arenaTeam.teamUuid, sortedMatches);
   return (
     <Tr>
       <Td
@@ -171,17 +72,17 @@ function TeamRow({ competitionUuid, arenaTeam }) {
       >
         {arenaTeam.coachName}
       </Td>
-      <Td>{Formatter.formatAsDate(arenaTeam.contests[0].matchDate, '-')}</Td>
-      <Td>{Formatter.formatAsDate(arenaTeam.contests[arenaTeam.contests.length - 1].matchDate, '-')}</Td>
-      <Td>{sortedContests.length}</Td>
-      <Td>{clusteredSortedContests.length}</Td>
+      <Td>{formatter.formatAsDate(arenaTeam.matches[0].finished, '-')}</Td>
+      <Td>{formatter.formatAsDate(arenaTeam.matches[arenaTeam.matches.length - 1].finished, '-')}</Td>
+      <Td>{sortedMatches.length}</Td>
+      <Td>{clusteredSortedMatches.length}</Td>
       <Td>
         <HStack spacing="0.8rem">
-          {clusteredSortedContests.map((clusteredContests) => (
+          {clusteredSortedMatches.map((clusteredMatches) => (
             <ArenaProgress
-              key={`arenaProgress-${getLastContest(clusteredContests).contestUuid}`}
+              key={`arenaProgress-${arenaHelpers.getLastMatch(clusteredMatches).matchId}`}
               teamUuid={arenaTeam.teamUuid}
-              contests={clusteredContests}
+              matches={clusteredMatches}
             />
           ))}
         </HStack>
@@ -262,7 +163,7 @@ function ArenaPage() {
     const fetchArenaTeams = (uuid, raceToFetch, runType) => {
       setArenaTeamsLoading(true);
       WarpScoresApiService.arenaTeams(uuid, raceToFetch, runType)
-        .then((teams) => teams.sort(teamByLastMatchDate))
+        .then((teams) => teams.sort(arenaHelpers.teamsByLastMatchDate))
         .then(setArenaTeams)
         .catch((reason) => setArenaTeamsError({ type: 'error', message: reason.toLocaleString() }))
         .finally(() => setArenaTeamsLoading(false));

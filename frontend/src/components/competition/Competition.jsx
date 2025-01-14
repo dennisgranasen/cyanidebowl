@@ -2,8 +2,8 @@ import React from 'react';
 import { Spinner, Td, Tr, useBreakpointValue } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import CompetitionProgress from './CompetitionProgress';
-import prettyPrint from '../../util/PrettyPrint';
-import abbreviators from '../../util/Abbreviators';
+import prettyPrint from '../../util/prettyPrint';
+import abbreviators from '../../util/abbreviators';
 import config from '../../config';
 
 const { smallScreenBreakpointValues } = config;

@@ -3,9 +3,9 @@ import { Box, Heading, Spinner, VStack } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
 import WarpScoresApiService from '../WarpScoresApiService';
 import Roster from '../components/team/Roster';
-import prettyPrint from '../util/PrettyPrint';
+import prettyPrint from '../util/prettyPrint';
 import Navigation from '../components/misc/Navigation';
-import Formatter from '../util/Formatter';
+import formatter from '../util/formatter';
 import ImageUrls from '../ImageUrls';
 import InfoArea from '../components/common/InfoArea';
 import InfoItem from '../components/common/InfoItem';
@@ -109,8 +109,8 @@ function TeamPage() {
                   <InfoItem key="cheerleaders" label="Cheerleaders" info={team.cheerleaders} />
                   <InfoItem key="assistantCoaches" label="Assistant coaches" info={team.coachAssistants} />
                   <InfoItem key="apothecary" label="Apothecary" info={team.apothecary} />
-                  <InfoItem key="cash" label="Cash" info={Formatter.formatAsNumber(team.cash)} />
-                  <InfoItem key="value" label="Value" info={Formatter.formatAsNumber(team.value)} />
+                  <InfoItem key="cash" label="Cash" info={formatter.formatAsNumber(team.cash)} />
+                  <InfoItem key="value" label="Value" info={formatter.formatAsNumber(team.value)} />
                   <InfoItem
                     key="matches"
                     label="Matches"

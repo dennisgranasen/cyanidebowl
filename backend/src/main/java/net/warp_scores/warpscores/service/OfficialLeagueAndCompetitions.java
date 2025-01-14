@@ -20,6 +20,13 @@ public class OfficialLeagueAndCompetitions {
     private static final UUID OFFICIAL_LEAGUE_UUID = UUID.fromString("00000000-0000-0000-0000-000000000025");
     private static final List<String> ARENA_MODE_COMPETITION_NAMES = List.of("ARENA_SEASON_07_NAME");
 
+    public void adjustCompetitionNameAndLogo(UUID leagueId,
+            String competitionName,
+            Consumer<String> competitionNameConsumer, Consumer<String> competitionLogoConsumer) {
+        adjustCompetitionName(leagueId, competitionName, competitionNameConsumer);
+        adjustCompetitionLogo(leagueId, competitionName, competitionLogoConsumer);
+    }
+
     public void adjustCompetitionName(UUID leagueId,
             String competitionName,
             Consumer<String> competitionNameConsumer) {
@@ -27,6 +34,16 @@ public class OfficialLeagueAndCompetitions {
             Optional<String> competitionNameMapping = Optional.ofNullable(
                     competitionNameProperties.getCompetitionName(competitionName));
             competitionNameConsumer.accept(competitionNameMapping.orElse(competitionName));
+        }
+    }
+
+    public void adjustCompetitionLogo(UUID leagueId,
+            String competitionName,
+            Consumer<String> competitionLogoConsumer) {
+        if (OFFICIAL_LEAGUE_UUID.equals(leagueId)) {
+            Optional<String> competitionLogoMapping = Optional.ofNullable(
+                    competitionNameProperties.getCompetitionLogo(competitionName));
+            competitionLogoMapping.ifPresent(competitionLogoConsumer);
         }
     }
 

@@ -62,7 +62,8 @@ public class CompetitionService {
             default -> notYetImplemented(competition.getFormat());
         }
         List.of(competition)
-                .forEach(c -> officialLeagueCompetitions.adjustCompetitionName(c.getLeagueId(), c.getName(), c::setName));
+                .forEach(c -> officialLeagueCompetitions.adjustCompetitionNameAndLogo(c.getLeagueId(), c.getName(),
+                        c::setName, c::setLogo));
         return competition;
     }
 

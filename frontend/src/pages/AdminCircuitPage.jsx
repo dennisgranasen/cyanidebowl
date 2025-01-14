@@ -31,7 +31,7 @@ import WarpScoresApiService from '../WarpScoresApiService';
 import Navigation from '../components/misc/Navigation';
 import CircuitLeg from '../components/circuit/CircuitLeg';
 import HeaderCard from '../components/common/HeaderCard';
-import prettyPrint from '../util/PrettyPrint';
+import prettyPrint from '../util/prettyPrint';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import config from '../config';
 

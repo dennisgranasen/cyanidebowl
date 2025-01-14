@@ -3,10 +3,10 @@ import { Center, Heading, Image, Spinner, Td, Text, Tr, useBreakpointValue } fro
 import { useNavigate } from 'react-router-dom';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import Race from '../team/Race';
-import Formatter from '../../util/Formatter';
+import formatter from '../../util/formatter';
 import config from '../../config';
 import ImageUrls from '../../ImageUrls';
-import prettyPrint from '../../util/PrettyPrint';
+import prettyPrint from '../../util/prettyPrint';
 
 const { boxSize, smallScreenBreakpointValues } = config;
 
@@ -60,39 +60,39 @@ function Rank({ rank }) {
         </>
       )}
       <Td>
-        <Center>{Formatter.formatAsNumber(rank.score)}</Center>
+        <Center>{formatter.formatAsNumber(rank.score)}</Center>
       </Td>
       <Td>
-        <Center>{Formatter.formatAsNumber(rank.gamesWon)}</Center>
+        <Center>{formatter.formatAsNumber(rank.gamesWon)}</Center>
       </Td>
       <Td>
-        <Center>{Formatter.formatAsNumber(rank.gamesDrawn)}</Center>
+        <Center>{formatter.formatAsNumber(rank.gamesDrawn)}</Center>
       </Td>
       <Td>
-        <Center>{Formatter.formatAsNumber(rank.gamesLost)}</Center>
+        <Center>{formatter.formatAsNumber(rank.gamesLost)}</Center>
       </Td>
       <Td>
-        <Center> {Formatter.formatAsNumber(rank.gamesPlayed)}</Center>
+        <Center> {formatter.formatAsNumber(rank.gamesPlayed)}</Center>
       </Td>
       {!isSmallScreen && (
         <>
           <Td>
-            <Center>{Formatter.formatAsNumber(rank.inflictedTouchdowns)}</Center>
+            <Center>{formatter.formatAsNumber(rank.inflictedTouchdowns)}</Center>
           </Td>
           <Td>
-            <Center>{Formatter.formatAsNumber(rank.sustainedTouchdowns)}</Center>
+            <Center>{formatter.formatAsNumber(rank.sustainedTouchdowns)}</Center>
           </Td>
           <Td>
-            <Center>{Formatter.formatAsNumber(rank.inflictedTouchdowns - rank.sustainedTouchdowns)}</Center>
+            <Center>{formatter.formatAsNumber(rank.inflictedTouchdowns - rank.sustainedTouchdowns)}</Center>
           </Td>
           <Td>
-            <Center>{Formatter.formatAsNumber(rank.inflictedCasualties)}</Center>
+            <Center>{formatter.formatAsNumber(rank.inflictedCasualties)}</Center>
           </Td>
           <Td>
-            <Center>{Formatter.formatAsNumber(rank.sustainedCasualties)}</Center>
+            <Center>{formatter.formatAsNumber(rank.sustainedCasualties)}</Center>
           </Td>
           <Td>
-            <Center>{Formatter.formatAsNumber(rank.inflictedCasualties - rank.sustainedCasualties)}</Center>
+            <Center>{formatter.formatAsNumber(rank.inflictedCasualties - rank.sustainedCasualties)}</Center>
           </Td>
         </>
       )}

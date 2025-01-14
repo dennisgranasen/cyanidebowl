@@ -15,4 +15,9 @@ public class OfficialLeagueCompetitionNameProperties {
     public String getCompetitionName(String competitionNameKey) {
         return env.containsProperty(competitionNameKey) ? env.getProperty(competitionNameKey) : competitionNameKey;
     }
+
+    public String getCompetitionLogo(String competitionNameKey) {
+        String competitionLogoKey = competitionNameKey.replaceAll("_NAME", "_LOGO");
+        return env.containsProperty(competitionLogoKey) ? env.getProperty(competitionLogoKey) : null;
+    }
 }

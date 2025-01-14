@@ -2,7 +2,7 @@ import React from 'react';
 import { Center, Image, Tag, Td, Text, Tr } from '@chakra-ui/react';
 import { FaBandage, FaStar } from 'react-icons/fa6';
 import Skills from './Skills';
-import prettyPrint from '../../util/PrettyPrint';
+import prettyPrint from '../../util/prettyPrint';
 import Injuries from './Injuries';
 import config from '../../config';
 import { Icon } from '@chakra-ui/icons';
