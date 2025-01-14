@@ -7,20 +7,9 @@ import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 
 const { smallScreenBreakpointValues } = config;
 
-function getDateFromUUID(uuid) {
-  const timestampHex = `${uuid.substr(15, 3)}${uuid.substr(9, 4)}${uuid.substr(0, 8)}`;
-  const timestamp = parseInt(timestampHex, 16);
-  let seconds = timestamp / (10 * 1000 * 1000);
-  // we can convert this to unix time by subtracting the number of seconds between that date and January 1, 1970
-  seconds -= 141427 * 24 * 60 * 60;
-  return new Date(seconds * 1000);
-}
-
 function getRobinFrom(contests) {
   if (!contests || contests[0].format !== 'RoundRobin' || contests[0].format !== 'Ladder') return null;
-  contests.sort((contestA, contestB) =>
-    comparators.compareAsDatesAsc(getDateFromUUID(contestA.contestUuid), getDateFromUUID(contestB.contestUuid))
-  );
+  contests.sort(comparators.compareContestsByContestUuidAsDatesAsc);
   const { coachName } = contests[0].opponents[0];
   return coachName;
 }
@@ -37,14 +26,8 @@ function toTabData(contests, isSmallScreen) {
           robin === contestA.opponents[0].coachName
             ? -1
             : contestA.opponents[0].coachName.localeCompare(contestB.opponents[0].coachName);
-      } else if (contestA.matchDate) {
-        if (contestB.matchDate) {
-          comparison = contestA.matchDate - contestB.matchDate;
-        } else {
-          comparison = -1;
-        }
       } else {
-        comparison = getDateFromUUID(contestA.contestUuid) - getDateFromUUID(contestB.contestUuid);
+        comparison = comparators.compareContestsByContestUuidAsDatesAsc(contestA, contestB);
       }
       return comparison;
     });

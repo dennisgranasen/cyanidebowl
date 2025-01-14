@@ -16,7 +16,7 @@ function LiveContests({ league, competition, embeddable, limit }) {
     setLoading(true);
     WarpScoresApiService.liveLeagueContests(leagueUuid, contestLimit)
       .then((data) => {
-        data.sort((compA, compB) => comparators.compareAsDatesAsc(compB.matchDate, compA.matchDate));
+        data.sort(comparators.compareContestsByMatchOrContestUuidAsDatesDesc);
         setContests(data);
       })
       .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
@@ -27,7 +27,7 @@ function LiveContests({ league, competition, embeddable, limit }) {
     setLoading(true);
     WarpScoresApiService.liveCompetitionContests(competitionUuid, contestLimit)
       .then((data) => {
-        data.sort((compA, compB) => comparators.compareAsDatesAsc(compB.matchDate, compA.matchDate));
+        data.sort(comparators.compareContestsByMatchOrContestUuidAsDatesDesc);
         setContests(data);
       })
       .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))

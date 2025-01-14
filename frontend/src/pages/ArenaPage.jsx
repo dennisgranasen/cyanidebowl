@@ -34,6 +34,7 @@ import WarpScoresApiService from '../WarpScoresApiService';
 import config from '../config';
 import DelayedIconTooltip from '../components/common/DelayedIconTooltip';
 import Formatter from '../util/Formatter';
+import comparators from '../util/Comparators';
 
 const { boxSize } = config;
 
@@ -58,19 +59,15 @@ function ContestLabel({ teamUuid, contest }) {
   );
 }
 
-const contestByMatchDate = (c1, c2) => {
-  return c1.matchDate - c2.matchDate;
-};
-
 function getLastContest(contests) {
-  const sortedContests = [].concat(contests.sort(contestByMatchDate));
+  const sortedContests = [].concat(contests.sort(comparators.compareContestsByMatchOrContestUuidAsDatesAsc));
   return sortedContests.pop();
 }
 
 const teamByLastMatchDate = (team1, team2) => {
   const contest1 = getLastContest(team1.contests);
   const contest2 = getLastContest(team2.contests);
-  return contestByMatchDate(contest1, contest2);
+  return comparators.compareContestsByMatchOrContestUuidAsDatesAsc(contest1, contest2);
 };
 
 function Score({ contest, teamUuid }) {
@@ -125,7 +122,9 @@ const clusterContests = (teamUuid, contests) => {
       currContests = [];
     }
   });
-  return clusteredContests.sort((c1, c2) => contestByMatchDate(getLastContest(c1), getLastContest(c2)));
+  return clusteredContests.sort((c1, c2) =>
+    comparators.compareContestsByMatchOrContestUuidAsDatesAsc(getLastContest(c1), getLastContest(c2))
+  );
 };
 
 function ArenaProgress({ contests, teamUuid }) {
@@ -146,7 +145,8 @@ function TeamRow({ competitionUuid, arenaTeam }) {
   const goToCoach = () => {
     navigate(`/competition/${competitionUuid}/arena/coach/${arenaTeam.coachUuid}`);
   };
-  const sortedContests = arenaTeam?.contests?.sort(contestByMatchDate) ?? [];
+  const sortedContests = [].concat(arenaTeam?.contests ?? []);
+  sortedContests.sort(comparators.compareContestsByMatchOrContestUuidAsDatesAsc);
   const clusteredSortedContests = clusterContests(arenaTeam.teamUuid, sortedContests);
   return (
     <Tr>
@@ -171,8 +171,10 @@ function TeamRow({ competitionUuid, arenaTeam }) {
       >
         {arenaTeam.coachName}
       </Td>
-      <Td>{Formatter.formatAsDate(getLastContest(arenaTeam.contests).matchDate, '-')}</Td>
+      <Td>{Formatter.formatAsDate(arenaTeam.contests[0].matchDate, '-')}</Td>
+      <Td>{Formatter.formatAsDate(arenaTeam.contests[arenaTeam.contests.length - 1].matchDate, '-')}</Td>
       <Td>{sortedContests.length}</Td>
+      <Td>{clusteredSortedContests.length}</Td>
       <Td>
         <HStack spacing="0.8rem">
           {clusteredSortedContests.map((clusteredContests) => (
@@ -203,8 +205,10 @@ function RunAccordionItem({ competitionUuid, label, loading, error, arenaTeams }
                   <Tr>
                     <Th>Team</Th>
                     <Th>Coach</Th>
-                    <Th>Run completed</Th>
+                    <Th>First game</Th>
+                    <Th>Last game</Th>
                     <Th>Games played</Th>
+                    <Th>Runs</Th>
                     <Th>Progress</Th>
                   </Tr>
                 </Thead>
@@ -217,8 +221,10 @@ function RunAccordionItem({ competitionUuid, label, loading, error, arenaTeams }
                   <Tr>
                     <Th>Team</Th>
                     <Th>Coach</Th>
-                    <Th>Run completed</Th>
+                    <Th>First game</Th>
+                    <Th>Last game</Th>
                     <Th>Games played</Th>
+                    <Th>Runs</Th>
                     <Th>Progress</Th>
                   </Tr>
                 </Tfoot>

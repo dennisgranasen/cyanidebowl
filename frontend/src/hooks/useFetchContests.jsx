@@ -13,7 +13,7 @@ export default function useFetchContests() {
     logger.debug('Fetching contests for competition: %o', competition);
     WarpScoresApiService.competitionContests(competition.uuid, limit)
       .then((data) => {
-        data.sort((compA, compB) => comparators.compareAsDatesDesc(compA.matchDate, compB.matchDate));
+        data.sort(comparators.compareContestsByMatchOrContestUuidAsDatesDesc);
         setContests(data);
       })
       .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
