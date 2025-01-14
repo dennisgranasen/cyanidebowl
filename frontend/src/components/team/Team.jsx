@@ -3,7 +3,7 @@ import { Image, Spinner, Td, Tr } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import Race from './Race';
-import Formatter from '../../util/Formatter';
+import formatter from '../../util/formatter';
 import ImageUrls from '../../ImageUrls';
 import config from '../../config';
 
@@ -30,8 +30,8 @@ function Team({ team }) {
       <Td>
         <Race race={team.race} />
       </Td>
-      <Td isNumeric>{Formatter.formatAsNumber(team.value)}</Td>
-      <Td isNumeric>{Formatter.formatAsNumber(team.cash)}</Td>
+      <Td isNumeric>{formatter.formatAsNumber(team.value)}</Td>
+      <Td isNumeric>{formatter.formatAsNumber(team.cash)}</Td>
     </Tr>
   ) : (
     <Spinner />

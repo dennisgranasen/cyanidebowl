@@ -1,4 +1,4 @@
-import timeUtil from './TimeUtil';
+import timeUtil from './timeUtil';
 
 const numberFormat = new Intl.NumberFormat('en-GB');
 const dateFormatOptions = {

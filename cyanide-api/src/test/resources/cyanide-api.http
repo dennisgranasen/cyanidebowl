@@ -7,6 +7,9 @@ GET https://web.cyanide-studio.com/ws/?bb=3&key={{apiKey}}
 ### Get status
 GET https://web.cyanide-studio.com/ws/cya/status/?key={{apiKey}}
 
+### Get rules
+https://web.cyanide-studio.com/ws/bb3/rules/?rule=&key={{apiKey}}
+
 # ##############################################################################
 # Lookup #######################################################################
 

@@ -71,7 +71,8 @@ GET {{backendBaseUrl}}/arena/fdcd5dde-e529-11ee-bbf2-0200000e1421/info/goblin
 GET {{backendBaseUrl}}/arena/fdcd5dde-e529-11ee-bbf2-0200000e1421/race/underworldDenizen/completed
 
 ### get arena contests for coach
-GET {{backendBaseUrl}}/arena/fdcd5dde-e529-11ee-bbf2-0200000e1421/coach/naytsyrhc
+GET {{backendBaseUrl}}/arena/fdcd5dde-e529-11ee-bbf2-0200000e1421/coach/5522f49f-397f-11ee-af36-020000a4d571
+
 
 ### Create an admin contest
 POST {{backendBaseUrl}}/contests/competition/72fbe403-a786-11ef-aaf1-bc24112ec32e

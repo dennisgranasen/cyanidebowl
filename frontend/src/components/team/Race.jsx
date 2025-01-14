@@ -1,5 +1,5 @@
 import React from 'react';
-import prettyPrint from '../../util/PrettyPrint';
+import prettyPrint from '../../util/prettyPrint';
 
 function Race({ race }) {
   return <>{prettyPrint(race)}</>;

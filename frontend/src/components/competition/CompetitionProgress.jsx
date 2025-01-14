@@ -3,7 +3,7 @@ import { Box, Flex, GridItem, Progress, SimpleGrid, VStack } from '@chakra-ui/re
 import { CalendarIcon, QuestionIcon } from '@chakra-ui/icons';
 import { FaFlagCheckered } from 'react-icons/fa6';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
-import prettyPrint from '../../util/PrettyPrint';
+import prettyPrint from '../../util/prettyPrint';
 
 function extractRoundData(currentRound, round, finishedMatches, roundLength, status) {
   let progress = 0;

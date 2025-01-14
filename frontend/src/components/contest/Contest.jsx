@@ -1,8 +1,8 @@
 import React from 'react';
 import { Center, Spinner, Td, Tr, useDisclosure } from '@chakra-ui/react';
 import Opponent from './Opponent';
-import prettyPrint from '../../util/PrettyPrint';
-import Formatter from '../../util/Formatter';
+import prettyPrint from '../../util/prettyPrint';
+import formatter from '../../util/formatter';
 import config from '../../config';
 import MatchModal from './MatchModal';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
@@ -31,8 +31,8 @@ function ScoreOrIconTooltip({ contest }) {
   let status = `${matchPlayed && !matchValidated ? 'Awaiting validation' : prettyPrint(contest.status)}`;
   if (contest.live) status = 'Live';
   const matchDate = contest.live
-    ? Formatter.formatAsDuration(contest.matchDate, null)
-    : Formatter.formatAsDate(contest.matchDate, '');
+    ? formatter.formatAsDuration(contest.matchDate, null)
+    : formatter.formatAsDate(contest.matchDate, '');
   const concedeText = contest.concede ? ' - Conceded' : '';
   const overtimeText = contest.overtime ? ' - Decided in Overtime' : '';
   const matchDateText = contest.adminResult ? ' - Admin result' : ` - ${matchDate}`;

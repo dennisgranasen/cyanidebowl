@@ -1,4 +1,4 @@
-import prettyPrint from './PrettyPrint';
+import prettyPrint from './prettyPrint';
 
 const makeInitials = (name) => {
   if (!name) return name;

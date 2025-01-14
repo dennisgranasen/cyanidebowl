@@ -1,5 +1,5 @@
 import axios from 'axios';
-import logger from './util/Logger';
+import logger from './util/logger';
 import config from './config';
 
 const { isProduction } = config;

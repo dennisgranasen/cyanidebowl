@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Image } from '@chakra-ui/react';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
-import prettyPrint from '../../util/PrettyPrint';
+import prettyPrint from '../../util/prettyPrint';
 import config from '../../config';
 import ImageUrls from '../../ImageUrls';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';

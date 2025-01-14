@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Heading } from '@chakra-ui/react';
 import { FaRegMoon } from 'react-icons/fa6';
-import Formatter from '../../util/Formatter';
+import formatter from '../../util/formatter';
 import WarpScoresApiService from '../../WarpScoresApiService';
-import comparators from '../../util/Comparators';
+import comparators from '../../util/comparators';
 import ContestMatchCards from './ContestMatchCards';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 
@@ -51,7 +51,7 @@ function LiveContests({ league, competition, embeddable, limit }) {
           contests={contests}
           noContentIcon={FaRegMoon}
           noContentHeading="No matches live currently..."
-          noContentText={league ? `Last match was ${Formatter.formatAsDate(league.dateLastMatch, '-')}` : null}
+          noContentText={league ? `Last match was ${formatter.formatAsDate(league.dateLastMatch, '-')}` : null}
         />
       </LoadingOrErrorWrapper>
     </>

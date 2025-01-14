@@ -15,9 +15,9 @@ import { SingleEliminationBracket } from 'react-tournament-brackets/dist/esm';
 import React, { useEffect, useState } from 'react';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import ImageUrls from '../../ImageUrls';
-import prettyPrint from '../../util/PrettyPrint';
+import prettyPrint from '../../util/prettyPrint';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
-import Formatter from '../../util/Formatter';
+import formatter from '../../util/formatter';
 import Ranks from './Ranks';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 import config from '../../config';
@@ -52,7 +52,7 @@ function toBracketMatch(contest) {
     id: contest?.contestUuid,
     nextMatchId: contest?.nextContestUuid,
     participants: toParticipants(contest?.opponents, contest?.winner),
-    startTime: Formatter.formatAsDate(contest?.matchDate, '-'),
+    startTime: formatter.formatAsDate(contest?.matchDate, '-'),
     state: contest?.matchDate ? 'DONE' : null,
     tournamentRoundText: `${contest?.round}`,
   };

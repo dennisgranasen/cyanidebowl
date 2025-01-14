@@ -1,7 +1,7 @@
 import React from 'react';
 import { Stack } from '@chakra-ui/react';
 import Injury from './Injury';
-import hashCode from '../../util/HashCode';
+import hashCode from '../../util/hashCode';
 
 function Injuries({ injuries }) {
   const injuryCountMap = [];

@@ -9,9 +9,9 @@ import DbbcCard from './aboutCards/DbbcCard';
 import Navigation from '../components/misc/Navigation';
 import ImageUrls from '../ImageUrls';
 import HeaderCard from '../components/common/HeaderCard';
-import logger from '../util/Logger';
+import logger from '../util/logger';
 import DisclaimerCard from './aboutCards/DisclaimerCard';
-import parseMarkdownPrefixingLinks from '../util/MarkdownParser';
+import parseMarkdownPrefixingLinks from '../util/markdownParser';
 import markDownTheme from '../theme/components/Markdown';
 
 const readmeFile = '/README.md';

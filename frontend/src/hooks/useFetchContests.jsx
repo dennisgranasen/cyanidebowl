@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import comparators from '../util/Comparators';
+import comparators from '../util/comparators';
 import WarpScoresApiService from '../WarpScoresApiService';
-import logger from '../util/Logger';
+import logger from '../util/logger';
 
 export default function useFetchContests() {
   const [contestsLoading, setContestsLoading] = useState(true);

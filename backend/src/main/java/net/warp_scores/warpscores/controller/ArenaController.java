@@ -65,7 +65,7 @@ public class ArenaController {
     @GetMapping("/arena/{competitionUuid}/coach/{coachId}")
     public ResponseEntity<List<ArenaTeam>> getArenaTeamsFor(@PathVariable(name = "competitionUuid") UUID competitionUuid,
             @PathVariable(name = "coachId") String coachId) {
-        List<ArenaTeam> arenaTeams = arenaService.loadArenaTeamsFor(competitionUuid, coachId);
+        List<ArenaTeam> arenaTeams = arenaService.loadArenaTeamsFor(competitionUuid, UUID.fromString(coachId));
         return ResponseEntity.ok(arenaTeams);
     }
 }

@@ -7,9 +7,9 @@ const warpScoresTheme = extendTheme({
   fonts: {
     nuffle: `'EmbeddedNuffle', sans-serif`,
     bigStar: `'EmbeddedBigStarRegular', sans-serif`,
-    sportsWorld: `'EmbeddedSportsWorldRegular', 'EmbeddedSportsWorldRegular2', sans-serif`,
-    heading: `'EmbeddedSportsWorldRegular', 'EmbeddedSportsWorldRegular2', 'EmbeddedBigStarRegular',${base.fonts?.heading}, sans-serif`,
-    body: `'EmbeddedSportsWorldRegular', 'EmbeddedSportsWorldRegular2', ${base.fonts?.body}, sans-serif`,
+    sportsWorld: `'EmbeddedSportsWorldRegular', sans-serif`,
+    heading: `'EmbeddedSportsWorldRegular', 'EmbeddedBigStarRegular',${base.fonts?.heading}, sans-serif`,
+    body: `${base.fonts?.body}, sans-serif`,
   },
   semanticTokens: {
     colors: {

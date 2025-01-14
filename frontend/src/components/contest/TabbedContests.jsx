@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Tab, TabList, TabPanel, TabPanels, Tabs, useBreakpointValue } from '@chakra-ui/react';
-import comparators from '../../util/Comparators';
+import comparators from '../../util/comparators';
 import config from '../../config';
 import Contests from './Contests';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';

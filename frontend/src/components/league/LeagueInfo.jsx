@@ -1,5 +1,5 @@
 import React from 'react';
-import Formatter from '../../util/Formatter';
+import formatter from '../../util/formatter';
 import InfoArea from '../common/InfoArea';
 import InfoItem from '../common/InfoItem';
 
@@ -23,7 +23,7 @@ function LeagueInfo({ league }) {
           label="Finished competitions"
           info={league?.countsByCompetitionStatus?.Finished || '-'}
         />
-        <InfoItem key="lastMatch" label="Last match" info={Formatter.formatAsDate(league.dateLastMatch, '-')} />
+        <InfoItem key="lastMatch" label="Last match" info={formatter.formatAsDate(league.dateLastMatch, '-')} />
       </InfoArea>
     )
   );

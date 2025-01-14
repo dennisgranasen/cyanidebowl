@@ -1,8 +1,6 @@
-import logger from './Logger';
-
 function getMatchOrContestUuid(contest) {
   if (!contest) return null;
-  return contest.matchUuid || contest.contestUuid;
+  return contest.matchId || contest.matchUuid || contest.contestUuid;
 }
 
 function getContestUuid(contest) {
@@ -12,7 +10,6 @@ function getContestUuid(contest) {
 
 const getDateFromUUID = (uuid) => {
   if (!uuid) return null;
-  logger.debug('Getting date from UUID: %o', uuid);
   const timestampHex = `${uuid.substr(15, 3)}${uuid.substr(9, 4)}${uuid.substr(0, 8)}`;
   const timestamp = parseInt(timestampHex, 16);
   let seconds = timestamp / (10 * 1000 * 1000);

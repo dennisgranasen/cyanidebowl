@@ -5,7 +5,7 @@ import Menu from './Menu';
 import AuthButton from './AuthButton';
 import config from '../../config';
 import ToggleColorModeButton from './ToggleColorModeButton';
-import prettyPrint from '../../util/PrettyPrint';
+import prettyPrint from '../../util/prettyPrint';
 
 const { isProduction } = config;
 
