@@ -21,7 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 import comparators from '../../util/comparators';
 import arenaHelpers from './arenaHelpers';
-import ImageUrls from '../../ImageUrls';
+import imageUrls from '../../imageUrls';
 import formatter from '../../util/formatter';
 import ArenaProgress from './ArenaProgress';
 import config from '../../config';
@@ -68,7 +68,7 @@ function TeamRow({ competitionUuid, arenaTeam, coachOrRace }) {
       >
         <HStack>
           <Image
-            src={`${ImageUrls.logo(arenaTeam?.teamLogo)}`}
+            src={`${imageUrls.logo(arenaTeam?.teamLogo)}`}
             boxSize={boxSize}
             fallback={<QuestionOutlineIcon boxSize={boxSize} />}
           />

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Accordion, Box, Heading, VStack } from '@chakra-ui/react';
 import { Link as RouteLink, useParams } from 'react-router-dom';
 import Navigation from '../components/misc/Navigation';
-import ImageUrls from '../ImageUrls';
+import imageUrls from '../imageUrls';
 import InfoArea from '../components/common/InfoArea';
 import HeaderCard from '../components/common/HeaderCard';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
@@ -60,8 +60,8 @@ function ArenaPage() {
           heading={`${competition?.name} - ${prettyPrint(race)}`}
           subHeading={<RouteLink to={`/${competition?.leagueId}`}>League: {competition?.leagueName}</RouteLink>}
           detailsHeading="Arena details"
-          mainImageSrc={competition?.logo ? ImageUrls.logo(competition?.logo) : ImageUrls.logo(competition?.leagueLogo)}
-          additionalImageSrc={ImageUrls.race(race)}
+          mainImageSrc={competition?.logo ? imageUrls.logo(competition?.logo) : imageUrls.logo(competition?.leagueLogo)}
+          additionalImageSrc={imageUrls.race(race)}
         >
           <LoadingOrErrorWrapper loading={arenaInfoLoading} error={arenaError}>
             <InfoArea>

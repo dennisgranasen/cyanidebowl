@@ -1,7 +1,7 @@
 import { Box, Heading, HStack, Image, VStack } from '@chakra-ui/react';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import React from 'react';
-import ImageUrls from '../../ImageUrls';
+import imageUrls from '../../imageUrls';
 import prettyPrint from '../../util/prettyPrint';
 import formatter from '../../util/formatter';
 import config from '../../config';
@@ -14,7 +14,7 @@ function ArenaMatchLabel({ teamUuid, match }) {
     <VStack align="left">
       <HStack>
         <Image
-          src={`${ImageUrls.logo(opponent.logo)}`}
+          src={`${imageUrls.logo(opponent.logo)}`}
           boxSize={boxSize}
           fallback={<QuestionOutlineIcon boxSize={boxSize} />}
         />

@@ -5,7 +5,7 @@ import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import Race from '../team/Race';
 import formatter from '../../util/formatter';
 import config from '../../config';
-import ImageUrls from '../../ImageUrls';
+import imageUrls from '../../imageUrls';
 import prettyPrint from '../../util/prettyPrint';
 
 const { boxSize, smallScreenBreakpointValues } = config;
@@ -35,7 +35,7 @@ function Rank({ rank }) {
           </Td>
           <Td>
             <Image
-              src={`${ImageUrls.logo(rank.team.logo)}`}
+              src={`${imageUrls.logo(rank.team.logo)}`}
               boxSize={boxSize}
               fallback={<QuestionOutlineIcon boxSize={boxSize} />}
               objectFit="scale-down"
@@ -47,7 +47,7 @@ function Rank({ rank }) {
           <Td>{rank.team.name}</Td>
           <Td>
             <Image
-              src={`${ImageUrls.logo(rank.team.logo)}`}
+              src={`${imageUrls.logo(rank.team.logo)}`}
               boxSize={boxSize}
               fallback={<QuestionOutlineIcon boxSize={boxSize} />}
               objectFit="scale-down"

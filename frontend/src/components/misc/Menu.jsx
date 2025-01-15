@@ -30,7 +30,7 @@ import Version from './Version';
 import Status from './Status';
 import StatusIcon from './StatusIcon';
 import timeUtil from '../../util/timeUtil';
-import ImageUrls from '../../ImageUrls';
+import imageUrls from '../../imageUrls';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
 import useAuth0WithUserPermissions from '../../hooks/useAuth0WithUserPermissions';
 
@@ -99,7 +99,7 @@ function Menu() {
   return (
     <>
       <Link onClick={onOpen}>
-        <Avatar borderRadius={4} boxSize={12} icon={<HamburgerIcon />} src={ImageUrls.warpscoresLogoPng('medium')}>
+        <Avatar borderRadius={4} boxSize={12} icon={<HamburgerIcon />} src={imageUrls.warpscoresLogoPng('medium')}>
           <AvatarBadge boxSize={smallBoxSize} bg="black">
             <StatusIcon status={status} statusOutdated={statusOutdated} />
           </AvatarBadge>
@@ -112,7 +112,7 @@ function Menu() {
           <DrawerCloseButton />
           <DrawerBody
             p={0}
-            backgroundImage={ImageUrls.warpscoresLogoPng()}
+            backgroundImage={imageUrls.warpscoresLogoPng()}
             backgroundRepeat="no-repeat"
             backgroundSize="cover"
           >

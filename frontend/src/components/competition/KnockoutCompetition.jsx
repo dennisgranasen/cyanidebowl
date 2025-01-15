@@ -14,7 +14,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import { SingleEliminationBracket } from 'react-tournament-brackets/dist/cjs';
-import ImageUrls from '../../ImageUrls';
+import imageUrls from '../../imageUrls';
 import prettyPrint from '../../util/prettyPrint';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
 import formatter from '../../util/formatter';
@@ -107,7 +107,7 @@ function Participant({
         <GridItem pl="4px" pr="4px" area="image" textAlign="center">
           <Center w="100%" h="100%">
             <Image
-              src={ImageUrls.logo(party.picture)}
+              src={imageUrls.logo(party.picture)}
               fallback={<QuestionOutlineIcon boxSize={boxSize} />}
               objectFit="contain"
             />

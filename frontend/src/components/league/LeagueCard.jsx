@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Card, CardBody, Flex, Heading, Image } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
-import ImageUrls from '../../ImageUrls';
+import imageUrls from '../../imageUrls';
 import LeagueInfo from './LeagueInfo';
 
 function LeagueCard({ league, ...props }) {
@@ -19,7 +19,7 @@ function LeagueCard({ league, ...props }) {
       {...props}
     >
       <Box p="0.5rem">
-        <Image objectFit="contain" maxW="140px" src={ImageUrls.logo(league.logo)} fallback={null} />
+        <Image objectFit="contain" maxW="140px" src={imageUrls.logo(league.logo)} fallback={null} />
       </Box>
       <Flex minWidth="max-content" w="100%">
         <CardBody>

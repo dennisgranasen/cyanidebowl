@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Checkbox, Image, Td, Tr } from '@chakra-ui/react';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import WarpScoresApiService from '../../WarpScoresApiService';
-import ImageUrls from '../../ImageUrls';
+import imageUrls from '../../imageUrls';
 import config from '../../config';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 import logger from '../../util/logger';
@@ -40,7 +40,7 @@ function CircuitLeg({ circuitLeg }) {
         <Td>
           {(competition?.logo || competition?.leagueLogo || league?.logo) && (
             <Image
-              src={`${ImageUrls.logo(competition.logo || competition.leagueLogo || league?.logo)}`}
+              src={`${imageUrls.logo(competition.logo || competition.leagueLogo || league?.logo)}`}
               boxSize={boxSize}
               fallback={<QuestionOutlineIcon boxSize={boxSize} />}
               objectFit="scale-down"

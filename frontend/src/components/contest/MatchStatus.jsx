@@ -1,7 +1,7 @@
 import React from 'react';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import { Avatar } from '@chakra-ui/react';
-import ImageUrls from '../../ImageUrls';
+import imageUrls from '../../imageUrls';
 import prettyPrint from '../../util/prettyPrint';
 import formatter from '../../util/formatter';
 import MatchStatusIcon from './MatchStatusIcon';
@@ -15,7 +15,7 @@ function StatusAsIcon({ status, stadium }) {
     case 'played':
       return (
         <Avatar
-          src={`${ImageUrls.stadium(stadium)}`}
+          src={`${imageUrls.stadium(stadium)}`}
           boxSize={boxSize}
           icon={<QuestionOutlineIcon boxSize={boxSize} />}
         />

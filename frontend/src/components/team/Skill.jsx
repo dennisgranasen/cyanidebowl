@@ -3,7 +3,7 @@ import { Box, Image } from '@chakra-ui/react';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import prettyPrint from '../../util/prettyPrint';
 import config from '../../config';
-import ImageUrls from '../../ImageUrls';
+import imageUrls from '../../imageUrls';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
 
 const { smallBoxSize: boxSize } = config;
@@ -13,7 +13,7 @@ function Skill({ skill }) {
     <DelayedIconTooltip label={prettyPrint(skill)}>
       <Box boxSize={boxSize}>
         <Image
-          src={`${ImageUrls.skill(skill)}`}
+          src={`${imageUrls.skill(skill)}`}
           alt={prettyPrint(skill)}
           objectFit="cover"
           fallback={<QuestionOutlineIcon boxSize={boxSize} />}

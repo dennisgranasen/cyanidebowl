@@ -7,7 +7,7 @@ import Navigation from '../components/misc/Navigation';
 import HeaderCard from '../components/common/HeaderCard';
 import config from '../config';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
-import ImageUrls from '../ImageUrls';
+import imageUrls from '../imageUrls';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 
 const { isProduction } = config;
@@ -36,7 +36,7 @@ function CoachPage() {
       <LoadingOrErrorWrapper loading={!authenticationReady}>
         <HeaderCard
           mainImageSrc={
-            isProduction ? authenticationReady && user && user.picture : ImageUrls.warpscoresLogoPng('medium')
+            isProduction ? authenticationReady && user && user.picture : imageUrls.warpscoresLogoPng('medium')
           }
           mainImageBorderRadius="full"
           heading="Coach-Page"

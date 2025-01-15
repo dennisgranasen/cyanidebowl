@@ -7,7 +7,7 @@ import { FaRegHeart } from 'react-icons/fa6';
 import { Icon } from '@chakra-ui/icons';
 import DbbcCard from './aboutCards/DbbcCard';
 import Navigation from '../components/misc/Navigation';
-import ImageUrls from '../ImageUrls';
+import imageUrls from '../imageUrls';
 import HeaderCard from '../components/common/HeaderCard';
 import logger from '../util/logger';
 import DisclaimerCard from './aboutCards/DisclaimerCard';
@@ -51,7 +51,7 @@ function AboutPage() {
       <HeaderCard
         heading="About"
         subHeading={<RouteLink to="/">warp-scores.net</RouteLink>}
-        mainImageSrc={ImageUrls.warpscoresLogoPng('medium')}
+        mainImageSrc={imageUrls.warpscoresLogoPng('medium')}
       />
       <VStack align="left">
         {!readme && (

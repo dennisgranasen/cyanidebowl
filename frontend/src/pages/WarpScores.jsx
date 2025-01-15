@@ -4,7 +4,7 @@ import WarpScoresApiService from '../WarpScoresApiService';
 import Navigation from '../components/misc/Navigation';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import HeaderCard from '../components/common/HeaderCard';
-import ImageUrls from '../ImageUrls';
+import imageUrls from '../imageUrls';
 import CircuitCard from '../components/circuit/CircuitCard';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 import config from '../config';
@@ -63,7 +63,7 @@ function WarpScores() {
       </Box>
       <>
         <HeaderCard
-          mainImageSrc={ImageUrls.warpscoresLogoPng('medium')}
+          mainImageSrc={imageUrls.warpscoresLogoPng('medium')}
           heading="Warp-Scores"
           subHeading="Welcome to warp-scores, a Spike-like facade to BB3 data provided by Cyanide's BB3-API."
         />

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Card, CardBody, Center, Grid, GridItem, Heading, Image, Text } from '@chakra-ui/react';
 import { Icon } from '@chakra-ui/icons';
-import ImageUrls from '../../ImageUrls';
+import imageUrls from '../../imageUrls';
 import formatter from '../../util/formatter';
 import config from '../../config';
 import ScoreOrIcon from './ScoreOrIcon';
@@ -59,7 +59,7 @@ function ContestMatchCard({ contest, contestHeader, noContentIcon, noContentHead
               </GridItem>
               <GridItem colSpan={3}>
                 <Center>
-                  <Image objectFit="contain" maxW="64px" src={ImageUrls.logo(contest.opponents[0].logo)} />
+                  <Image objectFit="contain" maxW="64px" src={imageUrls.logo(contest.opponents[0].logo)} />
                 </Center>
               </GridItem>
               <GridItem colSpan={2}>
@@ -67,7 +67,7 @@ function ContestMatchCard({ contest, contestHeader, noContentIcon, noContentHead
               </GridItem>
               <GridItem colSpan={3} align="center">
                 <Center h="100%">
-                  <Image objectFit="contain" maxW="64px" src={ImageUrls.logo(contest.opponents[1].logo)} />
+                  <Image objectFit="contain" maxW="64px" src={imageUrls.logo(contest.opponents[1].logo)} />
                 </Center>
               </GridItem>
               <GridItem colSpan={8}>

@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import WarpScoresApiService from '../WarpScoresApiService';
 import Navigation from '../components/misc/Navigation';
 import Competitions from '../components/competition/Competitions';
-import ImageUrls from '../ImageUrls';
+import imageUrls from '../imageUrls';
 import HeaderCard from '../components/common/HeaderCard';
 import LiveContests from '../components/contest/LiveContests';
 import LatestContests from '../components/contest/LatestContests';
@@ -59,7 +59,7 @@ function LeaguePage() {
         <Navigation currentPage="league" league={[league?.uuid, league?.name]} />
       </Box>
       {league && (
-        <HeaderCard heading={league.name} detailsHeading="League details" mainImageSrc={ImageUrls.logo(league.logo)}>
+        <HeaderCard heading={league.name} detailsHeading="League details" mainImageSrc={imageUrls.logo(league.logo)}>
           <LeagueInfo league={league} />
         </HeaderCard>
       )}
