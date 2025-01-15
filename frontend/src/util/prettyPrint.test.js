@@ -1,5 +1,5 @@
 import { expect, test } from '@jest/globals';
-import prettyPrint from './PrettyPrint';
+import prettyPrint from './prettyPrint';
 
 test('Pretty print works with camelCase', () => {
   expect(prettyPrint('helloThere')).toBe('Hello There');
