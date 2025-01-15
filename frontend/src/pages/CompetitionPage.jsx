@@ -3,7 +3,7 @@ import { Box, Spinner, VStack } from '@chakra-ui/react';
 import { Link as RouteLink, useParams } from 'react-router-dom';
 import WarpScoresApiService from '../WarpScoresApiService';
 import Navigation from '../components/misc/Navigation';
-import ImageUrls from '../ImageUrls';
+import imageUrls from '../imageUrls';
 import prettyPrint from '../util/prettyPrint';
 import CompetitionProgress from '../components/competition/CompetitionProgress';
 import InfoArea from '../components/common/InfoArea';
@@ -87,8 +87,8 @@ function CompetitionPage() {
           heading={competition?.name}
           subHeading={<RouteLink to={`/${competition?.leagueId}`}>League: {competition?.leagueName}</RouteLink>}
           detailsHeading="Competition details"
-          mainImageSrc={competition?.logo ? ImageUrls.logo(competition?.logo) : ImageUrls.logo(competition?.leagueLogo)}
-          additionalImageSrc={competition?.logo ? ImageUrls.logo(competition?.leagueLogo) : null}
+          mainImageSrc={competition?.logo ? imageUrls.logo(competition?.logo) : imageUrls.logo(competition?.leagueLogo)}
+          additionalImageSrc={competition?.logo ? imageUrls.logo(competition?.leagueLogo) : null}
         >
           <InfoArea>
             <InfoItem key="Created" label="Created" info={formatter.formatAsDate(competition?.dateCreated)} />

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import Race from './Race';
 import formatter from '../../util/formatter';
-import ImageUrls from '../../ImageUrls';
+import imageUrls from '../../imageUrls';
 import config from '../../config';
 
 const { boxSize } = config;
@@ -20,7 +20,7 @@ function Team({ team }) {
       <Td>{team.name}</Td>
       <Td>
         <Image
-          src={`${ImageUrls.logo(team.logo)}`}
+          src={`${imageUrls.logo(team.logo)}`}
           boxSize={boxSize}
           fallback={<QuestionOutlineIcon boxSize={boxSize} />}
           objectFit="scale-down"

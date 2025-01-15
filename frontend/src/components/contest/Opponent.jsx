@@ -1,7 +1,7 @@
 import React from 'react';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import { Box, Image, Td, Text, useBreakpointValue } from '@chakra-ui/react';
-import ImageUrls from '../../ImageUrls';
+import imageUrls from '../../imageUrls';
 import config from '../../config';
 import prettyPrint from '../../util/prettyPrint';
 
@@ -42,7 +42,7 @@ const Boxes = (opponent, reverse, winner) => {
           <Box align={textAlign}>
             <Image
               align={textAlign}
-              src={`${ImageUrls.logo(opponent.logo)}`}
+              src={`${imageUrls.logo(opponent.logo)}`}
               boxSize={boxSize}
               fallback={<QuestionOutlineIcon boxSize={boxSize} />}
               objectFit="scale-down"

@@ -5,7 +5,7 @@ import LiveContests from '../contest/LiveContests';
 import LatestContests from '../contest/LatestContests';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
-import ImageUrls from '../../ImageUrls';
+import imageUrls from '../../imageUrls';
 import prettyPrint from '../../util/prettyPrint';
 import useFetchArenaInfo from '../../hooks/useFetchArenaInfo';
 
@@ -31,7 +31,7 @@ function ArenaInfoCard({ competitionUuid, race }) {
       overflow="hidden"
       align="center"
     >
-      <Image maxH="120px" src={ImageUrls.race(race)} />
+      <Image maxH="120px" src={imageUrls.race(race)} />
       <CardBody p={2}>
         <Heading>{prettyPrint(race)}</Heading>
         <LoadingOrErrorWrapper loading={arenaInfoLoading} error={error}>

@@ -3,7 +3,7 @@ import { Box, VStack } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '../components/misc/Navigation';
 import HeaderCard from '../components/common/HeaderCard';
-import ImageUrls from '../ImageUrls';
+import imageUrls from '../imageUrls';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 import AdminCircuits from '../components/circuit/AdminCircuits';
 
@@ -23,7 +23,7 @@ function AdminPage() {
         <Navigation currentPage="admin" />
       </Box>
       <HeaderCard
-        mainImageSrc={ImageUrls.warpscoresLogoPng('medium')}
+        mainImageSrc={imageUrls.warpscoresLogoPng('medium')}
         heading="Admin"
         subHeading="Configure circuits for collecting data..."
       />

@@ -6,7 +6,7 @@ import Roster from '../components/team/Roster';
 import prettyPrint from '../util/prettyPrint';
 import Navigation from '../components/misc/Navigation';
 import formatter from '../util/formatter';
-import ImageUrls from '../ImageUrls';
+import imageUrls from '../imageUrls';
 import InfoArea from '../components/common/InfoArea';
 import InfoItem from '../components/common/InfoItem';
 import Matches from '../components/contest/Matches';
@@ -98,8 +98,8 @@ function TeamPage() {
                 heading={team?.name}
                 subHeading={`Coach: ${team?.coachName}`}
                 detailsHeading="Team details"
-                mainImageSrc={ImageUrls.logo(team?.logo)}
-                additionalImageSrc={ImageUrls.race(team?.race)}
+                mainImageSrc={imageUrls.logo(team?.logo)}
+                additionalImageSrc={imageUrls.race(team?.race)}
               >
                 <InfoArea>
                   <InfoItem key="race" label="Race" info={prettyPrint(team.race)} />

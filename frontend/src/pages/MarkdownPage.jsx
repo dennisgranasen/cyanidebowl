@@ -4,7 +4,7 @@ import { Link as RouteLink } from 'react-router-dom';
 import ReactMarkdown from 'markdown-to-jsx';
 import { ChakraUIRenderer } from 'chakra-ui-markdown';
 import Navigation from '../components/misc/Navigation';
-import ImageUrls from '../ImageUrls';
+import imageUrls from '../imageUrls';
 import HeaderCard from '../components/common/HeaderCard';
 import logger from '../util/logger';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
@@ -54,7 +54,7 @@ function MarkdownPage({ markdownDocument, title }) {
       <HeaderCard
         heading={title}
         subHeading={<RouteLink to="/">warp-scores.net</RouteLink>}
-        mainImageSrc={ImageUrls.warpscoresLogoPng('medium')}
+        mainImageSrc={imageUrls.warpscoresLogoPng('medium')}
       />
       <VStack align="left">
         <LoadingOrErrorWrapper loading={!markdownDocument || !content} error={error}>
