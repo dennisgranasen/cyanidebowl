@@ -11,18 +11,18 @@ import {
   Heading,
   Image,
 } from '@chakra-ui/react';
-import { SingleEliminationBracket } from 'react-tournament-brackets/dist/esm';
 import React, { useEffect, useState } from 'react';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
+import { SingleEliminationBracket } from 'react-tournament-brackets/dist/cjs';
 import ImageUrls from '../../ImageUrls';
 import prettyPrint from '../../util/prettyPrint';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
 import formatter from '../../util/formatter';
-import Ranks from './Ranks';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 import config from '../../config';
 import useFetchContests from '../../hooks/useFetchContests';
 import useFetchRanks from '../../hooks/useFetchRanks';
+import Ranks from './Ranks';
 
 const { boxSize } = config;
 
@@ -216,29 +216,33 @@ function KnockoutCompetition({ competition, competitionLoading }) {
   }, [competition, competitionLoading, contests, contestsLoading]);
 
   return (
-    <>
-      <Heading size="md">Knockout-Bracket</Heading>
-      <Box align="center" height="100%" width="100%" overflowX="scroll">
-        <LoadingOrErrorWrapper loading={competitionLoading || contestsLoading} error={contestError}>
-          {matches && matches.length > 0 && (
-            <SingleEliminationBracket matches={matches} matchComponent={MatchComponent} />
-          )}
-        </LoadingOrErrorWrapper>
-      </Box>
-      <Accordion allowMultiple>
-        <AccordionItem>
-          <AccordionButton>
-            <Box as="span" flex="1" textAlign="left">
-              <Heading size="md">Ranks</Heading>
-            </Box>
-            <AccordionIcon />
-          </AccordionButton>
-          <AccordionPanel>
-            <Ranks loading={competitionLoading || ranksLoading} ranks={ranks} error={ranksError} />
-          </AccordionPanel>
-        </AccordionItem>
-      </Accordion>
-    </>
+    <Accordion defaultIndex={[0]} allowMultiple>
+      <AccordionItem>
+        <AccordionButton>
+          <Box as="span" flex="1" textAlign="left">
+            <Heading size="md">Knockout-Bracket</Heading>
+          </Box>
+        </AccordionButton>
+        <AccordionPanel overflow="auto">
+          <LoadingOrErrorWrapper loading={competitionLoading || contestsLoading} error={contestError}>
+            {matches && matches.length > 0 && (
+              <SingleEliminationBracket matches={matches} matchComponent={MatchComponent} />
+            )}
+          </LoadingOrErrorWrapper>
+        </AccordionPanel>
+      </AccordionItem>
+      <AccordionItem>
+        <AccordionButton>
+          <Box as="span" flex="1" textAlign="left">
+            <Heading size="md">Ranks</Heading>
+          </Box>
+          <AccordionIcon />
+        </AccordionButton>
+        <AccordionPanel>
+          <Ranks loading={competitionLoading || ranksLoading} ranks={ranks} error={ranksError} />
+        </AccordionPanel>
+      </AccordionItem>
+    </Accordion>
   );
 }
 

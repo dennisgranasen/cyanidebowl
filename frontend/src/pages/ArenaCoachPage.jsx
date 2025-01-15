@@ -1,133 +1,35 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Accordion,
-  AccordionButton,
-  AccordionItem,
-  AccordionPanel,
-  Box,
-  Heading,
-  HStack,
-  Image,
-  Table,
-  TableContainer,
-  Tbody,
-  Td,
-  Tfoot,
-  Th,
-  Thead,
-  Tr,
-  VStack,
-} from '@chakra-ui/react';
-import { Link as RouteLink, useNavigate, useParams } from 'react-router-dom';
-import { QuestionOutlineIcon } from '@chakra-ui/icons';
+import { Accordion, Box, Heading, VStack } from '@chakra-ui/react';
+import { Link as RouteLink, useParams } from 'react-router-dom';
 import ImageUrls from '../ImageUrls';
 import InfoArea from '../components/common/InfoArea';
 import HeaderCard from '../components/common/HeaderCard';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import useFetchCompetition from '../hooks/useFetchCompetition';
-import prettyPrint from '../util/prettyPrint';
 import WarpScoresApiService from '../WarpScoresApiService';
-import config from '../config';
-import formatter from '../util/formatter';
 import Navigation from '../components/misc/Navigation';
 import InfoItem from '../components/common/InfoItem';
-import comparators from '../util/comparators';
-import arenaHelpers from '../components/arena/arenaHelpers';
-import ArenaProgress from '../components/arena/ArenaProgress';
+import ArenaRunAccordionItem from '../components/arena/ArenaRunAccordionItem';
 
-const { boxSize } = config;
-
-function TeamRow({ competitionUuid, arenaTeam }) {
-  const navigate = useNavigate();
-  const goToTeam = () => {
-    navigate(`/competition/${competitionUuid}/team/${arenaTeam.teamUuid}`);
-  };
-  const sortedMatches = [].concat(arenaTeam?.matches ?? []);
-  sortedMatches.sort(comparators.compareContestsByMatchOrContestUuidAsDatesAsc);
-  const clusteredSortedMatches = arenaHelpers.clusterMatches(arenaTeam.teamUuid, sortedMatches);
-  return (
-    <Tr>
-      <Td
-        _hover={{ textEmphasisColor: 'warpScoresHoverColor', textDecoration: 'underline' }}
-        cursor="pointer"
-        onClick={goToTeam}
-      >
-        <HStack>
-          <Image
-            src={`${ImageUrls.logo(arenaTeam?.teamLogo)}`}
-            boxSize={boxSize}
-            fallback={<QuestionOutlineIcon boxSize={boxSize} />}
-          />
-          <Box>{arenaTeam.teamName}</Box>
-        </HStack>
-      </Td>
-      <Td>{prettyPrint(arenaTeam.race)}</Td>
-      <Td>{formatter.formatAsDate(sortedMatches[0].finished)}</Td>
-      <Td>{formatter.formatAsDate(sortedMatches[sortedMatches.length - 1].finished)}</Td>
-      <Td>{sortedMatches.length}</Td>
-      <Td>{clusteredSortedMatches.length}</Td>
-      <Td>
-        <HStack spacing="0.8rem">
-          {clusteredSortedMatches.map((clusteredMatches) => (
-            <ArenaProgress
-              key={`arenaProgress-${arenaHelpers.getLastMatch(clusteredMatches).matchId}`}
-              teamUuid={arenaTeam.teamUuid}
-              matches={clusteredMatches}
-            />
-          ))}
-        </HStack>
-      </Td>
-    </Tr>
-  );
+function getAllArenaTeams(arenaCoachTeamsByRunType) {
+  if (!arenaCoachTeamsByRunType) return [];
+  return Object.values(arenaCoachTeamsByRunType).reduce((acc, arenaTeams) => acc.concat(arenaTeams), []);
 }
 
-function RunAccordionItem({ competitionUuid, label, loading, error, arenaTeams }) {
-  return (
-    <AccordionItem>
-      <AccordionButton>
-        <Heading size="md">{label}</Heading>
-      </AccordionButton>
-      <AccordionPanel>
-        <LoadingOrErrorWrapper loading={loading} error={error}>
-          {arenaTeams ? (
-            <TableContainer>
-              <Table variant="striped" size="sm">
-                <Thead>
-                  <Tr>
-                    <Th>Team</Th>
-                    <Th>Race</Th>
-                    <Th>First game</Th>
-                    <Th>Last game</Th>
-                    <Th>Games played</Th>
-                    <Th>Runs</Th>
-                    <Th>Progress</Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {arenaTeams.map((arenaTeam) => (
-                    <TeamRow key={arenaTeam.teamUuid} competitionUuid={competitionUuid} arenaTeam={arenaTeam} />
-                  ))}
-                </Tbody>
-                <Tfoot>
-                  <Tr>
-                    <Th>Team</Th>
-                    <Th>Race</Th>
-                    <Th>First game</Th>
-                    <Th>Last game</Th>
-                    <Th>Games played</Th>
-                    <Th>Runs</Th>
-                    <Th>Progress</Th>
-                  </Tr>
-                </Tfoot>
-              </Table>
-            </TableContainer>
-          ) : (
-            'Not yet available...'
-          )}
-        </LoadingOrErrorWrapper>
-      </AccordionPanel>
-    </AccordionItem>
-  );
+function getCoachNameFrom(arenaCoachTeamsByRunType) {
+  const coachNames = getAllArenaTeams(arenaCoachTeamsByRunType).map((arenaTeam) => arenaTeam.coachName);
+  return coachNames[0] || null;
+}
+
+function getDistinctRaces(arenaCoachTeamsByRunType) {
+  const distinctRaces = new Set(getAllArenaTeams(arenaCoachTeamsByRunType).map((arenaTeam) => arenaTeam.race));
+  return distinctRaces.size;
+}
+
+function getPlayedMatchesCount(arenaCoachTeamsByRunType) {
+  return getAllArenaTeams(arenaCoachTeamsByRunType)
+    .map((arenaTeam) => arenaTeam.matches.length)
+    .reduce((acc, count) => acc + count, 0);
 }
 
 function ArenaCoachPage() {
@@ -145,12 +47,8 @@ function ArenaCoachPage() {
     const fetchArenaCoachTeams = (competitionId, coachId) => {
       setArenaCoachTeamsLoading(true);
       WarpScoresApiService.arenaCoachTeams(competitionId, coachId)
-        .then((teams) => {
-          teams.sort((team1, team2) => {
-            const comparison = team1.race.localeCompare(team2.race);
-            return comparison || arenaHelpers.teamsByLastMatchDate(team1, team2);
-          });
-          setArenaCoachTeams(teams);
+        .then((teamsByRunType) => {
+          setArenaCoachTeams(teamsByRunType);
         })
         .catch((reason) => setArenaCoachTeamsError({ type: 'error', message: reason.toLocaleString() }))
         .finally(() => setArenaCoachTeamsLoading(false));
@@ -158,7 +56,10 @@ function ArenaCoachPage() {
     fetchArenaCoachTeams(competitionUuid, coachUuid);
   }, []);
 
-  const coachName = arenaCoachTeams ? arenaCoachTeams[0]?.coachName : null;
+  const coachName = getCoachNameFrom(arenaCoachTeams);
+  const activeRunsCount = arenaCoachTeams ? arenaCoachTeams.active?.length ?? '0' : '-';
+  const completedRunsCount = arenaCoachTeams ? arenaCoachTeams.completed?.length ?? '0' : '-';
+  const failedRunsCount = arenaCoachTeams ? arenaCoachTeams.failed?.length ?? '0' : '-';
   return (
     <VStack align="left">
       <Box>
@@ -178,19 +79,11 @@ function ArenaCoachPage() {
         >
           <LoadingOrErrorWrapper loading={arenaCoachTeamsLoading} error={arenaCoachTeamsError}>
             <InfoArea>
-              <InfoItem
-                key="playedRaces"
-                label="Played races"
-                info={new Set(arenaCoachTeams?.map((arenaTeam) => arenaTeam.race)).size}
-              />
-              <InfoItem
-                key="playedMatches"
-                label="Played matches"
-                info={arenaCoachTeams?.map((arenaTeam) => arenaTeam.matches.length).reduce((a, b) => a + b, 0)}
-              />
-              <InfoItem key="completedRuns" label="Completed runs" info="-" />
-              <InfoItem key="failedRuns" label="Failed runs" info="-" />
-              <InfoItem key="activeRuns" label="Active runs" info="-" />
+              <InfoItem key="playedRaces" label="Played races" info={getDistinctRaces(arenaCoachTeams)} />
+              <InfoItem key="playedMatches" label="Played matches" info={getPlayedMatchesCount(arenaCoachTeams)} />
+              <InfoItem key="completedRuns" label="Completed runs" info={completedRunsCount} />
+              <InfoItem key="failedRuns" label="Failed runs" info={failedRunsCount} />
+              <InfoItem key="activeRuns" label="Active runs" info={activeRunsCount} />
             </InfoArea>
           </LoadingOrErrorWrapper>
         </HeaderCard>
@@ -198,12 +91,32 @@ function ArenaCoachPage() {
       <Heading>Coach</Heading>
       <LoadingOrErrorWrapper loading={arenaCoachTeamsLoading} error={arenaCoachTeamsError}>
         <Accordion defaultIndex={[0]}>
-          <RunAccordionItem
+          <ArenaRunAccordionItem
+            key="completed"
+            label={`Completed runs (${completedRunsCount})`}
             competitionUuid={competitionUuid}
-            label="Teams"
             loading={arenaCoachTeamsLoading}
             error={arenaCoachTeamsError}
-            arenaTeams={arenaCoachTeams}
+            arenaTeams={arenaCoachTeams?.completed ?? []}
+            coachOrRace="Race"
+          />
+          <ArenaRunAccordionItem
+            key="active"
+            label={`Active runs (${activeRunsCount})`}
+            competitionUuid={competitionUuid}
+            loading={arenaCoachTeamsLoading}
+            error={arenaCoachTeamsError}
+            arenaTeams={arenaCoachTeams?.active ?? []}
+            coachOrRace="Race"
+          />
+          <ArenaRunAccordionItem
+            key="failed"
+            label={`Failed runs (${failedRunsCount})`}
+            competitionUuid={competitionUuid}
+            loading={arenaCoachTeamsLoading}
+            error={arenaCoachTeamsError}
+            arenaTeams={arenaCoachTeams?.failed ?? []}
+            coachOrRace="Race"
           />
         </Accordion>
       </LoadingOrErrorWrapper>

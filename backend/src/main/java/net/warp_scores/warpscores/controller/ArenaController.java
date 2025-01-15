@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -39,33 +40,34 @@ public class ArenaController {
     }
 
     @GetMapping("/arena/{competitionUuid}/race/{race}/{runType}")
-    public ResponseEntity<List<ArenaTeam>> getArenaTeamsFor(@PathVariable(name = "competitionUuid") UUID competitionUuid,
-            @PathVariable(name = "race") Race race, @PathVariable(name = "runType") ArenaService.RunType runType) {
+    public ResponseEntity<Map<ArenaTeam.RunType, List<ArenaTeam>>> getArenaTeamsFor(@PathVariable(name = "competitionUuid") UUID competitionUuid,
+            @PathVariable(name = "race") Race race, @PathVariable(name = "runType") ArenaTeam.RunType runType) {
         return getArenaTeamsFor(competitionUuid, race, runType, null);
     }
 
     @GetMapping("/arena/{competitionUuid}/race/{race}/{runType}/{limit}")
-    public ResponseEntity<List<ArenaTeam>> getArenaTeamsFor(@PathVariable(name = "competitionUuid") UUID competitionUuid,
+    public ResponseEntity<Map<ArenaTeam.RunType, List<ArenaTeam>>> getArenaTeamsFor(@PathVariable(name = "competitionUuid") UUID competitionUuid,
             @PathVariable(name = "race") Race race,
-            @PathVariable(name = "runType") ArenaService.RunType runType,
+            @PathVariable(name = "runType") ArenaTeam.RunType runType,
             @PathVariable(name = "limit") Integer limit) {
         return getArenaTeamsFor(competitionUuid, race, runType, Optional.ofNullable(limit), 0);
     }
 
     @GetMapping("/arena/{competitionUuid}/race/{race}/{runType}/{limit}/{offset}")
-    public ResponseEntity<List<ArenaTeam>> getArenaTeamsFor(@PathVariable(name = "competitionUuid") UUID competitionUuid,
+    public ResponseEntity<Map<ArenaTeam.RunType, List<ArenaTeam>>> getArenaTeamsFor(@PathVariable(name = "competitionUuid") UUID competitionUuid,
             @PathVariable(name = "race") Race race,
-            @PathVariable(name = "runType") ArenaService.RunType runType,
+            @PathVariable(name = "runType") ArenaTeam.RunType runType,
             @PathVariable(name = "limit") Optional<Integer> limit,
             @PathVariable(name = "offset") Integer offset) {
-        List<ArenaTeam> arenaTeams = arenaService.loadArenaTeamsFor(competitionUuid, race, runType);
+        Map<ArenaTeam.RunType, List<ArenaTeam>> arenaTeams = arenaService.loadArenaTeamsFor(competitionUuid, race,
+                runType);
         return ResponseEntity.ok(arenaTeams);
     }
 
     @GetMapping("/arena/{competitionUuid}/coach/{coachId}")
-    public ResponseEntity<List<ArenaTeam>> getArenaTeamsFor(@PathVariable(name = "competitionUuid") UUID competitionUuid,
+    public ResponseEntity<Map<ArenaTeam.RunType, List<ArenaTeam>>> getArenaTeamsFor(@PathVariable(name = "competitionUuid") UUID competitionUuid,
             @PathVariable(name = "coachId") String coachId) {
-        List<ArenaTeam> arenaTeams = arenaService.loadArenaTeamsFor(competitionUuid, UUID.fromString(coachId));
+        Map<ArenaTeam.RunType, List<ArenaTeam>> arenaTeams = arenaService.loadArenaTeamsFor(competitionUuid, UUID.fromString(coachId));
         return ResponseEntity.ok(arenaTeams);
     }
 }
