@@ -1,5 +1,5 @@
 import { expect, test } from '@jest/globals';
-import parseMarkdownPrefixingLinks from './MarkdownParser';
+import parseMarkdownPrefixingLinks from './markdownParser';
 
 test('parseMarkdownAdjustingLinks adjusts simple markdown links', () => {
   expect(parseMarkdownPrefixingLinks('Hello [markdown](link)', '/prefix/')).toBe('Hello [markdown](/prefix/link)');

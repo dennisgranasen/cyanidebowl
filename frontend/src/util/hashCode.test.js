@@ -1,5 +1,5 @@
 import { expect, test } from '@jest/globals';
-import hashCode from './HashCode';
+import hashCode from './hashCode';
 
 test('hash', () => {
   expect(hashCode('Hallo')).toBe(69490486);
