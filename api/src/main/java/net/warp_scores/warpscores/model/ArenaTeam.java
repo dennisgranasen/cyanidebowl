@@ -5,12 +5,15 @@ import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Document
 @Getter
 @Setter
 public class ArenaTeam {
+    public enum RunType {completed, active, failed}
+
     private String coachName;
     private UUID coachUuid;
     private String teamName;
@@ -20,6 +23,7 @@ public class ArenaTeam {
     private int totalGames;
     private List<Result> results;
     private List<Match> matches;
+    private Map<RunType, List<Match>> matchesByRunType;
 
     @Getter
     @Setter
