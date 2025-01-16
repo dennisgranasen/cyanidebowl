@@ -12,7 +12,7 @@ function Injuries({ injuries }) {
   }
   return (
     <Stack direction="row" spacing="2px">
-      {Object.entries(injuryCountMap).map(([injury, count], index) => {
+      {Object.entries(injuryCountMap).map(([injury, count]) => {
         return <Injury key={hashCode(injury)} injury={injury} count={count} />;
       })}
     </Stack>

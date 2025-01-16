@@ -4,7 +4,6 @@ import net.warp_scores.warpscores.model.ArenaTeam;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Race;
 import net.warp_scores.warpscores.model.Team;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.lang.Nullable;
@@ -49,12 +48,13 @@ public interface MatchRepository extends MongoRepository<Match, UUID> {
             "{ $project: { combined: { $concatArrays: [\"$wins\", \"$losses\"] } } }",
             "{ $unwind: \"$combined\" }",
             "{ $group: { _id: \"$combined._id\",  matches: { $push: \"$combined.match\" }, results: { $push: { result: \"$combined.result\" } }, coachName: { $first: \"$combined.coachName\" }, coachUuid: { $first: \"$combined.coachUuid\" }, teamUuid: { $first: \"$combined.teamUuid\" }, race: { $first: \"$combined.race\" }, winCount: { $sum: { $cond: { if: { $eq: [\"$combined.result\", \"win\"] }, then: 1, else: 0 } } }, lossCount: { $sum: { $cond: { if: { $eq: [\"$combined.result\", \"loss\"] }, then: 1, else: 0 } } } } }",
-            "{ $project: { _id: 1, race: 1, teamUuid: 1, coachName: 1, coachUuid: 1, results: [  { result: \"win\", count: \"$winCount\" }, { result: \"loss\", count: \"$lossCount\" } ], matches: 1, totalGames: { $add: [\"$winCount\", \"$lossCount\"] } } }"
+            "{ $project: { _id: 1, race: 1, teamUuid: 1, coachName: 1, coachUuid: 1, results: [  { result: \"win\", count: \"$winCount\" }, { result: \"loss\", count: \"$lossCount\" } ], matches: 1, totalGames: { $add: [\"$winCount\", \"$lossCount\"] } } }",
+            "{ $match:  { $or: [ { $expr: { $eq: [?3, null] } }, { $and: [ { totalGames: { $gte: ?3 } }, { results: { $elemMatch: { result: \"win\", count: { $gte: ?3 } } } } ] } ] } }"
     })
     List<ArenaTeam> queryArenaTeamsFor(UUID competitionId,
             @Nullable Race race,
             @Nullable UUID coachId,
-            Pageable pageable);
+            @Nullable Integer minWins);
 
     @Aggregation(pipeline = {
             // Match contests for a specific competition

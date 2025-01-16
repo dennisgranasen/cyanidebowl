@@ -68,7 +68,12 @@ GET {{backendBaseUrl}}/arena/fdcd5dde-e529-11ee-bbf2-0200000e1421/info
 GET {{backendBaseUrl}}/arena/fdcd5dde-e529-11ee-bbf2-0200000e1421/info/goblin
 
 ### get arena contests for race and runtype
-GET {{backendBaseUrl}}/arena/fdcd5dde-e529-11ee-bbf2-0200000e1421/race/underworldDenizen/completed
+GET {{backendBaseUrl}}/arena/fdcd5dde-e529-11ee-bbf2-0200000e1421/race/goblin/completed/2/8
+
+
+
+### get arena top coaches
+GET {{backendBaseUrl}}/arena/fdcd5dde-e529-11ee-bbf2-0200000e1421/topCoaches
 
 ### get arena contests for coach
 GET {{backendBaseUrl}}/arena/fdcd5dde-e529-11ee-bbf2-0200000e1421/coach/5522f49f-397f-11ee-af36-020000a4d571

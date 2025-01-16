@@ -2,10 +2,10 @@ import React from 'react';
 import { Image, Spinner, Td, Tr } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
-import Race from './Race';
 import formatter from '../../util/formatter';
 import imageUrls from '../../imageUrls';
 import config from '../../config';
+import Race from '../common/Race';
 
 const { boxSize } = config;
 

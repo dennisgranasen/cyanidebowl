@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Accordion, Box, Heading, VStack } from '@chakra-ui/react';
+import { Accordion, Box, VStack } from '@chakra-ui/react';
 import { Link as RouteLink, useParams } from 'react-router-dom';
 import imageUrls from '../imageUrls';
 import InfoArea from '../components/common/InfoArea';
@@ -57,9 +57,18 @@ function ArenaCoachPage() {
   }, []);
 
   const coachName = getCoachNameFrom(arenaCoachTeams);
-  const activeRunsCount = arenaCoachTeams ? arenaCoachTeams.active?.length ?? '0' : '-';
-  const completedRunsCount = arenaCoachTeams ? arenaCoachTeams.completed?.length ?? '0' : '-';
-  const failedRunsCount = arenaCoachTeams ? arenaCoachTeams.failed?.length ?? '0' : '-';
+  const activeTeamsCount = arenaCoachTeams ? arenaCoachTeams.active?.length ?? '0' : '-';
+  const completedTeamsCount = arenaCoachTeams ? arenaCoachTeams.completed?.length ?? '0' : '-';
+  const failedTeamsCount = arenaCoachTeams ? arenaCoachTeams.failed?.length ?? '0' : '-';
+  const activeRacesCount = arenaCoachTeams
+    ? new Set(arenaCoachTeams.active?.map((team) => team.race)).size ?? '0'
+    : '-';
+  const completedRacesCount = arenaCoachTeams
+    ? new Set(arenaCoachTeams.completed?.map((team) => team.race)).size ?? '0'
+    : '-';
+  const failedRacesCount = arenaCoachTeams
+    ? new Set(arenaCoachTeams.failed?.map((team) => team.race)).size ?? '0'
+    : '-';
   return (
     <VStack align="left">
       <Box>
@@ -72,8 +81,8 @@ function ArenaCoachPage() {
       </Box>
       <LoadingOrErrorWrapper loading={competitionLoading} error={competitionError}>
         <HeaderCard
-          heading={`${competition?.name}${coachName ? ` - ${coachName}` : ''}`}
-          subHeading={<RouteLink to={`/${competition?.leagueId}`}>League: {competition?.leagueName}</RouteLink>}
+          heading={`Coach: ${coachName ? `${coachName}` : ''}`}
+          subHeading={<RouteLink to={`/competition/${competitionUuid}`}>Competition: {competition?.name}</RouteLink>}
           detailsHeading="Arena Coach Details"
           mainImageSrc={competition?.logo ? imageUrls.logo(competition?.logo) : imageUrls.logo(competition?.leagueLogo)}
         >
@@ -81,19 +90,22 @@ function ArenaCoachPage() {
             <InfoArea>
               <InfoItem key="playedRaces" label="Played races" info={getDistinctRaces(arenaCoachTeams)} />
               <InfoItem key="playedMatches" label="Played matches" info={getPlayedMatchesCount(arenaCoachTeams)} />
-              <InfoItem key="completedRuns" label="Completed runs" info={completedRunsCount} />
-              <InfoItem key="failedRuns" label="Failed runs" info={failedRunsCount} />
-              <InfoItem key="activeRuns" label="Active runs" info={activeRunsCount} />
+              <InfoItem
+                key="completedRuns"
+                label="Completed"
+                info={`${completedTeamsCount} Teams, ${completedRacesCount} Races`}
+              />
+              <InfoItem key="failedRuns" label="Failed" info={`${failedTeamsCount} Teams, ${failedRacesCount} Races`} />
+              <InfoItem key="activeRuns" label="Active" info={`${activeTeamsCount} Teams, ${activeRacesCount} Races`} />
             </InfoArea>
           </LoadingOrErrorWrapper>
         </HeaderCard>
       </LoadingOrErrorWrapper>
-      <Heading>Coach</Heading>
       <LoadingOrErrorWrapper loading={arenaCoachTeamsLoading} error={arenaCoachTeamsError}>
         <Accordion defaultIndex={[0]}>
           <ArenaRunAccordionItem
             key="completed"
-            label={`Completed runs (${completedRunsCount})`}
+            label={`Completed teams (${completedTeamsCount})`}
             competitionUuid={competitionUuid}
             loading={arenaCoachTeamsLoading}
             error={arenaCoachTeamsError}
@@ -102,7 +114,7 @@ function ArenaCoachPage() {
           />
           <ArenaRunAccordionItem
             key="active"
-            label={`Active runs (${activeRunsCount})`}
+            label={`Active teams (${activeTeamsCount})`}
             competitionUuid={competitionUuid}
             loading={arenaCoachTeamsLoading}
             error={arenaCoachTeamsError}
@@ -111,7 +123,7 @@ function ArenaCoachPage() {
           />
           <ArenaRunAccordionItem
             key="failed"
-            label={`Failed runs (${failedRunsCount})`}
+            label={`Failed teams (${failedTeamsCount})`}
             competitionUuid={competitionUuid}
             loading={arenaCoachTeamsLoading}
             error={arenaCoachTeamsError}

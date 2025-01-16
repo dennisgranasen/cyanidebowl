@@ -18,6 +18,7 @@ import {
 import React from 'react';
 import { Icon, QuestionOutlineIcon } from '@chakra-ui/icons';
 import { useNavigate } from 'react-router-dom';
+import { FaRegFaceSadTear } from 'react-icons/fa6';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 import comparators from '../../util/comparators';
 import arenaHelpers from './arenaHelpers';
@@ -26,7 +27,6 @@ import formatter from '../../util/formatter';
 import ArenaProgress from './ArenaProgress';
 import config from '../../config';
 import prettyPrint from '../../util/prettyPrint';
-import { FaRegFaceSadTear } from 'react-icons/fa6';
 
 const { boxSize } = config;
 

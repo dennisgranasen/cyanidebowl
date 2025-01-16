@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Accordion, Box, Heading, VStack } from '@chakra-ui/react';
+import { Accordion, Box, VStack } from '@chakra-ui/react';
 import { Link as RouteLink, useParams } from 'react-router-dom';
 import Navigation from '../components/misc/Navigation';
 import imageUrls from '../imageUrls';
@@ -74,7 +74,6 @@ function ArenaPage() {
           </LoadingOrErrorWrapper>
         </HeaderCard>
       </LoadingOrErrorWrapper>
-      <Heading>{prettyPrint(race)}</Heading>
       <Accordion variant="simple" allowMultiple defaultIndex={[0]}>
         <ArenaRunAccordionItem
           key="completed"

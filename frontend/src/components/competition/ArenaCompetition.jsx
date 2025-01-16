@@ -1,13 +1,62 @@
-import { Card, CardBody, Heading, Image, SimpleGrid, Text } from '@chakra-ui/react';
+import {
+  Box,
+  Card,
+  CardBody,
+  Center,
+  Heading,
+  Image,
+  SimpleGrid,
+  Text,
+  VStack,
+  Wrap,
+  WrapItem,
+} from '@chakra-ui/react';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Icon } from '@chakra-ui/icons';
+import { BiSolidTrophy, BiTrophy } from 'react-icons/bi';
 import LiveContests from '../contest/LiveContests';
 import LatestContests from '../contest/LatestContests';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 import imageUrls from '../../imageUrls';
-import prettyPrint from '../../util/prettyPrint';
 import useFetchArenaInfo from '../../hooks/useFetchArenaInfo';
+import config from '../../config';
+import formatter from '../../util/formatter';
+import Race from '../common/Race';
+
+const { boxSize } = config;
+
+const iconFor = (placement) => {
+  if (placement >= 1 && placement <= 3) {
+    return BiSolidTrophy;
+  }
+  return BiTrophy;
+};
+
+const colorFor = (placement) => {
+  switch (placement) {
+    case 1:
+      return 'gold';
+    case 2:
+      return 'silver';
+    case 3:
+      return 'darkgoldenrod';
+    default:
+      return null;
+  }
+};
+
+function RaceAvatars({ races }) {
+  races.sort();
+  return (
+    <Wrap>
+      {races.map((race) => (
+        <WrapItem as={Race} key={race} race={race} size="sm" boxSize={boxSize} asAvatar />
+      ))}
+    </Wrap>
+  );
+}
 
 function ArenaInfoCard({ competitionUuid, race }) {
   const navigate = useNavigate();
@@ -32,19 +81,23 @@ function ArenaInfoCard({ competitionUuid, race }) {
       align="center"
     >
       <Image maxH="120px" src={imageUrls.race(race)} />
-      <CardBody p={2}>
-        <Heading>{prettyPrint(race)}</Heading>
-        <LoadingOrErrorWrapper loading={arenaInfoLoading} error={error}>
-          <Text>
-            {arenaInfo?.coaches} Coaches, {arenaInfo?.teams} Teams
-          </Text>
-          <Text>
-            Matches: {arenaInfo?.matches}, {arenaInfo?.wins} wins, {arenaInfo?.losses} losses
-          </Text>
-          <Text>
-            Runs: {arenaInfo?.activeRuns} active, {arenaInfo?.completedRuns} completed, {arenaInfo?.failedRuns} failed
-          </Text>
-        </LoadingOrErrorWrapper>
+      <CardBody p={2} height="100%">
+        <VStack align="left" height="100%">
+          <Heading>
+            <Race size="md" race={race} />
+          </Heading>
+          <LoadingOrErrorWrapper loading={arenaInfoLoading} error={error}>
+            <Text>
+              {arenaInfo?.coaches} Coaches, {arenaInfo?.teams} Teams
+            </Text>
+            <Text>
+              Matches: {arenaInfo?.matches}, {arenaInfo?.wins} wins, {arenaInfo?.losses} losses
+            </Text>
+            <Text>
+              Runs: {arenaInfo?.completedRuns} completed, {arenaInfo?.activeRuns} active, {arenaInfo?.failedRuns} failed
+            </Text>
+          </LoadingOrErrorWrapper>
+        </VStack>
       </CardBody>
     </Card>
   );
@@ -62,29 +115,93 @@ function ArenaInfos({ races, competitionUuid }) {
   );
 }
 
+function ArenaCoachCard({ competitionUuid, coach, index }) {
+  const navigate = useNavigate();
+  const goToArenaCoach = () => {
+    navigate(`/competition/${competitionUuid}/arena/coach/${coach.coachUuid}`);
+  };
+
+  return (
+    <Card
+      _hover={{ background: 'warpScoresHoverColor' }}
+      cursor="pointer"
+      onClick={goToArenaCoach}
+      direction="row"
+      overflow="hidden"
+      align="center"
+    >
+      <Center width="100px">
+        <VStack>
+          <Icon boxSize="60px" as={iconFor(index + 1)} color={colorFor(index + 1)} />
+          <Heading color={colorFor(index + 1)}>{index + 1}</Heading>
+        </VStack>
+      </Center>
+      <CardBody p={2} height="100%">
+        <VStack align="left">
+          <Heading>{coach?.coachName}</Heading>
+          <Text>
+            Teams: {coach ? coach.completedTeamsCount || 0 : '-'} completed, {coach ? coach.activeTeamsCount || 0 : '-'}{' '}
+            active, {coach ? coach.failedTeamsCount || 0 : '-'} failed
+          </Text>
+          <Text>Last completion: {formatter.formatAsDate(coach.lastCompletion, '-')}</Text>
+          <Box>
+            <RaceAvatars races={coach.completedRaces} />
+          </Box>
+        </VStack>
+      </CardBody>
+    </Card>
+  );
+}
+
+function ArenaCoaches({ coaches, competitionUuid }) {
+  return (
+    <SimpleGrid columns={{ lg: 3, sm: 1, md: 2 }} spacing="1.25rem">
+      {coaches?.map((coach, index) => (
+        <ArenaCoachCard key={coach.id} index={index} coach={coach} competitionUuid={competitionUuid} />
+      ))}
+    </SimpleGrid>
+  );
+}
+
 function ArenaCompetition({ competition }) {
   const [arenaRacesLoading, setArenaRacesLoading] = useState(false);
   const [arenaRaces, setArenaRaces] = useState([]);
-  const [error, setError] = useState(null);
+  const [arenaRacesError, setArenaRacesError] = useState(null);
+  const [arenaCoachesLoading, setArenaCoachesLoading] = useState(false);
+  const [arenaCoaches, setArenaCoaches] = useState(null);
+  const [arenaCoachesError, setArenaCoachesError] = useState(null);
 
-  const fetchArenaRaces = () => {
+  const fetchArenaRaces = async () => {
     setArenaRacesLoading(true);
-    WarpScoresApiService.arenaInfos(competition.uuid)
+    await WarpScoresApiService.arenaInfos(competition.uuid)
       .then(setArenaRaces)
-      .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
+      .catch((reason) => setArenaRacesError({ type: 'error', message: reason.toLocaleString() }))
       .finally(() => setArenaRacesLoading(false));
+  };
+
+  const fetchArenaTopCoaches = async () => {
+    setArenaCoachesLoading(true);
+    await WarpScoresApiService.arenaTopCoaches(competition.uuid)
+      .then(setArenaCoaches)
+      .catch((reason) => setArenaCoachesError({ type: 'error', message: reason.toLocaleString() }))
+      .finally(() => setArenaCoachesLoading(false));
   };
 
   useEffect(() => {
     if (competition) {
       fetchArenaRaces(competition);
+      fetchArenaTopCoaches(competition);
     }
   }, [competition]);
 
   return (
     <>
+      <Heading size="md">Top Arena Coaches</Heading>
+      <LoadingOrErrorWrapper loading={arenaCoachesLoading} error={arenaCoachesError}>
+        <ArenaCoaches coaches={arenaCoaches} competitionUuid={competition.uuid} />
+      </LoadingOrErrorWrapper>
       <Heading size="md">Arena Teams</Heading>
-      <LoadingOrErrorWrapper loading={arenaRacesLoading} error={error}>
+      <LoadingOrErrorWrapper loading={arenaRacesLoading} error={arenaRacesError}>
         <ArenaInfos races={arenaRaces} competitionUuid={competition.uuid} />
       </LoadingOrErrorWrapper>
       <LiveContests competition={competition} limit={6} />

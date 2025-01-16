@@ -133,6 +133,8 @@ export default {
     axios(`/contests/competition/${competitionUuid}${limit ? `/${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
+  arenaTopCoaches: async (competitionUuid) =>
+    axios(`/arena/${competitionUuid}/topCoaches`).then(returnData).catch(handleError),
   arenaInfos: async (competitionUuid, race) =>
     axios(`/arena/${competitionUuid}/info${race ? `/${race}` : ''}`)
       .then(returnData)

@@ -6,6 +6,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+import static net.warp_scores.warpscores.CacheNames.ARENA_COACHES;
+import static net.warp_scores.warpscores.CacheNames.ARENA_COACH_TEAMS;
 import static net.warp_scores.warpscores.CacheNames.ARENA_INFOS;
 import static net.warp_scores.warpscores.CacheNames.ARENA_RACES;
 import static net.warp_scores.warpscores.CacheNames.ARENA_TEAMS;
@@ -17,6 +19,8 @@ public class CacheCustomizer implements CacheManagerCustomizer<ConcurrentMapCach
 
     @Override
     public void customize(ConcurrentMapCacheManager cacheManager) {
-        cacheManager.setCacheNames(List.of(REST_NAF_COACH, DOMAIN_NAF_COACH, ARENA_TEAMS, ARENA_RACES, ARENA_INFOS));
+        cacheManager.setCacheNames(
+                List.of(REST_NAF_COACH, DOMAIN_NAF_COACH, ARENA_TEAMS, ARENA_COACHES, ARENA_COACH_TEAMS, ARENA_RACES,
+                        ARENA_INFOS));
     }
 }
