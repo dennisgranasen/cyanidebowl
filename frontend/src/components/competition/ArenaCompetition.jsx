@@ -34,6 +34,27 @@ const iconFor = (placement) => {
   return BiTrophy;
 };
 
+const ordinalIndicatorFor = (placement) => {
+  switch (placement) {
+    case 1:
+      return 'st';
+    case 2:
+      return 'nd';
+    case 3:
+      return 'rd';
+    default:
+      return 'th';
+  }
+};
+
+const ordinalFor = (placement) => {
+  return (
+    <Text as="sup" fontSize="md" position="relative" top="0">
+      {ordinalIndicatorFor(placement)}
+    </Text>
+  );
+};
+
 const colorFor = (placement) => {
   switch (placement) {
     case 1:
@@ -115,7 +136,7 @@ function ArenaInfos({ races, competitionUuid }) {
   );
 }
 
-function ArenaCoachCard({ competitionUuid, coach, index }) {
+function ArenaCoachCard({ competitionUuid, coach, placement }) {
   const navigate = useNavigate();
   const goToArenaCoach = () => {
     navigate(`/competition/${competitionUuid}/arena/coach/${coach.coachUuid}`);
@@ -132,8 +153,11 @@ function ArenaCoachCard({ competitionUuid, coach, index }) {
     >
       <Center width="100px">
         <VStack>
-          <Icon boxSize="60px" as={iconFor(index + 1)} color={colorFor(index + 1)} />
-          <Heading color={colorFor(index + 1)}>{index + 1}</Heading>
+          <Icon boxSize="60px" as={iconFor(placement)} color={colorFor(placement)} />
+          <Heading color={colorFor(placement)}>
+            {placement}
+            {ordinalFor(placement)}
+          </Heading>
         </VStack>
       </Center>
       <CardBody p={2} height="100%">
@@ -157,7 +181,7 @@ function ArenaCoaches({ coaches, competitionUuid }) {
   return (
     <SimpleGrid columns={{ lg: 3, sm: 1, md: 2 }} spacing="1.25rem">
       {coaches?.map((coach, index) => (
-        <ArenaCoachCard key={coach.id} index={index} coach={coach} competitionUuid={competitionUuid} />
+        <ArenaCoachCard key={coach.id} placement={index + 1} coach={coach} competitionUuid={competitionUuid} />
       ))}
     </SimpleGrid>
   );
