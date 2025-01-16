@@ -133,7 +133,7 @@ function Player({ player }) {
         <Center>
           {player.suspendedNextMatch ? (
             <Image
-              src="/img/recovering.png"
+              src="/img/injuries/recovering.png"
               alt="MNG"
               boxSize={smallBoxSize}
               fallback={<FaBandage color="orange" size={smallBoxSize} />}

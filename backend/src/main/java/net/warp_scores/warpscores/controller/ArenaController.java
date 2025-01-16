@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.model.ArenaCoach;
 import net.warp_scores.warpscores.model.ArenaInfo;
 import net.warp_scores.warpscores.model.ArenaTeam;
 import net.warp_scores.warpscores.model.Race;
@@ -50,24 +51,31 @@ public class ArenaController {
             @PathVariable(name = "race") Race race,
             @PathVariable(name = "runType") ArenaTeam.RunType runType,
             @PathVariable(name = "limit") Integer limit) {
-        return getArenaTeamsFor(competitionUuid, race, runType, Optional.ofNullable(limit), 0);
+        return getArenaTeamsFor(competitionUuid, race, runType, limit, null);
     }
 
     @GetMapping("/arena/{competitionUuid}/race/{race}/{runType}/{limit}/{offset}")
     public ResponseEntity<Map<ArenaTeam.RunType, List<ArenaTeam>>> getArenaTeamsFor(@PathVariable(name = "competitionUuid") UUID competitionUuid,
             @PathVariable(name = "race") Race race,
             @PathVariable(name = "runType") ArenaTeam.RunType runType,
-            @PathVariable(name = "limit") Optional<Integer> limit,
+            @PathVariable(name = "limit") Integer limit,
             @PathVariable(name = "offset") Integer offset) {
         Map<ArenaTeam.RunType, List<ArenaTeam>> arenaTeams = arenaService.loadArenaTeamsFor(competitionUuid, race,
-                runType);
+                runType, Optional.ofNullable(limit), Optional.ofNullable(offset));
         return ResponseEntity.ok(arenaTeams);
+    }
+
+    @GetMapping("/arena/{competitionUuid}/topCoaches")
+    public ResponseEntity<List<ArenaCoach>> getArenaTopCoaches(@PathVariable(name = "competitionUuid") UUID competitionUuid) {
+        List<ArenaCoach> topCoaches = arenaService.loadArenaTopCoachesFor(competitionUuid, 6);
+        return ResponseEntity.ok(topCoaches);
     }
 
     @GetMapping("/arena/{competitionUuid}/coach/{coachId}")
     public ResponseEntity<Map<ArenaTeam.RunType, List<ArenaTeam>>> getArenaTeamsFor(@PathVariable(name = "competitionUuid") UUID competitionUuid,
             @PathVariable(name = "coachId") String coachId) {
-        Map<ArenaTeam.RunType, List<ArenaTeam>> arenaTeams = arenaService.loadArenaTeamsFor(competitionUuid, UUID.fromString(coachId));
+        Map<ArenaTeam.RunType, List<ArenaTeam>> arenaTeams = arenaService.loadArenaTeamsFor(competitionUuid,
+                UUID.fromString(coachId));
         return ResponseEntity.ok(arenaTeams);
     }
 }

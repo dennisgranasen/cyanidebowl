@@ -2,11 +2,11 @@ import React from 'react';
 import { Center, Heading, Image, Spinner, Td, Text, Tr, useBreakpointValue } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
-import Race from '../team/Race';
 import formatter from '../../util/formatter';
 import config from '../../config';
 import imageUrls from '../../imageUrls';
 import prettyPrint from '../../util/prettyPrint';
+import Race from '../common/Race';
 
 const { boxSize, smallScreenBreakpointValues } = config;
 
@@ -55,7 +55,7 @@ function Rank({ rank }) {
           </Td>
           <Td>{rank.team.coachName}</Td>
           <Td>
-            <Race race={rank.team.race} />
+            <Race size="sm" race={rank.team.race} />
           </Td>
         </>
       )}

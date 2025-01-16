@@ -1,6 +1,7 @@
 package net.warp_scores.warpscores.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
@@ -12,6 +13,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Document
+@EqualsAndHashCode(of = "id")
 public class Coach {
     @Id
     private UUID id;

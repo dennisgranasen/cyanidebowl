@@ -24,7 +24,9 @@ const imageOrIconFor = (injury) => {
       imageName = injury.toLowerCase();
       break;
   }
-  return <Image src={`/img/${imageName}.png`} alt={injury} boxSize={boxSize} fallback={<QuestionOutlineIcon />} />;
+  return (
+    <Image src={`/img/injuries/${imageName}.png`} alt={injury} boxSize={boxSize} fallback={<QuestionOutlineIcon />} />
+  );
 };
 
 function Injury({ injury, count }) {

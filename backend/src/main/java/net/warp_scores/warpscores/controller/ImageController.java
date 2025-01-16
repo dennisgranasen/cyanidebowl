@@ -99,9 +99,16 @@ public class ImageController {
 
     @GetMapping("/race/{name}")
     public ResponseEntity<byte[]> getRaceImage(@PathVariable(name = "name") String name) {
-        String imageName = translateRaceToImageName(name);
+        String imageName = translateRaceToRaceImageName(name);
         Optional<String> imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getRaces(), imageName);
         return loadImage(imageUrl, Optional.of(300));
+    }
+
+    @GetMapping("/smallRace/{name}")
+    public ResponseEntity<byte[]> getRaceSmallImage(@PathVariable(name = "name") String name) {
+        String imageName = translateRaceToSmallRaceImageName(name);
+        Optional<String> imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getRaces(), imageName);
+        return loadImage(imageUrl, Optional.of(80));
     }
 
     @GetMapping("/stadium/{name}")
@@ -139,9 +146,14 @@ public class ImageController {
         return Skill.forCaseInsensitiveName(name).map(Skill::getImageName).orElse(null);
     }
 
-    private String translateRaceToImageName(String name) {
+    private String translateRaceToRaceImageName(String name) {
         Race race = Race.valueOf(name);
         return "TeamScreenshot_" + race.getImageName();
+    }
+
+    private String translateRaceToSmallRaceImageName(String name) {
+        Race race = Race.valueOf(name);
+        return "SmallRace_" + race.getImageName();
     }
 
     private Optional<String> getImageUrlFor(String baseUrl, String name) {

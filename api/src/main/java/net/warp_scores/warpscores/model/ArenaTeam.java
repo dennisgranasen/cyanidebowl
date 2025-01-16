@@ -1,7 +1,9 @@
 package net.warp_scores.warpscores.model;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
@@ -11,6 +13,8 @@ import java.util.UUID;
 @Document
 @Getter
 @Setter
+@EqualsAndHashCode(of = {"coachUuid", "teamUuid"})
+@ToString(of = {"coachName", "teamName"}, includeFieldNames = false)
 public class ArenaTeam {
     public enum RunType {completed, active, failed}
 
