@@ -32,7 +32,7 @@ public class ArenaTeam {
     @Getter
     @Setter
     public static class Result {
-        public enum ResultType {loss, win}
+        public enum ResultType {loss, win, draw}
 
         private ResultType result;
         private int count;

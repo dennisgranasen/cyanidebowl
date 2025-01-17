@@ -24,6 +24,7 @@ import useFetchArenaInfo from '../../hooks/useFetchArenaInfo';
 import config from '../../config';
 import formatter from '../../util/formatter';
 import Race from '../common/Race';
+import WinRate from '../common/WinRate';
 
 const { boxSize } = config;
 
@@ -163,6 +164,9 @@ function ArenaCoachCard({ competitionUuid, coach, placement }) {
       <CardBody p={2} height="100%">
         <VStack align="left">
           <Heading>{coach?.coachName}</Heading>
+          <Text>
+            <WinRate identifier="Win rate (overall)" winRate={coach.overallWinRate} />
+          </Text>
           <Text>
             Teams: {coach ? coach.completedTeamsCount || 0 : '-'} completed, {coach ? coach.activeTeamsCount || 0 : '-'}{' '}
             active, {coach ? coach.failedTeamsCount || 0 : '-'} failed

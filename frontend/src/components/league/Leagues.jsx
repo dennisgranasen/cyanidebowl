@@ -1,5 +1,13 @@
 import React from 'react';
-import { Accordion, AccordionButton, AccordionItem, AccordionPanel, Heading } from '@chakra-ui/react';
+import {
+  Accordion,
+  AccordionButton,
+  AccordionIcon,
+  AccordionItem,
+  AccordionPanel,
+  Box,
+  Heading,
+} from '@chakra-ui/react';
 import LeagueCard from './LeagueCard';
 
 function LeaguesAccordionItem({ leagues, header }) {
@@ -7,7 +15,10 @@ function LeaguesAccordionItem({ leagues, header }) {
     leagues?.length > 0 && (
       <AccordionItem>
         <AccordionButton>
-          <Heading size="md">{`${header} (${leagues.length})`}</Heading>
+          <Box as="span" flex="1" textAlign="left">
+            <Heading size="md">{`${header} (${leagues.length})`}</Heading>
+          </Box>
+          <AccordionIcon />
         </AccordionButton>
         <AccordionPanel>
           {leagues.map((currLeague) => (
