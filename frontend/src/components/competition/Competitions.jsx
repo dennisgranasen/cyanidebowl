@@ -2,8 +2,10 @@ import React from 'react';
 import {
   Accordion,
   AccordionButton,
+  AccordionIcon,
   AccordionItem,
   AccordionPanel,
+  Box,
   Heading,
   Spinner,
   Table,
@@ -37,7 +39,10 @@ function CompetitionsAccordionItem({ competitions, header }) {
     competitions?.length > 0 && (
       <AccordionItem>
         <AccordionButton>
-          <Heading size="md">{`${header} (${competitions.length})`}</Heading>
+          <Box as="span" flex="1" textAlign="left">
+            <Heading size="md">{`${header} (${competitions.length})`}</Heading>
+          </Box>
+          <AccordionIcon />
         </AccordionButton>
         <AccordionPanel>
           <TableContainer>

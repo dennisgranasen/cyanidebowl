@@ -1,6 +1,7 @@
 import timeUtil from './timeUtil';
 
-const numberFormat = new Intl.NumberFormat('en-GB');
+const numberFormat = new Intl.NumberFormat([]);
+const numberFormatPercentage = new Intl.NumberFormat([], { style: 'percent', maximumSignificantDigits: 3 });
 const dateFormatOptions = {
   year: '2-digit',
   month: '2-digit',
@@ -12,6 +13,11 @@ const dateFormatOptions = {
 
 const formatAsNumber = (value) => {
   return value !== null ? numberFormat.format(value) : '-';
+};
+
+const formatAsPercentage = (value) => {
+  if (value === null) return '-';
+  return `${numberFormatPercentage.format(value)}`;
 };
 
 const formatAsDate = (date, nullRepresentation) => {
@@ -34,6 +40,7 @@ const formatAsDuration = (startDate, endDate) => {
 
 export default {
   formatAsNumber,
+  formatAsPercentage,
   formatAsDate,
   formatAsDuration,
 };

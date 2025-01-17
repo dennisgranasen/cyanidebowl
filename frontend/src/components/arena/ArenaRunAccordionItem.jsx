@@ -1,5 +1,6 @@
 import {
   AccordionButton,
+  AccordionIcon,
   AccordionItem,
   AccordionPanel,
   Box,
@@ -99,7 +100,10 @@ function ArenaRunAccordionItem({ competitionUuid, label, loading, error, arenaTe
   return (
     <AccordionItem>
       <AccordionButton>
-        <Heading size="md">{label}</Heading>
+        <Box as="span" flex="1" textAlign="left">
+          <Heading size="md">{label}</Heading>
+        </Box>
+        <AccordionIcon />
       </AccordionButton>
       <AccordionPanel>
         <LoadingOrErrorWrapper loading={loading} error={error}>

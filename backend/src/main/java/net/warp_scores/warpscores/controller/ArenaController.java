@@ -3,6 +3,7 @@ package net.warp_scores.warpscores.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.model.ArenaCoach;
+import net.warp_scores.warpscores.model.ArenaCoachWithArenaTeams;
 import net.warp_scores.warpscores.model.ArenaInfo;
 import net.warp_scores.warpscores.model.ArenaTeam;
 import net.warp_scores.warpscores.model.Race;
@@ -72,11 +73,11 @@ public class ArenaController {
     }
 
     @GetMapping("/arena/{competitionUuid}/coach/{coachId}")
-    public ResponseEntity<Map<ArenaTeam.RunType, List<ArenaTeam>>> getArenaTeamsFor(@PathVariable(name = "competitionUuid") UUID competitionUuid,
+    public ResponseEntity<ArenaCoachWithArenaTeams> getArenaTeamsFor(@PathVariable(name = "competitionUuid") UUID competitionUuid,
             @PathVariable(name = "coachId") String coachId) {
-        Map<ArenaTeam.RunType, List<ArenaTeam>> arenaTeams = arenaService.loadArenaTeamsFor(competitionUuid,
+        ArenaCoachWithArenaTeams arenaCoachWithArenaTeams = arenaService.loadArenaCoachWithArenaTeams(competitionUuid,
                 UUID.fromString(coachId));
-        return ResponseEntity.ok(arenaTeams);
+        return ResponseEntity.ok(arenaCoachWithArenaTeams);
     }
 }
 

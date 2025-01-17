@@ -222,6 +222,7 @@ function KnockoutCompetition({ competition, competitionLoading }) {
           <Box as="span" flex="1" textAlign="left">
             <Heading size="md">Knockout-Bracket</Heading>
           </Box>
+          <AccordionIcon />
         </AccordionButton>
         <AccordionPanel overflow="auto">
           <LoadingOrErrorWrapper loading={competitionLoading || contestsLoading} error={contestError}>
