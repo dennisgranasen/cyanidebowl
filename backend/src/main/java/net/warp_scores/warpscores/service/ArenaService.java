@@ -437,18 +437,9 @@ public class ArenaService {
             Optional<Race> race,
             Optional<UUID> coachId,
             Optional<Integer> minWins) {
-        StopWatch stopWatch = new StopWatch();
-        stopWatch.start("queryArenaTeamsFor");
-        try {
-            return matchRepository.queryArenaTeamsFor(
-                    competitionUuid,
-                    race.orElse(null), coachId.orElse(null), minWins.orElse(null));
-        } finally {
-            stopWatch.stop();
-            log.info("Duration for DB {}: {}ms (queryParams: {}, {}, {}, {})",
-                    stopWatch.lastTaskInfo().getTaskName(),
-                    stopWatch.lastTaskInfo().getTimeMillis(), competitionUuid, race, coachId, minWins);
-        }
+        return matchRepository.queryArenaTeamsFor(
+                competitionUuid,
+                race.orElse(null), coachId.orElse(null), minWins.orElse(null));
     }
 
     public ArenaCoachWithArenaTeams loadArenaCoachWithArenaTeams(UUID competitionUuid, UUID coachUuid) {
