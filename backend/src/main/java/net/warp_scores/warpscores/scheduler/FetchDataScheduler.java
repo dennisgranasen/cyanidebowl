@@ -43,6 +43,12 @@ import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
 import static net.warp_scores.warpscores.model.CompetitionStatus.InProgress;
+import static net.warp_scores.warpscores.scheduler.Schedules.FIFTEEN_MINUTES;
+import static net.warp_scores.warpscores.scheduler.Schedules.FIVE_MINUTES;
+import static net.warp_scores.warpscores.scheduler.Schedules.ONE_HOUR;
+import static net.warp_scores.warpscores.scheduler.Schedules.TEN_MINUTES;
+import static net.warp_scores.warpscores.scheduler.Schedules.THREE_MINUTES;
+import static net.warp_scores.warpscores.scheduler.Schedules.TWENTY_SECONDS;
 
 @Slf4j
 @Service
@@ -68,7 +74,7 @@ public class FetchDataScheduler {
     private final TeamDomainService teamDomainService;
     private final MatchRepository matchRepository;
 
-    @Scheduled(initialDelay = Schedules.TWENTY_SECONDS, fixedDelay = Schedules.TEN_MINUTES)
+    @Scheduled(initialDelay = TWENTY_SECONDS, fixedDelay = TEN_MINUTES)
     public void fetchLeagues() {
         if (!cyanideApiProperties.isJobCreationSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchLeagues().");
@@ -90,7 +96,7 @@ public class FetchDataScheduler {
         fetchMatchesIfNecessary(leagues, lastKnownMatchDateByLeagueId);
     }
 
-    @Scheduled(initialDelay = Schedules.FIVE_MINUTES, fixedDelay = Schedules.ONE_HOUR)
+    @Scheduled(initialDelay = FIVE_MINUTES, fixedDelay = ONE_HOUR)
     public void fetchCompetitions() {
         if (!cyanideApiProperties.isJobCreationSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchCompetitions().");
@@ -116,7 +122,7 @@ public class FetchDataScheduler {
         }
     }
 
-    @Scheduled(initialDelay = Schedules.THREE_MINUTES, fixedDelay = Schedules.FIFTEEN_MINUTES)
+    @Scheduled(initialDelay = THREE_MINUTES, fixedDelay = FIFTEEN_MINUTES)
     public void fetchCompetitionContests() {
         if (!cyanideApiProperties.isJobCreationSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchLeagueContests().");
@@ -143,7 +149,7 @@ public class FetchDataScheduler {
         return CompetitionStatus.InProgress.equals(competition.getStatus());
     }
 
-    @Scheduled(initialDelay = Schedules.THREE_MINUTES, fixedDelay = Schedules.ONE_HOUR)
+    @Scheduled(initialDelay = THREE_MINUTES, fixedDelay = ONE_HOUR)
     public void fetchMissingMatches() {
         if (!cyanideApiProperties.isJobCreationSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchMissingMatches().");
