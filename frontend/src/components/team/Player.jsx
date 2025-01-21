@@ -1,13 +1,26 @@
 import React from 'react';
-import { Center, Image, Tag, Td, Text, Tr } from '@chakra-ui/react';
+import { Center, Image, Td, Text, Tr } from '@chakra-ui/react';
 import { FaBandage, FaStar } from 'react-icons/fa6';
+import { Icon } from '@chakra-ui/icons';
+import {
+  TbHexagon,
+  TbHexagonNumber0,
+  TbHexagonNumber1,
+  TbHexagonNumber2,
+  TbHexagonNumber3,
+  TbHexagonNumber4,
+  TbHexagonNumber5,
+  TbHexagonNumber6,
+  TbHexagonNumber7,
+  TbHexagonNumber8,
+  TbHexagonNumber9,
+} from 'react-icons/tb';
 import Skills from './Skills';
 import prettyPrint from '../../util/prettyPrint';
 import Injuries from './Injuries';
 import config from '../../config';
-import { Icon } from '@chakra-ui/icons';
 
-const { smallBoxSize } = config;
+const { smallBoxSize, tinyBoxSize } = config;
 
 const NO_PA = '-';
 
@@ -83,29 +96,46 @@ function Attribute({ type, defaultAttributes, bonus, malus }) {
   return <Text color={color}>{format(type, getRealValue(type, defaultValue, bonusValue, malusValue))}</Text>;
 }
 
-function romanize(num) {
-  const lookup = { X: 10, IX: 9, V: 5, IV: 4, I: 1 };
-  let roman = '';
-  Object.keys(lookup).forEach((key) => {
-    const value = lookup[key];
-    while (num >= value) {
-      roman += key;
-      num -= value;
-    }
-  });
-  return roman;
-}
-
 function lookupStarPlayerName(name) {
   const nameWithoutPrefix = name.replace('name_sp_', '');
   return `"${prettyPrint(nameWithoutPrefix)}" (Starplayer)`;
 }
 
+function iconFor(level) {
+  switch (level) {
+    case 0:
+      return TbHexagonNumber0;
+    case 1:
+      return TbHexagonNumber1;
+    case 2:
+      return TbHexagonNumber2;
+    case 3:
+      return TbHexagonNumber3;
+    case 4:
+      return TbHexagonNumber4;
+    case 5:
+      return TbHexagonNumber5;
+    case 6:
+      return TbHexagonNumber6;
+    case 7:
+      return TbHexagonNumber7;
+    case 8:
+      return TbHexagonNumber8;
+    case 9:
+      return TbHexagonNumber9;
+    default:
+      return TbHexagon;
+  }
+}
+
 function PlayerLevel({ level, starPlayer }) {
   if (!level && !starPlayer) return null;
-  if (starPlayer) return <Icon as={FaStar} boxSize={smallBoxSize} color="yellow.500" />;
 
-  return <Tag variant="outline" size="sm" borderRadius="full">{`${romanize(level)}`}</Tag>;
+  return starPlayer ? (
+    <Icon as={FaStar} boxSize={tinyBoxSize} color="yellow.500" />
+  ) : (
+    <Icon as={iconFor(level)} boxSize={tinyBoxSize} />
+  );
 }
 
 function Player({ player }) {

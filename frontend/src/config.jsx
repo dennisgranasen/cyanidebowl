@@ -18,6 +18,7 @@ const config = {
   locale: 'en-UK',
   boxSize: '2rem',
   smallBoxSize: '1.5rem',
+  tinyBoxSize: '1.2rem',
   hoverBoxShadow: 'inset 0 0 0 2000px rgba(255, 0, 150, 0.3);',
   smallScreenBreakpointValues: { base: true, sm: true, md: false },
 };

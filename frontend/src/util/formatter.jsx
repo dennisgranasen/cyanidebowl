@@ -12,11 +12,11 @@ const dateFormatOptions = {
 };
 
 const formatAsNumber = (value) => {
-  return value !== null ? numberFormat.format(value) : '-';
+  return value !== null && value !== undefined ? numberFormat.format(value) : '-';
 };
 
 const formatAsPercentage = (value) => {
-  if (value === null) return '-';
+  if (value === null || value === undefined) return '-';
   return `${numberFormatPercentage.format(value)}`;
 };
 
@@ -34,8 +34,21 @@ const formatAsDuration = (startDate, endDate) => {
   const hours = Math.floor(minutes / 60);
   const restMinutes = minutes % 60;
   const hoursText = hours > 0 ? `${hours} hour${hours > 1 ? 's' : ''}` : '';
-  const minutesText = restMinutes > 0 ? `${restMinutes} minute${minutes > 1 ? 's' : ''}` : '';
+  const minutesText = restMinutes > 0 ? `${restMinutes} minute${restMinutes > 1 ? 's' : ''}` : '';
   return `${hoursText}${hoursText && minutesText ? ', ' : ''}${minutesText}`;
+};
+
+const formatAsRomanNumber = (num) => {
+  const lookup = { X: 10, IX: 9, V: 5, IV: 4, I: 1 };
+  let roman = '';
+  Object.keys(lookup).forEach((key) => {
+    const value = lookup[key];
+    while (num >= value) {
+      roman += key;
+      num -= value;
+    }
+  });
+  return roman;
 };
 
 export default {
@@ -43,4 +56,5 @@ export default {
   formatAsPercentage,
   formatAsDate,
   formatAsDuration,
+  formatAsRomanNumber,
 };

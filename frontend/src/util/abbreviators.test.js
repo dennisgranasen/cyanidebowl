@@ -12,6 +12,7 @@ test('abbreviate coach name defaults to 3 letters with dot.', () => {
 
 test('abbreviate text can have a suffix and different length', () => {
   expect(abbreviators.abbreviateText('hello world we go out.', 6, '...')).toBe('hello ...');
+  expect(abbreviators.abbreviateText('hello world we go out.', 7)).toBe('hello w');
 });
 
 test('abbreviate coach name can use letter count', () => {
