@@ -77,6 +77,11 @@ GET https://web.cyanide-studio.com/ws/bb3/match/?uuid=172b2f97-b4a2-11ee-a745-02
 ### Get team
 GET https://web.cyanide-studio.com/ws/bb3/team/?name=[LBL] Elveland Yndians&key={{apiKey}}
 
+### Get team
+GET https://web.cyanide-studio.com/ws/bb3/team/?id=3c04418a-b7a4-11ef-9e80-bc2411305479&key={{apiKey}}
+
+
+
 ### Get team matches
 GET https://web.cyanide-studio.com/ws/bb3/teammatches/?team_id=736410bc-9b9f-11ee-a745-02000090a64f&key={{apiKey}}
 

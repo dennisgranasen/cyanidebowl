@@ -1,20 +1,23 @@
 package net.warp_scores.warpscores.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 @Getter
 @Setter
 @Document
+@EqualsAndHashCode(of = "id")
+@ToString(of = {"name", "race", "id"})
 public class Team {
     @Id
     private UUID id;
@@ -71,18 +74,4 @@ public class Team {
     private Integer sustainedko;
     private Integer sustainedinjuries;
     private Integer sustaineddead;
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof Team otherTeam)) {
-            return false;
-        }
-        if (id != null || otherTeam.id != null) {
-            return Objects.equals(id, otherTeam.id);
-        } else if (name != null || otherTeam.name != null) {
-            return Objects.equals(name, otherTeam.name);
-        } else {
-            return false;
-        }
-    }
 }

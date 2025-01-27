@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.model.Competition;
@@ -37,11 +38,13 @@ public class CompetitionService {
     private final ContestRepository contestsRepository;
     private final OfficialLeagueAndCompetitions officialLeagueCompetitions;
 
+    @DurationLogging(warnThresholdMillis = 1500, errorThresholdMillis = 3000)
     public List<Competition> loadForLeague(UUID leagueId) {
         List<Competition> competitions = competitionRepository.findByLeagueId(leagueId);
         return initializeForFormat(competitions);
     }
 
+    @DurationLogging
     public Optional<Competition> loadCompetition(UUID competitionId) {
         return competitionRepository.findById(competitionId)
                 .map(this::initializeForFormat);

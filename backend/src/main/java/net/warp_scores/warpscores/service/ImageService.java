@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.config.properties.CyanideApiProperties;
 import net.warp_scores.warpscores.domain.cache.ImageCache;
 import net.warp_scores.warpscores.domain.cache.ImageCacheRepository;
@@ -32,6 +33,7 @@ public class ImageService {
 
     private final ImageCacheRepository imageCacheRepository;
 
+    @DurationLogging
     public Optional<byte[]> loadImage(String imageUrl, Optional<Integer> maxWidth) {
         Optional<ImageCache> imageCache = imageCacheRepository.findById(imageUrl);
         boolean cacheOutdated = imageCache.map(this::cacheOutdated).orElse(true);

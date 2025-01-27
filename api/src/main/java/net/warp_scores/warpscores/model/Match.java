@@ -18,12 +18,14 @@ public class Match {
     private UUID matchId;
     private UUID competitionId;
     private String competitionName;
+    private String competitionLogo;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date started;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date finished;
     private UUID leagueId;
     private String leagueName;
+    private String leagueLogo;
     private String stadium;
     private Integer round;
     private List<Coach> coaches;

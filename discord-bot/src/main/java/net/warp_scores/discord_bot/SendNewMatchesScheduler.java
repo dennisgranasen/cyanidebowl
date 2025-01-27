@@ -76,12 +76,14 @@ public class SendNewMatchesScheduler {
             League league,
             Contest contest) {
         if (contest.getMatch() == null || contest.getMatch().getTeams() == null) {
-            log.info("Match or teams not yet available for contest '{}' of league {}. Not publishing.", contest.getContestUuid(),
+            log.info("Match or teams not yet available for contest '{}' of league {}. Not publishing.",
+                    contest.getContestUuid(),
                     league.getName());
             return;
         }
         EmbedCreateSpec.Builder builder = matchMessageBuilder
-                .builder(league, contest.getMatch(), contest.isConcede(), channelLeagueRegistration.getSpoiler());
+                .builder(league, contest.getMatch(), contest.isAdminResult(), contest.isConcede(), contest.isOvertime(),
+                        channelLeagueRegistration.getSpoiler());
         log.info("About to publish match {} of league {} to channel {}.", contest, league,
                 channelLeagueRegistration.getChannelId());
         discordClient

@@ -3,8 +3,10 @@ package net.warp_scores.warpscores.service;
 import com.fasterxml.uuid.Generators;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.UUIDUtil;
+import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.CompetitionFormat;
+import net.warp_scores.warpscores.model.CompetitionStatus;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.MatchStatus;
 import net.warp_scores.warpscores.model.Race;
@@ -41,11 +43,12 @@ public class ContestInitializationService {
         return initializeContestsScheduleForFormat(competition, teams, contests, true);
     }
 
+    @DurationLogging
     public List<Contest> initializeContestsScheduleForFormat(Optional<Competition> competition, List<Team> teams,
             List<Contest> contests, boolean generateFutureRoundRobinRounds) {
 
         Optional<CompetitionFormat> competitionFormat = competition.map(Competition::getFormat);
-        if (teams.isEmpty() || competitionFormat.isEmpty()) {
+        if (teams.isEmpty() || competitionFormat.isEmpty() || competitionNotStarted(competition)) {
             return contests;
         }
 
@@ -58,12 +61,16 @@ public class ContestInitializationService {
         };
     }
 
+    private boolean competitionNotStarted(Optional<Competition> competition) {
+        return competition.map(value -> CompetitionStatus.Registration.equals(value.getStatus())).orElse(true);
+    }
+
     @SuppressWarnings("rawtypes")
     private List<Contest> initializeKnockoutContests(List<Contest> contests,
             List<Team> teams) {
+        int teamCount = teams.size();
         int totalRounds = 1;
         int players = 2;
-        int teamCount = teams.size();
         for (; players < teamCount; players *= 2) {
             totalRounds++;
         }
@@ -92,7 +99,7 @@ public class ContestInitializationService {
             int nextRoundOffset = currRoundOffset + roundMatches[currRound];
             for (int matchIndex = currRoundOffset; matchIndex < nextRoundOffset; matchIndex++) {
                 Contest currContest = initializedContests.get(matchIndex);
-                int nextMatchIndexWithinRound = (int) Math.ceil((double) (matchIndex - currRoundOffset) / 2);
+                int nextMatchIndexWithinRound = (int) Math.floor((double) (matchIndex - currRoundOffset) / 2);
                 Contest nextContest = findNextContestByIndex(nextRoundOffset,
                         nextMatchIndexWithinRound, initializedContests);
                 if (nextContest != null && !MatchStatus.Calculated.equals(nextContest.getStatus())) {

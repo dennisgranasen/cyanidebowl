@@ -31,7 +31,8 @@ public class LatestMatchesMessageBuilder {
             boolean spoiler) {
         if (contests != null && contests.size() == 1) {
             Contest contest = contests.get(0);
-            return matchMessageBuilder.builder(league, contest.getMatch(), contest.isConcede(), spoiler);
+            return matchMessageBuilder.builder(league, contest.getMatch(), contest.isAdminResult(), contest.isConcede(),
+                    contest.isOvertime(), spoiler);
         }
 
         EmbedCreateSpec.Builder builder = warpScoresDiscordMessageBuilder

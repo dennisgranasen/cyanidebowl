@@ -6,13 +6,15 @@ import {
   AccordionPanel,
   Box,
   Center,
+  Container,
   Grid,
   GridItem,
   Heading,
+  HStack,
   Image,
 } from '@chakra-ui/react';
 import React, { useEffect, useState } from 'react';
-import { QuestionOutlineIcon } from '@chakra-ui/icons';
+import { Icon, QuestionOutlineIcon } from '@chakra-ui/icons';
 import { SingleEliminationBracket } from 'react-tournament-brackets/dist/cjs';
 import imageUrls from '../../imageUrls';
 import prettyPrint from '../../util/prettyPrint';
@@ -23,6 +25,7 @@ import config from '../../config';
 import useFetchContests from '../../hooks/useFetchContests';
 import useFetchRanks from '../../hooks/useFetchRanks';
 import Ranks from './Ranks';
+import { FaRegFaceSadTear } from 'react-icons/fa6';
 
 const { boxSize } = config;
 
@@ -226,8 +229,13 @@ function KnockoutCompetition({ competition, competitionLoading }) {
         </AccordionButton>
         <AccordionPanel overflow="auto">
           <LoadingOrErrorWrapper loading={competitionLoading || contestsLoading} error={contestError}>
-            {matches && matches.length > 0 && (
+            {matches && matches.length > 0 ? (
               <SingleEliminationBracket matches={matches} matchComponent={MatchComponent} />
+            ) : (
+              <HStack gap="1rem">
+                <Icon as={FaRegFaceSadTear} boxSize={boxSize} />
+                <Box>No matches yet...</Box>
+              </HStack>
             )}
           </LoadingOrErrorWrapper>
         </AccordionPanel>

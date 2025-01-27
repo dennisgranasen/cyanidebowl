@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
@@ -31,6 +32,7 @@ public class ContestService {
     private final TeamDomainService teamDomainService;
     private final OfficialLeagueAndCompetitions officialLeagueAndCompetitions;
 
+    @DurationLogging
     public List<Contest> getCompetitionContests(UUID competitionUuid, Optional<Integer> limit) {
         Optional<Competition> competition = competitionService.loadCompetition(competitionUuid);
         List<Team> teams = teamDomainService.findByCompetitionId(competitionUuid);
@@ -43,6 +45,7 @@ public class ContestService {
                 competition, teams, contests);
     }
 
+    @DurationLogging
     public List<Contest> getLatestLeagueContests(UUID leagueUuid, int limit) {
         List<Contest> contests = contestRepository.findByLeagueIdAndStatusOrderByMatchDateDesc(leagueUuid,
                 MatchStatus.Validated, PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "matchDate")));
@@ -50,6 +53,7 @@ public class ContestService {
         return contests;
     }
 
+    @DurationLogging
     public List<Contest> getLiveLeagueContests(UUID leagueUuid, int limit) {
         List<Contest> contests = contestRepository.findByLeagueIdAndLiveOrderByMatchDateDesc(leagueUuid, 1,
                 PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "matchDate")));
@@ -57,6 +61,7 @@ public class ContestService {
         return contests;
     }
 
+    @DurationLogging
     public List<Contest> getLatestCompetitionContests(UUID competitionUuid, int limit) {
         List<Contest> contests = contestRepository.findByCompetitionIdAndStatusOrderByMatchDateDesc(competitionUuid,
                 MatchStatus.Validated, PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "matchDate")));
@@ -64,6 +69,7 @@ public class ContestService {
         return contests;
     }
 
+    @DurationLogging
     public List<Contest> getLiveCompetitionContests(UUID competitionUuid, int limit) {
         List<Contest> contests = contestRepository.findByCompetitionIdAndLiveOrderByMatchDateDesc(competitionUuid, 1,
                 PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "matchDate")));
@@ -80,9 +86,16 @@ public class ContestService {
         contest.setAdminResult(contest.isAdminResult() ||
                 (matchUuid.isEmpty() &&
                         MatchStatus.Validated.equals(contest.getStatus())));
-        match.ifPresent(contest::setMatch);
-        match.ifPresent(m -> contest.setConcede(isConcede(m)));
-        match.ifPresent(m -> contest.setOvertime(isOvertime(m)));
+        match.ifPresent(
+                m -> {
+                    contest.setMatch(m);
+                    officialLeagueAndCompetitions.adjustCompetitionName(m.getLeagueId(), m.getCompetitionName(),
+                            m::setCompetitionName);
+                    officialLeagueAndCompetitions.adjustCompetitionLogo(m.getLeagueId(), m.getCompetitionName(),
+                            m::setCompetitionLogo);
+                    contest.setConcede(isConcede(m));
+                    contest.setOvertime(isOvertime(m));
+                });
     }
 
     public boolean isConcede(Match match) {

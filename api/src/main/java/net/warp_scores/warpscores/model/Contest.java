@@ -44,8 +44,10 @@ public class Contest implements Comparable<Contest> {
 
     @Override
     public String toString() {
-        String teamA = Optional.ofNullable(opponents).map(o -> o.get(0)).map(Team::getName).orElse("n/a");
-        String teamB = Optional.ofNullable(opponents).map(o -> o.get(1)).map(Team::getName).orElse("n/a");
+        String teamA = Optional.ofNullable(opponents).map(o -> !o.isEmpty() ? o.get(0) : null).map(Team::getName)
+                .orElse("n/a");
+        String teamB = Optional.ofNullable(opponents).map(o -> o.size() > 1 ? o.get(1) : null).map(Team::getName)
+                .orElse("n/a");
         return String.format("Contest[%s] Round: %s -> %s vs %s (next: %s)", contestUuid, round, teamA, teamB,
                 nextContestUuid);
     }
