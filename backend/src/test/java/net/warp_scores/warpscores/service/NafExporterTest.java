@@ -21,6 +21,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.UUID;
 
 import static net.warp_scores.warpscores.domain.NafCoachDomainService.NONE_NAF_COACH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -204,6 +205,7 @@ public class NafExporterTest {
 
     private Team newOpponent(String coachName, Race race, Integer touchdowns, Integer casualties) {
         Team team = new Team();
+        team.setId(UUID.randomUUID());
         team.setCoachName(coachName);
         team.setRace(race);
         team.setScore(touchdowns);

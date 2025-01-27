@@ -77,8 +77,8 @@ function TeamRow({ competitionUuid, arenaTeam, coachOrRace }) {
         </HStack>
       </Td>
       <RaceOrCoachColumn coachOrRace={coachOrRace} arenaTeam={arenaTeam} competitionUuid={competitionUuid} />
-      <Td>{formatter.formatAsDate(arenaTeam.matches[0].finished, '-')}</Td>
-      <Td>{formatter.formatAsDate(arenaTeam.matches[arenaTeam.matches.length - 1].finished, '-')}</Td>
+      <Td>{formatter.formatAsDate(arenaHelpers.earliestFinished(arenaTeam.matches), '-')}</Td>
+      <Td>{formatter.formatAsDate(arenaHelpers.latestFinished(arenaTeam.matches), '-')}</Td>
       <Td>{sortedMatches.length}</Td>
       <Td>{clusteredSortedMatches.length}</Td>
       <Td>

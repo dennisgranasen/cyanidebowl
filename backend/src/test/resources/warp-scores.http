@@ -79,6 +79,10 @@ GET {{backendBaseUrl}}/arena/fdcd5dde-e529-11ee-bbf2-0200000e1421/topCoaches
 GET {{backendBaseUrl}}/arena/fdcd5dde-e529-11ee-bbf2-0200000e1421/coach/5522f49f-397f-11ee-af36-020000a4d571
 
 
+### get knockout bracketry
+GET {{backendBaseUrl}}/knockout/8b8b0a15-c697-11ef-9e80-bc2411305479/bracket
+
+
 ### Create an admin contest
 POST {{backendBaseUrl}}/contests/competition/72fbe403-a786-11ef-aaf1-bc24112ec32e
 Authorization: Bearer {{auth_token}}

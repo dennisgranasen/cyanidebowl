@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -90,7 +91,7 @@ public class ContestInitializationServiceTest {
 
         whenContestsInitialized();
 
-        initializedContests.forEach(contest -> System.out.println(contest));
+        initializedContests.forEach(System.out::println);
     }
 
     @Test
@@ -192,6 +193,7 @@ public class ContestInitializationServiceTest {
         List<Team> teams = new ArrayList<>();
         for (String teamName : teamNames) {
             Team team = new Team();
+            team.setId(UUID.randomUUID());
             team.setName(teamName);
             teams.add(team);
         }

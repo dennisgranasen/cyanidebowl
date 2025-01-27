@@ -44,9 +44,31 @@ const clusterMatches = (teamUuid, matches) => {
   );
 };
 
+const earliestFinished = (matches) => {
+  return matches.reduce((earliest, curr) => {
+    if (!earliest) return curr.finished;
+    if (curr.finished) {
+      return curr.finished < earliest ? curr.finished : earliest;
+    }
+    return earliest;
+  }, null);
+};
+
+const latestFinished = (matches) => {
+  return matches.reduce((latest, curr) => {
+    if (!latest) return curr.finished;
+    if (curr.finished) {
+      return curr.finished > latest ? curr.finished : latest;
+    }
+    return latest;
+  }, null);
+};
+
 export default {
   clusterMatches,
   isWinner,
   teamsByLastMatchDate,
   getLastMatch,
+  earliestFinished,
+  latestFinished,
 };

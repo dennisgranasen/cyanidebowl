@@ -33,7 +33,12 @@ public class MatchMessageBuilder {
     private final WarpScoresProperties warpScoresProperties;
     private final WarpScoresDiscordMessageBuilder warpScoresDiscordMessageBuilder;
 
-    public EmbedCreateSpec.Builder builder(League league, Match match, boolean isConcede, boolean spoiler) {
+    public EmbedCreateSpec.Builder builder(League league,
+            Match match,
+            boolean isAdminResult,
+            boolean isConcede,
+            boolean isOvertime,
+            boolean spoiler) {
         Team teamA = match.getTeams().get(0);
         Team teamB = match.getTeams().get(1);
 
@@ -41,12 +46,20 @@ public class MatchMessageBuilder {
                 .builder(match.getCompetitionName(), getVsDetails(teamA, teamB, true, false, team ->
                         getFrontendMarkupLink(team.getName(), "/#/competition/%s/team/%s",
                                 match.getCompetitionId(),
-                                team.getId())), Optional.ofNullable(league.getLogo()))
+                                team.getId())), getLogoFromMatchCompetitionLeagueOrLeague(match, league.getLogo()))
                 .color(Color.MEDIUM_SEA_GREEN)
                 .url(String.format("%s/#/competition/%s", warpScoresProperties.getBaseUrls().getFrontend(),
                         match.getCompetitionId()))
                 .footer(format("Match played: %s", getMatchDateAsString(match)), null);
-        return addFields(builder, match, isConcede, spoiler);
+        return addFields(builder, match, isAdminResult, isConcede, isOvertime, spoiler);
+    }
+
+    private Optional<String> getLogoFromMatchCompetitionLeagueOrLeague(Match match, String leagueLogo) {
+        Optional<String> matchCompetitionLogo = Optional.ofNullable(match.getCompetitionLogo());
+        Optional<String> matchLeagueLogo = Optional.ofNullable(match.getLeagueLogo());
+
+        String logo = matchCompetitionLogo.orElse(matchLeagueLogo.orElse(leagueLogo));
+        return Optional.ofNullable(logo);
     }
 
     private String getMatchDateAsString(Match match) {
@@ -66,7 +79,9 @@ public class MatchMessageBuilder {
 
     private EmbedCreateSpec.Builder addFields(EmbedCreateSpec.Builder builder,
             Match match,
+            boolean isAdminResult,
             boolean isConcede,
+            boolean isOvertime,
             boolean spoiler) {
         Team teamA = match.getTeams().get(0);
         Team teamB = match.getTeams().get(1);
@@ -74,9 +89,16 @@ public class MatchMessageBuilder {
         Match.Coach coachB = match.getCoaches().get(1);
 
         Date matchDate = match.getStarted();
-
-        if (isConcede) {
-            builder = builder.addField("Conceded", "", false);
+        if (!spoiler) {
+            if (isAdminResult) {
+                builder = builder.addField("Admin result", "", false);
+            }
+            if (isOvertime) {
+                builder = builder.addField("Overtime", "", false);
+            }
+            if (isConcede) {
+                builder = builder.addField("Conced", "", false);
+            }
         }
 
         return builder

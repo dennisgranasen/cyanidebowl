@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.model.ArenaCoach;
 import net.warp_scores.warpscores.model.ArenaCoachWithArenaTeams;
@@ -15,7 +16,6 @@ import net.warp_scores.warpscores.model.Team;
 import net.warp_scores.warpscores.model.WinRate;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StopWatch;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static java.util.Comparator.comparing;
+import static java.util.Comparator.nullsLast;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
@@ -60,17 +61,20 @@ public class ArenaService {
     private final MatchRepository matchRepository;
 
     @Cacheable(ARENA_RACES)
+    @DurationLogging
     public List<Race> loadArenaRacesFor(UUID competitionUuid) {
         return matchRepository.getUsedRacesForCompetition(competitionUuid);
     }
 
     @Cacheable(ARENA_INFOS)
+    @DurationLogging(warnThresholdMillis = 1500, errorThresholdMillis = 3000)
     public Optional<ArenaInfo> loadArenaInfoFor(UUID competitionUuid, Race race) {
         List<ArenaTeam> arenaTeams = loadArenaTeamsFor(competitionUuid, race, empty(), empty());
         return toArenaInfo(race, arenaTeams);
     }
 
     @Cacheable(ARENA_TEAMS)
+    @DurationLogging(warnThresholdMillis = 1500, errorThresholdMillis = 3000)
     public Map<ArenaTeam.RunType, List<ArenaTeam>> loadArenaTeamsFor(UUID competitionUuid,
             Race race,
             ArenaTeam.RunType runType, Optional<Integer> limit, Optional<Integer> offset) {
@@ -78,7 +82,8 @@ public class ArenaService {
         List<ArenaTeam> filteredTeams = teamsForRace
                 .stream()
                 .filter(arenaTeam -> matchesRunType(arenaTeam, runType))
-                .sorted(comparing(ArenaTeam::getCoachName).thenComparing(ArenaTeam::getTeamName))
+                .filter(Objects::nonNull)
+                .sorted(nullsLast(comparing(this::latestFinishedGame).reversed()))
                 .toList();
         filteredTeams
                 .forEach(this::updateLogoAndNameFromContestsData);
@@ -92,7 +97,17 @@ public class ArenaService {
         return Map.of(runType, limitedTeams);
     }
 
+    private Date latestFinishedGame(ArenaTeam arenaTeam) {
+        return arenaTeam
+                .getMatches()
+                .stream()
+                .map(Match::getFinished)
+                .max(Comparator.naturalOrder())
+                .orElse(null);
+    }
+
     @Cacheable(ARENA_COACH_TEAMS)
+    @DurationLogging(warnThresholdMillis = 1500, errorThresholdMillis = 3000)
     public Map<ArenaTeam.RunType, List<ArenaTeam>> loadArenaTeamsFor(UUID competitionUuid, UUID coachId) {
         return loadArenaTeamsForInternal(competitionUuid, coachId);
     }
@@ -102,6 +117,7 @@ public class ArenaService {
         List<ArenaTeam> coachTeams = arenaTeams
                 .stream()
                 .filter(arenaTeam -> arenaTeam.getCoachUuid().equals(coachId))
+                .sorted(comparing(this::latestFinishedGame).reversed())
                 .toList();
         return toArenaTeamsByRunType(coachTeams);
     }
@@ -115,6 +131,7 @@ public class ArenaService {
     }
 
     @Cacheable(ARENA_COACHES)
+    @DurationLogging(warnThresholdMillis = 1500, errorThresholdMillis = 3000)
     public List<ArenaCoach> loadArenaTopCoachesFor(UUID competitionUuid, int topLimit) {
         List<ArenaTeam> arenaTeams = queryArenaTeamsFor(competitionUuid, empty(), empty(), empty());
         arenaTeams.sort(comparing(ArenaTeam::getCoachName));
@@ -263,17 +280,7 @@ public class ArenaService {
 
     private List<ArenaTeam> loadArenaTeamsFor(UUID competitionUuid,
             Race race, Optional<Integer> limit, Optional<Integer> offset) {
-        StopWatch stopWatch = new StopWatch();
-        try {
-            String taskName = String.format("getArenaTeamsBy[%s]", race);
-            stopWatch.start(taskName);
-
-            return queryArenaTeamsFor(competitionUuid, race);
-        } finally {
-            stopWatch.stop();
-            StopWatch.TaskInfo taskInfo = stopWatch.lastTaskInfo();
-            log.info("StopWatch {}: {}ms", taskInfo.getTaskName(), taskInfo.getTimeMillis());
-        }
+        return queryArenaTeamsFor(competitionUuid, race);
     }
 
     Optional<ArenaInfo> toArenaInfo(final Race race, List<ArenaTeam> arenaTeams) {

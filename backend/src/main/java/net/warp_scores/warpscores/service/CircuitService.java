@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.domain.SequenceGenerator;
 import net.warp_scores.warpscores.domain.persistence.CircuitRepository;
 import net.warp_scores.warpscores.model.Circuit;
@@ -29,6 +30,7 @@ public class CircuitService {
     private final LeagueService leagueService;
 
     @Transactional(readOnly = true)
+    @DurationLogging
     public Optional<Circuit> load(Long circuitId) {
         if (DUMMY_CIRCUIT_ID == circuitId) {
             return createDummyCircuitIfNecessary(circuitRepository.findAll());
@@ -38,6 +40,7 @@ public class CircuitService {
     }
 
     @Transactional(readOnly = true)
+    @DurationLogging
     public List<Circuit> loadAll() {
         List<Circuit> circuits = circuitRepository.findAll();
 
