@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(value = RetentionPolicy.RUNTIME)
 public @interface DurationLogging {
-    int infoThresholdMillis() default 300;
+    int infoThresholdMillis() default 400;
 
     int warnThresholdMillis() default 700;
 

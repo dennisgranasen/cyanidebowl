@@ -2,27 +2,29 @@ import { expect, test } from '@jest/globals';
 import formatter from './formatter';
 
 test('formatAsPercentage', () => {
-  expect(formatter.formatAsPercentage(0.9)).toBe('90%');
-  expect(formatter.formatAsPercentage(0.012)).toBe('1.2%');
-  expect(formatter.formatAsPercentage(0.7999)).toBe('80%');
+  expect(formatter.formatAsPercentage(0.9, ['de'])).toBe('90 %');
+  expect(formatter.formatAsPercentage(0.012, ['en'])).toBe('1.2%');
+  expect(formatter.formatAsPercentage(0.7999, ['en'])).toBe('80%');
   expect(formatter.formatAsPercentage(null)).toBe('-');
   expect(formatter.formatAsPercentage(undefined)).toBe('-');
 });
 
 test('formatAsNumber', () => {
-  expect(formatter.formatAsNumber(2)).toBe('2');
-  expect(formatter.formatAsNumber(2000)).toBe('2,000');
-  expect(formatter.formatAsNumber(0.7)).toBe('0.7');
-  expect(formatter.formatAsNumber(0.7544)).toBe('0.754');
-  expect(formatter.formatAsNumber(0.7545)).toBe('0.755');
-  expect(formatter.formatAsNumber(null)).toBe('-');
-  expect(formatter.formatAsNumber(undefined)).toBe('-');
-  expect(formatter.formatAsNumber(0)).toBe('0');
+  expect(formatter.formatAsNumber(2, ['en'])).toBe('2');
+  expect(formatter.formatAsNumber(2000, ['en'])).toBe('2,000');
+  expect(formatter.formatAsNumber(0.7, ['en'])).toBe('0.7');
+  expect(formatter.formatAsNumber(0.7544, ['en'])).toBe('0.754');
+  expect(formatter.formatAsNumber(0.7545, ['en'])).toBe('0.755');
+  expect(formatter.formatAsNumber(null, ['en'])).toBe('-');
+  expect(formatter.formatAsNumber(undefined, ['en'])).toBe('-');
+  expect(formatter.formatAsNumber(0, ['en'])).toBe('0');
 });
 
 test('formatAsDate', () => {
   const date = new Date(2024, 11, 20, 17, 15, 21);
-  expect(formatter.formatAsDate(date.toISOString())).toBe('20/12/24, 17:15');
+  expect(formatter.formatAsDate(date.toISOString(), '', ['en-GB'])).toBe('20/12/24, 17:15');
+  expect(formatter.formatAsDate(date.toISOString(), '', ['en-US'])).toBe('12/20/24, 17:15');
+  expect(formatter.formatAsDate(date.toISOString(), '', ['de-DE'])).toBe('20.12.24, 17:15');
   expect(formatter.formatAsDate(null, '##')).toBe('##');
   expect(formatter.formatAsDate(null)).toBe(undefined);
   expect(formatter.formatAsDate(undefined, '##')).toBe('##');

@@ -104,13 +104,6 @@ public class ImageController {
         return loadImage(imageUrl, Optional.of(300));
     }
 
-    @GetMapping("/smallRace/{name}")
-    public ResponseEntity<byte[]> getRaceSmallImage(@PathVariable(name = "name") String name) {
-        String imageName = translateRaceToSmallRaceImageName(name);
-        Optional<String> imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getRaces(), imageName);
-        return loadImage(imageUrl, Optional.of(80));
-    }
-
     @GetMapping("/stadium/{name}")
     public ResponseEntity<byte[]> getStadiumImage(@PathVariable(name = "name") String name) {
         Optional<String> imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getStadiums(), name);
@@ -149,11 +142,6 @@ public class ImageController {
     private String translateRaceToRaceImageName(String name) {
         Race race = Race.valueOf(name);
         return "TeamScreenshot_" + race.getImageName();
-    }
-
-    private String translateRaceToSmallRaceImageName(String name) {
-        Race race = Race.valueOf(name);
-        return "SmallRace_" + race.getImageName();
     }
 
     private Optional<String> getImageUrlFor(String baseUrl, String name) {
