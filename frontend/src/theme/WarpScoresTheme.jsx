@@ -17,6 +17,10 @@ const warpScoresTheme = extendTheme({
         default: 'black',
         _dark: 'white',
       },
+      warpScoresSecondaryColor: {
+        default: 'gray.500',
+        _dark: 'gray.500',
+      },
       warpScoresBackgroundColor: {
         default: 'gray.100',
         _dark: 'gray.700',

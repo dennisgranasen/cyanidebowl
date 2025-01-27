@@ -1,7 +1,11 @@
 import timeUtil from './timeUtil';
 
-const numberFormat = new Intl.NumberFormat([]);
-const numberFormatPercentage = new Intl.NumberFormat([], { style: 'percent', maximumSignificantDigits: 3 });
+const numberFormat = (locales = []) => new Intl.NumberFormat(locales);
+const numberFormatPercentage = (locales = []) =>
+  new Intl.NumberFormat(locales, {
+    style: 'percent',
+    maximumSignificantDigits: 3,
+  });
 const dateFormatOptions = {
   year: '2-digit',
   month: '2-digit',
@@ -11,20 +15,20 @@ const dateFormatOptions = {
   minute: 'numeric',
 };
 
-const formatAsNumber = (value) => {
-  return value !== null && value !== undefined ? numberFormat.format(value) : '-';
+const formatAsNumber = (value, locales = []) => {
+  return value !== null && value !== undefined ? numberFormat(locales).format(value) : '-';
 };
 
-const formatAsPercentage = (value) => {
+const formatAsPercentage = (value, locales = []) => {
   if (value === null || value === undefined) return '-';
-  return `${numberFormatPercentage.format(value)}`;
+  return `${numberFormatPercentage(locales).format(value)}`;
 };
 
-const formatAsDate = (date, nullRepresentation) => {
+const formatAsDate = (date, nullRepresentation, locales = []) => {
   if (!date) return nullRepresentation;
 
   const utcDate = timeUtil.asUTCDate(date);
-  return utcDate.toLocaleString([], dateFormatOptions);
+  return utcDate.toLocaleString(locales, dateFormatOptions);
 };
 
 const formatAsDuration = (startDate, endDate) => {
