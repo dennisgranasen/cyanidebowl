@@ -11,7 +11,7 @@ import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import markDownTheme from '../theme/components/Markdown';
 
 const getContentAdjustingMarkdownLinks = (text) => {
-  const markdownLinkRegex = /(\[[^\]]*\])\((?:https?:\/\/){0}([^:)]*)\)/g;
+  const markdownLinkRegex = /(\[[^\]]*])\((?:https?:\/\/){0}([^:)]*)\)/g;
   return text.replace(markdownLinkRegex, '$1(/#/$2)');
 };
 

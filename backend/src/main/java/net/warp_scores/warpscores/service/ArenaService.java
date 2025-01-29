@@ -15,6 +15,7 @@ import net.warp_scores.warpscores.model.Race;
 import net.warp_scores.warpscores.model.Team;
 import net.warp_scores.warpscores.model.WinRate;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -49,6 +50,7 @@ import static net.warp_scores.warpscores.CacheNames.ARENA_TEAMS;
 import static net.warp_scores.warpscores.model.ArenaTeam.RunType.active;
 import static net.warp_scores.warpscores.model.ArenaTeam.RunType.completed;
 import static net.warp_scores.warpscores.model.ArenaTeam.RunType.failed;
+import static org.springframework.data.domain.Pageable.unpaged;
 
 @Service
 @Slf4j
@@ -78,7 +80,7 @@ public class ArenaService {
     public Map<ArenaTeam.RunType, List<ArenaTeam>> loadArenaTeamsFor(UUID competitionUuid,
             Race race,
             ArenaTeam.RunType runType, Optional<Integer> limit, Optional<Integer> offset) {
-        List<ArenaTeam> teamsForRace = queryArenaTeamsFor(competitionUuid, race);
+        List<ArenaTeam> teamsForRace = queryArenaTeamsFor(competitionUuid, race, unpaged());
         List<ArenaTeam> filteredTeams = teamsForRace
                 .stream()
                 .filter(arenaTeam -> matchesRunType(arenaTeam, runType))
@@ -113,7 +115,7 @@ public class ArenaService {
     }
 
     private Map<ArenaTeam.RunType, List<ArenaTeam>> loadArenaTeamsForInternal(UUID competitionUuid, UUID coachId) {
-        List<ArenaTeam> arenaTeams = queryArenaTeamsFor(competitionUuid, coachId);
+        List<ArenaTeam> arenaTeams = queryArenaTeamsFor(competitionUuid, coachId, unpaged());
         List<ArenaTeam> coachTeams = arenaTeams
                 .stream()
                 .filter(arenaTeam -> arenaTeam.getCoachUuid().equals(coachId))
@@ -133,8 +135,14 @@ public class ArenaService {
     @Cacheable(ARENA_COACHES)
     @DurationLogging(warnThresholdMillis = 1500, errorThresholdMillis = 3000)
     public List<ArenaCoach> loadArenaTopCoachesFor(UUID competitionUuid, int topLimit) {
-        List<ArenaTeam> arenaTeams = queryArenaTeamsFor(competitionUuid, empty(), empty(), empty());
-        arenaTeams.sort(comparing(ArenaTeam::getCoachName));
+        List<ArenaTeam> arenaTeams = new ArrayList<>();
+        List<Race> races = loadArenaRacesFor(competitionUuid);
+        for (Race race : races) {
+            List<ArenaTeam> currQueryArenaTeams = queryArenaTeamsFor(competitionUuid, Optional.of(race), empty(), of(7),
+                    unpaged());
+            arenaTeams.addAll(currQueryArenaTeams);
+            log.info("Fetched race {} with {} arena teams.", race, currQueryArenaTeams.size());
+        }
         Map<Coach, List<ArenaTeam>> arenaTeamsByCoach = arenaTeams
                 .stream()
                 .collect(groupingBy(this::toCoach, toList()));
@@ -280,7 +288,7 @@ public class ArenaService {
 
     private List<ArenaTeam> loadArenaTeamsFor(UUID competitionUuid,
             Race race, Optional<Integer> limit, Optional<Integer> offset) {
-        return queryArenaTeamsFor(competitionUuid, race);
+        return queryArenaTeamsFor(competitionUuid, race, unpaged());
     }
 
     Optional<ArenaInfo> toArenaInfo(final Race race, List<ArenaTeam> arenaTeams) {
@@ -432,21 +440,22 @@ public class ArenaService {
     }
 
     private List<ArenaTeam> queryArenaTeamsFor(UUID competitionUuid,
-            Race race) {
-        return queryArenaTeamsFor(competitionUuid, of(race), empty(), empty());
+            Race race, Pageable pageable) {
+        return queryArenaTeamsFor(competitionUuid, of(race), empty(), empty(), pageable);
     }
 
-    private List<ArenaTeam> queryArenaTeamsFor(UUID competitionUuid, UUID coachId) {
-        return queryArenaTeamsFor(competitionUuid, empty(), of(coachId), empty());
+    private List<ArenaTeam> queryArenaTeamsFor(UUID competitionUuid, UUID coachId, Pageable pageable) {
+        return queryArenaTeamsFor(competitionUuid, empty(), of(coachId), empty(), pageable);
     }
 
     private List<ArenaTeam> queryArenaTeamsFor(UUID competitionUuid,
             Optional<Race> race,
             Optional<UUID> coachId,
-            Optional<Integer> minWins) {
+            Optional<Integer> minWins,
+            Pageable pageable) {
         return matchRepository.queryArenaTeamsFor(
                 competitionUuid,
-                race.orElse(null), coachId.orElse(null), minWins.orElse(null));
+                race.orElse(null), coachId.orElse(null), minWins.orElse(null), pageable);
     }
 
     public ArenaCoachWithArenaTeams loadArenaCoachWithArenaTeams(UUID competitionUuid, UUID coachUuid) {

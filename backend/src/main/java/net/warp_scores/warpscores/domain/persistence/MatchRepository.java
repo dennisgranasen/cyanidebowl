@@ -4,6 +4,7 @@ import net.warp_scores.warpscores.model.ArenaTeam;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Race;
 import net.warp_scores.warpscores.model.Team;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.lang.Nullable;
@@ -54,7 +55,8 @@ public interface MatchRepository extends MongoRepository<Match, UUID> {
     List<ArenaTeam> queryArenaTeamsFor(UUID competitionId,
             @Nullable Race race,
             @Nullable UUID coachId,
-            @Nullable Integer minWins);
+            @Nullable Integer minWins,
+            Pageable pageable);
 
     @Aggregation(pipeline = {
             // Match contests for a specific competition

@@ -6,6 +6,7 @@ import progressTheme from './components/Progress';
 const warpScoresTheme = extendTheme({
   fonts: {
     nuffle: `'EmbeddedNuffle', sans-serif`,
+    nuffleDice: `'EmbeddedNuffleDice', sans-serif`,
     bigStar: `'EmbeddedBigStarRegular', sans-serif`,
     sportsWorld: `'EmbeddedSportsWorldRegular', sans-serif`,
     heading: `'EmbeddedSportsWorldRegular', 'EmbeddedBigStarRegular',${base.fonts?.heading}, sans-serif`,
