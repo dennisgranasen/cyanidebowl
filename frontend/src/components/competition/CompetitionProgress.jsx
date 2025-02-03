@@ -4,21 +4,21 @@ import { CalendarIcon, QuestionIcon } from '@chakra-ui/icons';
 import { FaFlagCheckered } from 'react-icons/fa6';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
 import prettyPrint from '../../util/prettyPrint';
+import logger from '../../util/logger';
 
-function extractRoundData(currentRound, round, finishedMatches, roundLength, status) {
+function extractRoundData(currentRound, round, finishedMatchesInRound, roundLength, status) {
   let progress = 0;
   let active = false;
   if (currentRound > round + 1) {
     progress = 100;
   } else if (currentRound === round + 1) {
-    progress =
-      finishedMatches >= roundLength * currentRound ? 100 : (100 * (finishedMatches % roundLength)) / roundLength;
+    progress = finishedMatchesInRound === roundLength ? 100 : (100 * finishedMatchesInRound) / roundLength;
     active = status === 'InProgress';
   }
   return { progress, active };
 }
 
-function RoundRobinProgresses({
+function RoundRobinOrWissenProgresses({
   currentRound,
   totalRounds,
   liveMatches,
@@ -34,7 +34,13 @@ function RoundRobinProgresses({
   const live = liveMatches > 0;
   const roundProgresses = [];
   for (let round = 0; round < totalRounds; round += 1) {
-    const { progress, active } = extractRoundData(currentRound, round, finishedMatches, roundLength, status);
+    const { progress, active } = extractRoundData(
+      currentRound,
+      round,
+      finishedMatches === currentRound * roundLength ? roundLength : finishedMatches % roundLength,
+      roundLength,
+      status
+    );
     roundProgresses.push({ name: `round${round + 1}`, progress, active });
   }
   return (
@@ -69,9 +75,20 @@ function KnockoutProgresses({
   const needsValidation = notValidatedMatches - liveMatches > 0;
   const live = liveMatches > 0;
   const roundProgresses = [];
+  let finishedMatchesInRound = 0;
+  let roundLength = participants;
+  let matchesCumulated = 0;
   for (let round = 0; round < totalRounds; round += 1) {
-    const roundLength = participants / (2 * (round + 1));
-    const { progress, active } = extractRoundData(currentRound, round, finishedMatches, roundLength, status);
+    roundLength /= 2;
+    matchesCumulated += roundLength;
+    if (finishedMatches > matchesCumulated) {
+      finishedMatchesInRound = roundLength;
+    } else if (currentRound === round + 1) {
+      finishedMatchesInRound = matchesCumulated - finishedMatches;
+    } else {
+      finishedMatchesInRound = 0;
+    }
+    const { progress, active } = extractRoundData(currentRound, round, finishedMatchesInRound, roundLength, status);
     const width = Math.max(Math.floor((roundLength / totalMatches) * 95), 5);
     roundProgresses.push({ name: `round${round + 1}`, progress, active, width });
   }
@@ -91,22 +108,6 @@ function KnockoutProgresses({
   );
 }
 
-function WissenProgresses({ playedMatches, liveMatches, notValidatedMatches, totalMatches, status, withPadding }) {
-  const finishedMatches = playedMatches - notValidatedMatches;
-  const needsValidation = notValidatedMatches - liveMatches > 0;
-  const live = liveMatches > 0;
-  const color = needsValidation ? 'orange' : null;
-  const progress =
-    finishedMatches > 0 && finishedMatches === totalMatches
-      ? 100
-      : (100 * (finishedMatches % totalMatches)) / totalMatches;
-  return (
-    <Box paddingTop={withPadding ? '0.25rem' : null}>
-      <Progress value={progress} isIndeterminate={live} hasStripe={status === 'InProgress'} colorScheme={color} />
-    </Box>
-  );
-}
-
 function Progresses({
   currentRound,
   totalRounds,
@@ -122,8 +123,9 @@ function Progresses({
   if (status === 'Registration') return <CalendarIcon />;
   switch (format) {
     case 'RoundRobin':
+    case 'Wissen':
       return (
-        <RoundRobinProgresses
+        <RoundRobinOrWissenProgresses
           currentRound={currentRound}
           totalRounds={totalRounds}
           totalMatches={totalMatches}
@@ -143,17 +145,6 @@ function Progresses({
           playedMatches={playedMatches}
           notValidatedMatches={notValidatedMatches}
           liveMatches={liveMatches}
-          status={status}
-          withPadding={withPadding ? 'withPadding' : null}
-        />
-      );
-    case 'Wissen':
-      return (
-        <WissenProgresses
-          playedMatches={playedMatches}
-          liveMatches={liveMatches}
-          notValidatedMatches={notValidatedMatches}
-          totalMatches={totalMatches}
           status={status}
           withPadding={withPadding ? 'withPadding' : null}
         />
