@@ -22,6 +22,8 @@ public interface MatchRepository extends MongoRepository<Match, UUID> {
 
     Optional<Match> findTopByTeamsContainsOrderByStartedDesc(Team team);
 
+    List<Match> findByCoachesContains(Match.Coach coach, Pageable pageable);
+
     @Aggregation(pipeline = {
             "{ '$match': { 'teams': { $elemMatch: { '_id': ?0 } } } }"
     })
