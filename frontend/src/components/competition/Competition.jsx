@@ -1,14 +1,15 @@
 import React from 'react';
-import { Spinner, Td, Tr, useBreakpointValue } from '@chakra-ui/react';
+import { HStack, Image, Spinner, Td, Text, Tr, useBreakpointValue } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import CompetitionProgress from './CompetitionProgress';
 import prettyPrint from '../../util/prettyPrint';
 import abbreviators from '../../util/abbreviators';
 import config from '../../config';
+import ImageUrls from '../../imageUrls';
 
-const { smallScreenBreakpointValues } = config;
+const { boxSize, smallScreenBreakpointValues } = config;
 
-function Competition({ competition }) {
+function Competition({ competition, league }) {
   const navigate = useNavigate();
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
 
@@ -18,7 +19,12 @@ function Competition({ competition }) {
 
   return competition !== null ? (
     <Tr onClick={goToCompetition}>
-      <Td>{competition.name}</Td>
+      <Td>
+        <HStack>
+          <Image src={ImageUrls.logo(competition.logo || league?.logo)} boxSize={boxSize} objectFit="scale-down" />
+          <Text>{competition.name}</Text>
+        </HStack>
+      </Td>
       <Td>{isSmallScreen ? abbreviators.makeInitials(competition.format) : prettyPrint(competition.format)}</Td>
       <Td>
         <CompetitionProgress
