@@ -4,7 +4,6 @@ import { CalendarIcon, QuestionIcon } from '@chakra-ui/icons';
 import { FaFlagCheckered } from 'react-icons/fa6';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
 import prettyPrint from '../../util/prettyPrint';
-import logger from '../../util/logger';
 
 function extractRoundData(currentRound, round, finishedMatchesInRound, roundLength, status) {
   let progress = 0;

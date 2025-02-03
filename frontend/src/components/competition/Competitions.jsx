@@ -34,7 +34,7 @@ function TableColumns() {
   );
 }
 
-function CompetitionsAccordionItem({ competitions, header }) {
+function CompetitionsAccordionItem({ competitions, league, header }) {
   return (
     competitions?.length > 0 && (
       <AccordionItem>
@@ -52,7 +52,9 @@ function CompetitionsAccordionItem({ competitions, header }) {
               </Thead>
               <Tbody>
                 {competitions ? (
-                  competitions.map((competition) => <Competition competition={competition} key={competition.uuid} />)
+                  competitions.map((competition) => (
+                    <Competition competition={competition} league={league} key={competition.uuid} />
+                  ))
                 ) : (
                   <Spinner />
                 )}
@@ -68,22 +70,25 @@ function CompetitionsAccordionItem({ competitions, header }) {
   );
 }
 
-function Competitions({ competitions }) {
+function Competitions({ competitions, league }) {
   return (
     <Accordion variant="simple" allowMultiple defaultIndex={[0]}>
       <CompetitionsAccordionItem
         key="InProgress"
         header="Competitions In Progress"
+        league={league}
         competitions={competitions?.filter((competition) => competition.status === 'InProgress')}
       />
       <CompetitionsAccordionItem
         key="Registration"
         header="Competitions In Registration"
+        league={league}
         competitions={competitions?.filter((competition) => competition.status === 'Registration')}
       />
       <CompetitionsAccordionItem
         key="Finished"
         header="Finished Competitions"
+        league={league}
         competitions={competitions?.filter((competition) => competition.status === 'Finished')}
       />
     </Accordion>

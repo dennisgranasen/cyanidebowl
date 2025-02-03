@@ -64,7 +64,7 @@ function LeaguePage() {
         </HeaderCard>
       )}
       <LoadingOrErrorWrapper loading={loading} error={error}>
-        <Competitions competitions={competitions} />
+        <Competitions competitions={competitions} league={league} />
         <LiveContests league={league} />
         <LatestContests league={league} />
       </LoadingOrErrorWrapper>
