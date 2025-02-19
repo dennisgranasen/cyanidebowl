@@ -125,6 +125,7 @@ public class CyanideApiService {
         TeamMatchesRequest teamMatchesRequest = new TeamMatchesRequest();
         teamMatchesRequest.setTeam(team.getId());
         teamMatchesRequest.setStart(startDate);
+        teamMatchesRequest.setEnd(new Date());
         log.info(
                 "Loading matches for team {} starting from {}.",
                 team.getId(), startDate);
@@ -166,6 +167,7 @@ public class CyanideApiService {
             MatchesRequest matchesRequest = new MatchesRequest();
             matchesRequest.setLeague_id(league.getUuid());
             matchesRequest.setStart(startDate);
+            matchesRequest.setEnd(new Date());
             matchesRequest.setLimitSize(null);
             log.info(
                     "Loading matches for league {} starting from {}.",
