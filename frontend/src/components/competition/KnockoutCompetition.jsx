@@ -6,7 +6,6 @@ import {
   AccordionPanel,
   Box,
   Center,
-  Container,
   Grid,
   GridItem,
   Heading,
@@ -248,7 +247,12 @@ function KnockoutCompetition({ competition, competitionLoading }) {
           <AccordionIcon />
         </AccordionButton>
         <AccordionPanel>
-          <Ranks loading={competitionLoading || ranksLoading} ranks={ranks} error={ranksError} />
+          <Ranks
+            competitionUuid={competition?.uuid}
+            loading={competitionLoading || ranksLoading}
+            ranks={ranks}
+            error={ranksError}
+          />
         </AccordionPanel>
       </AccordionItem>
     </Accordion>

@@ -17,7 +17,12 @@ function LadderCompetition({ competition, competitionLoading }) {
   return (
     <>
       <Heading size="md">Ranking</Heading>
-      <Ranks loading={competitionLoading || ranksLoading} ranks={ranks} error={ranksError} />
+      <Ranks
+        competitionUuid={competition?.uuid}
+        loading={competitionLoading || ranksLoading}
+        ranks={ranks}
+        error={ranksError}
+      />
       <LiveContests competition={competition} limit={6} />
       <LatestContests competition={competition} limit={9} />
     </>

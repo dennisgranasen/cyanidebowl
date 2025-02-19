@@ -16,10 +16,12 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -48,8 +50,13 @@ public class RankService {
         Competition competition = competitionService.loadCompetition(competitionId)
                 .orElseThrow(NoSuchElementException::new);
 
-        List<Team> teams = teamDomainService.findByCompetitionId(competitionId);
         List<Contest> contests = contestRepository.findByCompetitionIdAndStatus(competition.getUuid(), Validated);
+        Set<Team> teams = new HashSet<>();
+        contests
+                .stream()
+                .map(Contest::getOpponents)
+                .flatMap(List::stream)
+                .collect(Collectors.toCollection(() -> teams));
         List<Match> matches = Collections.emptyList();
         if (!competition.getFormat().equals(CompetitionFormat.Ladder)) {
             matches = matchRepository.findByCompetitionId(competition.getUuid());

@@ -19,7 +19,12 @@ function RoundRobinAndWissenCompetition({ competition, competitionLoading }) {
   return (
     <>
       <Heading size="md">Ranking</Heading>
-      <Ranks loading={competitionLoading || ranksLoading} ranks={ranks} error={ranksError} />
+      <Ranks
+        loading={competitionLoading || ranksLoading}
+        competitionUuid={competition?.uuid}
+        ranks={ranks}
+        error={ranksError}
+      />
       <Heading size="md">Contests</Heading>
       <TabbedContests
         contests={contests}

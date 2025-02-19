@@ -1,7 +1,7 @@
 {
   "size": [
     1690,
-    15183,
+    15809,
     176,
     5
   ],
@@ -195,9 +195,12 @@
         "league|league_id|id": "League ID (Unspecified = all leagues)",
         "bb|opus": "Opus 1|2|3",
         "limit|max": "Limit",
-        "teams|teams_count|min_teams_count": "Min amount of registered teams (default = 1)"
+        "age|days": "Date last match (default = 365) (BB2 only)",
+        "teams|teams_count|min_teams_count": "Min amount of registered teams (default = 1) (BB2 only)",
+        "gamers_count": "Min amount of registered gamers (default = 1)(BB3 only)"
       },
       "history": [
+        "2025\/02\/17 : New BB3 parameter gamers_count",
         "2023\/05\/30 : BB3 Compatibility",
         "2018\/07\/23 : New leagues listing webservice",
         "2015\/12\/01 : List of leagues"
@@ -220,8 +223,8 @@
         "coach|coach_name": "Coach name",
         "coach|coach_id": "Coach ID",
         "exact": "Exact league name match 0|1",
-        "instruction|hint": "Lookup instruction",
-        "fallback": "Fallback to defaults if nothing found"
+        "instruction|hint": "Competitions lookup hints (HAS_CONTESTS | NOT_LADDER | ONLY_LADDER)",
+        "fallback": "Should competitions lookup fallback to default if no corresponding competition is found ? 0|1"
       },
       "history": [
         "2023\/06\/22 : New endpoint meant to look for teams, leagues, competitions or caoches by names or IDs"
@@ -315,6 +318,19 @@
       },
       "history": [
         "2023\/11\/17 : BB3 only new service, that shows misc rules related information (skills list, ...)"
+      ]
+    },
+    {
+      "game": "bb3",
+      "method": "sprintranking",
+      "url": "https:\/\/web.cyanide-studio.com\/ws\/bb3\/sprintranking\/?key={{apiKey}}",
+      "args": {
+        "competition_id": "Competition id",
+        "competition_name": "Competition name",
+        "match_threshold": "Match threshold (currently only 20)"
+      },
+      "history": [
+        "2024\/12\/16 : SprintRanking creation"
       ]
     },
     {

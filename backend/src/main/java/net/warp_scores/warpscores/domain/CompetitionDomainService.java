@@ -84,7 +84,8 @@ public class CompetitionDomainService {
         targetCompetition.setDateCreated(sourceApiCompetition.getDate_created());
         targetCompetition.setStatus(sourceApiCompetition.getStatus_name());
         targetCompetition.setLeagueName(sourceApiCompetition.getLeague().getName());
-        targetCompetition.setRoundsCount(sourceApiCompetition.getRounds_count());
+        targetCompetition.setCurrentRound(sourceApiCompetition.getRound());
+        targetCompetition.setTotalRounds(sourceApiCompetition.getRounds_count());
         targetCompetition.setTeamsCount(sourceApiCompetition.getTeams_count());
         targetCompetition.setTeamsMax(sourceApiCompetition.getTeams_max());
         targetCompetition.setTimeBonusDuration(sourceApiCompetition.getTime_bonus_duration());
