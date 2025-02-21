@@ -63,10 +63,10 @@ GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Played&league_id=94dd
 GET https://web.cyanide-studio.com/ws/bb3/contests/?status=*&league_id=&limit=0,+100&key={{apiKey}}
 
 ### Get contests * by competition_id
-GET https://web.cyanide-studio.com/ws/bb3/contests/?status=*&competition_id=fdcd5dde-e529-11ee-bbf2-0200000e1421&limit=0,+1000&order=started,desc&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/contests/?status=*&competition_id=70eb52e5-9d4f-11ef-aaf1-bc24112ec32e&limit=0,+1000&order=started,desc&key={{apiKey}}
 
 ### Get matches
-GET https://web.cyanide-studio.com/ws/bb3/matches/?competition_id=fdcd5dde-e529-11ee-bbf2-0200000e1421&order=started,desc&limit=100,+100&key={{apiKey}}&bb=3
+GET https://web.cyanide-studio.com/ws/bb3/matches/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&order=started,desc&key={{apiKey}}&bb=3
 
 , competition_name=null, competition_id=null, start=Sat Jul 06 13:04:56 CEST 2024,
 

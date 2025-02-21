@@ -8,10 +8,13 @@ import net.warp_scores.warpscores.UUIDUtil;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 @Getter
 @Setter
@@ -63,5 +66,16 @@ public class Contest implements Comparable<Contest> {
                     .compareTo(UUIDUtil.getInstantFromUUID(otherContest.contestUuid));
         }
         return compare;
+    }
+
+    public boolean notScheduledNorCalculated() {
+        return Stream
+                .of(MatchStatus.Scheduled, MatchStatus.Calculated)
+                .noneMatch(status -> status.equals(this.status));
+    }
+
+    public boolean notInProgressOrOlderThan4Hours() {
+        return MatchStatus.InProgress != this.status
+                || (matchDate != null && Instant.now().minus(Duration.ofHours(4)).isBefore(matchDate.toInstant()));
     }
 }

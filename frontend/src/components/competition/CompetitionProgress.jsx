@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Flex, GridItem, Progress, SimpleGrid, VStack } from '@chakra-ui/react';
+import { Box, Flex, GridItem, Progress, SimpleGrid, Spinner, VStack } from '@chakra-ui/react';
 import { CalendarIcon, QuestionIcon } from '@chakra-ui/icons';
 import { FaFlagCheckered } from 'react-icons/fa6';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
@@ -120,6 +120,7 @@ function Progresses({
 }) {
   if (status === 'Finished') return <FaFlagCheckered />;
   if (status === 'Registration') return <CalendarIcon />;
+  if (status === 'InProgress' && playedMatches === null) return <Spinner />;
   switch (format) {
     case 'RoundRobin':
     case 'Wissen':

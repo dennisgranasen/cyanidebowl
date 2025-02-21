@@ -144,8 +144,10 @@ export default {
   arenaCoachTeams: async (competitionUuid, coachUuid) =>
     axios(`/arena/${competitionUuid}/coach/${coachUuid}`).then(returnData).catch(handleError),
   // competitions
-  leagueCompetitions: async (leagueUuid) =>
-    axios(`/competitions/league/${leagueUuid}`).then(returnData).catch(handleError),
+  leagueCompetitions: async (leagueUuid, initialized) =>
+    axios(`/competitions/league/${leagueUuid}${initialized ? '/initialized' : ''}`)
+      .then(returnData)
+      .catch(handleError),
   competition: async (competitionUuid) => axios(`/competitions/${competitionUuid}`).then(returnData).catch(handleError),
   competitionTeam: async (competitionUuid, teamUuid) =>
     axios(`/competitions/${competitionUuid}/team/${teamUuid}`).then(returnData).catch(handleError),

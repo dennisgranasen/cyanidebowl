@@ -97,7 +97,7 @@ public class MatchMessageBuilder {
                 builder = builder.addField("Overtime", "", false);
             }
             if (isConcede) {
-                builder = builder.addField("Conced", "", false);
+                builder = builder.addField("Concede", "", false);
             }
         }
 

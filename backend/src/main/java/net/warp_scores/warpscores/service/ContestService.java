@@ -93,6 +93,7 @@ public class ContestService {
                             m::setCompetitionName);
                     officialLeagueAndCompetitions.adjustCompetitionLogo(m.getLeagueId(), m.getCompetitionName(),
                             m::setCompetitionLogo);
+                    contest.setLive(m.getFinished() == null ? 1 : 0);
                     contest.setConcede(isConcede(m));
                     contest.setOvertime(isOvertime(m));
                 });

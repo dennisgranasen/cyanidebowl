@@ -33,7 +33,7 @@ function LeaguePage() {
   }, []);
 
   useEffect(() => {
-    const fetchCompetitions = (leagueId) => {
+    const fetchCompetitions = async (leagueId, initialized) => {
       setError(undefined);
       setCompetitions([]);
       setLoading(true);
@@ -42,15 +42,14 @@ function LeaguePage() {
         setError({ type: 'info', message: 'No League selected.' });
         return;
       }
-      WarpScoresApiService.leagueCompetitions(leagueId)
+      WarpScoresApiService.leagueCompetitions(leagueId, initialized)
         .then(setCompetitions)
         .then(() => setLoading(false))
         .catch((reason) => {
           setError({ type: 'error', message: reason.toLocaleString() });
         });
     };
-    const leagueId = league && league !== null ? league.uuid : null;
-    fetchCompetitions(leagueId);
+    if (league) fetchCompetitions(league?.uuid).then(fetchCompetitions(league?.uuid, true));
   }, [league]);
 
   return (
@@ -65,9 +64,9 @@ function LeaguePage() {
       )}
       <LoadingOrErrorWrapper loading={loading} error={error}>
         <Competitions competitions={competitions} league={league} />
-        <LiveContests league={league} />
-        <LatestContests league={league} />
       </LoadingOrErrorWrapper>
+      <LiveContests league={league} />
+      <LatestContests league={league} />
     </Stack>
   );
 }

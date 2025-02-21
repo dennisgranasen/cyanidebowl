@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.service.cyanide;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.cyanide.api.requests.ApiRequest;
 import net.warp_scores.warpscores.cyanide.api.requests.CompetitionsRequest;
 import net.warp_scores.warpscores.cyanide.api.requests.ContestsRequest;
 import net.warp_scores.warpscores.cyanide.api.requests.LeagueRequest;
@@ -191,7 +192,7 @@ public class CyanideApiService {
         ContestsRequest contestsRequest = new ContestsRequest();
         contestsRequest.setCompetition_id(competition.getUuid());
 
-        int limitOffset = contestCount - 100;
+        int limitOffset = contestCount - ApiRequest.DEFAULT_FETCH_LIMIT;
         if (limitOffset < 0) {
             limitOffset = 0;
         }

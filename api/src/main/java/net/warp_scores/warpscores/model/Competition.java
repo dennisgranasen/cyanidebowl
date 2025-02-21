@@ -7,6 +7,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -51,5 +52,9 @@ public class Competition implements Comparable<Competition> {
         result = name.compareTo(competition.getName());
         return result;
 
+    }
+
+    public boolean isWissenOrRoundRobin() {
+        return List.of(CompetitionFormat.RoundRobin, CompetitionFormat.Wissen).contains(format);
     }
 }

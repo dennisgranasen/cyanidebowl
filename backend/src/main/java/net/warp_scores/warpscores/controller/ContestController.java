@@ -36,7 +36,7 @@ import static net.warp_scores.warpscores.controller.Authorities.AUTHORITY_WRITE_
 @RequiredArgsConstructor
 public class ContestController {
 
-    public static final int MAX_LIMIT_FOR_LATEST_CONTESTS = 12;
+    public static final int MAX_LIMIT_FOR_LATEST_CONTESTS = 24;
     public static final int DEFAULT_LIMIT_FOR_LATEST_CONTESTS = 6;
     public static final int DEFAULT_LIMIT_FOR_LIVE_CONTESTS = 15;
     public static final int DEFAULT_LIMIT_FOR_CONTESTS = 100;
