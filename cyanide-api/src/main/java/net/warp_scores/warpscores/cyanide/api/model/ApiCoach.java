@@ -22,6 +22,11 @@ public class ApiCoach {
     public enum Status {Registered}
 
     private String email;
+    private String platform;
+    @JsonAlias({"oldrating"})
+    private Long oldRating;
+    @JsonAlias({"newrating"})
+    private Long newRating;
     private String twitch;
     private String youtube;
     private String country;

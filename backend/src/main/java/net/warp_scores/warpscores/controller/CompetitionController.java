@@ -44,7 +44,21 @@ public class CompetitionController {
             List<Competition> competitions = competitionService.loadForLeague(leagueId);
             competitions = competitions
                     .stream()
-                    .filter(competitionService::competitionConsideredActive)
+                    .sorted()
+                    .toList();
+            return ResponseEntity.ok(competitions);
+        } catch (Exception ex) {
+            log.error("Unable to get competitions for league id {}", leagueId, ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/competitions/league/{leagueId}/initialized")
+    public ResponseEntity<List<Competition>> getActiveCompetitionsForLeagueInitialized(@PathVariable(name = "leagueId") UUID leagueId) {
+        try {
+            List<Competition> competitions = competitionService.loadForLeagueAndInitialize(leagueId);
+            competitions = competitions
+                    .stream()
                     .sorted()
                     .toList();
             return ResponseEntity.ok(competitions);

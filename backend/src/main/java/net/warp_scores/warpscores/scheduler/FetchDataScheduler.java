@@ -18,7 +18,6 @@ import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.model.LeagueCollection;
 import net.warp_scores.warpscores.model.Match;
-import net.warp_scores.warpscores.model.MatchStatus;
 import net.warp_scores.warpscores.model.Team;
 import net.warp_scores.warpscores.service.CompetitionService;
 import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
@@ -131,22 +130,28 @@ public class FetchDataScheduler {
         List<UUID> leagueIdsToCollect = leagueCollectionRepository.findByCollectionActive(true).stream()
                 .map(LeagueCollection::getLeagueId).toList();
         List<Competition> competitions = competitionRepository.findAll();
+
         List<Competition> activeCompetitions = competitions
                 .stream()
                 .filter(competition -> leagueIdsToCollect.contains(competition.getLeagueId()))
-                .filter(this::isActive)
+                .filter(Competition::isWissenOrRoundRobin)
+                .filter(this::isInProgressOrHasLiveMatches)
                 .toList();
 
         long distinctLeagueCount = activeCompetitions.stream().map(Competition::getLeagueId).distinct()
                 .count();
-        log.info("Will load contests for {} active competitions of {} different leagues.",
+        log.info("Will load contests for {} active Wissen/RoundRobin competitions of {} different leagues.",
                 activeCompetitions.size(), distinctLeagueCount);
 
         loadContestsFor(activeCompetitions);
     }
 
-    private boolean isActive(Competition competition) {
-        return CompetitionStatus.InProgress.equals(competition.getStatus());
+    private boolean isInProgressOrHasLiveMatches(Competition competition) {
+        if (competition.getStatus() == InProgress) {
+            return true;
+        }
+        Integer liveContests = contestRepository.countByCompetitionIdAndLive(competition.getUuid(), 1);
+        return liveContests != null && liveContests > 0;
     }
 
     @Scheduled(initialDelay = THREE_MINUTES, fixedDelay = ONE_HOUR)
@@ -159,9 +164,9 @@ public class FetchDataScheduler {
         List<Contest> contests = contestRepository.findContestsWithoutMatches();
         List<Contest> playedContests = contests
                 .stream()
-                .filter(contest -> contest.getLive() != 1)
-                .filter(contest -> !List.of(MatchStatus.Scheduled, MatchStatus.InProgress, MatchStatus.Calculated)
-                        .contains(contest.getStatus()))
+                .filter(Contest::notScheduledNorCalculated)
+                .filter(Contest::notInProgressOrOlderThan4Hours)
+                .filter(contest -> nonNull(contest.getMatchUuid()))
                 .toList();
 
         log.info("Found {} contests ({} played) with missing matches.", contests.size(),
@@ -170,7 +175,6 @@ public class FetchDataScheduler {
         List<UUID> matchUuids = playedContests
                 .stream()
                 .map(Contest::getMatchUuid)
-                .filter(Objects::nonNull)
                 .toList();
 
         loadMatches(matchUuids);
@@ -297,7 +301,7 @@ public class FetchDataScheduler {
 
     private void loadMatchesForLeagues(List<League> leagues, Map<UUID, Optional<Date>> lastMatchDateKnownByLeagueUuid,
             Map<UUID, Optional<Date>> earliestStartDateByLeagueUuid) {
-        List<Match> matches = leagues
+        List<UUID> matchUuids = leagues
                 .stream()
                 .filter(Objects::nonNull)
                 .map(l -> {
@@ -308,14 +312,11 @@ public class FetchDataScheduler {
                             lastMatchDateReported);
                 })
                 .flatMap(List::stream)
-                .toList();
-        log.info("Got {} (skeleton) matches.", matches.size());
-
-        List<UUID> matchUuids = matches
-                .stream()
                 .filter(Objects::nonNull)
                 .map(Match::getMatchId)
                 .toList();
+
+        log.info("Got {} skeleton matches.", matchUuids.size());
 
         loadMatches(matchUuids);
     }

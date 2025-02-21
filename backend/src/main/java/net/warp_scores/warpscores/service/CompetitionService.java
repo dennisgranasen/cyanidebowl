@@ -38,13 +38,18 @@ public class CompetitionService {
     private final ContestRepository contestsRepository;
     private final OfficialLeagueAndCompetitions officialLeagueCompetitions;
 
-    @DurationLogging(warnThresholdMillis = 1500, errorThresholdMillis = 3000)
-    public List<Competition> loadForLeague(UUID leagueId) {
-        List<Competition> competitions = competitionRepository.findByLeagueId(leagueId);
+    public List<Competition> loadForLeagueAndInitialize(UUID leagueId) {
+        List<Competition> competitions = loadForLeague(leagueId);
         return initializeForFormat(competitions);
     }
 
-    @DurationLogging
+    public List<Competition> loadForLeague(UUID leagueId) {
+        List<Competition> competitions = competitionRepository.findByLeagueId(leagueId);
+        competitions.forEach(c -> officialLeagueCompetitions.adjustCompetitionNameAndLogo(c.getLeagueId(), c.getName(),
+                c::setName, c::setLogo));
+        return competitions;
+    }
+
     public Optional<Competition> loadCompetition(UUID competitionId) {
         return competitionRepository.findById(competitionId)
                 .map(this::initializeForFormat);
@@ -57,16 +62,15 @@ public class CompetitionService {
     }
 
     private Competition initializeForFormat(Competition competition) {
-        switch (competition.getFormat()) {
-            case RoundRobin -> initializeRoundRobin(competition);
-            case Wissen -> initializeWissen(competition);
-            case Knockout -> initializeKnockout(competition);
-            case Ladder, Arena -> initializeLadder(competition);
-            default -> notYetImplemented(competition.getFormat());
+        if (CompetitionStatus.InProgress == competition.getStatus()) {
+            switch (competition.getFormat()) {
+                case RoundRobin -> initializeRoundRobin(competition);
+                case Wissen -> initializeWissen(competition);
+                case Knockout -> initializeKnockout(competition);
+                case Ladder, Arena -> initializeLadder(competition);
+                default -> notYetImplemented(competition.getFormat());
+            }
         }
-        List.of(competition)
-                .forEach(c -> officialLeagueCompetitions.adjustCompetitionNameAndLogo(c.getLeagueId(), c.getName(),
-                        c::setName, c::setLogo));
         return competition;
     }
 
@@ -74,6 +78,7 @@ public class CompetitionService {
         log.error("CompetitionFormat '{}' not implemented yet.", format);
     }
 
+    @DurationLogging(infoThresholdMillis = 0, warnThresholdMillis = 100, errorThresholdMillis = 3000)
     private void initializeRoundRobin(Competition competition) {
         Integer teams = competition.getTeamsMax();
         boolean isOdd = teams % 2 == 1;
@@ -85,8 +90,8 @@ public class CompetitionService {
                         groupingBy(
                                 Contest::getContestUuid,
                                 collectingAndThen(toList(), this::getLatest)));
-        if (contests.size() != uniqueContests.keySet().size()) {
-            log.info("Contests: {}, uniqueContests: {}.", contests.size(), uniqueContests.keySet().size());
+        if (contests.size() != uniqueContests.size()) {
+            log.info("Contests: {}, uniqueContests: {}.", contests.size(), uniqueContests.size());
         }
         int totalRounds = isOdd ? teams : teams - 1;
         int contestsPerRound = isOdd ? (teams - 1) / 2 : teams / 2;
@@ -99,11 +104,10 @@ public class CompetitionService {
 
     private Optional<Contest> getLatest(List<Contest> contests) {
         return contests
-                .stream()
-                .sorted(nullsFirst(comparing(Contest::getMatchDate).reversed()))
-                .findFirst();
+                .stream().min(nullsFirst(comparing(Contest::getMatchDate).reversed()));
     }
 
+    @DurationLogging(infoThresholdMillis = 0, warnThresholdMillis = 100, errorThresholdMillis = 3000)
     private void initializeWissen(Competition competition) {
         List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid(), Pageable.unpaged());
         OptionalInt currentRound = contests.stream().mapToInt(Contest::getRound).max();
@@ -115,6 +119,7 @@ public class CompetitionService {
         initializeMatchCount(competition, contests);
     }
 
+    @DurationLogging(infoThresholdMillis = 0, warnThresholdMillis = 100, errorThresholdMillis = 3000)
     private void initializeKnockout(Competition competition) {
         Integer teams = competition.getTeamsMax();
         int totalRounds = 1;
@@ -131,6 +136,7 @@ public class CompetitionService {
         initializeMatchCount(competition, contests);
     }
 
+    @DurationLogging(infoThresholdMillis = 0, warnThresholdMillis = 100, errorThresholdMillis = 3000)
     private void initializeLadder(Competition competition) {
         List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid(), Pageable.unpaged());
         initializeMatchCount(competition, contests);
@@ -178,7 +184,7 @@ public class CompetitionService {
     }
 
     public Map<CompetitionStatus, Long> countForLeague(UUID leagueUuid) {
-        List<Competition> competitions = loadForLeague(leagueUuid);
+        List<Competition> competitions = loadForLeagueAndInitialize(leagueUuid);
         return competitions
                 .stream()
                 .filter(this::competitionConsideredActive)
