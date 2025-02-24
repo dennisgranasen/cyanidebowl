@@ -175,19 +175,10 @@ public class CompetitionService {
         return Long.valueOf(count).intValue();
     }
 
-    public boolean competitionConsideredActive(Competition competition) {
-        boolean inRegistrationOrInProgress = List.of(CompetitionStatus.Registration, CompetitionStatus.InProgress)
-                .contains(competition.getStatus());
-        boolean finished = CompetitionStatus.Finished.equals(competition.getStatus());
-        int matchCount = Optional.ofNullable(competition.getPlayedMatches()).orElse(0);
-        return inRegistrationOrInProgress || finished && matchCount > 0;
-    }
-
     public Map<CompetitionStatus, Long> countForLeague(UUID leagueUuid) {
         List<Competition> competitions = loadForLeagueAndInitialize(leagueUuid);
         return competitions
                 .stream()
-                .filter(this::competitionConsideredActive)
                 .collect(
                         groupingBy(Competition::getStatus, Collectors.counting()));
     }
