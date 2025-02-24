@@ -125,7 +125,7 @@ public class FetchDataScheduler {
         }
     }
 
-    @Scheduled(initialDelay = FIVE_SECONDS, fixedDelay = FIFTEEN_MINUTES)
+    @Scheduled(initialDelay = THREE_MINUTES, fixedDelay = FIFTEEN_MINUTES)
     public void fetchCompetitionContests() {
         if (!cyanideApiProperties.isJobCreationSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchLeagueContests().");
