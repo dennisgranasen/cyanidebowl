@@ -10,6 +10,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,6 +29,15 @@ public interface MatchRepository extends MongoRepository<Match, UUID> {
             "{ '$match': { 'teams': { $elemMatch: { '_id': ?0 } } } }"
     })
     List<Match> findMatchesByTeamId(UUID teamId);
+
+    @Aggregation(pipeline = {
+            "{$match: {competitionId: { $in: ?0 }}}",
+            "{ $group: { _id: $competitionId, maxFinishedDate: { $max: $finished } }}",
+            "{ $project: { competitionId: $_id, maxFinishedDate: 1, _id: 0 }}"
+    })
+    List<CompetitionMaxFinishedDate> findLastMatchDateByCompetitionIds(List<UUID> competitionIds);
+
+    record CompetitionMaxFinishedDate(UUID competitionId, Date maxFinishedDate) {}
 
     @Aggregation(pipeline = {
             "{ $match: { $and: [ { competitionId: ?0 }, { $or: [ { $expr: { $eq: [?1, null] } }, {'teams.race': ?1 } ] }, { $or: [ { $expr: { $eq: [?2, null] } }, { 'coaches._id': ?2 } ] } ] } }",

@@ -63,7 +63,7 @@ GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Played&league_id=94dd
 GET https://web.cyanide-studio.com/ws/bb3/contests/?status=*&league_id=&limit=0,+100&key={{apiKey}}
 
 ### Get contests * by competition_id
-GET https://web.cyanide-studio.com/ws/bb3/contests/?status=*&competition_id=70eb52e5-9d4f-11ef-aaf1-bc24112ec32e&limit=0,+1000&order=started,desc&key={{apiKey}}
+GET https://web.cyanide-studio.com/ws/bb3/contests/?status=*&competition_id=62066aed-81cc-11ef-be7b-bc24112ec32e&limit=0,+1000&order=started,desc&key={{apiKey}}
 
 ### Get matches
 GET https://web.cyanide-studio.com/ws/bb3/matches/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&order=started,desc&key={{apiKey}}&bb=3

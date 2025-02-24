@@ -11,6 +11,7 @@ import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.LeagueCollectionRepository;
 import net.warp_scores.warpscores.domain.persistence.LeagueRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
+import net.warp_scores.warpscores.domain.persistence.MatchRepository.CompetitionMaxFinishedDate;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.CompetitionFormat;
 import net.warp_scores.warpscores.model.CompetitionStatus;
@@ -24,6 +25,8 @@ import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -44,6 +47,7 @@ import static java.util.stream.Collectors.toMap;
 import static net.warp_scores.warpscores.model.CompetitionStatus.InProgress;
 import static net.warp_scores.warpscores.scheduler.Schedules.FIFTEEN_MINUTES;
 import static net.warp_scores.warpscores.scheduler.Schedules.FIVE_MINUTES;
+import static net.warp_scores.warpscores.scheduler.Schedules.FIVE_SECONDS;
 import static net.warp_scores.warpscores.scheduler.Schedules.ONE_HOUR;
 import static net.warp_scores.warpscores.scheduler.Schedules.TEN_MINUTES;
 import static net.warp_scores.warpscores.scheduler.Schedules.THREE_MINUTES;
@@ -121,7 +125,7 @@ public class FetchDataScheduler {
         }
     }
 
-    @Scheduled(initialDelay = THREE_MINUTES, fixedDelay = FIFTEEN_MINUTES)
+    @Scheduled(initialDelay = FIVE_SECONDS, fixedDelay = FIFTEEN_MINUTES)
     public void fetchCompetitionContests() {
         if (!cyanideApiProperties.isJobCreationSchedulerActive()) {
             log.info("Scheduler deactivated by configuration. Skipping fetchLeagueContests().");
@@ -130,28 +134,47 @@ public class FetchDataScheduler {
         List<UUID> leagueIdsToCollect = leagueCollectionRepository.findByCollectionActive(true).stream()
                 .map(LeagueCollection::getLeagueId).toList();
         List<Competition> competitions = competitionRepository.findAll();
-
-        List<Competition> activeCompetitions = competitions
+        List<Competition> competitionsNeedingContests = competitions
                 .stream()
                 .filter(competition -> leagueIdsToCollect.contains(competition.getLeagueId()))
                 .filter(Competition::needsContests)
-                .filter(this::isInProgressOrHasLiveMatches)
+                .toList();
+        List<UUID> ids = competitionsNeedingContests.stream().map(Competition::getUuid).toList();
+        List<CompetitionMaxFinishedDate> lastMatchDateByCompetitionIds = matchRepository
+                .findLastMatchDateByCompetitionIds(ids);
+        Map<UUID, Optional<Date>> lastMatchDateByCompetitionId = lastMatchDateByCompetitionIds
+                .stream()
+                .collect(toMap(CompetitionMaxFinishedDate::competitionId,
+                        r -> Optional.ofNullable(r.maxFinishedDate())));
+        List<Competition> competitionsToCollect = competitions
+                .stream()
+                .filter(c -> this.shouldLoadContests(c, lastMatchDateByCompetitionId))
                 .toList();
 
-        long distinctLeagueCount = activeCompetitions.stream().map(Competition::getLeagueId).distinct()
+        long distinctLeagueCount = competitionsToCollect.stream().map(Competition::getLeagueId).distinct()
                 .count();
-        log.info("Will load contests for {} active Wissen/RoundRobin competitions of {} different leagues.",
-                activeCompetitions.size(), distinctLeagueCount);
+        log.info("Will load contests for {} active competitions needing contests of {} different leagues.",
+                competitionsToCollect.size(), distinctLeagueCount);
 
-        loadContestsFor(activeCompetitions);
+        loadContestsFor(competitionsToCollect);
     }
 
-    private boolean isInProgressOrHasLiveMatches(Competition competition) {
+    private boolean shouldLoadContests(Competition competition,
+            Map<UUID, Optional<Date>> lastMatchDateByCompetitionId) {
         if (competition.getStatus() == InProgress) {
             return true;
         }
         Integer liveContests = contestRepository.countByCompetitionIdAndLive(competition.getUuid(), 1);
-        return liveContests != null && liveContests > 0;
+        boolean hasLiveContests = liveContests != null && liveContests > 0;
+        if (hasLiveContests) {
+            return true;
+        }
+        Optional<Date> lastMatchDate = lastMatchDateByCompetitionId.getOrDefault(competition.getUuid(),
+                Optional.empty());
+        return lastMatchDate
+                .map(Date::toInstant)
+                .orElse(new Date(0).toInstant())
+                .isAfter(Instant.now().minus(Duration.ofDays(30)));
     }
 
     @Scheduled(initialDelay = THREE_MINUTES, fixedDelay = ONE_HOUR)
