@@ -134,7 +134,7 @@ public class FetchDataScheduler {
         List<Competition> activeCompetitions = competitions
                 .stream()
                 .filter(competition -> leagueIdsToCollect.contains(competition.getLeagueId()))
-                .filter(Competition::isWissenOrRoundRobin)
+                .filter(Competition::needsContests)
                 .filter(this::isInProgressOrHasLiveMatches)
                 .toList();
 
