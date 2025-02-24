@@ -36,7 +36,11 @@ function Leagues({ leagues }) {
       <LeaguesAccordionItem
         key="Active"
         header="Active Leagues"
-        leagues={leagues?.filter((league) => league.teamCount > 0 && league.countsByCompetitionStatus?.InProgress > 0)}
+        leagues={leagues?.filter(
+          (league) =>
+            league.teamCount > 0 &&
+            (league.countsByCompetitionStatus?.InProgress > 0 || league.countsByCompetitionStatus?.Registration > 0)
+        )}
       />
       <LeaguesAccordionItem
         key="Inactive"
