@@ -56,21 +56,13 @@ GET https://web.cyanide-studio.com/ws/bb3/coaches/?league_uuid=94dd6ae4-83fa-11e
 ### Get teams
 GET https://web.cyanide-studio.com/ws/bb3/teams/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&competition_id=e8848221-a04e-11ee-a745-02000090a64f&key={{apiKey}}&order=finished
 
-### Get contests * by league_id for status Played
-GET https://web.cyanide-studio.com/ws/bb3/contests/?status=Played&league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&key={{apiKey}}
-
-### Get contests * by league_id for status Validated
-GET https://web.cyanide-studio.com/ws/bb3/contests/?status=*&league_id=&limit=0,+100&key={{apiKey}}
-
-### Get contests * by competition_id
-GET https://web.cyanide-studio.com/ws/bb3/contests/?status=*&competition_id=62066aed-81cc-11ef-be7b-bc24112ec32e&limit=0,+1000&order=started,desc&key={{apiKey}}
+### Get contests * by competition_id for status *
+GET https://web.cyanide-studio.com/ws/bb3/contests/?status=*&competition_id=fdcd5dde-e529-11ee-bbf2-0200000e1421&order=started,desc&key={{apiKey}}
 
 ### Get matches
 GET https://web.cyanide-studio.com/ws/bb3/matches/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&order=started,desc&key={{apiKey}}&bb=3
 
-, competition_name=null, competition_id=null, start=Sat Jul 06 13:04:56 CEST 2024,
-
-### Get matches (ordered)
+## Get matches (ordered)
 GET https://web.cyanide-studio.com/ws/bb3/matches/?league_id=94dd6ae4-83fa-11ee-b910-02000090a64f&start=2023-12-01%2020:00:00&end=2024-01-10%2020:00:00&key={{apiKey}}&order=finished
 
 ### Get matches (ordered)

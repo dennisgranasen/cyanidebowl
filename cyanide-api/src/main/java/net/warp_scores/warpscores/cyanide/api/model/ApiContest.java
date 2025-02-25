@@ -30,6 +30,8 @@ public class ApiContest {
     private MatchType type;
     @JsonAlias({"status", "contest_status"})
     private MatchStatus status;
+    @JsonAlias({"match_status"})
+    private MatchStatus matchStatus;
     private String stadium;
     private String game_id;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
@@ -44,7 +46,6 @@ public class ApiContest {
     public static class Opponent {
         private Coach coach;
         private Team team;
-
     }
 
     @Getter
@@ -73,5 +74,4 @@ public class ApiContest {
         private Integer death;
         private Race race;
     }
-
 }
