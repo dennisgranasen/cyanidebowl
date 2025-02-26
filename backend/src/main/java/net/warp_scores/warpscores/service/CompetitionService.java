@@ -38,21 +38,32 @@ public class CompetitionService {
     private final ContestRepository contestsRepository;
     private final OfficialLeagueAndCompetitions officialLeagueCompetitions;
 
+    @DurationLogging
+    public List<Competition> loadForLeague(UUID leagueId) {
+        List<Competition> competitions = competitionRepository.findByLeagueId(leagueId);
+        competitions.forEach(this::adjustCompetitionNameAndLogo);
+        return competitions;
+    }
+
+    @DurationLogging
     public List<Competition> loadForLeagueAndInitialize(UUID leagueId) {
         List<Competition> competitions = loadForLeague(leagueId);
         return initializeForFormat(competitions);
     }
 
-    public List<Competition> loadForLeague(UUID leagueId) {
-        List<Competition> competitions = competitionRepository.findByLeagueId(leagueId);
-        competitions.forEach(c -> officialLeagueCompetitions.adjustCompetitionNameAndLogo(c.getLeagueId(), c.getName(),
-                c::setName, c::setLogo));
-        return competitions;
+    @DurationLogging
+    public Optional<Competition> loadCompetition(UUID competitionId) {
+        Optional<Competition> competition = competitionRepository
+                .findById(competitionId)
+                .map(this::initializeForFormat);
+        competition.ifPresent(this::adjustCompetitionNameAndLogo);
+        return competition;
     }
 
-    public Optional<Competition> loadCompetition(UUID competitionId) {
-        return competitionRepository.findById(competitionId)
-                .map(this::initializeForFormat);
+    private void adjustCompetitionNameAndLogo(Competition competition) {
+        officialLeagueCompetitions
+                .adjustCompetitionNameAndLogo(competition.getLeagueId(), competition.getName(), competition::setName,
+                        competition::setLogo);
     }
 
     private List<Competition> initializeForFormat(List<Competition> competitions) {
@@ -78,7 +89,6 @@ public class CompetitionService {
         log.error("CompetitionFormat '{}' not implemented yet.", format);
     }
 
-    @DurationLogging(infoThresholdMillis = 0, warnThresholdMillis = 100, errorThresholdMillis = 3000)
     private void initializeRoundRobin(Competition competition) {
         Integer teams = competition.getTeamsMax();
         boolean isOdd = teams % 2 == 1;
@@ -107,7 +117,6 @@ public class CompetitionService {
                 .stream().min(nullsFirst(comparing(Contest::getMatchDate).reversed()));
     }
 
-    @DurationLogging(infoThresholdMillis = 0, warnThresholdMillis = 100, errorThresholdMillis = 3000)
     private void initializeWissen(Competition competition) {
         List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid(), Pageable.unpaged());
         OptionalInt currentRound = contests.stream().mapToInt(Contest::getRound).max();
@@ -119,7 +128,6 @@ public class CompetitionService {
         initializeMatchCount(competition, contests);
     }
 
-    @DurationLogging(infoThresholdMillis = 0, warnThresholdMillis = 100, errorThresholdMillis = 3000)
     private void initializeKnockout(Competition competition) {
         Integer teams = competition.getTeamsMax();
         int totalRounds = 1;
@@ -136,7 +144,6 @@ public class CompetitionService {
         initializeMatchCount(competition, contests);
     }
 
-    @DurationLogging(infoThresholdMillis = 0, warnThresholdMillis = 100, errorThresholdMillis = 3000)
     private void initializeLadder(Competition competition) {
         List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid(), Pageable.unpaged());
         initializeMatchCount(competition, contests);

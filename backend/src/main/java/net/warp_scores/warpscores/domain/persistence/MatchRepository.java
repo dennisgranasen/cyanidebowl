@@ -19,25 +19,30 @@ import java.util.UUID;
 public interface MatchRepository extends MongoRepository<Match, UUID> {
     List<Match> findByCompetitionId(UUID competitionId);
 
-    Optional<Match> findTopByLeagueIdOrderByFinishedDesc(UUID leagueId);
-
     Optional<Match> findTopByTeamsContainsOrderByStartedDesc(Team team);
 
     List<Match> findByCoachesContains(Match.Coach coach, Pageable pageable);
 
     @Aggregation(pipeline = {
-            "{ '$match': { 'teams': { $elemMatch: { '_id': ?0 } } } }"
+            "{ $match: { teams: { $elemMatch: { _id: ?0 } } } }"
     })
     List<Match> findMatchesByTeamId(UUID teamId);
 
     @Aggregation(pipeline = {
-            "{$match: {competitionId: { $in: ?0 }}}",
-            "{ $group: { _id: $competitionId, maxFinishedDate: { $max: $finished } }}",
-            "{ $project: { competitionId: $_id, maxFinishedDate: 1, _id: 0 }}"
+            "{ $match: {leagueId: { $in: ?0 }} }",
+            "{ $group: { _id: $leagueId, date: { $max: $finished }} }",
+            "{ $project: { uuid: $_id, date: 1, _id: 0 } }"
     })
-    List<CompetitionMaxFinishedDate> findLastMatchDateByCompetitionIds(List<UUID> competitionIds);
+    List<DateForUuid> findLastMatchDateByLeagueIds(List<UUID> leagueIds);
 
-    record CompetitionMaxFinishedDate(UUID competitionId, Date maxFinishedDate) {}
+    @Aggregation(pipeline = {
+            "{ $match: {competitionId: { $in: ?0 }} }",
+            "{ $group: { _id: $competitionId, date: { $max: $finished }} }",
+            "{ $project: { uuid: $_id, date: 1, _id: 0 } }"
+    })
+    List<DateForUuid> findLastMatchDateByCompetitionIds(List<UUID> competitionIds);
+
+    record DateForUuid(UUID uuid, Date date) {}
 
     @Aggregation(pipeline = {
             "{ $match: { $and: [ { competitionId: ?0 }, { $or: [ { $expr: { $eq: [?1, null] } }, {'teams.race': ?1 } ] }, { $or: [ { $expr: { $eq: [?2, null] } }, { 'coaches._id': ?2 } ] } ] } }",

@@ -47,6 +47,7 @@ import static net.warp_scores.warpscores.CacheNames.ARENA_COACH_TEAMS;
 import static net.warp_scores.warpscores.CacheNames.ARENA_INFOS;
 import static net.warp_scores.warpscores.CacheNames.ARENA_RACES;
 import static net.warp_scores.warpscores.CacheNames.ARENA_TEAMS;
+import static net.warp_scores.warpscores.DurationLogger.executeLoggingDuration;
 import static net.warp_scores.warpscores.model.ArenaTeam.RunType.active;
 import static net.warp_scores.warpscores.model.ArenaTeam.RunType.completed;
 import static net.warp_scores.warpscores.model.ArenaTeam.RunType.failed;
@@ -286,11 +287,13 @@ public class ArenaService {
         }
     }
 
+    @DurationLogging(infoThresholdMillis = 0, warnThresholdMillis = 100, errorThresholdMillis = 500)
     private List<ArenaTeam> loadArenaTeamsFor(UUID competitionUuid,
             Race race, Optional<Integer> limit, Optional<Integer> offset) {
         return queryArenaTeamsFor(competitionUuid, race, unpaged());
     }
 
+    @DurationLogging(infoThresholdMillis = 0, warnThresholdMillis = 100, errorThresholdMillis = 500)
     Optional<ArenaInfo> toArenaInfo(final Race race, List<ArenaTeam> arenaTeams) {
         if (arenaTeams.isEmpty()) {
             return empty();
@@ -453,9 +456,9 @@ public class ArenaService {
             Optional<UUID> coachId,
             Optional<Integer> minWins,
             Pageable pageable) {
-        return matchRepository.queryArenaTeamsFor(
+        return executeLoggingDuration(() -> matchRepository.queryArenaTeamsFor(
                 competitionUuid,
-                race.orElse(null), coachId.orElse(null), minWins.orElse(null), pageable);
+                race.orElse(null), coachId.orElse(null), minWins.orElse(null), pageable));
     }
 
     public ArenaCoachWithArenaTeams loadArenaCoachWithArenaTeams(UUID competitionUuid, UUID coachUuid) {

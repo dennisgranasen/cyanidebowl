@@ -38,8 +38,7 @@ function Leagues({ leagues }) {
         header="Active Leagues"
         leagues={leagues?.filter(
           (league) =>
-            league.teamCount > 0 &&
-            (league.countsByCompetitionStatus?.InProgress > 0 || league.countsByCompetitionStatus?.Registration > 0)
+            league.countsByCompetitionStatus?.InProgress > 0 || league.countsByCompetitionStatus?.Registration > 0
         )}
       />
       <LeaguesAccordionItem
