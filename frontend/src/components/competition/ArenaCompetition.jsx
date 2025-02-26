@@ -168,10 +168,9 @@ function ArenaCoachCard({ competitionUuid, coach, placement }) {
             <WinRate identifier="Win rate (overall)" winRate={coach.overallWinRate} />
           </Text>
           <Text>
-            Teams: {coach ? coach.completedTeamsCount || 0 : '-'} completed, {coach ? coach.activeTeamsCount || 0 : '-'}{' '}
-            active, {coach ? coach.failedTeamsCount || 0 : '-'} failed
+            Completed teams: {coach ? coach.completedTeamsCount || 0 : '-'} (last on{' '}
+            {formatter.formatAsDate(coach.lastCompletion, '-')})
           </Text>
-          <Text>Last completion: {formatter.formatAsDate(coach.lastCompletion, '-')}</Text>
           <Box>
             <RaceAvatars races={coach.completedRaces} />
           </Box>
