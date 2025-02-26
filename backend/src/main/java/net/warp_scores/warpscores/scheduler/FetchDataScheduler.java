@@ -11,7 +11,6 @@ import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.LeagueCollectionRepository;
 import net.warp_scores.warpscores.domain.persistence.LeagueRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
-import net.warp_scores.warpscores.domain.persistence.MatchRepository.CompetitionMaxFinishedDate;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.CompetitionFormat;
 import net.warp_scores.warpscores.model.CompetitionStatus;
@@ -47,7 +46,6 @@ import static java.util.stream.Collectors.toMap;
 import static net.warp_scores.warpscores.model.CompetitionStatus.InProgress;
 import static net.warp_scores.warpscores.scheduler.Schedules.FIFTEEN_MINUTES;
 import static net.warp_scores.warpscores.scheduler.Schedules.FIVE_MINUTES;
-import static net.warp_scores.warpscores.scheduler.Schedules.FIVE_SECONDS;
 import static net.warp_scores.warpscores.scheduler.Schedules.ONE_HOUR;
 import static net.warp_scores.warpscores.scheduler.Schedules.TEN_MINUTES;
 import static net.warp_scores.warpscores.scheduler.Schedules.THREE_MINUTES;
@@ -140,12 +138,8 @@ public class FetchDataScheduler {
                 .filter(Competition::needsContests)
                 .toList();
         List<UUID> ids = competitionsNeedingContests.stream().map(Competition::getUuid).toList();
-        List<CompetitionMaxFinishedDate> lastMatchDateByCompetitionIds = matchRepository
-                .findLastMatchDateByCompetitionIds(ids);
-        Map<UUID, Optional<Date>> lastMatchDateByCompetitionId = lastMatchDateByCompetitionIds
-                .stream()
-                .collect(toMap(CompetitionMaxFinishedDate::competitionId,
-                        r -> Optional.ofNullable(r.maxFinishedDate())));
+        Map<UUID, Optional<Date>> lastMatchDateByCompetitionId = matchDomainService.getLastMatchDatesForCompetitions(
+                ids);
         List<Competition> competitionsToCollect = competitions
                 .stream()
                 .filter(c -> this.shouldLoadContests(c, lastMatchDateByCompetitionId))

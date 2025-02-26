@@ -6,6 +6,7 @@ public enum MatchStatus {
     Validated,
     InProgress,
     Played,
+    Canceled,
     Calculated,
     @Deprecated
     scheduled(true, Scheduled),
