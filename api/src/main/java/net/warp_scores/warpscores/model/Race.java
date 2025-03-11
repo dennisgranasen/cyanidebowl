@@ -26,7 +26,7 @@ public enum Race {
     darkElf(9, "Dark Elf", "Dark Elf", "DarkElf"),
     shamblingUndead(10, "Shambling Undead", "Shambling Undead", "Undead"),
     halfling(11, "Halfling", "Halfling", "Halfling"),
-    amazon(13, "Amazon", "Amazon", "Amazon"),
+    amazon(12, "Amazon", "Amazon", "Amazon"),
     elvenUnion(14, "Elven Union", "Elf Union", "ElvenUnion"),
     norse(15, "Norse", "Norse", "Norse"),
     tombKings(16, "Tomb Kings", "Tomb Kings", "TombKings"),
