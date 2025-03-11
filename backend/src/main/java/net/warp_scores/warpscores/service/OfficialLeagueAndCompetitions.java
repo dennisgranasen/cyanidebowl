@@ -6,7 +6,6 @@ import net.warp_scores.warpscores.config.OfficialLeagueCompetitionNameProperties
 import net.warp_scores.warpscores.model.CompetitionFormat;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -18,7 +17,7 @@ public class OfficialLeagueAndCompetitions {
     private final OfficialLeagueCompetitionNameProperties competitionNameProperties;
 
     private static final UUID OFFICIAL_LEAGUE_UUID = UUID.fromString("00000000-0000-0000-0000-000000000025");
-    private static final List<String> ARENA_MODE_COMPETITION_NAMES = List.of("ARENA_SEASON_07_NAME");
+    private static final String ARENA_MODE_COMPETITION_NAME_PATTERN = "ARENA_SEASON_[0-9]+_NAME";
 
     public void adjustCompetitionNameAndLogo(UUID leagueId,
             String competitionName,
@@ -50,7 +49,7 @@ public class OfficialLeagueAndCompetitions {
     public void adjustCompetitionFormat(UUID leagueId,
             String competitionName,
             Consumer<CompetitionFormat> competitionFormatConsumer) {
-        if (OFFICIAL_LEAGUE_UUID.equals(leagueId) && ARENA_MODE_COMPETITION_NAMES.contains(competitionName)) {
+        if (OFFICIAL_LEAGUE_UUID.equals(leagueId) && competitionName.matches(ARENA_MODE_COMPETITION_NAME_PATTERN)) {
             competitionFormatConsumer.accept(CompetitionFormat.Arena);
         }
     }
