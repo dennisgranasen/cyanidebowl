@@ -1,6 +1,7 @@
 import React from 'react';
 import { HStack, Image, Spinner, Td, Text, Tr, useBreakpointValue } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
+import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import CompetitionProgress from './CompetitionProgress';
 import prettyPrint from '../../util/prettyPrint';
 import abbreviators from '../../util/abbreviators';
@@ -21,7 +22,12 @@ function Competition({ competition, league }) {
     <Tr onClick={goToCompetition}>
       <Td>
         <HStack>
-          <Image src={ImageUrls.logo(competition.logo || league?.logo)} boxSize={boxSize} objectFit="scale-down" />
+          <Image
+            src={ImageUrls.logo(competition.logo || league?.logo)}
+            boxSize={boxSize}
+            objectFit="scale-down"
+            fallback={<QuestionOutlineIcon boxSize={boxSize} />}
+          />
           <Text>{competition.name}</Text>
         </HStack>
       </Td>
