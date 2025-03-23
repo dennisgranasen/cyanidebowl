@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -182,14 +183,40 @@ public class MatchMessageBuilder {
         statPairs.add(
                 new Statistics.StatPair("TD", teamA.getInflictedtouchdowns(), teamB.getInflictedtouchdowns()));
         statPairs.add(new Statistics.StatPair("CTV", round(teamA.getValue()), round(teamB.getValue())));
-        statPairs.add(new Statistics.StatPair("Inf. AvBr", teamA.getInflictedinjuries(), teamB.getInflictedinjuries()));
-        statPairs.add(new Statistics.StatPair("Inf. KO", teamA.getInflictedko(), teamB.getInflictedko()));
+        statPairs.add(new Statistics.StatPair("Blocks", sum(teamA, Player.Stats::getBlocks_succeeded), sum(teamB, Player.Stats::getBlocks_succeeded)));
+        statPairs.add(new Statistics.StatPair("AvBr", teamA.getInflictedinjuries(), teamB.getInflictedinjuries()));
+        statPairs.add(new Statistics.StatPair("KO", teamA.getInflictedko(), teamB.getInflictedko()));
         statPairs.add(
-                new Statistics.StatPair("Inf. CAS", teamA.getInflictedcasualties(), teamB.getInflictedcasualties()));
-        statPairs.add(new Statistics.StatPair("Inf. Death", teamA.getInflicteddead(), teamB.getInflicteddead()));
-        statPairs.add(new Statistics.StatPair("Inf. Surf", teamA.getInflictedpushouts(), teamB.getInflictedpushouts()));
+                new Statistics.StatPair("CAS", teamA.getInflictedcasualties(), teamB.getInflictedcasualties()));
+        statPairs.add(new Statistics.StatPair("Kills", teamA.getInflicteddead(), teamB.getInflicteddead()));
+        statPairs.add(new Statistics.StatPair("Surfs", teamA.getInflictedpushouts(), teamB.getInflictedpushouts()));
+        statPairs.add(new Statistics.StatPair("Fouls", sum(teamA, Player.Stats::getFoul_done), sum(teamB, Player.Stats::getFoul_done)));
+        statPairs.add(new Statistics.StatPair("SPP", sumXpGain(teamA), sumXpGain(teamB)));
 
         return Statistics.format(statPairs);
+    }
+
+    private Integer sumXpGain(Team team) {
+        return team
+                .getPlayers()
+                .stream()
+                .map(Player::getXpGain)
+                .filter(Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .filter(Objects::nonNull)
+                .sum();
+    }
+
+    private Integer sum(Team team, Function<Player.Stats, Integer> function) {
+        return team
+                .getPlayers()
+                .stream()
+                .map(Player::getStats)
+                .filter(Objects::nonNull)
+                .map(function)
+                .filter(Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .sum();
     }
 
     private BigDecimal round(BigDecimal value) {
