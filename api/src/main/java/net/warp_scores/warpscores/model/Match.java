@@ -31,6 +31,9 @@ public class Match {
     private List<Coach> coaches;
     private List<Team> teams;
     private boolean adminResult = false;
+    private boolean concede = false;
+    private boolean overtime = false;
+
 
     @Getter
     @Setter

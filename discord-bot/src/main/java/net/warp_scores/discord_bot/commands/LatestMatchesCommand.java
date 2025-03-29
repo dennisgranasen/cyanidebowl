@@ -14,6 +14,7 @@ import net.warp_scores.discord_bot.domain.ChannelLeagueRegistrationDomainService
 import net.warp_scores.discord_bot.service.WarpScoresBackendService;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.League;
+import net.warp_scores.warpscores.model.Match;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -53,26 +54,26 @@ public class LatestMatchesCommand implements SlashCommand {
                 .map(ApplicationCommandInteractionOptionValue::asLong);
 
         Snowflake channelId = event.getInteraction().getChannelId();
-        Map<League, List<Contest>> latestLeagueContests = getLeagueContests(channelId, count);
+        Map<League, List<Match>> latestLeagueMatches = getLeagueMatches(channelId, count);
         return event
                 .deferReply()
-                .then(loadMatches(event, latestLeagueContests, spoiler, count));
+                .then(loadMatches(event, latestLeagueMatches, spoiler, count));
     }
 
     private Mono<Void> loadMatches(ChatInputInteractionEvent event,
-            Map<League, List<Contest>> latestLeagueContests,
+            Map<League, List<Match>> latestLeagueMatches,
             Optional<Boolean> spoiler,
             Optional<Long> count) {
         return event
                 .createFollowup()
-                .withEmbeds(createEmbedCreateSpec(latestLeagueContests, spoiler.orElse(false), count))
+                .withEmbeds(createEmbedCreateSpec(latestLeagueMatches, spoiler.orElse(false), count))
                 .doOnError(error -> log.error("Error during creating message ({}).", error.getMessage(),
                         error.getCause()))
                 .onErrorResume(error -> event.createFollowup(":warning: Something went wrong..."))
                 .then();
     }
 
-    private Map<League, List<Contest>> getLeagueContests(Snowflake channelId, Optional<Long> count) {
+    private Map<League, List<Match>> getLeagueMatches(Snowflake channelId, Optional<Long> count) {
         List<ChannelLeagueRegistration> byChannelId = channelLeagueRegistrationDomainService.findByChannelId(channelId);
         List<UUID> leagueUuids = emptyList();
         if (byChannelId != null && !byChannelId.isEmpty()) {
@@ -82,23 +83,23 @@ public class LatestMatchesCommand implements SlashCommand {
                     .map(UUID::fromString)
                     .toList();
         }
-        Map<League, List<Contest>> latestLeagueContests = emptyMap();
+        Map<League, List<Match>> latestLeagueMatches = emptyMap();
         if (!leagueUuids.isEmpty()) {
-            latestLeagueContests = warpScoresBackendService.loadLatestLeaguesContests(leagueUuids, count);
+            latestLeagueMatches = warpScoresBackendService.loadLatestLeaguesMatches(leagueUuids, count);
         }
-        return latestLeagueContests;
+        return latestLeagueMatches;
     }
 
-    public EmbedCreateSpec createEmbedCreateSpec(Map<League, List<Contest>> latestLeagueContests, boolean spoiler,
+    public EmbedCreateSpec createEmbedCreateSpec(Map<League, List<Match>> latestLeagueMatches, boolean spoiler,
             Optional<Long> count) {
-        if (latestLeagueContests == null || latestLeagueContests.isEmpty()) {
+        if (latestLeagueMatches == null || latestLeagueMatches.isEmpty()) {
             return warpScoresDiscordMessageBuilder
                     .builder("Latest matches.", "Showing latest matches.")
                     .addField("Error", "No matches found.", false)
                     .build();
         }
 
-        Optional<League> league = latestLeagueContests.keySet().stream().findFirst();
+        Optional<League> league = latestLeagueMatches.keySet().stream().findFirst();
         Optional<UUID> leagueId = league.map(League::getUuid);
         if (leagueId.isEmpty()) {
             return warpScoresDiscordMessageBuilder
@@ -108,7 +109,7 @@ public class LatestMatchesCommand implements SlashCommand {
         }
 
         EmbedCreateSpec.Builder builder = latestMatchesMessageBuilder
-                .builder(league.get(), league.map(latestLeagueContests::get).orElse(emptyList()), count, spoiler);
+                .builder(league.get(), league.map(latestLeagueMatches::get).orElse(emptyList()), count, spoiler);
         return builder.build();
     }
 

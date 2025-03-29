@@ -20,40 +20,49 @@ function TeamAndCoach({ teamName, coachName, race, reverse }) {
   );
 }
 
-function ContestMatchCard({ contest, contestHeader, noContentIcon, noContentHeading, noContentText, variant }) {
+function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noContentHeading, noContentText, variant }) {
   let started;
   let finished;
-  if (contest) {
-    started = contest.match ? contest.match.started : contest.matchDate;
-    finished = contest.match && !contest.live ? contest.match.finished : null;
+  let teams;
+  let coaches;
+  if (contestOrMatch?.contestUuid) {
+    started = contestOrMatch.match ? contestOrMatch.match.started : contestOrMatch.matchDate;
+    finished = contestOrMatch.match && !contestOrMatch.live ? contestOrMatch.match.finished : null;
+    teams = contestOrMatch.opponents;
+    coaches = contestOrMatch.opponents;
+  } else if (contestOrMatch?.matchId) {
+    started = contestOrMatch.started;
+    finished = contestOrMatch.finished;
+    teams = contestOrMatch.teams;
+    coaches = contestOrMatch.coaches;
   }
   return (
     <Card direction="row" overflow="hidden" variant={variant} align="center">
-      {!contest && noContentIcon && (
+      {!contestOrMatch && noContentIcon && (
         <Center p="2">
           <Icon as={noContentIcon} boxSize="4em" />
         </Center>
       )}
       <CardBody p={2}>
         <Box w="100%">
-          {!contest && noContentHeading && <Heading size="md">{noContentHeading}</Heading>}
-          {contest ? (
+          {!contestOrMatch && noContentHeading && <Heading size="md">{noContentHeading}</Heading>}
+          {contestOrMatch ? (
             <Grid templateRows="repeat(4)" templateColumns="repeat(8, 1fr)" gap={4} w="100%">
               <GridItem colSpan={8}>
                 <Center color="grey">{contestHeader}</Center>
               </GridItem>
               <GridItem colSpan={4}>
                 <TeamAndCoach
-                  teamName={contest.opponents[0].name}
-                  coachName={contest.opponents[0].coachName}
-                  race={contest.opponents[0].race}
+                  teamName={teams[0]?.name}
+                  coachName={coaches[0].coachName || coaches[0].name}
+                  race={teams[0].race}
                 />
               </GridItem>
               <GridItem colSpan={4} align="right">
                 <TeamAndCoach
-                  teamName={contest.opponents[1].name}
-                  coachName={contest.opponents[1].coachName}
-                  race={contest.opponents[1].race}
+                  teamName={teams[1].name}
+                  coachName={coaches[1].coachName || coaches[1].name}
+                  race={teams[1].race}
                   reverse
                 />
               </GridItem>
@@ -62,20 +71,20 @@ function ContestMatchCard({ contest, contestHeader, noContentIcon, noContentHead
                   <Image
                     objectFit="contain"
                     maxW="64px"
-                    src={imageUrls.logo(contest.opponents[0].logo)}
+                    src={imageUrls.logo(teams[0].logo)}
                     fallback={<QuestionOutlineIcon boxSize={boxSize} />}
                   />
                 </Center>
               </GridItem>
               <GridItem colSpan={2}>
-                <ScoreOrIcon contest={contest} size="lg" boxSize={boxSize} />
+                <ScoreOrIcon contestOrMatch={contestOrMatch} size="lg" boxSize={boxSize} />
               </GridItem>
               <GridItem colSpan={3} align="center">
                 <Center h="100%">
                   <Image
                     objectFit="contain"
                     maxW="64px"
-                    src={imageUrls.logo(contest.opponents[1].logo)}
+                    src={imageUrls.logo(teams[1].logo)}
                     fallback={<QuestionOutlineIcon boxSize={boxSize} />}
                   />
                 </Center>
@@ -83,7 +92,10 @@ function ContestMatchCard({ contest, contestHeader, noContentIcon, noContentHead
               <GridItem colSpan={8}>
                 <Center color="grey">{`Started: ${formatter.formatAsDate(started, '-')}`}</Center>
                 <Center color="grey">
-                  {`${contest.live ? 'Live since:' : 'Duration:'} ${formatter.formatAsDuration(started, finished)}`}
+                  {`${contestOrMatch.live ? 'Live since:' : 'Duration:'} ${formatter.formatAsDuration(
+                    started,
+                    finished
+                  )}`}
                 </Center>
               </GridItem>
             </Grid>

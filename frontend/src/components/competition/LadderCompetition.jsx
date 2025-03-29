@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import Ranks from './Ranks';
 import useFetchRanks from '../../hooks/useFetchRanks';
 import LiveContests from '../contest/LiveContests';
-import LatestContests from '../contest/LatestContests';
+import LatestMatches from '../contest/LatestMatches';
 
 function LadderCompetition({ competition, competitionLoading }) {
   const { fetchRanks, ranks, ranksLoading, error: ranksError } = useFetchRanks();
@@ -23,8 +23,7 @@ function LadderCompetition({ competition, competitionLoading }) {
         ranks={ranks}
         error={ranksError}
       />
-      <LiveContests competition={competition} limit={6} />
-      <LatestContests competition={competition} limit={9} />
+      <LatestMatches competition={competition} limit={9} />
     </>
   );
 }

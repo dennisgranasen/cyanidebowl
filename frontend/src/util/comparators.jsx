@@ -1,11 +1,13 @@
 function getMatchOrContestUuid(contest) {
-  if (!contest) return null;
-  return contest.matchId || contest.matchUuid || contest.contestUuid;
+  return contest?.matchId ?? contest?.matchUuid ?? contest?.contestUuid ?? null;
+}
+
+function getMatchUuid(match) {
+  return match?.matchId ?? match?.matchUuid ?? null;
 }
 
 function getContestUuid(contest) {
-  if (!contest) return null;
-  return contest.contestUuid;
+  return contest?.contestUuid ?? null;
 }
 
 const getDateFromUUID = (uuid) => {
@@ -58,9 +60,14 @@ const compareContestsByContestUuidAsDatesDesc = (contest1, contest2) => {
   return compareUUIDsAsDatesDesc(getContestUuid(contest1), getContestUuid(contest2));
 };
 
+const compareMatchesByMatchUuidAsDatesDesc = (match1, match2) => {
+  return compareUUIDsAsDatesDesc(getMatchUuid(match1), getMatchUuid(match2));
+};
+
 export default {
   compareContestsByMatchOrContestUuidAsDatesAsc,
   compareContestsByMatchOrContestUuidAsDatesDesc,
   compareContestsByContestUuidAsDatesAsc,
   compareContestsByContestUuidAsDatesDesc,
+  compareMatchesByMatchUuidAsDatesDesc,
 };

@@ -29,6 +29,10 @@ Content-Type: application/json
 ### Relaod matches
 GET {{backendBaseUrl}}/matches/reload
 
+### load latest matches
+GET {{backendBaseUrl}}/matches/league/00000000-0000-0000-0000-000000000025/latest/24
+
+
 
 ### League
 GET {{backendBaseUrl}}/leagues/94dd6ae4-83fa-11ee-b910-02000090a64f

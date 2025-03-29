@@ -7,7 +7,7 @@ import Competitions from '../components/competition/Competitions';
 import imageUrls from '../imageUrls';
 import HeaderCard from '../components/common/HeaderCard';
 import LiveContests from '../components/contest/LiveContests';
-import LatestContests from '../components/contest/LatestContests';
+import LatestMatches from '../components/contest/LatestMatches';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import LeagueInfo from '../components/league/LeagueInfo';
 
@@ -17,6 +17,17 @@ function LeaguePage() {
   const [league, setLeague] = useState();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(undefined);
+  const [
+    activeCompetitionsIncludeRoundRobinOrWissenOrKnockoutTournaments,
+    setActiveCompetitionsIncludeRoundRobinOrWissenOrKnockoutTournaments,
+  ] = useState();
+
+  useEffect(() => {
+    const formats = competitions.map((competition) => competition.format);
+    const includeRoundRobinOrWissenOrKnockoutTournaments =
+      formats.includes('RoundRobin') || formats.includes('Wissen') || formats.includes('Knockout');
+    setActiveCompetitionsIncludeRoundRobinOrWissenOrKnockoutTournaments(includeRoundRobinOrWissenOrKnockoutTournaments);
+  }, [competitions]);
 
   useEffect(() => {
     const fetchLeague = () => {
@@ -65,8 +76,8 @@ function LeaguePage() {
       <LoadingOrErrorWrapper loading={loading} error={error}>
         <Competitions competitions={competitions} league={league} />
       </LoadingOrErrorWrapper>
-      <LiveContests league={league} />
-      <LatestContests league={league} />
+      {activeCompetitionsIncludeRoundRobinOrWissenOrKnockoutTournaments && <LiveContests league={league} />}
+      <LatestMatches league={league} />
     </Stack>
   );
 }
