@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.domain.persistence;
 
 import net.warp_scores.warpscores.model.ArenaTeam;
 import net.warp_scores.warpscores.model.Match;
+import net.warp_scores.warpscores.model.MatchStatus;
 import net.warp_scores.warpscores.model.Race;
 import net.warp_scores.warpscores.model.Team;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +21,12 @@ public interface MatchRepository extends MongoRepository<Match, UUID> {
     List<Match> findByCompetitionId(UUID competitionId);
 
     Optional<Match> findTopByTeamsContainsOrderByStartedDesc(Team team);
+
+    List<Match> findTopByLeagueIdAndFinishedNotNull(UUID leagueId,
+            Pageable pageable);
+
+    List<Match> findTopByCompetitionIdAndFinishedNotNull(UUID leagueId,
+            Pageable pageable);
 
     List<Match> findByCoachesContains(Match.Coach coach, Pageable pageable);
 

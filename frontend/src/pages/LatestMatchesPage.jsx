@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Stack } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
-import LatestContests from '../components/contest/LatestContests';
+import LatestMatches from '../components/contest/LatestMatches';
 import WarpScoresApiService from '../WarpScoresApiService';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 
@@ -29,7 +29,7 @@ function LatestMatchesPage() {
   return (
     <Stack>
       <LoadingOrErrorWrapper loading={loading} error={error}>
-        <LatestContests embeddable league={league} limit={limit} />
+        <LatestMatches embeddable league={league} limit={limit} />
       </LoadingOrErrorWrapper>
     </Stack>
   );

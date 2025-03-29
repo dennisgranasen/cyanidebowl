@@ -16,7 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import { Icon } from '@chakra-ui/icons';
 import { BiSolidTrophy, BiTrophy } from 'react-icons/bi';
 import LiveContests from '../contest/LiveContests';
-import LatestContests from '../contest/LatestContests';
+import LatestMatches from '../contest/LatestMatches';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 import imageUrls from '../../imageUrls';
@@ -231,8 +231,7 @@ function ArenaCompetition({ competition }) {
       <LoadingOrErrorWrapper loading={arenaRacesLoading} error={arenaRacesError}>
         <ArenaInfos races={arenaRaces} competitionUuid={competition.uuid} />
       </LoadingOrErrorWrapper>
-      <LiveContests competition={competition} limit={6} />
-      <LatestContests competition={competition} limit={9} />
+      <LatestMatches competition={competition} limit={9} />
     </>
   );
 }

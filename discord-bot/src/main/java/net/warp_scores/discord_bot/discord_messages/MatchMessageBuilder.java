@@ -36,9 +36,6 @@ public class MatchMessageBuilder {
 
     public EmbedCreateSpec.Builder builder(League league,
             Match match,
-            boolean isAdminResult,
-            boolean isConcede,
-            boolean isOvertime,
             boolean spoiler) {
         Team teamA = match.getTeams().get(0);
         Team teamB = match.getTeams().get(1);
@@ -52,7 +49,7 @@ public class MatchMessageBuilder {
                 .url(String.format("%s/#/competition/%s", warpScoresProperties.getBaseUrls().getFrontend(),
                         match.getCompetitionId()))
                 .footer(format("Match played: %s", getMatchDateAsString(match)), null);
-        return addFields(builder, match, isAdminResult, isConcede, isOvertime, spoiler);
+        return addFields(builder, match, spoiler);
     }
 
     private Optional<String> getLogoFromMatchCompetitionLeagueOrLeague(Match match, String leagueLogo) {
@@ -80,9 +77,6 @@ public class MatchMessageBuilder {
 
     private EmbedCreateSpec.Builder addFields(EmbedCreateSpec.Builder builder,
             Match match,
-            boolean isAdminResult,
-            boolean isConcede,
-            boolean isOvertime,
             boolean spoiler) {
         Team teamA = match.getTeams().get(0);
         Team teamB = match.getTeams().get(1);
@@ -91,13 +85,13 @@ public class MatchMessageBuilder {
 
         Date matchDate = match.getStarted();
         if (!spoiler) {
-            if (isAdminResult) {
+            if (match.isAdminResult()) {
                 builder = builder.addField("Admin result", "", false);
             }
-            if (isOvertime) {
+            if (match.isOvertime()) {
                 builder = builder.addField("Overtime", "", false);
             }
-            if (isConcede) {
+            if (match.isConcede()) {
                 builder = builder.addField("Concede", "", false);
             }
         }
@@ -184,13 +178,14 @@ public class MatchMessageBuilder {
                 new Statistics.StatPair("TD", teamA.getInflictedtouchdowns(), teamB.getInflictedtouchdowns()));
         statPairs.add(new Statistics.StatPair("CTV", round(teamA.getValue()), round(teamB.getValue())));
         statPairs.add(new Statistics.StatPair("Blocks", sum(teamA, Player.Stats::getBlocks_succeeded), sum(teamB, Player.Stats::getBlocks_succeeded)));
+        statPairs.add(new Statistics.StatPair("Fouls", sum(teamA, Player.Stats::getFoul_done), sum(teamB, Player.Stats::getFoul_done)));
+        statPairs.add(new Statistics.StatPair("Expulsions", teamA.getSustainedexpulsions(), teamB.getSustainedexpulsions()));
         statPairs.add(new Statistics.StatPair("AvBr", teamA.getInflictedinjuries(), teamB.getInflictedinjuries()));
         statPairs.add(new Statistics.StatPair("KO", teamA.getInflictedko(), teamB.getInflictedko()));
         statPairs.add(
                 new Statistics.StatPair("CAS", teamA.getInflictedcasualties(), teamB.getInflictedcasualties()));
         statPairs.add(new Statistics.StatPair("Kills", teamA.getInflicteddead(), teamB.getInflicteddead()));
         statPairs.add(new Statistics.StatPair("Surfs", teamA.getInflictedpushouts(), teamB.getInflictedpushouts()));
-        statPairs.add(new Statistics.StatPair("Fouls", sum(teamA, Player.Stats::getFoul_done), sum(teamB, Player.Stats::getFoul_done)));
         statPairs.add(new Statistics.StatPair("SPP", sumXpGain(teamA), sumXpGain(teamB)));
 
         return Statistics.format(statPairs);

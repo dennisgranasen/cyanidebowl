@@ -31,6 +31,7 @@ public class ContestService {
     private final ContestInitializationService contestInitializationService;
     private final TeamDomainService teamDomainService;
     private final OfficialLeagueAndCompetitions officialLeagueAndCompetitions;
+    private final MatchService matchService;
 
     @DurationLogging
     public List<Contest> getCompetitionContests(UUID competitionUuid, Optional<Integer> limit) {
@@ -94,57 +95,9 @@ public class ContestService {
                     officialLeagueAndCompetitions.adjustCompetitionLogo(m.getLeagueId(), m.getCompetitionName(),
                             m::setCompetitionLogo);
                     contest.setLive(m.getFinished() == null ? 1 : 0);
-                    contest.setConcede(isConcede(m));
-                    contest.setOvertime(isOvertime(m));
+                    contest.setConcede(matchService.isConcede(m));
+                    contest.setOvertime(matchService.isOvertime(m));
                 });
-    }
-
-    public boolean isConcede(Match match) {
-        boolean scoreDiffersTouchdowns = scoreDiffersTouchdowns(match);
-        boolean teamWithoutMvp = teamWithoutMvp(match);
-        return scoreDiffersTouchdowns && teamWithoutMvp;
-    }
-
-    public boolean isOvertime(Match match) {
-        boolean scoreDiffersTouchdowns = scoreDiffersTouchdowns(match);
-        boolean teamWithoutMvp = teamWithoutMvp(match);
-        return scoreDiffersTouchdowns && !teamWithoutMvp;
-    }
-
-    private boolean teamWithoutMvp(Match match) {
-        if (match.getTeams() == null || match.getTeams().isEmpty()) {
-            return false;
-        }
-        boolean teamAHasMvp = hasMvp(match.getTeams().get(0).getPlayers());
-        boolean teamBHasMvp = hasMvp(match.getTeams().get(1).getPlayers());
-        return !teamAHasMvp || !teamBHasMvp;
-    }
-
-    private boolean hasMvp(List<Player> players) {
-        if (players == null) {
-            return false;
-        }
-        return players.stream().anyMatch(p -> Optional.ofNullable(p.getMvp()).orElse(false));
-    }
-
-    public boolean scoreDiffersTouchdowns(Match match) {
-        if (match.getTeams() == null || match.getTeams().isEmpty()) {
-            return false;
-        }
-        int scoreA = getScore(match, 0);
-        int scoreB = getScore(match, 1);
-        int inflictedTdA = getInflictedTd(match, 0);
-        int inflictedTdB = getInflictedTd(match, 1);
-
-        return scoreA - scoreB != inflictedTdA - inflictedTdB;
-    }
-
-    private int getInflictedTd(Match match, int teamIndex) {
-        return Optional.ofNullable(match.getTeams().get(teamIndex).getInflictedtouchdowns()).orElse(0);
-    }
-
-    private int getScore(Match match, int teamIndex) {
-        return Optional.ofNullable(match.getTeams().get(teamIndex).getScore()).orElse(0);
     }
 
 }

@@ -59,7 +59,7 @@ function Contest({ contest }) {
       <Td>
         <DelayedIconTooltip label={<ScoreOrIconTooltip contest={contest} />}>
           <Center>
-            <ScoreOrIcon contest={contest} boxSize={smallBoxSize} size="sm" />
+            <ScoreOrIcon contestOrMatch={contest} boxSize={smallBoxSize} size="sm" />
           </Center>
         </DelayedIconTooltip>
       </Td>

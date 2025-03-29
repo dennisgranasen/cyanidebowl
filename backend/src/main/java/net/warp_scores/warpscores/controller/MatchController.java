@@ -6,6 +6,7 @@ import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.service.CompetitionService;
+import net.warp_scores.warpscores.service.MatchService;
 import net.warp_scores.warpscores.service.OfficialLeagueAndCompetitions;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,26 +24,38 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class MatchController {
+    public static final int MAX_LIMIT_FOR_LATEST_MATCHES = 24;
+    public static final int DEFAULT_LIMIT_FOR_LATEST_MATCHES = 6;
 
-    private final MatchRepository matchRepository;
     private final CompetitionService competitionService;
-    private final OfficialLeagueAndCompetitions officialLeagueAndCompetitions;
+    private final MatchService matchService;
 
     @GetMapping("/matches/team/{teamUuid}")
     public ResponseEntity<List<Match>> getTeamMatches(@PathVariable(name = "teamUuid") UUID teamUuid) {
         try {
-            List<Match> byTeamId = matchRepository
-                    .findAll()
-                    .stream()
-                    .filter(match -> match.getTeams().stream().anyMatch(team -> team.getId().equals(teamUuid)))
-                    .collect(Collectors.toList());
-
-            byTeamId.forEach(match ->
-                    officialLeagueAndCompetitions.adjustCompetitionName(match.getLeagueId(), match.getCompetitionName(),
-                            match::setCompetitionName));
+            List<Match> byTeamId = matchService.findByTeamId(teamUuid);
             return ResponseEntity.ok(byTeamId);
         } catch (Exception ex) {
             log.error("Unable to retrieve matches for team {}", teamUuid, ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/matches/league/{leagueUuid}/latest")
+    public ResponseEntity<List<Match>> getLatestLeagueContests(@PathVariable(name = "leagueUuid") UUID leagueUuid) {
+        return getLatestLeagueMatches(leagueUuid, null);
+    }
+
+    @GetMapping("/matches/league/{leagueUuid}/latest/{limit}")
+    public ResponseEntity<List<Match>> getLatestLeagueMatches(@PathVariable(name = "leagueUuid") UUID leagueUuid,
+            @PathVariable(name = "limit") Integer limit) {
+        limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT_FOR_LATEST_MATCHES);
+        limit = Math.min(limit, MAX_LIMIT_FOR_LATEST_MATCHES);
+        try {
+            List<Match> matches = matchService.getLatestLeagueMatches(leagueUuid, limit);
+            return ResponseEntity.ok(matches);
+        } catch (Exception ex) {
+            log.error("Unable to retrieve matches", ex);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -51,12 +64,30 @@ public class MatchController {
     public ResponseEntity<List<Match>> getCompetitionMatches(@PathVariable(name = "competitionId") UUID competitionId) {
         try {
             Optional<Competition> competition = competitionService.loadCompetition(competitionId);
-            List<Match> byCompetitionId = matchRepository
-                    .findByCompetitionId(competitionId);
+            List<Match> byCompetitionId = matchService.findByCompetitionId(competitionId);
             List<Match> matches = initializeForCompetition(byCompetitionId, competition);
             return ResponseEntity.ok(matches);
         } catch (Exception ex) {
             log.error("Unable to retrieve matches for competition {}", competitionId, ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/matches/competition/{competitionId}/latest")
+    public ResponseEntity<List<Match>> getLatestCompetitionMatches(@PathVariable(name = "competitionId") UUID competitionId) {
+        return getLatestCompetitionMatches(competitionId, null);
+    }
+
+    @GetMapping("/matches/competition/{competitionId}/latest/{limit}")
+    public ResponseEntity<List<Match>> getLatestCompetitionMatches(@PathVariable(name = "competitionId") UUID competitionId,
+            @PathVariable(name = "limit") Integer limit) {
+        limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT_FOR_LATEST_MATCHES);
+        limit = Math.min(limit, MAX_LIMIT_FOR_LATEST_MATCHES);
+        try {
+            List<Match> matches = matchService.getLatestCompetitionMatches(competitionId, limit);
+            return ResponseEntity.ok(matches);
+        } catch (Exception ex) {
+            log.error("Unable to retrieve matches", ex);
             return ResponseEntity.internalServerError().build();
         }
     }

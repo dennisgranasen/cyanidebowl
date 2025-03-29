@@ -7,27 +7,27 @@ import comparators from '../../util/comparators';
 import ContestMatchCards from './ContestMatchCards';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 
-function LatestContests({ league, competition, embeddable, limit }) {
+function LatestMatches({ league, competition, embeddable, limit }) {
   const [contests, setContests] = useState();
   const [loading, setLoading] = useState();
   const [error, setError] = useState();
 
-  const fetchLatestLeagueContests = (leagueUuid, contestLimit) => {
+  const fetchLatestLeagueMatches = (leagueUuid, contestLimit) => {
     setLoading(true);
-    WarpScoresApiService.latestLeagueContests(leagueUuid, contestLimit)
+    WarpScoresApiService.latestLeagueMatches(leagueUuid, contestLimit)
       .then((data) => {
-        data.sort(comparators.compareContestsByMatchOrContestUuidAsDatesDesc);
+        data.sort(comparators.compareMatchesByMatchUuidAsDatesDesc);
         setContests(data);
       })
       .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
       .finally(() => setLoading(false));
   };
 
-  const fetchLatestCompetitionContests = (competitionUuid, contestLimit) => {
+  const fetchLatestCompetitionMatches = (competitionUuid, contestLimit) => {
     setLoading(true);
-    WarpScoresApiService.latestCompetitionContests(competitionUuid, contestLimit)
+    WarpScoresApiService.latestCompetitionMatches(competitionUuid, contestLimit)
       .then((data) => {
-        data.sort(comparators.compareContestsByMatchOrContestUuidAsDatesDesc);
+        data.sort(comparators.compareMatchesByMatchUuidAsDatesDesc);
         setContests(data);
       })
       .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
@@ -36,10 +36,10 @@ function LatestContests({ league, competition, embeddable, limit }) {
 
   useEffect(() => {
     if (league) {
-      fetchLatestLeagueContests(league.uuid, limit);
+      fetchLatestLeagueMatches(league.uuid, limit);
     }
     if (competition) {
-      fetchLatestCompetitionContests(competition.uuid, limit);
+      fetchLatestCompetitionMatches(competition.uuid, limit);
     }
   }, [league, competition]);
 
@@ -59,4 +59,4 @@ function LatestContests({ league, competition, embeddable, limit }) {
   );
 }
 
-export default LatestContests;
+export default LatestMatches;
