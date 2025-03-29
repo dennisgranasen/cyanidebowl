@@ -44,8 +44,13 @@ public class MatchService {
 
     @DurationLogging
     public List<Match> findByCompetitionId(UUID competitionId) {
-        List<Match>matches = matchRepository.findByCompetitionId(competitionId);
+        List<Match> matches = matchRepository.findByCompetitionId(competitionId);
         return adjustCompetitionNameAndLogoAndUpdateConcedeAndOvertimeInfo(matches);
+    }
+
+    @DurationLogging
+    public Integer countByCompetitionId(UUID competitionId) {
+        return matchRepository.countMatchesByCompetitionId(competitionId);
     }
 
     private List<Match> adjustCompetitionNameAndLogoAndUpdateConcedeAndOvertimeInfo(List<Match> matches) {

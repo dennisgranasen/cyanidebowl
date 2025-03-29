@@ -20,6 +20,8 @@ import java.util.UUID;
 public interface MatchRepository extends MongoRepository<Match, UUID> {
     List<Match> findByCompetitionId(UUID competitionId);
 
+    Integer countMatchesByCompetitionId(UUID competitionId);
+
     Optional<Match> findTopByTeamsContainsOrderByStartedDesc(Team team);
 
     List<Match> findTopByLeagueIdAndFinishedNotNull(UUID leagueId,
