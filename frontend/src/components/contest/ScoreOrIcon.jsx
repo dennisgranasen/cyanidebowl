@@ -21,7 +21,8 @@ function ScoreOrIcon({ contestOrMatch, size, boxSize }) {
         !contestOrMatch.live;
       break;
     default:
-      matchPlayed = contestOrMatch.matchId ?? true;
+      matchPlayed = contestOrMatch.matchId && true;
+      matchValidated = contestOrMatch.matchId && true;
       break;
   }
 
