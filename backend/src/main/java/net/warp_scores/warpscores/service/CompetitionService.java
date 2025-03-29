@@ -9,6 +9,7 @@ import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.CompetitionFormat;
 import net.warp_scores.warpscores.model.CompetitionStatus;
 import net.warp_scores.warpscores.model.Contest;
+import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.MatchStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,7 @@ public class CompetitionService {
     private final CompetitionRepository competitionRepository;
     private final ContestRepository contestsRepository;
     private final OfficialLeagueAndCompetitions officialLeagueCompetitions;
+    private final MatchService matchService;
 
     @DurationLogging
     public List<Competition> loadForLeague(UUID leagueId) {
@@ -145,8 +147,9 @@ public class CompetitionService {
     }
 
     private void initializeLadder(Competition competition) {
-        List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid(), Pageable.unpaged());
-        initializeMatchCount(competition, contests);
+        Integer matchCount = matchService.countByCompetitionId(competition.getUuid());
+        competition.setTotalMatches(matchCount);
+        competition.setPlayedMatches(matchCount);
     }
 
     private void initializeMatchCount(Competition competition, List<Contest> contests) {
