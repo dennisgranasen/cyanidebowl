@@ -3,6 +3,7 @@ package net.warp_scores.discord_bot.discord_messages;
 import discord4j.core.spec.EmbedCreateFields;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.rest.util.Color;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.discord_bot.config.properties.WarpScoresProperties;
 import net.warp_scores.warpscores.model.League;
@@ -14,8 +15,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -33,6 +33,14 @@ public class MatchMessageBuilder {
 
     private final WarpScoresProperties warpScoresProperties;
     private final WarpScoresDiscordMessageBuilder warpScoresDiscordMessageBuilder;
+
+    private static int comparePlayersByXpGainReversed(Player player1, Player player2) {
+        Integer xpGain1 = player1.getXpGain();
+        Integer xpGain2 = player2.getXpGain();
+        xpGain1 = xpGain1 == null ? 0 : xpGain1;
+        xpGain2 = xpGain2 == null ? 0 : xpGain2;
+        return Integer.compare(xpGain2, xpGain1);
+    }
 
     public EmbedCreateSpec.Builder builder(League league,
             Match match,
@@ -126,13 +134,14 @@ public class MatchMessageBuilder {
         addImpactPlayers(team, builder);
     }
 
-    private void addImpactPlayers(Team team, StringBuilder builder) {
+    private void addImpactPlayers(@NonNull Team team, StringBuilder builder) {
         Optional<List<Player>> players = Optional.ofNullable(team.getPlayers());
         List<Player> impactPlayers = players
+                .orElse(Collections.emptyList())
                 .stream()
-                .flatMap(Collection::stream)
+                .filter(Objects::nonNull)
                 .filter(p -> p.getMatchplayed() != 0)
-                .sorted(Comparator.comparingInt(Player::getXpGain).reversed())
+                .sorted(MatchMessageBuilder::comparePlayersByXpGainReversed)
                 .toList();
         int playersAdded = 0;
         for (Player player : impactPlayers) {
@@ -177,9 +186,12 @@ public class MatchMessageBuilder {
         statPairs.add(
                 new Statistics.StatPair("TD", teamA.getInflictedtouchdowns(), teamB.getInflictedtouchdowns()));
         statPairs.add(new Statistics.StatPair("CTV", round(teamA.getValue()), round(teamB.getValue())));
-        statPairs.add(new Statistics.StatPair("Blocks", sum(teamA, Player.Stats::getBlocks_succeeded), sum(teamB, Player.Stats::getBlocks_succeeded)));
-        statPairs.add(new Statistics.StatPair("Fouls", sum(teamA, Player.Stats::getFoul_done), sum(teamB, Player.Stats::getFoul_done)));
-        statPairs.add(new Statistics.StatPair("Expulsions", teamA.getSustainedexpulsions(), teamB.getSustainedexpulsions()));
+        statPairs.add(new Statistics.StatPair("Blocks", sum(teamA, Player.Stats::getBlocks_succeeded),
+                sum(teamB, Player.Stats::getBlocks_succeeded)));
+        statPairs.add(new Statistics.StatPair("Fouls", sum(teamA, Player.Stats::getFoul_done),
+                sum(teamB, Player.Stats::getFoul_done)));
+        statPairs.add(
+                new Statistics.StatPair("Expulsions", teamA.getSustainedexpulsions(), teamB.getSustainedexpulsions()));
         statPairs.add(new Statistics.StatPair("AvBr", teamA.getInflictedinjuries(), teamB.getInflictedinjuries()));
         statPairs.add(new Statistics.StatPair("KO", teamA.getInflictedko(), teamB.getInflictedko()));
         statPairs.add(

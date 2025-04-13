@@ -27,9 +27,12 @@ function TableColumns() {
   return (
     <Tr>
       <Th>Competition</Th>
-      <Th>{isSmallScreen ? 'F' : 'Format'}</Th>
-      <Th>Status</Th>
       <Th isNumeric>{isSmallScreen ? 'T' : 'Teams'}</Th>
+      <Th>{isSmallScreen ? 'F' : 'Format'}</Th>
+      {!isSmallScreen && <Th>Status</Th>}
+      <Th>{isSmallScreen ? 'CR' : 'Current Round'}</Th>
+      <Th>{isSmallScreen ? 'RML' : 'Round matches left'}</Th>
+      <Th>{isSmallScreen ? 'TML' : 'Total matches left'}</Th>
     </Tr>
   );
 }

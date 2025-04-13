@@ -171,7 +171,9 @@ public class ContestInitializationService {
             createNextRounds(futureContests, currRound + 1, currRoundSize / 2, totalRounds);
         }
         if (contests.size() + futureContests.size() != totalMatches) {
-            throw new IllegalStateException("Something went wrong...");
+            throw new IllegalStateException(
+                    String.format("Something went wrong (contests: %s, futureContests: %s, totalMatches: %s)...",
+                            contests.size(), futureContests.size(), totalMatches));
         }
         return futureContests;
     }

@@ -180,7 +180,7 @@ function CompetitionProgress({
   const currentRoundText = currentRound ? `, Round ${currentRound}` : '';
   const totalRoundsText = currentRound && totalRounds ? `of ${totalRounds}` : '';
   const progressText = `${prettyPrint(status)}${currentRoundText} ${totalRoundsText}`;
-  const finishedMatches = playedMatches - notValidatedMatches;
+  const finishedMatches = playedMatches - (notValidatedMatches ?? 0);
   const notYetValidatedMatches = notValidatedMatches > 0 ? ` (${notValidatedMatches} not yet validated)` : '';
   const outOfTotalMatchesText = totalMatches ? ` out of ${totalMatches}` : '';
   const progressAdditionalText = playedMatches

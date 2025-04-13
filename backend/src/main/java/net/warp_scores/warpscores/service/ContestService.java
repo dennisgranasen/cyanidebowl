@@ -17,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,10 +37,10 @@ public class ContestService {
     @DurationLogging
     public List<Contest> getCompetitionContests(UUID competitionUuid, Optional<Integer> limit) {
         Optional<Competition> competition = competitionService.loadCompetition(competitionUuid);
-        List<Team> teams = teamDomainService.findByCompetitionId(competitionUuid);
         Pageable pageable = limit.map(l -> (Pageable) PageRequest.of(0, l, Sort.by(Sort.Direction.DESC, "matchDate")))
                 .orElse(Pageable.unpaged());
         List<Contest> contests = contestRepository.findByCompetitionId(competitionUuid, pageable);
+        List<Team> teams = contests.stream().map(Contest::getOpponents).flatMap(Collection::stream).distinct().toList();
         contests.forEach(this::loadMatchIntoAndAdjustCompetitionName);
 
         return contestInitializationService.initializeContestsScheduleForFormat(
