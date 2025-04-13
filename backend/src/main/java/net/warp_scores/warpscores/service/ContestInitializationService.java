@@ -38,13 +38,13 @@ public class ContestInitializationService {
         DUMMY_TEAM.setId(Generators.timeBasedGenerator().generate());
     }
 
-    public List<Contest> initializeContestsScheduleForFormat(Optional<Competition> competition, List<Team> teams,
+    public List<Contest> initializeContestsScheduleForFormat(Optional<Competition> competition, Collection<Team> teams,
             List<Contest> contests) {
         return initializeContestsScheduleForFormat(competition, teams, contests, true);
     }
 
     @DurationLogging
-    public List<Contest> initializeContestsScheduleForFormat(Optional<Competition> competition, List<Team> teams,
+    public List<Contest> initializeContestsScheduleForFormat(Optional<Competition> competition, Collection<Team> teams,
             List<Contest> contests, boolean generateFutureRoundRobinRounds) {
 
         Optional<CompetitionFormat> competitionFormat = competition.map(Competition::getFormat);
@@ -67,7 +67,7 @@ public class ContestInitializationService {
 
     @SuppressWarnings("rawtypes")
     private List<Contest> initializeKnockoutContests(List<Contest> contests,
-            List<Team> teams) {
+            Collection<Team> teams) {
         int teamCount = teams.size();
         int totalRounds = 1;
         int players = 2;
@@ -198,7 +198,7 @@ public class ContestInitializationService {
 
     private List<Contest> initializeRoundRobinContests(List<Contest> contests,
             Optional<Competition> competition,
-            List<Team> teams) {
+            Collection<Team> teams) {
         OptionalInt currentRound = contests
                 .stream()
                 .mapToInt(Contest::getRound)
@@ -240,7 +240,7 @@ public class ContestInitializationService {
     }
 
     private void addDummyTeamIfOddParticipants
-            (List<Team> teams, List<Team> homeTeams, List<Team> awayTeams) {
+            (Collection<Team> teams, List<Team> homeTeams, List<Team> awayTeams) {
         boolean isEven = teams.size() % 2 == 0;
         if (isEven) {
             return;
