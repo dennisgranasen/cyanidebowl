@@ -31,21 +31,33 @@ function Competition({ competition, league }) {
           <Text>{competition.name}</Text>
         </HStack>
       </Td>
-      <Td>{isSmallScreen ? abbreviators.makeInitials(competition.format) : prettyPrint(competition.format)}</Td>
-      <Td>
-        <CompetitionProgress
-          status={competition.status}
-          format={competition.format}
-          teamsMax={competition.teamsMax}
-          currentRound={competition.currentRound}
-          totalRounds={competition.totalRounds}
-          totalMatches={competition.totalMatches}
-          playedMatches={competition.playedMatches}
-          notValidatedMatches={competition.notValidatedMatches}
-          liveMatches={competition.liveMatches}
-        />
-      </Td>
       <Td isNumeric>{competition.teamsMax}</Td>
+      <Td>{isSmallScreen ? abbreviators.makeInitials(competition.format) : prettyPrint(competition.format)}</Td>
+      {!isSmallScreen && (
+        <Td>
+          <CompetitionProgress
+            status={competition.status}
+            format={competition.format}
+            teamsMax={competition.teamsMax}
+            currentRound={competition.currentRound}
+            totalRounds={competition.totalRounds}
+            totalMatches={competition.totalMatches}
+            playedMatches={competition.playedMatches}
+            notValidatedMatches={competition.notValidatedMatches}
+            liveMatches={competition.liveMatches}
+          />
+        </Td>
+      )}
+      <Td>{competition.currentRound && `${competition.currentRound}/${competition.totalRounds}`}</Td>
+      <Td>
+        {competition.currentRound &&
+          ['RoundRobin', 'Wissen'].includes(competition.format) &&
+          `${
+            competition.totalMatches / competition.totalRounds -
+            (competition.playedMatches % (competition.totalMatches / competition.totalRounds))
+          }`}
+      </Td>
+      <Td>{competition.currentRound && `${competition.totalMatches - competition.playedMatches}`}</Td>
     </Tr>
   ) : (
     <Spinner />
