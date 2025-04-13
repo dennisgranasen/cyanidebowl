@@ -233,7 +233,7 @@ public class FetchDataScheduler {
 
         leagues = leagues.stream()
                 .filter(league -> leagueHasMatchesAfterLastKnown(league,
-                        lastMatchDateKnownByLeagueUuid.get(league.getUuid())))
+                        lastMatchDateKnownByLeagueUuid.getOrDefault(league.getUuid(), Optional.empty())))
                 .toList();
 
         log.info("Will load matches for {} leagues.", leagues.size());

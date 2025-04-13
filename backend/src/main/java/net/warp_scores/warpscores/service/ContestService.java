@@ -10,7 +10,6 @@ import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.MatchStatus;
-import net.warp_scores.warpscores.model.Player;
 import net.warp_scores.warpscores.model.Team;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -18,8 +17,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -37,10 +38,14 @@ public class ContestService {
     @DurationLogging
     public List<Contest> getCompetitionContests(UUID competitionUuid, Optional<Integer> limit) {
         Optional<Competition> competition = competitionService.loadCompetition(competitionUuid);
+        Set<Team> teams = new LinkedHashSet<>(teamDomainService
+                .findByCompetitionId(competitionUuid)
+                .stream()
+                .toList());
         Pageable pageable = limit.map(l -> (Pageable) PageRequest.of(0, l, Sort.by(Sort.Direction.DESC, "matchDate")))
                 .orElse(Pageable.unpaged());
         List<Contest> contests = contestRepository.findByCompetitionId(competitionUuid, pageable);
-        List<Team> teams = contests.stream().map(Contest::getOpponents).flatMap(Collection::stream).distinct().toList();
+        teams.addAll(contests.stream().map(Contest::getOpponents).flatMap(Collection::stream).toList());
         contests.forEach(this::loadMatchIntoAndAdjustCompetitionName);
 
         return contestInitializationService.initializeContestsScheduleForFormat(
