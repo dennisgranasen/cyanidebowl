@@ -79,10 +79,10 @@ function getRealValue(type, defaultValue, bonusValue, malusValue) {
 }
 
 function getValueFrom(arrayOfObjects, neededType) {
-  const filtered = arrayOfObjects.map((object) =>
-    Object.keys(object)[0] === neededType ? object[Object.keys(object)] : 0
-  );
-  return filtered[0];
+  const sumForType = arrayOfObjects
+    .map((object) => (object[neededType] ? object[neededType] : 0))
+    .reduce((acc, value) => acc + value, 0);
+  return sumForType;
 }
 
 function Attribute({ type, defaultAttributes, bonus, malus }) {
