@@ -1,32 +1,27 @@
-# .github/workflows/.pull-data.yml  
 name: Pull data from Cyanide and update MongoDB
 
 on:
-  #schedule:
-  #  - cron: '*/5 * * * *'  # every 5 minutes
   workflow_dispatch:  # allows manual triggering of the workflow
-
+  schedule:
+    - cron: '0 * */15 * *'    # every 15 minutes
 jobs:
-  sync_and_update:
+  fetch_data:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout repo to run your Node.js script
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2. Setup Node.js
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
         with:
-          node-version: '18'
+          distribution: 'temurin'
+          java-version: '21'
 
-      # 3. Install dependencies
-      - name: Install dependencies
-        run: npm install
+      - name: Build with Maven
+        run: mvn clean package -DskipTests -DskipDocker -P fetcher
 
-      # 4. Run MongoDB update script
-      - name: Run MongoDB update script
-        env:
-          MONGODB_URI: ${{ secrets.MONGODB_URI }}
-        run: node scripts/updateMongo.js
+      - name: Fetch Competitions
+        run: java -jar ./backend/target/backend.jar
+
+      # Optionally, upload logs or artifacts if needed
