@@ -1,0 +1,22 @@
+# .github/workflows/gitlab-sync.yml
+name: Sync from GitLab
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'  # every Monday at 2:00 AM UTC
+  workflow_dispatch:  # allows manual triggering of the workflow
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Git
+        run: sudo apt-get install git
+
+      - name: Clone GitLab Repo
+        run: |
+          git clone --mirror git@gitlab.com:warp-scores/warp-scores.git
+          cd warp-scores.git
+          git remote add github git@gitlab.com:warp-scores/warp-scores.git https://${{ secrets.UPDATE_TOKEN }}@github.com/dennisgranasen/cyanidebowl.git
+          git fetch -p origin
+          git push --mirror github
