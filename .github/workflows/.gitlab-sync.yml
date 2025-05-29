@@ -17,6 +17,5 @@ jobs:
         run: |
           git clone --mirror https://oauth2:${{ secrets.GITLAB_READTOKEN }}@gitlab.com/warp-scores/warp-scores.git
           cd warp-scores.git
-          git remote add github https://oauth2:${{ secrets.GITLAB_READTOKEN }}@gitlab.com/warp-scores/warp-scores.git https://${{ secrets.UPDATE_TOKEN }}@github.com/dennisgranasen/cyanidebowl.git
-          git fetch -p origin
+          git remote add github https://${{ secrets.UPDATE_TOKEN }}@github.com/dennisgranasen/cyanidebowl.git
           git push --mirror github
