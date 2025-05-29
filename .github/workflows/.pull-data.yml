@@ -22,6 +22,9 @@ jobs:
         run: mvn clean package -DskipTests -DskipDocker -P fetcher -pl api,cyanide-api,backend -am
 
       - name: Fetch Competitions
+        env:
+          SPRING_DATA_MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          CYANIDE_API_KEY: ${{ secrets.CYANIDE_API_KEY }}
         run: java -jar ./backend/target/backend.jar
 
       # Optionally, upload logs or artifacts if needed
