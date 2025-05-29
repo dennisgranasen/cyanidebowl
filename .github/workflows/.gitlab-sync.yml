@@ -15,8 +15,8 @@ jobs:
 
       - name: Clone GitLab Repo
         run: |
-          git clone --mirror git@gitlab.com:warp-scores/warp-scores.git
+          git clone --mirror https://gitlab.com/warp-scores/warp-scores.git
           cd warp-scores.git
-          git remote add github git@gitlab.com:warp-scores/warp-scores.git https://${{ secrets.UPDATE_TOKEN }}@github.com/dennisgranasen/cyanidebowl.git
+          git remote add github https://gitlab.com/warp-scores/warp-scores.git https://${{ secrets.UPDATE_TOKEN }}@github.com/dennisgranasen/cyanidebowl.git
           git fetch -p origin
           git push --mirror github
