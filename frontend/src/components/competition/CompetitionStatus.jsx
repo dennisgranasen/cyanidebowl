@@ -1,7 +1,7 @@
 import React from 'react';
 import { FaAddressCard, FaFlagCheckered, FaSpinner } from 'react-icons/fa6';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
-import prettyPrint from '../../util/PrettyPrint';
+import prettyPrint from '../../util/prettyPrint';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
 
 function StatusAsIcon({ status }) {

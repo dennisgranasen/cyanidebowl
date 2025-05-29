@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Stack } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
 import WarpScoresApiService from '../WarpScoresApiService';
-import config from '../config';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import LiveContests from '../components/contest/LiveContests';
 
@@ -20,7 +19,7 @@ function LiveMatchesPage() {
         })
         .then(() => setLoading(false))
         .catch((reason) => {
-          setError({ type: 'error', message: reason.toLocaleString(config.locale) });
+          setError({ type: 'error', message: reason.toLocaleString() });
         });
     };
     fetchLeague();

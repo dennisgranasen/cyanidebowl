@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.discord_bot.config.properties.WarpScoresProperties;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.League;
+import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Status;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -71,32 +72,32 @@ public class WarpScoresBackendService {
         }
     }
 
-    public Map<League, List<Contest>> loadLatestLeaguesContests(List<UUID> leagueUuids) {
-        return loadLatestLeaguesContests(leagueUuids, Optional.empty());
+    public Map<League, List<Match>> loadLatestLeaguesMatches(List<UUID> leagueUuids) {
+        return loadLatestLeaguesMatches(leagueUuids, Optional.empty());
     }
 
-    public Map<League, List<Contest>> loadLatestLeagueContests(UUID leagueUuid, Optional<Long> count) {
-        return loadLatestLeaguesContests(List.of(leagueUuid), count);
+    public Map<League, List<Match>> loadLatestLeagueMatches(UUID leagueUuid, Optional<Long> count) {
+        return loadLatestLeaguesMatches(List.of(leagueUuid), count);
     }
 
-    public Map<League, List<Contest>> loadLatestLeaguesContests(List<UUID> leagueUuids, Optional<Long> count) {
-        Map<League, List<Contest>> latestLeagueContests = new HashMap<>();
-        leagueUuids.forEach(uuid -> loadLatestLeagueContestsInto(latestLeagueContests, uuid, count));
-        return latestLeagueContests;
+    public Map<League, List<Match>> loadLatestLeaguesMatches(List<UUID> leagueUuids, Optional<Long> count) {
+        Map<League, List<Match>> latestLeagueMatches = new HashMap<>();
+        leagueUuids.forEach(uuid -> loadLatestLeagueMatchesInto(latestLeagueMatches, uuid, count));
+        return latestLeagueMatches;
     }
 
-    private void loadLatestLeagueContestsInto(Map<League, List<Contest>> latestLeagueContests,
+    private void loadLatestLeagueMatchesInto(Map<League, List<Match>> latestLeagueMatches,
             UUID leagueUuid,
             Optional<Long> count) {
         RestTemplate restTemplate = new RestTemplate();
         Optional<League> league = loadLeague(leagueUuid);
         league.ifPresent(l -> {
-            ParameterizedTypeReference<List<Contest>> latestContestsTypeRef = new ParameterizedTypeReference<>() {};
-            ResponseEntity<List<Contest>> contestResponse = restTemplate.exchange(
-                    String.format("%s/contests/league/%s/latest%s", warpScoresProperties.getBaseUrls().getApiBackend(),
+            ParameterizedTypeReference<List<Match>> latestMatchesTypeRef = new ParameterizedTypeReference<>() {};
+            ResponseEntity<List<Match>> matchesResponse = restTemplate.exchange(
+                    String.format("%s/matches/league/%s/latest%s", warpScoresProperties.getBaseUrls().getApiBackend(),
                             leagueUuid, count.map(c -> String.format("/%s", c)).orElse("")), HttpMethod.GET,
-                    RequestEntity.EMPTY, latestContestsTypeRef);
-            latestLeagueContests.put(l, contestResponse.getBody());
+                    RequestEntity.EMPTY, latestMatchesTypeRef);
+            latestLeagueMatches.put(l, matchesResponse.getBody());
         });
     }
 

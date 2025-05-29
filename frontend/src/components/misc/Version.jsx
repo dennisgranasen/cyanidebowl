@@ -1,8 +1,8 @@
 import { Box, HStack, Spacer } from '@chakra-ui/react';
 import React, { useEffect, useState } from 'react';
 import WarpScoresApiService from '../../WarpScoresApiService';
-import abbreviators from '../../util/Abbreviators';
-import logger from '../../util/Logger';
+import abbreviators from '../../util/abbreviators';
+import logger from '../../util/logger';
 
 const frontendVersionFile = '/version.json';
 

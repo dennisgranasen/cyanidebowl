@@ -86,9 +86,10 @@ public class ContestDomainService {
         targetContest.setCompetitionId(sourceApiContestMatch.getCompetition_id());
         targetContest.setCompetitionName(sourceApiContestMatch.getCompetition());
         targetContest.setLeagueName(sourceApiContestMatch.getLeague());
-        targetContest.setMatchId(sourceApiContestMatch.getMatch_id());
+        targetContest.setGameId(sourceApiContestMatch.getGame_id());
+        targetContest.setMatchUuid(
+                Optional.ofNullable(sourceApiContestMatch.getGame_id()).map(UUID::fromString).orElse(null));
         targetContest.setMatchDate(sourceApiContestMatch.getMatch_date());
-        targetContest.setMatchUuid(sourceApiContestMatch.getMatch_uuid());
         targetContest.setOpponents(toOpponents(sourceApiContestMatch.getOpponents()));
 
         undeprecateMatchStatus(targetContest);

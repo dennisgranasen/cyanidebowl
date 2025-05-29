@@ -1,0 +1,6 @@
+const parseMarkdownPrefixingLinks = (text, prefix) => {
+  const markdownLinkRegex = /(\[[^\]]*\])\((?:https?|mailto:\/\/){0}([^:)]*)\)/g;
+  return text.replace(markdownLinkRegex, `$1(${prefix}$2)`);
+};
+
+export default parseMarkdownPrefixingLinks;

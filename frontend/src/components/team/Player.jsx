@@ -1,12 +1,26 @@
 import React from 'react';
-import { Center, Image, Tag, Td, Text, Tr } from '@chakra-ui/react';
-import { FaBandage } from 'react-icons/fa6';
+import { Center, Image, Td, Text, Tr } from '@chakra-ui/react';
+import { FaBandage, FaStar } from 'react-icons/fa6';
+import { Icon } from '@chakra-ui/icons';
+import {
+  TbHexagon,
+  TbHexagonNumber0,
+  TbHexagonNumber1,
+  TbHexagonNumber2,
+  TbHexagonNumber3,
+  TbHexagonNumber4,
+  TbHexagonNumber5,
+  TbHexagonNumber6,
+  TbHexagonNumber7,
+  TbHexagonNumber8,
+  TbHexagonNumber9,
+} from 'react-icons/tb';
 import Skills from './Skills';
-import prettyPrint from '../../util/PrettyPrint';
+import prettyPrint from '../../util/prettyPrint';
 import Injuries from './Injuries';
 import config from '../../config';
 
-const { smallBoxSize } = config;
+const { smallBoxSize, tinyBoxSize } = config;
 
 const NO_PA = '-';
 
@@ -65,10 +79,10 @@ function getRealValue(type, defaultValue, bonusValue, malusValue) {
 }
 
 function getValueFrom(arrayOfObjects, neededType) {
-  const filtered = arrayOfObjects.map((object) =>
-    Object.keys(object)[0] === neededType ? object[Object.keys(object)] : 0
-  );
-  return filtered[0];
+  const sumForType = arrayOfObjects
+    .map((object) => (object[neededType] ? object[neededType] : 0))
+    .reduce((acc, value) => acc + value, 0);
+  return sumForType;
 }
 
 function Attribute({ type, defaultAttributes, bonus, malus }) {
@@ -82,31 +96,61 @@ function Attribute({ type, defaultAttributes, bonus, malus }) {
   return <Text color={color}>{format(type, getRealValue(type, defaultValue, bonusValue, malusValue))}</Text>;
 }
 
-function romanize(num) {
-  const lookup = { X: 10, IX: 9, V: 5, IV: 4, I: 1 };
-  let roman = '';
-  Object.keys(lookup).forEach((key) => {
-    const value = lookup[key];
-    while (num >= value) {
-      roman += key;
-      num -= value;
-    }
-  });
-  return roman;
+function lookupStarPlayerName(name) {
+  const nameWithoutPrefix = name.replace('name_sp_', '');
+  return `"${prettyPrint(nameWithoutPrefix)}" (Starplayer)`;
+}
+
+function iconFor(level) {
+  switch (level) {
+    case 0:
+      return TbHexagonNumber0;
+    case 1:
+      return TbHexagonNumber1;
+    case 2:
+      return TbHexagonNumber2;
+    case 3:
+      return TbHexagonNumber3;
+    case 4:
+      return TbHexagonNumber4;
+    case 5:
+      return TbHexagonNumber5;
+    case 6:
+      return TbHexagonNumber6;
+    case 7:
+      return TbHexagonNumber7;
+    case 8:
+      return TbHexagonNumber8;
+    case 9:
+      return TbHexagonNumber9;
+    default:
+      return TbHexagon;
+  }
+}
+
+function PlayerLevel({ level, starPlayer }) {
+  if (!level && !starPlayer) return null;
+
+  return starPlayer ? (
+    <Icon as={FaStar} boxSize={tinyBoxSize} color="yellow.500" />
+  ) : (
+    <Icon as={iconFor(level)} boxSize={tinyBoxSize} />
+  );
 }
 
 function Player({ player }) {
   const defaultAttributes = player.extendedAttributes ? player.extendedAttributes.defaultAttributes : player.attributes;
   const bonus = player.extendedAttributes ? player.extendedAttributes.bonus : [];
   const malus = player.extendedAttributes ? player.extendedAttributes.malus : [];
+  const isStarplayer = player.type.endsWith('Star');
   return (
     <Tr>
       <Td>{player.number}</Td>
-      <Td>{player.name}</Td>
+      <Td>{isStarplayer ? lookupStarPlayerName(player.name) : player.name}</Td>
       <Td>{prettyPrint(player.type, '_')}</Td>
       <Td>
         <Center>
-          {player.level > 0 && <Tag variant="outline" size="sm" borderRadius="full">{`${romanize(player.level)}`}</Tag>}
+          <PlayerLevel level={player.level} starPlayer={isStarplayer} />
         </Center>
       </Td>
       <Td>
@@ -119,7 +163,7 @@ function Player({ player }) {
         <Center>
           {player.suspendedNextMatch ? (
             <Image
-              src="/img/recovering.png"
+              src="/img/injuries/recovering.png"
               alt="MNG"
               boxSize={smallBoxSize}
               fallback={<FaBandage color="orange" size={smallBoxSize} />}

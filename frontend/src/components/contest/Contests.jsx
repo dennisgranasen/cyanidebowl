@@ -1,14 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import {
-  Table,
-  TableContainer,
-  Tbody,
-  Tfoot,
-  Th,
-  Thead,
-  Tr,
-  useBreakpointValue,
-} from '@chakra-ui/react';
+import React from 'react';
+import { Table, TableContainer, Tbody, Tfoot, Th, Thead, Tr, useBreakpointValue } from '@chakra-ui/react';
 import Contest from './Contest';
 import config from '../../config';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
@@ -16,11 +7,7 @@ import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 const { smallScreenBreakpointValues } = config;
 
 function HeaderColumn({ title }) {
-  return (
-    <Th textAlign="center">
-      {title}
-    </Th>
-  );
+  return <Th textAlign="center">{title}</Th>;
 }
 
 function SmallTableColumns() {
@@ -53,22 +40,16 @@ function TableColumns() {
   return isSmallScreen ? <SmallTableColumns /> : <NormalTableColumns />;
 }
 
-function Contests({ contests, contestsLoading, competitionLoading }) {
-  const [loading, setLoading] = useState(contestsLoading || competitionLoading);
-
-  useEffect(() => {
-    setLoading(contestsLoading || competitionLoading);
-  }, [contestsLoading, competitionLoading]);
-
+function Contests({ contests, loading, error }) {
   return (
-    <LoadingOrErrorWrapper loading={loading}>
+    <LoadingOrErrorWrapper loading={loading || !contests} error={error}>
       <TableContainer>
         <Table variant="simpleClickable" size="sm">
           <Thead>
             <TableColumns />
           </Thead>
           <Tbody>
-            {contests.map((contest) => {
+            {contests?.map((contest) => {
               return <Contest contest={contest} key={contest.contestUuid} />;
             })}
           </Tbody>

@@ -35,10 +35,12 @@ public class SecurityConfiguration {
                         .requestMatchers(POST, "/lookup").authenticated()
                         .requestMatchers(GET, "/competitions/*/exportNafData").authenticated()
                         // public api read only endpoints
+                        .requestMatchers(GET, "/arena/**").permitAll()
                         .requestMatchers(GET, "/circuits/**").permitAll()
                         .requestMatchers(GET, "/competitions/**").permitAll()
                         .requestMatchers(GET, "/contests/**").permitAll()
                         .requestMatchers(GET, "/img/**").permitAll()
+                        .requestMatchers(GET, "/knockout/**").permitAll()
                         .requestMatchers(GET, "/leagues/**").permitAll()
                         .requestMatchers(GET, "/matches/**").permitAll()
                         .requestMatchers(GET, "/ranks/**").permitAll()

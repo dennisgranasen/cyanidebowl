@@ -43,7 +43,7 @@ public class ImageController {
 
     @GetMapping("/dbbc.png/{size}")
     public ResponseEntity<byte[]> getDbbcLogoPng(@PathVariable(name = "size", required = false) String size) {
-        Optional<byte[]> imageData = Optional.empty();
+        Optional<byte[]> imageData;
         imageData = imageService.loadFromClassPath("/dbbc.png");
         int width = 256;
         if ("small".equalsIgnoreCase(size)) {
@@ -64,7 +64,7 @@ public class ImageController {
 
     @GetMapping("/warpscores.png/{size}")
     public ResponseEntity<byte[]> getWarpScoresLogoPng(@PathVariable(name = "size", required = false) String size) {
-        Optional<byte[]> imageData = Optional.empty();
+        Optional<byte[]> imageData;
         if (size != null && !size.equalsIgnoreCase("original")) {
             imageData = imageService.loadFromClassPath("/warpscores.png");
             int width = 256;
@@ -99,7 +99,7 @@ public class ImageController {
 
     @GetMapping("/race/{name}")
     public ResponseEntity<byte[]> getRaceImage(@PathVariable(name = "name") String name) {
-        String imageName = translateRaceToImageName(name);
+        String imageName = translateRaceToRaceImageName(name);
         Optional<String> imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getRaces(), imageName);
         return loadImage(imageUrl, Optional.of(300));
     }
@@ -136,10 +136,10 @@ public class ImageController {
     }
 
     private String translateSkillToImageName(String name) {
-        return Skill.forCaseInsensitiveName(name).getImageName();
+        return Skill.forCaseInsensitiveName(name).map(Skill::getImageName).orElse(null);
     }
 
-    private String translateRaceToImageName(String name) {
+    private String translateRaceToRaceImageName(String name) {
         Race race = Race.valueOf(name);
         return "TeamScreenshot_" + race.getImageName();
     }

@@ -2,13 +2,16 @@ package net.warp_scores.warpscores.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.CompetitionFormat;
 import net.warp_scores.warpscores.model.CompetitionStatus;
 import net.warp_scores.warpscores.model.Contest;
+import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.MatchStatus;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -34,16 +37,35 @@ import static java.util.stream.Collectors.toList;
 public class CompetitionService {
     private final CompetitionRepository competitionRepository;
     private final ContestRepository contestsRepository;
+    private final OfficialLeagueAndCompetitions officialLeagueCompetitions;
+    private final MatchService matchService;
 
+    @DurationLogging
     public List<Competition> loadForLeague(UUID leagueId) {
         List<Competition> competitions = competitionRepository.findByLeagueId(leagueId);
-        return initializeForFormat(competitions);
-
+        competitions.forEach(this::adjustCompetitionNameAndLogo);
+        return competitions;
     }
 
+    @DurationLogging
+    public List<Competition> loadForLeagueAndInitialize(UUID leagueId) {
+        List<Competition> competitions = loadForLeague(leagueId);
+        return initializeForFormat(competitions);
+    }
+
+    @DurationLogging
     public Optional<Competition> loadCompetition(UUID competitionId) {
-        return competitionRepository.findById(competitionId)
+        Optional<Competition> competition = competitionRepository
+                .findById(competitionId)
                 .map(this::initializeForFormat);
+        competition.ifPresent(this::adjustCompetitionNameAndLogo);
+        return competition;
+    }
+
+    private void adjustCompetitionNameAndLogo(Competition competition) {
+        officialLeagueCompetitions
+                .adjustCompetitionNameAndLogo(competition.getLeagueId(), competition.getName(), competition::setName,
+                        competition::setLogo);
     }
 
     private List<Competition> initializeForFormat(List<Competition> competitions) {
@@ -53,12 +75,14 @@ public class CompetitionService {
     }
 
     private Competition initializeForFormat(Competition competition) {
-        switch (competition.getFormat()) {
-            case RoundRobin -> initializeRoundRobin(competition);
-            case Wissen -> initializeWissen(competition);
-            case Knockout -> initializeKnockout(competition);
-            case Ladder -> initializeLadder(competition);
-            default -> notYetImplemented(competition.getFormat());
+        if (CompetitionStatus.InProgress == competition.getStatus()) {
+            switch (competition.getFormat()) {
+                case RoundRobin -> initializeRoundRobin(competition);
+                case Wissen -> initializeWissen(competition);
+                case Knockout -> initializeKnockout(competition);
+                case Ladder, Arena -> initializeLadder(competition);
+                default -> notYetImplemented(competition.getFormat());
+            }
         }
         return competition;
     }
@@ -71,15 +95,15 @@ public class CompetitionService {
         Integer teams = competition.getTeamsMax();
         boolean isOdd = teams % 2 == 1;
         Integer contestCount = contestsRepository.countByCompetitionId(competition.getUuid());
-        List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid());
+        List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid(), Pageable.unpaged());
         Map<UUID, Optional<Contest>> uniqueContests = contests
                 .stream()
                 .collect(
                         groupingBy(
                                 Contest::getContestUuid,
                                 collectingAndThen(toList(), this::getLatest)));
-        if (contests.size() != uniqueContests.keySet().size()) {
-            log.info("Contests: {}, uniqueContests: {}.", contests.size(), uniqueContests.keySet().size());
+        if (contests.size() != uniqueContests.size()) {
+            log.info("Contests: {}, uniqueContests: {}.", contests.size(), uniqueContests.size());
         }
         int totalRounds = isOdd ? teams : teams - 1;
         int contestsPerRound = isOdd ? (teams - 1) / 2 : teams / 2;
@@ -92,13 +116,11 @@ public class CompetitionService {
 
     private Optional<Contest> getLatest(List<Contest> contests) {
         return contests
-                .stream()
-                .sorted(nullsFirst(comparing(Contest::getMatchDate).reversed()))
-                .findFirst();
+                .stream().min(nullsFirst(comparing(Contest::getMatchDate).reversed()));
     }
 
     private void initializeWissen(Competition competition) {
-        List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid());
+        List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid(), Pageable.unpaged());
         OptionalInt currentRound = contests.stream().mapToInt(Contest::getRound).max();
         if (competition.getTotalRounds() == null) {
             competition.setTotalRounds(calcWissenTotalRounds(competition.getTeamsMax()));
@@ -117,14 +139,17 @@ public class CompetitionService {
         }
         competition.setTotalRounds(totalRounds);
         int byes = players - teams;
-        competition.setTotalMatches(teams - 1 - byes);
-        List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid());
+        int totalMatches = teams - 1 - byes;
+        competition.setTotalMatches(totalMatches);
+        List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid(), Pageable.unpaged());
+        competition.setCurrentRound(contests.stream().mapToInt(Contest::getRound).max().orElse(0));
         initializeMatchCount(competition, contests);
     }
 
     private void initializeLadder(Competition competition) {
-        List<Contest> contests = contestsRepository.findByCompetitionId(competition.getUuid());
-        initializeMatchCount(competition, contests);
+        Integer matchCount = matchService.countByCompetitionId(competition.getUuid());
+        competition.setTotalMatches(matchCount);
+        competition.setPlayedMatches(matchCount);
     }
 
     private void initializeMatchCount(Competition competition, List<Contest> contests) {
@@ -160,19 +185,10 @@ public class CompetitionService {
         return Long.valueOf(count).intValue();
     }
 
-    public boolean competitionConsideredActive(Competition competition) {
-        boolean inRegistrationOrInProgress = List.of(CompetitionStatus.Registration, CompetitionStatus.InProgress)
-                .contains(competition.getStatus());
-        boolean finished = CompetitionStatus.Finished.equals(competition.getStatus());
-        int matchCount = Optional.ofNullable(competition.getPlayedMatches()).orElse(0);
-        return inRegistrationOrInProgress || finished && matchCount > 0;
-    }
-
     public Map<CompetitionStatus, Long> countForLeague(UUID leagueUuid) {
-        List<Competition> competitions = loadForLeague(leagueUuid);
+        List<Competition> competitions = loadForLeagueAndInitialize(leagueUuid);
         return competitions
                 .stream()
-                .filter(this::competitionConsideredActive)
                 .collect(
                         groupingBy(Competition::getStatus, Collectors.counting()));
     }

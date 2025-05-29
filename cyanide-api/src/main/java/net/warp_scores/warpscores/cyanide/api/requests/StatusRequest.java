@@ -28,6 +28,7 @@ public class StatusRequest extends ApiRequest<StatusRequest, StatusResponse> {
     public StatusRequest() {
         super("cya/status", StatusRequest.class, StatusResponse.class);
         setReadTimeout(Duration.ofSeconds(15));
-        setCacheValidity(CacheValidityDurations.FIFTEEN_MINUTES);
+        setCacheValidity(CacheValidityDurations.FIVE_MINUTES);
+        setLimitSize(null);
     }
 }

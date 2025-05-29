@@ -14,11 +14,17 @@ import java.util.UUID;
 public interface ContestRepository extends MongoRepository<Contest, UUID> {
     List<Contest> findByCompetitionIdAndStatus(UUID competitionId, MatchStatus matchStatus);
 
-    List<Contest> findByCompetitionId(UUID competitionId);
+    List<Contest> findByCompetitionId(UUID competitionId, Pageable pageable);
 
-    List<Contest> findByLeagueIdAndLive(UUID leagueId, Integer live);
+    List<Contest> findByLeagueIdAndLiveOrderByMatchDateDesc(UUID leagueId, Integer live, Pageable pageable);
 
     List<Contest> findByLeagueIdAndStatusOrderByMatchDateDesc(UUID leagueId,
+            MatchStatus matchStatus,
+            Pageable pageable);
+
+    List<Contest> findByCompetitionIdAndLiveOrderByMatchDateDesc(UUID competitionId, Integer live, Pageable pageable);
+
+    List<Contest> findByCompetitionIdAndStatusOrderByMatchDateDesc(UUID leagueId,
             MatchStatus matchStatus,
             Pageable pageable);
 

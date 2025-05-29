@@ -5,16 +5,14 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.UUID;
-
 @Getter
 @Setter
 @Document
 public class CircuitLeg implements Comparable<CircuitLeg> {
     @Id
     private Long circuitLegId;
-    private UUID competitionId;
     private CircuitLegType legType;
+    private String competitionId;
     private String label;
     private GameType game;
     private Platform platform;

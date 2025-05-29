@@ -1,5 +1,6 @@
 package net.warp_scores.warpscores.cyanide.api.model;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import net.warp_scores.warpscores.model.CompetitionFormat;
@@ -20,18 +21,23 @@ public class ApiContest {
     private UUID league_id;
     private String competition;
     private UUID competition_id;
+    @JsonAlias({"format", "competition_format"})
     private CompetitionFormat format;
     private UUID contest_id;
     private Integer round;
+    private Integer competition_round;
+    private Integer contest_round;
     private MatchType type;
+    @JsonAlias({"status", "contest_status"})
     private MatchStatus status;
+    @JsonAlias({"match_status"})
+    private MatchStatus matchStatus;
     private String stadium;
-    private String match_id;
+    private String game_id;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date match_date;
     private Integer live;
     private Opponent[] opponents;
-    private UUID match_uuid;
     private Object winner;
 
     @Getter
@@ -40,7 +46,6 @@ public class ApiContest {
     public static class Opponent {
         private Coach coach;
         private Team team;
-
     }
 
     @Getter
@@ -69,5 +74,4 @@ public class ApiContest {
         private Integer death;
         private Race race;
     }
-
 }

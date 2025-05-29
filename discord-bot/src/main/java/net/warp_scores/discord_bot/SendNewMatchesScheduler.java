@@ -12,8 +12,10 @@ import net.warp_scores.discord_bot.domain.ChannelLeagueRegistration;
 import net.warp_scores.discord_bot.domain.ChannelLeagueRegistrationDomainService;
 import net.warp_scores.discord_bot.domain.ChannelLeagueRegistrationRepository;
 import net.warp_scores.discord_bot.service.WarpScoresBackendService;
-import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.League;
+import net.warp_scores.warpscores.model.Match;
+
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +30,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "scheduler.enabled", havingValue = "true", matchIfMissing = true)
 public class SendNewMatchesScheduler {
 
     private final GatewayDiscordClient discordClient;
@@ -52,29 +55,33 @@ public class SendNewMatchesScheduler {
                                 Collectors.mapping(ChannelLeagueRegistration::getLeagueUuid, Collectors.toList())));
         for (Map.Entry<ChannelLeagueRegistration, List<String>> entry : leagueUuidsByChannelId.entrySet()) {
             ChannelLeagueRegistration channelLeagueRegistration = entry.getKey();
-            Map<League, List<Contest>> latestMatchesFor = getLatestMatchesFor(entry.getValue());
+            Map<League, List<Match>> latestMatchesFor = getLatestMatchesFor(entry.getValue());
             for (League league : latestMatchesFor.keySet()) {
-                List<Contest> latestContests = latestMatchesFor.get(league).stream().toList();
-                publishLatestContestFor(league, latestContests, channelLeagueRegistration);
+                List<Match> latestMatches = latestMatchesFor.get(league).stream().toList();
+                publishLatestMatchFor(league, latestMatches, channelLeagueRegistration);
             }
         }
     }
 
-    private void publishLatestContestFor(League league,
-            List<Contest> latestContests,
+    private void publishLatestMatchFor(League league,
+            List<Match> latestMatches,
             ChannelLeagueRegistration channelLeagueRegistration) {
-        Optional<Contest> oldestUnpublishedContest = latestContests
+        Optional<Match> oldestUnpublishedMatch = latestMatches
                 .stream()
-                .filter(contest -> contest.getMatchDate()
+                .filter(contest -> contest.getFinished()
                         .after(Optional.ofNullable(channelLeagueRegistration.getLastPublishedMatchDate())
-                                .orElse(new Date(0)))).min(Comparator.comparing(Contest::getMatchDate));
-        oldestUnpublishedContest.ifPresent(contest -> publishContest(channelLeagueRegistration, league, contest));
+                                .orElse(new Date(0)))).min(Comparator.comparing(Match::getFinished));
+        oldestUnpublishedMatch.ifPresent(
+                match -> publishMatch(channelLeagueRegistration, league, match));
     }
 
-    private void publishContest(ChannelLeagueRegistration channelLeagueRegistration, League league, Contest contest) {
+    private void publishMatch(ChannelLeagueRegistration channelLeagueRegistration,
+            League league,
+            Match match) {
         EmbedCreateSpec.Builder builder = matchMessageBuilder
-                .builder(league, contest, channelLeagueRegistration.getSpoiler());
-        log.info("About to publish match {} of league {} to channel {}.", contest, league,
+                .builder(league, match,
+                        channelLeagueRegistration.getSpoiler());
+        log.info("About to publish match {} of league {} to channel {}.", match, league,
                 channelLeagueRegistration.getChannelId());
         discordClient
                 .getChannelById(Snowflake.of(channelLeagueRegistration.getChannelId()))
@@ -83,7 +90,7 @@ public class SendNewMatchesScheduler {
                 .doOnError(error -> log.error("Error during publishing contests for {} to {} ({}).", league,
                         channelLeagueRegistration.getChannelId(), error.getMessage(),
                         error.getCause()))
-                .doOnNext(m -> updateLatestPublishedMatchDate(channelLeagueRegistration, contest.getMatchDate()))
+                .doOnNext(m -> updateLatestPublishedMatchDate(channelLeagueRegistration, match.getFinished()))
                 .block();
     }
 
@@ -95,8 +102,8 @@ public class SendNewMatchesScheduler {
                 channelLeagueRegistration.getLeagueUuid(), channelLeagueRegistration.getChannelId(), matchDate);
     }
 
-    private Map<League, List<Contest>> getLatestMatchesFor(List<String> leagueUuidValues) {
+    private Map<League, List<Match>> getLatestMatchesFor(List<String> leagueUuidValues) {
         List<UUID> leagueUuids = leagueUuidValues.stream().map(UUID::fromString).toList();
-        return warpScoresBackendService.loadLatestLeaguesContests(leagueUuids);
+        return warpScoresBackendService.loadLatestLeaguesMatches(leagueUuids);
     }
 }

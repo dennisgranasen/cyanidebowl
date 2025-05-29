@@ -1,14 +1,16 @@
 import React from 'react';
-import { Spinner, Td, Tr, useBreakpointValue } from '@chakra-ui/react';
+import { HStack, Image, Spinner, Td, Text, Tr, useBreakpointValue } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
+import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import CompetitionProgress from './CompetitionProgress';
-import prettyPrint from '../../util/PrettyPrint';
-import abbreviators from '../../util/Abbreviators';
+import prettyPrint from '../../util/prettyPrint';
+import abbreviators from '../../util/abbreviators';
 import config from '../../config';
+import ImageUrls from '../../imageUrls';
 
-const { smallScreenBreakpointValues } = config;
+const { boxSize, smallScreenBreakpointValues } = config;
 
-function Competition({ competition }) {
+function Competition({ competition, league }) {
   const navigate = useNavigate();
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
 
@@ -18,22 +20,44 @@ function Competition({ competition }) {
 
   return competition !== null ? (
     <Tr onClick={goToCompetition}>
-      <Td>{competition.name}</Td>
-      <Td>{isSmallScreen ? abbreviators.makeInitials(competition.format) : prettyPrint(competition.format)}</Td>
       <Td>
-        <CompetitionProgress
-          status={competition.status}
-          format={competition.format}
-          teamsMax={competition.teamsMax}
-          currentRound={competition.currentRound}
-          totalRounds={competition.totalRounds}
-          totalMatches={competition.totalMatches}
-          playedMatches={competition.playedMatches}
-          notValidatedMatches={competition.notValidatedMatches}
-          liveMatches={competition.liveMatches}
-        />
+        <HStack>
+          <Image
+            src={ImageUrls.logo(competition.logo || league?.logo)}
+            boxSize={boxSize}
+            objectFit="scale-down"
+            fallback={<QuestionOutlineIcon boxSize={boxSize} />}
+          />
+          <Text>{competition.name}</Text>
+        </HStack>
       </Td>
       <Td isNumeric>{competition.teamsMax}</Td>
+      <Td>{isSmallScreen ? abbreviators.makeInitials(competition.format) : prettyPrint(competition.format)}</Td>
+      {!isSmallScreen && (
+        <Td>
+          <CompetitionProgress
+            status={competition.status}
+            format={competition.format}
+            teamsMax={competition.teamsMax}
+            currentRound={competition.currentRound}
+            totalRounds={competition.totalRounds}
+            totalMatches={competition.totalMatches}
+            playedMatches={competition.playedMatches}
+            notValidatedMatches={competition.notValidatedMatches}
+            liveMatches={competition.liveMatches}
+          />
+        </Td>
+      )}
+      <Td>{competition.currentRound && `${competition.currentRound}/${competition.totalRounds}`}</Td>
+      <Td>
+        {competition.currentRound &&
+          ['RoundRobin', 'Wissen'].includes(competition.format) &&
+          `${
+            competition.totalMatches / competition.totalRounds -
+            (competition.playedMatches % (competition.totalMatches / competition.totalRounds))
+          }`}
+      </Td>
+      <Td>{competition.currentRound && `${competition.totalMatches - competition.playedMatches}`}</Td>
     </Tr>
   ) : (
     <Spinner />

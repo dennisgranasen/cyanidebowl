@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Getter
@@ -30,22 +31,28 @@ import java.util.stream.Collectors;
 public class ApiRequest<RequestType, ResponseType> {
 
     private static final SimpleDateFormat REQUEST_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+    public static final int DEFAULT_FETCH_LIMIT = 1000;
 
     private final String requestPath;
     private final Class<RequestType> requestClass;
     private final Class<ResponseType> responseClass;
 
-    public enum Platform {pc, playstation, xbox}
-
     public enum Order {ID, LastMatchDate, CreationDate}
 
-    private Platform platform = Platform.pc;
-    private Integer limit;
+    private Integer limitOffset = 0;
+    private Integer limitSize = DEFAULT_FETCH_LIMIT;
     private Integer exact;
 
     private Duration cacheValidity = CacheValidityDurations.TWO_HOURS;
     private Duration readTimeout = null;
     private Duration connectTimeout = Duration.ofSeconds(1);
+
+    public String getLimit() {
+        return Optional
+                .ofNullable(getLimitSize())
+                .map(limitSize -> String.format("%d,+%d", limitOffset, limitSize))
+                .orElse(null);
+    }
 
     public String md5Sum() {
         MultiValueMap<String, String> queryParams = toQueryParams();
@@ -97,7 +104,8 @@ public class ApiRequest<RequestType, ResponseType> {
         return Arrays.stream(allDeclaredMethods)
                 .filter(method -> method.getName().startsWith("get"))
                 .filter(method -> !List.of("getClass", "getCacheValidity", "getReadTimeout", "getConnectTimeout",
-                                "getResponseClass", "getRequestPath", "getRequestClass", "getId_only")
+                                "getResponseClass", "getRequestPath", "getRequestClass", "getId_only", "getLimitOffset",
+                                "getLimitSize")
                         .contains(method.getName()))
                 .toList();
     }

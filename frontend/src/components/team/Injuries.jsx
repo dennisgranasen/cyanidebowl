@@ -1,7 +1,7 @@
 import React from 'react';
 import { Stack } from '@chakra-ui/react';
 import Injury from './Injury';
-import hashCode from '../../util/HashCode';
+import hashCode from '../../util/hashCode';
 
 function Injuries({ injuries }) {
   const injuryCountMap = [];
@@ -12,7 +12,7 @@ function Injuries({ injuries }) {
   }
   return (
     <Stack direction="row" spacing="2px">
-      {Object.entries(injuryCountMap).map(([injury, count], index) => {
+      {Object.entries(injuryCountMap).map(([injury, count]) => {
         return <Injury key={hashCode(injury)} injury={injury} count={count} />;
       })}
     </Stack>

@@ -1,7 +1,7 @@
 import { Box, List, Text } from '@chakra-ui/react';
 import React from 'react';
 import NewsItem from './NewsItem';
-import hashCode from '../../util/HashCode';
+import hashCode from '../../util/hashCode';
 
 function NewsList({ news, headerSize, textSize, ...props }) {
   return (

@@ -2,24 +2,29 @@ package net.warp_scores.warpscores.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.model.Competition;
+import net.warp_scores.warpscores.model.CompetitionFormat;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Rank;
 import net.warp_scores.warpscores.model.Team;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static java.util.List.of;
 import static java.util.Objects.requireNonNullElse;
 import static java.util.Optional.empty;
 import static java.util.Optional.ofNullable;
@@ -34,17 +39,32 @@ public class RankService {
     private final TeamDomainService teamDomainService;
     private final CompetitionService competitionService;
 
-    private final List<RankComparisons> defaultRankComparisons = List.of(RankComparisons.SCORE_310, RankComparisons.WINS,
+    private final List<RankComparisons> defaultRankComparisons = List.of(RankComparisons.SCORE_310,
+            RankComparisons.WINS,
             RankComparisons.INFLICTED_TOUCHDOWNS, RankComparisons.TOUCHDOWN_DIFFERENCE);
 
-    public List<Rank> getRanksForCompetition(UUID competitionId, Optional<List<RankComparisons>> rankComparisons) {
+    @DurationLogging
+    public List<Rank> getRanksForCompetition(UUID competitionId,
+            Optional<List<RankComparisons>> rankComparisons,
+            Optional<Integer> limit) {
         Competition competition = competitionService.loadCompetition(competitionId)
                 .orElseThrow(NoSuchElementException::new);
 
-        List<Team> teams = teamDomainService.findByCompetitionId(competitionId);
+        List<Contest> contests = contestRepository.findByCompetitionIdAndStatus(competition.getUuid(), Validated);
+        Set<Team> teams = new HashSet<>();
+        contests
+                .stream()
+                .map(Contest::getOpponents)
+                .flatMap(List::stream)
+                .collect(Collectors.toCollection(() -> teams));
+        List<Match> matches = Collections.emptyList();
+        if (!competition.getFormat().equals(CompetitionFormat.Ladder)) {
+            matches = matchRepository.findByCompetitionId(competition.getUuid());
+        }
+        Map<UUID, Match> matchByMatchId = matches.stream().collect(Collectors.toMap(Match::getMatchId, m -> m));
 
         return teams.stream()
-                .map(team -> toRank(team, competition, rankComparisons.orElse(defaultRankComparisons)))
+                .map(team -> toRank(team, contests, matchByMatchId, rankComparisons.orElse(defaultRankComparisons)))
                 .sorted(
                         (rankA, rankB) -> {
                             int result = 0;
@@ -57,6 +77,7 @@ public class RankService {
                             return result;
                         }
                 )
+                .limit(limit.orElse(Integer.MAX_VALUE))
                 .collect(HashMap<Rank, Integer>::new, (map, rank) -> map.put(rank, map.size() + 1), (map, map2) -> {})
                 .entrySet()
                 .stream()
@@ -67,10 +88,12 @@ public class RankService {
                 .collect(Collectors.toList());
     }
 
-    private Rank toRank(Team team, Competition competition, List<RankComparisons> rankComparisons) {
+    private Rank toRank(Team team,
+            List<Contest> contests,
+            Map<UUID, Match> matchByMatchId,
+            List<RankComparisons> rankComparisons) {
         Rank rank = new Rank();
         rank.setTeam(team);
-        List<Contest> contests = contestRepository.findByCompetitionIdAndStatus(competition.getUuid(), Validated);
         int gamesPlayed = 0;
         int gamesWon = 0;
         int gamesDrawn = 0;
@@ -80,9 +103,9 @@ public class RankService {
         int inflictedCasualties = 0;
         int sustainedCasualties = 0;
         for (Contest contest : contests) {
-            Optional<Match> match = ofNullable(contest.getMatchUuid()).flatMap(matchRepository::findById);
-
+            Optional<Match> match = ofNullable(contest.getMatchUuid()).map(matchByMatchId::get);
             List<Team> teamResults = match.map(Match::getTeams).orElse(contest.getOpponents());
+
             Optional<Team> ownTeam = getTeam(teamResults, team.getId());
             Optional<Team> otherTeam = getOtherTeam(teamResults, ownTeam);
             if (ownTeam.isPresent() && otherTeam.isPresent()) {

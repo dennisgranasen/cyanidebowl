@@ -48,6 +48,9 @@ maven-package:
     DOCKER_DRIVER: overlay2
   only:
     - /^dev$/
+  before_script:
+    - git config --global user.email "${GIT_USER_EMAIL:-$GITLAB_USER_EMAIL}"
+    - git config --global user.name "${GIT_USER_NAME:-$GITLAB_USER_NAME}"
   script: "mvn -DskipTests=true install"
 
 maven-deploy-snapshot:
@@ -62,7 +65,7 @@ maven-deploy-snapshot:
     - /^dev$/
   when: manual
   before_script:
-    - version=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec
+    - version=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
   script:
     - "mvn -DskipTests=true -Ddockerfile.skip deploy -s ci_settings.xml"
     - echo "Logging in to registry..."
@@ -83,11 +86,10 @@ maven-release:
   only:
     - /^main$/
   before_script:
-    - git config --global user.email "no-reply@warp-scores.net"
-    - git config --global user.name "Gitlab-Pipeline"
-    - which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )
-    - eval $(ssh-agent -s)
-    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+    - ssh-keyscan gitlab.com > /tmp/ssh_known_hosts
+    - GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/tmp/ssh_known_hosts"
+    - git config --global user.email "${GIT_USER_EMAIL:-$GITLAB_USER_EMAIL}"
+    - git config --global user.name "${GIT_USER_NAME:-$GITLAB_USER_NAME}"
   script:
     - git checkout -B "$CI_BUILD_REF_NAME"
     - mvn -DskipTests=true release:prepare --batch-mode --settings ci_settings.xml
@@ -107,7 +109,7 @@ maven-deploy:
   before_script:
     - version=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
   script:
-    - "mvn -DskipTests=true -Ddockerfile.skip deploy -s ci_settings.xml"
+    - mvn -DskipTests=true -Ddockerfile.skip deploy -s ci_settings.xml
     - echo "Logging in to registry..."
     - docker login registry.gitlab.com
     - echo "Tagging docker images..."

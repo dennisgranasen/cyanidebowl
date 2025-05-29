@@ -6,6 +6,7 @@ import net.warp_scores.warpscores.cyanide.api.model.ApiCompetition;
 import net.warp_scores.warpscores.cyanide.api.responses.CompetitionsResponse;
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
 import net.warp_scores.warpscores.model.Competition;
+import net.warp_scores.warpscores.service.OfficialLeagueAndCompetitions;
 import net.warp_scores.warpscores.service.PopulatorUtil;
 import net.warp_scores.warpscores.service.UUIDConverter;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,8 @@ public class CompetitionDomainService {
 
     private final UUIDConverter uuidConverter;
 
+    private final OfficialLeagueAndCompetitions officialLeagueAndCompetitions;
+
     @Transactional
     public List<Competition> createOrUpdateCompetitions(CompetitionsResponse competitionsResponse) {
         if (competitionsResponse == null || competitionsResponse.isEmpty()) {
@@ -44,7 +47,6 @@ public class CompetitionDomainService {
     public Map<UUID, Optional<Date>> getEarliestStartDatesFor(List<UUID> leagueUuids) {
         Map<UUID, Optional<Date>> earliestStartDatesByLeagueUuid = new HashMap<>();
         leagueUuids
-                .stream()
                 .forEach(leagueUuid ->
                         earliestStartDatesByLeagueUuid.put(leagueUuid, competitionRepository
                                 .findTopByLeagueIdOrderByDateCreatedAsc(leagueUuid)
@@ -57,6 +59,9 @@ public class CompetitionDomainService {
                 apiCompetition.getName());
         if (competition != null) {
             populateCompetition(apiCompetition, competition);
+
+            officialLeagueAndCompetitions.adjustCompetitionFormat(competition.getLeagueId(), competition.getName(),
+                    competition::setFormat);
         }
         return competition;
     }
@@ -79,7 +84,8 @@ public class CompetitionDomainService {
         targetCompetition.setDateCreated(sourceApiCompetition.getDate_created());
         targetCompetition.setStatus(sourceApiCompetition.getStatus_name());
         targetCompetition.setLeagueName(sourceApiCompetition.getLeague().getName());
-        targetCompetition.setRoundsCount(sourceApiCompetition.getRounds_count());
+        targetCompetition.setCurrentRound(sourceApiCompetition.getRound());
+        targetCompetition.setTotalRounds(sourceApiCompetition.getRounds_count());
         targetCompetition.setTeamsCount(sourceApiCompetition.getTeams_count());
         targetCompetition.setTeamsMax(sourceApiCompetition.getTeams_max());
         targetCompetition.setTimeBonusDuration(sourceApiCompetition.getTime_bonus_duration());

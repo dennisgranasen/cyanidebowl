@@ -1,7 +1,7 @@
 import React from 'react';
 import { Image, Tag, TagLabel } from '@chakra-ui/react';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
-import prettyPrint from '../../util/PrettyPrint';
+import prettyPrint from '../../util/prettyPrint';
 import config from '../../config';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
 
@@ -24,7 +24,9 @@ const imageOrIconFor = (injury) => {
       imageName = injury.toLowerCase();
       break;
   }
-  return <Image src={`/img/${imageName}.png`} alt={injury} boxSize={boxSize} fallback={<QuestionOutlineIcon />} />;
+  return (
+    <Image src={`/img/injuries/${imageName}.png`} alt={injury} boxSize={boxSize} fallback={<QuestionOutlineIcon />} />
+  );
 };
 
 function Injury({ injury, count }) {

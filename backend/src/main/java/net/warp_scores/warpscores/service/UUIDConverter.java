@@ -19,7 +19,7 @@ public class UUIDConverter {
         try {
             return Optional.of(UUID.fromString(id));
         } catch (Exception ex) {
-            log.error("Not an UUID? (value: {}).", id);
+            log.error("Not a UUID? (value: {}), callerMethod: {}.", id, getCallerMethodName());
             return Optional.empty();
         }
     }
@@ -55,5 +55,14 @@ public class UUIDConverter {
             throw new IllegalArgumentException(String.format("Got ambiguous ids (%s).", uniqueUuids));
         }
         return uniqueUuids.get(0);
+    }
+
+    private static String getCallerMethodName() {
+        return StackWalker.
+                getInstance().
+                walk(stream -> stream.skip(2)
+                        .findFirst()
+                        .orElseThrow())
+                .getMethodName();
     }
 }

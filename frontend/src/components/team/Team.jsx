@@ -2,10 +2,10 @@ import React from 'react';
 import { Image, Spinner, Td, Tr } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
-import Race from './Race';
-import Formatter from '../../util/Formatter';
-import ImageUrls from '../../ImageUrls';
+import formatter from '../../util/formatter';
+import imageUrls from '../../imageUrls';
 import config from '../../config';
+import Race from '../common/Race';
 
 const { boxSize } = config;
 
@@ -20,7 +20,7 @@ function Team({ team }) {
       <Td>{team.name}</Td>
       <Td>
         <Image
-          src={`${ImageUrls.logo(team.logo)}`}
+          src={`${imageUrls.logo(team.logo)}`}
           boxSize={boxSize}
           fallback={<QuestionOutlineIcon boxSize={boxSize} />}
           objectFit="scale-down"
@@ -30,8 +30,8 @@ function Team({ team }) {
       <Td>
         <Race race={team.race} />
       </Td>
-      <Td isNumeric>{Formatter.formatAsNumber(team.value)}</Td>
-      <Td isNumeric>{Formatter.formatAsNumber(team.cash)}</Td>
+      <Td isNumeric>{formatter.formatAsNumber(team.value)}</Td>
+      <Td isNumeric>{formatter.formatAsNumber(team.cash)}</Td>
     </Tr>
   ) : (
     <Spinner />

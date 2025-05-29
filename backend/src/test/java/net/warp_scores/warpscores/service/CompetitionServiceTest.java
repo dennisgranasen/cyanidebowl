@@ -22,7 +22,15 @@ class CompetitionServiceTest {
     @Mock
     private ContestRepository contestRepository;
 
-    private CompetitionService competitionService = new CompetitionService(competitionRepository, contestRepository);
+    @Mock
+    private OfficialLeagueAndCompetitions officialLeagueCompetitions;
+
+    @Mock
+    private MatchService matchService;
+
+    private final CompetitionService competitionService = new CompetitionService(competitionRepository,
+            contestRepository,
+            officialLeagueCompetitions, matchService);
 
     @ParameterizedTest(name = "Expecting {1} rounds for {0} players.")
     @MethodSource("provideTestData")

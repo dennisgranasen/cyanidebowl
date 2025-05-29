@@ -1,5 +1,6 @@
 package net.warp_scores.warpscores.config;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.config.properties.ApplicationProperties;
 import org.springframework.context.annotation.Bean;
@@ -17,7 +18,7 @@ public class CorsConfig {
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
             @Override
-            public void addCorsMappings(CorsRegistry registry) {
+            public void addCorsMappings(@NonNull CorsRegistry registry) {
                 registry.addMapping("/**").allowedOrigins(applicationProperties.getClientOriginUrl(),
                         applicationProperties.getBackendOriginUrl());
             }

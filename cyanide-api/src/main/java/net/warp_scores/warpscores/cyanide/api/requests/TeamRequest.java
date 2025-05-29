@@ -53,5 +53,6 @@ public class TeamRequest extends ApiRequest<TeamRequest, TeamResponse> {
     public TeamRequest() {
         super("bb3/team", TeamRequest.class, TeamResponse.class);
         setCacheValidity(CacheValidityDurations.ONE_HOUR);
+        setLimitSize(null);
     }
 }
