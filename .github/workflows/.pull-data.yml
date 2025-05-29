@@ -19,7 +19,7 @@ jobs:
           java-version: '21'
 
       - name: Build with Maven
-        run: mvn clean package -DskipTests -DskipDocker -P fetcher
+        run: mvn clean package -DskipTests -DskipDocker -P fetcher -pl api,cyanide-api,backend -am
 
       - name: Fetch Competitions
         run: java -jar ./backend/target/backend.jar
