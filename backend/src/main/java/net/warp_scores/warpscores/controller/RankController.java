@@ -24,12 +24,18 @@ public class RankController {
 
     @GetMapping("/ranks/competition/{competitionId}")
     public ResponseEntity<List<Rank>> getRanksForCompetition(@PathVariable(name = "competitionId") UUID competitionId) {
+        return getRanksForCompetition(competitionId, null);
+    }
+
+    @GetMapping("/ranks/competition/{competitionId}/{limit}")
+    public ResponseEntity<List<Rank>> getRanksForCompetition(@PathVariable(name = "competitionId") UUID competitionId,
+            @PathVariable(name = "limit") Integer limit) {
         if (competitionId == null) {
             log.error("competitionId is null");
             return ResponseEntity.badRequest().build();
         }
         try {
-            List<Rank> ranks = rankService.getRanksForCompetition(competitionId, Optional.empty());
+            List<Rank> ranks = rankService.getRanksForCompetition(competitionId, Optional.empty(), Optional.ofNullable(limit));
             if (ranks == null || ranks.isEmpty()) {
                 return ResponseEntity.ok(Collections.emptyList());
             }

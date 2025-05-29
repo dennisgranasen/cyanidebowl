@@ -52,7 +52,7 @@ public class LeagueResponse extends ApiResponse {
     public String getInformationString() {
         return String.format("LeagueResponse[isEmpty=%s, league=%s, changeable=%s]",
                 isEmpty(),
-                Optional.ofNullable(league).map(ApiLeague::getApi_league).orElse("n/a"),
+                Optional.ofNullable(league).map(ApiLeague::getName).orElse("n/a"),
                 isChangeableResponse());
     }
 }

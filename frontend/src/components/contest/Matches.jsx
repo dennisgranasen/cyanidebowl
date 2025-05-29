@@ -14,9 +14,9 @@ import {
   useBreakpointValue,
 } from '@chakra-ui/react';
 import { Link as RouteLink } from 'react-router-dom';
-import Formatter from '../../util/Formatter';
+import formatter from '../../util/formatter';
 import config from '../../config';
-import prettyPrint from "../../util/PrettyPrint";
+import prettyPrint from '../../util/prettyPrint';
 
 const { smallScreenBreakpointValues } = config;
 
@@ -29,7 +29,7 @@ function Match({ match }) {
         <Tr>
           <Td textAlign="right">
             <Box>
-              <Tag size="sm">{Formatter.formatAsDate(match.started, '-')}</Tag>
+              <Tag size="sm">{formatter.formatAsDate(match.started, '-')}</Tag>
             </Box>
           </Td>
           <Td textAlign="center">
@@ -49,7 +49,7 @@ function Match({ match }) {
         </Tr>
       )}
       <Tr>
-        {!isSmallScreen && <Td>{Formatter.formatAsDate(match.started, '-')}</Td>}
+        {!isSmallScreen && <Td>{formatter.formatAsDate(match.started, '-')}</Td>}
         {!isSmallScreen && (
           <Td>
             <Text>
@@ -66,7 +66,9 @@ function Match({ match }) {
               {match.teams[0].name}
             </RouteLink>
           </Text>
-          <Text color="grey">{prettyPrint(match.teams[0].race)} ({match.coaches[0].name})</Text>
+          <Text color="grey">
+            {prettyPrint(match.teams[0].race)} ({match.coaches[0].name})
+          </Text>
         </Td>
         <Td fontSize="md" textAlign="center">{`${match.teams[0].score} - ${match.teams[1].score}`}</Td>
         <Td>
@@ -75,7 +77,9 @@ function Match({ match }) {
               {match.teams[1].name}
             </RouteLink>
           </Text>
-          <Text color="grey">({match.coaches[1].name}) {prettyPrint(match.teams[1].race)}</Text>
+          <Text color="grey">
+            ({match.coaches[1].name}) {prettyPrint(match.teams[1].race)}
+          </Text>
         </Td>
       </Tr>
     </>

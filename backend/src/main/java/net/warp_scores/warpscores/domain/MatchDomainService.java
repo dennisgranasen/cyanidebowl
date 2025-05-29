@@ -27,6 +27,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toMap;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -37,22 +40,30 @@ public class MatchDomainService {
 
     @Transactional
     public List<Match> findMatchesForTeam(UUID teamUuid) {
-        List<Match> all = matchRepository.findAll();
-        return all.stream()
-                .filter(m -> teamWithIdInList(teamUuid, m.getTeams()))
+        List<Match> teamMatches = matchRepository.findMatchesByTeamId(teamUuid);
+        return teamMatches.stream()
                 .sorted(Comparator.comparing(Match::getStarted).reversed())
                 .collect(Collectors.toList());
     }
 
     @Transactional
+    public Map<UUID, Optional<Date>> getLastMatchDatesForCompetitions(List<UUID> competitionUuids) {
+        List<MatchRepository.DateForUuid> lastMatchDateByCompetitionIds = matchRepository
+                .findLastMatchDateByCompetitionIds(competitionUuids);
+        return lastMatchDateByCompetitionIds
+                .stream()
+                .collect(toMap(MatchRepository.DateForUuid::uuid,
+                        r -> ofNullable(r.date())));
+    }
+
+    @Transactional
     public Map<UUID, Optional<Date>> getLastMatchDatesForLeagues(List<UUID> leagueUuids) {
-        Map<UUID, Optional<Date>> lastMatchDatesByLeagueUuid = new HashMap<>();
-        leagueUuids
-                .forEach(leagueUuid ->
-                        lastMatchDatesByLeagueUuid.put(leagueUuid, matchRepository
-                                .findTopByLeagueIdOrderByFinishedDesc(leagueUuid)
-                                .map(Match::getFinished)));
-        return lastMatchDatesByLeagueUuid;
+        List<MatchRepository.DateForUuid> lastMatchDateByLeagueIds = matchRepository
+                .findLastMatchDateByLeagueIds(leagueUuids);
+        return lastMatchDateByLeagueIds
+                .stream()
+                .collect(toMap(MatchRepository.DateForUuid::uuid,
+                        r -> ofNullable(r.date())));
     }
 
     @Transactional
@@ -84,16 +95,9 @@ public class MatchDomainService {
             return null;
         }
 
-        Optional<ApiMatch> apiMatch = Optional.ofNullable(matchResponse.getMatch());
+        Optional<ApiMatch> apiMatch = ofNullable(matchResponse.getMatch());
         Optional<Match> match = apiMatch.map(this::internalCreateOrUpdateMatch);
         return match.map(matchRepository::save).orElse(null);
-    }
-
-    private boolean teamWithIdInList(UUID teamUuid, List<Team> teams) {
-        return teams
-                .stream()
-                .map(Team::getId)
-                .anyMatch(uuid -> uuid.equals(teamUuid));
     }
 
     private Match internalCreateOrUpdateMatch(ApiMatch apiMatch) {

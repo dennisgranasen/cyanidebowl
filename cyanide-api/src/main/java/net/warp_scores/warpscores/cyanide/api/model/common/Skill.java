@@ -7,8 +7,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Getter
 public enum Skill {
@@ -31,6 +31,7 @@ public enum Skill {
     Claws("Claw", "Claws"),
     CloudBuster("CloudBuster", "Cloud Burster"),
     Dauntless("Dauntless"),
+    Drunkard("Drunkard"),
     Decay("Decay"),
     Defensive("Defensive"),
     DirtyPlayer("DirtyPlayer", "Dirty Player (.*)"),
@@ -38,7 +39,6 @@ public enum Skill {
     DivingCatch("DivingCatch", "Diving Catch"),
     DivingTackle("DivingTackle", "Diving Tackle"),
     Dodge("Dodge"),
-    Drunkhard("Drunkhard"),
     DumpOff("DumpOff", "Dump-Off"),
     ExtraArms("ExtraArms", "Extra Arms"),
     Fend("Fend"),
@@ -65,9 +65,10 @@ public enum Skill {
     NoHands("NoHands", "No hands"),
     OnTheBall("OnTheBall", "On the ball"),
     Pass("Pass"),
+    PickMeUp("PickMeUp", "Pick-Me-Up"),
     PileDriver("PileDriver", "Pile-Driver", "Pile driver"),
     PlagueRidden("PlagueRidden", "Plague ridden"),
-    PogoStick("PogoStick", "Pogo-Stick"),
+    PogoStick("PogoStick", "Pogo-Stick", "pogo stick"),
     PrehensileTail("PrehensileTail", "Prehensile tail"),
     Pro("Pro"),
     ProjectileVomit("ProjectileVomit", "Projectile Vomit"),
@@ -112,7 +113,10 @@ public enum Skill {
     }
 
     @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
-    public static Skill forCaseInsensitiveName(String name) {
+    public static Optional<Skill> forCaseInsensitiveName(String name) {
+        if (name == null || "null".equals(name)) {
+            return Optional.empty();
+        }
         List<Skill> skills = Arrays.stream(values())
                 .filter(skill ->
                         skill.name().equalsIgnoreCase(name) ||
@@ -122,11 +126,11 @@ public enum Skill {
                                         .map(String::toLowerCase)
                                         .anyMatch(regex -> name.toLowerCase().matches(regex))
                 )
-                .collect(Collectors.toList());
+                .toList();
         if (skills.size() == 1) {
-            return skills.get(0);
+            return Optional.ofNullable(skills.get(0));
         }
-        if (skills.size() == 0) {
+        if (skills.isEmpty()) {
             throw new NoSuchElementException(String.format("No skill found for skill name '%s'.", name));
         }
         throw new IllegalArgumentException(

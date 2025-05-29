@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -80,6 +81,17 @@ public class ContestInitializationServiceTest {
                 new String[]{"A", "F", "G", "E", "B", "C"},
                 new String[]{"A", "G", "B", "E", "C", "D"}
         );
+    }
+
+    @Test
+    public void roundRobinCompetitionContestsAreGeneratedForGalentio() {
+        givenCompetition(CompetitionFormat.RoundRobin);
+        givenTeams("Olgrot", "Frano Selak", "Lokistar", "Cam", "munkeychunks", "Maron", "Khanthiilas", "Jim Johnson", "Head Coach");
+        givenSeedContests(new String[]{"Frano Selak", "Lokistar", "Cam", "munkeychunks", "Maron", "Khanthiilas", "Jim Johnson", "Head Coach"});
+
+        whenContestsInitialized();
+
+        initializedContests.forEach(System.out::println);
     }
 
     @Test
@@ -181,6 +193,7 @@ public class ContestInitializationServiceTest {
         List<Team> teams = new ArrayList<>();
         for (String teamName : teamNames) {
             Team team = new Team();
+            team.setId(UUID.randomUUID());
             team.setName(teamName);
             teams.add(team);
         }

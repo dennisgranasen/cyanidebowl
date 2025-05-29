@@ -9,7 +9,7 @@ function ContestMatchCards({ contests, noContentIcon, noContentHeading, noConten
       {contests.map((contest) => (
         <ContestMatchCard
           key={contest.contestUuid}
-          contest={contest}
+          contestOrMatch={contest}
           contestHeader={
             embeddable ? (
               contest?.competitionName

@@ -18,6 +18,7 @@ public class SequenceGenerator {
 
     private final MongoOperations mongoOperations;
 
+    @SuppressWarnings("rawtypes")
     public Long nextIdFor(Class clazz) {
         DatabaseSequence counter = mongoOperations.findAndModify(query(where("_id").is(clazz.getSimpleName())),
                 new Update().inc("seq", 1), options().returnNew(true).upsert(true), DatabaseSequence.class);

@@ -43,6 +43,7 @@ public class MatchRequest extends ApiRequest<MatchRequest, MatchResponse> {
 
     public MatchRequest() {
         super("bb3/match", MatchRequest.class, MatchResponse.class);
-        setCacheValidity(CacheValidityDurations.FIVE_MINUTES);
+        setCacheValidity(CacheValidityDurations.ONE_HOUR);
+        setLimitSize(null);
     }
 }

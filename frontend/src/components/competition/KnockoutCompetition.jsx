@@ -9,17 +9,24 @@ import {
   Grid,
   GridItem,
   Heading,
+  HStack,
   Image,
 } from '@chakra-ui/react';
-import { SingleEliminationBracket } from 'react-tournament-brackets/dist/esm';
 import React, { useEffect, useState } from 'react';
-import logger from '../../util/Logger';
-import ImageUrls from '../../ImageUrls';
-import prettyPrint from '../../util/PrettyPrint';
+import { Icon, QuestionOutlineIcon } from '@chakra-ui/icons';
+import { SingleEliminationBracket } from 'react-tournament-brackets/dist/cjs';
+import imageUrls from '../../imageUrls';
+import prettyPrint from '../../util/prettyPrint';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
-import Formatter from '../../util/Formatter';
-import Ranks from './Ranks';
+import formatter from '../../util/formatter';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
+import config from '../../config';
+import useFetchContests from '../../hooks/useFetchContests';
+import useFetchRanks from '../../hooks/useFetchRanks';
+import Ranks from './Ranks';
+import { FaRegFaceSadTear } from 'react-icons/fa6';
+
+const { boxSize } = config;
 
 function toParticipant(opponent, winner) {
   return {
@@ -34,35 +41,20 @@ function toParticipant(opponent, winner) {
   };
 }
 
-function toParticipants(opponents, winner) {
-  logger.debug('Opponents: %o', opponents);
+function toParticipants(opponents, index, winner) {
   const participants = [];
   if (opponents) {
     opponents.forEach((opponent) => participants.push(toParticipant(opponent, winner)));
   }
-  logger.debug('Participants: %o', participants);
   return participants;
 }
 
-function getNextMatchId(teamId, currentRound, contests) {
-  let nextMatch = null;
-  if (contests) {
-    contests.forEach((contest) => {
-      if (contest.round === currentRound + 1 && contest.opponents.map((opponent) => opponent.id).includes(teamId)) {
-        nextMatch = contest;
-      }
-    });
-  }
-  logger.debug('Next match: %o', nextMatch);
-  return nextMatch?.contestUuid;
-}
-
-function toBracketMatch(contest, contests) {
+function toBracketMatch(contest) {
   return {
     id: contest?.contestUuid,
-    nextMatchId: getNextMatchId(contest?.winner?.team?.id, contest?.round, contests),
+    nextMatchId: contest?.nextContestUuid,
     participants: toParticipants(contest?.opponents, contest?.winner),
-    startTime: Formatter.formatAsDate(contest?.matchDate, '-'),
+    startTime: formatter.formatAsDate(contest?.matchDate, '-'),
     state: contest?.matchDate ? 'DONE' : null,
     tournamentRoundText: `${contest?.round}`,
   };
@@ -71,7 +63,7 @@ function toBracketMatch(contest, contests) {
 function toBracketMatches(contests) {
   const matches = [];
   if (contests) {
-    contests.forEach((contest) => matches.push(toBracketMatch(contest, contests)));
+    contests.forEach((contest) => matches.push(toBracketMatch(contest)));
   }
   return matches;
 }
@@ -116,18 +108,29 @@ function Participant({
       >
         <GridItem pl="4px" pr="4px" area="image" textAlign="center">
           <Center w="100%" h="100%">
-            <Image src={ImageUrls.logo(party.picture)} objectFit="contain" />
+            <Image
+              src={imageUrls.logo(party.picture)}
+              fallback={<QuestionOutlineIcon boxSize={boxSize} />}
+              objectFit="contain"
+            />
           </Center>
         </GridItem>
-        <GridItem pl="4px" area="team" w="100%" textAlign="left" fontWeight={won ? 'bold' : null} style={{ whiteSpace: 'nowrap' }}>
-          <Box>{party.teamName || teamNameFallback}</Box>
+        <GridItem
+          pl="4px"
+          area="team"
+          w="100%"
+          textAlign="left"
+          fontWeight={won ? 'bold' : null}
+          style={{ whiteSpace: 'nowrap' }}
+        >
+          <Box>{party.teamName || 'To be defined'}</Box>
         </GridItem>
         <GridItem pl="4px" area="coach" textAlign="left" fontSize="sm" color="grey" style={{ whiteSpace: 'nowrap' }}>
-          {`${party.coachName}, ${prettyPrint(party.race)}`}
+          {`${party.coachName || 'TBD'}, ${party.race ? prettyPrint(party.race) : 'unknown'}`}
         </GridItem>
         <GridItem area="score" textAlign="center" fontWeight={won ? 'bold' : null}>
           <Center w="100%" h="100%">
-            {party.resultText ?? resultFallback(party)}
+            {match.state === 'DONE' ? party.resultText : ''}
           </Center>
         </GridItem>
       </Grid>
@@ -153,7 +156,7 @@ function MatchComponent({
   onMouseLeave,
 }) {
   return (
-    <DelayedIconTooltip label={topText ? `Played ${topText}` : 'Scheduled'}>
+    <DelayedIconTooltip label={match.state === 'DONE' ? `Played ${topText}` : 'Scheduled'}>
       <div
         style={{
           cursor: 'pointer',
@@ -193,38 +196,66 @@ function MatchComponent({
   );
 }
 
-function KnockoutCompetition({ ranks, contests, competition, ranksLoading, contestsLoading, competitionLoading }) {
+function KnockoutCompetition({ competition, competitionLoading }) {
+  const { fetchContests, contests, contestsLoading, error: contestError } = useFetchContests();
+  const { fetchRanks, ranks, ranksLoading, error: ranksError } = useFetchRanks();
   const [matches, setMatches] = useState([]);
 
   useEffect(() => {
-    const bracketMatches =
-      !competitionLoading && contests && competition ? toBracketMatches(contests, competition?.teamsMax) : [];
-    setMatches(bracketMatches);
-  }, [competition, competitionLoading, contests]);
+    if (competition) {
+      fetchContests(competition);
+      fetchRanks(competition);
+    }
+  }, [competition]);
+
+  useEffect(() => {
+    if (!competitionLoading && competition && !contestsLoading && contests) {
+      const bracketMatches = toBracketMatches(contests);
+      setMatches(bracketMatches);
+    } else {
+      setMatches([]);
+    }
+  }, [competition, competitionLoading, contests, contestsLoading]);
+
   return (
-    <>
-      <Heading size="md">Knockout-Bracket</Heading>
-      <Box align="center" height="100%" width="100%" overflowX="scroll">
-        <LoadingOrErrorWrapper loading={contestsLoading}>
-          {matches && matches.length > 0 && (
-            <SingleEliminationBracket matches={matches} matchComponent={MatchComponent} />
-          )}
-        </LoadingOrErrorWrapper>
-      </Box>
-      <Accordion allowMultiple>
-        <AccordionItem>
-          <AccordionButton>
-            <Box as="span" flex="1" textAlign="left">
-              <Heading size="md">Ranks</Heading>
-            </Box>
-            <AccordionIcon />
-          </AccordionButton>
-          <AccordionPanel>
-            <Ranks loading={ranksLoading} ranks={ranks} />
-          </AccordionPanel>
-        </AccordionItem>
-      </Accordion>
-    </>
+    <Accordion defaultIndex={[0]} allowMultiple>
+      <AccordionItem>
+        <AccordionButton>
+          <Box as="span" flex="1" textAlign="left">
+            <Heading size="md">Knockout-Bracket</Heading>
+          </Box>
+          <AccordionIcon />
+        </AccordionButton>
+        <AccordionPanel overflow="auto">
+          <LoadingOrErrorWrapper loading={competitionLoading || contestsLoading} error={contestError}>
+            {matches && matches.length > 0 ? (
+              <SingleEliminationBracket matches={matches} matchComponent={MatchComponent} />
+            ) : (
+              <HStack gap="1rem">
+                <Icon as={FaRegFaceSadTear} boxSize={boxSize} />
+                <Box>No matches yet...</Box>
+              </HStack>
+            )}
+          </LoadingOrErrorWrapper>
+        </AccordionPanel>
+      </AccordionItem>
+      <AccordionItem>
+        <AccordionButton>
+          <Box as="span" flex="1" textAlign="left">
+            <Heading size="md">Ranks</Heading>
+          </Box>
+          <AccordionIcon />
+        </AccordionButton>
+        <AccordionPanel>
+          <Ranks
+            competitionUuid={competition?.uuid}
+            loading={competitionLoading || ranksLoading}
+            ranks={ranks}
+            error={ranksError}
+          />
+        </AccordionPanel>
+      </AccordionItem>
+    </Accordion>
   );
 }
 

@@ -9,6 +9,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.util.Date;
 import java.util.UUID;
 
+import static net.warp_scores.warpscores.model.CompetitionFormat.Ladder;
+
 @Getter
 @Setter
 @Document
@@ -24,8 +26,6 @@ public class Competition implements Comparable<Competition> {
     private Date dateCreated;
     private CompetitionFormat format;
     private CompetitionStatus status;
-    private Integer round;
-    private Integer roundsCount;
     private Integer teamsCount;
     private Integer teamsMax;
     private Integer timeBonusDuration;
@@ -53,5 +53,9 @@ public class Competition implements Comparable<Competition> {
         result = name.compareTo(competition.getName());
         return result;
 
+    }
+
+    public boolean needsContests() {
+        return Ladder != format;
     }
 }

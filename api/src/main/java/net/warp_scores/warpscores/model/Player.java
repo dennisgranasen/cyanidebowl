@@ -28,8 +28,10 @@ public class Player {
     private Integer[] casualtiesStateIds;
     private String[] casualtiesStates;
     private Boolean suspendedNextMatch;
-    private String[] skills;
+    private Object skills;
+    private Boolean mvp;
     private Integer matchplayed;
+    private Stats stats;
 
     @Getter
     @Setter
@@ -47,6 +49,43 @@ public class Player {
         private Attributes defaultAttributes;
         private List<LinkedHashMap<String, Integer>> bonus;
         private List<LinkedHashMap<String, Integer>> malus;
+    }
+
+    @Getter
+    @Setter
+    public static class Stats {
+        private Integer spp_gained;
+        private Integer touchdowns_scored;
+        private Integer yards_running;
+        private Integer yards_rushing;
+        private Integer hand_off_try;
+        private Integer hand_off_success;
+        private Integer catch_up_ball_try;
+        private Integer catch_up_ball_success;
+        private Integer rush_try;
+        private Integer rush_success;
+        private Integer dodge_try;
+        private Integer dodge_success;
+        private Integer pick_up_try;
+        private Integer pick_up_success;
+        private Integer blocks_succeeded;
+        private Integer blocks_sustained;
+        private Integer blitz_done;
+        private Integer armour_breaks;
+        private Integer injuries_inflicted;
+        private Integer injuries_sustained;
+        private Integer stun_inflicted;
+        private Integer stun_sustained;
+        private Integer ko_inflicted;
+        private Integer ko_sustained;
+        private Integer casualties_inflicted;
+        private Integer casualties_sustained;
+        private Integer kills_inflicted;
+        private Integer deaths_sustained;
+        private Integer foul_done;
+        private Integer foul_sustained;
+        private Integer throw_team_mate_try;
+        private Integer throw_team_mate_success;
     }
 }
 

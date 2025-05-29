@@ -2,13 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { Box, Stack } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
 import WarpScoresApiService from '../WarpScoresApiService';
-import config from '../config';
 import Navigation from '../components/misc/Navigation';
 import Competitions from '../components/competition/Competitions';
-import ImageUrls from '../ImageUrls';
+import imageUrls from '../imageUrls';
 import HeaderCard from '../components/common/HeaderCard';
 import LiveContests from '../components/contest/LiveContests';
-import LatestContests from '../components/contest/LatestContests';
+import LatestMatches from '../components/contest/LatestMatches';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import LeagueInfo from '../components/league/LeagueInfo';
 
@@ -18,6 +17,17 @@ function LeaguePage() {
   const [league, setLeague] = useState();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(undefined);
+  const [
+    activeCompetitionsIncludeRoundRobinOrWissenOrKnockoutTournaments,
+    setActiveCompetitionsIncludeRoundRobinOrWissenOrKnockoutTournaments,
+  ] = useState();
+
+  useEffect(() => {
+    const formats = competitions.map((competition) => competition.format);
+    const includeRoundRobinOrWissenOrKnockoutTournaments =
+      formats.includes('RoundRobin') || formats.includes('Wissen') || formats.includes('Knockout');
+    setActiveCompetitionsIncludeRoundRobinOrWissenOrKnockoutTournaments(includeRoundRobinOrWissenOrKnockoutTournaments);
+  }, [competitions]);
 
   useEffect(() => {
     const fetchLeague = () => {
@@ -27,14 +37,14 @@ function LeaguePage() {
         })
         .then(() => setLoading(false))
         .catch((reason) => {
-          setError({ type: 'error', message: reason.toLocaleString(config.locale) });
+          setError({ type: 'error', message: reason.toLocaleString() });
         });
     };
     fetchLeague();
   }, []);
 
   useEffect(() => {
-    const fetchCompetitions = (leagueId) => {
+    const fetchCompetitions = async (leagueId, initialized) => {
       setError(undefined);
       setCompetitions([]);
       setLoading(true);
@@ -43,15 +53,14 @@ function LeaguePage() {
         setError({ type: 'info', message: 'No League selected.' });
         return;
       }
-      WarpScoresApiService.leagueCompetitions(leagueId)
+      WarpScoresApiService.leagueCompetitions(leagueId, initialized)
         .then(setCompetitions)
         .then(() => setLoading(false))
         .catch((reason) => {
-          setError({ type: 'error', message: reason.toLocaleString(config.locale) });
+          setError({ type: 'error', message: reason.toLocaleString() });
         });
     };
-    const leagueId = league && league !== null ? league.uuid : null;
-    fetchCompetitions(leagueId);
+    if (league) fetchCompetitions(league?.uuid).then(fetchCompetitions(league?.uuid, true));
   }, [league]);
 
   return (
@@ -60,15 +69,15 @@ function LeaguePage() {
         <Navigation currentPage="league" league={[league?.uuid, league?.name]} />
       </Box>
       {league && (
-        <HeaderCard heading={league.name} detailsHeading="League details" mainImageSrc={ImageUrls.logo(league.logo)}>
+        <HeaderCard heading={league.name} detailsHeading="League details" mainImageSrc={imageUrls.logo(league.logo)}>
           <LeagueInfo league={league} />
         </HeaderCard>
       )}
       <LoadingOrErrorWrapper loading={loading} error={error}>
-        <Competitions competitions={competitions} />
-        <LiveContests league={league} />
-        <LatestContests league={league} />
+        <Competitions competitions={competitions} league={league} />
       </LoadingOrErrorWrapper>
+      {activeCompetitionsIncludeRoundRobinOrWissenOrKnockoutTournaments && <LiveContests league={league} />}
+      <LatestMatches league={league} />
     </Stack>
   );
 }

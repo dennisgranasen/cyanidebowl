@@ -47,5 +47,6 @@ public class CompetitionsRequest extends ApiRequest<CompetitionsRequest, Competi
     public CompetitionsRequest() {
         super("bb3/competitions", CompetitionsRequest.class, CompetitionsResponse.class);
         setCacheValidity(CacheValidityDurations.ONE_HOUR);
+        setLimitSize(null);
     }
 }

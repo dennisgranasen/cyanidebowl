@@ -6,7 +6,6 @@ const auth0Domain = 'warp-scores.eu.auth0.com';
 const auth0Audience = 'warp-scores-backend';
 const devDelay = isProduction ? 0 : 1000;
 
-
 const config = {
   MAX_AGE_FOR_STATUS_IN_MILLIS,
   backendUrl,
@@ -15,9 +14,11 @@ const config = {
   auth0ClientId,
   auth0Domain,
   auth0Audience,
+  showCircuitsFeature: false,
   locale: 'en-UK',
   boxSize: '2rem',
   smallBoxSize: '1.5rem',
+  tinyBoxSize: '1.2rem',
   hoverBoxShadow: 'inset 0 0 0 2000px rgba(255, 0, 150, 0.3);',
   smallScreenBreakpointValues: { base: true, sm: true, md: false },
 };

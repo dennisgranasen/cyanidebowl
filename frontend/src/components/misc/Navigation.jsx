@@ -5,27 +5,29 @@ import Menu from './Menu';
 import AuthButton from './AuthButton';
 import config from '../../config';
 import ToggleColorModeButton from './ToggleColorModeButton';
+import prettyPrint from '../../util/prettyPrint';
 
 const { isProduction } = config;
 
-function Navigation({ currentPage, league, competition, circuit, team }) {
-  const leagueLink = league ? `/${league[0]}` : '/';
-  const competitionLink = competition ? `/competition/${competition[0]}` : '';
-  const teamLink = team ? `${competitionLink}/team/${team[0]}` : '';
-  const circuitLink = circuit ? `/admin/circuit/${circuit[0]}` : '';
+function Navigation({ currentPage, parentPage, league, competition, circuit, team, race, coach }) {
   const isPage = (pageName, currentPageName) => {
     return pageName === currentPageName;
   };
 
+  const leagueLink = league ? `/${league[0]}` : '/';
+  const competitionLink = competition ? `/competition/${competition[0]}` : '';
+  const teamLink = team ? `${competitionLink}/team/${team[0]}` : '';
+  const circuitLink = circuit ? `${isPage('admin', parentPage) ? '/admin' : ''}/circuit/${circuit[0]}` : '';
+
   return (
     <Flex>
-      <Breadcrumb spacing={1}>
+      <Breadcrumb fontFamily="bigStar" spacing={1}>
         <BreadcrumbItem isCurrentPage={isPage('home', currentPage)}>
           <BreadcrumbLink variant="menu" as={RouteLink} to="/">
             Home
           </BreadcrumbLink>
         </BreadcrumbItem>
-        {(isPage('admin', currentPage) || isPage('circuits', currentPage)) && (
+        {(isPage('admin', currentPage) || isPage('admin', parentPage)) && (
           <BreadcrumbItem isCurrentPage={isPage('admin', currentPage)} flexWrap>
             <BreadcrumbLink variant="menu" as={RouteLink} to="/admin">
               Admin
@@ -58,6 +60,16 @@ function Navigation({ currentPage, league, competition, circuit, team }) {
             <BreadcrumbLink variant="menu" as={RouteLink} to={teamLink}>
               {team[1]}
             </BreadcrumbLink>
+          </BreadcrumbItem>
+        )}
+        {race && (
+          <BreadcrumbItem isCurrentPage={isPage('race', currentPage)} flexWrap>
+            <BreadcrumbLink variant="menu">{prettyPrint(race)}</BreadcrumbLink>
+          </BreadcrumbItem>
+        )}
+        {coach && (
+          <BreadcrumbItem isCurrentPage={isPage('coach', currentPage)} flexWrap>
+            <BreadcrumbLink variant="menu">{coach}</BreadcrumbLink>
           </BreadcrumbItem>
         )}
       </Breadcrumb>

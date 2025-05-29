@@ -1,6 +1,5 @@
 package net.warp_scores.warpscores.export.naf;
 
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import lombok.Getter;
 import lombok.Setter;
 

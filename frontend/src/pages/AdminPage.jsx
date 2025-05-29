@@ -1,26 +1,21 @@
-import React, {useEffect} from 'react';
+import React, { useEffect } from 'react';
 import { Box, VStack } from '@chakra-ui/react';
+import { useNavigate } from 'react-router-dom';
 import Navigation from '../components/misc/Navigation';
 import HeaderCard from '../components/common/HeaderCard';
-import Circuits from '../components/Circuits';
-import ImageUrls from '../ImageUrls';
-import {useAuth0WithUserPermissions} from "../hooks/useAuth0WithUserPermissions";
-import {useNavigate} from "react-router-dom";
+import imageUrls from '../imageUrls';
+import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
+import AdminCircuits from '../components/circuit/AdminCircuits';
 
 function AdminPage() {
-    const {
-        authenticationReady,
-        checkPermissions,
-        userPermissions,
-    } = useAuth0WithUserPermissions();
-    const navigate = useNavigate()
+  const { authenticationReady, checkPermissions, userPermissions } = useAuth0WithUserPermissions();
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        if ( authenticationReady && checkPermissions && !userPermissions.readCurrentUser)
-        {
-            navigate("/");
-        }
-    }, [authenticationReady, checkPermissions, userPermissions]);
+  useEffect(() => {
+    if (authenticationReady && checkPermissions && !userPermissions.readCurrentUser) {
+      navigate('/');
+    }
+  }, [authenticationReady, checkPermissions, userPermissions]);
 
   return (
     <VStack align="left">
@@ -28,12 +23,12 @@ function AdminPage() {
         <Navigation currentPage="admin" />
       </Box>
       <HeaderCard
-        mainImageSrc={ImageUrls.warpscoresLogoPng('medium')}
+        mainImageSrc={imageUrls.warpscoresLogoPng('medium')}
         heading="Admin"
         subHeading="Configure circuits for collecting data..."
       />
       <Box>
-        <Circuits />
+        <AdminCircuits />
       </Box>
     </VStack>
   );
