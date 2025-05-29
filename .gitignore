@@ -38,7 +38,6 @@ frontend/public/index.js
 frontend/public/index.js.LICENSE.txt
 
 http-client.env.json
-application.yml
 frontend/coverage
 frontend/public/*.md
 frontend/public/version.json
