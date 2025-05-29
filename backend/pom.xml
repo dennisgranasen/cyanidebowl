@@ -131,6 +131,22 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>fetcher</id>
+            <properties>
+                <startClass>net.warp_scores.warpscores.WarpFetcher</startClass>
+            </properties>
+        </profile>
+        <profile>
+            <id>server</id>
+            <properties>
+                <startClass>net.warp_scores.warpscores.WarpScoresApp</startClass>
+            </properties>
+        </profile>
+    </profiles>
+
     <build>
         <finalName>${project.artifactId}</finalName>
         <plugins>
@@ -165,7 +181,8 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <executable>true</executable>
-                    <mainClass>net.warp_scores.warpscores.WarpScoresApp</mainClass>
+                    <!--<mainClass>net.warp_scores.warpscores.WarpScoresApp</mainClass>-->
+                    <mainClass>${startClass}</mainClass>
                     <addResources>true</addResources>
                 </configuration>
                 <executions>
