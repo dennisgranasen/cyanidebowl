@@ -1,0 +1,54 @@
+server:
+  port: 8080
+
+spring:
+  data:
+    mongodb:
+      #uri: mongodb://USER:PASS@localhost:32768/DB_NAME?authSource=admin      
+      uri: ${SPRING_DATA_MONGODB_URI:}
+
+  web:
+    resources:
+      static-locations: classpath=/public
+  cache:
+    cache-names: "NafCoach"
+    caffeine:
+      spec: "maximumSize=500,expireAfterAccess=600s"
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://YOUR_DOMAIN/
+          jwk-set-uri: https://YOUR_DOMAIN/.well-known/jwks.json
+          jws-algorithms: RS256
+
+okta:
+  oauth2:
+    issuer: https://YOUR_DOMAIN/
+    audience: YOUR_AUDIENCE
+
+cyanide:
+  check-api-status-cron: '0 */15 * * * ?'
+  job-creation-scheduler-active: true
+  job-execution-scheduler-active: true
+  fetch-active: false
+  urls:
+    images-extension: png
+    images:
+      logos: https://images.cyanide-studio.com/bb3/logos
+      races: https://images.cyanide-studio.com/bb3/races
+      portraits: https://images.cyanide-studio.com/bb3/portraits
+      skills: https://images.cyanide-studio.com/bb3/skillicons/colorset2
+      stadiums: https://images.cyanide-studio.com/bb3/stadiums
+  api-config:
+    base-url: https://web.cyanide-studio.com/ws
+    key: ${CYANIDE_API_KEY:}
+  images-cache:
+    max-validity-in-minutes: 600
+  request-limit:
+    capacity: 30
+    period-in-seconds: 30
+
+application:
+  naf-coach-lookup-url-template: https://www.thenaf.net/coachcheck.php?naf_name=%s
+  default-spring-cache-ttl: 21600000
