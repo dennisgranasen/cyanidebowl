@@ -1,0 +1,21 @@
+app = "cyanidebowl"
+
+[build]
+  # Uncomment if you want to specify a Dockerfile path
+  dockerfile = "docker/Dockerfile"
+
+[env]
+  SERVER_PORT = "8080"
+  # Add other env vars as needed, or set them via the Fly.io dashboard
+
+[[services]]
+  internal_port = 8080
+  protocol = "tcp"
+
+  [[services.ports]]
+    handlers = ["http"]
+    port = 80
+
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = 443
