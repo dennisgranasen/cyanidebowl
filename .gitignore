@@ -45,7 +45,7 @@ frontend/public/version.json
 backend/src/main/resources/img/bb3
 
 /data
-
+.env
 sync.sh
 fetchMongoData.sh
 

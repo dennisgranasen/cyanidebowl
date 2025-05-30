@@ -29,8 +29,8 @@ okta:
 
 cyanide:
   check-api-status-cron: '0 */15 * * * ?'
-  job-creation-scheduler-active: true
-  job-execution-scheduler-active: true
+  job-creation-scheduler-active: false
+  job-execution-scheduler-active: false
   fetch-active: false
   urls:
     images-extension: png
@@ -52,3 +52,6 @@ cyanide:
 application:
   naf-coach-lookup-url-template: https://www.thenaf.net/coachcheck.php?naf_name=%s
   default-spring-cache-ttl: 21600000
+
+scheduler:
+  enabled: false
