@@ -18,6 +18,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class WarpScoresApp {
 
     public static void main(String[] args) {
+        System.out.println("SPRING_DATA_MONGODB_URI = " + System.getenv("SPRING_DATA_MONGODB_URI"));
+        System.out.println("CYANIDE_API_KEY = " + System.getenv("CYANIDE_API_KEY"));
         SpringApplication.run(WarpScoresApp.class, args);
     }
 
