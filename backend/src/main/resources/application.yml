@@ -1,5 +1,5 @@
 server:
-  port: ${SERVER_PORT:8080}
+  port: 8080
 
 spring:
   data:
@@ -53,6 +53,15 @@ cyanide:
   request-limit:
     capacity: 30
     period-in-seconds: 30
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
 
 application:
   naf-coach-lookup-url-template: https://www.thenaf.net/coachcheck.php?naf_name=%s
