@@ -5,7 +5,7 @@ app = "cyanidebowl"
   dockerfile = "backend/docker/Dockerfile"
 
 [env]
-  SERVER_PORT="80"
+  SERVER_PORT="8080"
   BACKEND_URI="https://cyanidebowl.fly.dev"
   FRONTEND_URI="https://bloodbowl.granasen.com"
   REACT_APP_BACKEND_URI="https://cyanidebowl.fly.dev"
