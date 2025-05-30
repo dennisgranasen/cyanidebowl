@@ -21,7 +21,7 @@ COPY ../../pom.xml .
 COPY ../../backend ./backend
 COPY ../../api ./api
 COPY ../../cyanide-api ./cyanide-api
-RUN mvn -f backend/pom.xml clean package -DskipTests -P server
+RUN mvn clean package -DskipTests -P server -pl api,cyanide-api,backend -am
 
 FROM openjdk:17-jdk-alpine
 WORKDIR /app
