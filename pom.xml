@@ -26,13 +26,26 @@
         <url>https://gitlab.com/warp-scores/warp-scores/</url>
         <tag>HEAD</tag>
     </scm>
-    <modules>
-        <module>cyanide-api</module>
-        <module>api</module>
-        <module>backend</module>
-        <module>frontend</module>
-        <module>discord-bot</module>
-    </modules>
+    <profiles>
+        <profile>
+            <id>server</id>
+            <modules>
+                <module>cyanide-api</module>
+                <module>api</module>
+                <module>backend</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>all</id>
+            <modules>
+                <module>cyanide-api</module>
+                <module>api</module>
+                <module>backend</module>
+                <module>frontend</module>
+                <module>discord-bot</module>
+            </modules>
+        </profile>
+    </profiles>
 
     <dependencyManagement>
         <dependencies>
