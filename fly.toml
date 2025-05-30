@@ -2,7 +2,7 @@ app = "cyanidebowl"
 
 [build]
   # Uncomment if you want to specify a Dockerfile path
-  dockerfile = "docker/Dockerfile"
+  dockerfile = "backend/docker/Dockerfile"
 
 [env]
   SERVER_PORT = "8080"
