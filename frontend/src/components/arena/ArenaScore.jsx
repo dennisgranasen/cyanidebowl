@@ -9,6 +9,7 @@ function ArenaScore({ match, teamUuid }) {
   const opponent = match.teams.find((t) => t.id !== teamUuid);
   const teamScore = team?.score ?? 0;
   const opponentScore = opponent?.score ?? 0;
+  console.log("boxSize: " + boxSize);
   return (
     <Center height={boxSize} width={boxSize}>
       {teamScore}:{opponentScore}
