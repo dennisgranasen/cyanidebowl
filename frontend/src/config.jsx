@@ -1,9 +1,9 @@
 const MAX_AGE_FOR_STATUS_IN_MILLIS = 35 * 60 * 1_000;
 const isProduction = process.env.NODE_ENV === 'production';
 const backendUrl = isProduction ?  'https://cyanidebowl.fly.dev' : 'http://localhost:8080';
-const auth0ClientId = 'vds4UOVhMmdut8kNXOQ0XJ1s5st95vdu';
-const auth0Domain = 'warp-scores.eu.auth0.com';
-const auth0Audience = 'warp-scores-backend';
+const auth0ClientId = 'J1jl3ahLjVJc2uDAGbDKOoosG8AFGhbB';
+const auth0Domain = 'nst-scores.eu.auth0.com';
+const auth0Audience = 'nst-scores-backend';
 const devDelay = isProduction ? 0 : 1000;
 
 const config = {
