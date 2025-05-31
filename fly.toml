@@ -10,9 +10,9 @@ app = "cyanidebowl"
   FRONTEND_URI="https://bloodbowl.granasen.com"
   REACT_APP_BACKEND_URI="https://cyanidebowl.fly.dev"
   AUTH_URI="https://nst-scores.eu.auth0.com/"
+  AUTH_AUDIENCE="nst-scores-backend"
   SPRING_PROFILES_ACTIVE="server"
-  OKTA_AUDIENCE="nst-scores-backend"
-  
+
 [[services]]
   internal_port = 8080
   protocol = "tcp"
