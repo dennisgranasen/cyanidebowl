@@ -6,8 +6,8 @@ spring:
 
 cyanide:
   check-api-status-cron: '0 */15 * * * ?'
-  job-creation-scheduler-active: false
-  job-execution-scheduler-active: false
+  job-creation-scheduler-active: true
+  job-execution-scheduler-active: true
   fetch-active: false
   urls:
     images-extension: png
