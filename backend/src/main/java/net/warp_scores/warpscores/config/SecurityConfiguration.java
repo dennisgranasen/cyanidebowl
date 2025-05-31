@@ -50,6 +50,8 @@ public class SecurityConfiguration {
                         .requestMatchers(GET, "/matches/**").permitAll()
                         .requestMatchers(GET, "/ranks/**").permitAll()
                         .requestMatchers(GET, "/teams/**").permitAll()
+                        .requestMatchers(GET, "/debug-headers").permitAll()
+                        .requestMatchers(GET, "/actuator/health", "/actuator/info").permitAll()
                         // rest
                         .anyRequest().denyAll()
                 )
