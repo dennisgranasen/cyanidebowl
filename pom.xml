@@ -36,6 +36,14 @@
             </modules>
         </profile>
         <profile>
+            <id>dev</id>
+            <modules>
+                <module>cyanide-api</module>
+                <module>api</module>
+                <module>backend</module>
+            </modules>
+        </profile>
+        <profile>
             <id>fetcher</id>
             <modules>
                 <module>cyanide-api</module>

@@ -1,0 +1,26 @@
+server:
+  address: 0.0.0.0
+  port: 8080
+  forward-headers-strategy: native
+
+spring:
+  web:
+    resources:
+      static-locations: classpath=/public
+    cors:
+      allowed-origins: "${FRONTEND_URI:http://localhost:8022}"
+      allowed-methods: "*"
+      allowed-headers: "*"
+      allow-credentials: true
+      max-age: 3600
+  cache:
+    cache-names: "NafCoach"
+    caffeine:
+      spec: "maximumSize=500,expireAfterAccess=600s"
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/
+          jwk-set-uri: http://localhost:8080/.well-known/jwks.json
+          jws-algorithms: RS256
