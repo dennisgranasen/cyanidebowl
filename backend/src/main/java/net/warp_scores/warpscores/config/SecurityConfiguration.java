@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.GlobalErrorHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
@@ -14,6 +15,7 @@ import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpMethod.POST;
 
 @Configuration(proxyBeanMethods = false)
+@Profile("server")
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfiguration {
