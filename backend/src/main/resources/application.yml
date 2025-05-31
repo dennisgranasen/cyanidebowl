@@ -1,37 +1,8 @@
-server:
-  address: 0.0.0.0
-  port: 8080
-
 spring:
   data:
     mongodb:
       uri: ${SPRING_DATA_MONGODB_URI:mongodb://${MONGO_USER:USER}:${MONGO_PASS:PASS}@localhost:32768/${MONGO_DB:cyanidebowl}?authSource=admin}
 
-  web:
-    resources:
-      static-locations: classpath=/public
-    cors:
-      allowed-origins: "${FRONTEND_URI:http://localhost:8022}"
-      allowed-methods: "*"
-      allowed-headers: "*"
-      allow-credentials: true
-      max-age: 3600
-  cache:
-    cache-names: "NafCoach"
-    caffeine:
-      spec: "maximumSize=500,expireAfterAccess=600s"
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${FRONTEND_URI:http://localhost:8022}
-          jwk-set-uri: ${FRONTEND_URI:http://localhost:8022}/.well-known/jwks.json
-          jws-algorithms: RS256
-
-okta:
-  oauth2:
-    issuer: ${FRONTEND_URI:http://localhost:8022}
-    audience: YOUR_AUDIENCE
 
 cyanide:
   check-api-status-cron: '0 */15 * * * ?'
@@ -54,15 +25,6 @@ cyanide:
   request-limit:
     capacity: 30
     period-in-seconds: 30
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
-  endpoint:
-    health:
-      show-details: always
 
 application:
   naf-coach-lookup-url-template: https://www.thenaf.net/coachcheck.php?naf_name=%s
