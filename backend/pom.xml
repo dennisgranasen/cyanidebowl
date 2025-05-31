@@ -151,6 +151,12 @@
                 <startClass>net.warp_scores.warpscores.WarpScoresApp</startClass>
             </properties>
         </profile>
+        <profile>
+            <id>dev</id>
+            <properties>
+                <startClass>net.warp_scores.warpscores.WarpScoresApp</startClass>
+            </properties>
+        </profile>
     </profiles>
 
     <build>
