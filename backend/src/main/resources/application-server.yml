@@ -2,7 +2,7 @@ server:
   address: 0.0.0.0
   port: 8080
   forward-headers-strategy: native
-  
+
 spring:
   web:
     resources:
@@ -22,7 +22,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${AUTH0_URI:http://localhost:8022}
-          jwk-set-uri: ${https://AUTH0_URI:http://localhost:8022}/.well-known/jwks.json
+          jwk-set-uri: ${AUTH0_URI:http://localhost:8022}/.well-known/jwks.json
           jws-algorithms: RS256
 
 okta:
