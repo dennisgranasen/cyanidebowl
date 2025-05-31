@@ -24,27 +24,6 @@ spring:
           jwk-set-uri: ${https://AUTH0_URI:http://localhost:8022}/.well-known/jwks.json
           jws-algorithms: RS256
 
-  web:
-    resources:
-      static-locations: classpath=/public
-    cors:
-      allowed-origins: "${FRONTEND_URI:http://localhost:8022}"
-      allowed-methods: "*"
-      allowed-headers: "*"
-      allow-credentials: true
-      max-age: 3600
-  cache:
-    cache-names: "NafCoach"
-    caffeine:
-      spec: "maximumSize=500,expireAfterAccess=600s"
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${FRONTEND_URI:http://localhost:8022}
-          jwk-set-uri: ${FRONTEND_URI:http://localhost:8022}/.well-known/jwks.json
-          jws-algorithms: RS256
-
 okta:
   oauth2:
     issuer: ${FRONTEND_URI:http://localhost:8022}
