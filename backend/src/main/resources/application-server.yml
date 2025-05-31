@@ -28,7 +28,7 @@ spring:
 okta:
   oauth2:
     issuer: ${FRONTEND_URI:http://localhost:8022}
-    audience: YOUR_AUDIENCE
+    audience: ${OKTA_AUDIENCE:api://default}
 
 management:
   endpoints:
