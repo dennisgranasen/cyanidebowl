@@ -41,9 +41,6 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .requiresChannel(channel -> channel
-                   .anyRequest().requiresSecure()
-                )       
                 .authorizeHttpRequests(requests -> requests
                         // status/misc
                         .requestMatchers(GET, "/version.json", "/status").permitAll()
