@@ -20,8 +20,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${FRONTEND_URI:http://localhost:8022}
-          jwk-set-uri: ${FRONTEND_URI:http://localhost:8022}/.well-known/jwks.json
+          issuer-uri: ${AUTH0_URI:http://localhost:8022}
+          jwk-set-uri: ${https://AUTH0_URI:http://localhost:8022}/.well-known/jwks.json
           jws-algorithms: RS256
 
   web:
