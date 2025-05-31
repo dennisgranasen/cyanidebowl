@@ -36,6 +36,26 @@
             </modules>
         </profile>
         <profile>
+            <id>fetcher</id>
+            <modules>
+                <module>cyanide-api</module>
+                <module>api</module>
+                <module>backend</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>frontend</id>
+            <modules>
+                <module>frontend</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>discord-bot</id>
+            <modules>
+                <module>discord-bot</module>
+            </modules>
+        </profile>
+        <profile>
             <id>all</id>
             <modules>
                 <module>cyanide-api</module>
