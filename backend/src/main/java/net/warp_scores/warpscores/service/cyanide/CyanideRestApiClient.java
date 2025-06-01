@@ -115,6 +115,7 @@ public class CyanideRestApiClient {
     public <RequestType, ResponseType> URI
     createUri(ApiRequest<RequestType, ResponseType> apiRequest, String apiKey) {
         MultiValueMap<String, String> queryParams = apiRequest.toQueryParams();
+        log.info("Query params: {}", queryParams); // <-- Add this line
         queryParams.add("key", apiKey);
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder
                 .fromUriString(String.format("%s/%s/", cyanideApiProperties.getApiConfig().getBaseUrl(),

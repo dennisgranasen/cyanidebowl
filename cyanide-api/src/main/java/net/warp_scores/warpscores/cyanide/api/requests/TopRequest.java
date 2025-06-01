@@ -33,7 +33,7 @@ import java.util.UUID;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TopRequest extends ApiRequest<TopRequest, TopResponse> {
     public TopRequest() {
-        super("bb3/top", TopRequest.class, TopResponse.class);
+        super("bb/top", TopRequest.class, TopResponse.class);
     }
     private String league_name;
     private UUID league_id;

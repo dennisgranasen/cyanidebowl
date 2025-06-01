@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 @RestController
 @RequiredArgsConstructor
 @Slf4j
@@ -20,12 +22,16 @@ public class LookupController {
     @PostMapping("/lookup")
     @PreAuthorize(Authorities.AUTHORITY_WRITE_REGISTER_LEAGUE)
     public ResponseEntity<LookupResponse> performLookup(@RequestBody LookupRequest lookupRequest) {
+
+        log.info("Lookup request: {}", lookupRequest);
         try {
             LookupResponse lookup = cyanideApiService.lookup(lookupRequest);
+            log.info("Lookup response: {}", lookup);
             return ResponseEntity.ok(lookup);
         } catch (Exception ex) {
             log.error("Unable to perform lookup {}.", lookupRequest, ex);
             return ResponseEntity.internalServerError().build();
         }
     }
+
 }

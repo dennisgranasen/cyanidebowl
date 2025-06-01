@@ -40,7 +40,7 @@ public class TeamMatchesRequest extends ApiRequest<TeamMatchesRequest, TeamMatch
     private MatchesRequest.Ordering ordering;
 
     public TeamMatchesRequest() {
-        super("bb3/teammatches", TeamMatchesRequest.class, TeamMatchesResponse.class);
+        super("bb/teammatches", TeamMatchesRequest.class, TeamMatchesResponse.class);
         setCacheValidity(CacheValidityDurations.ONE_HOUR);
     }
 }

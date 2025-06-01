@@ -53,7 +53,7 @@ public class TeamsRequest extends ApiRequest<TeamsRequest, TeamsResponse> {
     private Integer last_match;
 
     public TeamsRequest() {
-        super("bb3/teams", TeamsRequest.class, TeamsResponse.class);
+        super("bb/teams", TeamsRequest.class, TeamsResponse.class);
         setCacheValidity(CacheValidityDurations.ONE_HOUR);
         setLimitSize(null);
     }

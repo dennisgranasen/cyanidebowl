@@ -42,6 +42,6 @@ public class LadderRequest extends ApiRequest<LadderRequest, LadderResponse> {
     private UUID competition_id;
 
     public LadderRequest() {
-        super("bb3/ladder", LadderRequest.class, LadderResponse.class);
+        super("bb/ladder", LadderRequest.class, LadderResponse.class);
     }
 }

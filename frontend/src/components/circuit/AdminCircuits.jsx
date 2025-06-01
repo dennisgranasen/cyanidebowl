@@ -6,6 +6,7 @@ import {
   CardBody,
   CardFooter,
   CardHeader,
+  Checkbox,
   FormControl,
   FormErrorMessage,
   FormHelperText,
@@ -25,7 +26,7 @@ function AdminCircuits() {
   const { authenticationReady, userPermissions, getAccessTokenSilently, getAccessTokenWithPopup } =
     useAuth0WithUserPermissions();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState({});
+  const [error, setError] = useState(null);
   const [circuits, setCircuits] = useState([]);
 
   const validateCircuitName = (value) => {
@@ -52,6 +53,7 @@ function AdminCircuits() {
     setLoading(true);
     WarpScoresApiService.circuits()
       .then((data) => {
+        console.log(data);
         setCircuits(data);
       })
       .catch((reason) => {
@@ -63,13 +65,17 @@ function AdminCircuits() {
   };
 
   useEffect(() => {
-    fetchCircuits();
-  }, []);
+    if (authenticationReady) {
+      fetchCircuits();
+      console.log("Circuits baby!");
+    }
+  }, [authenticationReady]);
 
   return (
     <VStack align="left">
+      <Checkbox isChecked={authenticationReady}>Auth ready?</Checkbox>
       <LoadingOrErrorWrapper loading={loading} error={error}>
-        {circuits?.length > 0 && (
+        {circuits && circuits.length > 0 && (
           <>
             <Heading size="md">Circuits</Heading>
             <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing="1rem" mb="1rem">

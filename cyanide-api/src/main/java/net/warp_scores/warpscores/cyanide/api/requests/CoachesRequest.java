@@ -31,7 +31,7 @@ import lombok.ToString;
 public class CoachesRequest extends ApiRequest<CoachesRequest, CoachesResponse> {
 
     public CoachesRequest() {
-        super("bb3/coaches", CoachesRequest.class, CoachesResponse.class);
+        super("bb/coaches", CoachesRequest.class, CoachesResponse.class);
         setCacheValidity(CacheValidityDurations.TWO_HOURS);
         setLimitSize(null);
     }

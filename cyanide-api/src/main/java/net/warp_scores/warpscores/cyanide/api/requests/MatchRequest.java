@@ -42,7 +42,7 @@ public class MatchRequest extends ApiRequest<MatchRequest, MatchResponse> {
     private Integer rosters = 1;
 
     public MatchRequest() {
-        super("bb3/match", MatchRequest.class, MatchResponse.class);
+        super("bb/match", MatchRequest.class, MatchResponse.class);
         setCacheValidity(CacheValidityDurations.ONE_HOUR);
         setLimitSize(null);
     }
