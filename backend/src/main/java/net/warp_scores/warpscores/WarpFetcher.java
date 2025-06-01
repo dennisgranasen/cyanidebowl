@@ -15,7 +15,6 @@ public class WarpFetcher {
         ApplicationContext context = app.run(args);
         FetchDataService fetcher = context.getBean(FetchDataService.class);
         System.out.println("Running WarpFetcher...");
-        System.out.println("scheduler.enabled = " + context.getEnvironment().getProperty("scheduler.enabled"));
         if (args.length > 0)  {
             String arg = args[0];
             if (arg.equals("leagues")) {

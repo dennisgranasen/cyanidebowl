@@ -58,7 +58,7 @@ public class ContestsRequest extends ApiRequest<ContestsRequest, ContestsRespons
     private Integer round;
 
     public ContestsRequest() {
-        super("bb3/contests", ContestsRequest.class, ContestsResponse.class);
+        super("bb/contests", ContestsRequest.class, ContestsResponse.class);
         setCacheValidity(CacheValidityDurations.FIFTEEN_MINUTES);
     }
 }

@@ -36,7 +36,7 @@ public class LeagueRequest extends ApiRequest<LeagueRequest, LeagueResponse> {
     private UUID league_id;
 
     public LeagueRequest() {
-        super("bb3/league", LeagueRequest.class, LeagueResponse.class);
+        super("bb/league", LeagueRequest.class, LeagueResponse.class);
         setCacheValidity(CacheValidityDurations.FIFTEEN_MINUTES);
         setLimitSize(null);
     }

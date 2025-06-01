@@ -8,7 +8,7 @@ cyanide:
   check-api-status-cron: '0 */15 * * * ?'
   job-creation-scheduler-active: true
   job-execution-scheduler-active: true
-  fetch-active: false
+  fetch-active: true
   urls:
     images-extension: png
     images:

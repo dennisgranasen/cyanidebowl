@@ -43,7 +43,11 @@ const getToken = async (getAccessTokenSilently, getAccessTokenWithPopup) => {
 
 const getAuthHeaders = async (getAccessTokenSilently, getAccessTokenWithPopup) => {
   if (!isProduction) {
-    return null;
+    return {
+      headers: {
+        Authorization: 'Bearer dev-token',
+      },
+    }; 
   }
   const token = await getToken(getAccessTokenSilently, getAccessTokenWithPopup);
   return {
@@ -66,9 +70,56 @@ const getDataWithAuthentication = async (endpoint, getAccessTokenSilently, getAc
   return axios(endpoint, authHeaders);
 };
 
+
+/*
+    public List<IdWithName> lookupLeague(Optional<String> leagueName) {
+        if (leagueName.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        LookupRequest lookupRequest = new LookupRequest();
+        lookupRequest.setLeague_name(leagueName.get());
+        AuthenticatedHttpEntity<LookupRequest> authenticatedHttpEntity = new AuthenticatedHttpEntity<>(
+                Optional.of(lookupRequest));
+
+        RestTemplate restTemplate = new RestTemplate();
+        ParameterizedTypeReference<LookupResponse> lookupResponseRef = new ParameterizedTypeReference<>() {};
+
+        IdWithName[] leagues = null;
+        try {
+            ResponseEntity<LookupResponse> lookupResponse = restTemplate.exchange(
+                    String.format("%s/lookup", warpScoresProperties.getBaseUrls().getApiBackend()),
+                    HttpMethod.POST,
+                    authenticatedHttpEntity.create(), lookupResponseRef);
+            leagues = Optional.ofNullable(lookupResponse.getBody())
+                    .map(LookupResponse::getLeagues)
+                    .orElse(null);
+        }  catch (HttpClientErrorException e) {
+            if (404 == e.getStatusCode().value()) {
+                log.warn("Lookup for {} did return {}.", leagueName, e.getStatusCode());
+            } else {
+                log.error("Error {} while lookup.", e.getStatusCode());
+            }
+        }
+        if (leagues == null || leagues.length == 0) {
+            return Collections.emptyList();
+        } else {
+            return List.of(leagues);
+        }
+    }
+*/
+
 export default {
   // misc
   backendVersion: async () => axios(`/version.json`).then(returnData).catch(handleError),
+
+
+  lookup: async(lookupFields, getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const authHeaders = await getAuthHeaders(getAccessTokenSilently, getAccessTokenWithPopup);
+    return axios.post('/lookup', lookupFields, authHeaders)
+        .then(returnData)
+        .catch(handleError)
+  },
   status: async () => axios(`/status`).then(returnData).catch(handleError),
   // circuits
   newCircuit: async (name, getAccessTokenSilently, getAccessTokenWithPopup) =>

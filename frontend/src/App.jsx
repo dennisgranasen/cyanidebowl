@@ -21,6 +21,7 @@ import AdminCircuitLegPage from './pages/AdminCircuitLegPage';
 import Fonts from './theme/Fonts';
 import ArenaPage from './pages/ArenaPage';
 import ArenaCoachPage from './pages/ArenaCoachPage';
+import { MockAuth0Provider } from './components/misc/MockAuthProvider';
 
 const { isProduction } = config;
 
@@ -47,6 +48,49 @@ function Auth0ProviderWithRedirectCallback({ children, ...props }) {
   );
 }
 
+function AppRoutes() {
+  return (
+      <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={<WarpScores />} />
+      <Route path="/statistics" element={<StatisticsPage />} />
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/terms.md" element={<MarkdownPage markdownDocument="/terms.md" title="Terms" />} />
+      <Route
+        path="/privacy.md"
+        element={<MarkdownPage markdownDocument="/privacy.md" title="Privacy Policy" />}
+      />
+      <Route
+        path="/discord-bot.md"
+        element={<MarkdownPage markdownDocument="/discord-bot.md" title="Discord Bot" />}
+      />
+      <Route path="/README.md" element={<MarkdownPage markdownDocument="/README.md" title="Readme" />} />
+      <Route
+        path="/CHANGELOG.md"
+        element={<MarkdownPage markdownDocument="/CHANGELOG.md" title="Changelog" />}
+      />
+      <Route path="/:leagueUuid" element={<LeaguePage />} />
+      <Route path="/latestMatches/:leagueUuid" element={<LatestMatchesPage />} />
+      <Route path="/latestMatches/:leagueUuid/:limit" element={<LatestMatchesPage />} />
+      <Route path="/liveMatches/:leagueUuid" element={<LiveMatchesPage />} />
+      <Route path="/team/:teamUuid" element={<TeamPage />} />
+      <Route path="/competition/:competitionUuid" element={<CompetitionPage />} />
+      <Route path="/competition/:competitionUuid/arena/:race" element={<ArenaPage />} />
+      <Route path="/competition/:competitionUuid/arena/coach/:coachUuid" element={<ArenaCoachPage />} />
+      <Route path="/competition/:competitionUuid/team/:teamUuid" element={<TeamPage />} />
+      <Route path="/circuit/:circuitId" element={<CircuitPage />} />
+      {/* Protected Routes/Needing authentication */}
+      <Route path="/coachPage" element={<ProtectedRoute component={CoachPage} />} />
+      <Route path="/admin" element={<ProtectedRoute component={AdminPage} />} />
+      <Route path="/admin/circuit/:circuitId" element={<ProtectedRoute component={AdminCircuitPage} />} />
+      <Route
+        path="/admin/circuit/:circuitId/leg/:legId"
+        element={<ProtectedRoute component={AdminCircuitLegPage} />}
+      />
+    </Routes>
+  );
+}
+
 function App() {
   return (
     <DarkMode>
@@ -55,52 +99,21 @@ function App() {
         <Fonts />
         <Box padding="4">
           <Router>
-            <Auth0ProviderWithRedirectCallback
-              domain={config.auth0Domain}
-              clientId={config.auth0ClientId}
-              authorizationParams={{
-                redirect_uri: window.location.origin,
-              }}
-            >
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={<WarpScores />} />
-                <Route path="/statistics" element={<StatisticsPage />} />
-                <Route path="/about" element={<AboutPage />} />
-                <Route path="/terms.md" element={<MarkdownPage markdownDocument="/terms.md" title="Terms" />} />
-                <Route
-                  path="/privacy.md"
-                  element={<MarkdownPage markdownDocument="/privacy.md" title="Privacy Policy" />}
-                />
-                <Route
-                  path="/discord-bot.md"
-                  element={<MarkdownPage markdownDocument="/discord-bot.md" title="Discord Bot" />}
-                />
-                <Route path="/README.md" element={<MarkdownPage markdownDocument="/README.md" title="Readme" />} />
-                <Route
-                  path="/CHANGELOG.md"
-                  element={<MarkdownPage markdownDocument="/CHANGELOG.md" title="Changelog" />}
-                />
-                <Route path="/:leagueUuid" element={<LeaguePage />} />
-                <Route path="/latestMatches/:leagueUuid" element={<LatestMatchesPage />} />
-                <Route path="/latestMatches/:leagueUuid/:limit" element={<LatestMatchesPage />} />
-                <Route path="/liveMatches/:leagueUuid" element={<LiveMatchesPage />} />
-                <Route path="/team/:teamUuid" element={<TeamPage />} />
-                <Route path="/competition/:competitionUuid" element={<CompetitionPage />} />
-                <Route path="/competition/:competitionUuid/arena/:race" element={<ArenaPage />} />
-                <Route path="/competition/:competitionUuid/arena/coach/:coachUuid" element={<ArenaCoachPage />} />
-                <Route path="/competition/:competitionUuid/team/:teamUuid" element={<TeamPage />} />
-                <Route path="/circuit/:circuitId" element={<CircuitPage />} />
-                {/* Protected Routes/Needing authentication */}
-                <Route path="/coachPage" element={<ProtectedRoute component={CoachPage} />} />
-                <Route path="/admin" element={<ProtectedRoute component={AdminPage} />} />
-                <Route path="/admin/circuit/:circuitId" element={<ProtectedRoute component={AdminCircuitPage} />} />
-                <Route
-                  path="/admin/circuit/:circuitId/leg/:legId"
-                  element={<ProtectedRoute component={AdminCircuitLegPage} />}
-                />
-              </Routes>
-            </Auth0ProviderWithRedirectCallback>
+            {isProduction ? (
+              <Auth0ProviderWithRedirectCallback
+                domain={config.auth0Domain}
+                clientId={config.auth0ClientId}
+                authorizationParams={{
+                  redirect_uri: window.location.origin,
+                }}
+              >
+                <AppRoutes />
+              </Auth0ProviderWithRedirectCallback>
+            ) : (
+              <MockAuth0Provider>
+                <AppRoutes />
+              </MockAuth0Provider>
+            )}
           </Router>
         </Box>
       </ChakraProvider>

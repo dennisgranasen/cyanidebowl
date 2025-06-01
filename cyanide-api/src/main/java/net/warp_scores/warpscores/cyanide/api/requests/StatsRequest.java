@@ -27,6 +27,6 @@ import lombok.ToString;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StatsRequest extends ApiRequest<StatsRequest, StatsResponse> {
     public StatsRequest() {
-        super("bb3/stats", StatsRequest.class, StatsResponse.class);
+        super("bb/stats", StatsRequest.class, StatsResponse.class);
     }
 }

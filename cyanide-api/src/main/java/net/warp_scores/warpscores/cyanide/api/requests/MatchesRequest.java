@@ -59,7 +59,7 @@ public class MatchesRequest extends ApiRequest<MatchesRequest, MatchesResponse> 
     private Integer team_stats;
 
     public MatchesRequest() {
-        super("bb3/matches", MatchesRequest.class, MatchesResponse.class);
+        super("bb/matches", MatchesRequest.class, MatchesResponse.class);
         setCacheValidity(CacheValidityDurations.FIFTEEN_MINUTES);
     }
 }

@@ -39,7 +39,7 @@ public class LeaguesRequest extends ApiRequest<LeaguesRequest, LeaguesResponse> 
     private Integer min_teams_count;
 
     public LeaguesRequest() {
-        super("bb3/leagues", LeaguesRequest.class, LeaguesResponse.class);
+        super("bb/leagues", LeaguesRequest.class, LeaguesResponse.class);
         setLimitSize(null);
     }
 }
