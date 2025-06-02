@@ -1,6 +1,6 @@
-# warp-scores.net
+# cyanidebowl
 
-Welcome to [warp-scores](https://warp-scores.net), a Spike-like facade for Cyanide's BB3 API.
+Welcome to [cyanidebowl](https://bloodbowl.granasen.com), a Spike-like facade for Cyanide's BB3 API based on warp-scores (https://warp-scores.net)
 
 ## Description
 This is a Spike-like web page to show match results and data from BB3 obtained through Cyanide's API. 
