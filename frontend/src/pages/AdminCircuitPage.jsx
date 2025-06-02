@@ -55,7 +55,11 @@ function TableColumns() {
 function AdminCircuitPage() {
   const { isAuthenticated, isLoading, getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0WithUserPermissions();
 
-  const platforms = [
+  const bbVersion = config.bbVersion || 3;
+  const bbVersions = [ 1, 2, 3 ];
+
+  const platforms = [ 'PC', 'Playstation', 'Xbox', 'Switch', 'Cross platform', 'Tabletop', 'Fumbbl' ];
+    /*
     'bb1.pc',
     'bb2.pc',
     'bb2.ps',
@@ -65,12 +69,12 @@ function AdminCircuitPage() {
     'bb3.ps',
     'bb3.switch',
     'bb3.xbox',
+    */
     /*
     "fumbbl.lrb6",
     "fumbbl.2020",
     "tt.lrb6",
     "tt.2020" */
-  ];
   
   const legTypes = ['League', 'Competition', 'Circuit'];
   const treatLadderOptions = [
@@ -84,7 +88,7 @@ function AdminCircuitPage() {
     competitionOrLeagueId: '',
     competitionOrLeagueName: '',
     legType: '',
-    platform: 'bb3.cross',
+    //platform: 'bb3.cross',
     label: '',
     collectData: true,
     treatLadderAs: '',
@@ -155,8 +159,8 @@ function AdminCircuitPage() {
     
     WarpScoresApiService.lookup({
       league_name: values.competitionOrLeagueName,
-      bb: values.platform.split('.')[0][2],
-      //platform: values.platform.split('.')[1],
+      bb: values.bbVersion[values.bbVersion.length - 1],
+      //platform: values.platform,
       exact: 1, 
       fallback: false
     })
@@ -231,25 +235,24 @@ function AdminCircuitPage() {
                       )}
                     </Field>
                   <Field
-                    name="platform"
-                    validate={(value) => (value?.trim().length > 0 ? null : 'Specify platform (e.g. BB3 Cross)')}
+                    name="bbVersion"
+                    validate={(value) => (value?.trim().length > 0 ? null : 'Specify version')}
                   >
                     {({ field, form }) => (
                       <FormControl isInvalid={form.errors.platform && form.touched.platform}>
-                        <FormLabel>Platform</FormLabel>
-                        <FormHelperText>Select which platform the leg is registered for?</FormHelperText>
-                        <Select {...field} variant="outlined" placeholder="Select platform">
-                          {platforms.map((platformOption) => (
-                            <option value={platformOption} key={platformOption}>
-                              {prettyPrint(platformOption)}
+                        <FormLabel>Blood Bowl version</FormLabel>
+                        <FormHelperText>Select which version of Blood bowl the leg is registered for?</FormHelperText>
+                        <Select {...field} variant="outlined" placeholder="Select version">
+                          {bbVersions.map((versionOption) => (
+                            <option value={versionOption} key={versionOption}>
+                              {"Blood Bowl " + versionOption.toString()}
                             </option>
                           ))}
                         </Select>
-                        <FormErrorMessage>{form.errors.platform}</FormErrorMessage>
+                        <FormErrorMessage>{form.errors.bbVersion}</FormErrorMessage>
                       </FormControl>
                     )}
                   </Field>
-
                   </Box>
                   
                 </SimpleGrid>
