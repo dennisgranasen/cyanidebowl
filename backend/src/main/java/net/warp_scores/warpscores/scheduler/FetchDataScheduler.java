@@ -322,9 +322,10 @@ public class FetchDataScheduler {
                 .stream()
                 .filter(Objects::nonNull)
                 .map(l -> {
-                    Optional<Date> earliestStartDate = earliestStartDateByLeagueUuid.get(l.getUuid());
-                    Optional<Date> lastMatchDateKnown = lastMatchDateKnownByLeagueUuid.get(l.getUuid());
-                    Optional<Date> lastMatchDateReported = ofNullable(l.getDateLastMatch());
+                    Optional<Date> earliestStartDate = earliestStartDateByLeagueUuid.getOrDefault(l.getUuid(), Optional.empty());
+                    Optional<Date> lastMatchDateKnown = lastMatchDateKnownByLeagueUuid.getOrDefault(l.getUuid(), Optional.empty());
+                    Optional<Date> lastMatchDateReported = ofNullable
+                            (l.getDateLastMatch());
                     return cyanideApiService.loadMatches(l, earliestStartDate, lastMatchDateKnown,
                             lastMatchDateReported);
                 })

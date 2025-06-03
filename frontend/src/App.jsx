@@ -53,7 +53,7 @@ function App() {
       <ChakraProvider theme={warpScoresTheme}>
         <CSSReset />
         <Fonts />
-        <Box padding="4">
+        <Box>
           <Router>
             <Auth0ProviderWithRedirectCallback
               domain={config.auth0Domain}
