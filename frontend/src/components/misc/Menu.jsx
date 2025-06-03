@@ -62,17 +62,8 @@ function LastCheck({ status, textSize, statusOutdated }) {
 }
 
 function Menu() {
-  const {
-    user,
-    authenticationReady,
-    checkPermissions,
-    userPermissions,
-    isAuthenticated,
-    loginWithPopup,
-    logout,
-    getAccessTokenSilently,
-    getAccessTokenWithPopup,
-  } = useAuth0WithUserPermissions();
+  const { user, authenticationReady, checkPermissions, userPermissions, isAuthenticated, loginWithPopup, logout } =
+    useAuth0WithUserPermissions();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [status, setStatus] = useState(null);
   const [statusOutdated, setStatusOutdated] = useState(false);
