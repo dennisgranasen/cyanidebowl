@@ -173,16 +173,14 @@ function AdminCircuitPage() {
   };
 
   const onAddLegClicked = (values, actions) => {
-    const platformParts = values.platform.split('.');
-    const game = platformParts[0].toUpperCase();
-    const p = platformParts[1].toUpperCase();
     WarpScoresApiService.addLegToCircuit(
       circuit.circuitId,
-      values.leagueOrCompetitionId,
+      selectedLeagueId,
+      selectedCompetitionId,
       values.legType,
       values.label,
-      game,
-      p,
+      bbVersion,
+      values.platform,
       values.isCollect,
       values.isKnockout,
       getAccessTokenSilently,

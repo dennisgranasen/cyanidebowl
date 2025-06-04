@@ -7,9 +7,12 @@ export default function useFetchCompetition() {
   const [error, setError] = useState(null);
 
   const fetchCompetition = (competitionUuid) => {
+    console.debug('Fetching competition with UUID:', competitionUuid);
     setCompetitionLoading(true);
+    console.debug('Loading competition with UUID:', competitionUuid);
     WarpScoresApiService.competition(competitionUuid)
       .then((data) => {
+        console.debug('Done fetching competition with UUID:', competitionUuid);
         setCompetition(data);
       })
       .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))

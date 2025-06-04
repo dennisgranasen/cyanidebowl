@@ -2,6 +2,9 @@ package net.warp_scores.warpscores.model;
 
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.UUID;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -11,8 +14,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class CircuitLeg implements Comparable<CircuitLeg> {
     @Id
     private Long circuitLegId;
-    private CircuitLegType legType;
+    private String leagueId;
     private String competitionId;
+    private CircuitLegType legType;
     private String label;
     private GameType game;
     private Platform platform;

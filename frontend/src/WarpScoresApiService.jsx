@@ -132,6 +132,7 @@ export default {
       .catch(handleError),
   addLegToCircuit: async (
     circuitId,
+    leagueId,
     competitionId,
     legType,
     customLabel,
@@ -145,6 +146,7 @@ export default {
     postDataWithAuthentication(
       `/circuits/${circuitId}/legs`,
       {
+        leagueId,
         competitionId,
         legType,
         label: customLabel,
