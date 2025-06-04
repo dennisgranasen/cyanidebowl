@@ -19,10 +19,10 @@ import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.model.LeagueCollection;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Team;
-import net.warp_scores.warpscores.service.CompetitionService;
 import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
 
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -267,11 +267,30 @@ public class FetchDataService {
         loadMatchesForTeams(teams, lastMatchDateKnownByTeamUuid, earliestStartDateByTeamId);
     }
 
-    private List<League> loadLeaguesFor(List<LeagueCollection> leaguesToCollect) {
+    private List<League> loadLeaguesFor(
+        List<LeagueCollection> leaguesToCollect) {
+        if (leaguesToCollect.isEmpty()) {
+                log.info("No leagues to collect. Skipping loadLeaguesFor().");
+                return List.of();
+        }
+        Integer defaultOpus = cyanideApiProperties.getDefaults().getOpus();
+        Optional<Integer> defaultOpusOpt = Optional.ofNullable(defaultOpus);
+
         List<League> leagues = leaguesToCollect
                 .stream()
-                .map(LeagueCollection::getLeagueId)
-                .map(cyanideApiService::loadLeague)
+                .map(lc -> {
+                    Optional<Integer> opus = lc.getOpus() != null
+                            ? Optional.of(lc.getOpus())
+                            : defaultOpusOpt;
+                    if (opus.isEmpty()) {
+                        log.warn("No opus set for league collection {}, using default opus {}.",
+                                lc.getLeagueId(), defaultOpus);
+                    }
+                    if (opus.get() < 3)
+                        return cyanideApiService.loadOldLeague(lc.getOldId(), opus);
+                    else
+                        return cyanideApiService.loadLeague(lc.getLeagueId(), opus);
+                })
                 .collect(Collectors.toList());
         log.info("Loaded {} leagues.", leagues.size());
         return leagues;

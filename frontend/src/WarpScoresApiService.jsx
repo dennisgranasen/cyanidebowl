@@ -159,8 +159,8 @@ export default {
       .then(returnData)
       .catch(handleError),
   // leagues
-  leagues: async (leagueUuid) =>
-    axios(`/leagues${leagueUuid ? `/${leagueUuid}` : ''}`)
+  leagues: async (leagueUuid, opus) =>
+    axios(`/leagues${leagueUuid ? `/${leagueUuid}` : ''}${opus !== undefined && opus !== null ? `?opus=${opus}` : ''}`)
       .then(returnData)
       .catch(handleError),
   // contests

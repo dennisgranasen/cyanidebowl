@@ -83,9 +83,23 @@ public class CyanideApiService {
         return cyanideCachedRestApiClient.getFromCacheOrApi(lookupRequest);
     }
 
-    public League loadLeague(UUID leagueId) {
+    public League loadOldLeague(int leagueId, Optional<Integer> opus) {
+        LeagueRequest leagueRequest = new LeagueRequest();
+        leagueRequest.setId(leagueId);
+        if (opus.isPresent()) {
+            leagueRequest.setOpus(opus.get());
+        }
+        LeagueResponse leagueResponse = 
+            cyanideCachedRestApiClient.getFromCacheOrApi(leagueRequest);
+        return leagueDomainService.createOrUpdateLeague(leagueResponse);
+    }
+
+    public League loadLeague(UUID leagueId, Optional<Integer> opus) {
         LeagueRequest leagueRequest = new LeagueRequest();
         leagueRequest.setLeague_id(leagueId);
+        if (opus.isPresent()) {
+            leagueRequest.setOpus(opus.get());
+        }
         LeagueResponse leagueResponse = cyanideCachedRestApiClient.getFromCacheOrApi(leagueRequest);
         return leagueDomainService.createOrUpdateLeague(leagueResponse);
     }
