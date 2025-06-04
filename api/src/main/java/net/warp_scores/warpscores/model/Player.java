@@ -15,6 +15,7 @@ import java.util.UUID;
 public class Player {
     @Id
     private UUID id;
+    private Integer oldId; // This is the old ID used in the legacy system, if applicable.
     private String name;
     private Integer raceId;
     private Integer number;
@@ -32,6 +33,8 @@ public class Player {
     private Boolean mvp;
     private Integer matchplayed;
     private Stats stats;
+
+    private Integer opus; // Opus is the version of the coach, used for compatibility with different game versions.
 
     @Getter
     @Setter

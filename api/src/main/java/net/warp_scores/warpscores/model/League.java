@@ -25,6 +25,7 @@ public class League {
     private Date dateLastMatch;
 
     private Map<CompetitionStatus, Long> countsByCompetitionStatus;
+    private int opus; // Opus is the version of the league, used for compatibility with different game versions.
 
     @Override
     public String toString() {

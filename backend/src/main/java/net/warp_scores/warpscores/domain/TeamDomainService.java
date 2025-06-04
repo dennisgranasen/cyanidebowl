@@ -16,6 +16,7 @@ import net.warp_scores.warpscores.service.TeamPopulator;
 import net.warp_scores.warpscores.service.UUIDConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,6 +39,9 @@ public class TeamDomainService {
     private final CompetitionTeamsDomainService competitionTeamsDomainService;
     private final OfficialLeagueAndCompetitions officialLeagueCompetitions;
     private final OfficialLeagueAndCompetitions officialLeagueAndCompetitions;
+    
+    @Value("${cyanide.defaults.opus:3}")
+    private int defaultOpus;
 
     @Transactional
     public List<Team> createOrUpdateTeams(TeamsResponse teamsResponse) {
@@ -60,14 +64,26 @@ public class TeamDomainService {
     }
 
     @Transactional
-    public List<Team> findByCompetitionId(UUID competitionUuid) {
-        Optional<CompetitionTeams> competitionTeams = competitionTeamsDomainService.findByCompetitionId(
-                competitionUuid);
-        List<UUID> teamUuids = competitionTeams.map(CompetitionTeams::getTeamUuids).orElse(Collections.emptyList());
+    public List<Team> findByCompetitionId(UUID competitionUuid, Optional<Integer> opus) {
+        Optional<CompetitionTeams> competitionTeams = 
+            competitionTeamsDomainService.findByCompetitionId(competitionUuid, opus);
+        List<UUID> teamUuids = 
+            competitionTeams.map(CompetitionTeams::getTeamUuids).orElse(Collections.emptyList());
         List<Team> teams = this.teamRepository.findAllById(teamUuids);
         setRelevantCompetition(teams, competitionUuid);
         return teams;
     }
+
+    @Transactional
+    public List<Team> findByOldCompetitionId(Integer competitionId, Optional<Integer> opus) {
+        CompetitionTeams competitionTeams = 
+            competitionTeamsDomainService.findByOldCompetitionId(competitionId, opus);
+        List<UUID> teamUuids = competitionTeams.getTeamUuids();
+        List<Team> teams = this.teamRepository.findAllById(teamUuids);
+        setRelevantCompetition(teams, competitionId, opus.orElse(defaultOpus));
+        return teams;
+    }
+
 
     @Transactional
     public Optional<Team> findTeam(UUID teamUuid, Optional<UUID> competitionUuid) {
@@ -87,6 +103,21 @@ public class TeamDomainService {
         } else {
             return Optional.empty();
         }
+    }
+
+    private void setRelevantCompetition(List<Team> teams, Integer oldCompetitionId, Integer opus) {
+        /*  
+        TODO: Not implemented yet, but maybe needed for old competitions.
+            Need to determine what the purpose of relevant competition is in this context.
+        Optional<Competition> competition = 
+            this.competitionRepository.findByOldIdAndOpus(oldCompetitionId, opus);
+        teams
+                .forEach(team -> {
+                    UUID
+                    team.setCompetitionIds(new UUID[]{competitionUuid});
+                    competition.ifPresent(c -> team.setCompetitionName(c.getName()));
+                });
+                */
     }
 
     private void setRelevantCompetition(List<Team> teams, UUID competitionUuid) {

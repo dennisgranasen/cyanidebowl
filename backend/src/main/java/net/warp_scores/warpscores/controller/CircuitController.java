@@ -40,7 +40,8 @@ public class CircuitController {
     }
 
     @GetMapping("/circuits/{circuitId}")
-    public ResponseEntity<Circuit> getCircuit(@PathVariable(name = "circuitId") Long circuitId) {
+    public ResponseEntity<Circuit> getCircuit(
+            @PathVariable(name = "circuitId") Long circuitId) {
         try {
             Optional<Circuit> circuit = circuitService.load(circuitId);
             return circuit
@@ -54,14 +55,16 @@ public class CircuitController {
 
     @PostMapping("/circuits")
     @PreAuthorize(AUTHORITY_WRITE_LEAGUE_ADMIN) // ✨
-    public ResponseEntity<Circuit> createCircuit(@RequestBody Circuit circuit) {
+    public ResponseEntity<Circuit> createCircuit(
+            @RequestBody Circuit circuit) {
         circuit = circuitService.createCircuit(circuit);
         return new ResponseEntity<>(circuit, HttpStatusCode.valueOf(HttpStatus.CREATED.value()));
     }
 
     @PostMapping("/circuits/{circuitId}/legs")
     @PreAuthorize(AUTHORITY_WRITE_LEAGUE_ADMIN) // ✨
-    public ResponseEntity<Circuit> addCircuitLeg(@PathVariable(name = "circuitId") Long circuitId,
+    public ResponseEntity<Circuit> addCircuitLeg(
+            @PathVariable(name = "circuitId") Long circuitId,
             @RequestBody CircuitLeg circuitLeg) {
         try {
             Optional<Circuit> circuit = circuitService.load(circuitId);

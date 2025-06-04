@@ -17,6 +17,7 @@ import java.util.UUID;
 public class Coach {
     @Id
     private UUID id;
+    private Integer oldId; // This is the old ID used in the legacy system, if applicable.
     private String name;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date created;
@@ -28,6 +29,8 @@ public class Coach {
     private String lastLang;
     private String status;
     private Boolean matchValidation;
+    
+    private Integer opus; // Opus is the version of the coach, used for compatibility with different game versions.
 
     @Override
     public String toString() {

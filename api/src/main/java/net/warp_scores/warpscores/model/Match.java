@@ -17,6 +17,7 @@ public class Match {
     @Id
     private UUID matchId;
     private UUID competitionId;
+    private Integer oldCompetitionId; // This is the old ID used in the legacy system, if applicable.
     private String competitionName;
     private String competitionLogo;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
@@ -24,6 +25,7 @@ public class Match {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date finished;
     private UUID leagueId;
+    private Integer oldLeagueId;
     private String leagueName;
     private String leagueLogo;
     private String stadium;
@@ -34,6 +36,7 @@ public class Match {
     private boolean concede = false;
     private boolean overtime = false;
 
+    private Integer opus; // Opus is the version of the match, used for compatibility with different game versions.
 
     @Getter
     @Setter

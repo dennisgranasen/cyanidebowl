@@ -8,4 +8,5 @@ import java.util.UUID;
 
 @Repository
 public interface CompetitionTeamsRepository extends MongoRepository<CompetitionTeams, UUID> {
+    CompetitionTeams findByOldCompetitionIdAndOpus(Integer oldId, Integer opus);
 }

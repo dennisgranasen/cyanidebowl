@@ -107,13 +107,45 @@ function AdminCircuitPage() {
   // Handler for row click
   const handleCompetitionClick = (id, name) => {
     setSelectedCompetitionId(id);
-    setSelectedLeagueId('');
+    //setSelectedLeagueId('');
     setLabel(name);
 
-    WarpScoresApiService.competition(id)
-      .then((res) => { console.log('Competition details:', res); })
-      .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }));  
-  };
+    WarpScoresApiService.competition(id, bbVersion)
+      .then((res1) => { console.log('Competition details:', res1); })
+      .catch((reason1) => {
+        //setError({ type: 'error', message: reason.toLocaleString() })
+        console.log('Could not fetch competition details:', reason1);
+        //console.log('Trying to fetch league details instead: ', selectedLeagueId);
+        if (reason1.response && reason1.response.status === 404) {
+          var theLeague = null;
+          for (const league of searchResults.leagues) {
+            if (theLeague) break;
+            WarpScoresApiService.leagueCompetitions(league.id, bbVersion)
+              .then((competitions) => {
+                console.log('Competitions:', competitions);
+                if (competitions.some((comp) => comp.uuid === id)) {
+                  console.log('Found league for competition:', name);
+                  theLeague = league;
+                  setSelectedLeagueId(league.id);
+                  setLabel(league.name + " - " + name);
+                }
+              })
+              .catch((reason2) => {
+                console.log('Could not fetch league details:', reason2);
+                setError({ type: 'error', message: reason2.toLocaleString() });
+              }) 
+          }
+          if (theLeague) {
+            const foundCompetition = league.find((comp) => comp.uuid === id);
+            console.log(foundCompetition);
+          }
+          else {
+            console.log(`Could not find league for competition ${name} (${id})`);
+            //setError({ type: 'error', message: `Could not find league for competition ${name} (${id})` });
+          }
+        }
+      });  
+  };  
   // Handler for row click
   const handleLeagueClick = (id, name) => {
     setSelectedCompetitionId('');

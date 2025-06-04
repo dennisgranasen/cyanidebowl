@@ -7,6 +7,7 @@ import net.warp_scores.warpscores.service.RankService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collections;
@@ -23,19 +24,18 @@ public class RankController {
     private final RankService rankService;
 
     @GetMapping("/ranks/competition/{competitionId}")
-    public ResponseEntity<List<Rank>> getRanksForCompetition(@PathVariable(name = "competitionId") UUID competitionId) {
-        return getRanksForCompetition(competitionId, null);
-    }
-
-    @GetMapping("/ranks/competition/{competitionId}/{limit}")
-    public ResponseEntity<List<Rank>> getRanksForCompetition(@PathVariable(name = "competitionId") UUID competitionId,
-            @PathVariable(name = "limit") Integer limit) {
+    public ResponseEntity<List<Rank>> getRanksForCompetition(
+            @PathVariable(name = "competitionId") UUID competitionId,
+            @RequestParam(name = "limit", required = false) Integer limit,
+            @RequestParam(name = "opus", required = false) Integer opus) {
         if (competitionId == null) {
             log.error("competitionId is null");
             return ResponseEntity.badRequest().build();
         }
         try {
-            List<Rank> ranks = rankService.getRanksForCompetition(competitionId, Optional.empty(), Optional.ofNullable(limit));
+            List<Rank> ranks = rankService.getRanksForCompetition(
+                competitionId, Optional.ofNullable(opus),
+                Optional.empty(), Optional.ofNullable(limit));
             if (ranks == null || ranks.isEmpty()) {
                 return ResponseEntity.ok(Collections.emptyList());
             }

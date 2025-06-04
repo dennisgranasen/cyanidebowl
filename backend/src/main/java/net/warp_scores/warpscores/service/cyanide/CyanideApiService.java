@@ -83,7 +83,7 @@ public class CyanideApiService {
         return cyanideCachedRestApiClient.getFromCacheOrApi(lookupRequest);
     }
 
-    public League loadOldLeague(int leagueId, Optional<Integer> opus) {
+    public League loadOldLeague(Integer leagueId, Optional<Integer> opus) {
         LeagueRequest leagueRequest = new LeagueRequest();
         leagueRequest.setId(leagueId);
         if (opus.isPresent()) {
@@ -91,7 +91,7 @@ public class CyanideApiService {
         }
         LeagueResponse leagueResponse = 
             cyanideCachedRestApiClient.getFromCacheOrApi(leagueRequest);
-        return leagueDomainService.createOrUpdateLeague(leagueResponse);
+        return leagueDomainService.createOrUpdateLeague(leagueResponse, opus);
     }
 
     public League loadLeague(UUID leagueId, Optional<Integer> opus) {
@@ -101,7 +101,7 @@ public class CyanideApiService {
             leagueRequest.setOpus(opus.get());
         }
         LeagueResponse leagueResponse = cyanideCachedRestApiClient.getFromCacheOrApi(leagueRequest);
-        return leagueDomainService.createOrUpdateLeague(leagueResponse);
+        return leagueDomainService.createOrUpdateLeague(leagueResponse, opus);
     }
 
     public List<Team> loadTeams(Competition competition) {
@@ -194,9 +194,22 @@ public class CyanideApiService {
         return Collections.emptyList();
     }
 
-    public List<Competition> loadCompetitions(UUID leagueId) {
+    public List<Competition> loadCompetitions(Integer oldLeagueId, Optional<Integer> opus) {
         CompetitionsRequest competitionsRequest = new CompetitionsRequest();
-        competitionsRequest.setLeague_id(leagueId);
+        competitionsRequest.setLeague_id(oldLeagueId.toString());
+        if (opus.isPresent()) {
+            competitionsRequest.setOpus(opus.get());
+        }
+        CompetitionsResponse competitionsResponse = cyanideCachedRestApiClient.getFromCacheOrApi(competitionsRequest);
+        return competitionDomainService.createOrUpdateCompetitions(competitionsResponse);
+    }
+
+    public List<Competition> loadCompetitions(UUID leagueId, Optional<Integer> opus) {
+        CompetitionsRequest competitionsRequest = new CompetitionsRequest();
+        competitionsRequest.setLeague_id(leagueId.toString());
+        if (opus.isPresent()) {
+            competitionsRequest.setOpus(opus.get());
+        }
         CompetitionsResponse competitionsResponse = cyanideCachedRestApiClient.getFromCacheOrApi(competitionsRequest);
         return competitionDomainService.createOrUpdateCompetitions(competitionsResponse);
     }

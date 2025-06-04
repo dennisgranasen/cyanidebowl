@@ -15,5 +15,5 @@ public interface LeagueRepository extends MongoRepository<League, UUID> {
      * @param oldId the old ID of the league
      * @return an Optional containing the League if found, or empty if not found
      */
-    Optional<League> findByOldId(int oldId);
+    Optional<League> findByOldIdAndOpus(Integer oldId, Integer opus);
 }

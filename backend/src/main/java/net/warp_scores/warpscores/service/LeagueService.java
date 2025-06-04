@@ -6,7 +6,9 @@ import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.domain.persistence.LeagueRepository;
 import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
+
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +21,9 @@ public class LeagueService {
 
     private final LeagueRepository leagueRepository;
     private final CyanideApiService cyanideApiService;
+
+    @Value("${cyanide.defaults.opus:3}")
+    private int defaultOpus;
 
     @DurationLogging(warnThresholdMillis = 1500, errorThresholdMillis = 3000)
     public List<League> loadAll() {
@@ -47,8 +52,9 @@ public class LeagueService {
         }
     }
 
-    public Optional<League> loadByOldId(int id, Optional<Integer> opus) {
-        Optional<League> league = leagueRepository.findByOldId(id);
+    public Optional<League> loadByOldId(Integer id, Optional<Integer> opus) {
+        Optional<League> league = leagueRepository.findByOldIdAndOpus(id, 
+            opus.orElse(defaultOpus)); // Default opus if not provided
         if (league.isPresent()) {
             return league;
         } else {
