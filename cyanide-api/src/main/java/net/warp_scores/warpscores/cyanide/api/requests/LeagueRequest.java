@@ -34,6 +34,8 @@ import java.util.UUID;
 public class LeagueRequest extends ApiRequest<LeagueRequest, LeagueResponse> {
     private String league_name;
     private UUID league_id;
+    private Integer id; // Alias for league_id for compatibility with BB1
+    private Integer opus;
 
     public LeagueRequest() {
         super("bb/league", LeagueRequest.class, LeagueResponse.class);

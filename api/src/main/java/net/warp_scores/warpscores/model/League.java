@@ -16,6 +16,7 @@ import java.util.UUID;
 public class League {
     @Id
     private UUID uuid;
+    private Integer oldId; // This is the old ID used in the legacy system, if applicable.
     private String logo;
     private String name;
     private Integer teamCount;

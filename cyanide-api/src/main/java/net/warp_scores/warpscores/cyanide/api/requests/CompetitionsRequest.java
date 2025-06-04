@@ -43,6 +43,7 @@ public class CompetitionsRequest extends ApiRequest<CompetitionsRequest, Competi
     private UUID league_id;
     private Integer competitions_limit;
     private Integer leagues_limit;
+    private Integer opus;
 
     public CompetitionsRequest() {
         super("bb/competitions", CompetitionsRequest.class, CompetitionsResponse.class);

@@ -11,4 +11,5 @@ import java.util.UUID;
 public interface LeagueCollectionRepository extends MongoRepository<LeagueCollection, UUID> {
 
     List<LeagueCollection> findByCollectionActive(Boolean collectionActive);
+    List<LeagueCollection> findByOldId(int oldId);
 }

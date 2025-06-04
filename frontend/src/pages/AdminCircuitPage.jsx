@@ -55,7 +55,6 @@ function TableColumns() {
 function AdminCircuitPage() {
   const { isAuthenticated, isLoading, getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0WithUserPermissions();
 
-  const bbVersion = config.bbVersion || 3;
   const bbVersions = [ 1, 2, 3 ];
 
   const platforms = [ 'PC', 'Playstation', 'Xbox', 'Switch', 'Cross platform', 'Tabletop', 'Fumbbl' ];
@@ -94,24 +93,35 @@ function AdminCircuitPage() {
     treatLadderAs: '',
   };
 
-  const { circuitId } = useParams();
+  const {circuitId } = useParams();
+  const [bbVersion, setBbVersion] = useState(config.bbVersion || 3);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState();
   const [circuit, setCircuit] = useState();
   const [searchResults, setSearchResults] = useState([]);
   const [selectedLeagueId, setSelectedLeagueId] = useState('');
   const [selectedCompetitionId, setSelectedCompetitionId] = useState('');
+  const [label, setLabel] = useState('');
 
 
   // Handler for row click
-  const handleCompetitionClick = (id) => {
+  const handleCompetitionClick = (id, name) => {
     setSelectedCompetitionId(id);
-    setSelectedLeagueId('')
+    setSelectedLeagueId('');
+    setLabel(name);
+
+    WarpScoresApiService.competition(id)
+      .then((res) => { console.log('Competition details:', res); })
+      .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }));  
   };
   // Handler for row click
-  const handleLeagueClick = (id) => {
+  const handleLeagueClick = (id, name) => {
     setSelectedCompetitionId('');
-    setSelectedLeagueId(id)
+    setSelectedLeagueId(id);
+    setLabel(name);
+    WarpScoresApiService.leagues(id, bbVersion)
+      .then((res) => { console.log('League details:', res); })
+      .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }));  
   };
 
   const compareLegs = (leg, otherLeg) => {
@@ -155,8 +165,8 @@ function AdminCircuitPage() {
   };
 
   const onSearchClicked = (values, actions) => {
-    console.log('Searching for', values.competitionOrLeagueName, values.platform);
-    
+    console.log('Searching for', values.competitionOrLeagueName, values.bbVersion);
+    setBbVersion(values.bbVersion[values.bbVersion.length - 1]);
     WarpScoresApiService.lookup({
       league_name: values.competitionOrLeagueName,
       bb: values.bbVersion[values.bbVersion.length - 1],
@@ -214,7 +224,7 @@ function AdminCircuitPage() {
         </Box>
         <Checkbox isChecked={isAuthenticated}>Auth</Checkbox>
         <HStack>
-          <Formik initialValues={{ competitionOrLeagueName: '' }} 
+          <Formik initialValues={{ competitionOrLeagueName: '', bbVersion: bbVersion }} 
             onSubmit={(values, actions) => onSearchClicked(values, actions)}>
             {(props) => (
               <Card as={Form} variant="outline" size="sm">
@@ -236,7 +246,7 @@ function AdminCircuitPage() {
                     </Field>
                   <Field
                     name="bbVersion"
-                    validate={(value) => (value?.trim().length > 0 ? null : 'Specify version')}
+                    validate={(value) => (value?.length > 0 ? null : 'Specify version')}                    
                   >
                     {({ field, form }) => (
                       <FormControl isInvalid={form.errors.platform && form.touched.platform}>
@@ -287,7 +297,7 @@ function AdminCircuitPage() {
                     {searchResults.leagues.map((item) => (
                       <Tr key={item.id || item.uuid || item.leagueId}
                                 _hover={{ bg: 'gray.100', cursor: 'pointer' }}
-                                onClick={() => handleLeagueClick(item.id || item.uuid || item.leagueId)}>
+                                onClick={() => handleLeagueClick(item.id || item.uuid || item.leagueId, item.name)}>
                         <Td>{item.name || item.leagueName}</Td>
                         <Td>{item.id || item.uuid || item.leagueId}</Td>
                       </Tr>
@@ -312,7 +322,7 @@ function AdminCircuitPage() {
                     {searchResults.competitions.map((item) => (
                       <Tr key={item.id || item.uuid || item.leagueId}
                                 _hover={{ bg: 'gray.100', cursor: 'pointer' }}
-                                onClick={() => handleCompetitionClick(item.id || item.uuid || item.competitionId)}>
+                                onClick={() => handleCompetitionClick(item.id || item.uuid || item.competitionId, item.name)}>
                         <Td>{item.name || item.leagueName}</Td>
                         <Td>{item.id || item.uuid || item.competitionId}</Td>
                       </Tr>
@@ -330,6 +340,7 @@ function AdminCircuitPage() {
           {
             ...initialFormValues, 
             competitionOrLeagueId: selectedCompetitionId || '',
+            label: label || '',
           }}
                 onSubmit={(values, actions) => onAddLegClicked(values, actions)}>
           {(props) => (
@@ -340,11 +351,17 @@ function AdminCircuitPage() {
                   {useEffect(() => {
                       if (selectedCompetitionId) {
                         props.setFieldValue('competitionOrLeagueId', selectedCompetitionId);
+                        props.setFieldValue('legType', 'Competition');
                       } else if (selectedLeagueId) {
                         props.setFieldValue('competitionOrLeagueId', selectedLeagueId);
+                        props.setFieldValue('legType', 'League');
                       } 
-                    }, [selectedCompetitionId, selectedLeagueId])
-                  }                 
+                      if (label) {
+                        props.setFieldValue('label', label);
+                      }
+
+                    }, [selectedCompetitionId, selectedLeagueId, label])
+                  }
                   <Field
                     name="competitionOrLeagueId"
                     validate={(value) => (value?.trim().length > 0 ? null : 'Competition or League id required.')}

@@ -25,6 +25,8 @@ cyanide:
   request-limit:
     capacity: 30
     period-in-seconds: 30
+  defaults:
+    opus: 3
 
 application:
   naf-coach-lookup-url-template: https://www.thenaf.net/coachcheck.php?naf_name=%s
@@ -34,3 +36,4 @@ application:
 
 scheduler:
   enabled: false
+

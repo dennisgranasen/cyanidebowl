@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Arrays;
@@ -38,12 +39,15 @@ public class LeagueCollectionController {
 
     @PostMapping("/leagueCollection/{leagueId}")
     @PreAuthorize(AUTHORITY_WRITE_REGISTER_LEAGUE) // ✨
-    public ResponseEntity<List<League>> createLeagueCollection(@PathVariable(name = "leagueId") UUID leagueId) {
-        List<League> leagues = doCreateLeagueCollection(leagueId);
+    public ResponseEntity<List<League>> createLeagueCollection(
+        @PathVariable(name = "leagueId") UUID leagueId,
+        @RequestParam(name = "opus", required = false) Integer opus
+    ) {
+        List<League> leagues = doCreateLeagueCollection(leagueId, Optional.ofNullable(opus));
         return ResponseEntity.ok(leagues);
     }
 
-    private List<League> doCreateLeagueCollection(UUID leagueId) {
+    private List<League> doCreateLeagueCollection(UUID leagueId, Optional<Integer> opus) {
         LookupRequest lookupRequest = new LookupRequest();
         lookupRequest.setLeague_id(leagueId);
         LookupResponse lookup = cyanideApiService.lookup(lookupRequest);
@@ -57,8 +61,15 @@ public class LeagueCollectionController {
 
         return leagueCollections
                 .stream()
-                .map(LeagueCollection::getLeagueId)
-                .map(cyanideApiService::loadLeague)
+                .map(lc -> {
+                    if (opus.isPresent() && opus.get() < 3) {
+                        // Use getId() for old leagues (BB1)
+                        return cyanideApiService.loadOldLeague(lc.getOldId(), opus);
+                    } else {
+                        // Use getLeagueId() for BB2/BB3
+                        return cyanideApiService.loadLeague(lc.getLeagueId(), opus);
+                    }
+                })
                 .toList();
     }
 

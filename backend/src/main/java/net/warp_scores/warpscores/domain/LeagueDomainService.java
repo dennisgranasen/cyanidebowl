@@ -52,7 +52,13 @@ public class LeagueDomainService {
 
     private void populateLeague(ApiLeague sourceApiLeague, League targetLeague) {
         PopulatorUtil.copyNonNullProperties(sourceApiLeague, targetLeague);
-        targetLeague.setUuid(UUID.fromString(sourceApiLeague.getId()));
+        /* TOOD: Uncomment when OldID is available
+        if (sourceApiLeague.getId() == null) {
+            log.error("League ID is null for league '{}'.", sourceApiLeague.getName());
+            targetLeague.setOldId(sourceApiLeague.getOldId());
+        } else     
+         */
+            targetLeague.setUuid(UUID.fromString(sourceApiLeague.getId()));
         targetLeague.setTeamCount(sourceApiLeague.getTeamCount());
         targetLeague.setLogo(sourceApiLeague.getLogo());
         targetLeague.setDateLastMatch(sourceApiLeague.getDateLastMatch());
