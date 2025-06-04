@@ -25,8 +25,9 @@ cyanide:
   request-limit:
     capacity: 30
     period-in-seconds: 30
-  defaults:
+  defaults:  
     opus: 3
+    official-league-uuid: "00000000-0000-0000-0000-000000000025"    
 
 application:
   naf-coach-lookup-url-template: https://www.thenaf.net/coachcheck.php?naf_name=%s
@@ -35,5 +36,5 @@ application:
   backend-origin-url: ${BACKEND_URI:http://localhost:${SERVER_PORT}:8080}
 
 scheduler:
-  enabled: false
+  enabled: true
 

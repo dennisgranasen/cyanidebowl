@@ -11,6 +11,7 @@ import net.warp_scores.warpscores.service.OfficialLeagueAndCompetitions;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Comparator;
@@ -61,9 +62,12 @@ public class MatchController {
     }
 
     @GetMapping("/matches/competition/{competitionId}")
-    public ResponseEntity<List<Match>> getCompetitionMatches(@PathVariable(name = "competitionId") UUID competitionId) {
+    public ResponseEntity<List<Match>> getCompetitionMatches(
+            @PathVariable(name = "competitionId") UUID competitionId,
+            @RequestParam(name = "opus", required = false) Integer opus) {
         try {
-            Optional<Competition> competition = competitionService.loadCompetition(competitionId);
+            Optional<Competition> competition =
+                competitionService.loadCompetition(competitionId, Optional.of(opus));
             List<Match> byCompetitionId = matchService.findByCompetitionId(competitionId);
             List<Match> matches = initializeForCompetition(byCompetitionId, competition);
             return ResponseEntity.ok(matches);

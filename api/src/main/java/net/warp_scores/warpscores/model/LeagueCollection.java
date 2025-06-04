@@ -15,9 +15,8 @@ import java.util.UUID;
 public class LeagueCollection {
     @Id
     private UUID leagueId;
+    private Integer oldLeagueId;
     
-    private int oldId; // This is the old ID used in the legacy system, if applicable.
-
     private String leagueName;
 
     private Boolean collectionActive;

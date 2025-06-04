@@ -9,12 +9,14 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.Optional;
 
 @Repository
 public interface ContestRepository extends MongoRepository<Contest, UUID> {
     List<Contest> findByCompetitionIdAndStatus(UUID competitionId, MatchStatus matchStatus);
 
-    List<Contest> findByCompetitionId(UUID competitionId, Pageable pageable);
+    List<Contest> findByCompetitionId(UUID competitionId, Optional<Integer> opus, Pageable pageable);
+    List<Contest> findByOldCompetitionId(Integer oldId, Optional<Integer> opus, Pageable pageable);
 
     List<Contest> findByLeagueIdAndLiveOrderByMatchDateDesc(UUID leagueId, Integer live, Pageable pageable);
 

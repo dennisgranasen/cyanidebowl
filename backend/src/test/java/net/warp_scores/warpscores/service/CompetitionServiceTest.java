@@ -2,6 +2,8 @@ package net.warp_scores.warpscores.service;
 
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
+import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
+
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -28,9 +30,13 @@ class CompetitionServiceTest {
     @Mock
     private MatchService matchService;
 
-    private final CompetitionService competitionService = new CompetitionService(competitionRepository,
+    @Mock
+    private CyanideApiService cyanideApiService;
+
+    private final CompetitionService competitionService = 
+        new CompetitionService(competitionRepository,
             contestRepository,
-            officialLeagueCompetitions, matchService);
+            officialLeagueCompetitions, matchService, cyanideApiService);
 
     @ParameterizedTest(name = "Expecting {1} rounds for {0} players.")
     @MethodSource("provideTestData")

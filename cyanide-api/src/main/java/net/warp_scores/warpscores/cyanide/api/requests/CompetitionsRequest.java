@@ -40,7 +40,7 @@ import java.util.UUID;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CompetitionsRequest extends ApiRequest<CompetitionsRequest, CompetitionsResponse> {
     private String league_name;
-    private UUID league_id;
+    private String league_id;
     private Integer competitions_limit;
     private Integer leagues_limit;
     private Integer opus;

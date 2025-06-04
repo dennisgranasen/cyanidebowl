@@ -196,11 +196,16 @@ export default {
       .then(returnData)
       .catch(handleError),
   // competitions
-  leagueCompetitions: async (leagueUuid, initialized) =>
-    axios(`/competitions/league/${leagueUuid}${initialized ? '/initialized' : ''}`)
+  leagueCompetitions: async (leagueUuid, opus, initialized) =>
+    axios(
+      `/competitions/league/${leagueUuid}${initialized ? '/initialized' : ''}${opus !== undefined && opus !== null ? (initialized ? `?opus=${opus}` : `?opus=${opus}`) : ''}`
+    )
       .then(returnData)
       .catch(handleError),
-  competition: async (competitionUuid) => axios(`/competitions/${competitionUuid}`).then(returnData).catch(handleError),
+  competition: async (competitionUuid, opus) =>
+    axios(`/competitions${competitionUuid ? `/${competitionUuid}` : ''}${opus !== undefined && opus !== null ? `?opus=${opus}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
   competitionTeam: async (competitionUuid, teamUuid) =>
     axios(`/competitions/${competitionUuid}/team/${teamUuid}`).then(returnData).catch(handleError),
   competitionRanks: async (competitionUuid, limit) =>

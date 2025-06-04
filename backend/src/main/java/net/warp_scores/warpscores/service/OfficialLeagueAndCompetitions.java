@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 @Slf4j
@@ -16,8 +17,14 @@ import java.util.function.Consumer;
 public class OfficialLeagueAndCompetitions {
     private final OfficialLeagueCompetitionNameProperties competitionNameProperties;
 
-    private static final UUID OFFICIAL_LEAGUE_UUID = UUID.fromString("00000000-0000-0000-0000-000000000025");
+    @Value("${cyanide.defaults.official-league-uuid}")
+    private String officialLeagueUuidString;
+
     private static final String ARENA_MODE_COMPETITION_NAME_PATTERN = "ARENA_SEASON_[0-9]+_NAME";
+
+    private UUID getOfficialLeagueUuid() {
+        return UUID.fromString(officialLeagueUuidString);
+    }
 
     public void adjustCompetitionNameAndLogo(UUID leagueId,
             String competitionName,
@@ -29,7 +36,7 @@ public class OfficialLeagueAndCompetitions {
     public void adjustCompetitionName(UUID leagueId,
             String competitionName,
             Consumer<String> competitionNameConsumer) {
-        if (OFFICIAL_LEAGUE_UUID.equals(leagueId)) {
+        if (getOfficialLeagueUuid().equals(leagueId)) {
             Optional<String> competitionNameMapping = Optional.ofNullable(
                     competitionNameProperties.getCompetitionName(competitionName));
             competitionNameConsumer.accept(competitionNameMapping.orElse(competitionName));
@@ -39,7 +46,7 @@ public class OfficialLeagueAndCompetitions {
     public void adjustCompetitionLogo(UUID leagueId,
             String competitionName,
             Consumer<String> competitionLogoConsumer) {
-        if (OFFICIAL_LEAGUE_UUID.equals(leagueId)) {
+        if (getOfficialLeagueUuid().equals(leagueId)) {
             Optional<String> competitionLogoMapping = Optional.ofNullable(
                     competitionNameProperties.getCompetitionLogo(competitionName));
             competitionLogoMapping.ifPresent(competitionLogoConsumer);
@@ -49,7 +56,8 @@ public class OfficialLeagueAndCompetitions {
     public void adjustCompetitionFormat(UUID leagueId,
             String competitionName,
             Consumer<CompetitionFormat> competitionFormatConsumer) {
-        if (OFFICIAL_LEAGUE_UUID.equals(leagueId) && competitionName.matches(ARENA_MODE_COMPETITION_NAME_PATTERN)) {
+        if (getOfficialLeagueUuid().equals(leagueId) && 
+                competitionName.matches(ARENA_MODE_COMPETITION_NAME_PATTERN)) {
             competitionFormatConsumer.accept(CompetitionFormat.Arena);
         }
     }

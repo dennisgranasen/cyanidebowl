@@ -17,6 +17,8 @@ import static net.warp_scores.warpscores.model.CompetitionFormat.Ladder;
 public class Competition implements Comparable<Competition> {
     @Id
     private UUID uuid;
+    private Integer oldId; // This is the old ID used in the legacy system, if applicable.
+    private Integer oldLeagueId; // This is the old ID used in the legacy system, if applicable.
     private String name;
     private String logo;
     private UUID leagueId;
@@ -38,6 +40,8 @@ public class Competition implements Comparable<Competition> {
     private Integer liveMatches;
     private Integer playedMatches;
     private Integer totalMatches;
+
+    private Integer opus; // Opus is the version of the competition, used for compatibility with different game versions.
 
     @Override
     public int compareTo(Competition competition) {

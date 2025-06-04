@@ -106,7 +106,10 @@ public class FetchDataService {
     }
 
     private void fetchTeamsForCompetitionIfTeamsMissing(Competition competition) {
-        List<Team> byCompetitionId = teamDomainService.findByCompetitionId(competition.getUuid());
+        List<Team> byCompetitionId = 
+                teamDomainService.findByCompetitionId(
+                        competition.getUuid(), 
+                        Optional.of(competition.getOpus()));
         if (!competition.getFormat()
                 .equals(CompetitionFormat.Ladder) && competition.getTeamsMax() != null && competition.getTeamsMax() > byCompetitionId.size()) {
             log.info("Loading teams for competition {} as maxTeams ({}) > availableTeams ({}).", competition.getUuid(),
@@ -287,7 +290,7 @@ public class FetchDataService {
                                 lc.getLeagueId(), defaultOpus);
                     }
                     if (opus.get() < 3)
-                        return cyanideApiService.loadOldLeague(lc.getOldId(), opus);
+                        return cyanideApiService.loadOldLeague(lc.getOldLeagueId(), opus);
                     else
                         return cyanideApiService.loadLeague(lc.getLeagueId(), opus);
                 })
@@ -299,8 +302,9 @@ public class FetchDataService {
     private List<Competition> loadCompetitionsFor(List<LeagueCollection> leaguesToCollect) {
         List<Competition> competitions = leaguesToCollect
                 .stream()
-                .map(LeagueCollection::getLeagueId)
-                .map(cyanideApiService::loadCompetitions)
+                .map(lc -> cyanideApiService.loadCompetitions(
+                        lc.getLeagueId(),
+                        Optional.ofNullable(lc.getOpus())))
                 .flatMap(List::stream)
                 .toList();
         List<League> leagues = leagueRepository.findAll();
@@ -310,7 +314,9 @@ public class FetchDataService {
     }
 
     private void countCompetitions(League league) {
-        Map<CompetitionStatus, Long> countsByStatus = competitionService.countForLeague(league.getUuid());
+        Map<CompetitionStatus, Long> countsByStatus = 
+                competitionService.countForLeague(league.getUuid(),
+                Optional.ofNullable(league.getOpus()));
         league.setCountsByCompetitionStatus(countsByStatus);
         leagueRepository.save(league);
     }

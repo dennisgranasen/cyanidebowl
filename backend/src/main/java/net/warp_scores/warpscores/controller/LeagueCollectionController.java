@@ -64,7 +64,7 @@ public class LeagueCollectionController {
                 .map(lc -> {
                     if (opus.isPresent() && opus.get() < 3) {
                         // Use getId() for old leagues (BB1)
-                        return cyanideApiService.loadOldLeague(lc.getOldId(), opus);
+                        return cyanideApiService.loadOldLeague(lc.getOldLeagueId(), opus);
                     } else {
                         // Use getLeagueId() for BB2/BB3
                         return cyanideApiService.loadLeague(lc.getLeagueId(), opus);

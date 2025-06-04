@@ -22,7 +22,8 @@ public class TeamPopulator {
 
     private final UUIDConverter uuidConverter;
 
-    public void populateTeamTeam(ApiTeam sourceApiTeam, TeamResponse.Player[] apiPlayers, Team targetTeam) {
+    public void populateTeamTeam(ApiTeam sourceApiTeam, 
+        TeamResponse.Player[] apiPlayers, Team targetTeam) {
         populateTeam(sourceApiTeam, targetTeam);
         targetTeam.setPlayers(toPlayersFromTeamTeam(apiPlayers));
     }
@@ -36,7 +37,8 @@ public class TeamPopulator {
         if (apiPlayers == null) {
             return Collections.emptyList();
         }
-        return Arrays.stream(apiPlayers).map(this::toPlayerFromMatchTeam).collect(Collectors.toList());
+        return Arrays.stream(apiPlayers).map(this::toPlayerFromMatchTeam)
+            .collect(Collectors.toList());
     }
 
     private Player toPlayerFromMatchTeam(ApiPlayer apiPlayer) {
@@ -60,7 +62,8 @@ public class TeamPopulator {
         PopulatorUtil.copyNonNullProperties(sourceApiTeam, targetTeam);
         targetTeam.setId(uuidConverter.toUuid(sourceApiTeam.getId()).orElse(null));
         targetTeam.setCompetitionIds(
-                uuidConverter.toUuids(targetTeam.getCompetitionIds(), sourceApiTeam.getBb3_competition_id()));
+                uuidConverter.toUuids(targetTeam.getCompetitionIds(),
+                                      sourceApiTeam.getBb3_competition_id()));
         targetTeam.setLeagueIds(
                 uuidConverter.toUuids(targetTeam.getLeagueIds(), sourceApiTeam.getLeagueId()));
     }
@@ -69,7 +72,8 @@ public class TeamPopulator {
         if (apiPlayers == null) {
             return Collections.emptyList();
         }
-        return Arrays.stream(apiPlayers).map(this::toPlayerFromTeamTeam).collect(Collectors.toList());
+        return Arrays.stream(apiPlayers).map(this::toPlayerFromTeamTeam)
+            .collect(Collectors.toList());
     }
 
     private Player toPlayerFromTeamTeam(TeamResponse.Player apiPlayer) {
@@ -97,16 +101,19 @@ public class TeamPopulator {
         return attributes;
     }
 
-    private Player.ExtendedAttributes toExtendedAttributes(TeamResponse.Player.ExtendedAttributes apiExtendedAttributes) {
+    private Player.ExtendedAttributes toExtendedAttributes(
+            TeamResponse.Player.ExtendedAttributes apiExtendedAttributes) {
         Player.ExtendedAttributes extendedAttributes = new Player.ExtendedAttributes();
 
-        Player.Attributes defaultAttributes = toAttributes(apiExtendedAttributes.getDefaultAttributes());
+        Player.Attributes defaultAttributes =
+            toAttributes(apiExtendedAttributes.getDefaultAttributes());
         extendedAttributes.setDefaultAttributes(defaultAttributes);
         PopulatorUtil.copyNonNullProperties(apiExtendedAttributes, extendedAttributes);
         return extendedAttributes;
     }
 
-    private Player.ExtendedAttributes toExtendedAttributes(ApiPlayer.ExtendedAttributes apiExtendedAttributes) {
+    private Player.ExtendedAttributes toExtendedAttributes(
+            ApiPlayer.ExtendedAttributes apiExtendedAttributes) {
         Player.ExtendedAttributes extendedAttributes = new Player.ExtendedAttributes();
 
         Player.Attributes defaultAttributes = new Player.Attributes();
@@ -136,7 +143,8 @@ public class TeamPopulator {
         return stats;
     }
 
-    private List<LinkedHashMap<String, Integer>> collect(ApiPlayer.ExtendedAttributes apiExtendedAttributes,
+    private List<LinkedHashMap<String, Integer>> collect(
+            ApiPlayer.ExtendedAttributes apiExtendedAttributes,
             Function<ApiPlayer.ExtendedAttributes.ExtendedAttribute, Integer> getter) {
         List<LinkedHashMap<String, Integer>> collected = new ArrayList<>();
         collected.add(toMap("ma", getter.apply(apiExtendedAttributes.getMa())));

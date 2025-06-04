@@ -9,6 +9,7 @@ import java.util.UUID;
 @Setter
 public class Rank {
     private UUID competitionId;
+    private Integer oldCompetitionId; // This is the old ID used in the legacy system, if applicable.
     private Team team;
     private Integer rank = 0;
     private Integer gamesPlayed = 0;
@@ -20,4 +21,6 @@ public class Rank {
     private Integer sustainedTouchdowns = 0;
     private Integer inflictedCasualties = 0;
     private Integer sustainedCasualties = 0;
+
+    private Integer opus; // Opus is the version of the rank, used for compatibility with different game versions.
 }

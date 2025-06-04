@@ -21,6 +21,7 @@ import java.util.UUID;
 public class Team {
     @Id
     private UUID id;
+    private Integer oldId; // This is the old ID used in the legacy system, if applicable.
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date created;
@@ -41,9 +42,11 @@ public class Team {
     private String coachName;
 
     private UUID[] leagueIds;
+    private Integer[] oldLeagueIds;
     private String leagueName;
 
     private UUID[] competitionIds;
+    private Integer[] oldCompetitionIds;
     private String competitionName;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
@@ -74,4 +77,6 @@ public class Team {
     private Integer sustainedko;
     private Integer sustainedinjuries;
     private Integer sustaineddead;
+
+    private Integer opus; // Opus is the version of the team, used for compatibility with different game versions.
 }

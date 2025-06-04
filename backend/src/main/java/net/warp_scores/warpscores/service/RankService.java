@@ -44,13 +44,15 @@ public class RankService {
             RankComparisons.INFLICTED_TOUCHDOWNS, RankComparisons.TOUCHDOWN_DIFFERENCE);
 
     @DurationLogging
-    public List<Rank> getRanksForCompetition(UUID competitionId,
+    public List<Rank> getRanksForCompetition(UUID competitionId, 
+            Optional<Integer> opus,
             Optional<List<RankComparisons>> rankComparisons,
             Optional<Integer> limit) {
-        Competition competition = competitionService.loadCompetition(competitionId)
+        Competition competition = competitionService.loadCompetition(competitionId, opus)
                 .orElseThrow(NoSuchElementException::new);
 
-        List<Contest> contests = contestRepository.findByCompetitionIdAndStatus(competition.getUuid(), Validated);
+        List<Contest> contests = 
+            contestRepository.findByCompetitionIdAndStatus(competition.getUuid(), Validated);
         Set<Team> teams = new HashSet<>();
         contests
                 .stream()
@@ -61,14 +63,18 @@ public class RankService {
         if (!competition.getFormat().equals(CompetitionFormat.Ladder)) {
             matches = matchRepository.findByCompetitionId(competition.getUuid());
         }
-        Map<UUID, Match> matchByMatchId = matches.stream().collect(Collectors.toMap(Match::getMatchId, m -> m));
+        Map<UUID, Match> matchByMatchId =
+            matches.stream().collect(Collectors.toMap(Match::getMatchId, m -> m));
 
         return teams.stream()
-                .map(team -> toRank(team, contests, matchByMatchId, rankComparisons.orElse(defaultRankComparisons)))
+                .map(team -> toRank(
+                    team, contests, matchByMatchId,
+                    rankComparisons.orElse(defaultRankComparisons)))
                 .sorted(
                         (rankA, rankB) -> {
                             int result = 0;
-                            for (RankComparisons comparisons : rankComparisons.orElse(defaultRankComparisons)) {
+                            for (RankComparisons comparisons : rankComparisons.orElse(
+                                    defaultRankComparisons)) {
                                 result = comparisons.getComparator().compare(rankA, rankB);
                                 if (result != 0) {
                                     return result;
@@ -78,7 +84,8 @@ public class RankService {
                         }
                 )
                 .limit(limit.orElse(Integer.MAX_VALUE))
-                .collect(HashMap<Rank, Integer>::new, (map, rank) -> map.put(rank, map.size() + 1), (map, map2) -> {})
+                .collect(HashMap<Rank, Integer>::new, (map, rank) -> 
+                    map.put(rank, map.size() + 1), (map, map2) -> {})
                 .entrySet()
                 .stream()
                 .map(entry -> {

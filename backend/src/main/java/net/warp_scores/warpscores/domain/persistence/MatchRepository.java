@@ -6,6 +6,7 @@ import net.warp_scores.warpscores.model.MatchStatus;
 import net.warp_scores.warpscores.model.Race;
 import net.warp_scores.warpscores.model.Team;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.aggregation.ArrayOperators.In;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.lang.Nullable;
@@ -19,8 +20,10 @@ import java.util.UUID;
 @Repository
 public interface MatchRepository extends MongoRepository<Match, UUID> {
     List<Match> findByCompetitionId(UUID competitionId);
+    List<Match> findByOldCompetitionIdAndOpus(Integer oldId, Integer opus);
 
     Integer countMatchesByCompetitionId(UUID competitionId);
+    Integer countMatchesByOldCompetitionIdAndOpus(Integer oldId, Integer opus);
 
     Optional<Match> findTopByTeamsContainsOrderByStartedDesc(Team team);
 
