@@ -69,7 +69,7 @@ function LeaguePage() {
         <Navigation currentPage="league" league={[league?.uuid, league?.name]} />
       </Box>
       {league && (
-        <HeaderCard heading={league.name} detailsHeading="League details" mainImageSrc={imageUrls.logo(league.logo)}>
+        <HeaderCard heading={league.name} detailsHeading="League details" mainImageSrc={imageUrls.logo(league.logo,league?.opus)}>
           <LeagueInfo league={league} />
         </HeaderCard>
       )}

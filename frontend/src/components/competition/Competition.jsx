@@ -23,7 +23,7 @@ function Competition({ competition, league }) {
       <Td>
         <HStack>
           <Image
-            src={ImageUrls.logo(competition.logo || league?.logo)}
+            src={ImageUrls.logo(competition.logo || league?.logo, competition.opus || league?.opus)}
             boxSize={boxSize}
             objectFit="scale-down"
             fallback={<QuestionOutlineIcon boxSize={boxSize} />}

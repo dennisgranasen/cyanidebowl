@@ -1,21 +1,39 @@
 import { useState } from 'react';
 import WarpScoresApiService from '../WarpScoresApiService';
+import logger from '../util/logger';
+
 
 export default function useFetchCompetition() {
   const [competition, setCompetition] = useState([]);
   const [competitionLoading, setCompetitionLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchCompetition = (competitionUuid) => {
-    console.debug('Fetching competition with UUID:', competitionUuid);
+  const fetchCompetition = (leagueId, competitionId, opus) => {
+    //logger.info(`Fetching competition ${leagueId} Comp ${competitionId}:`);
     setCompetitionLoading(true);
-    console.debug('Loading competition with UUID:', competitionUuid);
-    WarpScoresApiService.competition(competitionUuid)
+    //logger.info(`Loading competition ${leagueId} Comp ${competitionId}:`);
+    WarpScoresApiService.leagueCompetitions(leagueId, opus)
       .then((data) => {
-        console.debug('Done fetching competition with UUID:', competitionUuid);
-        setCompetition(data);
+        //logger.info(`data: `, data);
+        if (!data || !data.length) {
+          //logger.warn(`No competitions found for league ${leagueId} with opus ${opus}`);
+          setCompetition([]);
+          return;
+        }
+        const competitionData = data.find((comp) => comp.uuid === competitionId);
+        if (!competitionData) {
+          //logger.warn(`Competition ${competitionId} not found in league ${leagueId}`);
+          setCompetition([]);
+          return;
+        } 
+        //logger.info(`Competition data found: `, competitionData);
+        //logger.info(`Done fetching competition ${leagueId} Comp ${competitionId}:`);
+        setCompetition(competitionData);
       })
-      .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
+      .catch((reason) => 
+        {
+          setError({ type: 'error', message: reason.toLocaleString() });          
+        })
       .finally(() => setCompetitionLoading(false));
   };
 

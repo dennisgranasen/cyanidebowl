@@ -12,11 +12,11 @@ cyanide:
   urls:
     images-extension: png
     images:
-      logos: https://images.cyanide-studio.com/bb3/logos
-      races: https://images.cyanide-studio.com/bb3/races
-      portraits: https://images.cyanide-studio.com/bb3/portraits
-      skills: https://images.cyanide-studio.com/bb3/skillicons/colorset2
-      stadiums: https://images.cyanide-studio.com/bb3/stadiums
+      logos: https://images.cyanide-studio.com/bb{OPUS}/logos
+      races: https://images.cyanide-studio.com/bb{OPUS}/races
+      portraits: https://images.cyanide-studio.com/bb{OPUS}/portraits
+      skills: https://images.cyanide-studio.com/bb{OPUS}/skillicons/colorset2
+      stadiums: https://images.cyanide-studio.com/bb{OPUS}/stadiums
   api-config:
     base-url: https://web.cyanide-studio.com/ws
     key: ${CYANIDE_API_KEY:}

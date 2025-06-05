@@ -66,7 +66,7 @@ public class CircuitController {
     public ResponseEntity<Circuit> addCircuitLeg(
             @PathVariable(name = "circuitId") Long circuitId,
             @RequestBody CircuitLeg circuitLeg) {
-        try {
+        try {            
             Optional<Circuit> circuit = circuitService.load(circuitId);
             return circuit
                     .map(c ->

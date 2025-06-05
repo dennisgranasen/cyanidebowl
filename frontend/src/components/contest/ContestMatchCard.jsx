@@ -71,7 +71,7 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
                   <Image
                     objectFit="contain"
                     maxW="64px"
-                    src={imageUrls.logo(teams[0].logo)}
+                    src={imageUrls.logo(teams[0].logo, teams[1]?.opus)}
                     fallback={<QuestionOutlineIcon boxSize={boxSize} />}
                   />
                 </Center>
@@ -84,7 +84,7 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
                   <Image
                     objectFit="contain"
                     maxW="64px"
-                    src={imageUrls.logo(teams[1].logo)}
+                    src={imageUrls.logo(teams[1].logo, teams[1]?.opus)}
                     fallback={<QuestionOutlineIcon boxSize={boxSize} />}
                   />
                 </Center>
