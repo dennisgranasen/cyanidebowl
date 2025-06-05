@@ -36,7 +36,7 @@ function Rank({ rank, competitionUuid }) {
           </Td>
           <Td>
             <Image
-              src={`${imageUrls.logo(rank.team.logo)}`}
+              src={`${imageUrls.logo(rank.team.logo, rank?.opus)}`}
               boxSize={boxSize}
               fallback={<QuestionOutlineIcon boxSize={boxSize} />}
               objectFit="scale-down"
@@ -48,7 +48,7 @@ function Rank({ rank, competitionUuid }) {
           <Td>{rank.team.name}</Td>
           <Td>
             <Image
-              src={`${imageUrls.logo(rank.team.logo)}`}
+              src={`${imageUrls.logo(rank.team.logo, rank?.opus)}`}
               boxSize={boxSize}
               fallback={<QuestionOutlineIcon boxSize={boxSize} />}
               objectFit="scale-down"

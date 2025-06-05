@@ -42,7 +42,7 @@ const Boxes = (opponent, reverse, winner) => {
           <Box align={textAlign}>
             <Image
               align={textAlign}
-              src={`${imageUrls.logo(opponent.logo)}`}
+              src={`${imageUrls.logo(opponent.logo, opponent?.opus)}`}
               boxSize={boxSize}
               fallback={<QuestionOutlineIcon boxSize={boxSize} />}
               objectFit="scale-down"

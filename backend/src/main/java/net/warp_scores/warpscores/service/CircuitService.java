@@ -115,7 +115,7 @@ public class CircuitService {
     }
 
     public Circuit createLeg(Circuit circuit, CircuitLeg circuitLeg) {
-        log.info("Adding leg {} to circuit {}.", circuitLeg, circuit);
+        log.info("Adding leg {} to circuit {}.", circuitLeg, circuit);        
         circuitLeg.setCircuitLegId(sequenceGenerator.nextIdFor(CircuitLeg.class));
         circuit.addLeg(circuitLeg);
         return circuitRepository.save(circuit);

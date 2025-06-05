@@ -9,6 +9,7 @@ const devDelay = isProduction ? 0 : 1000;
 const config = {
   MAX_AGE_FOR_STATUS_IN_MILLIS,
   backendUrl,
+  defaultOpus: 3,
   isProduction,
   devDelay,
   auth0ClientId,

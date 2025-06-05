@@ -12,6 +12,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Optional;
@@ -25,14 +26,22 @@ public class ImageController {
 
     private final ImageService imageService;
 
+    private Integer getDefaultOpus() {
+        return cyanideApiProperties.getDefaults().getOpus();
+    }
+
     @GetMapping("/logo/{name}")
-    public ResponseEntity<byte[]> getLogoImage(@PathVariable(name = "name") String name) {
+    public ResponseEntity<byte[]> getLogoImage(
+            @PathVariable(name = "name") String name,
+            @RequestParam(name = "opus", required = false) Integer opus) {
         if (name != null && !name.startsWith("Logo_")) {
             name = name.equals("null") ? null : String.format("Logo_%s", StringUtils.capitalize(name));
         } else if (name != null && name.startsWith("Logo_")) {
             name = "Logo_" + StringUtils.capitalize(name.substring("Logo_".length()));
         }
-        Optional<String> imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getLogos(), name);
+        Optional<String> imageUrl = 
+            getImageUrlFor(cyanideApiProperties.getUrls().getImages().getLogos(),
+                name, Optional.ofNullable(opus));
         return loadImage(imageUrl);
     }
 
@@ -91,28 +100,44 @@ public class ImageController {
     }
 
     @GetMapping("/skill/{name}")
-    public ResponseEntity<byte[]> getSkillImage(@PathVariable(name = "name") String name) {
+    public ResponseEntity<byte[]> getSkillImage(
+            @PathVariable(name = "name") String name,
+            @RequestParam(name = "opus", required = false) Integer opus) {
         String imageName = translateSkillToImageName(name);
-        Optional<String> imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getSkills(), imageName);
+        Optional<String> imageUrl = 
+            getImageUrlFor(cyanideApiProperties.getUrls().getImages().getSkills(),
+                imageName, Optional.ofNullable(opus));
         return loadImage(imageUrl);
     }
 
     @GetMapping("/race/{name}")
-    public ResponseEntity<byte[]> getRaceImage(@PathVariable(name = "name") String name) {
+    public ResponseEntity<byte[]> getRaceImage(
+            @PathVariable(name = "name") String name,
+            @RequestParam(name = "opus", required = false) Integer opus) {
         String imageName = translateRaceToRaceImageName(name);
-        Optional<String> imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getRaces(), imageName);
+        Optional<String> imageUrl = 
+            getImageUrlFor(cyanideApiProperties.getUrls().getImages().getRaces(), 
+                imageName, Optional.ofNullable(opus));
         return loadImage(imageUrl, Optional.of(300));
     }
 
     @GetMapping("/stadium/{name}")
-    public ResponseEntity<byte[]> getStadiumImage(@PathVariable(name = "name") String name) {
-        Optional<String> imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getStadiums(), name);
+    public ResponseEntity<byte[]> getStadiumImage(
+            @PathVariable(name = "name") String name,
+            @RequestParam(name = "opus", required = false) Integer opus) {
+        Optional<String> imageUrl = 
+            getImageUrlFor(cyanideApiProperties.getUrls().getImages().getStadiums(),
+                name, Optional.ofNullable(opus));
         return loadImage(imageUrl, Optional.of(128));
     }
 
     @GetMapping("/portrait/{name}")
-    public ResponseEntity<byte[]> getPortraitImage(@PathVariable(name = "name") String name) {
-        Optional<String> imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getPortraits(), name);
+    public ResponseEntity<byte[]> getPortraitImage(
+            @PathVariable(name = "name") String name,
+            @RequestParam(name = "opus", required = false) Integer opus) {
+        Optional<String> imageUrl = 
+            getImageUrlFor(cyanideApiProperties.getUrls().getImages().getPortraits(),
+                name, Optional.ofNullable(opus));
         return loadImage(imageUrl);
     }
 
@@ -144,13 +169,15 @@ public class ImageController {
         return "TeamScreenshot_" + race.getImageName();
     }
 
-    private Optional<String> getImageUrlFor(String baseUrl, String name) {
+    private Optional<String> getImageUrlFor(String baseUrl, String name, Optional<Integer> opus) {
         if (!StringUtils.hasText(baseUrl) || !StringUtils.hasText(name)) {
             return Optional.empty();
         }
         String ext = cyanideApiProperties.getUrls().getImagesExtension();
-        return Optional.of(String.format("%s/%s%s%s", baseUrl, name,
+        String url = String.format("%s/%s%s%s", baseUrl, name,
                 ext.startsWith(".") ? "" : ".",
-                ext));
+                ext);
+       return Optional.of(url.replace("{OPUS}", 
+            opus.orElse(getDefaultOpus()).toString()));
     }
 }

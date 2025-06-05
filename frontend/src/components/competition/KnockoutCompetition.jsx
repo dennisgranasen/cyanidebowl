@@ -109,7 +109,7 @@ function Participant({
         <GridItem pl="4px" pr="4px" area="image" textAlign="center">
           <Center w="100%" h="100%">
             <Image
-              src={imageUrls.logo(party.picture)}
+              src={imageUrls.logo(party.picture, party?.opus)}
               fallback={<QuestionOutlineIcon boxSize={boxSize} />}
               objectFit="contain"
             />
