@@ -14,6 +14,7 @@ function extractRoundData(currentRound, round, finishedMatchesInRound, roundLeng
     progress = finishedMatchesInRound === roundLength ? 100 : (100 * finishedMatchesInRound) / roundLength;
     active = status === 'InProgress';
   }
+  console.log(`finishedMatchesInRound ${finishedMatchesInRound}, roundLength ${roundLength}`);
   return { progress, active };
 }
 
@@ -70,7 +71,7 @@ function KnockoutProgresses({
   withPadding,
 }) {
   const participants = totalMatches + 1;
-  const finishedMatches = playedMatches - notValidatedMatches;
+  const finishedMatches = playedMatches;
   const needsValidation = notValidatedMatches - liveMatches > 0;
   const live = liveMatches > 0;
   const roundProgresses = [];
@@ -83,12 +84,15 @@ function KnockoutProgresses({
     if (finishedMatches > matchesCumulated) {
       finishedMatchesInRound = roundLength;
     } else if (currentRound === round + 1) {
-      finishedMatchesInRound = matchesCumulated - finishedMatches;
+      finishedMatchesInRound = finishedMatches - matchesCumulated + roundLength;
     } else {
       finishedMatchesInRound = 0;
     }
     const { progress, active } = extractRoundData(currentRound, round, finishedMatchesInRound, roundLength, status);
     const width = Math.max(Math.floor((roundLength / totalMatches) * 95), 5);
+    console.log(
+      `width: ${width} progress ${progress} matchesCumulated: ${matchesCumulated}, finishedMatchesInRound ${finishedMatchesInRound}, roundLength ${roundLength}, round ${round}, currentRound ${currentRound} finishedMatches ${finishedMatches}`
+    );
     roundProgresses.push({ name: `round${round + 1}`, progress, active, width });
   }
   return (
