@@ -7,6 +7,6 @@ import org.springframework.stereotype.Repository;
 import java.util.UUID;
 
 @Repository
-public interface CompetitionTeamsRepository extends MongoRepository<CompetitionTeams, UUID> {
-    CompetitionTeams findByOldCompetitionIdAndOpus(Integer oldId, Integer opus);
+public interface CompetitionTeamsRepository extends MongoRepository<CompetitionTeams, String> {
+    //CompetitionTeams findByCompetitionIdAndOpus(String competitionId, Integer opus);
 }

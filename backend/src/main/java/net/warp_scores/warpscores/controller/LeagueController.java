@@ -34,16 +34,9 @@ public class LeagueController {
         log.info("Fetching league with ID: {} and opus: {}", leagueId, opus);
         Optional<League> league;
         try {
-            UUID uuid = UUID.fromString(leagueId);
-            league = leagueService.loadById(uuid, Optional.ofNullable(opus));
+            league = leagueService.loadById(leagueId, Optional.ofNullable(opus));
         } catch (IllegalArgumentException e) {
-            // Not a UUID, try as integer
-            try {
-                Integer oldId = Integer.valueOf(leagueId);
-                league = leagueService.loadByOldId(oldId, Optional.ofNullable(opus));
-            } catch (NumberFormatException ex) {
-                return ResponseEntity.badRequest().build();
-            }
+            return ResponseEntity.badRequest().build();
         }
         return league
                 .map(ResponseEntity::ok)

@@ -26,38 +26,53 @@ public class OfficialLeagueAndCompetitions {
         return UUID.fromString(officialLeagueUuidString);
     }
 
-    public void adjustCompetitionNameAndLogo(UUID leagueId,
+    public void adjustCompetitionNameAndLogo(String leagueId,
             String competitionName,
             Consumer<String> competitionNameConsumer, Consumer<String> competitionLogoConsumer) {
-        adjustCompetitionName(leagueId, competitionName, competitionNameConsumer);
-        adjustCompetitionLogo(leagueId, competitionName, competitionLogoConsumer);
+        UUIDConverter uuidConverter = new UUIDConverter();
+        Optional<UUID> leagueUuid = uuidConverter.toUuid(leagueId);
+        if (leagueUuid.isPresent() &&  
+            getOfficialLeagueUuid().equals(leagueUuid.get())) {
+
+            adjustCompetitionName(leagueId, competitionName, competitionNameConsumer);
+            adjustCompetitionLogo(leagueId, competitionName, competitionLogoConsumer);
+        }
     }
 
-    public void adjustCompetitionName(UUID leagueId,
+    public void adjustCompetitionName(String leagueId,
             String competitionName,
             Consumer<String> competitionNameConsumer) {
-        if (getOfficialLeagueUuid().equals(leagueId)) {
+        UUIDConverter uuidConverter = new UUIDConverter();
+        Optional<UUID> leagueUuid = uuidConverter.toUuid(leagueId);
+        if (leagueUuid.isPresent() &&  
+            getOfficialLeagueUuid().equals(leagueUuid.get())) {
             Optional<String> competitionNameMapping = Optional.ofNullable(
                     competitionNameProperties.getCompetitionName(competitionName));
             competitionNameConsumer.accept(competitionNameMapping.orElse(competitionName));
         }
     }
 
-    public void adjustCompetitionLogo(UUID leagueId,
+    public void adjustCompetitionLogo(String leagueId,
             String competitionName,
             Consumer<String> competitionLogoConsumer) {
-        if (getOfficialLeagueUuid().equals(leagueId)) {
+        UUIDConverter uuidConverter = new UUIDConverter();
+        Optional<UUID> leagueUuid = uuidConverter.toUuid(leagueId);
+        if (leagueUuid.isPresent() &&  
+            getOfficialLeagueUuid().equals(leagueUuid.get())) {
             Optional<String> competitionLogoMapping = Optional.ofNullable(
                     competitionNameProperties.getCompetitionLogo(competitionName));
             competitionLogoMapping.ifPresent(competitionLogoConsumer);
         }
     }
 
-    public void adjustCompetitionFormat(UUID leagueId,
+    public void adjustCompetitionFormat(String leagueId,
             String competitionName,
             Consumer<CompetitionFormat> competitionFormatConsumer) {
-        if (getOfficialLeagueUuid().equals(leagueId) && 
-                competitionName.matches(ARENA_MODE_COMPETITION_NAME_PATTERN)) {
+        UUIDConverter uuidConverter = new UUIDConverter();
+        Optional<UUID> leagueUuid = uuidConverter.toUuid(leagueId);
+        if (leagueUuid.isPresent() &&  
+            getOfficialLeagueUuid().equals(leagueUuid.get()) &&
+            competitionName.matches(ARENA_MODE_COMPETITION_NAME_PATTERN)) {
             competitionFormatConsumer.accept(CompetitionFormat.Arena);
         }
     }

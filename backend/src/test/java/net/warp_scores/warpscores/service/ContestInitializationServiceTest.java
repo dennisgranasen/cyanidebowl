@@ -193,7 +193,7 @@ public class ContestInitializationServiceTest {
         List<Team> teams = new ArrayList<>();
         for (String teamName : teamNames) {
             Team team = new Team();
-            team.setId(UUID.randomUUID());
+            team.setId(UUID.randomUUID().toString());
             team.setName(teamName);
             teams.add(team);
         }

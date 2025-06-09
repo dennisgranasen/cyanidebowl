@@ -40,14 +40,14 @@ public class LeagueCollectionController {
     @PostMapping("/leagueCollection/{leagueId}")
     @PreAuthorize(AUTHORITY_WRITE_REGISTER_LEAGUE) // ✨
     public ResponseEntity<List<League>> createLeagueCollection(
-        @PathVariable(name = "leagueId") UUID leagueId,
+        @PathVariable(name = "leagueId") String leagueId,
         @RequestParam(name = "opus", required = false) Integer opus
     ) {
         List<League> leagues = doCreateLeagueCollection(leagueId, Optional.ofNullable(opus));
         return ResponseEntity.ok(leagues);
     }
 
-    private List<League> doCreateLeagueCollection(UUID leagueId, Optional<Integer> opus) {
+    private List<League> doCreateLeagueCollection(String leagueId, Optional<Integer> opus) {
         LookupRequest lookupRequest = new LookupRequest();
         lookupRequest.setLeague_id(leagueId);
         LookupResponse lookup = cyanideApiService.lookup(lookupRequest);
@@ -61,26 +61,16 @@ public class LeagueCollectionController {
 
         return leagueCollections
                 .stream()
-                .map(lc -> {
-                    if (opus.isPresent() && opus.get() < 3) {
-                        // Use getId() for old leagues (BB1)
-                        return cyanideApiService.loadOldLeague(lc.getOldLeagueId(), opus);
-                    } else {
-                        // Use getLeagueId() for BB2/BB3
-                        return cyanideApiService.loadLeague(lc.getLeagueId(), opus);
-                    }
-                })
+                .map(lc -> cyanideApiService.loadLeague(lc.getLeagueId(), opus))
                 .toList();
     }
 
     private LeagueCollection newLeagueCollection(IdWithName idWithName) {
-        Optional<UUID> uuid = uuidConverter.toUuid(idWithName.getId());
-        return uuid.map(id -> {
-            LeagueCollection leagueCollection = new LeagueCollection();
-            leagueCollection.setCollectionActive(true);
-            leagueCollection.setLeagueName(idWithName.getName());
-            leagueCollection.setLeagueId(id);
-            return leagueCollection;
-        }).orElse(null);
+        String id = idWithName.getId();
+        LeagueCollection leagueCollection = new LeagueCollection();
+        leagueCollection.setCollectionActive(true);
+        leagueCollection.setLeagueName(idWithName.getName());
+        leagueCollection.setLeagueId(id);
+        return leagueCollection;
     }
 }

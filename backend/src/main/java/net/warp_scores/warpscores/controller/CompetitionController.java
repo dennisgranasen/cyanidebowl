@@ -10,6 +10,8 @@ import net.warp_scores.warpscores.model.Team;
 import net.warp_scores.warpscores.service.CompetitionService;
 import net.warp_scores.warpscores.service.NafExporter;
 import net.warp_scores.warpscores.service.NafXmlCreator;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -40,25 +42,18 @@ public class CompetitionController {
 
     private final ExecutorService nafExporterExecutor = Executors.newFixedThreadPool(5);
 
+    @Value("${cyanide.defaults.opus:3}")
+    private int defaultOpus;
+
+
     @GetMapping("/competitions/league/{leagueId}")
     public ResponseEntity<List<Competition>> getActiveCompetitionsForLeague(
             @PathVariable(name = "leagueId") String leagueId,
             @RequestParam(name = "opus", required = false) Integer opus) {
         try {
-            List<Competition> competitions;
-            if (opus != null && opus < 3) {
-                // If opus is less than 3, we assume it's an old ID
-                Integer oldId = Integer.parseInt(leagueId);
-                competitions = 
-                    competitionService.loadForLeague(oldId, Optional.ofNullable(opus));
-
-            } 
-            else {
-                UUID leagueUuid = UUID.fromString(leagueId);
-                competitions = 
-                    competitionService.loadForLeague(leagueUuid, Optional.ofNullable(opus));
-            }
-            competitions = competitions
+            
+            List<Competition> competitions =                
+                competitionService.loadForLeague(leagueId, Optional.ofNullable(opus))
                     .stream()
                     .sorted()
                     .toList();
@@ -74,20 +69,8 @@ public class CompetitionController {
             @PathVariable(name = "leagueId") String leagueId,
             @RequestParam(name = "opus", required = false) Integer opus) {
         try {
-            List<Competition> competitions;
-            if (opus != null && opus < 3) {
-                // If opus is less than 3, we assume it's an old ID
-                Integer oldId = Integer.parseInt(leagueId);
-                competitions = 
-                    competitionService.loadForLeagueAndInitialize(oldId, Optional.ofNullable(opus));
-
-            } 
-            else {
-                UUID leagueUuid = UUID.fromString(leagueId);
-                competitions = 
-                    competitionService.loadForLeagueAndInitialize(leagueUuid, Optional.ofNullable(opus));
-            }
-            competitions = competitions
+            List<Competition> competitions =
+                competitionService.loadForLeagueAndInitialize(leagueId, Optional.ofNullable(opus))
                     .stream()
                     .sorted()
                     .toList();
@@ -105,17 +88,10 @@ public class CompetitionController {
                 // Need to do this like leagueController... 
 
         log.info("Fetching competition with ID: {} and opus: {}", competitionId, opus);
-        Optional<Competition> competition;
-        if (opus != null && opus < 3) {
-            competition = competitionService.loadCompetitionByOldId(
-                Integer.parseInt(competitionId), Optional.ofNullable(opus));
-                log.info("Did < 3 opus, using old ID: {}", competitionId);
-        }
-        else {
-            competition = competitionService.loadCompetition(
-                UUID.fromString(competitionId), Optional.ofNullable(opus));
-                log.info("Did > 2 opus, using UUID: {}", competitionId);
-        }
+        Optional<Competition> competition =
+            competitionService.loadCompetition(competitionId, 
+                                               Optional.ofNullable(opus));
+
         log.info(competitionId, opus, competition);
         return competition
                 .map(ResponseEntity::ok)
@@ -125,7 +101,7 @@ public class CompetitionController {
     @GetMapping("/competitions/{competitionId}/exportNafData")
     @PreAuthorize(AUTHORITY_WRITE_LEAGUE_ADMIN) // ✨
     public DeferredResult<byte[]> exportNafData(
-            @PathVariable(name = "competitionId") UUID competitionId,
+            @PathVariable(name = "competitionId") String competitionId,
             @RequestParam(name = "opus", required = false) Integer opus, 
             JwtAuthenticationToken principal) {
         String exporterName = Optional.ofNullable(principal).map(JwtAuthenticationToken::getName).orElse("unknown");
@@ -135,7 +111,7 @@ public class CompetitionController {
         return output;
     }
 
-    private void createNafExportData(UUID competitionId, Optional<Integer> opus, String exporterName, DeferredResult<byte[]> output) {
+    private void createNafExportData(String competitionId, Optional<Integer> opus, String exporterName, DeferredResult<byte[]> output) {
         try {
             Optional<NafReport> nafReport = nafExporter.export(competitionId, opus, exporterName);
             Optional<String> xml = nafReport.map(nafXmlCreator::writeAsXml);
@@ -149,28 +125,33 @@ public class CompetitionController {
 
     @GetMapping("/competitions/{competitionId}/teams")
     public ResponseEntity<List<Team>> getTeamsForCompetition(
-            @PathVariable(name = "competitionId") UUID competitionId,
+            @PathVariable(name = "competitionId") String competitionId,
             @RequestParam(name = "opus", required = false) Integer opus) {
         try {
             List<Team> teams =
                 teamDomainService.findByCompetitionId(competitionId, Optional.ofNullable(opus));
             return ResponseEntity.ok(teams);
         } catch (Exception ex) {
-            log.error("Unable to get teams for competition uuid {}.", competitionId, ex);
+            log.error("Unable to get teams for competition id {}.", competitionId, ex);
             return ResponseEntity.internalServerError().build();
         }
     }
 
-    @GetMapping("/competitions/{competitionUuid}/team/{teamUuid}")
-    public ResponseEntity<Team> getTeam(@PathVariable(name = "competitionUuid") UUID competitionUuid,
-            @PathVariable(name = "teamUuid") UUID teamUuid) {
+    @GetMapping("/competitions/{competitionId}/team/{teamId}")
+    public ResponseEntity<Team> getTeam(
+            @PathVariable(name = "competitionId") String competitionId,
+            @PathVariable(name = "teamId") String teamId,
+            @RequestParam(name = "opus", required = false) Integer opus) {
         try {
-            Optional<Team> team = teamDomainService.findTeam(teamUuid, Optional.of(competitionUuid));
+            Optional<Team> team = 
+                teamDomainService.findTeam(teamId,
+                    Optional.of(competitionId), 
+                    Optional.ofNullable(opus));
             return team
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
         } catch (Exception ex) {
-            log.error("Unable to get team for competition {} (teamId: {})", competitionUuid, teamUuid, ex);
+            log.error("Unable to get team for competition {} (teamId: {})", competitionId, teamId, ex);
             return ResponseEntity.internalServerError().build();
         }
     }

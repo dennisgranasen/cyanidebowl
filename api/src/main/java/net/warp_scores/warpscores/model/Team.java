@@ -16,12 +16,17 @@ import java.util.UUID;
 @Getter
 @Setter
 @Document
-@EqualsAndHashCode(of = "id")
+@EqualsAndHashCode(of = {"id", "opus"})
 @ToString(of = {"name", "race", "id"})
 public class Team {
     @Id
-    private UUID id;
-    private Integer oldId; // This is the old ID used in the legacy system, if applicable.
+    public String get_id() {
+        return id != null && opus != null ? opus + "-" + id : null;
+    }
+    public String getTeamId() { return id; }
+
+    private String id;
+    //private Integer oldId; // This is the old ID used in the legacy system, if applicable.
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date created;
@@ -41,11 +46,11 @@ public class Team {
     private String coachId;
     private String coachName;
 
-    private UUID[] leagueIds;
+    private String[] leagueIds;
     private Integer[] oldLeagueIds;
     private String leagueName;
 
-    private UUID[] competitionIds;
+    private String[] competitionIds;
     private Integer[] oldCompetitionIds;
     private String competitionName;
 

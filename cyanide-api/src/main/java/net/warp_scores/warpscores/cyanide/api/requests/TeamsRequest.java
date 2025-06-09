@@ -44,13 +44,14 @@ import java.util.UUID;
 public class TeamsRequest extends ApiRequest<TeamsRequest, TeamsResponse> {
 
     private String league_name;
-    private UUID league_id;
+    private String league_id;
     private String competition_name;
-    private UUID competition_id;
+    private String competition_id;
     private Integer case_sensitive;
     private Integer race;
     private Integer logo;
     private Integer last_match;
+    private Integer opus;
 
     public TeamsRequest() {
         super("bb/teams", TeamsRequest.class, TeamsResponse.class);

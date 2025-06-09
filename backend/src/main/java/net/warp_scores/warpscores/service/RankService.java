@@ -12,6 +12,8 @@ import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Rank;
 import net.warp_scores.warpscores.model.Team;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -39,12 +41,16 @@ public class RankService {
     private final TeamDomainService teamDomainService;
     private final CompetitionService competitionService;
 
+    @Value("${cyanide.defaults.opus:3}")
+    private int defaultOpus;
+
+
     private final List<RankComparisons> defaultRankComparisons = List.of(RankComparisons.SCORE_310,
             RankComparisons.WINS,
             RankComparisons.INFLICTED_TOUCHDOWNS, RankComparisons.TOUCHDOWN_DIFFERENCE);
 
     @DurationLogging
-    public List<Rank> getRanksForCompetition(UUID competitionId, 
+    public List<Rank> getRanksForCompetition(String competitionId, 
             Optional<Integer> opus,
             Optional<List<RankComparisons>> rankComparisons,
             Optional<Integer> limit) {
@@ -52,7 +58,8 @@ public class RankService {
                 .orElseThrow(NoSuchElementException::new);
 
         List<Contest> contests = 
-            contestRepository.findByCompetitionIdAndStatus(competition.getUuid(), Validated);
+            contestRepository.findByCompetitionIdAndStatus(competitionId, opus,
+                Validated);
         Set<Team> teams = new HashSet<>();
         contests
                 .stream()
@@ -61,7 +68,8 @@ public class RankService {
                 .collect(Collectors.toCollection(() -> teams));
         List<Match> matches = Collections.emptyList();
         if (!competition.getFormat().equals(CompetitionFormat.Ladder)) {
-            matches = matchRepository.findByCompetitionId(competition.getUuid());
+            matches = matchRepository.findByCompetitionId(competitionId, 
+                opus.orElse(defaultOpus));
         }
         Map<UUID, Match> matchByMatchId =
             matches.stream().collect(Collectors.toMap(Match::getMatchId, m -> m));
@@ -179,7 +187,7 @@ public class RankService {
         return Optional.of(teams.get(0));
     }
 
-    private Optional<Team> getTeam(List<Team> teamResults, UUID teamId) {
+    private Optional<Team> getTeam(List<Team> teamResults, String teamId) {
         if (teamResults == null) {
             return empty();
         }

@@ -2,8 +2,11 @@ package net.warp_scores.warpscores.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.mongodb.lang.Nullable;
+
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import net.warp_scores.warpscores.UUIDUtil;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.aggregation.ArrayOperators.In;
@@ -22,14 +25,18 @@ import java.util.stream.Stream;
 @Document
 public class Contest implements Comparable<Contest> {
     @Id
+    public String get_id() {
+        return contestUuid != null && opus != null ? opus + "-" + contestUuid : null;
+    }
+
     private UUID contestUuid;
-    private Integer oldContestId; // This is the old ID used in the legacy system, if applicable.
+    //private Integer oldContestId; // This is the old ID used in the legacy system, if applicable.
     private CompetitionFormat format;
-    private UUID leagueId;
+    private String leagueId;
     private Integer oldLeagueId; // This is the old ID used in the legacy system, if applicable.
     private String leagueName;
-    private UUID competitionId;
-    private Integer oldCompetitionId;
+    private String competitionId;
+    //private Integer oldCompetitionId;
     private String competitionName;
     private String stadium;
     private MatchType type;

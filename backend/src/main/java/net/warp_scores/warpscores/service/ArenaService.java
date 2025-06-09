@@ -1,38 +1,5 @@
 package net.warp_scores.warpscores.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import net.warp_scores.warpscores.annotations.DurationLogging;
-import net.warp_scores.warpscores.domain.persistence.MatchRepository;
-import net.warp_scores.warpscores.model.ArenaCoach;
-import net.warp_scores.warpscores.model.ArenaCoachWithArenaTeams;
-import net.warp_scores.warpscores.model.ArenaInfo;
-import net.warp_scores.warpscores.model.ArenaTeam;
-import net.warp_scores.warpscores.model.ArenaTeam.Result.ResultType;
-import net.warp_scores.warpscores.model.Coach;
-import net.warp_scores.warpscores.model.Match;
-import net.warp_scores.warpscores.model.Race;
-import net.warp_scores.warpscores.model.Team;
-import net.warp_scores.warpscores.model.WinRate;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static java.util.Comparator.comparing;
@@ -53,10 +20,48 @@ import static net.warp_scores.warpscores.model.ArenaTeam.RunType.completed;
 import static net.warp_scores.warpscores.model.ArenaTeam.RunType.failed;
 import static org.springframework.data.domain.Pageable.unpaged;
 
+import java.lang.foreign.Linker.Option;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.annotations.DurationLogging;
+import net.warp_scores.warpscores.domain.persistence.MatchRepository;
+import net.warp_scores.warpscores.model.ArenaCoach;
+import net.warp_scores.warpscores.model.ArenaCoachWithArenaTeams;
+import net.warp_scores.warpscores.model.ArenaInfo;
+import net.warp_scores.warpscores.model.ArenaTeam;
+import net.warp_scores.warpscores.model.ArenaTeam.Result.ResultType;
+import net.warp_scores.warpscores.model.Coach;
+import net.warp_scores.warpscores.model.Match;
+import net.warp_scores.warpscores.model.Race;
+import net.warp_scores.warpscores.model.Team;
+import net.warp_scores.warpscores.model.WinRate;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class ArenaService {
+
+    @org.springframework.beans.factory.annotation.Value("${defaultOpus:3}")
+    private int defaultOpus;
 
     private static final int NEEDED_WINS_FOR_COMPLETION = 7;
     private static final int LOSSES_BEFORE_ELIMINATION = 2;
@@ -65,23 +70,36 @@ public class ArenaService {
 
     @Cacheable(ARENA_RACES)
     @DurationLogging
-    public List<Race> loadArenaRacesFor(UUID competitionUuid) {
-        return matchRepository.getUsedRacesForCompetition(competitionUuid);
+    public List<Race> loadArenaRacesFor(
+            String competitionId, 
+            Optional<Integer> opus) {
+        return matchRepository.getUsedRacesForCompetition(
+            competitionId, 
+            opus.orElse(defaultOpus)); // Replace 1 with your intended default opus value
     }
 
     @Cacheable(ARENA_INFOS)
     @DurationLogging(warnThresholdMillis = 1500, errorThresholdMillis = 3000)
-    public Optional<ArenaInfo> loadArenaInfoFor(UUID competitionUuid, Race race) {
-        List<ArenaTeam> arenaTeams = loadArenaTeamsFor(competitionUuid, race, empty(), empty());
+    public Optional<ArenaInfo> loadArenaInfoFor(
+            String competitionId, 
+            Race race,
+            Optional<Integer> opus) {
+        List<ArenaTeam> arenaTeams = loadArenaTeamsFor(
+            competitionId, race, empty(), empty(), 
+            opus.orElse(defaultOpus));
         return toArenaInfo(race, arenaTeams);
     }
 
     @Cacheable(ARENA_TEAMS)
     @DurationLogging(warnThresholdMillis = 1500, errorThresholdMillis = 3000)
-    public Map<ArenaTeam.RunType, List<ArenaTeam>> loadArenaTeamsFor(UUID competitionUuid,
+    public Map<ArenaTeam.RunType, List<ArenaTeam>> loadArenaTeamsFor(String competitionId,
             Race race,
-            ArenaTeam.RunType runType, Optional<Integer> limit, Optional<Integer> offset) {
-        List<ArenaTeam> teamsForRace = queryArenaTeamsFor(competitionUuid, race, unpaged());
+            ArenaTeam.RunType runType,
+            Optional<Integer> limit,
+            Optional<Integer> offset,
+            Optional<Integer> opus) {
+        List<ArenaTeam> teamsForRace = queryArenaTeamsFor(
+            competitionId, race, unpaged(), opus.orElse(defaultOpus));
         List<ArenaTeam> filteredTeams = teamsForRace
                 .stream()
                 .filter(arenaTeam -> matchesRunType(arenaTeam, runType))
@@ -111,15 +129,23 @@ public class ArenaService {
 
     @Cacheable(ARENA_COACH_TEAMS)
     @DurationLogging(warnThresholdMillis = 1500, errorThresholdMillis = 3000)
-    public Map<ArenaTeam.RunType, List<ArenaTeam>> loadArenaTeamsFor(UUID competitionUuid, UUID coachId) {
-        return loadArenaTeamsForInternal(competitionUuid, coachId);
+    public Map<ArenaTeam.RunType, List<ArenaTeam>> loadArenaTeamsFor(
+            String competitionId,
+            String coachId,
+            Optional<Integer> opus) {
+        return loadArenaTeamsForInternal(competitionId, coachId, opus.orElse(defaultOpus));
     }
 
-    private Map<ArenaTeam.RunType, List<ArenaTeam>> loadArenaTeamsForInternal(UUID competitionUuid, UUID coachId) {
-        List<ArenaTeam> arenaTeams = queryArenaTeamsFor(competitionUuid, coachId, unpaged());
+    private Map<ArenaTeam.RunType, List<ArenaTeam>> loadArenaTeamsForInternal(
+            String competitionId,
+            String coachId,
+            Optional<Integer> opus) {
+        List<ArenaTeam> arenaTeams = queryArenaTeamsFor(
+            competitionId, coachId, unpaged(),
+            opus.orElse(defaultOpus));
         List<ArenaTeam> coachTeams = arenaTeams
                 .stream()
-                .filter(arenaTeam -> arenaTeam.getCoachUuid().equals(coachId))
+                .filter(arenaTeam -> arenaTeam.getCoachId().equals(coachId))
                 .sorted(comparing(this::latestFinishedGame).reversed())
                 .toList();
         return toArenaTeamsByRunType(coachTeams);
@@ -135,12 +161,16 @@ public class ArenaService {
 
     @Cacheable(ARENA_COACHES)
     @DurationLogging(warnThresholdMillis = 1500, errorThresholdMillis = 3000)
-    public List<ArenaCoach> loadArenaTopCoachesFor(UUID competitionUuid, int topLimit) {
+    public List<ArenaCoach> loadArenaTopCoachesFor(
+            String competitionId,
+            int topLimit,
+            Optional<Integer> opus) {
         List<ArenaTeam> arenaTeams = new ArrayList<>();
-        List<Race> races = loadArenaRacesFor(competitionUuid);
+        List<Race> races = loadArenaRacesFor(competitionId,opus. orElse(defaultOpus));
         for (Race race : races) {
-            List<ArenaTeam> currQueryArenaTeams = queryArenaTeamsFor(competitionUuid, Optional.of(race), empty(), of(7),
-                    unpaged());
+            List<ArenaTeam> currQueryArenaTeams = queryArenaTeamsFor(
+                competitionId, Optional.of(race), empty(), of(7),
+                unpaged(), opus.orElse(defaultOpus));
             arenaTeams.addAll(currQueryArenaTeams);
             log.info("Fetched race {} with {} arena teams.", race, currQueryArenaTeams.size());
         }
@@ -165,15 +195,15 @@ public class ArenaService {
     private ArenaCoach toArenaCoach(Coach coach, Map<ArenaTeam.RunType, List<ArenaTeam>> arenaTeamsByRunType) {
         ArenaCoach arenaCoach = new ArenaCoach();
         arenaCoach.setCoachName(coach.getName());
-        arenaCoach.setCoachUuid(coach.getId());
+        arenaCoach.setCoachId(coach.getId());
 
-        Map<ArenaTeam.RunType, Set<UUID>> teamUuidsByRunType = new HashMap<>();
+        Map<ArenaTeam.RunType, Set<String>> teamUuidsByRunType = new HashMap<>();
         Map<ArenaTeam.RunType, Set<Race>> racesByRunType = new HashMap<>();
         Map<Race, WinRate> winRateByRace = new HashMap<>();
         arenaTeamsByRunType.forEach((runType, arenaTeams) -> {
             racesByRunType.put(runType, arenaTeams.stream().map(ArenaTeam::getRace).collect(Collectors.toSet()));
             teamUuidsByRunType.put(runType,
-                    arenaTeams.stream().map(ArenaTeam::getTeamUuid).collect(Collectors.toSet()));
+                    arenaTeams.stream().map(ArenaTeam::getTeamId).collect(Collectors.toSet()));
 
             Map<Race, WinRate> currWinRateByRace = arenaTeams.stream()
                     .filter(team -> Objects.nonNull(team.getResults()))
@@ -208,7 +238,9 @@ public class ArenaService {
         return arenaCoach;
     }
 
-    private static void mergeWinRate(Map<Race, WinRate> currWinRatesByRace, Map<Race, WinRate> winRateByRace) {
+    private static void mergeWinRate(
+            Map<Race, WinRate> currWinRatesByRace,
+            Map<Race, WinRate> winRateByRace) {
         currWinRatesByRace.forEach((race, newWinRate) -> winRateByRace.merge(
                 race,
                 newWinRate,
@@ -246,7 +278,7 @@ public class ArenaService {
                 .map(Match::getTeams)
                 .orElse(emptyList())
                 .stream()
-                .filter(t -> t.getId().equals(arenaTeam.getTeamUuid()))
+                .filter(t -> t.getId().equals(arenaTeam.getTeamId()))
                 .findFirst();
         team.ifPresent(t -> {
             arenaTeam.setTeamLogo(t.getLogo());
@@ -254,21 +286,26 @@ public class ArenaService {
         });
     }
 
-    private boolean matchesRunType(ArenaTeam arenaTeam, ArenaTeam.RunType runType) {
-        return runType == getRunTypeFor(arenaTeam);
+    private boolean matchesRunType(
+            ArenaTeam arenaTeam,
+            ArenaTeam.RunType runType,
+            Optional<Integer> opus) {
+        return runType == getRunTypeFor(arenaTeam, opus);
     }
 
-    private ArenaTeam.RunType getRunTypeFor(ArenaTeam arenaTeam) {
+    private ArenaTeam.RunType getRunTypeFor(
+            ArenaTeam arenaTeam, Optional<Integer> opus) {
         final AtomicInteger completedCount = new AtomicInteger(0);
         final AtomicInteger failedCount = new AtomicInteger(0);
         final AtomicInteger activeCount = new AtomicInteger(0);
-        countRunsInto(arenaTeam.getTeamUuid(), arenaTeam.getMatches(), activeCount, completedCount, failedCount);
+        countRunsInto(arenaTeam.getTeamId(), arenaTeam.getMatches(),
+            activeCount, completedCount, failedCount, opus);
 
         final AtomicInteger completedCountForLast9Games = new AtomicInteger(0);
         final AtomicInteger failedCountForLast9Games = new AtomicInteger(0);
         final AtomicInteger activeCountForLast9Games = new AtomicInteger(0);
-        countRunsInto(arenaTeam.getTeamUuid(), arenaTeam.getMatches(), activeCountForLast9Games,
-                completedCountForLast9Games, failedCountForLast9Games, true, of(9));
+        countRunsInto(arenaTeam.getTeamId(), arenaTeam.getMatches(), activeCountForLast9Games,
+                completedCountForLast9Games, failedCountForLast9Games, true, of(9), opus);
 
         if (completedCount.get() == 0 && completedCountForLast9Games.get() > 0) {
             completedCount.getAndIncrement();
@@ -288,9 +325,10 @@ public class ArenaService {
     }
 
     @DurationLogging(infoThresholdMillis = 0, warnThresholdMillis = 100, errorThresholdMillis = 500)
-    private List<ArenaTeam> loadArenaTeamsFor(UUID competitionUuid,
-            Race race, Optional<Integer> limit, Optional<Integer> offset) {
-        return queryArenaTeamsFor(competitionUuid, race, unpaged());
+    private List<ArenaTeam> loadArenaTeamsFor(String competitionId,
+            Race race, Optional<Integer> limit, Optional<Integer> offset,
+            Optional<Integer> opus) {
+        return queryArenaTeamsFor(competitionId, race, unpaged(), opus);
     }
 
     @DurationLogging(infoThresholdMillis = 0, warnThresholdMillis = 100, errorThresholdMillis = 500)
@@ -298,19 +336,19 @@ public class ArenaService {
         if (arenaTeams.isEmpty()) {
             return empty();
         }
-        Set<UUID> coachIds = new HashSet<>();
-        Set<UUID> teamIds = new HashSet<>();
+        Set<String> coachIds = new HashSet<>();
+        Set<String> teamIds = new HashSet<>();
         Set<UUID> matchUuids = new HashSet<>();
-        Map<UUID, Integer> winsByTeamId = new HashMap<>();
-        Map<UUID, Integer> lossesByTeamId = new HashMap<>();
-        Map<UUID, Integer> failedRunsByTeamId = new HashMap<>();
-        Map<UUID, Integer> completedRunsByTeamId = new HashMap<>();
-        Map<UUID, Integer> activeRunsByTeamId = new HashMap<>();
+        Map<String, Integer> winsByTeamId = new HashMap<>();
+        Map<String, Integer> lossesByTeamId = new HashMap<>();
+        Map<String, Integer> failedRunsByTeamId = new HashMap<>();
+        Map<String, Integer> completedRunsByTeamId = new HashMap<>();
+        Map<String, Integer> activeRunsByTeamId = new HashMap<>();
         arenaTeams
                 .stream()
                 .filter(arenaTeam -> race.equals(arenaTeam.getRace()))
                 .forEach(arenaTeam -> {
-                    coachIds.add(arenaTeam.getCoachUuid());
+                    coachIds.add(arenaTeam.getCoachId());
                     matchUuids.addAll(
                             arenaTeam
                                     .getMatches()
@@ -319,40 +357,40 @@ public class ArenaService {
                                             .anyMatch(r -> r.equals(race)))
                                     .map(Match::getMatchId)
                                     .collect(Collectors.toSet()));
-                    UUID teamUuid = arenaTeam.getTeamUuid();
-                    teamIds.add(teamUuid);
+                    String teamId = arenaTeam.getTeamId();
+                    teamIds.add(teamId);
                     Integer wins = arenaTeam
                             .getResults()
                             .stream()
                             .filter(r -> r.getResult() == ResultType.win)
                             .mapToInt(ArenaTeam.Result::getCount)
                             .sum();
-                    winsByTeamId.putIfAbsent(teamUuid, wins);
+                    winsByTeamId.putIfAbsent(teamId, wins);
                     Integer losses = arenaTeam
                             .getResults()
                             .stream()
                             .filter(r -> r.getResult() == ResultType.loss)
                             .mapToInt(ArenaTeam.Result::getCount)
                             .sum();
-                    lossesByTeamId.putIfAbsent(teamUuid, losses);
+                    lossesByTeamId.putIfAbsent(teamId, losses);
 
                     final AtomicInteger completedCount = new AtomicInteger(0);
                     final AtomicInteger failedCount = new AtomicInteger(0);
                     final AtomicInteger activeCount = new AtomicInteger(0);
-                    countRunsInto(teamUuid, arenaTeam.getMatches(), activeCount, completedCount, failedCount);
+                    countRunsInto(teamId, arenaTeam.getMatches(), activeCount, completedCount, failedCount);
 
                     final AtomicInteger completedCountForLast9Games = new AtomicInteger(0);
                     final AtomicInteger failedCountForLast9Games = new AtomicInteger(0);
                     final AtomicInteger activeCountForLast9Games = new AtomicInteger(0);
-                    countRunsInto(teamUuid, arenaTeam.getMatches(), activeCountForLast9Games,
+                    countRunsInto(teamId, arenaTeam.getMatches(), activeCountForLast9Games,
                             completedCountForLast9Games, failedCountForLast9Games, true, of(9));
 
                     if (completedCount.get() == 0 && completedCountForLast9Games.get() > 0) {
                         completedCount.getAndIncrement();
                     }
-                    completedRunsByTeamId.putIfAbsent(teamUuid, completedCount.get());
-                    failedRunsByTeamId.putIfAbsent(teamUuid, failedCount.get());
-                    activeRunsByTeamId.putIfAbsent(teamUuid, activeCount.get());
+                    completedRunsByTeamId.putIfAbsent(teamId, completedCount.get());
+                    failedRunsByTeamId.putIfAbsent(teamId, failedCount.get());
+                    activeRunsByTeamId.putIfAbsent(teamId, activeCount.get());
                 });
         ArenaInfo arenaInfo = new ArenaInfo()
                 .withRace(race)
@@ -367,15 +405,16 @@ public class ArenaService {
         return of(arenaInfo);
     }
 
-    private void countRunsInto(UUID teamUuid,
+    private void countRunsInto(String teamId,
             List<Match> matches,
             AtomicInteger activeCount,
             AtomicInteger completedCount,
             AtomicInteger failedCount) {
-        countRunsInto(teamUuid, matches, activeCount, completedCount, failedCount, false, empty());
+        countRunsInto(teamId, matches, activeCount, completedCount, failedCount, false,
+            empty());
     }
 
-    private void countRunsInto(UUID teamUuid,
+    private void countRunsInto(String teamId,
             List<Match> matches,
             AtomicInteger activeCount,
             AtomicInteger completedCount,
@@ -392,24 +431,24 @@ public class ArenaService {
                 .stream()
                 .sorted(comparing)
                 .limit(limit.orElse(matches.size()))
-                .forEach(match -> countContestInto(teamUuid, match, wins, losses, completedCount,
-                        failedCount));
+                .forEach(match -> countContestInto(teamId, match, wins, losses,
+                     completedCount, failedCount));
         if (wins.get() > 0 || losses.get() > 0) {
             activeCount.getAndIncrement();
         }
 
     }
 
-    private void countContestInto(UUID teamUuid, Match match,
+    private void countContestInto(String teamId, Match match,
             AtomicInteger currWins,
             AtomicInteger currLosses,
             AtomicInteger completedCount,
             AtomicInteger failedCount) {
-        UUID winnerUuid = getWinnerTeamUuidOrNull(match);
-        if (winnerUuid == null) {
+        String winnerId = getWinnerTeamIdOrNull(match);
+        if (winnerId == null) {
             return;
         }
-        if (teamUuid.equals(winnerUuid)) {
+        if (teamId.equals(winnerId)) {
             currWins.getAndIncrement();
         } else {
             currLosses.getAndIncrement();
@@ -426,7 +465,7 @@ public class ArenaService {
         }
     }
 
-    private UUID getWinnerTeamUuidOrNull(Match match) {
+    private String getWinnerTeamIdOrNull(Match match) {
         return match
                 .getTeams()
                 .stream()
@@ -438,31 +477,40 @@ public class ArenaService {
     private Coach toCoach(ArenaTeam arenaTeam) {
         Coach coach = new Coach();
         coach.setName(arenaTeam.getCoachName());
-        coach.setId(arenaTeam.getCoachUuid());
+        coach.setId(arenaTeam.getCoachId());
         return coach;
     }
 
-    private List<ArenaTeam> queryArenaTeamsFor(UUID competitionUuid,
-            Race race, Pageable pageable) {
-        return queryArenaTeamsFor(competitionUuid, of(race), empty(), empty(), pageable);
+    private List<ArenaTeam> queryArenaTeamsFor(String competitionId,
+            Race race, Pageable pageable,
+            Optional<Integer> opus) {
+        return queryArenaTeamsFor(competitionId, of(race), empty(), empty(), pageable, opus);
     }
 
-    private List<ArenaTeam> queryArenaTeamsFor(UUID competitionUuid, UUID coachId, Pageable pageable) {
-        return queryArenaTeamsFor(competitionUuid, empty(), of(coachId), empty(), pageable);
+    private List<ArenaTeam> queryArenaTeamsFor(
+            String competitionId,
+            String coachId,
+            Pageable pageable,
+            Optional<Integer> opus){
+        return queryArenaTeamsFor(competitionId, empty(), of(coachId), empty(), pageable, opus);
     }
 
-    private List<ArenaTeam> queryArenaTeamsFor(UUID competitionUuid,
+    private List<ArenaTeam> queryArenaTeamsFor(String competitionId,
             Optional<Race> race,
-            Optional<UUID> coachId,
+            Optional<String> coachId,
             Optional<Integer> minWins,
-            Pageable pageable) {
+            Pageable pageable,
+            Optional<Integer> opus) {
         return executeLoggingDuration(() -> matchRepository.queryArenaTeamsFor(
-                competitionUuid,
-                race.orElse(null), coachId.orElse(null), minWins.orElse(null), pageable));
+                competitionId,
+                race.orElse(null), coachId.orElse(null), minWins.orElse(null), pageable, opus));
     }
 
-    public ArenaCoachWithArenaTeams loadArenaCoachWithArenaTeams(UUID competitionUuid, UUID coachUuid) {
-        Map<ArenaTeam.RunType, List<ArenaTeam>> runTypeListMap = loadArenaTeamsForInternal(competitionUuid, coachUuid);
+    public ArenaCoachWithArenaTeams loadArenaCoachWithArenaTeams(
+            String competitionId,
+            String coachId,
+            Optional<Integer> opus) {
+        Map<ArenaTeam.RunType, List<ArenaTeam>> runTypeListMap = loadArenaTeamsForInternal(competitionId, coachId, opus);
         Optional<ArenaTeam> first = runTypeListMap
                 .values()
                 .stream()

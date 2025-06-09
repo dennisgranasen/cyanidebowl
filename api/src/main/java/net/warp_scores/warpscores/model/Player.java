@@ -1,7 +1,10 @@
 package net.warp_scores.warpscores.model;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -12,10 +15,17 @@ import java.util.UUID;
 @Getter
 @Setter
 @Document
+@EqualsAndHashCode(of = {"id", "opus"})
+@ToString(of = {"name", "id"})
 public class Player {
     @Id
-    private UUID id;
-    private Integer oldId; // This is the old ID used in the legacy system, if applicable.
+    public String get_id() {
+        return id != null && opus != null ? opus + "-" + id : null;
+    }
+    public String getPlayerId() { return id; }
+
+    private String id;
+    //private Integer oldId; // This is the old ID used in the legacy system, if applicable.
     private String name;
     private Integer raceId;
     private Integer number;

@@ -34,7 +34,7 @@ import java.util.UUID;
 @ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TeamMatchesRequest extends ApiRequest<TeamMatchesRequest, TeamMatchesResponse> {
-    private UUID team;
+    private String team;
     private Date start;
     private Date end;
     private MatchesRequest.Ordering ordering;

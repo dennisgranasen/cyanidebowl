@@ -13,6 +13,8 @@ import net.warp_scores.warpscores.model.Team;
 import net.warp_scores.warpscores.service.PopulatorUtil;
 import net.warp_scores.warpscores.service.TeamPopulator;
 import net.warp_scores.warpscores.service.UUIDConverter;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,18 +40,23 @@ public class MatchDomainService {
     private final TeamPopulator teamPopulator;
     private final UUIDConverter uuidConverter;
 
+    @Value("${cyanide.defaults.opus:3}")
+    private int defaultOpus;
+
     @Transactional
-    public List<Match> findMatchesForTeam(UUID teamUuid) {
-        List<Match> teamMatches = matchRepository.findMatchesByTeamId(teamUuid);
+    public List<Match> findMatchesForTeam(String teamId, Optional<Integer> opus) {
+        List<Match> teamMatches = 
+            matchRepository.findMatchesByTeamId(teamId, opus.orElse(defaultOpus));
         return teamMatches.stream()
                 .sorted(Comparator.comparing(Match::getStarted).reversed())
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    public Map<UUID, Optional<Date>> getLastMatchDatesForCompetitions(List<UUID> competitionUuids) {
+    public Map<UUID, Optional<Date>> getLastMatchDatesForCompetitions(
+            List<String> competitionIds, Optional<Integer> opus) {
         List<MatchRepository.DateForUuid> lastMatchDateByCompetitionIds = matchRepository
-                .findLastMatchDateByCompetitionIds(competitionUuids);
+                .findLastMatchDateByCompetitionIds(competitionIds, opus.orElse(defaultOpus));
         return lastMatchDateByCompetitionIds
                 .stream()
                 .collect(toMap(MatchRepository.DateForUuid::uuid,
@@ -57,23 +64,25 @@ public class MatchDomainService {
     }
 
     @Transactional
-    public Map<UUID, Optional<Date>> getLastMatchDatesForLeagues(List<UUID> leagueUuids) {
+    public Map<String, Optional<Date>> getLastMatchDatesForLeagues(
+            List<String> leagueIds, Optional<Integer> opus) {
         List<MatchRepository.DateForUuid> lastMatchDateByLeagueIds = matchRepository
-                .findLastMatchDateByLeagueIds(leagueUuids);
+                .findLastMatchDateByLeagueIds(leagueIds, opus.orElse(defaultOpus));
         return lastMatchDateByLeagueIds
                 .stream()
-                .collect(toMap(MatchRepository.DateForUuid::uuid,
-                        r -> ofNullable(r.date())));
+                .collect(Collectors.toMap(
+                    d -> d.uuid() != null ? d.uuid().toString() : null,
+                    d -> Optional.ofNullable(d.date())
+                ));
     }
 
     @Transactional
-    public Map<UUID, Optional<Date>> getLastMatchDatesForTeams(List<Team> teams) {
-        Map<UUID, Optional<Date>> lastMatchDatesByTeamUuid = new HashMap<>();
-        teams
-                .forEach(team ->
-                        lastMatchDatesByTeamUuid.put(team.getId(), matchRepository
-                                .findTopByTeamsContainsOrderByStartedDesc(team).map(Match::getStarted)));
-        return lastMatchDatesByTeamUuid;
+    public Map<String, Optional<Date>> getLastMatchDatesForTeams(List<Team> teams) {
+        Map<String, Optional<Date>> lastMatchDatesByTeamId = new HashMap<>();
+        teams.forEach(team ->
+             lastMatchDatesByTeamId.put(team.getId(), matchRepository
+                .findTopByTeamsContainsOrderByStartedDesc(team).map(Match::getStarted)));
+        return lastMatchDatesByTeamId;
     }
 
     @Transactional

@@ -16,8 +16,12 @@ import java.util.UUID;
 @EqualsAndHashCode(of = "id")
 public class Coach {
     @Id
-    private UUID id;
-    private Integer oldId; // This is the old ID used in the legacy system, if applicable.
+    public String get_id() {
+        return id != null && opus != null ? opus + "-" + id : null;
+    }
+
+    private String id;
+    public String getCoachId() { return id; }
     private String name;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date created;

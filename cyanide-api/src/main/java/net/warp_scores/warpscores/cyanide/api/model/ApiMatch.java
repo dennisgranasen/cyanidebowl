@@ -15,7 +15,7 @@ public class ApiMatch {
     private UUID matchId;
     private String id;
     @JsonAlias("idcompetition")
-    private UUID competitionId;
+    private String competitionId;
     @JsonAlias("competitionname")
     private String competitionName;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
@@ -23,7 +23,7 @@ public class ApiMatch {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date finished;
     @JsonAlias("idleague")
-    private UUID leagueId;
+    private String leagueId;
     @JsonAlias("leaguename")
     private String leagueName;
     private String stadium;

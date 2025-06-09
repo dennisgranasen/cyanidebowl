@@ -37,9 +37,10 @@ import java.util.UUID;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LadderRequest extends ApiRequest<LadderRequest, LadderResponse> {
     private String league_name;
-    private UUID league_id;
+    private String league_id;
     private String competition_name;
-    private UUID competition_id;
+    private String competition_id;
+    private Integer opus;
 
     public LadderRequest() {
         super("bb/ladder", LadderRequest.class, LadderResponse.class);

@@ -9,15 +9,15 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface TeamRepository extends MongoRepository<Team, UUID> {
+public interface TeamRepository extends MongoRepository<Team, String> {
     @Query("{ 'oldId' : ?0, 'opus' : ?1 }")
     Team findByOldIdAndOpus(Integer oldId, Integer opus);
 
     @Query("{ 'competitionIds': ?0 }")
-    List<Team> findByCompetitionId(UUID competitionId);
+    List<Team> findByCompetitionId(String competitionId);
     
     @Query("{ 'leagueIds': ?0 }")
-    List<Team> findByLeagueId(UUID leagueId);
+    List<Team> findByLeagueId(String leagueId);
 
     @Query("{ 'oldCompetitionIds': ?0, 'opus' : ?1 } }")
     List<Team> findByOldCompetitionIdAndOpus(Integer competitionId, Integer opus);

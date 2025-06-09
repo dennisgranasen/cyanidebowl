@@ -1,26 +1,27 @@
 package net.warp_scores.warpscores.cyanide.api.model;
 
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.UUID;
+
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import lombok.Getter;
+import lombok.Setter;
 import net.warp_scores.warpscores.model.CompetitionFormat;
 import net.warp_scores.warpscores.model.MatchStatus;
 import net.warp_scores.warpscores.model.MatchType;
 import net.warp_scores.warpscores.model.Race;
-import lombok.Getter;
-import lombok.Setter;
-
-import java.math.BigDecimal;
-import java.util.Date;
-import java.util.UUID;
 
 @Getter
 @Setter
 public class ApiContest {
     private String league;
-    private UUID league_id;
+    private String league_id;
     private String competition;
-    private UUID competition_id;
+    private String competition_id;
     @JsonAlias({"format", "competition_format"})
     private CompetitionFormat format;
     private UUID contest_id;
@@ -52,7 +53,7 @@ public class ApiContest {
     @Setter
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Coach {
-        private UUID id;
+        private String id;
         private String name;
         private String twitch;
         private String youtube;
@@ -65,7 +66,7 @@ public class ApiContest {
     @Setter
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Team {
-        private UUID id;
+        private String id;
         private String name;
         private String logo;
         private BigDecimal value;

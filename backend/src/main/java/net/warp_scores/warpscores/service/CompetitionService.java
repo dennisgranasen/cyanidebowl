@@ -14,6 +14,7 @@ import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
+import org.springframework.expression.spel.ast.OpAnd;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -40,6 +41,7 @@ import static java.util.stream.Collectors.toList;
 public class CompetitionService {
     private final CompetitionRepository competitionRepository;
     private final ContestRepository contestsRepository;
+    private final IdService idService;
     private final OfficialLeagueAndCompetitions officialLeagueCompetitions;
     private final MatchService matchService;
     private final CyanideApiService cyanideApiService;
@@ -47,9 +49,8 @@ public class CompetitionService {
     @Value("${cyanide.defaults.opus:3}")
     private int defaultOpus;
 
-
     @DurationLogging
-    public List<Competition> loadForLeague(UUID leagueId, Optional<Integer> opus) {
+    public List<Competition> loadForLeague(String leagueId, Optional<Integer> opus) {
         List<Competition> competitions = 
             competitionRepository.findByLeagueIdAndOpus(leagueId, opus.orElse(defaultOpus));
         if (competitions.isEmpty()) {
@@ -61,91 +62,40 @@ public class CompetitionService {
     }
 
     @DurationLogging
-    public List<Competition> loadForLeague(Integer oldLeagueId, Optional<Integer> opus) {
-    List<Competition> competitions = 
-        competitionRepository.findByOldLeagueIdAndOpus(oldLeagueId, opus.orElse(defaultOpus));
-        if (competitions.isEmpty()) {
-            competitions = cyanideApiService.loadCompetitions(oldLeagueId, opus);
-        }
-        competitions.forEach(this::adjustCompetitionNameAndLogo);
-        return competitions;
-    }
-
-
-    @DurationLogging
-    public List<Competition> loadForLeagueAndInitialize(UUID leagueId, Optional<Integer> opus) {
+    public List<Competition> loadForLeagueAndInitialize(String leagueId, Optional<Integer> opus) {
         List<Competition> competitions = loadForLeague(leagueId, opus);
         return initializeForFormat(competitions);
     }
 
-        @DurationLogging
-    public List<Competition> loadForLeagueAndInitialize(Integer oldLeagueId, Optional<Integer> opus) {
-        List<Competition> competitions = loadForLeague(oldLeagueId, opus);
-        return initializeForFormat(competitions);
-    }
-
-
     @DurationLogging
-    public Optional<Competition> loadCompetition(UUID competitionId, Optional<Integer> opus) {
+    public Optional<Competition> loadCompetition(String competitionId, Optional<Integer> opus) {
         Optional<Competition> competition = 
-            competitionRepository.findByUuidAndOpus(competitionId, opus.orElse(defaultOpus))
-                                 .map(this::initializeForFormat);
-        competition.ifPresent(this::adjustCompetitionNameAndLogo);
-        return competition;
-    }
-
-    @DurationLogging
-    public Optional<Competition> loadCompetitionByOldId(int competitionId, Optional<Integer> opus) {
-        log.info("Loading competition by old ID: {} with opus: {}", competitionId, opus.orElse(defaultOpus));
-
-        Optional<Competition> competition = 
-            competitionRepository.findByOldIdAndOpus(competitionId, opus.orElse(defaultOpus))
+            competitionRepository.findById(idService.getComposedId(opus, competitionId))
                                  .map(this::initializeForFormat);
         if (competition.isPresent()) {
             log.info("Competition {} found in DB, initializing for format...", competitionId);
-            return competition;
-        }
-        log.info("Competition {} not found in DB, fetching from Cyanide API...", competitionId);
-        List<net.warp_scores.warpscores.model.Competition> fetched = 
-            cyanideApiService.loadCompetitions(competitionId, opus);
-        // Optionally save to DB if found
-        if (fetched != null) {
-            log.info("Competitions {} fetched from Cyanide API, saving to DB...", competitionId);
-            for (net.warp_scores.warpscores.model.Competition comp : fetched) {
-                if (comp.getOldId() == competitionId) {
-                    comp.setOldId(competitionId);
+            adjustCompetitionNameAndLogo(competition.get());
+        } else {
+            log.info("Competition {} not found in DB, fetching from Cyanide API...", competitionId);
+            List<net.warp_scores.warpscores.model.Competition> fetched = 
+                cyanideApiService.loadCompetitions(competitionId, opus);
+            // Optionally save to DB if found
+            if (fetched != null) {
+                log.info("Competitions {} fetched from Cyanide API, saving to DB...", competitionId);
+                for (net.warp_scores.warpscores.model.Competition comp : fetched) {
+                    // TODO: This looks fishy, should be checked
                     log.info("Saving competition: {}", comp);
+                    adjustCompetitionNameAndLogo(comp);
                     competitionRepository.save(comp);
                     return Optional.of(comp);
-                }
-            }   
-        }
-
-        log.warn("Competition {} not found in Cyanide API either.", competitionId);
-        return Optional.empty();
-        
-
-        //competition.ifPresent(this::adjustCompetitionNameAndLogo);
-        //log.info("Loaded competition: {}", competition);
-        //return competition;
-    }
-
-    @DurationLogging
-    public Optional<Competition> loadCompetition(int oldId, Optional<Integer> opus) {
-        Optional<Competition> competition;
-        if (opus.orElse(defaultOpus) < 3) {
-            log.info("Opus {} is less than 3, returning old competition.",
-                opus.orElse(defaultOpus));            
-            competition = competitionRepository.findByOldIdAndOpus(oldId, opus.orElse(defaultOpus));
-            if (competition.isPresent()){
-                Competition competitionObj = competition.get();
-                initializeForFormat(competitionObj);
-                adjustCompetitionNameAndLogo(competitionObj);
+                }   
             }
-        } else {
-            log.error("Cannot load competition by int oldId when opus >= 3. Please provide a UUID.");
-            competition = Optional.empty();
+
+            log.warn("Competition {} not found in Cyanide API either.", competitionId);
+            return Optional.empty();
+
         }
+
         return competition;
     }
 
@@ -186,10 +136,11 @@ public class CompetitionService {
         Integer teams = competition.getTeamsMax();
         boolean isOdd = teams % 2 == 1;
         Integer contestCount = 
-            contestsRepository.countByCompetitionId(competition.getUuid());
+            contestsRepository.countByCompetitionId(competition.getCompetitionId(),
+                Optional.of(competition.getOpus()));
         List<Contest> contests = 
             contestsRepository.findByCompetitionId(
-                competition.getUuid(), Optional.of(competition.getOpus()), Pageable.unpaged());
+                competition.getId(), Optional.of(competition.getOpus()), Pageable.unpaged());
         Map<UUID, Optional<Contest>> uniqueContests = contests
                 .stream()
                 .collect(
@@ -216,7 +167,7 @@ public class CompetitionService {
     private void initializeWissen(Competition competition) {
         List<Contest> contests = 
             contestsRepository.findByCompetitionId(
-                competition.getUuid(), Optional.of(competition.getOpus()), Pageable.unpaged());
+                competition.getCompetitionId(), Optional.of(competition.getOpus()), Pageable.unpaged());
         OptionalInt currentRound = contests.stream().mapToInt(Contest::getRound).max();
         if (competition.getTotalRounds() == null) {
             competition.setTotalRounds(calcWissenTotalRounds(competition.getTeamsMax()));
@@ -238,21 +189,30 @@ public class CompetitionService {
         int totalMatches = teams - 1 - byes;
         competition.setTotalMatches(totalMatches);
         List<Contest> contests = contestsRepository.findByCompetitionId(
-            competition.getUuid(), Optional.of(competition.getOpus()), Pageable.unpaged());
+            competition.getCompetitionId(), Optional.of(competition.getOpus()), Pageable.unpaged());
         competition.setCurrentRound(contests.stream().mapToInt(Contest::getRound).max().orElse(0));
         initializeMatchCount(competition, contests);
     }
 
     private void initializeLadder(Competition competition) {
-        Integer matchCount = matchService.countByCompetitionId(competition.getUuid());
-        competition.setTotalMatches(matchCount);
-        competition.setPlayedMatches(matchCount);
+        Integer matchCount = matchService.countByCompetitionId(
+            competition.getCompetitionId(), Optional.ofNullable(competition.getOpus()));
+        if (matchCount == null) {
+            competition.setTotalMatches(matchCount);
+            competition.setPlayedMatches(matchCount);
+        }
     }
 
     private void initializeMatchCount(Competition competition, List<Contest> contests) {
-        Integer playedMatchesCount = contestsRepository.countByCompetitionIdAndMatchDateNotNull(competition.getUuid());
-        Integer liveMatches = contestsRepository.countByCompetitionIdAndLive(competition.getUuid(), 1);
-        Integer notPlayedAdministratedCount = getNotPlayedAdministratedMatchesCount(contests);
+        Optional<Integer> optOpus = Optional.ofNullable(competition.getOpus());
+        Integer playedMatchesCount = 
+            contestsRepository.countByCompetitionIdAndMatchDateNotNull(
+                competition.getId(), optOpus);
+        Integer liveMatches =
+            contestsRepository.countByCompetitionIdAndLive(
+                competition.getId(), optOpus, 1);
+        Integer notPlayedAdministratedCount = 
+            getNotPlayedAdministratedMatchesCount(contests);
         Integer notValidatedCount = getNotValidatedMatchesCount(contests);
         competition.setPlayedMatches(playedMatchesCount + notPlayedAdministratedCount);
         competition.setLiveMatches(liveMatches);
@@ -283,8 +243,8 @@ public class CompetitionService {
     }
 
     public Map<CompetitionStatus, Long> countForLeague(
-            UUID leagueUuid, Optional<Integer> opus) {
-        List<Competition> competitions = loadForLeagueAndInitialize(leagueUuid, opus);
+            String leagueId, Optional<Integer> opus) {
+        List<Competition> competitions = loadForLeagueAndInitialize(leagueId, opus);
         return competitions
                 .stream()
                 .collect(

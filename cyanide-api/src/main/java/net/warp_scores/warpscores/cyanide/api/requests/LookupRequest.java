@@ -43,14 +43,14 @@ import java.util.UUID;
 public class LookupRequest extends ApiRequest<LookupRequest, LookupResponse> {
 
     private String league_name;
-    private UUID league_id;
+    private String league_id;
     private ApiRequest.Order order;
     private String competition_name;
-    private UUID competition_id;
+    private String competition_id;
     private String team_name;
-    private UUID team_id;
+    private String team_id;
     private String coach_name;
-    private UUID coach_id;
+    private String coach_id;
     private Integer exact;
     private String instruction;
     private String platform;

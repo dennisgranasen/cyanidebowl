@@ -42,7 +42,7 @@ import java.util.UUID;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TeamRequest extends ApiRequest<TeamRequest, TeamResponse> {
 
-    private UUID id;
+    private String id;
     private String name;
     private Integer coach;
     private Integer roster;

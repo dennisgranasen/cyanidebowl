@@ -15,8 +15,12 @@ import java.util.UUID;
 @Document
 public class Match {
     @Id
+    public String get_id() {
+        return matchId != null && opus != null ? opus + "-" + matchId : null;
+    }
+
     private UUID matchId;
-    private UUID competitionId;
+    private String competitionId;
     private Integer oldCompetitionId; // This is the old ID used in the legacy system, if applicable.
     private String competitionName;
     private String competitionLogo;
@@ -24,7 +28,7 @@ public class Match {
     private Date started;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date finished;
-    private UUID leagueId;
+    private String leagueId;
     private Integer oldLeagueId;
     private String leagueName;
     private String leagueLogo;
@@ -41,7 +45,7 @@ public class Match {
     @Getter
     @Setter
     public static class Coach {
-        private UUID id;
+        private String id;
         private String name;
     }
 

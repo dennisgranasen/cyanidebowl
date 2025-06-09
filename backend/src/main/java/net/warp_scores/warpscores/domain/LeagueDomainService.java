@@ -44,7 +44,8 @@ public class LeagueDomainService {
         League league;
         String id = apiLeague.getId();
         if (id != null && isUuid(id)){
-            league = newOrFromDb(uuidConverter.toUuid(apiLeague.getId()), apiLeague.getName(), opus);
+            league = newOrFromDb(Optional.ofNullable(apiLeague.getId()),
+             apiLeague.getName(), opus);
         } else {
             league = newOrFromDb(Integer.parseInt(id), apiLeague.getName(), opus);
         }
@@ -67,12 +68,12 @@ public class LeagueDomainService {
         return league;
     }
 
-    private League newOrFromDb(Optional<UUID> uuid, String name, Optional<Integer> opus) {
-        if (uuid.isEmpty()) {
-            log.error("Can't convert league '{}'. Need an UUID.", name);
+    private League newOrFromDb(Optional<String> id, String name, Optional<Integer> opus) {
+        if (id.isEmpty()) {
+            log.error("Can't convert league '{}'. Need an ID.", name);
             return null;
         }
-        Optional<League> leagueFromDb = uuid.flatMap(leagueRepository::findById);
+        Optional<League> leagueFromDb = id.flatMap(leagueRepository::findById);
         League league = leagueFromDb.orElse(new League());
         //league.setUuid(uuid.get());
         //league.setOpus(opus.orElse(defaultOpus));
@@ -84,30 +85,26 @@ public class LeagueDomainService {
             League targetLeague,
             Optional<Integer> opus) {
         PopulatorUtil.copyNonNullProperties(sourceApiLeague, targetLeague);
-        log.info(null != targetLeague.getUuid() ?
-                "Populating league {} with UUID {}" :
-                "Populating league {} with OldID {}",
-                targetLeague.getName(), targetLeague.getUuid() != null ? targetLeague.getUuid() : targetLeague.getOldId());
         log.info(targetLeague.toString()); 
         String id = sourceApiLeague.getId();
         if (id == null) {
             log.error("League ID is null for league: {}", targetLeague.getName());
             return;
         }   
-        if (isUuid(id)){
-            targetLeague.setUuid(UUID.fromString(id));
-        } else {
-            targetLeague.setUuid(
-                getUuidFromOldIdAndOpus(Integer.parseInt(id), opus.orElse(defaultOpus)));
-            targetLeague.setOldId(Integer.parseInt(id));
-        }
+        //if (isUuid(id)){
+        targetLeague.setId(id);
+        //} else {
+          //  targetLeague.setId(
+            //    getUuidFromOldIdAndOpus(Integer.parseInt(id), opus.orElse(defaultOpus)));
+            //targetLeague.setOldId(Integer.parseInt(id));
+        //}
         targetLeague.setOpus(opus.orElse(defaultOpus));
         targetLeague.setTeamCount(sourceApiLeague.getTeamCount());
         targetLeague.setLogo(sourceApiLeague.getLogo());
         targetLeague.setDateLastMatch(sourceApiLeague.getDateLastMatch());
     }
 
-    private UUID getUuidFromOldIdAndOpus(Integer oldId, int opus) {
-        return UUID.nameUUIDFromBytes((oldId + "-" + opus).getBytes());
+    private String getUuidFromOldIdAndOpus(Integer oldId, int opus) {
+        return UUID.nameUUIDFromBytes((oldId + "-" + opus).getBytes()).toString();
     }
 }

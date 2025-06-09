@@ -8,7 +8,7 @@ import java.util.UUID;
 import java.util.Optional;
 
 @Repository
-public interface LeagueRepository extends MongoRepository<League, UUID> {
+public interface LeagueRepository extends MongoRepository<League, String> {
     /**
      * Find a league by its old ID.
      *
