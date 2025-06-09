@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Checkbox, Image, Td, Tr } from '@chakra-ui/react';
+import { Checkbox, Image, Td, Tr, Button } from '@chakra-ui/react';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import imageUrls from '../../imageUrls';
@@ -10,16 +10,29 @@ import useFetchCompetition from '../../hooks/useFetchCompetition';
 
 const { boxSize } = config;
 
-function CircuitLeg({ circuitLeg }) {
+function CircuitLeg({ circuitLeg, onRemoveLeg }) {
   const [league, setLeague] = useState(null);
   const [error, setError] = useState(null);
+  // Example in CircuitLeg.jsx or parent
+  const getOpusFromGame = (game) => {
+    switch (game) {
+      case 'BB1': return 1;
+      case 'BB2': return 2;
+      case 'BB3': return 3;
+      default: return undefined;
+    }
+  };
   const { fetchCompetition, competition, competitionLoading, error: competitionError } = 
-    useFetchCompetition(circuitLeg.leagueId, circuitLeg.competitionId, 3);
+    useFetchCompetition(circuitLeg.leagueId, circuitLeg.competitionId,
+        getOpusFromGame(circuitLeg.game));
 
-  const fetchLeague = (leagueId) => {
-    WarpScoresApiService.leagues(leagueId)
+
+
+  const fetchLeague = (leagueId, opus) => {
+        logger.info('Fetched league: %o', opus);
+    WarpScoresApiService.leagues(leagueId, opus)
       .then((data) => {
-        setLeague(data);
+        setLeague(data, opus);
         logger.info('Fetched league: %o', data);
       })
       .catch((reason) => {
@@ -29,12 +42,13 @@ function CircuitLeg({ circuitLeg }) {
 
   useEffect(() => {
     logger.info('Circuit leg is %o', circuitLeg);
+    var opus = getOpusFromGame(circuitLeg.game)
     //if (circuitLeg && circuitLeg.legType === 'League') {
-    fetchLeague(circuitLeg.leagueId);
+    fetchLeague(circuitLeg.leagueId, opus);
 
     if (circuitLeg && circuitLeg.legType === 'Competition' && circuitLeg.competitionId)
     {
-      fetchCompetition(circuitLeg.leagueId, circuitLeg.competitionId, 3);
+      fetchCompetition(circuitLeg.leagueId, circuitLeg.competitionId, opus);
     }
 
     
@@ -59,12 +73,21 @@ function CircuitLeg({ circuitLeg }) {
         <Td>{circuitLeg.legType}</Td>
         <Td>{circuitLeg.game}</Td>
         <Td>{circuitLeg.platform}</Td>
+        <Td>{circuitLeg.ruleset}</Td>
+        <Td>{circuitLeg.treatLadderAs}</Td>
         <Td>
-          <Checkbox defaultChecked={circuitLeg.isKnockout} readOnly />
+          <Checkbox defaultChecked={circuitLeg.collectData} readOnly />
         </Td>
         <Td>
-          <Checkbox defaultChecked={circuitLeg.isCollected} readOnly />
+          <Button
+            colorScheme="red"
+            size="xs"
+            onClick={() => onRemoveLeg && onRemoveLeg(circuitLeg.circuitLegId)}
+          >
+            Remove
+          </Button>
         </Td>
+
       </Tr>
     //</LoadingOrErrorWrapper>
   );

@@ -70,6 +70,10 @@ const getDataWithAuthentication = async (endpoint, getAccessTokenSilently, getAc
   return axios(endpoint, authHeaders);
 };
 
+const deleteDataWithAuthentication = async (endpoint, getAccessTokenSilently, getAccessTokenWithPopup) => {
+  const authHeaders = await getAuthHeaders(getAccessTokenSilently, getAccessTokenWithPopup);
+  return axios.delete(endpoint, authHeaders);
+};
 
 /*
     public List<IdWithName> lookupLeague(Optional<String> leagueName) {
@@ -138,8 +142,9 @@ export default {
     customLabel,
     game,
     platform,
-    isCompleted,
-    isKnockout,
+    ruleset,
+    collectData,
+    treatLadderAs,
     getAccessTokenSilently,
     getAccessTokenWithPopup
   ) =>
@@ -147,19 +152,34 @@ export default {
       `/circuits/${circuitId}/legs`,
       {
         leagueId,
-        competitionId,
+        competitionId: competitionId  || null,
         legType,
         label: customLabel,
-        game,
+        game: game.toUpperCase(),
         platform,
-        isCompleted,
-        isKnockout,
+        ruleset: ruleset.toUpperCase(),
+        collectData: collectData ?? false,
+        treatLadderAs: treatLadderAs?.toUpperCase() || null,
       },
       getAccessTokenSilently,
       getAccessTokenWithPopup
     )
       .then(returnData)
       .catch(handleError),
+  removeCircuitLeg: async (
+    circuitId, 
+    circuitLegId,
+    getAccessTokenSilently,
+    getAccessTokenWithPopup
+  ) =>
+    deleteDataWithAuthentication(
+      `/circuits/${circuitId}/legs/${circuitLegId}`,
+      getAccessTokenSilently,
+      getAccessTokenWithPopup
+    )
+      .then(returnData)
+      .catch(handleError),
+  
   // leagues
   leagues: async (leagueUuid, opus) =>
     axios(`/leagues${leagueUuid ? `/${leagueUuid}` : ''}${opus !== undefined && opus !== null ? `?opus=${opus}` : ''}`)

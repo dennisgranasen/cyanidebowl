@@ -9,10 +9,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -79,4 +81,22 @@ public class CircuitController {
 
     }
 
+    @DeleteMapping("/circuits/{circuitId}/legs/{circuitLegId}")
+    @PreAuthorize(AUTHORITY_WRITE_LEAGUE_ADMIN)
+    public ResponseEntity<Circuit> removeCircuitLeg(
+            @PathVariable(name = "circuitId") Long circuitId,
+            @PathVariable(name = "circuitLegId") Long circuitLegId) {
+        try {
+            Optional<Circuit> circuit = circuitService.load(circuitId);
+            if (circuit.isPresent()) {
+                Circuit updated = circuitService.removeLeg(circuit.get(), circuitLegId);
+                return ResponseEntity.ok(updated);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception ex) {
+            log.error("Unable to remove leg {} from circuit {}.", circuitLegId, circuitId, ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }

@@ -42,11 +42,22 @@ public class CompetitionController {
 
     @GetMapping("/competitions/league/{leagueId}")
     public ResponseEntity<List<Competition>> getActiveCompetitionsForLeague(
-            @PathVariable(name = "leagueId") UUID leagueId,
+            @PathVariable(name = "leagueId") String leagueId,
             @RequestParam(name = "opus", required = false) Integer opus) {
         try {
-            List<Competition> competitions = 
-                competitionService.loadForLeague(leagueId, Optional.ofNullable(opus));
+            List<Competition> competitions;
+            if (opus != null && opus < 3) {
+                // If opus is less than 3, we assume it's an old ID
+                Integer oldId = Integer.parseInt(leagueId);
+                competitions = 
+                    competitionService.loadForLeague(oldId, Optional.ofNullable(opus));
+
+            } 
+            else {
+                UUID leagueUuid = UUID.fromString(leagueId);
+                competitions = 
+                    competitionService.loadForLeague(leagueUuid, Optional.ofNullable(opus));
+            }
             competitions = competitions
                     .stream()
                     .sorted()
@@ -60,12 +71,22 @@ public class CompetitionController {
 
     @GetMapping("/competitions/league/{leagueId}/initialized")
     public ResponseEntity<List<Competition>> getActiveCompetitionsForLeagueInitialized(
-            @PathVariable(name = "leagueId") UUID leagueId,
+            @PathVariable(name = "leagueId") String leagueId,
             @RequestParam(name = "opus", required = false) Integer opus) {
         try {
-            List<Competition> competitions = 
-                competitionService.loadForLeagueAndInitialize(leagueId, 
-                    Optional.ofNullable(opus));
+            List<Competition> competitions;
+            if (opus != null && opus < 3) {
+                // If opus is less than 3, we assume it's an old ID
+                Integer oldId = Integer.parseInt(leagueId);
+                competitions = 
+                    competitionService.loadForLeagueAndInitialize(oldId, Optional.ofNullable(opus));
+
+            } 
+            else {
+                UUID leagueUuid = UUID.fromString(leagueId);
+                competitions = 
+                    competitionService.loadForLeagueAndInitialize(leagueUuid, Optional.ofNullable(opus));
+            }
             competitions = competitions
                     .stream()
                     .sorted()
@@ -88,11 +109,14 @@ public class CompetitionController {
         if (opus != null && opus < 3) {
             competition = competitionService.loadCompetitionByOldId(
                 Integer.parseInt(competitionId), Optional.ofNullable(opus));
+                log.info("Did < 3 opus, using old ID: {}", competitionId);
         }
         else {
             competition = competitionService.loadCompetition(
                 UUID.fromString(competitionId), Optional.ofNullable(opus));
+                log.info("Did > 2 opus, using UUID: {}", competitionId);
         }
+        log.info(competitionId, opus, competition);
         return competition
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());

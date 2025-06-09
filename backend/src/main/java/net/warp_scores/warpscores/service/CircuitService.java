@@ -88,10 +88,11 @@ public class CircuitService {
         Circuit circuit = new Circuit();
         circuit.setCircuitId(DUMMY_CIRCUIT_ID);
         circuit.setCircuitName("Leagues without circuits");
-        circuit.setCircuitLegs(leaguesWithoutCircuits.stream().map(this::createDummyCircuitLeg).toList());
+        //circuit.setCircuitLegs(leaguesWithoutCircuits.stream().map(this::createDummyCircuitLeg).toList());
         return Optional.of(circuit);
     }
 
+    /*
     private CircuitLeg createDummyCircuitLeg(League league) {
         CircuitLeg circuitLeg = new CircuitLeg();
         circuitLeg.setLegType(CircuitLegType.League);
@@ -103,6 +104,7 @@ public class CircuitService {
         circuitLeg.setCompetitionId(league.getUuid().toString());
         return circuitLeg;
     }
+    */
 
     public Circuit createCircuit(Circuit circuit) {
         return newCircuit(circuit);
@@ -118,6 +120,14 @@ public class CircuitService {
         log.info("Adding leg {} to circuit {}.", circuitLeg, circuit);        
         circuitLeg.setCircuitLegId(sequenceGenerator.nextIdFor(CircuitLeg.class));
         circuit.addLeg(circuitLeg);
+        return circuitRepository.save(circuit);
+    }
+
+    public Circuit removeLeg(Circuit circuit, Long circuitLegId) {
+        log.info("Removing leg {} from circuit {}.", circuitLegId, circuit.getCircuitId());
+        // Remove the leg with the given ID
+        circuit.getCircuitLegs().removeIf(leg -> circuitLegId.equals(leg.getCircuitLegId()));
+        // Save and return the updated circuit
         return circuitRepository.save(circuit);
     }
 }

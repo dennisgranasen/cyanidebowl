@@ -1,31 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box,
-  Button,
-  Card,
-  CardBody,
-  CardFooter,
-  CardHeader,
-  Checkbox,
-  FormControl,
-  FormErrorMessage,
-  FormHelperText,
-  FormLabel,
-  Heading,
-  HStack,
-  Input,
-  Select,
-  SimpleGrid,
-  Table,
-  TableContainer,
-  Tbody,
-  Tfoot,
-  Td,
-  Th,
-  Thead,
-  Tr,
-  VStack,
-  Tab,
+  Box, Button, Card, CardBody, CardFooter, CardHeader, Checkbox, FormControl, FormErrorMessage,
+  FormHelperText, FormLabel, Heading, HStack, Input, Select, SimpleGrid, Table, TableContainer,
+  Tbody, Tfoot, Td, Th, Thead, Tr, VStack
 } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
 import { Field, Form, Formik } from 'formik';
@@ -38,6 +15,70 @@ import prettyPrint from '../util/prettyPrint';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import config from '../config';
 
+// --- Constants and helpers ---
+
+const bbVersions = [1, 2, 3];
+
+const gameTypes = {
+  bb1: { name: 'Blood Bowl 1', ruleset: ['LRB6'], platforms: ['PC'] },
+  bb2: { name: 'Blood Bowl 2', ruleset: ['LRB6'], platforms: ['PC', 'Playstation', 'Xbox'] },
+  bb3: { name: 'Blood Bowl 3', ruleset: ['BB2020'], platforms: ['PC', 'Playstation', 'Xbox', 'Switch'] },
+  bloodbowl: { name: 'Blood Bowl', rulesets: ['LRB6', 'BB2016', 'BB2020', 'Other'], defaultRuleset: 'BB2020', platforms: ['Tabletop', 'Fumbbl', 'TTS', 'Other'] },
+  sevens: { name: 'Blood Bowl 7s', rulesets: ['LRB6', 'BB2016', 'BB2020', 'Other'], defaultRuleset: 'BB2020', platforms: ['Tabletop', 'TTS'] },
+  dungeonbowl: { name: 'Dungeon Bowl', ruleset: ['DB5', 'DB2021', 'Other'], defaultRuleset: 'DB2021', platforms: ['Tabletop', 'TTS'] },
+  gutterbowl: { name: 'Gutter Bowl', ruleset: ['GB2023', 'Other'], platforms: ['Tabletop', 'TTS'] }
+};
+
+const treatLadderOptions = [
+  { value: 'knockout', label: 'Treat as Knockout' },
+  { value: 'round-robin', label: 'Treat as Round Robin League' },
+  { value: 'ladder', label: 'Treat as Ladder' },
+];
+
+const initialFormValues = {
+  leagueId: '',
+  leagueName: '',
+  competitionId: '',
+  competitionName: '',
+  legType: '',
+  label: '',
+  collectData: true,
+  treatLadderAs: '',
+  competitionFormat: '',
+  opus: String(config.defaultOpus || 3),
+};
+
+// --- Helper functions ---
+
+const bbVersionToGameTypeKey = (bbVersion) => {
+  switch (String(bbVersion)) {
+    case '1': return 'bb1';
+    case '2': return 'bb2';
+    case '3': return 'bb3';
+    default: return 'bb3';
+  }
+};
+
+const getPlatforms = (type) => gameTypes[type]?.platforms || [];
+const getRulesets = (type) => gameTypes[type]?.rulesets || gameTypes[type]?.ruleset || [];
+const getDefaultRuleset = (type) => {
+  const gt = gameTypes[type];
+  if (!gt) return '';
+  if (gt.defaultRuleset) return gt.defaultRuleset;
+  if (gt.rulesets && gt.rulesets.length > 0) return gt.rulesets[0];
+  if (gt.ruleset && gt.ruleset.length > 0) return gt.ruleset[0];
+  return '';
+};
+const getDefaultPlatform = (type) => {
+  const gt = gameTypes[type];
+  if (!gt) return '';
+  if (gt.platforms && gt.platforms.length > 0) return gt.platforms[0];
+  return '';
+};
+
+const compareLegs = (leg, otherLeg) => leg.label.localeCompare(otherLeg.label);
+
+// --- Table columns as a separate component ---
 function TableColumns() {
   return (
     <Tr>
@@ -46,99 +87,24 @@ function TableColumns() {
       <Th>League</Th>
       <Th>Competition</Th>
       <Th>LegType</Th>
-      <Th>Game version</Th>
+      <Th>Game</Th>
       <Th>Platform</Th>
-      <Th>Knockout?</Th>
+      <Th>Ruleset</Th>
+      <Th>Ladder</Th>
       <Th>Collect?</Th>
     </Tr>
   );
 }
 
+// --- Main component ---
 function AdminCircuitPage() {
+  // --- Auth and params ---
   const { isAuthenticated, isLoading, getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0WithUserPermissions();
+  const { circuitId } = useParams();
 
-  const bbVersions = [ 1, 2, 3 ];
-
-  const platforms = [ 'PC', 'Playstation', 'Xbox', 'Switch', 'Cross platform', 'Tabletop', 'Fumbbl' ];
-    /*
-    'bb1.pc',
-    'bb2.pc',
-    'bb2.ps',
-    'bb2.xbox',
-    'bb3.cross',
-    'bb3.pc',
-    'bb3.ps',
-    'bb3.switch',
-    'bb3.xbox',
-    */
-    /*
-    "fumbbl.lrb6",
-    "fumbbl.2020",
-    "tt.lrb6",
-    "tt.2020" */
-  
-  const gameTypes = {
-    bb1: {
-      name: 'Blood Bowl 1',
-      ruleset: ['LRB6'],
-      platforms: ['PC'],
-    },
-    bb2: {
-      name: 'Blood Bowl 2',
-      ruleset: ['LRB6'],
-      platforms: ['PC', 'Playstation', 'Xbox'],
-    },
-    bb3: {
-      name: 'Blood Bowl 3',
-      ruleset: ['BB2020'],
-      platforms: ['PC', 'Playstation', 'Xbox', 'Switch'],
-    },
-    bloodbowl: {
-      name: 'Blood Bowl',
-      rulesets: ['LRB6', 'BB2016', 'BB2020', 'Other'],
-      defaultRuleset: 'BB2020',
-      platforms: ['Tabletop', 'Fumbbl', 'TTS', 'Other'],
-    },
-    sevens: {
-      name: 'Blood Bowl 7s',
-      rulesets: ['LRB6', 'BB2016', 'BB2020', 'Other'],
-      defaultRuleset: 'BB2020',
-      platforms: ['Tabletop', 'TTS'],
-    },
-    dungeonbowl: {
-      name: 'Dungeon Bowl',
-      ruleset: ['DB5', 'DB2021', 'Other'],
-      defaultRuleset: 'DB2021',
-      platforms: ['Tabletop', 'TTS'],
-    },
-    gutterbowl: {
-      name: 'Gutter Bowl',
-      ruleset: ['GB2023', 'Other'],
-      platforms: ['Tabletop', 'TTS'],
-    }
-  };
-
-  const treatLadderOptions = [
-    { value: 'knockout', label: 'Treat as Knockout' },
-    { value: 'round-robin', label: 'Treat as Round Robin League' },
-    { value: 'ladder', label: 'Treat as Ladder' },
-  ];
-
-
-  const initialFormValues = {
-    competitionOrLeagueId: '',
-    competitionOrLeagueName: '',
-    legType: '',
-    //platform: 'bb3.cross',
-    label: '',
-    collectData: true, // checked by default
-    treatLadderAs: '',
-    competitionFormat: '',
-  };
-
-  const {circuitId} = useParams();
-  const [bbVersion, setBbVersion] = useState(String(config.defaultOpus || 3)); // Default to "3"
-  const [gameType, setGameType] = useState('Blood Bowl 3'); // Default to BB3
+  // --- State ---
+  const [bbVersion, setBbVersion] = useState(String(config.defaultOpus || 3));
+  const [gameType, setGameType] = useState('Blood Bowl 3');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState();
   const [circuit, setCircuit] = useState();
@@ -146,116 +112,93 @@ function AdminCircuitPage() {
   const [selectedLeagueId, setSelectedLeagueId] = useState('');
   const [selectedCompetitionId, setSelectedCompetitionId] = useState('');
   const [label, setLabel] = useState('');
-
   const [selectedLeague, setSelectedLeague] = useState(null);
   const [selectedCompetition, setSelectedCompetition] = useState(null);
+  const [selectedGameType, setSelectedGameType] = useState('');
+  const [selectedPlatform, setSelectedPlatform] = useState('');
+  const [selectedRuleset, setSelectedRuleset] = useState('');
 
+  // --- Effects ---
+  useEffect(() => { fetchCircuit(circuitId); }, []);
+  useEffect(() => {
+    if (!selectedGameType) return;
+    // Platform
+    const platforms = getPlatforms(selectedGameType);
+    setSelectedPlatform(platforms.length === 1 ? platforms[0] : getDefaultPlatform(selectedGameType));
+    // Ruleset
+    const rulesets = getRulesets(selectedGameType);
+    setSelectedRuleset(rulesets.length === 1 ? rulesets[0] : getDefaultRuleset(selectedGameType));
+  }, [selectedGameType]);
 
-  // Helper to map bbVersion to gameType key
-  const bbVersionToGameTypeKey = (bbVersion) => {
-    switch (String(bbVersion)) {
-      case '1': return 'bb1';
-      case '2': return 'bb2';
-      case '3': return 'bb3';
-      default: return 'bb3';
+  // --- Handlers ---
+  const handleCompetitionClick = (competition) => {
+    setSelectedCompetitionId(competition.id || competition.uuid || competition.competitionId);
+    setLabel(competition.name);
+    
+    console.log(searchResults);
+    const compObj = (searchResults.competitions || []).find(
+      c => (c.id || c.uuid || c.competitionId) === competition.id
+    );
+
+    /*
+      The search results are just {id, name}
+      How do I fetch the league Id if I don't know what league the competition belongs to?
+      Should probably load all leagues in the search results and then find the league.
+    */
+
+    const name = competition.name || competition.leagueName || 'Unknown Competition';
+    setSelectedCompetition(competition);
+    const gameTypeKey = bbVersionToGameTypeKey(bbVersion);
+    setSelectedGameType(gameTypeKey);
+    setSelectedPlatform(getDefaultPlatform(gameTypeKey));
+    setSelectedRuleset(getDefaultRuleset(gameTypeKey));
+    console.log(compObj);
+    if (competition.leagueId) {
+      setSelectedLeagueId(competition.leagueId);
+      WarpScoresApiService.leagues(competition.leagueId, bbVersion)
+        .then((res) => setSelectedLeague(res))
+        .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }));
+    } else {
+      WarpScoresApiService.competition(competition.id, bbVersion)
+        .catch((reason1) => {
+          if (reason1.response && reason1.response.status === 404) {
+            for (const league of searchResults.leagues) {
+              WarpScoresApiService.leagueCompetitions(league.id, bbVersion)
+                .then((competitions) => {
+                  const foundComp = competitions.find((comp) => comp.uuid === competition.id);
+                  if (foundComp) {
+                    setSelectedCompetition(foundComp);
+                    setSelectedLeagueId(league.id);
+                    setLabel(league.name + " - " + name);
+                    setSelectedLeague(league);
+                  }
+                })
+                .catch((reason2) => setError({ type: 'error', message: reason2.toLocaleString() }));
+            }
+          }
+        });
     }
   };
 
-  const handleCompetitionClick = (id, name) => {
-    setSelectedCompetitionId(id);
-    setLabel(name);
-    const compObj = (searchResults.competitions || []).find(
-      c => (c.id || c.uuid || c.competitionId) === id
-    );
-    setSelectedCompetition(compObj || null);
-    // Use bbVersion to determine game type
-    const gameTypeKey = bbVersionToGameTypeKey(bbVersion);
-    setSelectedGameType(gameTypeKey);
-
-    // Set platform and ruleset based on game type
-    const platforms = getPlatforms(gameTypeKey);
-    const rulesets = getRulesets(gameTypeKey);
-    const platform = platforms.length === 1 ? platforms[0] : getDefaultPlatform(gameTypeKey);
-    const ruleset = rulesets.length === 1 ? rulesets[0] : getDefaultRuleset(gameTypeKey);
-    setSelectedPlatform(platform);
-    setSelectedRuleset(ruleset);
-
-    if (compObj.leagueId) {
-      setSelectedLeagueId(compObj.leagueId);
-      WarpScoresApiService.leagues(compObj.leagueId, bbVersion)
-        .then((res) => {
-          //console.log('League details:', res);
-          setSelectedLeague(res);
-        })
-        .catch((reason) => {
-          //console.log('Could not fetch league details:', reason);
-          setError({ type: 'error', message: reason.toLocaleString() });
-        });
-    } else {
-      WarpScoresApiService.competition(id, bbVersion)
-        .then((res1) => { 
-          //console.log('Competition details:', res1); 
-          //setSelectedCompetition(res1);
-          //setSelectedCompetitionId(id);
-        })
-        .catch((reason1) => {
-          //console.log('Could not fetch competition details:', reason1);
-          //console.log('Trying to fetch league details instead: ', selectedLeagueId);
-          if (reason1.response && reason1.response.status === 404) {
-            var theLeague = null;
-            for (const league of searchResults.leagues) {
-              if (theLeague) break;
-              WarpScoresApiService.leagueCompetitions(league.id, bbVersion)
-                .then((competitions) => {
-                  //console.log('Competitions:', competitions);
-                    const foundComp = competitions.find((comp) => comp.uuid === id);
-                    if (foundComp) {
-                      console.log('Found league for competition:', name);
-                      console.log('Found competition:', foundComp);
-                      theLeague = league;
-                      setSelectedCompetition(foundComp);
-                      setSelectedLeagueId(league.id);
-                      setLabel(league.name + " - " + name);
-                      setSelectedLeague(league);
-                    }
-                })
-                .catch((reason2) => {
-                  //console.log('Could not fetch league details:', reason2);
-                  setError({ type: 'error', message: reason2.toLocaleString() });
-                }) 
-            }
-          }
-        });  
-      }
-  };  
-  // Handler for row click
-  const handleLeagueClick = (id, name) => {
+  const handleLeagueClick = (league) => {
     setSelectedCompetitionId('');
-    setSelectedLeagueId(id);
-    setLabel(name);
-
-    // Use bbVersion to determine game type
+    setSelectedLeagueId(league.id || league.leagueId || league.uuid);
+    setLabel(league.name);
     const gameTypeKey = bbVersionToGameTypeKey(bbVersion);
     setSelectedGameType(gameTypeKey);
-
-    // Set platform and ruleset based on game type
-    const platforms = getPlatforms(gameTypeKey);
-    const rulesets = getRulesets(gameTypeKey);
-    const platform = platforms.length === 1 ? platforms[0] : getDefaultPlatform(gameTypeKey);
-    const ruleset = rulesets.length === 1 ? rulesets[0] : getDefaultRuleset(gameTypeKey);
-    setSelectedPlatform(platform);
-    setSelectedRuleset(ruleset);
-
-    WarpScoresApiService.leagues(id, bbVersion)
-      .then((res) => { console.log('League details:', res); setSelectedLeague(res); })
-      .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }));  
-
+    setSelectedPlatform(getDefaultPlatform(gameTypeKey));
+    setSelectedRuleset(getDefaultRuleset(gameTypeKey));
+    WarpScoresApiService.leagues(league.id, bbVersion)
+      .then((res) => setSelectedLeague(res))
+      .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }));
   };
 
-  const compareLegs = (leg, otherLeg) => {
-    return leg.label.localeCompare(otherLeg.label);
+  const handleRemoveLeg = (circuitLegId) => {
+    if (!window.confirm('Are you sure you want to remove this leg?')) return;
+    WarpScoresApiService.removeCircuitLeg(circuit.circuitId, circuitLegId)
+      .then(() => fetchCircuit(circuitId))
+      .catch((err) => setError({ type: 'error', message: err.toLocaleString() }));
   };
-
 
   const fetchCircuit = (id) => {
     setLoading(true);
@@ -266,7 +209,7 @@ function AdminCircuitPage() {
         setCircuit(res);
       })
       .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
-      .finally(setLoading(false));
+      .finally(() => setLoading(false));
   };
 
   const onAddLegClicked = (values, actions) => {
@@ -276,105 +219,140 @@ function AdminCircuitPage() {
       values.competitionId,
       values.legType,
       values.label,
-      bbVersion,
+      values.gameType,
       values.platform,
-      values.isCollect,
-      values.isKnockout,
+      values.ruleset,
+      values.collectData,
+      values.treatLadderAs,
       getAccessTokenSilently,
       getAccessTokenWithPopup
     )
       .then(() => fetchCircuit(circuitId))
-      .catch((err) => console.log(err))
+      .catch((err) => setError({ type: 'error', message: err.toLocaleString() }))
       .finally(() => {
-        values = initialFormValues;
         actions.setSubmitting(false);
       });
   };
 
+  /*
   const onSearchClicked = (values, actions) => {
-    setBbVersion(values.bbVersion); // values.bbVersion is now always a string
-    console.log('Searching for', values.competitionOrLeagueName, values.bbVersion);
+    setBbVersion(values.bbVersion);
+    console.log('Searching for:', values.searchName, 'BB Version:', values.bbVersion);
     WarpScoresApiService.lookup({
-      league_name: values.competitionOrLeagueName,
-      bb: values.bbVersion[values.bbVersion.length - 1],
-      //platform: values.platform,
-      exact: 1, 
-      fallback: false
+      league_name: values.searchName,
+      bb: values.bbVersion,
+      exact: 1,
+      fallback: true
     })
-      .then((res) => {
-        console.log(res);
-        setSearchResults(res);
-      })
-      .catch((err) => {
-        setSearchResults([]);
-        console.log(err);
-      })
-      .finally(() => {
-        actions.setSubmitting(false);
+      .then((res) => setSearchResults(res))
+      .catch((err) => setSearchResults([]))
+      .finally(() => actions.setSubmitting(false));
+  };
+
+  const onSearchClicked = async (values, actions) => {
+    setBbVersion(values.bbVersion);
+    try {
+      const res = await WarpScoresApiService.lookup({
+        league_name: values.searchName,
+        bb: values.bbVersion,
+        exact: 1,
+        fallback: false
       });
-  };
-
-  useEffect(() => {
-    fetchCircuit(circuitId);
-  }, []);
-  
-  // Extract gameType keys for select options
-  const gameTypeKeys = Object.keys(gameTypes);
-
-  // Helper to get platforms/rulesets for selected gameType
-  const getPlatforms = (type) => gameTypes[type]?.platforms || [];
-  const getRulesets = (type) => gameTypes[type]?.rulesets || gameTypes[type]?.ruleset || [];
-
-  // Helper to get default value for ruleset
-  const getDefaultRuleset = (type) => {
-    const gt = gameTypes[type];
-    if (!gt) return '';
-    if (gt.defaultRuleset) return gt.defaultRuleset;
-    if (gt.rulesets && gt.rulesets.length > 0) return gt.rulesets[0];
-    if (gt.ruleset && gt.ruleset.length > 0) return gt.ruleset[0];
-    return '';
-  };
-
-  // Helper to get default value for platform
-  const getDefaultPlatform = (type) => {
-    const gt = gameTypes[type];
-    if (!gt) return '';
-    if (gt.platforms && gt.platforms.length > 0) return gt.platforms[0];
-    return '';
-  };
-
-  // Add state for selected gameType, platform, and ruleset
-  const [selectedGameType, setSelectedGameType] = useState('');
-  const [selectedPlatform, setSelectedPlatform] = useState('');
-  const [selectedRuleset, setSelectedRuleset] = useState('');
-
-  // Update platform and ruleset automatically when gameType changes
-  useEffect(() => {
-    if (!selectedGameType) return;
-
-    // Platform
-    const platforms = getPlatforms(selectedGameType);
-    if (platforms.length === 1) {
-      setSelectedPlatform(platforms[0]);
-    } else if (platforms.length > 1) {
-      setSelectedPlatform(getDefaultPlatform(selectedGameType));
-    } else {
-      setSelectedPlatform('');
+      // If leagues found, fetch details for each league in parallel
+      if (res.leagues && res.leagues.length > 0) {
+        const detailedLeagues = await Promise.all(
+          res.leagues.map(async (league) => {
+            try {
+              const details = await WarpScoresApiService.leagues(league.id || league.leagueId || league.uuid, values.bbVersion);
+              return { ...league, ...details };
+            } catch (e) {
+              // If fetch fails, just return the original league object
+              return league;
+            }
+          })
+        );
+        setSearchResults({ ...res, leagues: detailedLeagues });
+      } else {
+        setSearchResults(res);
+      }
+    } catch (err) {
+      setSearchResults([]);
+    } finally {
+      actions.setSubmitting(false);
     }
+  };
+  */
 
-    // Ruleset
-    const rulesets = getRulesets(selectedGameType);
-    if (rulesets.length === 1) {
-      setSelectedRuleset(rulesets[0]);
-    } else if (rulesets.length > 1) {
-      setSelectedRuleset(getDefaultRuleset(selectedGameType));
-    } else {
-      setSelectedRuleset('');
+  const onSearchClicked = async (values, actions) => {
+    setBbVersion(values.bbVersion);
+    try {
+      const res = await WarpScoresApiService.lookup({
+        league_name: values.searchName,
+        bb: values.bbVersion,
+        exact: 1,
+        fallback: false
+      });
+
+      let detailedLeagues = [];
+      if (res.leagues && res.leagues.length > 0) {
+        detailedLeagues = await Promise.all(
+          res.leagues.map(async (league) => {
+            try {
+              const details = await WarpScoresApiService.leagues(
+                league.id || league.leagueId || league.uuid,
+                values.bbVersion
+              );
+              // Fetch competitions for this league
+              let competitions = [];
+              try {
+                competitions = await WarpScoresApiService.leagueCompetitions(
+                  league.id || league.leagueId || league.uuid,
+                  values.bbVersion
+                );
+              } catch (e) {
+                competitions = [];
+              }
+              return { ...league, ...details, competitions };
+            } catch (e) {
+              return league;
+            }
+          })
+        );
+      }
+
+      // Expand competitions with detailed objects from leagues
+      let expandedCompetitions = res.competitions || [];
+      if (expandedCompetitions.length > 0 && detailedLeagues.length > 0) {
+        expandedCompetitions = expandedCompetitions.map((comp) => {
+          let detailedComp = null;
+          for (const league of detailedLeagues) {
+            if (league.competitions) {
+              detailedComp = league.competitions.find(
+                c =>
+                  (c.id || c.uuid || c.competitionId) === (comp.id || comp.uuid || comp.competitionId)
+              );
+              if (detailedComp) break;
+            }
+          }
+          return detailedComp || comp;
+        });
+      }
+
+      setSearchResults({
+        ...res,
+        leagues: detailedLeagues,
+        competitions: expandedCompetitions,
+      });
+    } catch (err) {
+      setSearchResults([]);
+    } finally {
+      actions.setSubmitting(false);
     }
-  }, [selectedGameType]);
+  };
 
+  // --- Render ---
   return (
-    <VStack align="left">      
+    <VStack align="left">
       <Box>
         <Navigation parentPage="admin" currentPage="circuits" circuit={[circuitId, circuit?.circuitName]} />
       </Box>
@@ -388,66 +366,70 @@ function AdminCircuitPage() {
             </Thead>
             <Tbody>
               {circuit?.circuitLegs.map((circuitLeg) => (
-                <CircuitLeg key={circuitLeg.circuitLegId} circuitLeg={circuitLeg} />
+                <CircuitLeg
+                  key={circuitLeg.circuitLegId}
+                  circuitLeg={circuitLeg}
+                  onRemoveLeg={handleRemoveLeg}
+                />
               ))}
             </Tbody>
             <Tfoot>
               <TableColumns />
             </Tfoot>
           </Table>
-        </TableContainer>        
+        </TableContainer>
 
+        {/* Search Form */}
         <Heading size="md">Add Leg</Heading>
         <Box mb="1rem">
-          A Circuit Leg is either a competition or a league (with all it&apos;s competitions), specified by leg type.
-          You may add a custom label and define, if data from Cyanide API should be collected periodically. If you
-          select &quot;treat Ladder as Knockout&quot;, all competitions of type ladder will be rendered as if they were
-          knockout tournaments.
+          A Circuit Leg is either a competition or a league (with all its competitions), specified by leg type.
+          You may add a custom label and define if data from Cyanide API should be collected periodically.
+          If you select "treat Ladder as Knockout", all competitions of type ladder will be rendered as if they were knockout tournaments.
         </Box>
         <Checkbox isChecked={isAuthenticated}>Auth</Checkbox>
         <HStack>
           <Formik
-  initialValues={{ competitionOrLeagueName: '', bbVersion: bbVersion }}
-  onSubmit={(values, actions) => onSearchClicked(values, actions)}>
+            initialValues={{ searchName: '', bbVersion: bbVersion }}
+            onSubmit={onSearchClicked}
+          >
             {(props) => (
               <Card as={Form} variant="outline" size="sm">
                 <CardHeader>Search for id</CardHeader>
                 <SimpleGrid as={CardBody} columns={{ base: 1, md: 2, xl: 3 }} gap="1rem">
                   <Box>
                     <Field
-                      name="competitionOrLeagueName"
+                      name="searchName"
                       validate={(value) => (value?.trim().length > 0 ? null : 'Competition or League name required.')}
                     >
                       {({ field, form }) => (
-                        <FormControl isInvalid={form.errors.competitionOrLeagueName && form.touched.competitionOrLeagueName}>
+                        <FormControl isInvalid={form.errors.searchName && form.touched.searchName}>
                           <FormLabel>Name</FormLabel>
                           <FormHelperText>Name of the Competition or League to search for</FormHelperText>
                           <Input {...field} placeholder="Competition/League name" />
-                          <FormErrorMessage>{form.errors.competitionOrLeagueName}</FormErrorMessage>
+                          <FormErrorMessage>{form.errors.searchName}</FormErrorMessage>
                         </FormControl>
                       )}
                     </Field>
-                  <Field
-                    name="bbVersion"
-                    validate={(value) => (value?.length > 0 ? null : 'Specify version')}                    
-                  >
-                    {({ field, form }) => (
-                      <FormControl isInvalid={form.errors.platform && form.touched.platform}>
-                        <FormLabel>Blood Bowl version</FormLabel>
-                        <FormHelperText>Select which version of Blood bowl the leg is registered for?</FormHelperText>
-                        <Select {...field} variant="outlined" placeholder="Select version">
-                          {bbVersions.map((versionOption) => (
-                            <option value={String(versionOption)} key={versionOption}>
-                              {"Blood Bowl " + versionOption}
-                            </option>
-                          ))}
-                        </Select>
-                        <FormErrorMessage>{form.errors.bbVersion}</FormErrorMessage>
-                      </FormControl>
-                    )}
-                  </Field>
+                    <Field
+                      name="bbVersion"
+                      validate={(value) => (value?.length > 0 ? null : 'Specify version')}
+                    >
+                      {({ field, form }) => (
+                        <FormControl isInvalid={form.errors.platform && form.touched.platform}>
+                          <FormLabel>Blood Bowl version</FormLabel>
+                          <FormHelperText>Select which version of Blood bowl the leg is registered for?</FormHelperText>
+                          <Select {...field} variant="outlined" placeholder="Select version">
+                            {bbVersions.map((versionOption) => (
+                              <option value={String(versionOption)} key={versionOption}>
+                                {"Blood Bowl " + versionOption}
+                              </option>
+                            ))}
+                          </Select>
+                          <FormErrorMessage>{form.errors.bbVersion}</FormErrorMessage>
+                        </FormControl>
+                      )}
+                    </Field>
                   </Box>
-                  
                 </SimpleGrid>
                 <CardFooter>
                   <Box>
@@ -464,7 +446,7 @@ function AdminCircuitPage() {
               </Card>
             )}
           </Formik>
-           {/* Search Results Table */}
+          {/* Search Results Table */}
           {searchResults.leagues && searchResults.leagues.length > 0 && (
             <Box mt={4}>
               <Heading size="sm" mb={2}>Leagues</Heading>
@@ -480,7 +462,7 @@ function AdminCircuitPage() {
                     {searchResults.leagues.map((item) => (
                       <Tr key={item.id || item.uuid || item.leagueId}
                                 _hover={{ bg: 'gray.100', cursor: 'pointer' }}
-                                onClick={() => handleLeagueClick(item.id || item.uuid || item.leagueId, item.name)}>
+                                onClick={() => handleLeagueClick(item)}>
                         <Td>{item.name || item.leagueName}</Td>
                         <Td>{item.id || item.uuid || item.leagueId}</Td>
                       </Tr>
@@ -505,7 +487,7 @@ function AdminCircuitPage() {
                     {searchResults.competitions.map((item) => (
                       <Tr key={item.id || item.uuid || item.leagueId}
                                 _hover={{ bg: 'gray.100', cursor: 'pointer' }}
-                                onClick={() => handleCompetitionClick(item.id || item.uuid || item.competitionId, item.name)}>
+                                onClick={() => handleCompetitionClick(item)}>
                         <Td>{item.name || item.leagueName}</Td>
                         <Td>{item.id || item.uuid || item.competitionId}</Td>
                       </Tr>
@@ -517,19 +499,19 @@ function AdminCircuitPage() {
           )}
         </HStack>
 
-
         {/* Add Leg Form */}
         <Formik
           initialValues={{
             ...initialFormValues,
-            competitionOrLeagueId: selectedCompetitionId || '',
+            leagueId: selectedLeagueId || '',
+            competitionId: selectedCompetitionId || '',
             label: label || '',
             gameType: selectedGameType,
             platform: selectedPlatform,
             ruleset: selectedRuleset,
           }}
           enableReinitialize
-          onSubmit={(values, actions) => onAddLegClicked(values, actions)}
+          onSubmit={onAddLegClicked}
         >
           {(props) => {
             // Sync Formik fields with state when state changes
@@ -539,10 +521,9 @@ function AdminCircuitPage() {
               props.setFieldValue('ruleset', selectedRuleset);
             }, [selectedGameType, selectedPlatform, selectedRuleset]);
             useEffect(() => {
-              props.setFieldValue('competitionOrLeagueId', selectedCompetitionId || '');
+              props.setFieldValue('competitionId', selectedCompetitionId || '');
               props.setFieldValue('label', label || '');
             }, [selectedCompetitionId, label]);
-            // Set competitionFormat in Formik when a competition is selected
             useEffect(() => {
               if (selectedCompetition && selectedCompetition.format) {
                 props.setFieldValue('competitionFormat', selectedCompetition.format);
@@ -593,7 +574,7 @@ function AdminCircuitPage() {
                               props.setFieldValue('gameType', value);
                             }}
                           >
-                            {gameTypeKeys.map(key => (
+                            {Object.keys(gameTypes).map(key => (
                               <option value={key} key={key}>
                                 {gameTypes[key].name}
                               </option>
@@ -678,12 +659,13 @@ function AdminCircuitPage() {
                             props.setFieldValue('legType', 'Blood Bowl 3: PC/Cross');
                             break;
                         }
-                        if (selectedCompetitionId) {
-                          props.setFieldValue('competitionOrLeagueId', selectedCompetitionId);                        
-                          props.setFieldValue('legType', 'Competition');
-                        } else if (selectedLeagueId) {
-                          props.setFieldValue('competitionOrLeagueId', selectedLeagueId);
+                        if (selectedLeagueId) {
+                          props.setFieldValue('leagueId', selectedLeagueId);
                           props.setFieldValue('legType', 'League');
+                        }
+                        if (selectedCompetitionId) {
+                          props.setFieldValue('competitionId', selectedCompetitionId);                        
+                          props.setFieldValue('legType', 'Competition');
                         } 
                         if (label) {
                           props.setFieldValue('label', label);

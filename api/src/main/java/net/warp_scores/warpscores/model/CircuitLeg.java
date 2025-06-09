@@ -20,8 +20,9 @@ public class CircuitLeg implements Comparable<CircuitLeg> {
     private String label;
     private GameType game;
     private Platform platform;
-    private Boolean isKnockout;
-    private Boolean isCollected;
+    private String ruleset;
+    private Boolean collectData;
+    private String treatLadderAs;
 
     @Override
     public int compareTo(CircuitLeg other) {

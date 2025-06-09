@@ -33,6 +33,7 @@ public class LeagueService {
     @DurationLogging
     public Optional<League> loadById(UUID leagueUuid, Optional<Integer> opus) {
         Optional<League> league = leagueRepository.findById(leagueUuid);
+        log.info("Loading league by new ID: {}, opus: {}", leagueUuid, opus.orElse(defaultOpus));
         if (league.isPresent()) {
             return league;
         } else {
@@ -55,7 +56,9 @@ public class LeagueService {
     public Optional<League> loadByOldId(Integer id, Optional<Integer> opus) {
         Optional<League> league = leagueRepository.findByOldIdAndOpus(id, 
             opus.orElse(defaultOpus)); // Default opus if not provided
+        log.info("Loading league by old ID: {}, opus: {}", id, opus.orElse(defaultOpus));
         if (league.isPresent()) {
+            log.info("League found in DB.", league.get());
             return league;
         } else {
             // Try to fetch from Cyanide API
