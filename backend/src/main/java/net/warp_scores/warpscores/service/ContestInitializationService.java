@@ -35,7 +35,7 @@ public class ContestInitializationService {
 
     static {
         DUMMY_TEAM.setName("Dummy Team");
-        DUMMY_TEAM.setId(Generators.timeBasedGenerator().generate());
+        DUMMY_TEAM.setId(Generators.timeBasedGenerator().generate().toString());
     }
 
     public List<Contest> initializeContestsScheduleForFormat(Optional<Competition> competition, Collection<Team> teams,
@@ -52,12 +52,13 @@ public class ContestInitializationService {
             return contests;
         }
 
+        /* updated with BB2 competition formats */
         return switch (competitionFormat.get()) {
-            case RoundRobin -> generateFutureRoundRobinRounds ?
+            case RoundRobin, round_robin -> generateFutureRoundRobinRounds ?
                     initializeRoundRobinContests(unmodifiableList(contests), competition, teams) :
                     contests;
-            case Knockout -> initializeKnockoutContests(unmodifiableList(contests), teams);
-            case Wissen, Ladder, Arena -> contests;
+            case Knockout, single_elimination -> initializeKnockoutContests(unmodifiableList(contests), teams);
+            case Wissen, Ladder, Arena, swiss, ladder -> contests;
         };
     }
 
@@ -155,7 +156,7 @@ public class ContestInitializationService {
         Map teamMap = (Map) winner.get("team");
         Map coachMap = (Map) winner.get("coach");
         Team team = new Team();
-        team.setId(UUID.fromString((String) teamMap.get("id")));
+        team.setId((String) teamMap.get("id"));
         team.setName((String) teamMap.get("name"));
         team.setCoachName((String) coachMap.get("name"));
         team.setLogo((String) teamMap.get("logo"));
@@ -278,7 +279,7 @@ public class ContestInitializationService {
         for (int i = 0; i < groupA.size(); i++) {
             Contest contest = new Contest();
             contest.setRound(round + 1);
-            contest.setCompetitionId(competition.getUuid());
+            contest.setCompetitionId(competition.getId());
             contest.setCompetitionName(competition.getName());
             contest.setLeagueId(competition.getLeagueId());
             contest.setLeagueName(competition.getLeagueName());

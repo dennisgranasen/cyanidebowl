@@ -36,8 +36,8 @@ public class TopRequest extends ApiRequest<TopRequest, TopResponse> {
         super("bb/top", TopRequest.class, TopResponse.class);
     }
     private String league_name;
-    private UUID league_id;
+    private String league_id;
     private String competition_name;
-    private UUID competition_id;
+    private String competition_id;
 
 }

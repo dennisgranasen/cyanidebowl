@@ -37,6 +37,7 @@ public class CompetitionDomainService {
         if (competitionsResponse == null || competitionsResponse.isEmpty()) {
             return Collections.emptyList();
         }
+        log.info(competitionsResponse.toString());
         List<Competition> competitions = Arrays.stream(competitionsResponse.getCompetitions())
                 .map(this::internalCreateOrUpdateCompetition)
                 .collect(Collectors.toList());
@@ -44,42 +45,46 @@ public class CompetitionDomainService {
     }
 
     @Transactional
-    public Map<UUID, Optional<Date>> getEarliestStartDatesFor(List<UUID> leagueUuids) {
-        Map<UUID, Optional<Date>> earliestStartDatesByLeagueUuid = new HashMap<>();
-        leagueUuids
-                .forEach(leagueUuid ->
-                        earliestStartDatesByLeagueUuid.put(leagueUuid, competitionRepository
-                                .findTopByLeagueIdOrderByDateCreatedAsc(leagueUuid)
+    public Map<String, Optional<Date>> getEarliestStartDatesFor(List<String> leagueIds) {
+        Map<String, Optional<Date>> earliestStartDatesByLeagueId = new HashMap<>();
+        leagueIds
+                .forEach(leagueId ->
+                        earliestStartDatesByLeagueId.put(leagueId, competitionRepository
+                                .findTopByLeagueIdOrderByDateCreatedAsc(leagueId)
                                 .map(Competition::getDateCreated)));
-        return earliestStartDatesByLeagueUuid;
+        return earliestStartDatesByLeagueId;
     }
 
     private Competition internalCreateOrUpdateCompetition(ApiCompetition apiCompetition) {
-        Competition competition = newCompetitionOrFromDb(uuidConverter.toUuid(apiCompetition.getId()),
+        Competition competition = newCompetitionOrFromDb(
+            Optional.ofNullable(apiCompetition.getId()),
                 apiCompetition.getName());
         if (competition != null) {
             populateCompetition(apiCompetition, competition);
 
-            officialLeagueAndCompetitions.adjustCompetitionFormat(competition.getLeagueId(), competition.getName(),
-                    competition::setFormat);
+            if (competition.getOpus() > 2)
+            officialLeagueAndCompetitions.adjustCompetitionFormat(
+                competition.getLeagueId(), 
+                competition.getName(),
+                competition::setFormat);
         }
         return competition;
     }
 
-    private Competition newCompetitionOrFromDb(Optional<UUID> uuid, String name) {
-        if (uuid.isEmpty()) {
-            log.error("Can't convert competition '{}'. Need an UUID.", name);
+    private Competition newCompetitionOrFromDb(Optional<String> id, String name) {
+        if (id.isEmpty()) {
+            log.error("Can't convert competition '{}'. Need anUID.", name);
             return null;
         }
-        Optional<Competition> competitionFromDb = uuid.flatMap(competitionRepository::findById);
+        Optional<Competition> competitionFromDb = competitionRepository.findById(id.get());
         Competition competition = competitionFromDb.orElse(new Competition());
-        competition.setUuid(uuid.get());
+        competition.setId(id.get());
         return competition;
     }
 
     private void populateCompetition(ApiCompetition sourceApiCompetition, Competition targetCompetition) {
         PopulatorUtil.copyNonNullProperties(sourceApiCompetition, targetCompetition);
-        targetCompetition.setLeagueId(UUID.fromString(sourceApiCompetition.getLeague().getId()));
+        targetCompetition.setLeagueId(sourceApiCompetition.getLeague().getId());
         targetCompetition.setLeagueLogo(sourceApiCompetition.getLeague().getLogo());
         targetCompetition.setDateCreated(sourceApiCompetition.getDate_created());
         targetCompetition.setStatus(sourceApiCompetition.getStatus_name());

@@ -12,7 +12,7 @@ import java.util.UUID;
 @Setter
 public class ApiCoach {
     @JsonAlias({"idcoach"})
-    private UUID id;
+    private String id;
     @JsonAlias({"coachname"})
     private String name;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")

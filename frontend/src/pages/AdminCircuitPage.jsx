@@ -498,7 +498,7 @@ function AdminCircuitPage() {
                         <Tr
                           key={item.id || item.uuid || item.competitionId}
                           _hover={isDetailed ? { bg: 'gray.100', cursor: 'pointer' } : undefined}
-                          style={isDetailed ? {} : { color: 'red', backgroundColor: '#ffeaea', cursor: 'not-allowed' }}
+                          style={isDetailed ? {} : { color: 'red', cursor: 'not-allowed' }}
                           onClick={isDetailed ? () => handleCompetitionClick(item) : undefined}
                         >
                           <Td>{item.name || item.leagueName}</Td>

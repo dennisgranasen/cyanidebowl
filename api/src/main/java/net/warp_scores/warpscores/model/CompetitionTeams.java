@@ -1,7 +1,10 @@
 package net.warp_scores.warpscores.model;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -11,11 +14,15 @@ import java.util.UUID;
 @Getter
 @Setter
 @Document
+@EqualsAndHashCode(of = {"competitionId", "opus"})
 public class CompetitionTeams {
     @Id
-    private UUID competitionUuid;
-    private Integer oldCompetitionId; // This is the old ID used in the legacy system, if applicable.
+    public String get_id() {
+        return competitionId != null && opus != null ? opus + "-" + competitionId : null;
+    }
+
+    private String competitionId;
     private Integer opus; // Opus is the version of the competition teams, used for compatibility with different game versions. 
 
-    private List<UUID> teamUuids;
+    private List<String> teamIds;
 }

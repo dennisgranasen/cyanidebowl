@@ -1,5 +1,6 @@
 package net.warp_scores.warpscores.model;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -11,11 +12,16 @@ import java.util.UUID;
 @Getter
 @Setter
 @Document
-@ToString
+@EqualsAndHashCode(of = {"leagueId", "opus"})
+@ToString(of = {"leagueName",  "leagueId"})
 public class LeagueCollection {
     @Id
-    private UUID leagueId;
-    private Integer oldLeagueId;
+    public String get_id() {
+        return leagueId != null && opus != null ? opus + "-" + leagueId : null;
+    }
+
+    private String leagueId;
+    //private Integer oldLeagueId;
     
     private String leagueName;
 

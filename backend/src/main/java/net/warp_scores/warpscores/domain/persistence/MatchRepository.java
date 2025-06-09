@@ -19,45 +19,45 @@ import java.util.UUID;
 
 @Repository
 public interface MatchRepository extends MongoRepository<Match, UUID> {
-    List<Match> findByCompetitionId(UUID competitionId);
-    List<Match> findByOldCompetitionIdAndOpus(Integer oldId, Integer opus);
+    List<Match> findByCompetitionId(String competitionId, Integer opus);
+    //List<Match> findByOldCompetitionIdAndOpus(Integer oldId, Integer opus);
 
-    Integer countMatchesByCompetitionId(UUID competitionId);
-    Integer countMatchesByOldCompetitionIdAndOpus(Integer oldId, Integer opus);
+    Integer countMatchesByCompetitionId(String competitionId, Integer opus);
+    //Integer countMatchesByOldCompetitionIdAndOpus(Integer oldId, Integer opus);
 
     Optional<Match> findTopByTeamsContainsOrderByStartedDesc(Team team);
 
-    List<Match> findTopByLeagueIdAndFinishedNotNull(UUID leagueId,
-            Pageable pageable);
+    List<Match> findTopByLeagueIdAndFinishedNotNull(String leagueId,
+            Pageable pageable, Integer opus);
 
-    List<Match> findTopByCompetitionIdAndFinishedNotNull(UUID leagueId,
-            Pageable pageable);
+    List<Match> findTopByCompetitionIdAndFinishedNotNull(String leagueId,
+            Pageable pageable, Integer opus);
 
     List<Match> findByCoachesContains(Match.Coach coach, Pageable pageable);
 
     @Aggregation(pipeline = {
-            "{ $match: { teams: { $elemMatch: { _id: ?0 } } } }"
+            "{ $match: {$and: [{opus: ?1}, { teams: { $elemMatch: { _id: ?0 } } ] } }"
     })
-    List<Match> findMatchesByTeamId(UUID teamId);
+    List<Match> findMatchesByTeamId(String teamId, Integer opus);
 
     @Aggregation(pipeline = {
-            "{ $match: {leagueId: { $in: ?0 }} }",
+            "{ $match: {$and: [{leagueId: { $in: ?0 }}, {opus: $1}] } }",
             "{ $group: { _id: $leagueId, date: { $max: $finished }} }",
             "{ $project: { uuid: $_id, date: 1, _id: 0 } }"
     })
-    List<DateForUuid> findLastMatchDateByLeagueIds(List<UUID> leagueIds);
+    List<DateForUuid> findLastMatchDateByLeagueIds(List<String> leagueIds, Integer opus);
 
     @Aggregation(pipeline = {
-            "{ $match: {competitionId: { $in: ?0 }} }",
+            "{ $match: { $and: {competitionId: { $in: ?0 }}, {opus: ?1} } }",
             "{ $group: { _id: $competitionId, date: { $max: $finished }} }",
             "{ $project: { uuid: $_id, date: 1, _id: 0 } }"
     })
-    List<DateForUuid> findLastMatchDateByCompetitionIds(List<UUID> competitionIds);
+    List<DateForUuid> findLastMatchDateByCompetitionIds(List<String> competitionIds, Integer opus);
 
     record DateForUuid(UUID uuid, Date date) {}
 
     @Aggregation(pipeline = {
-            "{ $match: { $and: [ { competitionId: ?0 }, { $or: [ { $expr: { $eq: [?1, null] } }, {'teams.race': ?1 } ] }, { $or: [ { $expr: { $eq: [?2, null] } }, { 'coaches._id': ?2 } ] } ] } }",
+            "{ $match: { $and: [ { competitionId: ?0 }, { opus: ?5}, { $or: [ { $expr: { $eq: [?1, null] } }, {'teams.race': ?1 } ] }, { $or: [ { $expr: { $eq: [?2, null] } }, { 'coaches._id': ?2 } ] } ] } }",
             "{ $project: { _id: 1, \"teams.players\": 0 }}",
             "{ $addFields: { match: \"$$ROOT\" } }",
             "{ $addFields: { winnerTeamUuid: { $cond: { if: { $gt: [{ $arrayElemAt: [\"$teams.score\", 0] }, { $arrayElemAt: [\"$teams.score\", 1] }] }, then: { $arrayElemAt: [\"$teams._id\", 0] }, else: { $arrayElemAt: [\"$teams._id\", 1] } } } } }",
@@ -81,15 +81,16 @@ public interface MatchRepository extends MongoRepository<Match, UUID> {
             "{ $project: { _id: 1, race: 1, teamUuid: 1, coachName: 1, coachUuid: 1, results: [  { result: \"win\", count: \"$winCount\" }, { result: \"loss\", count: \"$lossCount\" } ], matches: 1, totalGames: { $add: [\"$winCount\", \"$lossCount\"] } } }",
             "{ $match:  { $or: [ { $expr: { $eq: [?3, null] } }, { $and: [ { totalGames: { $gte: ?3 } }, { results: { $elemMatch: { result: \"win\", count: { $gte: ?3 } } } } ] } ] } }"
     })
-    List<ArenaTeam> queryArenaTeamsFor(UUID competitionId,
+    List<ArenaTeam> queryArenaTeamsFor(String competitionId,
             @Nullable Race race,
-            @Nullable UUID coachId,
+            @Nullable String coachId,
             @Nullable Integer minWins,
-            Pageable pageable);
+            Pageable pageable,
+            Integer opus);
 
     @Aggregation(pipeline = {
             // Match contests for a specific competition
-            "{ $match: { competitionId: ?0 } }",
+            "{ $match: { $and: [{competitionId: ?0}, {opus: ?1}] } }",
             // Unwind the opponents array
             "{ $unwind: \"$teams\" }",
             // Group by race to collect all distinct races
@@ -97,5 +98,5 @@ public interface MatchRepository extends MongoRepository<Match, UUID> {
             // Project only the races
             "{ $project: { race: \"$_id\", _id: 0 } }"
     })
-    List<Race> getUsedRacesForCompetition(UUID competitionId);
+    List<Race> getUsedRacesForCompetition(String competitionId, Integer opus);
 }

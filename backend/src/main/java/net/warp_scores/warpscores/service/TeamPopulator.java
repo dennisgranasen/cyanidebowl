@@ -44,7 +44,7 @@ public class TeamPopulator {
     private Player toPlayerFromMatchTeam(ApiPlayer apiPlayer) {
         Player player = new Player();
         PopulatorUtil.copyNonNullProperties(apiPlayer, player);
-        player.setId(uuidConverter.toUuid(apiPlayer.getId()).orElse(null));
+        player.setId(apiPlayer.getId());
         player.setValue(apiPlayer.getValue());
         player.setRaceId(apiPlayer.getIdraces());
         player.setSuspendedNextMatch(apiPlayer.getSuspended_next_match());
@@ -60,12 +60,39 @@ public class TeamPopulator {
 
     private void populateTeam(ApiTeam sourceApiTeam, Team targetTeam) {
         PopulatorUtil.copyNonNullProperties(sourceApiTeam, targetTeam);
-        targetTeam.setId(uuidConverter.toUuid(sourceApiTeam.getId()).orElse(null));
-        targetTeam.setCompetitionIds(
-                uuidConverter.toUuids(targetTeam.getCompetitionIds(),
-                                      sourceApiTeam.getBb3_competition_id()));
-        targetTeam.setLeagueIds(
-                uuidConverter.toUuids(targetTeam.getLeagueIds(), sourceApiTeam.getLeagueId()));
+        targetTeam.setId(sourceApiTeam.getId());
+
+        // Append the new competition id to the existing array if not already present
+        String[] existing = targetTeam.getCompetitionIds();
+        String newId = sourceApiTeam.getBb3_competition_id();
+        if (newId != null && !newId.isEmpty()) {
+            boolean alreadyExists = existing != null && Arrays.asList(existing).contains(newId);
+            if (!alreadyExists) {
+                if (existing == null) {
+                    targetTeam.setCompetitionIds(new String[]{newId});
+                } else {
+                    String[] combined = Arrays.copyOf(existing, existing.length + 1);
+                    combined[existing.length] = newId;
+                    targetTeam.setCompetitionIds(combined);
+                }
+            }
+        }
+
+        // Append the new league id to the existing array if not already present
+        existing = targetTeam.getLeagueIds();
+        newId = sourceApiTeam.getLeagueId();
+        if (newId != null && !newId.isEmpty()) {
+            boolean alreadyExists = existing != null && Arrays.asList(existing).contains(newId);
+            if (!alreadyExists) {
+                if (existing == null) {
+                    targetTeam.setLeagueIds(new String[]{newId});
+                } else {
+                    String[] combined = Arrays.copyOf(existing, existing.length + 1);
+                    combined[existing.length] = newId;
+                    targetTeam.setLeagueIds(combined);
+                }
+            }
+        }
     }
 
     private List<Player> toPlayersFromTeamTeam(TeamResponse.Player[] apiPlayers) {
@@ -79,7 +106,7 @@ public class TeamPopulator {
     private Player toPlayerFromTeamTeam(TeamResponse.Player apiPlayer) {
         Player player = new Player();
         PopulatorUtil.copyNonNullProperties(apiPlayer, player);
-        player.setId(uuidConverter.toUuid(apiPlayer.getId()).orElse(null));
+        player.setId(apiPlayer.getId());
         player.setRaceId(apiPlayer.getIdraces());
         player.setSuspendedNextMatch(apiPlayer.getSuspended_next_match());
         player.setAttributes(toAttributes(apiPlayer.getAttributes()));

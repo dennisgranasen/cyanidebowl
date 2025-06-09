@@ -94,7 +94,7 @@ public class CyanideApiService {
         return leagueDomainService.createOrUpdateLeague(leagueResponse, opus);
     }
 
-    public League loadLeague(UUID leagueId, Optional<Integer> opus) {
+    public League loadLeague(String leagueId, Optional<Integer> opus) {
         LeagueRequest leagueRequest = new LeagueRequest();
         leagueRequest.setLeague_id(leagueId);
         if (opus.isPresent()) {
@@ -106,7 +106,7 @@ public class CyanideApiService {
 
     public List<Team> loadTeams(Competition competition) {
         TeamsRequest teamsRequest = new TeamsRequest();
-        teamsRequest.setCompetition_id(competition.getUuid());
+        teamsRequest.setCompetition_id(competition.getId());
         teamsRequest.setLeague_id(competition.getLeagueId());
         TeamsResponse teamsResponse = cyanideCachedRestApiClient.getFromCacheOrApi(teamsRequest);
         List<Team> teams = teamDomainService.createOrUpdateTeams(teamsResponse);
@@ -176,21 +176,21 @@ public class CyanideApiService {
             Optional<Date> lastMatchDateReported) {
         log.info(
                 "Checking if matches to be loaded for league {} (earliestStart: {}, lastMatchDateKnown: {}, lastMatchDateReported: {}).",
-                league.getUuid(), earliestStartDate, lastMatchDateKnown, lastMatchDateReported);
+                league.getId(), earliestStartDate, lastMatchDateKnown, lastMatchDateReported);
         Date startDate = lastMatchDateKnown.orElse(earliestStartDate.orElse(null));
         if (startDate != null && (lastMatchDateReported.isEmpty() || startDate.before(lastMatchDateReported.get()))) {
             MatchesRequest matchesRequest = new MatchesRequest();
-            matchesRequest.setLeague_id(league.getUuid());
+            matchesRequest.setLeague_id(league.getId());
             matchesRequest.setStart(startDate);
             matchesRequest.setEnd(new Date());
             matchesRequest.setLimitSize(null);
             log.info(
                     "Loading matches for league {} starting from {}.",
-                    league.getUuid(), startDate);
+                    league.getId(), startDate);
             MatchesResponse matchesResponse = cyanideCachedRestApiClient.getFromCacheOrApi(matchesRequest);
             return matchDomainService.createOrUpdateMatches(matchesResponse);
         }
-        log.info("No matches to load for league {}.", league.getUuid());
+        log.info("No matches to load for league {}.", league.getId());
         return Collections.emptyList();
     }
 
@@ -204,7 +204,7 @@ public class CyanideApiService {
         return competitionDomainService.createOrUpdateCompetitions(competitionsResponse);
     }
 
-    public List<Competition> loadCompetitions(UUID leagueId, Optional<Integer> opus) {
+    public List<Competition> loadCompetitions(String leagueId, Optional<Integer> opus) {
         CompetitionsRequest competitionsRequest = new CompetitionsRequest();
         competitionsRequest.setLeague_id(leagueId.toString());
         if (opus.isPresent()) {
@@ -215,9 +215,11 @@ public class CyanideApiService {
     }
 
     public List<Contest> loadContests(Competition competition) {
-        Integer contestCount = contestRepository.countByCompetitionId(competition.getUuid());
+        Integer contestCount = 
+            contestRepository.countByCompetitionId(
+                competition.getId(), Optional.ofNullable(competition.getOpus()));
         ContestsRequest contestsRequest = new ContestsRequest();
-        contestsRequest.setCompetition_id(competition.getUuid());
+        contestsRequest.setCompetition_id(competition.getId());
 
         int limitOffset = contestCount - ApiRequest.DEFAULT_FETCH_LIMIT;
         if (limitOffset < 0) {

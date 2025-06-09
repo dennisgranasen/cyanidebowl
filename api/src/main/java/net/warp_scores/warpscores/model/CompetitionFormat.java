@@ -1,6 +1,6 @@
 package net.warp_scores.warpscores.model;
 
 public enum CompetitionFormat implements Comparable<CompetitionFormat> {
-    /** TODO: Need to update for BB2 */
-    RoundRobin, Knockout, Wissen, Ladder, Arena
+    /*BB3*/ RoundRobin, Knockout, Wissen, Ladder, Arena,
+    /*BB2*/ round_robin, single_elimination, ladder, swiss
 }

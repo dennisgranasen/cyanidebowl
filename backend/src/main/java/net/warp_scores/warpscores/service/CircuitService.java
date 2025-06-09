@@ -65,18 +65,17 @@ public class CircuitService {
     @Deprecated
     private List<League> getLeaguesWithoutCircuits(List<Circuit> circuits) {
         List<League> leagues = leagueService.loadAll();
-        List<UUID> leagueUuidsInCircuits = circuits
+        List<String> leagueIdsInCircuits = circuits
                 .stream()
                 .flatMap(c -> c.getCircuitLegs().stream())
                 .collect(Collectors.toSet())
                 .stream()
                 .filter(cl -> cl.getLegType() == CircuitLegType.League)
                 .map(CircuitLeg::getCompetitionId)
-                .map(UUID::fromString)
                 .toList();
         List<League> leaguesWithoutCircuits = leagues
                 .stream()
-                .filter(league -> !leagueUuidsInCircuits.contains(league.getUuid()))
+                .filter(league -> !leagueIdsInCircuits.contains(league.getId()))
                 .toList();
         return leaguesWithoutCircuits;
     }

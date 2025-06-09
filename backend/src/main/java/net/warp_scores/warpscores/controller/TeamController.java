@@ -28,7 +28,7 @@ public class TeamController {
     private final OfficialLeagueAndCompetitions officialLeagueAndCompetitions;
 
     @GetMapping("/teams/{teamId}")
-    public ResponseEntity<Team> getTeam(@PathVariable(name = "teamId") UUID teamId) {
+    public ResponseEntity<Team> getTeam(@PathVariable(name = "teamId") String teamId) {
         try {
             Optional<Team> team = teamDomainService.findTeam(teamId, Optional.empty());
             return team
@@ -41,7 +41,7 @@ public class TeamController {
     }
 
     @GetMapping("/teams/{teamId}/matches")
-    public ResponseEntity<List<Match>> getMatches(@PathVariable(name = "teamId") UUID teamId) {
+    public ResponseEntity<List<Match>> getMatches(@PathVariable(name = "teamId") String teamId) {
         try {
             List<Match> matchesForTeam = matchDomainService.findMatchesForTeam(teamId);
             matchesForTeam.forEach(match -> officialLeagueAndCompetitions.adjustCompetitionName(match.getLeagueId(),

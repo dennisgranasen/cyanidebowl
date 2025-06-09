@@ -21,6 +21,7 @@ public class LeagueService {
 
     private final LeagueRepository leagueRepository;
     private final CyanideApiService cyanideApiService;
+    private final IdService idService;
 
     @Value("${cyanide.defaults.opus:3}")
     private int defaultOpus;
@@ -31,28 +32,31 @@ public class LeagueService {
     }
 
     @DurationLogging
-    public Optional<League> loadById(UUID leagueUuid, Optional<Integer> opus) {
-        Optional<League> league = leagueRepository.findById(leagueUuid);
-        log.info("Loading league by new ID: {}, opus: {}", leagueUuid, opus.orElse(defaultOpus));
+    public Optional<League> loadById(String leagueId, Optional<Integer> opus) {
+        String id = idService.getComposedId(opus, leagueId);
+        Optional<League> league = leagueRepository.findById(id);
+        log.info("Loading league by ID: {}, opus: {}", leagueId, opus.orElse(defaultOpus));
         if (league.isPresent()) {
+            log.info("Loading league from DB. ID: {}, opus: {}", leagueId, opus.orElse(defaultOpus));
             return league;
         } else {
             // Try to fetch from Cyanide API
-            log.info("League {} not found in DB, fetching from Cyanide API...", leagueUuid);
+            log.info("League {} not found in DB, fetching from Cyanide API...", leagueId);
             net.warp_scores.warpscores.model.League fetched = 
-                cyanideApiService.loadLeague(leagueUuid, opus);
+                cyanideApiService.loadLeague(leagueId, opus);
             // Optionally save to DB if found
             if (fetched != null) {
-                log.info("League {} fetched from Cyanide API, saving to DB...", leagueUuid);
+                log.info("League {} fetched from Cyanide API, saving to DB...", leagueId);
                 leagueRepository.save(fetched);
                 return Optional.of(fetched);
             } else {
-                log.warn("League {} not found in Cyanide API either.", leagueUuid);
+                log.warn("League {} not found in Cyanide API either.", leagueId);
                 return Optional.empty();
             }
         }
     }
 
+    /*
     public Optional<League> loadByOldId(Integer id, Optional<Integer> opus) {
         Optional<League> league = leagueRepository.findByOldIdAndOpus(id, 
             opus.orElse(defaultOpus)); // Default opus if not provided
@@ -75,4 +79,5 @@ public class LeagueService {
             }
         }
     }
+    */
 }

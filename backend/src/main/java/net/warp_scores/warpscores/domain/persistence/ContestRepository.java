@@ -13,28 +13,30 @@ import java.util.Optional;
 
 @Repository
 public interface ContestRepository extends MongoRepository<Contest, UUID> {
-    List<Contest> findByCompetitionIdAndStatus(UUID competitionId, MatchStatus matchStatus);
+    List<Contest> findByCompetitionIdAndStatus(String competitionId, 
+        Optional<Integer> opus, MatchStatus matchStatus);
 
-    List<Contest> findByCompetitionId(UUID competitionId, Optional<Integer> opus, Pageable pageable);
-    List<Contest> findByOldCompetitionId(Integer oldId, Optional<Integer> opus, Pageable pageable);
+    List<Contest> findByCompetitionId(String competitionId, 
+        Optional<Integer> opus, Pageable pageable);
+    //List<Contest> findByOldCompetitionId(Integer oldId, Optional<Integer> opus, Pageable pageable);
 
-    List<Contest> findByLeagueIdAndLiveOrderByMatchDateDesc(UUID leagueId, Integer live, Pageable pageable);
+    List<Contest> findByLeagueIdAndLiveOrderByMatchDateDesc(String leagueId, 
+        Optional<Integer> opus, Integer live, Pageable pageable);
 
-    List<Contest> findByLeagueIdAndStatusOrderByMatchDateDesc(UUID leagueId,
-            MatchStatus matchStatus,
-            Pageable pageable);
+    List<Contest> findByLeagueIdAndStatusOrderByMatchDateDesc(String leagueId,
+        Optional<Integer> opus, MatchStatus matchStatus, Pageable pageable);
 
-    List<Contest> findByCompetitionIdAndLiveOrderByMatchDateDesc(UUID competitionId, Integer live, Pageable pageable);
+    List<Contest> findByCompetitionIdAndLiveOrderByMatchDateDesc(String competitionId,
+        Optional<Integer> opus, Integer live, Pageable pageable);
 
-    List<Contest> findByCompetitionIdAndStatusOrderByMatchDateDesc(UUID leagueId,
-            MatchStatus matchStatus,
-            Pageable pageable);
+    List<Contest> findByCompetitionIdAndStatusOrderByMatchDateDesc(String leagueId,
+        Optional<Integer> opus, MatchStatus matchStatus, Pageable pageable);
 
-    Integer countByCompetitionId(UUID competitionId);
+    Integer countByCompetitionId(String competitionId, Optional<Integer> opus);
 
-    Integer countByCompetitionIdAndMatchDateNotNull(UUID competitionId);
+    Integer countByCompetitionIdAndMatchDateNotNull(String competitionId, Optional<Integer> opus);
 
-    Integer countByCompetitionIdAndLive(UUID competitionId, Integer live);
+    Integer countByCompetitionIdAndLive(String competitionId, Optional<Integer> opus, Integer live);
 
     @Aggregation(pipeline = {
             "{'$lookup': { 'from': 'match', 'localField': 'matchUuid', 'foreignField': '_id', 'as': 'dbMatch'}}",

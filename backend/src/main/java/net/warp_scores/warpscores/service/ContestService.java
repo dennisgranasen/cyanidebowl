@@ -33,45 +33,20 @@ public class ContestService {
     private final CompetitionService competitionService;
     private final ContestInitializationService contestInitializationService;
     private final TeamDomainService teamDomainService;
+    private final IdService idService;
     private final OfficialLeagueAndCompetitions officialLeagueAndCompetitions;
     private final MatchService matchService;
-    private final UUIDConverter uuidConverter;
 
     @Value("${cyanide.defaults.opus:3}")
     private int defaultOpus;
 
-
     @DurationLogging
     public List<Contest> getCompetitionContests(
-                Integer competitionId,
+                String competitionId,
                 Optional<Integer> opus,
                 Optional<Integer> limit) {  
         Optional<Competition> competition = 
-                competitionService.loadCompetitionByOldId(competitionId, opus);
-        Set<Team> teams = new LinkedHashSet<>(teamDomainService
-                .findByOldCompetitionId(competitionId, opus)
-                .stream()
-                .toList());
-        Pageable pageable = limit.map(l -> 
-                (Pageable) PageRequest.of(0, l, 
-                        Sort.by(Sort.Direction.DESC, "matchDate")))
-                .orElse(Pageable.unpaged());
-        List<Contest> contests = contestRepository.findByOldCompetitionId(
-                competitionId, opus, pageable);
-        teams.addAll(contests.stream().map(
-                Contest::getOpponents).flatMap(Collection::stream).toList());
-        contests.forEach(this::loadMatchIntoAndAdjustCompetitionName);
-
-        return contestInitializationService.initializeContestsScheduleForFormat(
-                competition, teams, contests);
-    }
-
-    @DurationLogging
-    public List<Contest> getCompetitionContests(
-                UUID competitionId,
-                Optional<Integer> opus,
-                Optional<Integer> limit) {  
-        Optional<Competition> competition = competitionService.loadCompetition(competitionId, opus);
+                competitionService.loadCompetition(competitionId, opus);
         Set<Team> teams = new LinkedHashSet<>(teamDomainService
                 .findByCompetitionId(competitionId, opus)
                 .stream()
@@ -89,9 +64,13 @@ public class ContestService {
     }
 
     @DurationLogging
-    public List<Contest> getLatestLeagueContests(UUID leagueUuid, int limit) {
+    public List<Contest> getLatestLeagueContests(
+                String leagueId,
+                Optional<Integer> opus,
+                int limit) {
         List<Contest> contests = 
-                contestRepository.findByLeagueIdAndStatusOrderByMatchDateDesc(leagueUuid,
+                contestRepository.findByLeagueIdAndStatusOrderByMatchDateDesc(leagueId,
+                        opus,
                         MatchStatus.Validated, 
                         PageRequest.of(0, limit, 
                                 Sort.by(Sort.Direction.DESC, "matchDate")));
@@ -100,10 +79,13 @@ public class ContestService {
     }
 
     @DurationLogging
-    public List<Contest> getLiveLeagueContests(UUID leagueUuid, int limit) {
+    public List<Contest> getLiveLeagueContests(
+                String leagueId,
+                Optional<Integer> opus,
+                int limit) {
         List<Contest> contests = 
                 contestRepository.findByLeagueIdAndLiveOrderByMatchDateDesc(
-                        leagueUuid, 1,
+                        leagueId, opus, 1,
                         PageRequest.of(0, limit, 
                                 Sort.by(Sort.Direction.DESC, "matchDate")));
         contests.forEach(this::loadMatchIntoAndAdjustCompetitionName);
@@ -111,10 +93,11 @@ public class ContestService {
     }
 
     @DurationLogging
-    public List<Contest> getLatestCompetitionContests(UUID competitionUuid, int limit) {
+    public List<Contest> getLatestCompetitionContests(
+                String competitionId, Optional<Integer> opus, int limit) {
         List<Contest> contests = 
                 contestRepository.findByCompetitionIdAndStatusOrderByMatchDateDesc(
-                        competitionUuid, MatchStatus.Validated, 
+                        competitionId, opus, MatchStatus.Validated, 
                         PageRequest.of(0, limit, 
                                 Sort.by(Sort.Direction.DESC, "matchDate")));
         contests.forEach(this::loadMatchIntoAndAdjustCompetitionName);
@@ -122,10 +105,11 @@ public class ContestService {
     }
 
     @DurationLogging
-    public List<Contest> getLiveCompetitionContests(UUID competitionUuid, int limit) {
+    public List<Contest> getLiveCompetitionContests(
+                String competitionId, Optional<Integer> opus, int limit) {
         List<Contest> contests =
                 contestRepository.findByCompetitionIdAndLiveOrderByMatchDateDesc(
-                        competitionUuid, 1, 
+                        competitionId, opus, 1, 
                                 PageRequest.of(0, limit, 
                                         Sort.by(Sort.Direction.DESC, "matchDate")));
         contests.forEach(this::loadMatchIntoAndAdjustCompetitionName);

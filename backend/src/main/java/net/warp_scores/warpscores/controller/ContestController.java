@@ -9,6 +9,8 @@ import net.warp_scores.warpscores.model.Coach;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.Race;
 import net.warp_scores.warpscores.service.ContestService;
+
+import org.springframework.expression.spel.ast.OpAnd;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StopWatch;
@@ -45,13 +47,15 @@ public class ContestController {
     private final ContestDomainService contestDomainService;
 
 
-    @GetMapping("/contests/competition/{competitionUuid}/latest")
+    @GetMapping("/contests/competition/{competitionId}/latest")
     public ResponseEntity<List<Contest>> getLatestCompetitionContests(
-            @PathVariable(name = "competitionUuid") UUID competitionUuid,
+            @PathVariable(name = "competitionId") String competitionId,
+            @RequestParam(name = "opus", required = false) Integer opus,
             @RequestParam(name = "limit", required = false) Integer limit) {
         try {
             limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT_FOR_LIVE_CONTESTS);
-            List<Contest> contests = contestService.getLatestCompetitionContests(competitionUuid, limit);
+            List<Contest> contests = contestService.getLatestCompetitionContests(
+                competitionId, Optional.ofNullable(opus), limit);
             return ResponseEntity.ok(contests);
         } catch (Exception ex) {
             log.error("Unable to retrieve contests", ex);
@@ -59,9 +63,9 @@ public class ContestController {
         }
     }
 
-    @GetMapping("/contests/competition/{competitionUuid}")
+    @GetMapping("/contests/competition/{competitionId}")
     public ResponseEntity<List<Contest>> getCompetitionContests(
-            @PathVariable(name = "competitionUuid") UUID competitionId,
+            @PathVariable(name = "competitionId") String competitionId,
             @RequestParam(name = "limit", required = false) Integer limit,
             @RequestParam(name = "opus", required = false) Integer opus) {
         try {
@@ -76,10 +80,10 @@ public class ContestController {
         }
     }
 
-    @PostMapping("/contests/competition/{competitionUuid}")
+    @PostMapping("/contests/competition/{competitionId}")
     @PreAuthorize(AUTHORITY_WRITE_LEAGUE_ADMIN) // ✨
     public ResponseEntity<Void> addContest(
-            @PathVariable(name = "competitionUuid") UUID competitionUuid,
+            @PathVariable(name = "competitionId") String competitionUuid,
             @RequestBody Contest contest) {
         try {
             contestDomainService.addContest(contest);
@@ -90,14 +94,16 @@ public class ContestController {
         }
     }
 
-    @GetMapping("/contests/league/{leagueUuid}/latest")
+    @GetMapping("/contests/league/{leagueId}/latest")
     public ResponseEntity<List<Contest>> getLatestLeagueContests(
-            @PathVariable(name = "leagueUuid") UUID leagueUuid,
+            @PathVariable(name = "leagueId") String leagueId,
+            @RequestParam(name = "opus", required = false) Integer opus,
             @RequestParam(name = "limit", required = false) Integer limit) {
         limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT_FOR_LATEST_CONTESTS);
         limit = Math.min(limit, MAX_LIMIT_FOR_LATEST_CONTESTS);
         try {
-            List<Contest> contests = contestService.getLatestLeagueContests(leagueUuid, limit);
+            List<Contest> contests = contestService.getLatestLeagueContests(
+                leagueId, Optional.ofNullable(opus), limit);
             return ResponseEntity.ok(contests);
         } catch (Exception ex) {
             log.error("Unable to retrieve contests", ex);

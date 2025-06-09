@@ -205,7 +205,7 @@ public class NafExporterTest {
 
     private Team newOpponent(String coachName, Race race, Integer touchdowns, Integer casualties) {
         Team team = new Team();
-        team.setId(UUID.randomUUID());
+        team.setId(UUID.randomUUID().toString());
         team.setCoachName(coachName);
         team.setRace(race);
         team.setScore(touchdowns);

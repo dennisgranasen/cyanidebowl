@@ -13,16 +13,16 @@ import java.util.UUID;
 @Document
 @Getter
 @Setter
-@EqualsAndHashCode(of = {"coachUuid", "teamUuid"})
+@EqualsAndHashCode(of = {"coachId", "teamId"})
 @ToString(of = {"coachName", "teamName"}, includeFieldNames = false)
 public class ArenaTeam {
     public enum RunType {completed, active, failed}
 
     private String coachName;
-    private UUID coachUuid;
+    private String coachId;
     private String teamName;
     private String teamLogo;
-    private UUID teamUuid;
+    private String teamId;
     private Race race;
     private int totalGames;
     private List<Result> results;

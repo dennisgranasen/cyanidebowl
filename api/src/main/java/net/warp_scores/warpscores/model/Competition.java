@@ -1,8 +1,13 @@
 package net.warp_scores.warpscores.model;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
+
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -14,14 +19,20 @@ import static net.warp_scores.warpscores.model.CompetitionFormat.Ladder;
 @Getter
 @Setter
 @Document
-public class Competition implements Comparable<Competition> {
+@EqualsAndHashCode(of = {"id", "opus"})
+@ToString(of = {"name", "id"})
+public class Competition implements Comparable<Competition> {    
     @Id
-    private UUID uuid;
-    private Integer oldId; // This is the old ID used in the legacy system, if applicable.
-    private Integer oldLeagueId; // This is the old ID used in the legacy system, if applicable.
+    public String get_id() {
+        return id != null && opus != null ? opus + "-" + id : null;
+    }
+
+    private String id;
+    public String getCompetitionId() { return id; }
+
     private String name;
     private String logo;
-    private UUID leagueId;
+    private String leagueId;
     private String leagueName;
     private String leagueLogo;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")

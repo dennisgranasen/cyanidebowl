@@ -6,8 +6,12 @@ import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Player;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.aggregation.ArrayOperators.In;
+import org.springframework.expression.spel.ast.OpAnd;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,38 +23,45 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MatchService {
     private final MatchRepository matchRepository;
-
     private final OfficialLeagueAndCompetitions officialLeagueAndCompetitions;
 
+    @Value("${cyanide.defaults.opus:3}")
+    private int defaultOpus;
+
     @DurationLogging
-    public List<Match> findByTeamId(UUID teamUuid) {
-        List<Match> matches = matchRepository.findMatchesByTeamId(teamUuid);
+    public List<Match> findByTeamId(String teamId, Optional<Integer> opus) {
+        List<Match> matches =
+            matchRepository.findMatchesByTeamId(teamId, opus.orElse(defaultOpus));
         return adjustCompetitionNameAndLogoAndUpdateConcedeAndOvertimeInfo(matches);
     }
 
     @DurationLogging
-    public List<Match> getLatestLeagueMatches(UUID leagueUuid, int limit) {
-        List<Match> matches = matchRepository.findTopByLeagueIdAndFinishedNotNull(leagueUuid,
-                PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "finished")));
+    public List<Match> getLatestLeagueMatches(String leagueId, int limit, Optional<Integer> opus) {
+        List<Match> matches = matchRepository.findTopByLeagueIdAndFinishedNotNull(leagueId,
+                PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "finished")),
+                opus.orElse(defaultOpus));
         return adjustCompetitionNameAndLogoAndUpdateConcedeAndOvertimeInfo(matches);
     }
 
     @DurationLogging
-    public List<Match> getLatestCompetitionMatches(UUID competitionUuid, int limit) {
-        List<Match> matches = matchRepository.findTopByCompetitionIdAndFinishedNotNull(competitionUuid,
-                PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "finished")));
+    public List<Match> getLatestCompetitionMatches(String competitionId, int limit, Optional<Integer> opus) {
+        List<Match> matches = matchRepository.findTopByCompetitionIdAndFinishedNotNull(competitionId,
+                PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "finished")),
+                opus.orElse(defaultOpus));
         return adjustCompetitionNameAndLogoAndUpdateConcedeAndOvertimeInfo(matches);
     }
 
     @DurationLogging
-    public List<Match> findByCompetitionId(UUID competitionId) {
-        List<Match> matches = matchRepository.findByCompetitionId(competitionId);
+    public List<Match> findByCompetitionId(String competitionId, Optional<Integer> opus) {
+        List<Match> matches = matchRepository.findByCompetitionId(competitionId,
+            opus.orElse(defaultOpus));
         return adjustCompetitionNameAndLogoAndUpdateConcedeAndOvertimeInfo(matches);
     }
 
     @DurationLogging
-    public Integer countByCompetitionId(UUID competitionId) {
-        return matchRepository.countMatchesByCompetitionId(competitionId);
+    public Integer countByCompetitionId(String competitionId, Optional<Integer> opus) {
+        return matchRepository.countMatchesByCompetitionId(competitionId, 
+            opus.orElse(defaultOpus));
     }
 
     private List<Match> adjustCompetitionNameAndLogoAndUpdateConcedeAndOvertimeInfo(List<Match> matches) {

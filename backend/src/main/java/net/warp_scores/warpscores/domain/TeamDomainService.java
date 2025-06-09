@@ -14,6 +14,7 @@ import net.warp_scores.warpscores.service.OfficialLeagueAndCompetitions;
 import net.warp_scores.warpscores.service.PopulatorUtil;
 import net.warp_scores.warpscores.service.TeamPopulator;
 import net.warp_scores.warpscores.service.UUIDConverter;
+import net.warp_scores.warpscores.service.IdService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +38,7 @@ public class TeamDomainService {
 
     private final UUIDConverter uuidConverter;
     private final CompetitionTeamsDomainService competitionTeamsDomainService;
+    private final IdService idService;
     private final OfficialLeagueAndCompetitions officialLeagueCompetitions;
     private final OfficialLeagueAndCompetitions officialLeagueAndCompetitions;
     
@@ -64,41 +66,39 @@ public class TeamDomainService {
     }
 
     @Transactional
-    public List<Team> findByCompetitionId(UUID competitionUuid, Optional<Integer> opus) {
+    public List<Team> findByCompetitionId(String competitionId, Optional<Integer> opus) {
         Optional<CompetitionTeams> competitionTeams = 
-            competitionTeamsDomainService.findByCompetitionId(competitionUuid, opus);
-        List<UUID> teamUuids = 
-            competitionTeams.map(CompetitionTeams::getTeamUuids).orElse(Collections.emptyList());
-        List<Team> teams = this.teamRepository.findAllById(teamUuids);
-        setRelevantCompetition(teams, competitionUuid);
-        return teams;
-    }
+            competitionTeamsDomainService.findByCompetitionId(competitionId, opus);
+        List<String> teamIds = 
+            competitionTeams.map(CompetitionTeams::getTeamIds).orElse(Collections.emptyList());
 
-    @Transactional
-    public List<Team> findByOldCompetitionId(Integer competitionId, Optional<Integer> opus) {
-        CompetitionTeams competitionTeams = 
-            competitionTeamsDomainService.findByOldCompetitionId(competitionId, opus);
-        List<UUID> teamUuids = competitionTeams.getTeamUuids();
-        List<Team> teams = this.teamRepository.findAllById(teamUuids);
-        setRelevantCompetition(teams, competitionId, opus.orElse(defaultOpus));
+        // Compose Mongo IDs for lookup
+        List<String> mongoIds = teamIds.stream()
+            .map(id -> idService.getComposedId(opus, id))
+            .collect(Collectors.toList());
+
+        List<Team> teams = this.teamRepository.findAllById(mongoIds);
+        setRelevantCompetition(teams, competitionId);
         return teams;
     }
 
 
     @Transactional
-    public Optional<Team> findTeam(UUID teamUuid, Optional<UUID> competitionUuid) {
-        List<Team> teams = teamRepository.findAllById(List.of(teamUuid));
+    public Optional<Team> findTeam(String teamId, Optional<String> competitionId, Optional<Integer> opus) {
+        String mongoId = idService.getComposedId(opus, teamId);
+        List<Team> teams = teamRepository.findAllById(List.of(mongoId));
         if (teams.size() == 1) {
-            competitionUuid.ifPresent((uuid) -> setRelevantCompetition(teams, uuid));
+            competitionId.ifPresent((id) -> setRelevantCompetition(teams, id));
             Team team = teams.get(0);
-            UUID competitionId = team.getCompetitionIds()[0];
-            Optional<Competition> competition = competitionRepository.findById(competitionId);
+            String competitionId0 = team.getCompetitionIds()[0];
+            Optional<Competition> competition = competitionRepository.findById(competitionId0);
             team.setLeagueName(competition.map(Competition::getLeagueName).orElse(null));
-            Optional<UUID> leagueId = competition.map(Competition::getLeagueId);
-            team.setLeagueIds(leagueId.map(id -> new UUID[]{id}).orElse(null));
+            Optional<String> leagueId = competition.map(Competition::getLeagueId);
+            team.setLeagueIds(new String[]{leagueId.get()});
             leagueId.ifPresent(id ->
-                    officialLeagueAndCompetitions.adjustCompetitionName(id, team.getCompetitionName(),
-                            team::setCompetitionName));
+                    officialLeagueAndCompetitions.adjustCompetitionName(
+                        id, team.getCompetitionName(), 
+                        team::setCompetitionName));
             return Optional.of(team);
         } else {
             return Optional.empty();
@@ -120,17 +120,17 @@ public class TeamDomainService {
                 */
     }
 
-    private void setRelevantCompetition(List<Team> teams, UUID competitionUuid) {
-        Optional<Competition> competition = this.competitionRepository.findById(competitionUuid);
+    private void setRelevantCompetition(List<Team> teams, String competitionId) {
+        Optional<Competition> competition = this.competitionRepository.findById(competitionId);
         teams
                 .forEach(team -> {
-                    team.setCompetitionIds(new UUID[]{competitionUuid});
+                    team.setCompetitionIds(new String[]{competitionId});
                     competition.ifPresent(c -> team.setCompetitionName(c.getName()));
                 });
     }
 
     private Team internalCreateOrUpdateTeam(ApiTeam apiTeam) {
-        Team team = newTeamOrFromDb(uuidConverter.toUuid(apiTeam.getId()), apiTeam.getName());
+        Team team = newTeamOrFromDb(Optional.ofNullable(apiTeam.getId()), apiTeam.getName());
         if (team != null) {
             teamPopulator.populateTeamTeam(apiTeam, new TeamResponse.Player[0], team);
         }
@@ -138,21 +138,21 @@ public class TeamDomainService {
     }
 
     private Team internalCreateOrUpdateTeam(ApiTeam apiTeam, TeamResponse.Player[] players) {
-        Team team = newTeamOrFromDb(uuidConverter.toUuid(apiTeam.getId()), apiTeam.getName());
+        Team team = newTeamOrFromDb(Optional.ofNullable(apiTeam.getId()), apiTeam.getName());
         if (team != null) {
             teamPopulator.populateTeamTeam(apiTeam, players, team);
         }
         return team;
     }
 
-    private Team newTeamOrFromDb(Optional<UUID> uuid, String name) {
-        if (uuid.isEmpty()) {
-            log.error("Can't convert team '{}'. Need an UUID.", name);
+    private Team newTeamOrFromDb(Optional<String> id, String name) {
+        if (id.isEmpty()) {
+            log.error("Can't convert team '{}'. Need an ID.", name);
             return null;
         }
-        Optional<Team> teamFromDb = uuid.flatMap(teamRepository::findById);
+        Optional<Team> teamFromDb = id.flatMap(teamRepository::findById);
         Team team = teamFromDb.orElse(new Team());
-        team.setId(uuid.get());
+        team.setId(id.get());
         return team;
     }
 

@@ -25,7 +25,7 @@ public class RankController {
 
     @GetMapping("/ranks/competition/{competitionId}")
     public ResponseEntity<List<Rank>> getRanksForCompetition(
-            @PathVariable(name = "competitionId") UUID competitionId,
+            @PathVariable(name = "competitionId") String competitionId,
             @RequestParam(name = "limit", required = false) Integer limit,
             @RequestParam(name = "opus", required = false) Integer opus) {
         if (competitionId == null) {

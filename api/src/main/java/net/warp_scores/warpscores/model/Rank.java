@@ -8,8 +8,7 @@ import java.util.UUID;
 @Getter
 @Setter
 public class Rank {
-    private UUID competitionId;
-    private Integer oldCompetitionId; // This is the old ID used in the legacy system, if applicable.
+    private String competitionId;
     private Team team;
     private Integer rank = 0;
     private Integer gamesPlayed = 0;

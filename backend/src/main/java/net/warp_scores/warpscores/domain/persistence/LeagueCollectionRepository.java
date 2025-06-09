@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface LeagueCollectionRepository extends MongoRepository<LeagueCollection, UUID> {
+public interface LeagueCollectionRepository extends MongoRepository<LeagueCollection, String> {
 
     List<LeagueCollection> findByCollectionActive(Boolean collectionActive);
     List<LeagueCollection> findByOldLeagueIdAndOpus(Integer oldLeagueId, Integer opus);

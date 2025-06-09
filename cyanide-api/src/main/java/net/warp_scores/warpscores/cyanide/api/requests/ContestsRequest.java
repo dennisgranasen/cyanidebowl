@@ -52,8 +52,8 @@ public class ContestsRequest extends ApiRequest<ContestsRequest, ContestsRespons
     public enum Status {Sheduled, Scheduled, InProgress, Validated, Played}
 
     private String league_name;
-    private UUID league_id;
-    private UUID competition_id;
+    private String league_id;
+    private String competition_id;
     private String status;
     private Integer round;
 

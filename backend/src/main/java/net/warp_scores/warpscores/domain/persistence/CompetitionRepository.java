@@ -14,19 +14,18 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface CompetitionRepository extends MongoRepository<Competition, UUID> {
+public interface CompetitionRepository extends MongoRepository<Competition, String> {
 
-    List<Competition> findByLeagueIdAndStatusIn(UUID leagueId, List<CompetitionStatus> status);
+    List<Competition> findByLeagueIdAndStatusIn(String leagueId, List<CompetitionStatus> status);
 
-    Integer countByLeagueIdAndStatus(UUID leagueId, CompetitionStatus status);
+    Integer countByLeagueIdAndStatus(String leagueId, CompetitionStatus status);
 
-    List<Competition> findByLeagueIdAndOpus(UUID leagueId, Integer opus);
+    List<Competition> findByLeagueIdAndOpus(String leagueId, Integer opus);
+    //Optional<Competition> findByIdAndOpus(String id, Integer opus);
+    //Optional<Competition> findByOldIdAndOpus(Integer oldId, Integer opus);
+    //List<Competition> findByOldLeagueIdAndOpus(Integer oldId, Integer opus);
 
-    Optional<Competition> findByUuidAndOpus(UUID uuid, Integer opus);
-    Optional<Competition> findByOldIdAndOpus(Integer oldId, Integer opus);
-    List<Competition> findByOldLeagueIdAndOpus(Integer oldId, Integer opus);
-
-    Optional<Competition> findTopByLeagueIdOrderByDateCreatedAsc(UUID leagueId);
+    Optional<Competition> findTopByLeagueIdOrderByDateCreatedAsc(String leagueId);
 
     List<Competition> findByStatusInAndFormatIn(Collection<CompetitionStatus> statuses,
             Collection<CompetitionFormat> formats);
