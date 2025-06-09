@@ -484,14 +484,21 @@ function AdminCircuitPage() {
                     </Tr>
                   </Thead>
                   <Tbody>
-                    {searchResults.competitions.map((item) => (
-                      <Tr key={item.id || item.uuid || item.leagueId}
-                                _hover={{ bg: 'gray.100', cursor: 'pointer' }}
-                                onClick={() => handleCompetitionClick(item)}>
-                        <Td>{item.name || item.leagueName}</Td>
-                        <Td>{item.id || item.uuid || item.competitionId}</Td>
-                      </Tr>
-                    ))}
+                    {searchResults.competitions.map((item) => {
+                      // Check if this competition is detailed (has more than just id/name)
+                      const isDetailed = !!(item.format || item.leagueId || item.status || item.teams || item.rounds);
+                      return (
+                        <Tr
+                          key={item.id || item.uuid || item.competitionId}
+                          _hover={isDetailed ? { bg: 'gray.100', cursor: 'pointer' } : undefined}
+                          style={isDetailed ? {} : { color: 'red', backgroundColor: '#ffeaea', cursor: 'not-allowed' }}
+                          onClick={isDetailed ? () => handleCompetitionClick(item) : undefined}
+                        >
+                          <Td>{item.name || item.leagueName}</Td>
+                          <Td>{item.id || item.uuid || item.competitionId}</Td>
+                        </Tr>
+                      );
+                    })}
                   </Tbody>
                 </Table>
               </TableContainer>
