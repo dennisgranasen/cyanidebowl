@@ -64,7 +64,9 @@ public class CompetitionService {
     public List<Competition> loadForLeague(Integer oldLeagueId, Optional<Integer> opus) {
     List<Competition> competitions = 
         competitionRepository.findByOldLeagueIdAndOpus(oldLeagueId, opus.orElse(defaultOpus));
-
+        if (competitions.isEmpty()) {
+            competitions = cyanideApiService.loadCompetitions(oldLeagueId, opus);
+        }
         competitions.forEach(this::adjustCompetitionNameAndLogo);
         return competitions;
     }

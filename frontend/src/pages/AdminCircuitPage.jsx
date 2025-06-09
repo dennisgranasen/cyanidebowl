@@ -289,8 +289,9 @@ function AdminCircuitPage() {
       const res = await WarpScoresApiService.lookup({
         league_name: values.searchName,
         bb: values.bbVersion,
-        exact: 1,
-        fallback: false
+        exact: 0,
+        hint: 'HAS_CONTESTS',
+        fallback: 0
       });
 
       let detailedLeagues = [];
@@ -339,6 +340,12 @@ function AdminCircuitPage() {
       }
 
       setSearchResults({
+        ...res,
+        leagues: detailedLeagues,
+        competitions: expandedCompetitions,
+      });
+
+      console.log('Search results:', {
         ...res,
         leagues: detailedLeagues,
         competitions: expandedCompetitions,
