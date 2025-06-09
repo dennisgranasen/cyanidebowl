@@ -76,6 +76,13 @@ public class CompetitionService {
         return initializeForFormat(competitions);
     }
 
+        @DurationLogging
+    public List<Competition> loadForLeagueAndInitialize(Integer oldLeagueId, Optional<Integer> opus) {
+        List<Competition> competitions = loadForLeague(oldLeagueId, opus);
+        return initializeForFormat(competitions);
+    }
+
+
     @DurationLogging
     public Optional<Competition> loadCompetition(UUID competitionId, Optional<Integer> opus) {
         Optional<Competition> competition = 
@@ -87,11 +94,38 @@ public class CompetitionService {
 
     @DurationLogging
     public Optional<Competition> loadCompetitionByOldId(int competitionId, Optional<Integer> opus) {
+        log.info("Loading competition by old ID: {} with opus: {}", competitionId, opus.orElse(defaultOpus));
+
         Optional<Competition> competition = 
             competitionRepository.findByOldIdAndOpus(competitionId, opus.orElse(defaultOpus))
                                  .map(this::initializeForFormat);
-        competition.ifPresent(this::adjustCompetitionNameAndLogo);
-        return competition;
+        if (competition.isPresent()) {
+            log.info("Competition {} found in DB, initializing for format...", competitionId);
+            return competition;
+        }
+        log.info("Competition {} not found in DB, fetching from Cyanide API...", competitionId);
+        List<net.warp_scores.warpscores.model.Competition> fetched = 
+            cyanideApiService.loadCompetitions(competitionId, opus);
+        // Optionally save to DB if found
+        if (fetched != null) {
+            log.info("Competitions {} fetched from Cyanide API, saving to DB...", competitionId);
+            for (net.warp_scores.warpscores.model.Competition comp : fetched) {
+                if (comp.getOldId() == competitionId) {
+                    comp.setOldId(competitionId);
+                    log.info("Saving competition: {}", comp);
+                    competitionRepository.save(comp);
+                    return Optional.of(comp);
+                }
+            }   
+        }
+
+        log.warn("Competition {} not found in Cyanide API either.", competitionId);
+        return Optional.empty();
+        
+
+        //competition.ifPresent(this::adjustCompetitionNameAndLogo);
+        //log.info("Loaded competition: {}", competition);
+        //return competition;
     }
 
     @DurationLogging
@@ -114,6 +148,7 @@ public class CompetitionService {
     }
 
     private void adjustCompetitionNameAndLogo(Competition competition) {
+        log.info("Adjusting competition name and logo for competition: {}", competition);
         officialLeagueCompetitions
                 .adjustCompetitionNameAndLogo(
                     competition.getLeagueId(), 
