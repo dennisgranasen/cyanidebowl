@@ -9,6 +9,8 @@ import net.warp_scores.warpscores.model.ArenaInfo;
 import net.warp_scores.warpscores.model.ArenaTeam;
 import net.warp_scores.warpscores.model.Race;
 import net.warp_scores.warpscores.service.ArenaService;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,6 +28,10 @@ import java.util.UUID;
 public class ArenaController {
 
     private final ArenaService arenaService;
+    
+    @Value("${cyanide.defaults.topCoaches:6}")
+    private int defaultTopCoaches;
+
 
     @GetMapping("/arena/{competitionId}/info")
     public ResponseEntity<List<Race>> getArenaRaces(
@@ -79,16 +85,19 @@ public class ArenaController {
             @PathVariable(name = "limit") Integer limit,
             @PathVariable(name = "offset") Integer offset,
             @RequestParam(name = "opus", required = false) Integer opus) {
-        Map<ArenaTeam.RunType, List<ArenaTeam>> arenaTeams = arenaService.loadArenaTeamsFor(competitionId, race,
-                runType, Optional.ofNullable(limit), Optional.ofNullable(offset), opus);
+        Map<ArenaTeam.RunType, List<ArenaTeam>> arenaTeams = 
+            arenaService.loadArenaTeamsFor(competitionId, race,
+                runType, Optional.ofNullable(limit), Optional.ofNullable(offset), Optional.ofNullable(opus));
         return ResponseEntity.ok(arenaTeams);
     }
 
     @GetMapping("/arena/{competitionId}/topCoaches")
     public ResponseEntity<List<ArenaCoach>> getArenaTopCoaches(
             @PathVariable(name = "competitionId") String competitionId,
+            @RequestParam(name = "limit", required = false) Integer topLimit,
             @RequestParam(name = "opus", required = false) Integer opus) {
-        List<ArenaCoach> topCoaches = arenaService.loadArenaTopCoachesFor(competitionId, opus);
+        List<ArenaCoach> topCoaches = 
+            arenaService.loadArenaTopCoachesFor(competitionId, Optional.ofNullable(topLimit), Optional.ofNullable(opus));
         return ResponseEntity.ok(topCoaches);
     }
 
@@ -97,8 +106,8 @@ public class ArenaController {
             @PathVariable(name = "competitionId") String competitionId,
             @PathVariable(name = "coachId") String coachId,
             @RequestParam(name = "opus", required = false) Integer opus) {
-        ArenaCoachWithArenaTeams arenaCoachWithArenaTeams = arenaService.loadArenaCoachWithArenaTeams(
-            competitionId, coachId, opus);
+        ArenaCoachWithArenaTeams arenaCoachWithArenaTeams = 
+            arenaService.loadArenaCoachWithArenaTeams(competitionId, coachId, Optional.ofNullable(opus));
         return ResponseEntity.ok(arenaCoachWithArenaTeams);
     }
 }

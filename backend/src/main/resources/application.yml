@@ -27,6 +27,7 @@ cyanide:
     period-in-seconds: 30
   defaults:  
     opus: 3
+    top-coaches: 5
     official-league-uuid: "00000000-0000-0000-0000-000000000025"    
 
 application:

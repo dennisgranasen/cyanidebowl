@@ -26,6 +26,7 @@ public interface CompetitionRepository extends MongoRepository<Competition, Stri
     //List<Competition> findByOldLeagueIdAndOpus(Integer oldId, Integer opus);
 
     Optional<Competition> findTopByLeagueIdOrderByDateCreatedAsc(String leagueId);
+    Optional<Competition> findTopByLeagueIdAndOpusOrderByDateCreatedAsc(String leagueId, Integer opus);
 
     List<Competition> findByStatusInAndFormatIn(Collection<CompetitionStatus> statuses,
             Collection<CompetitionFormat> formats);

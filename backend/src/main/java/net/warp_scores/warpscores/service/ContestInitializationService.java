@@ -54,6 +54,7 @@ public class ContestInitializationService {
 
         /* updated with BB2 competition formats */
         return switch (competitionFormat.get()) {
+            case undefined -> emptyList();
             case RoundRobin, round_robin -> generateFutureRoundRobinRounds ?
                     initializeRoundRobinContests(unmodifiableList(contests), competition, teams) :
                     contests;
