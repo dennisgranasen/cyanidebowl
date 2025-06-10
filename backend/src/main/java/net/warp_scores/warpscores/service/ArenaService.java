@@ -36,6 +36,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -60,8 +61,10 @@ import net.warp_scores.warpscores.model.WinRate;
 @RequiredArgsConstructor
 public class ArenaService {
 
-    @org.springframework.beans.factory.annotation.Value("${defaultOpus:3}")
+    @Value("${defaultOpus:3}")
     private int defaultOpus;
+    @Value("${cyanide.defaults.topCoaches:6}")
+    private int defaultTopCoaches;
 
     private static final int NEEDED_WINS_FOR_COMPLETION = 7;
     private static final int LOSSES_BEFORE_ELIMINATION = 2;
@@ -84,9 +87,7 @@ public class ArenaService {
             String competitionId, 
             Race race,
             Optional<Integer> opus) {
-        List<ArenaTeam> arenaTeams = loadArenaTeamsFor(
-            competitionId, race, empty(), empty(), 
-            opus.orElse(defaultOpus));
+        List<ArenaTeam> arenaTeams = loadArenaTeamsFor(competitionId, race, empty(), empty(), opus);
         return toArenaInfo(race, arenaTeams);
     }
 
@@ -99,7 +100,7 @@ public class ArenaService {
             Optional<Integer> offset,
             Optional<Integer> opus) {
         List<ArenaTeam> teamsForRace = queryArenaTeamsFor(
-            competitionId, race, unpaged(), opus.orElse(defaultOpus));
+            competitionId, race, unpaged(), opus);
         List<ArenaTeam> filteredTeams = teamsForRace
                 .stream()
                 .filter(arenaTeam -> matchesRunType(arenaTeam, runType))
@@ -133,16 +134,15 @@ public class ArenaService {
             String competitionId,
             String coachId,
             Optional<Integer> opus) {
-        return loadArenaTeamsForInternal(competitionId, coachId, opus.orElse(defaultOpus));
+        return loadArenaTeamsForInternal(competitionId, coachId, opus);
     }
 
     private Map<ArenaTeam.RunType, List<ArenaTeam>> loadArenaTeamsForInternal(
             String competitionId,
             String coachId,
             Optional<Integer> opus) {
-        List<ArenaTeam> arenaTeams = queryArenaTeamsFor(
-            competitionId, coachId, unpaged(),
-            opus.orElse(defaultOpus));
+        List<ArenaTeam> arenaTeams = queryArenaTeamsFor(competitionId, coachId, unpaged(), opus);
+            
         List<ArenaTeam> coachTeams = arenaTeams
                 .stream()
                 .filter(arenaTeam -> arenaTeam.getCoachId().equals(coachId))
@@ -163,14 +163,13 @@ public class ArenaService {
     @DurationLogging(warnThresholdMillis = 1500, errorThresholdMillis = 3000)
     public List<ArenaCoach> loadArenaTopCoachesFor(
             String competitionId,
-            int topLimit,
+            Optional<Integer> topLimit,
             Optional<Integer> opus) {
         List<ArenaTeam> arenaTeams = new ArrayList<>();
-        List<Race> races = loadArenaRacesFor(competitionId,opus. orElse(defaultOpus));
+        List<Race> races = loadArenaRacesFor(competitionId, opus);
         for (Race race : races) {
             List<ArenaTeam> currQueryArenaTeams = queryArenaTeamsFor(
-                competitionId, Optional.of(race), empty(), of(7),
-                unpaged(), opus.orElse(defaultOpus));
+                competitionId, Optional.of(race), empty(), of(7), unpaged(), opus);
             arenaTeams.addAll(currQueryArenaTeams);
             log.info("Fetched race {} with {} arena teams.", race, currQueryArenaTeams.size());
         }
@@ -188,7 +187,7 @@ public class ArenaService {
                         .thenComparing(ArenaCoach::getActiveNotCompletedRacesCount)
                         .reversed()
                         .thenComparing(ac -> ofNullable(ac.getLastCompletion()).orElse(new Date(0))))
-                .limit(topLimit)
+                .limit(topLimit.orElse(defaultTopCoaches))
                 .toList();
     }
 
@@ -288,24 +287,22 @@ public class ArenaService {
 
     private boolean matchesRunType(
             ArenaTeam arenaTeam,
-            ArenaTeam.RunType runType,
-            Optional<Integer> opus) {
-        return runType == getRunTypeFor(arenaTeam, opus);
+            ArenaTeam.RunType runType) {
+        return runType == getRunTypeFor(arenaTeam);
     }
 
     private ArenaTeam.RunType getRunTypeFor(
-            ArenaTeam arenaTeam, Optional<Integer> opus) {
+            ArenaTeam arenaTeam) {
         final AtomicInteger completedCount = new AtomicInteger(0);
         final AtomicInteger failedCount = new AtomicInteger(0);
         final AtomicInteger activeCount = new AtomicInteger(0);
-        countRunsInto(arenaTeam.getTeamId(), arenaTeam.getMatches(),
-            activeCount, completedCount, failedCount, opus);
+        countRunsInto(arenaTeam.getTeamId(), arenaTeam.getMatches(), activeCount, completedCount, failedCount);
 
         final AtomicInteger completedCountForLast9Games = new AtomicInteger(0);
         final AtomicInteger failedCountForLast9Games = new AtomicInteger(0);
         final AtomicInteger activeCountForLast9Games = new AtomicInteger(0);
         countRunsInto(arenaTeam.getTeamId(), arenaTeam.getMatches(), activeCountForLast9Games,
-                completedCountForLast9Games, failedCountForLast9Games, true, of(9), opus);
+                completedCountForLast9Games, failedCountForLast9Games, true, of(9));
 
         if (completedCount.get() == 0 && completedCountForLast9Games.get() > 0) {
             completedCount.getAndIncrement();
@@ -503,7 +500,8 @@ public class ArenaService {
             Optional<Integer> opus) {
         return executeLoggingDuration(() -> matchRepository.queryArenaTeamsFor(
                 competitionId,
-                race.orElse(null), coachId.orElse(null), minWins.orElse(null), pageable, opus));
+                race.orElse(null), coachId.orElse(null), minWins.orElse(null), pageable,
+                    opus.orElse(defaultOpus)));
     }
 
     public ArenaCoachWithArenaTeams loadArenaCoachWithArenaTeams(

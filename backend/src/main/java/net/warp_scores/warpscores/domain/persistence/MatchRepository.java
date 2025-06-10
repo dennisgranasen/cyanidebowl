@@ -18,9 +18,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface MatchRepository extends MongoRepository<Match, UUID> {
+public interface MatchRepository extends MongoRepository<Match, String> {
     List<Match> findByCompetitionId(String competitionId, Integer opus);
     //List<Match> findByOldCompetitionIdAndOpus(Integer oldId, Integer opus);
+
+    List<Match> findByMatchId(UUID matchId);
+    List<Match> findAllByMatchIdIn(List<UUID> matchIds);
 
     Integer countMatchesByCompetitionId(String competitionId, Integer opus);
     //Integer countMatchesByOldCompetitionIdAndOpus(Integer oldId, Integer opus);
@@ -45,16 +48,16 @@ public interface MatchRepository extends MongoRepository<Match, UUID> {
             "{ $group: { _id: $leagueId, date: { $max: $finished }} }",
             "{ $project: { uuid: $_id, date: 1, _id: 0 } }"
     })
-    List<DateForUuid> findLastMatchDateByLeagueIds(List<String> leagueIds, Integer opus);
+    List<DateForId> findLastMatchDateByLeagueIds(List<String> leagueIds, Integer opus);
 
     @Aggregation(pipeline = {
             "{ $match: { $and: {competitionId: { $in: ?0 }}, {opus: ?1} } }",
             "{ $group: { _id: $competitionId, date: { $max: $finished }} }",
             "{ $project: { uuid: $_id, date: 1, _id: 0 } }"
     })
-    List<DateForUuid> findLastMatchDateByCompetitionIds(List<String> competitionIds, Integer opus);
+    List<DateForId> findLastMatchDateByCompetitionIds(List<String> competitionIds, Integer opus);
 
-    record DateForUuid(UUID uuid, Date date) {}
+    record DateForId(String id, Date date) {}
 
     @Aggregation(pipeline = {
             "{ $match: { $and: [ { competitionId: ?0 }, { opus: ?5}, { $or: [ { $expr: { $eq: [?1, null] } }, {'teams.race': ?1 } ] }, { $or: [ { $expr: { $eq: [?2, null] } }, { 'coaches._id': ?2 } ] } ] } }",

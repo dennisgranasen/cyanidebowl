@@ -53,25 +53,25 @@ public class MatchDomainService {
     }
 
     @Transactional
-    public Map<UUID, Optional<Date>> getLastMatchDatesForCompetitions(
+    public Map<String, Optional<Date>> getLastMatchDatesForCompetitions(
             List<String> competitionIds, Optional<Integer> opus) {
-        List<MatchRepository.DateForUuid> lastMatchDateByCompetitionIds = matchRepository
+        List<MatchRepository.DateForId> lastMatchDateByCompetitionIds = matchRepository
                 .findLastMatchDateByCompetitionIds(competitionIds, opus.orElse(defaultOpus));
         return lastMatchDateByCompetitionIds
                 .stream()
-                .collect(toMap(MatchRepository.DateForUuid::uuid,
+                .collect(toMap(MatchRepository.DateForId::id,
                         r -> ofNullable(r.date())));
     }
 
     @Transactional
     public Map<String, Optional<Date>> getLastMatchDatesForLeagues(
             List<String> leagueIds, Optional<Integer> opus) {
-        List<MatchRepository.DateForUuid> lastMatchDateByLeagueIds = matchRepository
+        List<MatchRepository.DateForId> lastMatchDateByLeagueIds = matchRepository
                 .findLastMatchDateByLeagueIds(leagueIds, opus.orElse(defaultOpus));
         return lastMatchDateByLeagueIds
                 .stream()
                 .collect(Collectors.toMap(
-                    d -> d.uuid() != null ? d.uuid().toString() : null,
+                    d -> d.id() != null ? d.id() : null,
                     d -> Optional.ofNullable(d.date())
                 ));
     }
@@ -117,8 +117,8 @@ public class MatchDomainService {
     }
 
     private Match newMatchOrFromDb(UUID uuid) {
-        Optional<Match> matchFromDb = matchRepository.findById(uuid);
-        Match match = matchFromDb.orElse(new Match());
+        List<Match> matchesFromDb = matchRepository.findByMatchId(uuid);
+        Match match = matchesFromDb.isEmpty() ? new Match() : matchesFromDb.get(0); ;
         match.setMatchId(uuid);
         return match;
     }
