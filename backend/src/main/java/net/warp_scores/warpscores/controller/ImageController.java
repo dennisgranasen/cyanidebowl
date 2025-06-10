@@ -33,7 +33,11 @@ public class ImageController {
             name = "Logo_" + StringUtils.capitalize(name.substring("Logo_".length()));
         }
         Optional<String> imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getLogos(), name);
-        return loadImage(imageUrl);
+        Optional<String> bb2FallbackImageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getLogos(),
+                name).map((url) -> url.replace("bb3", "bb2"));
+        Optional<String> bb1FallbackImageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getLogos(),
+                name).map((url) -> url.replace("bb3", "bb1"));
+        return loadImage(imageUrl, bb2FallbackImageUrl, bb1FallbackImageUrl);
     }
 
     @GetMapping("/dbbc.png")
@@ -116,12 +120,19 @@ public class ImageController {
         return loadImage(imageUrl);
     }
 
-    private ResponseEntity<byte[]> loadImage(Optional<String> imageUrl) {
-        return loadImage(imageUrl, Optional.empty());
+    private ResponseEntity<byte[]> loadImage(Optional<String> imageUrl, Optional<String>... fallbackImageUrls) {
+        return loadImage(imageUrl, Optional.empty(), fallbackImageUrls);
     }
 
-    private ResponseEntity<byte[]> loadImage(Optional<String> imageUrl, Optional<Integer> maxWidth) {
+    private ResponseEntity<byte[]> loadImage(Optional<String> imageUrl,
+            Optional<Integer> maxWidth,
+            Optional<String>... fallbackImageUrls) {
         Optional<byte[]> imageData = imageUrl.flatMap(url -> imageService.loadImage(url, maxWidth));
+        for (Optional<String> fallbackImageUrl : fallbackImageUrls) {
+            if (imageData.isEmpty() && fallbackImageUrl.isPresent()) {
+                imageData = fallbackImageUrl.flatMap(url -> imageService.loadImage(url, maxWidth));
+            }
+        }
         return imageData
                 .map(ImageController::ok)
                 .orElse(noContent());
