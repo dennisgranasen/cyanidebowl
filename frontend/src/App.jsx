@@ -21,6 +21,7 @@ import AdminCircuitLegPage from './pages/AdminCircuitLegPage';
 import Fonts from './theme/Fonts';
 import ArenaPage from './pages/ArenaPage';
 import ArenaCoachPage from './pages/ArenaCoachPage';
+import CompetitionStatsPage from './pages/CompetitionStatsPage';
 
 const { isProduction } = config;
 
@@ -87,6 +88,7 @@ function App() {
                 <Route path="/liveMatches/:leagueUuid" element={<LiveMatchesPage />} />
                 <Route path="/team/:teamUuid" element={<TeamPage />} />
                 <Route path="/competition/:competitionUuid" element={<CompetitionPage />} />
+                <Route path="/competition/:competitionUuid/stats" element={<CompetitionStatsPage />} />
                 <Route path="/competition/:competitionUuid/arena/:race" element={<ArenaPage />} />
                 <Route path="/competition/:competitionUuid/arena/coach/:coachUuid" element={<ArenaCoachPage />} />
                 <Route path="/competition/:competitionUuid/team/:teamUuid" element={<TeamPage />} />

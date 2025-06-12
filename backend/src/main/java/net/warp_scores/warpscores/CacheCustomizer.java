@@ -12,6 +12,7 @@ import static net.warp_scores.warpscores.CacheNames.ARENA_INFOS;
 import static net.warp_scores.warpscores.CacheNames.ARENA_RACES;
 import static net.warp_scores.warpscores.CacheNames.ARENA_TEAMS;
 import static net.warp_scores.warpscores.CacheNames.DOMAIN_NAF_COACH;
+import static net.warp_scores.warpscores.CacheNames.LATEST_LEAGUE_MATCHES;
 import static net.warp_scores.warpscores.CacheNames.REST_NAF_COACH;
 
 @Component
@@ -21,6 +22,6 @@ public class CacheCustomizer implements CacheManagerCustomizer<ConcurrentMapCach
     public void customize(ConcurrentMapCacheManager cacheManager) {
         cacheManager.setCacheNames(
                 List.of(REST_NAF_COACH, DOMAIN_NAF_COACH, ARENA_TEAMS, ARENA_COACHES, ARENA_COACH_TEAMS, ARENA_RACES,
-                        ARENA_INFOS));
+                        ARENA_INFOS, LATEST_LEAGUE_MATCHES));
     }
 }

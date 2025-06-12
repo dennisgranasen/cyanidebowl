@@ -150,6 +150,8 @@ export default {
       .then(returnData)
       .catch(handleError),
   competition: async (competitionUuid) => axios(`/competitions/${competitionUuid}`).then(returnData).catch(handleError),
+  competitionStats: async (competitionUuid) =>
+    axios(`/competitions/${competitionUuid}/stats`).then(returnData).catch(handleError),
   competitionTeam: async (competitionUuid, teamUuid) =>
     axios(`/competitions/${competitionUuid}/team/${teamUuid}`).then(returnData).catch(handleError),
   competitionRanks: async (competitionUuid, limit) =>

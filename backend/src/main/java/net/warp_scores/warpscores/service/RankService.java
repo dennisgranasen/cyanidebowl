@@ -3,9 +3,7 @@ package net.warp_scores.warpscores.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.annotations.DurationLogging;
-import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
-import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.CompetitionFormat;
 import net.warp_scores.warpscores.model.Contest;
@@ -34,14 +32,13 @@ import static net.warp_scores.warpscores.model.MatchStatus.Validated;
 @Slf4j
 @RequiredArgsConstructor
 public class RankService {
-    private final MatchRepository matchRepository;
     private final ContestRepository contestRepository;
-    private final TeamDomainService teamDomainService;
     private final CompetitionService competitionService;
 
     private final List<RankComparisons> defaultRankComparisons = List.of(RankComparisons.SCORE_310,
             RankComparisons.WINS,
             RankComparisons.INFLICTED_TOUCHDOWNS, RankComparisons.TOUCHDOWN_DIFFERENCE);
+    private final MatchService matchService;
 
     @DurationLogging
     public List<Rank> getRanksForCompetition(UUID competitionId,
@@ -59,7 +56,7 @@ public class RankService {
                 .collect(Collectors.toCollection(() -> teams));
         List<Match> matches = Collections.emptyList();
         if (!competition.getFormat().equals(CompetitionFormat.Ladder)) {
-            matches = matchRepository.findByCompetitionId(competition.getUuid());
+            matches = matchService.findByCompetitionId(competition.getUuid());
         }
         Map<UUID, Match> matchByMatchId = matches.stream().collect(Collectors.toMap(Match::getMatchId, m -> m));
 
