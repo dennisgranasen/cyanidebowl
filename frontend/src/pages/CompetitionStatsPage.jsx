@@ -7,6 +7,7 @@ import imageUrls from '../imageUrls';
 import HeaderCard from '../components/common/HeaderCard';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import Race from '../components/common/Race';
+import formatter from '../util/formatter';
 
 function CompetitionStatsPage() {
   const { competitionUuid } = useParams();
@@ -45,7 +46,7 @@ function CompetitionStatsPage() {
     fetchCompetition();
   }, [competitionUuid]);
 
-  const raceStats = Object.keys(competitionStats?.raceStats ?? []) ?? [];
+  const raceStats = Object.keys(competitionStats?.teamAndRaceStats.raceStats ?? []) ?? [];
 
   return (
     <VStack align="left">
@@ -65,6 +66,7 @@ function CompetitionStatsPage() {
           additionalImageSrc={competition?.logo ? imageUrls.logo(competition?.leagueLogo) : null}
         >
           <Heading>Competition statistics</Heading>
+          Last updated: {formatter.formatAsDate(competitionStats?.lastUpdated)}
         </HeaderCard>
       </LoadingOrErrorWrapper>
       <LoadingOrErrorWrapper loading={competitionStatsLoading} error={error}>
@@ -88,10 +90,11 @@ function CompetitionStatsPage() {
             {raceStats
               .sort(
                 (race1, race2) =>
-                  (competitionStats?.raceStats[race2].winrate ?? 0) - (competitionStats?.raceStats[race1].winrate ?? 0)
+                  (competitionStats?.teamAndRaceStats?.raceStats[race2].winrate ?? 0) -
+                  (competitionStats?.teamAndRaceStats?.raceStats[race1].winrate ?? 0)
               )
               .map((race) => {
-                const stats = competitionStats?.raceStats[race];
+                const stats = competitionStats?.teamAndRaceStats?.raceStats[race];
                 return (
                   <Tr key={race}>
                     <Td>

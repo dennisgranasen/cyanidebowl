@@ -7,6 +7,7 @@ import net.warp_scores.warpscores.cyanide.api.model.ApiMatch;
 import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
 import net.warp_scores.warpscores.cyanide.api.responses.MatchResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.MatchesResponse;
+import net.warp_scores.warpscores.domain.persistence.DateForUuid;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Team;
@@ -48,21 +49,21 @@ public class MatchDomainService {
 
     @Transactional
     public Map<UUID, Optional<Date>> getLastMatchDatesForCompetitions(List<UUID> competitionUuids) {
-        List<MatchRepository.DateForUuid> lastMatchDateByCompetitionIds = matchRepository
+        List<DateForUuid> lastMatchDateByCompetitionIds = matchRepository
                 .findLastMatchDateByCompetitionIds(competitionUuids);
         return lastMatchDateByCompetitionIds
                 .stream()
-                .collect(toMap(MatchRepository.DateForUuid::uuid,
+                .collect(toMap(DateForUuid::uuid,
                         r -> ofNullable(r.date())));
     }
 
     @Transactional
     public Map<UUID, Optional<Date>> getLastMatchDatesForLeagues(List<UUID> leagueUuids) {
-        List<MatchRepository.DateForUuid> lastMatchDateByLeagueIds = matchRepository
+        List<DateForUuid> lastMatchDateByLeagueIds = matchRepository
                 .findLastMatchDateByLeagueIds(leagueUuids);
         return lastMatchDateByLeagueIds
                 .stream()
-                .collect(toMap(MatchRepository.DateForUuid::uuid,
+                .collect(toMap(DateForUuid::uuid,
                         r -> ofNullable(r.date())));
     }
 

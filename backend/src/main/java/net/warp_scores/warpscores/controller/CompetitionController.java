@@ -2,13 +2,14 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.domain.CompetitionStatsDomainService;
 import net.warp_scores.warpscores.domain.TeamDomainService;
+import net.warp_scores.warpscores.domain.persistence.CompetitionStatsRepository;
 import net.warp_scores.warpscores.export.naf.NafReport;
 import net.warp_scores.warpscores.model.Competition;
-import net.warp_scores.warpscores.model.TeamAndRaceStats;
-import net.warp_scores.warpscores.model.Match;
-import net.warp_scores.warpscores.model.Stats;
+import net.warp_scores.warpscores.model.CompetitionStats;
 import net.warp_scores.warpscores.model.Team;
+import net.warp_scores.warpscores.model.TeamAndRaceStats;
 import net.warp_scores.warpscores.service.CompetitionService;
 import net.warp_scores.warpscores.service.MatchService;
 import net.warp_scores.warpscores.service.NafExporter;
@@ -44,6 +45,8 @@ public class CompetitionController {
     private final ExecutorService nafExporterExecutor = Executors.newFixedThreadPool(5);
     private final MatchService matchService;
     private final StatsService statsService;
+    private final CompetitionStatsDomainService competitionStatsDomainService;
+    private final CompetitionStatsRepository competitionStatsRepository;
 
     @GetMapping("/competitions/league/{leagueId}")
     public ResponseEntity<List<Competition>> getActiveCompetitionsForLeague(@PathVariable(name = "leagueId") UUID leagueId) {
@@ -89,12 +92,11 @@ public class CompetitionController {
     }
 
     @GetMapping(value = "/competitions/{competitionId}/stats", produces = "application/json")
-    public ResponseEntity<TeamAndRaceStats> getCompetitionStats(@PathVariable(name = "competitionId") UUID competitionId) {
+    public ResponseEntity<CompetitionStats> getCompetitionStats(@PathVariable(name = "competitionId") UUID competitionId) {
         try
         {
-            List<Match> matches = matchService.findByCompetitionId(competitionId);
-            TeamAndRaceStats competitionStats = statsService.collectStats(matches);
-            return ResponseEntity.ok(competitionStats);
+            Optional<CompetitionStats> competitionStats = competitionStatsRepository.findById(competitionId);
+            return competitionStats.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
         } catch (Exception ex) {
             log.error("Unable to get stats for competition {}", competitionId, ex);
             return ResponseEntity.internalServerError().build();

@@ -54,7 +54,6 @@ public interface MatchRepository extends MongoRepository<Match, UUID> {
     })
     List<DateForUuid> findLastMatchDateByCompetitionIds(List<UUID> competitionIds);
 
-    record DateForUuid(UUID uuid, Date date) {}
 
     @Aggregation(pipeline = {
             "{ $match: { $and: [ { competitionId: ?0 }, { $or: [ { $expr: { $eq: [?1, null] } }, {'teams.race': ?1 } ] }, { $or: [ { $expr: { $eq: [?2, null] } }, { 'coaches._id': ?2 } ] } ] } }",

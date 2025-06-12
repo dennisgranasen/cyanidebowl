@@ -105,7 +105,9 @@ public class ImageController {
     public ResponseEntity<byte[]> getRaceImage(@PathVariable(name = "name") String name) {
         String imageName = translateRaceToRaceImageName(name);
         Optional<String> imageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getRaces(), imageName);
-        return loadImage(imageUrl, Optional.of(300));
+        Optional<String> logoFallbackImageUrl = getImageUrlFor(cyanideApiProperties.getUrls().getImages().getLogos(),
+                String.format("Logo_%s_01",Race.valueOf(name).getImageName()));
+        return loadImage(imageUrl, Optional.of(300), logoFallbackImageUrl);
     }
 
     @GetMapping("/stadium/{name}")
