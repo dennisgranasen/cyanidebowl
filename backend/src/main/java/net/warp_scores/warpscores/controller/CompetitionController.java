@@ -5,10 +5,15 @@ import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.export.naf.NafReport;
 import net.warp_scores.warpscores.model.Competition;
+import net.warp_scores.warpscores.model.TeamAndRaceStats;
+import net.warp_scores.warpscores.model.Match;
+import net.warp_scores.warpscores.model.Stats;
 import net.warp_scores.warpscores.model.Team;
 import net.warp_scores.warpscores.service.CompetitionService;
+import net.warp_scores.warpscores.service.MatchService;
 import net.warp_scores.warpscores.service.NafExporter;
 import net.warp_scores.warpscores.service.NafXmlCreator;
+import net.warp_scores.warpscores.service.StatsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -37,6 +42,8 @@ public class CompetitionController {
     private final NafXmlCreator nafXmlCreator;
 
     private final ExecutorService nafExporterExecutor = Executors.newFixedThreadPool(5);
+    private final MatchService matchService;
+    private final StatsService statsService;
 
     @GetMapping("/competitions/league/{leagueId}")
     public ResponseEntity<List<Competition>> getActiveCompetitionsForLeague(@PathVariable(name = "leagueId") UUID leagueId) {
@@ -77,6 +84,19 @@ public class CompetitionController {
                     .orElse(ResponseEntity.notFound().build());
         } catch (Exception ex) {
             log.error("Unable to get competition {}", competitionId, ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping(value = "/competitions/{competitionId}/stats", produces = "application/json")
+    public ResponseEntity<TeamAndRaceStats> getCompetitionStats(@PathVariable(name = "competitionId") UUID competitionId) {
+        try
+        {
+            List<Match> matches = matchService.findByCompetitionId(competitionId);
+            TeamAndRaceStats competitionStats = statsService.collectStats(matches);
+            return ResponseEntity.ok(competitionStats);
+        } catch (Exception ex) {
+            log.error("Unable to get stats for competition {}", competitionId, ex);
             return ResponseEntity.internalServerError().build();
         }
     }

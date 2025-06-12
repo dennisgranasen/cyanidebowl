@@ -6,10 +6,12 @@ import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Player;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -44,8 +46,12 @@ public class MatchService {
 
     @DurationLogging
     public List<Match> findByCompetitionId(UUID competitionId) {
-        List<Match> matches = matchRepository.findByCompetitionId(competitionId);
-        return adjustCompetitionNameAndLogoAndUpdateConcedeAndOvertimeInfo(matches);
+        List<Match> matches = new ArrayList<>();
+        Integer totalMatches = matchRepository.countMatchesByCompetitionId(competitionId);
+        for (int i = 0; i < totalMatches; i += 1000) {
+            matches.addAll(adjustCompetitionNameAndLogoAndUpdateConcedeAndOvertimeInfo(matchRepository.findByCompetitionId(competitionId, PageRequest.of(i, 1000))));
+        }
+        return matches;
     }
 
     @DurationLogging

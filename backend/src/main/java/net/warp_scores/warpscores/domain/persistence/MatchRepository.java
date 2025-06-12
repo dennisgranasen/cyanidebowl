@@ -18,9 +18,12 @@ import java.util.UUID;
 
 @Repository
 public interface MatchRepository extends MongoRepository<Match, UUID> {
-    List<Match> findByCompetitionId(UUID competitionId);
+
+    List<Match> findByLeagueId(UUID leagueId);
 
     Integer countMatchesByCompetitionId(UUID competitionId);
+
+    List<Match> findByCompetitionId(UUID competitionId, Pageable pageable);
 
     Optional<Match> findTopByTeamsContainsOrderByStartedDesc(Team team);
 

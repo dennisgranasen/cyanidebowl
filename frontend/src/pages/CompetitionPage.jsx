@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Spinner, VStack } from '@chakra-ui/react';
+import { Box, Button, Spinner, VStack } from '@chakra-ui/react';
 import { Link as RouteLink, useParams } from 'react-router-dom';
 import WarpScoresApiService from '../WarpScoresApiService';
 import Navigation from '../components/misc/Navigation';
@@ -135,6 +135,9 @@ function CompetitionPage() {
                 />
               )}
           </InfoArea>
+          <RouteLink to={`/competition/${competition?.uuid}/stats`}>
+            <Button size="xs">Statistics</Button>
+          </RouteLink>
         </HeaderCard>
       </LoadingOrErrorWrapper>
       <LoadingOrErrorWrapper loading={competitionLoading} error={error}>
