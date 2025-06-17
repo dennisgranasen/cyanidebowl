@@ -20,7 +20,6 @@ import static net.warp_scores.warpscores.model.ArenaTeam.RunType.completed;
 import static net.warp_scores.warpscores.model.ArenaTeam.RunType.failed;
 import static org.springframework.data.domain.Pageable.unpaged;
 
-import java.lang.foreign.Linker.Option;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;

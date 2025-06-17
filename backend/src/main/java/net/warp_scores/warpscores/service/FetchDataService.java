@@ -35,6 +35,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.apache.commons.lang3.tuple.Pair;
 
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.nullsFirst;
@@ -80,8 +82,10 @@ public class FetchDataService {
         List<LeagueCollection> leaguesToCollect = leagueCollectionRepository.findByCollectionActive(true);
 
         List<League> existingLeagues = leagueRepository.findAll();
-        Map<String, Optional<Date>> lastKnownMatchDateByLeagueId = matchDomainService.getLastMatchDatesForLeagues(
-                existingLeagues.stream().map(League::getId).toList());
+        Stream<Pair<Integer, String>> leagueData = 
+                existingLeagues.stream().map((l) -> Pair.of(l.getOpus(), l.getLeagueId()));
+        Map<String, Optional<Date>> lastKnownMatchDateByLeagueId = 
+                matchDomainService.getLastMatchDatesForLeagues(leagueData.toList());
 
         log.info("Will load leagues for {} leagues with active league collection.",
                 leaguesToCollect.size());
@@ -230,8 +234,8 @@ public class FetchDataService {
 
     private void fetchMatchesFor(List<String> leagueIds) {
         List<League> leagues = leagueRepository.findAllById(leagueIds);
-        Map<String, Optional<Date>> lastMatchDateKnownByLeagueId = matchDomainService.getLastMatchDatesForLeagues(
-                leagueIds);
+        Map<String, Optional<Date>> lastMatchDateKnownByLeagueId = 
+                matchDomainService.getLastMatchDatesForLeagues(leagueIds);
         Map<String, Optional<Date>> earliestStartDateByLeagueId = competitionDomainService.getEarliestStartDatesFor(
                 leagueIds);
 

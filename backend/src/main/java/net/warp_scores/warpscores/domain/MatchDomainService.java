@@ -8,6 +8,7 @@ import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
 import net.warp_scores.warpscores.cyanide.api.responses.MatchResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.MatchesResponse;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
+import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Team;
 import net.warp_scores.warpscores.service.PopulatorUtil;
@@ -26,8 +27,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.Pair;
 
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toMap;
@@ -52,22 +55,57 @@ public class MatchDomainService {
                 .collect(Collectors.toList());
     }
 
+    
     @Transactional
-    public Map<UUID, Optional<Date>> getLastMatchDatesForCompetitions(
-            List<String> competitionIds, Optional<Integer> opus) {
-        List<MatchRepository.DateForUuid> lastMatchDateByCompetitionIds = matchRepository
-                .findLastMatchDateByCompetitionIds(competitionIds, opus.orElse(defaultOpus));
-        return lastMatchDateByCompetitionIds
+    public Map<String, Optional<Date>> getLastMatchDatesForCompetitions(
+            List<Competition> compData) {
+
+        List<MatchRepository.DateForUuid> lastMatchDateByCompIds = Collections.emptyList();
+
+        for (Competition competition : compData) {
+            Integer opus = competition.getOpus();
+            List<String> compIds = competition.getId() != null
+                    ? Collections.singletonList(competition.getId())
+                    : Collections.emptyList();
+            if (!compIds.isEmpty()) {
+                lastMatchDateByCompIds.addAll(matchRepository
+                        .findLastMatchDateByCompetitionIds(compIds, opus));
+            }
+        }
+                        
+        return lastMatchDateByCompIds
                 .stream()
-                .collect(toMap(MatchRepository.DateForUuid::uuid,
-                        r -> ofNullable(r.date())));
+                .collect(Collectors.toMap(
+                    d -> d.uuid() != null ? d.uuid().toString() : null,
+                    d -> Optional.ofNullable(d.date())
+                ));
     }
 
+
+            
     @Transactional
     public Map<String, Optional<Date>> getLastMatchDatesForLeagues(
-            List<String> leagueIds, Optional<Integer> opus) {
-        List<MatchRepository.DateForUuid> lastMatchDateByLeagueIds = matchRepository
-                .findLastMatchDateByLeagueIds(leagueIds, opus.orElse(defaultOpus));
+            List<Pair<Integer, String>> leagueData) {
+    
+        List<Integer> opi = leagueData
+                .stream()
+                .map(Pair::getLeft)
+                .distinct()
+                .collect(Collectors.toList());
+        List<MatchRepository.DateForUuid> lastMatchDateByLeagueIds = Collections.emptyList();
+        for (Integer opus : opi)
+        {
+            List<String> leagueIds = leagueData
+                    .stream()
+                    .filter(p -> p.getLeft().equals(opus))
+                    .map(Pair::getRight)
+                    .collect(Collectors.toList());
+            if (!leagueIds.isEmpty()) {
+                lastMatchDateByLeagueIds.addAll(matchRepository
+                        .findLastMatchDateByLeagueIds(leagueIds, opus));
+            }
+        }
+        
         return lastMatchDateByLeagueIds
                 .stream()
                 .collect(Collectors.toMap(
