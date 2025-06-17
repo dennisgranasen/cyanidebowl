@@ -35,6 +35,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.apache.commons.lang3.tuple.Pair;
 
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.nullsFirst;
@@ -84,6 +86,8 @@ public class FetchDataService {
         List<LeagueCollection> leaguesToCollect = leagueCollectionRepository.findByCollectionActive(true);
 
         List<League> existingLeagues = leagueRepository.findAll();
+        Map<String, Optional<Date>> lastKnownMatchDateByLeagueId = matchDomainService.getLastMatchDatesForLeagues(
+                existingLeagues.stream().map(League::getId).toList());
 
         log.info("Will load leagues for {} leagues with active league collection.",
                 leaguesToCollect.size());
@@ -253,21 +257,12 @@ public class FetchDataService {
         }
     }
 
-    private void fetchMatchesFor(List<League> leagues) {
-        // Group leagues by opus
-        Map<Integer, List<League>> leaguesByOpus = leagues.stream()
-            .collect(Collectors.groupingBy(l -> l.getOpus() != null ? l.getOpus() : defaultOpus));
-
-        for (Map.Entry<Integer, List<League>> entry : leaguesByOpus.entrySet()) {
-            Integer opus = entry.getKey();
-            List<League> leaguesForOpus = entry.getValue();
-            List<String> leagueIds = leaguesForOpus.stream().map(League::getId).toList();
-
-            // Call getLastMatchDatesForLeagues with opus
-            Map<String, Optional<Date>> lastMatchDateKnownByLeagueId =
-                matchDomainService.getLastMatchDatesForLeagues(leagueIds, Optional.ofNullable(opus));
-            Map<String, Optional<Date>> earliestStartDateByLeagueId =
-                competitionDomainService.getEarliestStartDatesFor(leagueIds, Optional.ofNullable(opus));
+    private void fetchMatchesFor(List<String> leagueIds) {
+        List<League> leagues = leagueRepository.findAllById(leagueIds);
+        Map<String, Optional<Date>> lastMatchDateKnownByLeagueId = matchDomainService.getLastMatchDatesForLeagues(
+                leagueIds);
+        Map<String, Optional<Date>> earliestStartDateByLeagueId = competitionDomainService.getEarliestStartDatesFor(
+                leagueIds);
 
             List<League> filteredLeagues = leaguesForOpus.stream()
                 .filter(league -> leagueHasMatchesAfterLastKnown(

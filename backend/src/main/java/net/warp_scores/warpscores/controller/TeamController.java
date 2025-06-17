@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -31,19 +30,15 @@ public class TeamController {
     @GetMapping("/teams/{teamId}")
     public ResponseEntity<Team> getTeam(
             @PathVariable(name = "teamId") String teamId,
-            @RequestParam(name = "opus", required = false) Integer opus) {
+            @RequestParam(name = "opus", required = false) Integer opus ) {
         try {
-            Optional<Team> team = 
-                teamDomainService.findTeam(teamId, Optional.empty(), Optional.ofNullable(opus));
-            if (team.isEmpty()) {
-                log.warn("Team with ID {} not found.", teamId);
-                return ResponseEntity.notFound().build();
-            }
+            Optional<Team> team = teamDomainService.findTeam(teamId, Optional.empty(),
+                Optional.ofNullable(opus));
             return team
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
         } catch (Exception ex) {
-            log.error("Unable to get team for uuid {}.", teamId, ex);
+            log.error("Unable to get team for id {}.", teamId, ex);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -53,7 +48,8 @@ public class TeamController {
             @PathVariable(name = "teamId") String teamId,
             @RequestParam(name = "opus", required = false) Integer opus) {
         try {
-            List<Match> matchesForTeam = matchDomainService.findMatchesForTeam(teamId,Optional.ofNullable(opus));
+            List<Match> matchesForTeam = 
+                matchDomainService.findMatchesForTeam(teamId, Optional.ofNullable(opus));
             matchesForTeam.forEach(match -> officialLeagueAndCompetitions.adjustCompetitionName(match.getLeagueId(),
                     match.getCompetitionName(), match::setCompetitionName));
             return ResponseEntity.ok(matchesForTeam);
