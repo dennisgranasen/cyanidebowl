@@ -109,7 +109,7 @@ public class MatchDomainService {
         return lastMatchDateByLeagueIds
                 .stream()
                 .collect(Collectors.toMap(
-                    d -> d.uuid() != null ? d.uuid().toString() : null,
+                    d -> d.id() != null ? d.id() : null,
                     d -> Optional.ofNullable(d.date())
                 ));
     }
@@ -155,8 +155,8 @@ public class MatchDomainService {
     }
 
     private Match newMatchOrFromDb(UUID uuid) {
-        Optional<Match> matchFromDb = matchRepository.findById(uuid);
-        Match match = matchFromDb.orElse(new Match());
+        List<Match> matchesFromDb = matchRepository.findByMatchId(uuid);
+        Match match = matchesFromDb.isEmpty() ? new Match() : matchesFromDb.get(0); ;
         match.setMatchId(uuid);
         return match;
     }

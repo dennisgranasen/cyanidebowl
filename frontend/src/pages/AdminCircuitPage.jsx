@@ -289,7 +289,7 @@ function AdminCircuitPage() {
       const res = await WarpScoresApiService.lookup({
         league_name: values.searchName,
         bb: values.bbVersion,
-        exact: 0,
+        exact: values.exact ? 1 : 0,
         hint: 'HAS_CONTESTS',
         fallback: 0
       });
@@ -396,7 +396,7 @@ function AdminCircuitPage() {
         <Checkbox isChecked={isAuthenticated}>Auth</Checkbox>
         <HStack>
           <Formik
-            initialValues={{ searchName: '', bbVersion: bbVersion }}
+            initialValues={{ searchName: '', bbVersion: bbVersion, exact: true }}
             onSubmit={onSearchClicked}
           >
             {(props) => (
@@ -433,6 +433,30 @@ function AdminCircuitPage() {
                             ))}
                           </Select>
                           <FormErrorMessage>{form.errors.bbVersion}</FormErrorMessage>
+                        </FormControl>
+                      )}
+                    </Field>
+                    <Field name="exact" type="checkbox">
+                      {({ field, form }) => (
+                        <FormControl>
+                          <Checkbox
+                            {...field}
+                            isChecked={field.value}
+                            onChange={e => {
+                              if (!e.target.checked) {
+                                const confirmed = window.confirm(
+                                  "Disabling exact search may return a large number of results and could be VERY slow. Are you sure you want to continue?"
+                                );
+                                if (!confirmed) {
+                                  // Prevent unchecking
+                                  return;
+                                }
+                              }
+                              form.setFieldValue('exact', e.target.checked);
+                            }}
+                          >
+                            Exact search
+                          </Checkbox>
                         </FormControl>
                       )}
                     </Field>

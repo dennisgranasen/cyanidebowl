@@ -12,7 +12,9 @@ import java.util.UUID;
 import java.util.Optional;
 
 @Repository
-public interface ContestRepository extends MongoRepository<Contest, UUID> {
+public interface ContestRepository extends MongoRepository<Contest, String> {
+    List<Contest> findByContestUuid(UUID contestUUid);
+
     List<Contest> findByCompetitionIdAndStatus(String competitionId, 
         Optional<Integer> opus, MatchStatus matchStatus);
 

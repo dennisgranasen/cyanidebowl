@@ -36,35 +36,11 @@ public class LeagueDomainService {
         return leagueRepository.save(league);
     }
 
-    private boolean isUuid(String id) {
-        return id.contains("-") && id.length() >= 32;
-    }
-
     private League internalCreateOrUpdateLeague(ApiLeague apiLeague, Optional<Integer> opus) {
-        League league;
-        String id = apiLeague.getId();
-        if (id != null && isUuid(id)){
-            league = newOrFromDb(Optional.ofNullable(apiLeague.getId()),
-             apiLeague.getName(), opus);
-        } else {
-            league = newOrFromDb(Integer.parseInt(id), apiLeague.getName(), opus);
-        }
+        League league = newOrFromDb(Optional.ofNullable(apiLeague.getId()), apiLeague.getName(), opus);
         if (league != null) {
             populateLeague(apiLeague, league, opus);
         }
-        return league;
-    }
-
-    private League newOrFromDb(Integer oldId, String name, Optional<Integer> opus) {
-        if (oldId == null) {
-            log.error("Can't convert league '{}'. Need an OldID.", name);
-            return null;
-        }
-        Optional<League> leagueFromDb = 
-            leagueRepository.findByOldIdAndOpus(oldId, opus.orElse(defaultOpus));
-        League league = leagueFromDb.orElse(new League());
-        //league.setOldId(oldId);
-        //league.setOpus(opus.orElse(defaultOpus));
         return league;
     }
 

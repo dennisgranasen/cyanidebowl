@@ -9,8 +9,12 @@ import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.service.OfficialLeagueAndCompetitions;
 import net.warp_scores.warpscores.service.PopulatorUtil;
 import net.warp_scores.warpscores.service.UUIDConverter;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import static java.util.Comparator.nullsLast;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,10 +31,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CompetitionDomainService {
     private final CompetitionRepository competitionRepository;
-
     private final UUIDConverter uuidConverter;
-
     private final OfficialLeagueAndCompetitions officialLeagueAndCompetitions;
+
+
+    @Value("${cyanide.defaults.opus:3}")
+    private int defaultOpus;
 
     @Transactional
     public List<Competition> createOrUpdateCompetitions(CompetitionsResponse competitionsResponse) {
@@ -45,13 +51,23 @@ public class CompetitionDomainService {
     }
 
     @Transactional
-    public Map<String, Optional<Date>> getEarliestStartDatesFor(List<String> leagueIds) {
+    public Map<String, Optional<Date>> getEarliestStartDatesFor(List<String> leagueIds, Optional<Integer> opus) {
         Map<String, Optional<Date>> earliestStartDatesByLeagueId = new HashMap<>();
-        leagueIds
-                .forEach(leagueId ->
-                        earliestStartDatesByLeagueId.put(leagueId, competitionRepository
-                                .findTopByLeagueIdOrderByDateCreatedAsc(leagueId)
-                                .map(Competition::getDateCreated)));
+        for (String leagueId : leagueIds) {
+            Optional<Date> dateOpt;
+            if (opus.isPresent()) {
+                // Find the earliest competition for this leagueId and opus
+                dateOpt = competitionRepository
+                    .findTopByLeagueIdAndOpusOrderByDateCreatedAsc(leagueId, opus.get())
+                    .map(Competition::getDateCreated);
+            } else {
+                // Fallback to original logic if opus is not present
+                dateOpt = competitionRepository
+                    .findTopByLeagueIdOrderByDateCreatedAsc(leagueId)
+                    .map(Competition::getDateCreated);
+            }
+            earliestStartDatesByLeagueId.put(leagueId, dateOpt);
+        }
         return earliestStartDatesByLeagueId;
     }
 
@@ -61,12 +77,13 @@ public class CompetitionDomainService {
                 apiCompetition.getName());
         if (competition != null) {
             populateCompetition(apiCompetition, competition);
-
-            if (competition.getOpus() > 2)
-            officialLeagueAndCompetitions.adjustCompetitionFormat(
-                competition.getLeagueId(), 
-                competition.getName(),
-                competition::setFormat);
+            Integer opus = competition.getOpus();
+            if (opus == null) opus = defaultOpus;
+            if (opus > 2)
+                officialLeagueAndCompetitions.adjustCompetitionFormat(
+                    competition.getLeagueId(), 
+                    competition.getName(),
+                    competition::setFormat);
         }
         return competition;
     }
