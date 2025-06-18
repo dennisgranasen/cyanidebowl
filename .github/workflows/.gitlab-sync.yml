@@ -13,7 +13,7 @@ jobs:
       - name: Install Git
         run: sudo apt-get install git
 
-      # - name: Clone GitLab Repo  (WARNING: OVERWRITE GITHUB REPO)
+      # - name: Clone GitLab Repo  (WARNING: This will overwrite the github repo)
       #   run: |
       #     git clone --mirror https://oauth2:${{ secrets.GITLAB_READTOKEN }}@gitlab.com/warp-scores/warp-scores.git
       #     cd warp-scores.git
