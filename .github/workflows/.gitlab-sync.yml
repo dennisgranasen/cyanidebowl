@@ -13,7 +13,7 @@ jobs:
       - name: Install Git
         run: sudo apt-get install git
 
-      # - name: Clone GitLab Repo  (WARNING: This will overwrite the github repo)
+      # - name: Clone GitLab Repo  (WARNING: OVERWRITE GITHUB REPO)
       #   run: |
       #     git clone --mirror https://oauth2:${{ secrets.GITLAB_READTOKEN }}@gitlab.com/warp-scores/warp-scores.git
       #     cd warp-scores.git
@@ -28,7 +28,11 @@ jobs:
 
       - name: Add GitLab remote and fetch
         run: |
-          git clone --mirror https://oauth2:${{ secrets.GITLAB_READTOKEN }}@gitlab.com/warp-scores/warp-scores.git
-          cd warp-scores.git
-          git remote add github https://${{ secrets.UPDATE_TOKEN }}@github.com/dennisgranasen/cyanidebowl.git
-          git push --mirror github
+          git remote add gitlab https://oauth2:${{ secrets.GITLAB_READTOKEN }}@gitlab.com/warp-scores/warp-scores.git
+          git fetch gitlab
+
+      - name: Merge GitLab/main into GitHub/main
+        run: |
+          git checkout main
+          git merge gitlab/main --allow-unrelated-histories --no-edit || true
+          git push origin main
