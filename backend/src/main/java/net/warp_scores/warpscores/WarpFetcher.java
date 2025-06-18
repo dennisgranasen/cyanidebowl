@@ -5,7 +5,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 
-@SpringBootApplication(scanBasePackages = "net.warp_scores.warpscores")
+//@SpringBootApplication(scanBasePackages = "net.warp_scores.warpscores")
 public class WarpFetcher {
 
     public static void main(String[] args) {

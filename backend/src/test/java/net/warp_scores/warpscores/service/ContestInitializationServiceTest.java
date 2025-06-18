@@ -6,6 +6,9 @@ import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.Team;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -18,6 +21,7 @@ import java.util.UUID;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+//@Disabled
 public class ContestInitializationServiceTest {
     private final ContestInitializationService service = new ContestInitializationService();
 
@@ -27,8 +31,17 @@ public class ContestInitializationServiceTest {
 
     private List<Contest> initializedContests;
 
+    @BeforeEach
+    public void setUp() {
+        givenCompetition = null;
+        givenSeedContests = new ArrayList<>();
+        givenTeams = new ArrayList<>();
+        initializedContests = new ArrayList<>();
+    }
+
     @Test
     public void roundRobinCompetitionContestsAreGenerated() {
+        System.out.println("DEBUG: Starting test: roundRobinCompetitionContestsAreGenerated");
         givenCompetition(CompetitionFormat.RoundRobin);
         givenTeams("A", "B", "C", "D", "E", "F");
         givenSeedContests(new String[]{"A", "F", "B", "E", "C", "D"});
@@ -142,6 +155,16 @@ public class ContestInitializationServiceTest {
 
         whenContestsInitialized();
 
+        // Debug print of all initialized contests
+        for (Contest contest : initializedContests) {
+            System.out.printf(
+                "TEST DEBUG: Round %d, Home=%s, Away=%s%n",
+                contest.getRound(),
+                contest.getOpponents().get(0).getName(),
+                contest.getOpponents().get(1).getName()
+            );
+        }
+
         assertThat(this.givenSeedContests, is(seedContests));
     }
 
@@ -201,9 +224,12 @@ public class ContestInitializationServiceTest {
     }
 
     private void whenContestsInitialized() {
+        // Add debug trace before and after initialization
+        System.out.println("DEBUG: Initializing contests with teams: " + givenTeams);
         this.initializedContests = this.service.initializeContestsScheduleForFormat(Optional.of(givenCompetition),
                 givenTeams,
                 givenSeedContests);
+        System.out.println("DEBUG: Contests initialized: " + this.initializedContests);
     }
 
     private static Contest createContest(int round, String teamNameA, String teamNameB) {

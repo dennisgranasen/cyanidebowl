@@ -20,8 +20,8 @@ import java.util.List;
 @ToString(of = {"name", "race", "identity"})
 public class Team {
     @Id
-    public String get_id() {
-        return identity != null ? identity.getId() : null;
+    public Identity get_id() {
+        return identity;
     }
     public String getTeamId() { return identity != null ? identity.getId() : null; }
 

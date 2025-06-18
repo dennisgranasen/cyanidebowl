@@ -16,8 +16,8 @@ import java.util.Date;
 @EqualsAndHashCode(of = "identity")
 public class Coach {
     @Id
-    public String get_id() {
-        return identity != null ? identity.getId() : null;
+    public Identity get_id() {
+        return identity;
     }
 
     private final Identity identity;

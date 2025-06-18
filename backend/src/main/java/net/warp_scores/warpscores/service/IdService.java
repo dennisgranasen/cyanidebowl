@@ -9,6 +9,6 @@ public class IdService {
     private int defaultOpus;
 
     public String getComposedId(Optional<Integer> opus, String id) {
-        return opus.orElse(defaultOpus) + "-" + id;
+        return opus.orElse(defaultOpus) + "_" + id;
     }
 }

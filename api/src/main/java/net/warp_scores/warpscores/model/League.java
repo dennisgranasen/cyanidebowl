@@ -19,8 +19,8 @@ import java.util.Map;
 @ToString(of = {"name", "identity"})
 public class League {
     @Id
-    public String get_id() {
-        return identity != null ? identity.getId() : null;
+    public Identity get_id() {
+        return identity;
     }
     public String getLeagueId() { return identity != null ? identity.getId() : null; }
 

@@ -6,6 +6,7 @@ import net.warp_scores.warpscores.cyanide.api.model.common.IdWithName;
 import net.warp_scores.warpscores.cyanide.api.requests.LookupRequest;
 import net.warp_scores.warpscores.cyanide.api.responses.LookupResponse;
 import net.warp_scores.warpscores.domain.persistence.LeagueCollectionRepository;
+import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.model.LeagueCollection;
@@ -27,6 +28,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static java.util.Optional.ofNullable;
 import static net.warp_scores.warpscores.controller.Authorities.AUTHORITY_WRITE_REGISTER_LEAGUE;
 
 @RestController
@@ -50,16 +52,19 @@ public class LeagueCollectionController {
         @PathVariable(name = "leagueId") String leagueId,
         @RequestParam(name = "opus", required = false) Integer opus
     ) {
-        List<League> leagues = doCreateLeagueCollection(leagueId, Optional.ofNullable(opus));
+        Identity identity = new SimpleIdentity(leagueId, ofNullable(opus).orElse(defaultOpus));
+        List<League> leagues = doCreateLeagueCollection(identity);
         return ResponseEntity.ok(leagues);
     }
 
-    private List<League> doCreateLeagueCollection(String leagueId, Optional<Integer> opus) {
+    private List<League> doCreateLeagueCollection(Identity id) {
         LookupRequest lookupRequest = new LookupRequest();
-        lookupRequest.setLeague_id(leagueId);
+        lookupRequest.setLeague_id(id.getId());
+        lookupRequest.setOpus(id.getOpus());
         LookupResponse lookup = cyanideApiService.lookup(lookupRequest);
+        int opus = lookup.getMeta().getOpus().orElse(defaultOpus);
         List<LeagueCollection> leagueCollections = Arrays.stream(lookup.getLeagues())
-                .map(this::newLeagueCollection)
+                .map((idWithName) -> newLeagueCollection(idWithName, opus))
                 .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
@@ -68,16 +73,15 @@ public class LeagueCollectionController {
 
         return leagueCollections
                 .stream()
-                .map(lc -> cyanideApiService.loadLeague(new SimpleIdentity(lc.getLeagueId(), opus.orElse(defaultOpus))))
+                .map(lc -> cyanideApiService.loadLeague(lc.get_id()))
                 .toList();
     }
 
-    private LeagueCollection newLeagueCollection(IdWithName idWithName) {
+    private LeagueCollection newLeagueCollection(IdWithName idWithName, int opus) {
         String id = idWithName.getId();
-        LeagueCollection leagueCollection = new LeagueCollection();
+        LeagueCollection leagueCollection = new LeagueCollection(new SimpleIdentity(id, opus));
         leagueCollection.setCollectionActive(true);
         leagueCollection.setLeagueName(idWithName.getName());
-        leagueCollection.setLeagueId(id);
         return leagueCollection;
     }
 }

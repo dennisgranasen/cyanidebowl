@@ -17,8 +17,8 @@ import java.util.UUID;
 @Document
 public class Match {
     @Id
-    public String get_id() {
-        return identity != null ? identity.getId() : null;
+    public Identity get_id() {
+        return identity;
     }
     public String getMatchId() { return identity != null ? identity.getId() : null; }
 
