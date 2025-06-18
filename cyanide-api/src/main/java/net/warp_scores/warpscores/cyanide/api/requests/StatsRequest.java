@@ -29,4 +29,6 @@ public class StatsRequest extends ApiRequest<StatsRequest, StatsResponse> {
     public StatsRequest() {
         super("bb/stats", StatsRequest.class, StatsResponse.class);
     }
+    private String stats;
+    private Integer opus;
 }

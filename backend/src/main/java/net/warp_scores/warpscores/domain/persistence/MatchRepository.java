@@ -1,12 +1,13 @@
 package net.warp_scores.warpscores.domain.persistence;
 
+import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.model.ArenaTeam;
 import net.warp_scores.warpscores.model.Match;
-import net.warp_scores.warpscores.model.MatchStatus;
+//import net.warp_scores.warpscores.model.MatchStatus;
 import net.warp_scores.warpscores.model.Race;
 import net.warp_scores.warpscores.model.Team;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.mongodb.core.aggregation.ArrayOperators.In;
+//import org.springframework.data.mongodb.core.aggregation.ArrayOperators.In;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.lang.Nullable;
@@ -18,49 +19,49 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface MatchRepository extends MongoRepository<Match, String> {
-    List<Match> findByCompetitionId(String competitionId, Integer opus);
+public interface MatchRepository extends MongoRepository<Match, Identity> {
+    List<Match> findByCompetitionId(Identity competitionId);
     //List<Match> findByOldCompetitionIdAndOpus(Integer oldId, Integer opus);
 
-    List<Match> findByMatchId(UUID matchId);
+    List<Match> findByMatchUuid(UUID matchId);
     List<Match> findAllByMatchIdIn(List<UUID> matchIds);
 
-    Integer countMatchesByCompetitionId(String competitionId, Integer opus);
+    Integer countMatchesByCompetitionId(Identity competitionId);
     //Integer countMatchesByOldCompetitionIdAndOpus(Integer oldId, Integer opus);
 
     Optional<Match> findTopByTeamsContainsOrderByStartedDesc(Team team);
 
-    List<Match> findTopByLeagueIdAndFinishedNotNull(String leagueId,
-            Pageable pageable, Integer opus);
+    List<Match> findTopByLeagueIdAndFinishedNotNull(Identity leagueId,
+            Pageable pageable);
 
-    List<Match> findTopByCompetitionIdAndFinishedNotNull(String leagueId,
-            Pageable pageable, Integer opus);
+    List<Match> findTopByCompetitionIdAndFinishedNotNull(Identity leagueId,
+            Pageable pageable);
 
     List<Match> findByCoachesContains(Match.Coach coach, Pageable pageable);
 
     @Aggregation(pipeline = {
-            "{ $match: {$and: [{opus: ?1}, { teams: { $elemMatch: { _id: ?0 } } ] } }"
+            "{ $match: { teams: { $elemMatch: { _id: ?0 } } } }"
     })
-    List<Match> findMatchesByTeamId(String teamId, Integer opus);
+    List<Match> findMatchesByTeamId(Identity teamId);
 
     @Aggregation(pipeline = {
-            "{ $match: {$and: [{leagueId: { $in: ?0 }}, {opus: $1}] } }",
+            "{ $match: {leagueId: { $in: ?0 } } }",
             "{ $group: { _id: $leagueId, date: { $max: $finished }} }",
             "{ $project: { uuid: $_id, date: 1, _id: 0 } }"
     })
-    List<DateForId> findLastMatchDateByLeagueIds(List<String> leagueIds, Integer opus);
+    List<DateForId> findLastMatchDateByLeagueIds(List<Identity> leagueIds);
 
     @Aggregation(pipeline = {
-            "{ $match: { $and: {competitionId: { $in: ?0 }}, {opus: ?1} } }",
+            "{ $match: {competitionId: { $in: ?0 } } }",
             "{ $group: { _id: $competitionId, date: { $max: $finished }} }",
             "{ $project: { uuid: $_id, date: 1, _id: 0 } }"
     })
-    List<DateForId> findLastMatchDateByCompetitionIds(List<String> competitionIds, Integer opus);
+    List<DateForId> findLastMatchDateByCompetitionIds(List<Identity> competitionIds);
 
-    record DateForId(String id, Date date) {}
+    record DateForId(Identity id, Date date) {}
 
     @Aggregation(pipeline = {
-            "{ $match: { $and: [ { competitionId: ?0 }, { opus: ?5}, { $or: [ { $expr: { $eq: [?1, null] } }, {'teams.race': ?1 } ] }, { $or: [ { $expr: { $eq: [?2, null] } }, { 'coaches._id': ?2 } ] } ] } }",
+            "{ $match: { $and: [ { competitionId: ?0 }, { $or: [ { $expr: { $eq: [?1, null] } }, {'teams.race': ?1 } ] }, { $or: [ { $expr: { $eq: [?2, null] } }, { 'coaches._id': ?2 } ] } ] } }",
             "{ $project: { _id: 1, \"teams.players\": 0 }}",
             "{ $addFields: { match: \"$$ROOT\" } }",
             "{ $addFields: { winnerTeamUuid: { $cond: { if: { $gt: [{ $arrayElemAt: [\"$teams.score\", 0] }, { $arrayElemAt: [\"$teams.score\", 1] }] }, then: { $arrayElemAt: [\"$teams._id\", 0] }, else: { $arrayElemAt: [\"$teams._id\", 1] } } } } }",
@@ -84,16 +85,15 @@ public interface MatchRepository extends MongoRepository<Match, String> {
             "{ $project: { _id: 1, race: 1, teamUuid: 1, coachName: 1, coachUuid: 1, results: [  { result: \"win\", count: \"$winCount\" }, { result: \"loss\", count: \"$lossCount\" } ], matches: 1, totalGames: { $add: [\"$winCount\", \"$lossCount\"] } } }",
             "{ $match:  { $or: [ { $expr: { $eq: [?3, null] } }, { $and: [ { totalGames: { $gte: ?3 } }, { results: { $elemMatch: { result: \"win\", count: { $gte: ?3 } } } } ] } ] } }"
     })
-    List<ArenaTeam> queryArenaTeamsFor(String competitionId,
+    List<ArenaTeam> queryArenaTeamsFor(Identity competitionId,
             @Nullable Race race,
             @Nullable String coachId,
             @Nullable Integer minWins,
-            Pageable pageable,
-            Integer opus);
+            Pageable pageable);
 
     @Aggregation(pipeline = {
             // Match contests for a specific competition
-            "{ $match: { $and: [{competitionId: ?0}, {opus: ?1}] } }",
+            "{ $match: {competitionId: ?0} }",
             // Unwind the opponents array
             "{ $unwind: \"$teams\" }",
             // Group by race to collect all distinct races
@@ -101,5 +101,5 @@ public interface MatchRepository extends MongoRepository<Match, String> {
             // Project only the races
             "{ $project: { race: \"$_id\", _id: 0 } }"
     })
-    List<Race> getUsedRacesForCompetition(String competitionId, Integer opus);
+    List<Race> getUsedRacesForCompetition(Identity competitionId);
 }

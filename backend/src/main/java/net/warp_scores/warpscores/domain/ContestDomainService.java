@@ -5,18 +5,17 @@ import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.cyanide.api.model.ApiContest;
 import net.warp_scores.warpscores.cyanide.api.responses.ContestsResponse;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
+import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.Team;
 import net.warp_scores.warpscores.service.PopulatorUtil;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -30,12 +29,17 @@ public class ContestDomainService {
 
     private final ContestRepository contestRepository;
 
+    @Value("${cyanide.defaults.opus:3}")
+    private int defaultOpus;
+
+
     @Transactional
     public List<Contest> createOrUpdateContests(ContestsResponse contestsResponse) {
         if (contestsResponse == null || contestsResponse.isEmpty()) {
             return Collections.emptyList();
         }
-
+        Optional<Integer> opus = contestsResponse.getMeta().getOpus();
+        
         List<Contest> contests = Arrays
                 .stream(contestsResponse.getContests())
                 .collect(toMap(ApiContest::getContest_id, Function.identity(),
@@ -43,64 +47,58 @@ public class ContestDomainService {
                                 Comparator.nullsFirst(Comparator.naturalOrder())))))
                 .values()
                 .stream()
-                .map(this::internalCreateOrUpdateContest)
+                .map((x) -> internalCreateOrUpdateContest(x, opus))
                 .collect(Collectors.toList());
         return contestRepository.saveAll(contests);
     }
 
-    public Contest internalCreateOrUpdateContest(ApiContest apiContest) {
-        Contest contest = newContestOrFromDb(apiContest.getContest_id());
+    public Contest internalCreateOrUpdateContest(
+            ApiContest apiContest, Optional<Integer> opus) {
+        int myOpus = opus.orElse(defaultOpus);
+        SimpleIdentity id = new SimpleIdentity(apiContest.getContest_id(), myOpus);
+        Contest contest = newContestOrFromDb(id);
         if (contest != null && !contest.isAdminResult()) {
-            populateContest(apiContest, contest);
+            populateContest(apiContest, contest, myOpus);
         }
         return contest;
     }
 
-    public Contest addContest(Contest contest) {
-        if (contest.getContestUuid() == null) {
-            contest.setContestUuid(UUID.randomUUID());
+    public Contest addContest(Contest contest, Optional<Integer> opus) {
+        Identity contestIdentity = contest.getIdentity();
+        if (contestIdentity == null) {
+            contestIdentity = new SimpleIdentity(UUID.randomUUID(), opus.orElse(defaultOpus));
         }
-        List<Contest> byId = contestRepository.findByContestUuid(contest.getContestUuid());
+        Optional<Contest> byId = contestRepository.findById(contestIdentity);
         if (!byId.isEmpty()) {
-            throw new IllegalArgumentException("Contest with uuid " + contest.getContestUuid() + " already exists");
+            throw new IllegalArgumentException("Contest with uuid " + contestIdentity + " already exists");
         }
+        contest.setIdentity(contestIdentity);
         return contestRepository.save(contest);
     }
 
-    private Contest newContestOrFromDb(UUID uuid) {
-        if (uuid == null) {
-            log.error("Can't convert contest. Need an UUID.");
+    private Contest newContestOrFromDb(Identity id) {
+        if (id == null) {
+            log.error("Can't convert contest. Need an Id.");
             return null;
         }
-        List<Contest> contestsFromDb = contestRepository.findByContestUuid(uuid);
-        Contest contest;
-        if (contestsFromDb.isEmpty()) {
-            contest = new Contest();
-        } else if (contestsFromDb.size() > 1) {
-            log.warn("Found multiple contests with the same UUID: {}", uuid);
-            contest = contestsFromDb.stream()
-                    .max(Comparator.comparing(Contest::getOpus))
-                    .orElseThrow(() -> new IllegalStateException("No contest found with UUID: " + uuid));
-        } else {
-            contest = contestsFromDb.get(0);
-        }
-        contest.setContestUuid(uuid);
-        return contest;
+
+        Optional<Contest> contestFromDb = contestRepository.findById(id);
+        return contestFromDb.isPresent() ? contestFromDb.get() : new Contest(id);
     }
 
-    private void populateContest(ApiContest sourceApiContestMatch, Contest targetContest) {
+    private void populateContest(ApiContest sourceApiContestMatch, Contest targetContest, int opus) {
         PopulatorUtil.copyNonNullProperties(sourceApiContestMatch, targetContest);
-        targetContest.setContestUuid(sourceApiContestMatch.getContest_id());
-        targetContest.setLeagueId(sourceApiContestMatch.getLeague_id());
+        //targetContest.setContestUuid(sourceApiContestMatch.getContest_id());
+        targetContest.setLeagueId(new SimpleIdentity(sourceApiContestMatch.getLeague_id(), 3));
         targetContest.setLive(sourceApiContestMatch.getLive());
-        targetContest.setCompetitionId(sourceApiContestMatch.getCompetition_id());
+        targetContest.setCompetitionId(new SimpleIdentity(sourceApiContestMatch.getCompetition_id(), 3));
         targetContest.setCompetitionName(sourceApiContestMatch.getCompetition());
         targetContest.setLeagueName(sourceApiContestMatch.getLeague());
         targetContest.setGameId(sourceApiContestMatch.getGame_id());
         targetContest.setMatchUuid(
                 Optional.ofNullable(sourceApiContestMatch.getGame_id()).map(UUID::fromString).orElse(null));
         targetContest.setMatchDate(sourceApiContestMatch.getMatch_date());
-        targetContest.setOpponents(toOpponents(sourceApiContestMatch.getOpponents()));
+        targetContest.setOpponents(toOpponents(sourceApiContestMatch.getOpponents(), opus));
 
         undeprecateMatchStatus(targetContest);
     }
@@ -109,20 +107,22 @@ public class ContestDomainService {
         contest.setStatus(contest.getStatus().undeprecate());
     }
 
-    private List<Team> toOpponents(ApiContest.Opponent[] apiOpponents) {
+    private List<Team> toOpponents(ApiContest.Opponent[] apiOpponents, int opus) {
         if (apiOpponents == null) {
             return Collections.emptyList();
         }
-        return Arrays.stream(apiOpponents).map(this::toOpponent).collect(Collectors.toList());
+        return Arrays.stream(apiOpponents)
+            .map((apiTeam) -> toOpponent(apiTeam, opus))
+            .collect(Collectors.toList());
     }
 
-    private Team toOpponent(ApiContest.Opponent apiOpponent) {
-        Team team = new Team();
+    private Team toOpponent(ApiContest.Opponent apiOpponent, int opus) {
+        SimpleIdentity id = new SimpleIdentity(apiOpponent.getTeam().getId(), opus);
+        Team team = new Team(id);
         ApiContest.Team apiTeam = apiOpponent.getTeam();
         PopulatorUtil.copyNonNullProperties(apiTeam, team);
         team.setCoachId(apiOpponent.getCoach().getId().toString());
         team.setCoachName(apiOpponent.getCoach().getName());
         return team;
     }
-
 }

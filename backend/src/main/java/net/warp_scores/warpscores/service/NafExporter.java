@@ -6,6 +6,7 @@ import net.warp_scores.warpscores.export.naf.Coach;
 import net.warp_scores.warpscores.export.naf.Game;
 import net.warp_scores.warpscores.export.naf.NafReport;
 import net.warp_scores.warpscores.export.naf.PlayerRecord;
+import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.CompetitionStatus;
 import net.warp_scores.warpscores.model.Contest;
@@ -38,9 +39,9 @@ public class NafExporter {
     private final CompetitionService competitionService;
     private final NafCoachService nafCoachService;
 
-    public Optional<NafReport> export(String competitionId, Optional<Integer> opus, String exporterName) {
+    public Optional<NafReport> export(Identity competitionId, String exporterName) {
         Optional<Competition> competition = 
-            competitionService.loadCompetition(competitionId, opus);
+            competitionService.loadCompetition(competitionId);
         return competition.flatMap(comp -> export(comp, exporterName));
     }
 
@@ -52,8 +53,7 @@ public class NafExporter {
         }
 
         List<Contest> competitionContests = 
-            contestService.getCompetitionContests(
-                competition.getId(), Optional.of(competition.getOpus()), Optional.empty());
+            contestService.getCompetitionContests(competition.getIdentity(), Optional.empty());
         return Optional.of(export(competitionContests, exporterName));
     }
 

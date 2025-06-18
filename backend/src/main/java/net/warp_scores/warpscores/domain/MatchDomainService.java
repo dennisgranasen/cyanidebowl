@@ -8,6 +8,8 @@ import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
 import net.warp_scores.warpscores.cyanide.api.responses.MatchResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.MatchesResponse;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
+import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Team;
@@ -28,12 +30,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import java.util.UUID;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.tuple.Pair;
 
 import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.toMap;
 
 @Slf4j
 @Service
@@ -41,15 +40,14 @@ import static java.util.stream.Collectors.toMap;
 public class MatchDomainService {
     private final MatchRepository matchRepository;
     private final TeamPopulator teamPopulator;
-    private final UUIDConverter uuidConverter;
 
     @Value("${cyanide.defaults.opus:3}")
     private int defaultOpus;
 
     @Transactional
-    public List<Match> findMatchesForTeam(String teamId, Optional<Integer> opus) {
+    public List<Match> findMatchesForTeam(Identity teamId) {
         List<Match> teamMatches = 
-            matchRepository.findMatchesByTeamId(teamId, opus.orElse(defaultOpus));
+            matchRepository.findMatchesByTeamId(teamId);
         return teamMatches.stream()
                 .sorted(Comparator.comparing(Match::getStarted).reversed())
                 .collect(Collectors.toList());
@@ -57,26 +55,25 @@ public class MatchDomainService {
 
     
     @Transactional
-    public Map<String, Optional<Date>> getLastMatchDatesForCompetitions(
+    public Map<Identity, Optional<Date>> getLastMatchDatesForCompetitions(
             List<Competition> compData) {
 
-        List<MatchRepository.DateForUuid> lastMatchDateByCompIds = Collections.emptyList();
+        List<MatchRepository.DateForId> lastMatchDateByCompIds = Collections.emptyList();
 
         for (Competition competition : compData) {
-            Integer opus = competition.getOpus();
-            List<String> compIds = competition.getId() != null
-                    ? Collections.singletonList(competition.getId())
+            //Integer opus = competition.getOpus();
+            List<Identity> compIds = competition.getIdentity() != null
+                    ? Collections.singletonList(competition.getIdentity())
                     : Collections.emptyList();
             if (!compIds.isEmpty()) {
                 lastMatchDateByCompIds.addAll(matchRepository
-                        .findLastMatchDateByCompetitionIds(compIds, opus));
+                        .findLastMatchDateByCompetitionIds(compIds));
             }
         }
-                        
         return lastMatchDateByCompIds
                 .stream()
                 .collect(Collectors.toMap(
-                    d -> d.uuid() != null ? d.uuid().toString() : null,
+                    d -> d.id(),
                     d -> Optional.ofNullable(d.date())
                 ));
     }
@@ -84,41 +81,29 @@ public class MatchDomainService {
 
             
     @Transactional
-    public Map<String, Optional<Date>> getLastMatchDatesForLeagues(
-            List<Pair<Integer, String>> leagueData) {
+    public Map<Identity, Optional<Date>> getLastMatchDatesForLeagues(
+            List<Identity> leagueIds) {
     
-        List<Integer> opi = leagueData
-                .stream()
-                .map(Pair::getLeft)
-                .distinct()
-                .collect(Collectors.toList());
-        List<MatchRepository.DateForUuid> lastMatchDateByLeagueIds = Collections.emptyList();
-        for (Integer opus : opi)
-        {
-            List<String> leagueIds = leagueData
-                    .stream()
-                    .filter(p -> p.getLeft().equals(opus))
-                    .map(Pair::getRight)
-                    .collect(Collectors.toList());
-            if (!leagueIds.isEmpty()) {
-                lastMatchDateByLeagueIds.addAll(matchRepository
-                        .findLastMatchDateByLeagueIds(leagueIds, opus));
-            }
+        List<MatchRepository.DateForId> lastMatchDateByLeagueIds = 
+            Collections.emptyList();
+        if (!leagueIds.isEmpty()) {
+            lastMatchDateByLeagueIds.addAll(matchRepository
+                    .findLastMatchDateByLeagueIds(leagueIds));
         }
         
         return lastMatchDateByLeagueIds
                 .stream()
                 .collect(Collectors.toMap(
-                    d -> d.id() != null ? d.id() : null,
+                    d -> d.id(),
                     d -> Optional.ofNullable(d.date())
                 ));
     }
 
     @Transactional
-    public Map<String, Optional<Date>> getLastMatchDatesForTeams(List<Team> teams) {
-        Map<String, Optional<Date>> lastMatchDatesByTeamId = new HashMap<>();
+    public Map<Identity, Optional<Date>> getLastMatchDatesForTeams(List<Team> teams) {
+        Map<Identity, Optional<Date>> lastMatchDatesByTeamId = new HashMap<>();
         teams.forEach(team ->
-             lastMatchDatesByTeamId.put(team.getId(), matchRepository
+             lastMatchDatesByTeamId.put(team.getIdentity(), matchRepository
                 .findTopByTeamsContainsOrderByStartedDesc(team).map(Match::getStarted)));
         return lastMatchDatesByTeamId;
     }
@@ -128,10 +113,11 @@ public class MatchDomainService {
         if (matchesResponse == null || matchesResponse.isEmpty()) {
             return Collections.emptyList();
         }
+        Optional<Integer> opus = matchesResponse.getMeta().getOpus();
 
         List<Match> matches = Arrays
                 .stream(matchesResponse.getMatches())
-                .map(this::internalCreateOrUpdateMatch)
+                .map((apiMatch) -> internalCreateOrUpdateMatch(apiMatch, opus))
                 .toList();
         return matchRepository.saveAll(matches);
     }
@@ -141,36 +127,38 @@ public class MatchDomainService {
         if (matchResponse == null || matchResponse.isEmpty()) {
             return null;
         }
-
+        Optional<Integer> opus = matchResponse.getMeta().getOpus();
         Optional<ApiMatch> apiMatch = ofNullable(matchResponse.getMatch());
-        Optional<Match> match = apiMatch.map(this::internalCreateOrUpdateMatch);
+        Optional<Match> match = apiMatch.map((x) -> internalCreateOrUpdateMatch(x, opus));
         return match.map(matchRepository::save).orElse(null);
     }
 
-    private Match internalCreateOrUpdateMatch(ApiMatch apiMatch) {
+    private Match internalCreateOrUpdateMatch(ApiMatch apiMatch, Optional<Integer> opus) {
+        int myOpus = opus.orElse(defaultOpus);
         Match match = newMatchOrFromDb(
-                uuidConverter.getNonNull(apiMatch.getMatchId(), uuidConverter.toUuid(apiMatch.getId()).orElse(null)));
-        populateMatch(apiMatch, match);
+            new SimpleIdentity(apiMatch.getId(), myOpus));
+        populateMatch(apiMatch, myOpus, match);
         return match;
     }
 
-    private Match newMatchOrFromDb(UUID uuid) {
-        List<Match> matchesFromDb = matchRepository.findByMatchId(uuid);
-        Match match = matchesFromDb.isEmpty() ? new Match() : matchesFromDb.get(0); ;
-        match.setMatchId(uuid);
-        return match;
+    private Match newMatchOrFromDb(Identity id) {
+        Optional<Match> matchFromDb = matchRepository.findById(id);
+        if (matchFromDb.isPresent()) {
+            return matchFromDb.get();
+        }
+        return new Match(id);
     }
 
-    public void populateMatch(ApiMatch sourceApiMatch, Match targetMatch) {
+    public void populateMatch(ApiMatch sourceApiMatch, int opus, Match targetMatch) {
         PopulatorUtil.copyNonNullProperties(sourceApiMatch, targetMatch);
 
         targetMatch.setCoaches(
                 Arrays.stream(sourceApiMatch.getCoaches())
-                        .map(this::toCoach)
+                        .map((apiCoach) -> toCoach(apiCoach))
                         .collect(Collectors.toList()));
         targetMatch.setTeams(
                 Arrays.stream(sourceApiMatch.getTeams())
-                        .map(this::toTeam)
+                        .map((apiTeam) -> toTeam(apiTeam, opus))
                         .collect(Collectors.toList()));
     }
 
@@ -180,9 +168,9 @@ public class MatchDomainService {
         return coach;
     }
 
-    private Team toTeam(ApiTeam apiTeam) {
-        Team team = new Team();
-        teamPopulator.populateMatchTeam(apiTeam, team);
+    private Team toTeam(ApiTeam apiTeam, int opus) {
+        Team team = new Team(new SimpleIdentity(apiTeam.getId(), opus));
+        teamPopulator.populateMatchTeam(apiTeam, team, opus);
         return team;
     }
 

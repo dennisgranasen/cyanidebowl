@@ -1,6 +1,6 @@
 package net.warp_scores.warpscores.model;
 
 
-public enum CircuitLegType implements Comparable<CircuitLegType> {
+public enum CircuitLegType  {
     League, Competition, Circuit
 }

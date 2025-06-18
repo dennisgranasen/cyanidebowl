@@ -6,6 +6,7 @@ import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
+import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.CompetitionFormat;
 import net.warp_scores.warpscores.model.Contest;
@@ -41,25 +42,20 @@ public class RankService {
     private final TeamDomainService teamDomainService;
     private final CompetitionService competitionService;
 
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
-
 
     private final List<RankComparisons> defaultRankComparisons = List.of(RankComparisons.SCORE_310,
             RankComparisons.WINS,
             RankComparisons.INFLICTED_TOUCHDOWNS, RankComparisons.TOUCHDOWN_DIFFERENCE);
 
     @DurationLogging
-    public List<Rank> getRanksForCompetition(String competitionId, 
-            Optional<Integer> opus,
+    public List<Rank> getRanksForCompetition(Identity competitionId, 
             Optional<List<RankComparisons>> rankComparisons,
             Optional<Integer> limit) {
-        Competition competition = competitionService.loadCompetition(competitionId, opus)
+        Competition competition = competitionService.loadCompetition(competitionId)
                 .orElseThrow(NoSuchElementException::new);
 
         List<Contest> contests = 
-            contestRepository.findByCompetitionIdAndStatus(competitionId, opus,
-                Validated);
+            contestRepository.findByCompetitionIdAndStatus(competitionId, Validated);
         Set<Team> teams = new HashSet<>();
         contests
                 .stream()
@@ -68,11 +64,10 @@ public class RankService {
                 .collect(Collectors.toCollection(() -> teams));
         List<Match> matches = Collections.emptyList();
         if (!competition.getFormat().equals(CompetitionFormat.Ladder)) {
-            matches = matchRepository.findByCompetitionId(competitionId, 
-                opus.orElse(defaultOpus));
+            matches = matchRepository.findByCompetitionId(competitionId);
         }
         Map<UUID, Match> matchByMatchId =
-            matches.stream().collect(Collectors.toMap(Match::getMatchId, m -> m));
+            matches.stream().collect(Collectors.toMap(m -> UUID.fromString(m.getMatchId()), m -> m, (a, b) -> a, HashMap::new));
 
         return teams.stream()
                 .map(team -> toRank(
@@ -121,7 +116,7 @@ public class RankService {
             Optional<Match> match = ofNullable(contest.getMatchUuid()).map(matchByMatchId::get);
             List<Team> teamResults = match.map(Match::getTeams).orElse(contest.getOpponents());
 
-            Optional<Team> ownTeam = getTeam(teamResults, team.getId());
+            Optional<Team> ownTeam = getTeam(teamResults, team.getIdentity());
             Optional<Team> otherTeam = getOtherTeam(teamResults, ownTeam);
             if (ownTeam.isPresent() && otherTeam.isPresent()) {
                 gamesPlayed++;
@@ -176,7 +171,7 @@ public class RankService {
             return empty();
         }
         List<Team> teams = teamResults.stream()
-                .filter(team -> !myTeam.get().getId().equals(team.getId()))
+                .filter(team -> !myTeam.get().getIdentity().equals(team.getIdentity()))
                 .toList();
         if (teams.isEmpty()) {
             return empty();
@@ -187,12 +182,12 @@ public class RankService {
         return Optional.of(teams.get(0));
     }
 
-    private Optional<Team> getTeam(List<Team> teamResults, String teamId) {
+    private Optional<Team> getTeam(List<Team> teamResults, Identity teamId) {
         if (teamResults == null) {
             return empty();
         }
         List<Team> teams = teamResults.stream()
-                .filter(team -> teamId.equals(team.getId()))
+                .filter(team -> teamId.equals(team.getIdentity()))
                 .toList();
         if (teams.isEmpty()) {
             return empty();

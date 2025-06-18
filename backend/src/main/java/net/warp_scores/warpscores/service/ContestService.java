@@ -6,6 +6,7 @@ import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
+import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.Match;
@@ -37,24 +38,20 @@ public class ContestService {
     private final OfficialLeagueAndCompetitions officialLeagueAndCompetitions;
     private final MatchService matchService;
 
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
-
     @DurationLogging
     public List<Contest> getCompetitionContests(
-                String competitionId,
-                Optional<Integer> opus,
+                Identity competitionId,
                 Optional<Integer> limit) {  
         Optional<Competition> competition = 
-                competitionService.loadCompetition(competitionId, opus);
+                competitionService.loadCompetition(competitionId);
         Set<Team> teams = new LinkedHashSet<>(teamDomainService
-                .findByCompetitionId(competitionId, opus)
+                .findByCompetitionId(competitionId)
                 .stream()
                 .toList());
         Pageable pageable = limit.map(l -> (Pageable) PageRequest.of(0, l, Sort.by(Sort.Direction.DESC, "matchDate")))
                 .orElse(Pageable.unpaged());
         List<Contest> contests = contestRepository.findByCompetitionId(
-                competitionId, opus, pageable);
+                competitionId, pageable);
         teams.addAll(contests.stream().map(
                 Contest::getOpponents).flatMap(Collection::stream).toList());
         contests.forEach(this::loadMatchIntoAndAdjustCompetitionName);
@@ -65,12 +62,10 @@ public class ContestService {
 
     @DurationLogging
     public List<Contest> getLatestLeagueContests(
-                String leagueId,
-                Optional<Integer> opus,
+                Identity leagueId,
                 int limit) {
         List<Contest> contests = 
                 contestRepository.findByLeagueIdAndStatusOrderByMatchDateDesc(leagueId,
-                        opus,
                         MatchStatus.Validated, 
                         PageRequest.of(0, limit, 
                                 Sort.by(Sort.Direction.DESC, "matchDate")));
@@ -80,12 +75,11 @@ public class ContestService {
 
     @DurationLogging
     public List<Contest> getLiveLeagueContests(
-                String leagueId,
-                Optional<Integer> opus,
+                Identity leagueId,
                 int limit) {
         List<Contest> contests = 
                 contestRepository.findByLeagueIdAndLiveOrderByMatchDateDesc(
-                        leagueId, opus, 1,
+                        leagueId, 1,
                         PageRequest.of(0, limit, 
                                 Sort.by(Sort.Direction.DESC, "matchDate")));
         contests.forEach(this::loadMatchIntoAndAdjustCompetitionName);
@@ -94,10 +88,10 @@ public class ContestService {
 
     @DurationLogging
     public List<Contest> getLatestCompetitionContests(
-                String competitionId, Optional<Integer> opus, int limit) {
+                Identity competitionId, int limit) {
         List<Contest> contests = 
                 contestRepository.findByCompetitionIdAndStatusOrderByMatchDateDesc(
-                        competitionId, opus, MatchStatus.Validated, 
+                        competitionId, MatchStatus.Validated, 
                         PageRequest.of(0, limit, 
                                 Sort.by(Sort.Direction.DESC, "matchDate")));
         contests.forEach(this::loadMatchIntoAndAdjustCompetitionName);
@@ -106,10 +100,10 @@ public class ContestService {
 
     @DurationLogging
     public List<Contest> getLiveCompetitionContests(
-                String competitionId, Optional<Integer> opus, int limit) {
+                Identity competitionId, int limit) {
         List<Contest> contests =
                 contestRepository.findByCompetitionIdAndLiveOrderByMatchDateDesc(
-                        competitionId, opus, 1, 
+                        competitionId, 1, 
                                 PageRequest.of(0, limit, 
                                         Sort.by(Sort.Direction.DESC, "matchDate")));
         contests.forEach(this::loadMatchIntoAndAdjustCompetitionName);
@@ -122,7 +116,7 @@ public class ContestService {
             contest.setMatch(null);
             return;
         }
-        List<Match> match = matchRepository.findByMatchId(matchUuid.get());
+        List<Match> match = matchRepository.findByMatchUuid(matchUuid.get());
 
         officialLeagueAndCompetitions.adjustCompetitionName(contest.getLeagueId(), 
                 contest.getCompetitionName(),

@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.service;
 
 import com.fasterxml.uuid.Generators;
 import net.warp_scores.warpscores.model.CompetitionFormat;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.Team;
@@ -176,7 +177,7 @@ public class ContestInitializationServiceTest {
     }
 
     private void givenCompetition(CompetitionFormat competitionFormat) {
-        this.givenCompetition = new Competition();
+        this.givenCompetition = new Competition(new SimpleIdentity(1,1));
         this.givenCompetition.setFormat(competitionFormat);
         this.givenCompetition.setName("Test Competition");
     }
@@ -192,8 +193,7 @@ public class ContestInitializationServiceTest {
     private void givenTeams(String... teamNames) {
         List<Team> teams = new ArrayList<>();
         for (String teamName : teamNames) {
-            Team team = new Team();
-            team.setId(UUID.randomUUID().toString());
+            Team team = new Team(new SimpleIdentity(UUID.randomUUID(), 3));
             team.setName(teamName);
             teams.add(team);
         }
@@ -207,8 +207,7 @@ public class ContestInitializationServiceTest {
     }
 
     private static Contest createContest(int round, String teamNameA, String teamNameB) {
-        Contest contest = new Contest();
-        contest.setContestUuid(Generators.timeBasedGenerator().generate());
+        Contest contest = new Contest(new SimpleIdentity(UUID.randomUUID(), 3));
         Team teamA = createTeam(teamNameA);
         Team teamB = createTeam(teamNameB);
         contest.setOpponents(List.of(teamA, teamB));
@@ -217,7 +216,7 @@ public class ContestInitializationServiceTest {
     }
 
     private static Team createTeam(String teamName) {
-        Team team = new Team();
+        Team team = new Team(new SimpleIdentity(2, 2));
         team.setName(teamName);
         return team;
     }

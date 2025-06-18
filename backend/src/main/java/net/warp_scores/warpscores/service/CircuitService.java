@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.domain.SequenceGenerator;
 import net.warp_scores.warpscores.domain.persistence.CircuitRepository;
+import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.model.Circuit;
 import net.warp_scores.warpscores.model.CircuitLeg;
 import net.warp_scores.warpscores.model.CircuitLegType;
@@ -16,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,16 +44,14 @@ public class CircuitService {
     @DurationLogging
     public List<Circuit> loadAll() {
         List<Circuit> circuits = circuitRepository.findAll();
-
         addDummyCircuitForLegacyLeagues(circuits);
-
         return circuits;
     }
 
     @Deprecated
     private void addDummyCircuitForLegacyLeagues(List<Circuit> circuits) {
         Optional<Circuit> circuit = createDummyCircuitIfNecessary(circuits);
-        circuit.ifPresentOrElse(c -> circuits.add(c),
+        circuit.ifPresentOrElse(circuits::add,
                 () -> log.info("No legacy leagues found. Code can be cleaned up."));
     }
 
@@ -65,19 +64,17 @@ public class CircuitService {
     @Deprecated
     private List<League> getLeaguesWithoutCircuits(List<Circuit> circuits) {
         List<League> leagues = leagueService.loadAll();
-        List<String> leagueIdsInCircuits = circuits
+        Set<Identity> leagueIdsInCircuits = circuits
                 .stream()
                 .flatMap(c -> c.getCircuitLegs().stream())
-                .collect(Collectors.toSet())
-                .stream()
                 .filter(cl -> cl.getLegType() == CircuitLegType.League)
-                .map(CircuitLeg::getCompetitionId)
-                .toList();
-        List<League> leaguesWithoutCircuits = leagues
+                .map(CircuitLeg::getEntityId)
+                .collect(Collectors.toSet());
+        // Use getLeagueId() or getIdentity().getId() depending on your League model
+        return leagues
                 .stream()
-                .filter(league -> !leagueIdsInCircuits.contains(league.getId()))
-                .toList();
-        return leaguesWithoutCircuits;
+                .filter(league -> !leagueIdsInCircuits.contains(league.getLeagueId()))
+                .collect(Collectors.toList());
     }
 
     private Optional<Circuit> createDummyCircuit(List<League> leaguesWithoutCircuits) {
@@ -87,7 +84,8 @@ public class CircuitService {
         Circuit circuit = new Circuit();
         circuit.setCircuitId(DUMMY_CIRCUIT_ID);
         circuit.setCircuitName("Leagues without circuits");
-        //circuit.setCircuitLegs(leaguesWithoutCircuits.stream().map(this::createDummyCircuitLeg).toList());
+        // If you want to add dummy legs, uncomment and update the following:
+        // circuit.setCircuitLegs(leaguesWithoutCircuits.stream().map(this::createDummyCircuitLeg).toList());
         return Optional.of(circuit);
     }
 
@@ -100,7 +98,7 @@ public class CircuitService {
         circuitLeg.setIsKnockout(false);
         circuitLeg.setIsCollected(true);
         circuitLeg.setLabel(league.getName());
-        circuitLeg.setCompetitionId(league.getUuid().toString());
+        circuitLeg.setCompetitionId(league.getLeagueId()); // Use Identity-based id
         return circuitLeg;
     }
     */
@@ -124,9 +122,7 @@ public class CircuitService {
 
     public Circuit removeLeg(Circuit circuit, Long circuitLegId) {
         log.info("Removing leg {} from circuit {}.", circuitLegId, circuit.getCircuitId());
-        // Remove the leg with the given ID
         circuit.getCircuitLegs().removeIf(leg -> circuitLegId.equals(leg.getCircuitLegId()));
-        // Save and return the updated circuit
         return circuitRepository.save(circuit);
     }
 }

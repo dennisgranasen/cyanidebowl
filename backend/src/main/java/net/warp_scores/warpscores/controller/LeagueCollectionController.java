@@ -6,10 +6,13 @@ import net.warp_scores.warpscores.cyanide.api.model.common.IdWithName;
 import net.warp_scores.warpscores.cyanide.api.requests.LookupRequest;
 import net.warp_scores.warpscores.cyanide.api.responses.LookupResponse;
 import net.warp_scores.warpscores.domain.persistence.LeagueCollectionRepository;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.model.LeagueCollection;
 import net.warp_scores.warpscores.service.UUIDConverter;
 import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,6 +40,10 @@ public class LeagueCollectionController {
 
     private final UUIDConverter uuidConverter;
 
+        @Value("${cyanide.defaults.opus:3}")
+    private int defaultOpus;
+
+
     @PostMapping("/leagueCollection/{leagueId}")
     @PreAuthorize(AUTHORITY_WRITE_REGISTER_LEAGUE) // ✨
     public ResponseEntity<List<League>> createLeagueCollection(
@@ -61,7 +68,7 @@ public class LeagueCollectionController {
 
         return leagueCollections
                 .stream()
-                .map(lc -> cyanideApiService.loadLeague(lc.getLeagueId(), opus))
+                .map(lc -> cyanideApiService.loadLeague(new SimpleIdentity(lc.getLeagueId(), opus.orElse(defaultOpus))))
                 .toList();
     }
 

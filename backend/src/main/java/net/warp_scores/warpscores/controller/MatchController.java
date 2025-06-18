@@ -3,11 +3,15 @@ package net.warp_scores.warpscores.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
+import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.service.CompetitionService;
 import net.warp_scores.warpscores.service.MatchService;
 import net.warp_scores.warpscores.service.OfficialLeagueAndCompetitions;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,13 +35,18 @@ public class MatchController {
     private final CompetitionService competitionService;
     private final MatchService matchService;
 
+    @Value("${cyanide.defaults.opus:3}")
+    private int defaultOpus;
+
+
     @GetMapping("/matches/team/{teamId}")
     public ResponseEntity<List<Match>> getTeamMatches(
             @PathVariable(name = "teamId") String teamId, 
             @RequestParam(name = "opus", required = false) Integer opus) {
         try {
             List<Match> byTeamId = 
-            matchService.findByTeamId(teamId, Optional.ofNullable(opus));
+            matchService.findByTeamId(new SimpleIdentity(
+                teamId, Optional.ofNullable(opus).orElse(defaultOpus)));
             return ResponseEntity.ok(byTeamId);
         } catch (Exception ex) {
             log.error("Unable to retrieve matches for team {}", teamId, ex);
@@ -60,8 +69,9 @@ public class MatchController {
         limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT_FOR_LATEST_MATCHES);
         limit = Math.min(limit, MAX_LIMIT_FOR_LATEST_MATCHES);
         try {
-            List<Match> matches = matchService.getLatestLeagueMatches(leagueId, 
-                limit, Optional.ofNullable(opus));
+            Identity leagueIdentity = new SimpleIdentity(
+                leagueId, Optional.ofNullable(opus).orElse(defaultOpus));
+            List<Match> matches = matchService.getLatestLeagueMatches(leagueIdentity, limit);
             return ResponseEntity.ok(matches);
         } catch (Exception ex) {
             log.error("Unable to retrieve matches", ex);
@@ -74,10 +84,11 @@ public class MatchController {
             @PathVariable(name = "competitionId") String competitionId,
             @RequestParam(name = "opus", required = false) Integer opus) {
         try {
+            Identity competitionIdentity = new SimpleIdentity(
+                competitionId, Optional.ofNullable(opus).orElse(defaultOpus));
             Optional<Competition> competition =
-                competitionService.loadCompetition(competitionId, Optional.of(opus));
-            List<Match> byCompetitionId = matchService.findByCompetitionId(
-                competitionId, Optional.of(opus));
+                competitionService.loadCompetition(competitionIdentity);
+            List<Match> byCompetitionId = matchService.findByCompetitionId(competitionIdentity);
             List<Match> matches = initializeForCompetition(byCompetitionId, competition);
             return ResponseEntity.ok(matches);
         } catch (Exception ex) {
@@ -102,8 +113,11 @@ public class MatchController {
         limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT_FOR_LATEST_MATCHES);
         limit = Math.min(limit, MAX_LIMIT_FOR_LATEST_MATCHES);
         try {
+            Identity competitionIdentity = 
+                new SimpleIdentity(competitionId, Optional.ofNullable(opus).orElse(defaultOpus));
+
             List<Match> matches = matchService.getLatestCompetitionMatches(
-                competitionId, limit, Optional.ofNullable(opus));
+                competitionIdentity, limit);
             return ResponseEntity.ok(matches);
         } catch (Exception ex) {
             log.error("Unable to retrieve matches", ex);

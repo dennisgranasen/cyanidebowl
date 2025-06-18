@@ -1,6 +1,7 @@
 package net.warp_scores.warpscores.service;
 
 import net.warp_scores.warpscores.export.naf.NafReport;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.NafCoach;
 import net.warp_scores.warpscores.model.Race;
@@ -192,7 +193,7 @@ public class NafExporterTest {
             Object[] teamRaces,
             Object[] teamTouchdowns,
             Object[] teamCasualties) {
-        Contest contest = new Contest();
+        Contest contest = new Contest(new SimpleIdentity(42,1));
         contest.setMatchDate(parseDateOrNullIgnoringExceptions(matchDateValue));
         contest.setOpponents(List.of(
                 newOpponent((String) teamCoachNames[0], (Race) teamRaces[0], (Integer) teamTouchdowns[0],
@@ -204,8 +205,7 @@ public class NafExporterTest {
     }
 
     private Team newOpponent(String coachName, Race race, Integer touchdowns, Integer casualties) {
-        Team team = new Team();
-        team.setId(UUID.randomUUID().toString());
+        Team team = new Team(new SimpleIdentity(UUID.randomUUID(), 3));
         team.setCoachName(coachName);
         team.setRace(race);
         team.setScore(touchdowns);

@@ -30,4 +30,8 @@ public class RulesRequest extends ApiRequest<RulesRequest, RulesResponse> {
         super("bb/rules", RulesRequest.class, RulesResponse.class);
         setCacheValidity(CacheValidityDurations.ONE_DAY);
     }
+
+    private String platform;
+    private String opus;
+    private String ruleset; // Alias for rule, rules, ruleset for compatibility with BB
 }

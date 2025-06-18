@@ -4,24 +4,28 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import net.warp_scores.warpscores.identity.Identity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
-import java.util.UUID;
 
 @Getter
 @Setter
 @Document
-@EqualsAndHashCode(of = "id")
+@EqualsAndHashCode(of = "identity")
 public class Coach {
     @Id
     public String get_id() {
-        return id != null && opus != null ? opus + "-" + id : null;
+        return identity != null ? identity.getId() : null;
     }
 
-    private String id;
-    public String getCoachId() { return id; }
+    private final Identity identity;
+
+    public String getCoachId() {
+        return identity != null ? identity.getId() : null;
+    }
+
     private String name;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date created;
@@ -33,11 +37,13 @@ public class Coach {
     private String lastLang;
     private String status;
     private Boolean matchValidation;
-    
-    private Integer opus; // Opus is the version of the coach, used for compatibility with different game versions.
+
+    public Coach(Identity identity) {
+        this.identity = identity;
+    }
 
     @Override
     public String toString() {
-            return String.format("Coach[%s] %s", id, name);
+        return String.format("Coach[%s] %s", getCoachId(), name);
     }
 }

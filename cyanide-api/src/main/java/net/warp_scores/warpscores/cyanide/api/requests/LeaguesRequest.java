@@ -34,7 +34,7 @@ import java.util.UUID;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LeaguesRequest extends ApiRequest<LeaguesRequest, LeaguesResponse> {
     private String league_name;
-    private UUID league_id;
+    private String league_id;
     private Integer id; // Alias for league_id for compatibility with BB1
     private String team;
     private Integer min_teams_count;

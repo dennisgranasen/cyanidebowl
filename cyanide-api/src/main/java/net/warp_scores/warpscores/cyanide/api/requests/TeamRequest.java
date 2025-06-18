@@ -42,6 +42,7 @@ import java.util.UUID;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TeamRequest extends ApiRequest<TeamRequest, TeamResponse> {
 
+    private String platform;
     private String id;
     private String name;
     private Integer coach;
@@ -49,6 +50,7 @@ public class TeamRequest extends ApiRequest<TeamRequest, TeamResponse> {
     private Integer statistics;
     private Integer skills;
     private Integer casualties;
+    private Integer opus;
 
     public TeamRequest() {
         super("bb/team", TeamRequest.class, TeamResponse.class);

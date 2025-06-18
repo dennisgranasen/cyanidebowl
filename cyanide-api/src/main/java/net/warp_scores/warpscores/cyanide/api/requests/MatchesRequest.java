@@ -47,6 +47,7 @@ import java.util.UUID;
 public class MatchesRequest extends ApiRequest<MatchesRequest, MatchesResponse> {
     public enum Ordering {started, finished}
 
+    private String platform;
     private String league_name;
     private String league_id;
     private String competition_name;
@@ -57,6 +58,7 @@ public class MatchesRequest extends ApiRequest<MatchesRequest, MatchesResponse> 
     private Integer id_only;
     private String team_id;
     private Integer team_stats;
+    private Integer opus;
 
     public MatchesRequest() {
         super("bb/matches", MatchesRequest.class, MatchesResponse.class);

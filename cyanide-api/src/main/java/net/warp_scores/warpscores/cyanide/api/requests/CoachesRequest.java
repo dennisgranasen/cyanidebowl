@@ -39,4 +39,6 @@ public class CoachesRequest extends ApiRequest<CoachesRequest, CoachesResponse> 
     private String league;
 
     private String competition;
+
+    private Integer opus;
 }

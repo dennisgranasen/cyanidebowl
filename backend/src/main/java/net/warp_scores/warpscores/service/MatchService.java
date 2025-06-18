@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
+import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Player;
 
@@ -29,39 +30,35 @@ public class MatchService {
     private int defaultOpus;
 
     @DurationLogging
-    public List<Match> findByTeamId(String teamId, Optional<Integer> opus) {
+    public List<Match> findByTeamId(Identity teamId) {
         List<Match> matches =
-            matchRepository.findMatchesByTeamId(teamId, opus.orElse(defaultOpus));
+            matchRepository.findMatchesByTeamId(teamId);
         return adjustCompetitionNameAndLogoAndUpdateConcedeAndOvertimeInfo(matches);
     }
 
     @DurationLogging
-    public List<Match> getLatestLeagueMatches(String leagueId, int limit, Optional<Integer> opus) {
+    public List<Match> getLatestLeagueMatches(Identity leagueId, int limit) {
         List<Match> matches = matchRepository.findTopByLeagueIdAndFinishedNotNull(leagueId,
-                PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "finished")),
-                opus.orElse(defaultOpus));
+                PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "finished")));
         return adjustCompetitionNameAndLogoAndUpdateConcedeAndOvertimeInfo(matches);
     }
 
     @DurationLogging
-    public List<Match> getLatestCompetitionMatches(String competitionId, int limit, Optional<Integer> opus) {
+    public List<Match> getLatestCompetitionMatches(Identity competitionId, int limit) {
         List<Match> matches = matchRepository.findTopByCompetitionIdAndFinishedNotNull(competitionId,
-                PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "finished")),
-                opus.orElse(defaultOpus));
+                PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "finished")));
         return adjustCompetitionNameAndLogoAndUpdateConcedeAndOvertimeInfo(matches);
     }
 
     @DurationLogging
-    public List<Match> findByCompetitionId(String competitionId, Optional<Integer> opus) {
-        List<Match> matches = matchRepository.findByCompetitionId(competitionId,
-            opus.orElse(defaultOpus));
+    public List<Match> findByCompetitionId(Identity competitionId) {
+        List<Match> matches = matchRepository.findByCompetitionId(competitionId);
         return adjustCompetitionNameAndLogoAndUpdateConcedeAndOvertimeInfo(matches);
     }
 
     @DurationLogging
-    public Integer countByCompetitionId(String competitionId, Optional<Integer> opus) {
-        return matchRepository.countMatchesByCompetitionId(competitionId, 
-            opus.orElse(defaultOpus));
+    public Integer countByCompetitionId(Identity competitionId) {
+        return matchRepository.countMatchesByCompetitionId(competitionId);
     }
 
     private List<Match> adjustCompetitionNameAndLogoAndUpdateConcedeAndOvertimeInfo(List<Match> matches) {

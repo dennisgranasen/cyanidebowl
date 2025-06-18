@@ -2,8 +2,11 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.service.LeagueService;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,6 +24,9 @@ public class LeagueController {
 
     private final LeagueService leagueService;
 
+    @Value("${cyanide.defaults.opus:3}")
+    private int defaultOpus;
+
     @GetMapping("/leagues")
     public ResponseEntity<List<League>> getLeagues() {
         List<League> all = leagueService.loadAll();
@@ -34,7 +40,8 @@ public class LeagueController {
         log.info("Fetching league with ID: {} and opus: {}", leagueId, opus);
         Optional<League> league;
         try {
-            league = leagueService.loadById(leagueId, Optional.ofNullable(opus));
+            league = leagueService.loadById(new SimpleIdentity(leagueId, 
+                Optional.ofNullable(opus).orElse(defaultOpus)));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         }

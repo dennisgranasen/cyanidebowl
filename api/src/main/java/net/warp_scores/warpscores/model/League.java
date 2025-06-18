@@ -1,34 +1,35 @@
 package net.warp_scores.warpscores.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-
+import net.warp_scores.warpscores.identity.Identity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
 import java.util.Map;
-import java.util.UUID;
 
 @Getter
 @Setter
 @Document
-@EqualsAndHashCode(of = {"id", "opus"})
-@ToString(of = {"name", "id"})
+@EqualsAndHashCode(of = "identity")
+@ToString(of = {"name", "identity"})
 public class League {
     @Id
     public String get_id() {
-        return id != null && opus != null ? opus + "-" + id : null;
+        return identity != null ? identity.getId() : null;
     }
-    public String getLeagueId() { return id; }
+    public String getLeagueId() { return identity != null ? identity.getId() : null; }
 
+    private final Identity identity;
 
-    private String id;
-    //private Integer oldId; // This is the old ID used in the legacy system, if applicable.
+    public League(Identity identity) {
+        this.identity = identity;
+    }
+
     private String logo;
     private String name;
     private Integer teamCount;
@@ -37,6 +38,4 @@ public class League {
     private Date dateLastMatch;
 
     private Map<CompetitionStatus, Long> countsByCompetitionStatus;
-    private Integer opus; // Opus is the version of the league, used for compatibility with different game versions.
-
 }

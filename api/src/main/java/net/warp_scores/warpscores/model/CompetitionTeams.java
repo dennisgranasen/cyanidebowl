@@ -4,25 +4,29 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import net.warp_scores.warpscores.identity.Identity;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
-import java.util.UUID;
 
 @Getter
 @Setter
 @Document
-@EqualsAndHashCode(of = {"competitionId", "opus"})
+@EqualsAndHashCode(of = "identity")
+@ToString(of = {"identity"})
 public class CompetitionTeams {
     @Id
     public String get_id() {
-        return competitionId != null && opus != null ? opus + "-" + competitionId : null;
+        return identity != null ? identity.getId() : null;
     }
+    public String getCompetitionId() { return identity != null ? identity.getId() : null; }   
+    private final Identity identity;
 
-    private String competitionId;
-    private Integer opus; // Opus is the version of the competition teams, used for compatibility with different game versions. 
+    public CompetitionTeams(Identity identity) {
+        this.identity = identity;
+    }
 
     private List<String> teamIds;
 }

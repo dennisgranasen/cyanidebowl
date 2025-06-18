@@ -3,6 +3,8 @@ package net.warp_scores.warpscores.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.domain.ContestDomainService;
+import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.ArenaInfo;
 import net.warp_scores.warpscores.model.ArenaTeam;
 import net.warp_scores.warpscores.model.Coach;
@@ -10,6 +12,7 @@ import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.Race;
 import net.warp_scores.warpscores.service.ContestService;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.expression.spel.ast.OpAnd;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,6 +35,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
+import static java.util.Optional.ofNullable;
 import static net.warp_scores.warpscores.controller.Authorities.AUTHORITY_WRITE_LEAGUE_ADMIN;
 
 @Slf4j
@@ -46,6 +50,8 @@ public class ContestController {
     private final ContestService contestService;
     private final ContestDomainService contestDomainService;
 
+    @Value("${cyanide.defaults.opus:3}")
+    private int defaultOpus;
 
     @GetMapping("/contests/competition/{competitionId}/latest")
     public ResponseEntity<List<Contest>> getLatestCompetitionContests(
@@ -54,8 +60,11 @@ public class ContestController {
             @RequestParam(name = "limit", required = false) Integer limit) {
         try {
             limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT_FOR_LIVE_CONTESTS);
+            Identity competitionIdentity = 
+                new SimpleIdentity(competitionId, ofNullable(opus).orElse(defaultOpus));
+            
             List<Contest> contests = contestService.getLatestCompetitionContests(
-                competitionId, Optional.ofNullable(opus), limit);
+                competitionIdentity, limit);
             return ResponseEntity.ok(contests);
         } catch (Exception ex) {
             log.error("Unable to retrieve contests", ex);
@@ -69,9 +78,10 @@ public class ContestController {
             @RequestParam(name = "limit", required = false) Integer limit,
             @RequestParam(name = "opus", required = false) Integer opus) {
         try {
+            Identity competitionIdentity = 
+                new SimpleIdentity(competitionId, ofNullable(opus).orElse(defaultOpus));
             List<Contest> contests = contestService.getCompetitionContests(
-                competitionId,
-                Optional.ofNullable(opus),
+                competitionIdentity,
                 Optional.ofNullable(limit));
             return ResponseEntity.ok(contests);
         } catch (Exception ex) {
@@ -86,7 +96,7 @@ public class ContestController {
             @PathVariable(name = "competitionId") String competitionUuid,
             @RequestBody Contest contest) {
         try {
-            contestDomainService.addContest(contest);
+            contestDomainService.addContest(contest, Optional.empty());
             return ResponseEntity.accepted().build();
         } catch (Exception ex) {
             log.error("Unable to add contests", ex);
@@ -102,8 +112,11 @@ public class ContestController {
         limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT_FOR_LATEST_CONTESTS);
         limit = Math.min(limit, MAX_LIMIT_FOR_LATEST_CONTESTS);
         try {
+            Identity leagueIdentity = 
+                new SimpleIdentity(leagueId, ofNullable(opus).orElse(defaultOpus));
+
             List<Contest> contests = contestService.getLatestLeagueContests(
-                leagueId, Optional.ofNullable(opus), limit);
+                leagueIdentity, limit);
             return ResponseEntity.ok(contests);
         } catch (Exception ex) {
             log.error("Unable to retrieve contests", ex);
