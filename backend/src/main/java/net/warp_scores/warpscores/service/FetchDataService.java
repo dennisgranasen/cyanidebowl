@@ -129,8 +129,8 @@ public class FetchDataService {
             log.info("Scheduler deactivated by configuration. Skipping fetchLeagueContests().");
             return;
         }
-        List<String> leagueIdsToCollect = leagueCollectionRepository.findByCollectionActive(true).stream()
-                .map(LeagueCollection::getLeagueId).toList();
+        List<Identity> leagueIdsToCollect = leagueCollectionRepository.findByCollectionActive(true).stream()
+                .map(LeagueCollection::getIdentity).toList();
         List<Competition> competitions = competitionRepository.findAll();
         List<Competition> competitionsNeedingContests = competitions
                 .stream()
@@ -287,8 +287,7 @@ public class FetchDataService {
         List<League> leagues = leaguesToCollect
                 .stream()
                 .map(lc ->
-                        cyanideApiService.loadLeague(new SimpleIdentity(
-                                lc.getLeagueId(), lc.getOpus())))
+                        cyanideApiService.loadLeague(lc.getIdentity()))
                 .collect(Collectors.toList());
         log.info("Loaded {} leagues.", leagues.size());
         return leagues;
@@ -297,9 +296,8 @@ public class FetchDataService {
     private List<Competition> loadCompetitionsFor(List<LeagueCollection> leaguesToCollect) {
         List<Competition> competitions = leaguesToCollect
                 .stream()
-                .filter(lc -> nonNull(lc.getLeagueId()))
-                .map(lc -> cyanideApiService.loadCompetitions(
-                        new SimpleIdentity(lc.getLeagueId(), lc.getOpus())))
+                .filter(lc -> nonNull(lc.getIdentity()))
+                .map(lc -> cyanideApiService.loadCompetitions(lc.getIdentity()))
                 .flatMap(List::stream)
                 .toList();
         List<League> leagues = leagueRepository.findAll();

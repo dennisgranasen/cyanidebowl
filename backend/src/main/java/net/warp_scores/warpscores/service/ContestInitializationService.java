@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -225,15 +226,36 @@ public class ContestInitializationService {
     private List<Contest> initializeRoundRobinContests(List<Contest> contests,
             Optional<Competition> competition,
             Collection<Team> teams) {
+        log.info("DEBUG: Starting initializeRoundRobinContests");
         OptionalInt currentRound = contests
                 .stream()
                 .mapToInt(Contest::getRound)
                 .max();
 
+        log.info("DEBUG: Current round: {}", currentRound.orElse(0));
+
         List<Team> homeTeams = new ArrayList<>();
         List<Team> awayTeams = new ArrayList<>();
+
+
         extractFirstRoundTeams(contests, homeTeams, awayTeams);
+
+        log.info("DEBUG: Home teams after extractFirstRoundTeams: {}", homeTeams);
+        log.info("DEBUG: Away teams after extractFirstRoundTeams: {}", awayTeams);
+
         addDummyTeamIfOddParticipants(teams, homeTeams, awayTeams);
+
+        log.info("DEBUG: Home teams after addDummyTeamIfOddParticipants: {}", homeTeams);
+        log.info("DEBUG: Away teams after addDummyTeamIfOddParticipants: {}", awayTeams);
+
+        log.info("DEBUG: Teams for round robin: {}", teams);
+
+        /* This is the fix according to AI, but it doesn't work */
+        // Before calling generateScheduledContests
+        //homeTeams.sort(Comparator.comparing(Team::getName));
+        //awayTeams.sort(Comparator.comparing(Team::getName));
+        /* END OF (NOT WORKING) FIX */
+
 
         List<Contest> scheduledContests = competition.map(comp ->
                         generateScheduledContests(comp, homeTeams, awayTeams)
@@ -243,8 +265,19 @@ public class ContestInitializationService {
                                 .toList())
                 .orElse(emptyList());
 
+        log.info("DEBUG: Scheduled contests: {}", scheduledContests.size());
+        for (Contest c : scheduledContests) {
+            log.info("DEBUG: Scheduled Contest round={}, home={}, away={}", c.getRound(), c.getOpponents().get(0).getName(), c.getOpponents().get(1).getName());
+        }
+
         List<Contest> initializedContests = new ArrayList<>(contests);
         initializedContests.addAll(scheduledContests);
+
+        log.info("DEBUG: Initialized contests: {}", initializedContests.size());
+        for (Contest c : initializedContests) {
+            log.info("DEBUG: Initialized Contest round={}, home={}, away={}", c.getRound(), c.getOpponents().get(0).getName(), c.getOpponents().get(1).getName());
+        }
+
         return initializedContests;
     }
 

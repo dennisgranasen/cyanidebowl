@@ -9,10 +9,10 @@ public class IdentityUtil {
      * If the id contains only one part after opus, it's SimpleIdentity; otherwise, CompositeIdentity.
      */
     public static Identity fromId(String id) {
-        if (id == null || !id.contains("-")) {
+        if (id == null || !id.contains(Identity.DELIMITER)) {
             throw new IllegalArgumentException("Invalid id format: " + id);
         }
-        String[] tokens = id.split("-");
+        String[] tokens = id.split(Identity.DELIMITER);
         if (tokens.length == 2) {
             // Format: opus-id
             int opus = Integer.parseInt(tokens[0]);

@@ -4,6 +4,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import net.warp_scores.warpscores.identity.Identity;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -16,11 +18,15 @@ import java.util.UUID;
 @ToString(of = {"leagueName",  "leagueId"})
 public class LeagueCollection {
     @Id
-    public String get_id() {
-        return leagueId != null && opus != null ? opus + "-" + leagueId : null;
+    public Identity get_id() {
+        return identity;
     }
 
-    private String leagueId;
+    public LeagueCollection(Identity identity) {
+        this.identity = identity;
+    }
+
+    private final Identity identity;
     //private Integer oldLeagueId;
     
     private String leagueName;
@@ -29,5 +35,4 @@ public class LeagueCollection {
 
     private String platform;
 
-    private Integer opus;
 }

@@ -3,13 +3,23 @@ package net.warp_scores.warpscores.identity;
 import java.util.Arrays;
 import java.util.Objects;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+    
 /**
  * Composite identity implementation for MongoDB and URLs.
  */
+@Getter
+@Setter
+@ToString(of = {"id", "opus", "parts"})
 public class CompositeIdentity implements Identity {
-    private final String id;
-    private final int opus;
-    private final String[] parts;
+    private String id;
+    private int opus;
+    private String[] parts;
+
+    public CompositeIdentity() {
+    }
 
     public CompositeIdentity(int opus, Object... parts) {
         Objects.requireNonNull(parts, "parts must not be null");
@@ -22,31 +32,25 @@ public class CompositeIdentity implements Identity {
         StringBuilder sb = new StringBuilder();
         sb.append(opus);
         for (String part : parts) {
-            sb.append('-').append(part);
+            sb.append(DELIMITER).append(part);
         }
         return sb.toString();
-    }
-
-    @Override
-    public String getId() {
-        return id;
-    }
-
-    public int getOpus() {
-        return opus;
     }
 
     public String[] getParts() {
         return parts.clone();
     }
 
+    public String asMongoKey() {
+        return buildId(opus, parts);
+    }   
     /**
      * Parse a CompositeIdentity from a string id.
      * The id must be in the format: opus-part1-part2-...-partN
      */
     public static CompositeIdentity fromId(String id) {
         Objects.requireNonNull(id, "id must not be null");
-        String[] tokens = id.split("-");
+        String[] tokens = id.split(DELIMITER);
         if (tokens.length < 2) {
             throw new IllegalArgumentException("Invalid composite id: " + id);
         }

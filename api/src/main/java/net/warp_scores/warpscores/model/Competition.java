@@ -22,8 +22,8 @@ import static net.warp_scores.warpscores.model.CompetitionFormat.Ladder;
 @ToString(of = {"name", "identity"})
 public class Competition implements Comparable<Competition> {
     @Id
-    public String get_id() {
-        return identity != null ? identity.getId() : null;
+    public Identity get_id() {
+        return identity;
     }
 
     private final Identity identity;

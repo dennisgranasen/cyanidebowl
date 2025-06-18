@@ -26,9 +26,11 @@ import java.util.stream.Stream;
 @Setter
 @Document
 public class Contest implements Comparable<Contest> {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(Contest.class);
+
     @Id
-    public String get_id() {
-        return identity != null ? identity.getId() : null;
+    public Identity get_id() {
+        return identity;
     }
     
     public String getPlayerId() { return identity != null ? identity.getId() : null; }

@@ -18,8 +18,8 @@ import java.util.List;
 @ToString(of = {"identity"})
 public class CompetitionTeams {
     @Id
-    public String get_id() {
-        return identity != null ? identity.getId() : null;
+    public Identity get_id() {
+        return identity;
     }
     public String getCompetitionId() { return identity != null ? identity.getId() : null; }   
     private final Identity identity;

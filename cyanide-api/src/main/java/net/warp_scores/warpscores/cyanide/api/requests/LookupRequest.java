@@ -54,7 +54,7 @@ public class LookupRequest extends ApiRequest<LookupRequest, LookupResponse> {
     private Integer exact;
     private String instruction;
     private String platform;
-    private String bb;
+    private Integer opus;
     private Integer fallback;
 
     public LookupRequest() {
