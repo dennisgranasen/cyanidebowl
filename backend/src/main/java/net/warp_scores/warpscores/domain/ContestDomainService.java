@@ -60,8 +60,8 @@ public class ContestDomainService {
         if (contest.getContestUuid() == null) {
             contest.setContestUuid(UUID.randomUUID());
         }
-        Optional<Contest> byId = contestRepository.findById(contest.getContestUuid());
-        if (byId.isPresent()) {
+        List<Contest> byId = contestRepository.findByContestUuid(contest.getContestUuid());
+        if (!byId.isEmpty()) {
             throw new IllegalArgumentException("Contest with uuid " + contest.getContestUuid() + " already exists");
         }
         return contestRepository.save(contest);
@@ -72,8 +72,18 @@ public class ContestDomainService {
             log.error("Can't convert contest. Need an UUID.");
             return null;
         }
-        Optional<Contest> contestFromDb = contestRepository.findById(uuid);
-        Contest contest = contestFromDb.orElse(new Contest());
+        List<Contest> contestsFromDb = contestRepository.findByContestUuid(uuid);
+        Contest contest;
+        if (contestsFromDb.isEmpty()) {
+            contest = new Contest();
+        } else if (contestsFromDb.size() > 1) {
+            log.warn("Found multiple contests with the same UUID: {}", uuid);
+            contest = contestsFromDb.stream()
+                    .max(Comparator.comparing(Contest::getOpus))
+                    .orElseThrow(() -> new IllegalStateException("No contest found with UUID: " + uuid));
+        } else {
+            contest = contestsFromDb.get(0);
+        }
         contest.setContestUuid(uuid);
         return contest;
     }

@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -51,13 +53,24 @@ public class CompetitionController {
             @PathVariable(name = "leagueId") String leagueId,
             @RequestParam(name = "opus", required = false) Integer opus) {
         try {
-            
             List<Competition> competitions =                
-                competitionService.loadForLeague(leagueId, Optional.ofNullable(opus))
-                    .stream()
+                competitionService.loadForLeague(leagueId, Optional.ofNullable(opus));
+
+            // Check for null competitions and log the full list as JSON if any are found
+            if (competitions.stream().anyMatch(c -> c == null)) {
+                try {
+                    ObjectMapper mapper = new ObjectMapper();
+                    String json = mapper.writeValueAsString(competitions);
+                    log.error("Null competition found in list for league {}: {}", leagueId, json);
+                } catch (Exception e) {
+                    log.error("Failed to serialize competitions list to JSON", e);
+                }
+            }
+            List<Competition> filtered = competitions.stream()
+                    .filter(c -> c.getStatus() != null)
                     .sorted()
                     .toList();
-            return ResponseEntity.ok(competitions);
+            return ResponseEntity.ok(filtered);
         } catch (Exception ex) {
             log.error("Unable to get competitions for league id {}", leagueId, ex);
             return ResponseEntity.internalServerError().build();
@@ -72,6 +85,7 @@ public class CompetitionController {
             List<Competition> competitions =
                 competitionService.loadForLeagueAndInitialize(leagueId, Optional.ofNullable(opus))
                     .stream()
+                    .filter(c -> c.getStatus() != null)
                     .sorted()
                     .toList();
             return ResponseEntity.ok(competitions);

@@ -83,6 +83,7 @@ public class CyanideApiService {
         return cyanideCachedRestApiClient.getFromCacheOrApi(lookupRequest);
     }
 
+    /*
     public League loadOldLeague(Integer leagueId, Optional<Integer> opus) {
         LeagueRequest leagueRequest = new LeagueRequest();
         leagueRequest.setId(leagueId);
@@ -92,7 +93,7 @@ public class CyanideApiService {
         LeagueResponse leagueResponse = 
             cyanideCachedRestApiClient.getFromCacheOrApi(leagueRequest);
         return leagueDomainService.createOrUpdateLeague(leagueResponse, opus);
-    }
+    }*/
 
     public League loadLeague(String leagueId, Optional<Integer> opus) {
         LeagueRequest leagueRequest = new LeagueRequest();
@@ -131,6 +132,8 @@ public class CyanideApiService {
                 "Checking if matches to be loaded for team {} (earliestStart: {}, lastMatchDateKnown: {}, lastMatchDateReported: {}).",
                 team.getId(), earliestStartDate, lastMatchDateKnown, lastMatchDateReported);
         Date startDate = lastMatchDateKnown.orElse(earliestStartDate.orElse(null));
+
+
         if (startDate == null || (lastMatchDateReported.isPresent() && !startDate.before(
                 lastMatchDateReported.get()))) {
             log.info("No matches to load for team {}.", team.getId());
@@ -210,7 +213,8 @@ public class CyanideApiService {
         if (opus.isPresent()) {
             competitionsRequest.setOpus(opus.get());
         }
-        CompetitionsResponse competitionsResponse = cyanideCachedRestApiClient.getFromCacheOrApi(competitionsRequest);
+        CompetitionsResponse competitionsResponse = 
+            cyanideCachedRestApiClient.getFromCacheOrApi(competitionsRequest);
         return competitionDomainService.createOrUpdateCompetitions(competitionsResponse);
     }
 

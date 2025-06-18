@@ -118,7 +118,11 @@ public class ContestService {
 
     private void loadMatchIntoAndAdjustCompetitionName(Contest contest) {
         Optional<UUID> matchUuid = Optional.ofNullable(contest.getMatchUuid());
-        Optional<Match> match = matchUuid.flatMap(matchRepository::findById);
+        if (matchUuid.isEmpty()) {
+            contest.setMatch(null);
+            return;
+        }
+        List<Match> match = matchRepository.findByMatchId(matchUuid.get());
 
         officialLeagueAndCompetitions.adjustCompetitionName(contest.getLeagueId(), 
                 contest.getCompetitionName(),
@@ -126,17 +130,18 @@ public class ContestService {
         contest.setAdminResult(contest.isAdminResult() ||
                 (matchUuid.isEmpty() &&
                         MatchStatus.Validated.equals(contest.getStatus())));
-        match.ifPresent(
-                m -> {
-                    contest.setMatch(m);
-                    officialLeagueAndCompetitions.adjustCompetitionName(
-                        m.getLeagueId(), m.getCompetitionName(), m::setCompetitionName);
-                    officialLeagueAndCompetitions.adjustCompetitionLogo(
-                        m.getLeagueId(), m.getCompetitionName(), m::setCompetitionLogo);
-                    contest.setLive(m.getFinished() == null ? 1 : 0);
-                    contest.setConcede(matchService.isConcede(m));
-                    contest.setOvertime(matchService.isOvertime(m));
-                });
+        if (match.isEmpty()) {
+            contest.setMatch(null);
+            return;
+        }
+        Match m = match.get(0);
+        contest.setMatch(m);
+        officialLeagueAndCompetitions.adjustCompetitionName(
+        m.getLeagueId(), m.getCompetitionName(), m::setCompetitionName);
+        officialLeagueAndCompetitions.adjustCompetitionLogo(
+        m.getLeagueId(), m.getCompetitionName(), m::setCompetitionLogo);
+        contest.setLive(m.getFinished() == null ? 1 : 0);
+        contest.setConcede(matchService.isConcede(m));
+        contest.setOvertime(matchService.isOvertime(m));
     }
-
 }
