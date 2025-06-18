@@ -3,6 +3,8 @@ package net.warp_scores.warpscores.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
+import net.warp_scores.warpscores.identity.Identity;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -16,20 +18,26 @@ import java.util.UUID;
 public class Match {
     @Id
     public String get_id() {
-        return matchId != null && opus != null ? opus + "-" + matchId : null;
+        return identity != null ? identity.getId() : null;
+    }
+    public String getMatchId() { return identity != null ? identity.getId() : null; }
+
+    private final Identity identity;
+
+    public Match(Identity identity) {
+        this.identity = identity;
     }
 
-    private UUID matchId;
-    private String competitionId;
-    private Integer oldCompetitionId; // This is the old ID used in the legacy system, if applicable.
+    //private UUID matchId;
+    private Identity competitionId;
+    //private Integer oldCompetitionId; // This is the old ID used in the legacy system, if applicable.
     private String competitionName;
     private String competitionLogo;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date started;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date finished;
-    private String leagueId;
-    private Integer oldLeagueId;
+    private Identity leagueId;
     private String leagueName;
     private String leagueLogo;
     private String stadium;
@@ -39,8 +47,6 @@ public class Match {
     private boolean adminResult = false;
     private boolean concede = false;
     private boolean overtime = false;
-
-    private Integer opus; // Opus is the version of the match, used for compatibility with different game versions.
 
     @Getter
     @Setter

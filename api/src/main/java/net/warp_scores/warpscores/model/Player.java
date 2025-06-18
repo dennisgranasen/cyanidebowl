@@ -4,28 +4,31 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-
+import net.warp_scores.warpscores.identity.Identity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.UUID;
 
 @Getter
 @Setter
 @Document
-@EqualsAndHashCode(of = {"id", "opus"})
-@ToString(of = {"name", "id"})
+@EqualsAndHashCode(of = "identity")
+@ToString(of = {"name", "identity"})
 public class Player {
     @Id
     public String get_id() {
-        return id != null && opus != null ? opus + "-" + id : null;
+        return identity != null ? identity.getId() : null;
     }
-    public String getPlayerId() { return id; }
+    public String getPlayerId() { return identity != null ? identity.getId() : null; }
 
-    private String id;
-    //private Integer oldId; // This is the old ID used in the legacy system, if applicable.
+    private final Identity identity;
+
+    public Player(Identity identity) {
+        this.identity = identity;
+    } 
+
     private String name;
     private Integer raceId;
     private Integer number;
@@ -43,8 +46,6 @@ public class Player {
     private Boolean mvp;
     private Integer matchplayed;
     private Stats stats;
-
-    private Integer opus; // Opus is the version of the coach, used for compatibility with different game versions.
 
     @Getter
     @Setter

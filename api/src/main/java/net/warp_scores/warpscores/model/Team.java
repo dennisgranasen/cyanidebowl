@@ -5,28 +5,31 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import net.warp_scores.warpscores.identity.Identity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 @Getter
 @Setter
 @Document
-@EqualsAndHashCode(of = {"id", "opus"})
-@ToString(of = {"name", "race", "id"})
+@EqualsAndHashCode(of = "identity")
+@ToString(of = {"name", "race", "identity"})
 public class Team {
     @Id
     public String get_id() {
-        return id != null && opus != null ? opus + "-" + id : null;
+        return identity != null ? identity.getId() : null;
     }
-    public String getTeamId() { return id; }
+    public String getTeamId() { return identity != null ? identity.getId() : null; }
 
-    private String id;
-    //private Integer oldId; // This is the old ID used in the legacy system, if applicable.
+    private final Identity identity;
+    
+    public Team(Identity identity) {
+        this.identity = identity;
+    }
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date created;
@@ -46,12 +49,10 @@ public class Team {
     private String coachId;
     private String coachName;
 
-    private String[] leagueIds;
-    private Integer[] oldLeagueIds;
+    private Identity[] leagueIds;
     private String leagueName;
 
-    private String[] competitionIds;
-    private Integer[] oldCompetitionIds;
+    private Identity[] competitionIds;
     private String competitionName;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
@@ -82,6 +83,4 @@ public class Team {
     private Integer sustainedko;
     private Integer sustainedinjuries;
     private Integer sustaineddead;
-
-    private Integer opus; // Opus is the version of the team, used for compatibility with different game versions.
 }

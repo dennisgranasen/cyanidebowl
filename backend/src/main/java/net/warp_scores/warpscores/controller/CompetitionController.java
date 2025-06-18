@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.export.naf.NafReport;
+import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.model.Team;
@@ -29,6 +31,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static java.util.Optional.ofNullable;
 import static net.warp_scores.warpscores.controller.Authorities.AUTHORITY_WRITE_LEAGUE_ADMIN;
 
 @Slf4j
@@ -53,8 +56,11 @@ public class CompetitionController {
             @PathVariable(name = "leagueId") String leagueId,
             @RequestParam(name = "opus", required = false) Integer opus) {
         try {
+            Identity leagueIdentity = 
+                new SimpleIdentity(leagueId, ofNullable(opus).orElse(defaultOpus));
+
             List<Competition> competitions =                
-                competitionService.loadForLeague(leagueId, Optional.ofNullable(opus));
+                competitionService.loadForLeague(leagueIdentity);
 
             // Check for null competitions and log the full list as JSON if any are found
             if (competitions.stream().anyMatch(c -> c == null)) {
@@ -82,8 +88,9 @@ public class CompetitionController {
             @PathVariable(name = "leagueId") String leagueId,
             @RequestParam(name = "opus", required = false) Integer opus) {
         try {
+            Identity leagueIdentity = new SimpleIdentity(leagueId, ofNullable(opus).orElse(defaultOpus));
             List<Competition> competitions =
-                competitionService.loadForLeagueAndInitialize(leagueId, Optional.ofNullable(opus))
+                competitionService.loadForLeagueAndInitialize(leagueIdentity)
                     .stream()
                     .filter(c -> c.getStatus() != null)
                     .sorted()
@@ -101,10 +108,11 @@ public class CompetitionController {
             @RequestParam(name = "opus", required = false) Integer opus) {
                 // Need to do this like leagueController... 
 
+        Identity competitionIdentity = 
+            new SimpleIdentity(competitionId, ofNullable(opus).orElse(defaultOpus));
         log.info("Fetching competition with ID: {} and opus: {}", competitionId, opus);
         Optional<Competition> competition =
-            competitionService.loadCompetition(competitionId, 
-                                               Optional.ofNullable(opus));
+            competitionService.loadCompetition(competitionIdentity);
 
         log.info(competitionId, opus, competition);
         return competition
@@ -127,7 +135,9 @@ public class CompetitionController {
 
     private void createNafExportData(String competitionId, Optional<Integer> opus, String exporterName, DeferredResult<byte[]> output) {
         try {
-            Optional<NafReport> nafReport = nafExporter.export(competitionId, opus, exporterName);
+            Identity competitionIdentity = 
+                new SimpleIdentity(competitionId, opus.orElse(defaultOpus));
+            Optional<NafReport> nafReport = nafExporter.export(competitionIdentity, exporterName);
             Optional<String> xml = nafReport.map(nafXmlCreator::writeAsXml);
             byte[] result = xml.map(String::getBytes).orElse(null);
             output.setResult(result);
@@ -142,8 +152,10 @@ public class CompetitionController {
             @PathVariable(name = "competitionId") String competitionId,
             @RequestParam(name = "opus", required = false) Integer opus) {
         try {
+            Identity competitionIdentity = 
+                new SimpleIdentity(competitionId, ofNullable(opus).orElse(defaultOpus));
             List<Team> teams =
-                teamDomainService.findByCompetitionId(competitionId, Optional.ofNullable(opus));
+                teamDomainService.findByCompetitionId(competitionIdentity);
             return ResponseEntity.ok(teams);
         } catch (Exception ex) {
             log.error("Unable to get teams for competition id {}.", competitionId, ex);
@@ -157,10 +169,14 @@ public class CompetitionController {
             @PathVariable(name = "teamId") String teamId,
             @RequestParam(name = "opus", required = false) Integer opus) {
         try {
+            Identity teamIdentity = 
+                new SimpleIdentity(teamId, ofNullable(opus).orElse(defaultOpus));
+
+            Identity competitionIdentity = 
+                new SimpleIdentity(competitionId, ofNullable(opus).orElse(defaultOpus));
+
             Optional<Team> team = 
-                teamDomainService.findTeam(teamId,
-                    Optional.of(competitionId), 
-                    Optional.ofNullable(opus));
+                teamDomainService.findTeam(teamIdentity, Optional.of(competitionIdentity));
             return team
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());

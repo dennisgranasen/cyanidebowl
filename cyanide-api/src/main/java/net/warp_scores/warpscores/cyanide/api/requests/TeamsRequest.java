@@ -42,7 +42,8 @@ import java.util.UUID;
 @ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TeamsRequest extends ApiRequest<TeamsRequest, TeamsResponse> {
-
+    
+    private String platform;
     private String league_name;
     private String league_id;
     private String competition_name;

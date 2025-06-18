@@ -14,6 +14,8 @@ import java.util.UUID;
 import static java.util.Collections.emptyList;
 import static java.util.Optional.ofNullable;
 
+import net.warp_scores.warpscores.identity.Identity;
+
 @Document
 @Getter
 @Setter
@@ -21,7 +23,7 @@ import static java.util.Optional.ofNullable;
 @ToString(of = "coachName", includeFieldNames = false)
 public class ArenaCoach {
     private String coachName;
-    private String coachId;
+    private Identity coachId;
     private Set<Race> completedRaces;
     private int activeNotCompletedRacesCount;
     private int activeTeamsCount;

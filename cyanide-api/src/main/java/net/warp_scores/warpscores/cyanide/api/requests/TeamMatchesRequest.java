@@ -38,6 +38,9 @@ public class TeamMatchesRequest extends ApiRequest<TeamMatchesRequest, TeamMatch
     private Date start;
     private Date end;
     private MatchesRequest.Ordering ordering;
+    private String platform;
+    //private Integer limit;
+    private Integer opus;
 
     public TeamMatchesRequest() {
         super("bb/teammatches", TeamMatchesRequest.class, TeamMatchesResponse.class);

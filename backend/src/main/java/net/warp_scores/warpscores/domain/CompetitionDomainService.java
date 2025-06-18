@@ -5,35 +5,26 @@ import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.cyanide.api.model.ApiCompetition;
 import net.warp_scores.warpscores.cyanide.api.responses.CompetitionsResponse;
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
+import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.service.OfficialLeagueAndCompetitions;
 import net.warp_scores.warpscores.service.PopulatorUtil;
-import net.warp_scores.warpscores.service.UUIDConverter;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static java.util.Comparator.nullsLast;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class CompetitionDomainService {
+    
     private final CompetitionRepository competitionRepository;
-    private final UUIDConverter uuidConverter;
     private final OfficialLeagueAndCompetitions officialLeagueAndCompetitions;
-
 
     @Value("${cyanide.defaults.opus:3}")
     private int defaultOpus;
@@ -44,64 +35,51 @@ public class CompetitionDomainService {
             return Collections.emptyList();
         }
         log.info(competitionsResponse.toString());
+        Optional<Integer> opus = competitionsResponse.getMeta().getOpus();
         List<Competition> competitions = Arrays.stream(competitionsResponse.getCompetitions())
-                .map(this::internalCreateOrUpdateCompetition)
+                .map((x) -> internalCreateOrUpdateCompetition(x, opus))
                 .collect(Collectors.toList());
         return competitionRepository.saveAll(competitions);
     }
 
     @Transactional
-    public Map<String, Optional<Date>> getEarliestStartDatesFor(List<String> leagueIds, Optional<Integer> opus) {
-        Map<String, Optional<Date>> earliestStartDatesByLeagueId = new HashMap<>();
-        for (String leagueId : leagueIds) {
-            Optional<Date> dateOpt;
-            if (opus.isPresent()) {
-                // Find the earliest competition for this leagueId and opus
-                dateOpt = competitionRepository
-                    .findTopByLeagueIdAndOpusOrderByDateCreatedAsc(leagueId, opus.get())
-                    .map(Competition::getDateCreated);
-            } else {
-                // Fallback to original logic if opus is not present
-                dateOpt = competitionRepository
-                    .findTopByLeagueIdOrderByDateCreatedAsc(leagueId)
-                    .map(Competition::getDateCreated);
-            }
-            earliestStartDatesByLeagueId.put(leagueId, dateOpt);
-        }
+    public Map<Identity, Optional<Date>> getEarliestStartDatesFor(List<Identity> leagueIdentities) {
+        Map<Identity, Optional<Date>> earliestStartDatesByLeagueId = new HashMap<>();
+        leagueIdentities
+                .forEach(leagueId ->
+                        earliestStartDatesByLeagueId.put(leagueId, competitionRepository
+                                .findTopByLeagueIdOrderByDateCreatedAsc(leagueId)
+                                .map(Competition::getDateCreated)));
         return earliestStartDatesByLeagueId;
     }
 
-    private Competition internalCreateOrUpdateCompetition(ApiCompetition apiCompetition) {
-        Competition competition = newCompetitionOrFromDb(
-            Optional.ofNullable(apiCompetition.getId()),
-                apiCompetition.getName());
+    private Competition internalCreateOrUpdateCompetition(ApiCompetition apiCompetition,
+                                                          Optional<Integer> opus) {
+        int myOpus = opus.orElse(defaultOpus);
+        Identity identity = new SimpleIdentity(apiCompetition.getId(), myOpus);
+        
+        Competition competition = newCompetitionOrFromDb(identity);
         if (competition != null) {
             populateCompetition(apiCompetition, competition);
-            Integer opus = competition.getOpus();
-            if (opus == null) opus = defaultOpus;
-            if (opus > 2)
+            if (myOpus > 2)
                 officialLeagueAndCompetitions.adjustCompetitionFormat(
-                    competition.getLeagueId(), 
+                    competition.getLeagueId(),
                     competition.getName(),
                     competition::setFormat);
         }
         return competition;
     }
 
-    private Competition newCompetitionOrFromDb(Optional<String> id, String name) {
-        if (id.isEmpty()) {
-            log.error("Can't convert competition '{}'. Need anUID.", name);
-            return null;
-        }
-        Optional<Competition> competitionFromDb = competitionRepository.findById(id.get());
-        Competition competition = competitionFromDb.orElse(new Competition());
-        competition.setId(id.get());
+    private Competition newCompetitionOrFromDb(Identity identity) {
+        Optional<Competition> competitionFromDb = competitionRepository.findById(identity);
+        Competition competition = competitionFromDb.orElse(new Competition(identity));
         return competition;
     }
 
-    private void populateCompetition(ApiCompetition sourceApiCompetition, Competition targetCompetition) {
+    private void populateCompetition(
+        ApiCompetition sourceApiCompetition,
+        Competition targetCompetition) {
         PopulatorUtil.copyNonNullProperties(sourceApiCompetition, targetCompetition);
-        targetCompetition.setLeagueId(sourceApiCompetition.getLeague().getId());
         targetCompetition.setLeagueLogo(sourceApiCompetition.getLeague().getLogo());
         targetCompetition.setDateCreated(sourceApiCompetition.getDate_created());
         targetCompetition.setStatus(sourceApiCompetition.getStatus_name());

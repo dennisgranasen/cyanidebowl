@@ -2,8 +2,12 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Rank;
 import net.warp_scores.warpscores.service.RankService;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,6 +26,9 @@ import java.util.UUID;
 public class RankController {
 
     private final RankService rankService;
+    @Value("${cyanide.defaults.opus:3}")
+    private int defaultOpus;
+
 
     @GetMapping("/ranks/competition/{competitionId}")
     public ResponseEntity<List<Rank>> getRanksForCompetition(
@@ -33,8 +40,11 @@ public class RankController {
             return ResponseEntity.badRequest().build();
         }
         try {
+            Identity competitionIdentity = 
+                new SimpleIdentity(competitionId, Optional.ofNullable(opus).orElse(defaultOpus));
+
             List<Rank> ranks = rankService.getRanksForCompetition(
-                competitionId, Optional.ofNullable(opus),
+                competitionIdentity,
                 Optional.empty(), Optional.ofNullable(limit));
             if (ranks == null || ranks.isEmpty()) {
                 return ResponseEntity.ok(Collections.emptyList());

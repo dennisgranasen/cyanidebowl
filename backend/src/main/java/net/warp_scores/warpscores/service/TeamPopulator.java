@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.cyanide.api.model.ApiPlayer;
 import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
 import net.warp_scores.warpscores.cyanide.api.responses.TeamResponse;
+import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Player;
 import net.warp_scores.warpscores.model.Team;
 import org.springframework.stereotype.Service;
@@ -23,28 +25,28 @@ public class TeamPopulator {
     private final UUIDConverter uuidConverter;
 
     public void populateTeamTeam(ApiTeam sourceApiTeam, 
-        TeamResponse.Player[] apiPlayers, Team targetTeam) {
-        populateTeam(sourceApiTeam, targetTeam);
-        targetTeam.setPlayers(toPlayersFromTeamTeam(apiPlayers));
+        TeamResponse.Player[] apiPlayers, Team targetTeam, int opus) {
+        populateTeam(sourceApiTeam, targetTeam, opus);
+        targetTeam.setPlayers(toPlayersFromTeamTeam(apiPlayers, opus));
     }
 
-    public void populateMatchTeam(ApiTeam sourceApiTeam, Team targetTeam) {
-        populateTeam(sourceApiTeam, targetTeam);
-        targetTeam.setPlayers(toPlayersFromMatchTeam(sourceApiTeam.getRoster()));
+    public void populateMatchTeam(ApiTeam sourceApiTeam, Team targetTeam, int opus) {
+        populateTeam(sourceApiTeam, targetTeam, opus);
+        targetTeam.setPlayers(toPlayersFromMatchTeam(sourceApiTeam.getRoster(), opus));
     }
 
-    private List<Player> toPlayersFromMatchTeam(ApiPlayer[] apiPlayers) {
+    private List<Player> toPlayersFromMatchTeam(ApiPlayer[] apiPlayers, int opus) {
         if (apiPlayers == null) {
             return Collections.emptyList();
         }
-        return Arrays.stream(apiPlayers).map(this::toPlayerFromMatchTeam)
+        return Arrays.stream(apiPlayers).map((apiPlayer) -> toPlayerFromMatchTeam(apiPlayer, opus))
             .collect(Collectors.toList());
     }
 
-    private Player toPlayerFromMatchTeam(ApiPlayer apiPlayer) {
-        Player player = new Player();
+    private Player toPlayerFromMatchTeam(ApiPlayer apiPlayer, int opus) {
+        Player player = new Player(new SimpleIdentity(apiPlayer.getId(), opus));
         PopulatorUtil.copyNonNullProperties(apiPlayer, player);
-        player.setId(apiPlayer.getId());
+        //player.setId(apiPlayer.getId());
         player.setValue(apiPlayer.getValue());
         player.setRaceId(apiPlayer.getIdraces());
         player.setSuspendedNextMatch(apiPlayer.getSuspended_next_match());
@@ -58,20 +60,21 @@ public class TeamPopulator {
         return player;
     }
 
-    private void populateTeam(ApiTeam sourceApiTeam, Team targetTeam) {
+    private void populateTeam(ApiTeam sourceApiTeam, Team targetTeam, int opus) {
         PopulatorUtil.copyNonNullProperties(sourceApiTeam, targetTeam);
-        targetTeam.setId(sourceApiTeam.getId());
+        //targetTeam.setIdentity(sourceApiTeam.getId());
 
         // Append the new competition id to the existing array if not already present
-        String[] existing = targetTeam.getCompetitionIds();
-        String newId = sourceApiTeam.getBb3_competition_id();
-        if (newId != null && !newId.isEmpty()) {
+        Identity[] existing = targetTeam.getCompetitionIds();
+        String bb3Id = sourceApiTeam.getBb3_competition_id();
+        Identity newId = new SimpleIdentity(bb3Id,3);
+        if (newId != null && !bb3Id.isEmpty()) {
             boolean alreadyExists = existing != null && Arrays.asList(existing).contains(newId);
             if (!alreadyExists) {
                 if (existing == null) {
-                    targetTeam.setCompetitionIds(new String[]{newId});
+                    targetTeam.setCompetitionIds(new Identity[]{newId});
                 } else {
-                    String[] combined = Arrays.copyOf(existing, existing.length + 1);
+                    Identity[] combined = Arrays.copyOf(existing, existing.length + 1);
                     combined[existing.length] = newId;
                     targetTeam.setCompetitionIds(combined);
                 }
@@ -80,14 +83,14 @@ public class TeamPopulator {
 
         // Append the new league id to the existing array if not already present
         existing = targetTeam.getLeagueIds();
-        newId = sourceApiTeam.getLeagueId();
-        if (newId != null && !newId.isEmpty()) {
+        newId = new SimpleIdentity(sourceApiTeam.getLeagueId(), opus);
+        if (newId != null && newId != null) {
             boolean alreadyExists = existing != null && Arrays.asList(existing).contains(newId);
             if (!alreadyExists) {
                 if (existing == null) {
-                    targetTeam.setLeagueIds(new String[]{newId});
+                    targetTeam.setLeagueIds(new Identity[]{newId});
                 } else {
-                    String[] combined = Arrays.copyOf(existing, existing.length + 1);
+                    Identity[] combined = Arrays.copyOf(existing, existing.length + 1);
                     combined[existing.length] = newId;
                     targetTeam.setLeagueIds(combined);
                 }
@@ -95,18 +98,18 @@ public class TeamPopulator {
         }
     }
 
-    private List<Player> toPlayersFromTeamTeam(TeamResponse.Player[] apiPlayers) {
+    private List<Player> toPlayersFromTeamTeam(TeamResponse.Player[] apiPlayers, int opus) {
         if (apiPlayers == null) {
             return Collections.emptyList();
         }
-        return Arrays.stream(apiPlayers).map(this::toPlayerFromTeamTeam)
+        return Arrays.stream(apiPlayers).map((apiPlayer) -> toPlayerFromTeamTeam(apiPlayer, opus))
             .collect(Collectors.toList());
     }
 
-    private Player toPlayerFromTeamTeam(TeamResponse.Player apiPlayer) {
-        Player player = new Player();
+    private Player toPlayerFromTeamTeam(TeamResponse.Player apiPlayer, int opus) {
+        Player player = new Player(
+            new SimpleIdentity(apiPlayer.getId(), opus));
         PopulatorUtil.copyNonNullProperties(apiPlayer, player);
-        player.setId(apiPlayer.getId());
         player.setRaceId(apiPlayer.getIdraces());
         player.setSuspendedNextMatch(apiPlayer.getSuspended_next_match());
         player.setAttributes(toAttributes(apiPlayer.getAttributes()));

@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import net.warp_scores.warpscores.UUIDUtil;
+import net.warp_scores.warpscores.identity.Identity;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.aggregation.ArrayOperators.In;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -26,17 +28,21 @@ import java.util.stream.Stream;
 public class Contest implements Comparable<Contest> {
     @Id
     public String get_id() {
-        return contestUuid != null && opus != null ? opus + "-" + contestUuid : null;
+        return identity != null ? identity.getId() : null;
+    }
+    
+    public String getPlayerId() { return identity != null ? identity.getId() : null; }
+
+    private Identity identity;
+    public UUID getContestUuid() {
+        return UUIDUtil.getUUIDFromIdentity(identity);
     }
 
-    private UUID contestUuid;
     //private Integer oldContestId; // This is the old ID used in the legacy system, if applicable.
     private CompetitionFormat format;
-    private String leagueId;
-    private Integer oldLeagueId; // This is the old ID used in the legacy system, if applicable.
+    private Identity leagueId;
     private String leagueName;
-    private String competitionId;
-    //private Integer oldCompetitionId;
+    private Identity competitionId;
     private String competitionName;
     private String stadium;
     private MatchType type;
@@ -55,7 +61,10 @@ public class Contest implements Comparable<Contest> {
     private boolean overtime;
 
     private UUID nextContestUuid;
-    private Integer opus; // Opus is the version of the contest, used for compatibility with different game versions.
+
+    public Contest(Identity identity) {
+        this.identity = identity;
+    }
 
     @Override
     public String toString() {
@@ -63,7 +72,7 @@ public class Contest implements Comparable<Contest> {
                 .orElse("n/a");
         String teamB = Optional.ofNullable(opponents).map(o -> o.size() > 1 ? o.get(1) : null).map(Team::getName)
                 .orElse("n/a");
-        return String.format("Contest[%s] Round: %s -> %s vs %s (next: %s)", contestUuid, round, teamA, teamB,
+        return String.format("Contest[%s] Round: %s -> %s vs %s (next: %s)", identity, round, teamA, teamB,
                 nextContestUuid);
     }
 
@@ -73,9 +82,10 @@ public class Contest implements Comparable<Contest> {
         }
 
         int compare = round != null && otherContest.round != null ? Integer.compare(round, otherContest.round) : 0;
+        UUID contestUuid = getContestUuid();
         if (compare == 0) {
             compare = UUIDUtil.getInstantFromUUID(contestUuid)
-                    .compareTo(UUIDUtil.getInstantFromUUID(otherContest.contestUuid));
+                    .compareTo(UUIDUtil.getInstantFromUUID(otherContest.getContestUuid()));
         }
         return compare;
     }

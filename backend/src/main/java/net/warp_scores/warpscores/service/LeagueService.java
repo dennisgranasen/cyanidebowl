@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.domain.persistence.LeagueRepository;
+import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
 
@@ -32,18 +33,16 @@ public class LeagueService {
     }
 
     @DurationLogging
-    public Optional<League> loadById(String leagueId, Optional<Integer> opus) {
-        String id = idService.getComposedId(opus, leagueId);
-        Optional<League> league = leagueRepository.findById(id);
-        log.info("Loading league by ID: {}, opus: {}", leagueId, opus.orElse(defaultOpus));
+    public Optional<League> loadById(Identity leagueId) {        
+        Optional<League> league = leagueRepository.findById(leagueId);
+        log.info("Loading league by ID: {}, opus: {}", leagueId, leagueId.getOpus()); 
         if (league.isPresent()) {
-            log.info("Loading league from DB. ID: {}, opus: {}", leagueId, opus.orElse(defaultOpus));
             return league;
         } else {
             // Try to fetch from Cyanide API
             log.info("League {} not found in DB, fetching from Cyanide API...", leagueId);
             net.warp_scores.warpscores.model.League fetched = 
-                cyanideApiService.loadLeague(leagueId, opus);
+                cyanideApiService.loadLeague(leagueId);
             // Optionally save to DB if found
             if (fetched != null) {
                 log.info("League {} fetched from Cyanide API, saving to DB...", leagueId);

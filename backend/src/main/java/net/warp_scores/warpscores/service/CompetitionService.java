@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
+import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.CompetitionFormat;
 import net.warp_scores.warpscores.model.CompetitionStatus;
@@ -14,7 +16,6 @@ import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
-import org.springframework.expression.spel.ast.OpAnd;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -50,11 +51,11 @@ public class CompetitionService {
     private int defaultOpus;
 
     @DurationLogging
-    public List<Competition> loadForLeague(String leagueId, Optional<Integer> opus) {
-        List<Competition> competitions = 
-            competitionRepository.findByLeagueIdAndOpus(leagueId, opus.orElse(defaultOpus));
+    public List<Competition> loadForLeague(Identity leagueIdentity) {
+        List<Competition> competitions =
+            competitionRepository.findByLeagueId(leagueIdentity);
         if (competitions.isEmpty()) {
-            competitions = cyanideApiService.loadCompetitions(leagueId, opus);
+            competitions = cyanideApiService.loadCompetitions(leagueIdentity);
         }
         competitions.forEach(this::adjustCompetitionNameAndLogo);
 
@@ -62,40 +63,35 @@ public class CompetitionService {
     }
 
     @DurationLogging
-    public List<Competition> loadForLeagueAndInitialize(String leagueId, Optional<Integer> opus) {
-        List<Competition> competitions = loadForLeague(leagueId, opus);
+    public List<Competition> loadForLeagueAndInitialize(Identity leagueIdentity) {
+        List<Competition> competitions = loadForLeague(leagueIdentity);
         return initializeForFormat(competitions);
     }
 
     @DurationLogging
-    public Optional<Competition> loadCompetition(String competitionId, Optional<Integer> opus) {
-        Optional<Competition> competition = 
-            competitionRepository.findById(idService.getComposedId(opus, competitionId))
+    public Optional<Competition> loadCompetition(Identity competitionIdentity) {
+        Optional<Competition> competition =
+            competitionRepository.findById(competitionIdentity)
                                  .map(this::initializeForFormat);
         if (competition.isPresent()) {
-            log.info("Competition {} found in DB, initializing for format...", competitionId);
+            log.info("Competition {} found in DB, initializing for format...", competitionIdentity.getId());
             adjustCompetitionNameAndLogo(competition.get());
         } else {
-            log.info("Competition {} not found in DB, fetching from Cyanide API...", competitionId);
-            List<net.warp_scores.warpscores.model.Competition> fetched = 
-                cyanideApiService.loadCompetitions(competitionId, opus);
-            // Optionally save to DB if found
-            if (fetched != null) {
-                log.info("Competitions {} fetched from Cyanide API, saving to DB...", competitionId);
-                for (net.warp_scores.warpscores.model.Competition comp : fetched) {
-                    // TODO: This looks fishy, should be checked
+            log.info("Competition {} not found in DB, fetching from Cyanide API...", competitionIdentity.getId());
+            List<Competition> fetched =
+                cyanideApiService.loadCompetitions(competitionIdentity);
+            if (fetched != null && !fetched.isEmpty()) {
+                log.info("Competitions {} fetched from Cyanide API, saving to DB...", competitionIdentity.getId());
+                for (Competition comp : fetched) {
                     log.info("Saving competition: {}", comp);
                     adjustCompetitionNameAndLogo(comp);
                     competitionRepository.save(comp);
                     return Optional.of(comp);
-                }   
+                }
             }
-
-            log.warn("Competition {} not found in Cyanide API either.", competitionId);
+            log.warn("Competition {} not found in Cyanide API either.", competitionIdentity.getId());
             return Optional.empty();
-
         }
-
         return competition;
     }
 
@@ -103,7 +99,7 @@ public class CompetitionService {
         log.info("Adjusting competition name and logo for competition: {}", competition);
         officialLeagueCompetitions
                 .adjustCompetitionNameAndLogo(
-                    competition.getLeagueId(), 
+                    competition.getLeagueId(),
                     competition.getName(),
                     competition::setName,
                     competition::setLogo);
@@ -135,17 +131,17 @@ public class CompetitionService {
     private void initializeRoundRobin(Competition competition) {
         Integer teams = competition.getTeamsMax();
         boolean isOdd = teams % 2 == 1;
-        Integer contestCount = 
-            contestsRepository.countByCompetitionId(competition.getCompetitionId(),
-                Optional.of(competition.getOpus()));
-        List<Contest> contests = 
+        Integer contestCount =
+            contestsRepository.countByCompetitionId(competition.getIdentity());
+        List<Contest> contests =
             contestsRepository.findByCompetitionId(
-                competition.getId(), Optional.of(competition.getOpus()), Pageable.unpaged());
-        Map<UUID, Optional<Contest>> uniqueContests = contests
+                new SimpleIdentity(competition.getCompetitionId(), competition.getIdentity().getOpus()),
+                Pageable.unpaged());
+        Map<Identity, Optional<Contest>> uniqueContests = contests
                 .stream()
                 .collect(
                         groupingBy(
-                                Contest::getContestUuid,
+                                Contest::getIdentity,
                                 collectingAndThen(toList(), this::getLatest)));
         if (contests.size() != uniqueContests.size()) {
             log.info("Contests: {}, uniqueContests: {}.", contests.size(), uniqueContests.size());
@@ -165,9 +161,10 @@ public class CompetitionService {
     }
 
     private void initializeWissen(Competition competition) {
-        List<Contest> contests = 
-            contestsRepository.findByCompetitionId(
-                competition.getCompetitionId(), Optional.of(competition.getOpus()), Pageable.unpaged());
+        List<Contest> contests =
+            contestsRepository.findByCompetitionId(new SimpleIdentity(
+                competition.getCompetitionId(), competition.getIdentity().getOpus()),
+                Pageable.unpaged());
         OptionalInt currentRound = contests.stream().mapToInt(Contest::getRound).max();
         if (competition.getTotalRounds() == null) {
             competition.setTotalRounds(calcWissenTotalRounds(competition.getTeamsMax()));
@@ -189,14 +186,13 @@ public class CompetitionService {
         int totalMatches = teams - 1 - byes;
         competition.setTotalMatches(totalMatches);
         List<Contest> contests = contestsRepository.findByCompetitionId(
-            competition.getCompetitionId(), Optional.of(competition.getOpus()), Pageable.unpaged());
+            competition.getIdentity(), Pageable.unpaged());
         competition.setCurrentRound(contests.stream().mapToInt(Contest::getRound).max().orElse(0));
         initializeMatchCount(competition, contests);
     }
 
     private void initializeLadder(Competition competition) {
-        Integer matchCount = matchService.countByCompetitionId(
-            competition.getCompetitionId(), Optional.ofNullable(competition.getOpus()));
+        Integer matchCount = matchService.countByCompetitionId(competition.getIdentity());
         if (matchCount == null) {
             competition.setTotalMatches(matchCount);
             competition.setPlayedMatches(matchCount);
@@ -204,14 +200,13 @@ public class CompetitionService {
     }
 
     private void initializeMatchCount(Competition competition, List<Contest> contests) {
-        Optional<Integer> optOpus = Optional.ofNullable(competition.getOpus());
-        Integer playedMatchesCount = 
+        Integer playedMatchesCount =
             contestsRepository.countByCompetitionIdAndMatchDateNotNull(
-                competition.getId(), optOpus);
+                competition.getIdentity());
         Integer liveMatches =
             contestsRepository.countByCompetitionIdAndLive(
-                competition.getId(), optOpus, 1);
-        Integer notPlayedAdministratedCount = 
+                competition.getIdentity(), 1);
+        Integer notPlayedAdministratedCount =
             getNotPlayedAdministratedMatchesCount(contests);
         Integer notValidatedCount = getNotValidatedMatchesCount(contests);
         competition.setPlayedMatches(playedMatchesCount + notPlayedAdministratedCount);
@@ -242,9 +237,8 @@ public class CompetitionService {
         return Long.valueOf(count).intValue();
     }
 
-    public Map<CompetitionStatus, Long> countForLeague(
-            String leagueId, Optional<Integer> opus) {
-        List<Competition> competitions = loadForLeagueAndInitialize(leagueId, opus);
+    public Map<CompetitionStatus, Long> countForLeague(Identity leagueIdentity) {
+        List<Competition> competitions = loadForLeagueAndInitialize(leagueIdentity);
         return competitions
                 .stream()
                 .collect(

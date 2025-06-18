@@ -6,8 +6,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.util.UUID;
-
 /*
     {
       "game": "bb3",
@@ -35,9 +33,10 @@ public class TopRequest extends ApiRequest<TopRequest, TopResponse> {
     public TopRequest() {
         super("bb/top", TopRequest.class, TopResponse.class);
     }
+    private String platform;
     private String league_name;
     private String league_id;
     private String competition_name;
     private String competition_id;
-
+    private Integer opus;
 }

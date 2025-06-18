@@ -56,6 +56,7 @@ public class ContestsRequest extends ApiRequest<ContestsRequest, ContestsRespons
     private String competition_id;
     private String status;
     private Integer round;
+    private Integer opus;
 
     public ContestsRequest() {
         super("bb/contests", ContestsRequest.class, ContestsResponse.class);
