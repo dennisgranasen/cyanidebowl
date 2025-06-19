@@ -3,7 +3,10 @@ spring:
     mongodb:
       uri: ${SPRING_DATA_MONGODB_URI:mongodb://${MONGO_USER:USER}:${MONGO_PASS:PASS}@localhost:32768/${MONGO_DB:cyanidebowl}?authSource=admin}
 
-
+logging:
+  level:
+    org.springframework.boot.autoconfigure.mongo: DEBUG
+    
 cyanide:
   check-api-status-cron: '0 */15 * * * ?'
   job-creation-scheduler-active: true

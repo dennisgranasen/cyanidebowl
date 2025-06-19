@@ -215,10 +215,10 @@ public class CompetitionService {
     }
 
     private static Integer getNotValidatedMatchesCount(List<Contest> contests) {
-        Map<UUID, List<MatchStatus>> matchStatuses = contests
+        Map<Identity, List<MatchStatus>> matchStatuses = contests
                 .stream()
-                .filter(contest -> Objects.nonNull(contest.getMatchUuid()))
-                .collect(groupingBy(Contest::getMatchUuid,
+                .filter(contest -> Objects.nonNull(contest.getMatchIdentity()))
+                .collect(groupingBy(Contest::getMatchIdentity,
                         mapping(Contest::getStatus, toList())));
         long notValidatedCount = matchStatuses
                 .entrySet()
@@ -231,7 +231,7 @@ public class CompetitionService {
     private static Integer getNotPlayedAdministratedMatchesCount(List<Contest> contests) {
         long count = contests
                 .stream()
-                .filter(contest -> Objects.isNull(contest.getMatchUuid()))
+                .filter(contest -> Objects.isNull(contest.getMatchIdentity()))
                 .filter(contest -> MatchStatus.Validated.equals(contest.getStatus()))
                 .count();
         return Long.valueOf(count).intValue();
