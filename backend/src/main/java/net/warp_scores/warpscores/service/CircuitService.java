@@ -5,17 +5,22 @@ import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.domain.SequenceGenerator;
 import net.warp_scores.warpscores.domain.persistence.CircuitRepository;
+import net.warp_scores.warpscores.domain.persistence.LeagueCollectionRepository;
 import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.IdentityUtil;
 import net.warp_scores.warpscores.model.Circuit;
 import net.warp_scores.warpscores.model.CircuitLeg;
 import net.warp_scores.warpscores.model.CircuitLegType;
 import net.warp_scores.warpscores.model.GameType;
+import net.warp_scores.warpscores.model.LadderOption;
 import net.warp_scores.warpscores.model.League;
+import net.warp_scores.warpscores.model.LeagueCollection;
 import net.warp_scores.warpscores.model.Platform;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -27,6 +32,7 @@ public class CircuitService {
     public static final long DUMMY_CIRCUIT_ID = -42L;
 
     private final CircuitRepository circuitRepository;
+    private final LeagueCollectionRepository collectionRepository;
     private final SequenceGenerator sequenceGenerator;
     private final LeagueService leagueService;
 
@@ -73,7 +79,7 @@ public class CircuitService {
         // Use getLeagueId() or getIdentity().getId() depending on your League model
         return leagues
                 .stream()
-                .filter(league -> !leagueIdsInCircuits.contains(league.getLeagueId()))
+                .filter(league -> !leagueIdsInCircuits.contains(league.getIdentity()))
                 .collect(Collectors.toList());
     }
 
@@ -117,6 +123,62 @@ public class CircuitService {
         log.info("Adding leg {} to circuit {}.", circuitLeg, circuit);        
         circuitLeg.setCircuitLegId(sequenceGenerator.nextIdFor(CircuitLeg.class));
         circuit.addLeg(circuitLeg);
+        return circuitRepository.save(circuit);
+    }
+
+    public Circuit updateLeg(Circuit circuit, long circuitLegId, Map<String, Object> circuitLeg) {
+        //circuitLeg.setCircuitLegId(sequenceGenerator.nextIdFor(CircuitLeg.class));
+        CircuitLeg leg = circuit.getCircuitLeg(circuitLegId);
+        if (leg == null)
+            throw new IllegalArgumentException("Circuit leg with ID " + circuitLegId + " not found in circuit.");
+        boolean wasCollected = leg.getIsCollected();
+        if (circuitLeg.containsKey("entityId")) {
+            Identity id = IdentityUtil.fromId((String)circuitLeg.get("entityId"));
+            if (id != null)
+                leg.setEntityId(id);
+        }
+        if (circuitLeg.containsKey("legType"))
+            leg.setLegType(circuitLeg.get("legType") instanceof CircuitLegType
+                    ? (CircuitLegType) circuitLeg.get("legType")
+                    : CircuitLegType.valueOf((String) circuitLeg.get("legType")));
+        if (circuitLeg.containsKey("label"))
+            leg.setLabel(circuitLeg.get("label") instanceof String
+                    ? (String) circuitLeg.get("label")
+                    : String.valueOf(circuitLeg.get("label")));
+        if (circuitLeg.containsKey("game")) 
+            leg.setGame(circuitLeg.get("game") instanceof GameType
+                    ? (GameType) circuitLeg.get("game")
+                    : GameType.valueOf((String) circuitLeg.get("game")));
+        if (circuitLeg.containsKey("platform")) 
+            leg.setPlatform(circuitLeg.get("platform") instanceof Platform
+                    ? (Platform) circuitLeg.get("platform")
+                    : Platform.valueOf((String) circuitLeg.get("platform")));
+        if (circuitLeg.containsKey("ruleset")) 
+            leg.setRuleset(circuitLeg.get("ruleset") instanceof String
+                    ? (String) circuitLeg.get("ruleset")
+                    : String.valueOf(circuitLeg.get("ruleset")));
+        if (circuitLeg.containsKey("isCollected")) 
+            leg.setIsCollected(circuitLeg.get("isCollected") instanceof Boolean
+                    ? (Boolean) circuitLeg.get("isCollected")
+                    : Boolean.parseBoolean((String) circuitLeg.get("isCollected")));
+        if (circuitLeg.containsKey("isArchived"))
+            leg.setIsArchived(circuitLeg.get("isArchived") instanceof Boolean
+                    ? (Boolean) circuitLeg.get("isArchived")
+                    : Boolean.parseBoolean((String) circuitLeg.get("isArchived")));
+        if (circuitLeg.containsKey("ladderOption")) 
+            leg.setLadderOption(circuitLeg.get("ladderOption") instanceof LadderOption
+                    ? (LadderOption) circuitLeg.get("ladderOption")
+                    : LadderOption.valueOf((String)circuitLeg.get("ladderOption")));
+
+        //log.info("Updated leg {} in circuit {}.", circuitLegId, circuit.getCircuitId());
+        if (wasCollected && !leg.getIsCollected()) { 
+            log.info("Leg {} in circuit {} was collected, but is now removed from collection.", circuitLegId, circuit.getCircuitId());
+            LeagueCollection lc = new LeagueCollection(leg.getEntityId());
+            collectionRepository.insert(lc);
+        } else if (!wasCollected && leg.getIsCollected()) {
+            log.info("Leg {} in circuit {} was not collected, but collection is now started.", circuitLegId, circuit.getCircuitId());
+            collectionRepository.deleteById(leg.getEntityId());
+        }  
         return circuitRepository.save(circuit);
     }
 

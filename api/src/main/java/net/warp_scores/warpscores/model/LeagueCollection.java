@@ -18,15 +18,12 @@ import java.util.UUID;
 @ToString(of = {"leagueName",  "leagueId"})
 public class LeagueCollection {
     @Id
-    public Identity get_id() {
-        return identity;
-    }
+    private final Identity identity;
 
     public LeagueCollection(Identity identity) {
         this.identity = identity;
     }
 
-    private final Identity identity;
     //private Integer oldLeagueId;
     
     private String leagueName;

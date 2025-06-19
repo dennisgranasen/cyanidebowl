@@ -127,7 +127,7 @@ public class ArenaService {
                 .stream()
                 .filter(arenaTeam -> {
                     Identity arenaCoachId = arenaTeam.getCoachId();
-                    return arenaCoachId != null && arenaCoachId.getId().equals(coachId.getId());
+                    return arenaCoachId != null && arenaCoachId.getValue().equals(coachId.getValue());
                 })
                 .sorted(comparing(this::latestFinishedGame).reversed())
                 .toList();
@@ -177,7 +177,7 @@ public class ArenaService {
     private ArenaCoach toArenaCoach(Coach coach, Map<ArenaTeam.RunType, List<ArenaTeam>> arenaTeamsByRunType) {
         ArenaCoach arenaCoach = new ArenaCoach();
         arenaCoach.setCoachName(coach.getName());
-        arenaCoach.setCoachId(coach.getIdentity());
+        arenaCoach.setId(coach.getIdentity());
 
         Map<ArenaTeam.RunType, Set<Identity>> teamUuidsByRunType = new HashMap<>();
         Map<ArenaTeam.RunType, Set<Race>> racesByRunType = new HashMap<>();
@@ -476,7 +476,7 @@ public class ArenaService {
             Pageable pageable) {
         return executeLoggingDuration(() -> matchRepository.queryArenaTeamsFor(
                 competitionId, race.orElse(null),
-                coachId.map(Identity::getId).orElse(null),
+                coachId.map(Identity::getValue).orElse(null),
                 minWins.orElse(null), pageable
             ));
     }

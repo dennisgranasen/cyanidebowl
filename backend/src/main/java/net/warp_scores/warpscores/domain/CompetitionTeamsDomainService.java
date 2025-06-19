@@ -23,7 +23,7 @@ public class CompetitionTeamsDomainService {
     public CompetitionTeams createOrUpdateCompetitionTeams(Competition competition,
                                                            List<Team> teams) {
         CompetitionTeams competitionTeams = new CompetitionTeams(competition.getIdentity());
-        competitionTeams.setTeamIds(teams.stream().map(t -> t.getIdentity().getId()).toList());
+        competitionTeams.setTeamIds(teams.stream().map(t -> t.getIdentity().getValue()).toList());
         return competitionTeamsRepository.save(competitionTeams);
     }
 

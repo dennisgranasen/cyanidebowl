@@ -14,7 +14,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 })
 public interface Identity {
     String DELIMITER = "_";
-    String getId();
+    //String getId();
     int getOpus();
+    String getValue();
     String asMongoKey();    
 }

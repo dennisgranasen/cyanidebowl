@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparing;
@@ -42,7 +41,6 @@ import static java.util.stream.Collectors.toList;
 public class CompetitionService {
     private final CompetitionRepository competitionRepository;
     private final ContestRepository contestsRepository;
-    private final IdService idService;
     private final OfficialLeagueAndCompetitions officialLeagueCompetitions;
     private final MatchService matchService;
     private final CyanideApiService cyanideApiService;
@@ -57,7 +55,7 @@ public class CompetitionService {
         if (competitions.isEmpty()) {
             competitions = cyanideApiService.loadCompetitions(leagueIdentity);
         }
-        competitions.forEach(this::adjustCompetitionNameAndLogo);
+        //competitions.forEach(this::adjustCompetitionNameAndLogo);
 
         return competitions;
     }
@@ -74,14 +72,14 @@ public class CompetitionService {
             competitionRepository.findById(competitionIdentity)
                                  .map(this::initializeForFormat);
         if (competition.isPresent()) {
-            log.info("Competition {} found in DB, initializing for format...", competitionIdentity.getId());
+            log.info("Competition {} found in DB, initializing for format...", competitionIdentity.getValue());
             adjustCompetitionNameAndLogo(competition.get());
         } else {
-            log.info("Competition {} not found in DB, fetching from Cyanide API...", competitionIdentity.getId());
+            log.info("Competition {} not found in DB, fetching from Cyanide API...", competitionIdentity.getValue());
             List<Competition> fetched =
                 cyanideApiService.loadCompetitions(competitionIdentity);
             if (fetched != null && !fetched.isEmpty()) {
-                log.info("Competitions {} fetched from Cyanide API, saving to DB...", competitionIdentity.getId());
+                log.info("Competitions {} fetched from Cyanide API, saving to DB...", competitionIdentity.getValue());
                 for (Competition comp : fetched) {
                     log.info("Saving competition: {}", comp);
                     adjustCompetitionNameAndLogo(comp);
@@ -89,7 +87,7 @@ public class CompetitionService {
                     return Optional.of(comp);
                 }
             }
-            log.warn("Competition {} not found in Cyanide API either.", competitionIdentity.getId());
+            log.warn("Competition {} not found in Cyanide API either.", competitionIdentity.getValue());
             return Optional.empty();
         }
         return competition;

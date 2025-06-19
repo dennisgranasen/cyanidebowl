@@ -18,17 +18,15 @@ import java.util.Map;
 @EqualsAndHashCode(of = "identity")
 @ToString(of = {"name", "identity"})
 public class League {
-    @Id
-    public Identity get_id() {
-        return identity;
-    }
-    public String getLeagueId() { return identity != null ? identity.getId() : null; }
 
+    @Id
     private final Identity identity;
 
     public League(Identity identity) {
         this.identity = identity;
     }
+
+    public String getLeagueId() { return identity != null ? identity.getValue() : null; }
 
     private String logo;
     private String name;

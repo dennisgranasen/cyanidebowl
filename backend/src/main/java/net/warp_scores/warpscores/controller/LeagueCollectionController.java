@@ -59,7 +59,7 @@ public class LeagueCollectionController {
 
     private List<League> doCreateLeagueCollection(Identity id) {
         LookupRequest lookupRequest = new LookupRequest();
-        lookupRequest.setLeague_id(id.getId());
+        lookupRequest.setLeague_id(id.getValue());
         lookupRequest.setOpus(id.getOpus());
         LookupResponse lookup = cyanideApiService.lookup(lookupRequest);
         int opus = lookup.getMeta().getOpus().orElse(defaultOpus);
@@ -73,7 +73,7 @@ public class LeagueCollectionController {
 
         return leagueCollections
                 .stream()
-                .map(lc -> cyanideApiService.loadLeague(lc.get_id()))
+                .map(lc -> cyanideApiService.loadLeague(lc.getIdentity()))
                 .toList();
     }
 

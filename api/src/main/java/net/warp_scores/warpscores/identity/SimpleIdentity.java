@@ -3,6 +3,7 @@ package net.warp_scores.warpscores.identity;
 import java.util.Objects;
 import java.util.UUID;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -12,9 +13,9 @@ import lombok.ToString;
  */
 @Getter
 @Setter
-@ToString(of = {"id", "opus", "value"})
+@ToString(of = {"opus", "value"})
+@EqualsAndHashCode(of = {"opus", "value"})
 public class SimpleIdentity implements Identity {
-    private String id;
     private int opus;
     private String value;
 
@@ -24,7 +25,6 @@ public class SimpleIdentity implements Identity {
     public SimpleIdentity(String value, int opus) {
         this.value = Objects.requireNonNull(value, "value must not be null");
         this.opus = opus;
-        this.id = opus + DELIMITER + value;
     }
 
     public SimpleIdentity(UUID uuid, int opus) {

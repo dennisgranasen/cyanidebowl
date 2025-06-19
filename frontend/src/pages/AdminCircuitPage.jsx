@@ -42,8 +42,9 @@ const initialFormValues = {
   competitionName: '',
   legType: '',
   label: '',
-  collectData: true,
-  treatLadderAs: '',
+  isCollected: true,
+  isArchived: false,
+  ladderOption: '',
   competitionFormat: '',
   opus: String(config.defaultOpus || 3),
 };
@@ -92,6 +93,7 @@ function TableColumns() {
       <Th>Ruleset</Th>
       <Th>Ladder</Th>
       <Th>Collect?</Th>
+      <Th>Archived?</Th>
     </Tr>
   );
 }
@@ -117,6 +119,8 @@ function AdminCircuitPage() {
   const [selectedGameType, setSelectedGameType] = useState('');
   const [selectedPlatform, setSelectedPlatform] = useState('');
   const [selectedRuleset, setSelectedRuleset] = useState('');
+  //const [isCollected, setIsCollected] = useState(initialFormValues.isCollected);
+  //const [isArchived, setIsArchived] = useState(initialFormValues.isArchived);
 
   // --- Effects ---
   useEffect(() => { fetchCircuit(circuitId); }, []);
@@ -200,6 +204,30 @@ function AdminCircuitPage() {
       .catch((err) => setError({ type: 'error', message: err.toLocaleString() }));
   };
 
+  const handleCircuitLegIsCollectedChanged = (circuitLegId, isChecked) => {
+    WarpScoresApiService.updateCircuitLeg(
+      circuit.circuitId,
+      circuitLegId,
+      {isCollected: isChecked},
+      getAccessTokenSilently,
+      getAccessTokenWithPopup
+    )
+      .then(() => fetchCircuit(circuitId))
+      .catch((err) => setError({ type: 'error', message: err.toLocaleString() }));      
+  };
+
+  const handleCircuitLegIsArchivedChanged = (circuitLegId, isChecked) => {
+    WarpScoresApiService.updateCircuitLeg(
+      circuit.circuitId,
+      circuitLegId,
+      {isArchived: isChecked},
+      getAccessTokenSilently,
+      getAccessTokenWithPopup
+    )
+      .then(() => fetchCircuit(circuitId))
+      .catch((err) => setError({ type: 'error', message: err.toLocaleString() }));      
+  };
+
   const fetchCircuit = (id) => {
     setLoading(true);
     WarpScoresApiService.circuits(id)
@@ -222,8 +250,9 @@ function AdminCircuitPage() {
       values.gameType,
       values.platform,
       values.ruleset,
-      values.collectData,
-      values.treatLadderAs,
+      values.isCollected,
+      values.isArchived,
+      values.ladderOption,
       getAccessTokenSilently,
       getAccessTokenWithPopup
     )
@@ -288,7 +317,7 @@ function AdminCircuitPage() {
     try {
       const res = await WarpScoresApiService.lookup({
         league_name: values.searchName,
-        bb: values.bbVersion,
+        opus: values.bbVersion,
         exact: values.exact ? 1 : 0,
         hint: 'HAS_CONTESTS',
         fallback: 0
@@ -376,6 +405,8 @@ function AdminCircuitPage() {
                 <CircuitLeg
                   key={circuitLeg.circuitLegId}
                   circuitLeg={circuitLeg}
+                  onCollectDataChanged={handleCircuitLegIsCollectedChanged}
+                  onArchivedChanged={handleCircuitLegIsArchivedChanged}
                   onRemoveLeg={handleRemoveLeg}
                 />
               ))}

@@ -3,16 +3,13 @@ package net.warp_scores.warpscores.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.mongodb.lang.Nullable;
 
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 import net.warp_scores.warpscores.UUIDUtil;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.aggregation.ArrayOperators.In;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Duration;
@@ -27,16 +24,12 @@ import java.util.stream.Stream;
 @Setter
 @Document
 public class Contest implements Comparable<Contest> {
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(Contest.class);
 
     @Id
-    public Identity get_id() {
-        return identity;
-    }
-    
-    public String getPlayerId() { return identity != null ? identity.getId() : null; }
-
     private Identity identity;
+   
+    public String getPlayerId() { return identity != null ? identity.getValue() : null; }
+
     public UUID getContestUuid() {
         return UUIDUtil.getUUIDFromIdentity(identity);
     }

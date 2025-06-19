@@ -1,10 +1,10 @@
 package net.warp_scores.warpscores.model;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import net.warp_scores.warpscores.identity.Identity;
-
-import java.util.UUID;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -12,6 +12,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Getter
 @Setter
 @Document
+@ToString(of = {"circuitLegId", "entityId", "legType", "label", "game", "platform", "ruleset", "isCollected", "isArchived", "ladderOption"})
+@EqualsAndHashCode(of = "circuitLegId")
 public class CircuitLeg implements Comparable<CircuitLeg> {
     @Id
     private Long circuitLegId;
@@ -21,8 +23,9 @@ public class CircuitLeg implements Comparable<CircuitLeg> {
     private GameType game;
     private Platform platform;
     private String ruleset;
-    private Boolean collectData;
-    private String treatLadderAs;
+    private Boolean isCollected;
+    private Boolean isArchived;
+    private LadderOption ladderOption;
 
     @Override
     public int compareTo(CircuitLeg other) {
