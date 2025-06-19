@@ -10,7 +10,7 @@ import useFetchCompetition from '../../hooks/useFetchCompetition';
 
 const { boxSize } = config;
 
-function CircuitLeg({ circuitLeg, onRemoveLeg }) {
+function CircuitLeg({ circuitLeg, onRemoveLeg, onCollectDataChanged, onArchivedChanged }) {
   const [league, setLeague] = useState(null);
   const [error, setError] = useState(null);
   // Example in CircuitLeg.jsx or parent
@@ -74,9 +74,20 @@ function CircuitLeg({ circuitLeg, onRemoveLeg }) {
         <Td>{circuitLeg.game}</Td>
         <Td>{circuitLeg.platform}</Td>
         <Td>{circuitLeg.ruleset}</Td>
-        <Td>{circuitLeg.treatLadderAs}</Td>
+        <Td>{circuitLeg.ladderOption}</Td>
         <Td>
-          <Checkbox defaultChecked={circuitLeg.collectData} readOnly />
+          <Checkbox 
+            defaultChecked={circuitLeg.isCollected} 
+            onChange={() => onCollectDataChanged && 
+              onCollectDataChanged(circuitLeg.circuitLegId, !circuitLeg.isCollected)}
+          />
+        </Td>
+        <Td>
+          <Checkbox 
+            defaultChecked={circuitLeg.isArchived} 
+            onChange={() => onArchivedChanged && 
+              onArchivedChanged(circuitLeg.circuitLegId, !circuitLeg.isArchived)}
+          />
         </Td>
         <Td>
           <Button

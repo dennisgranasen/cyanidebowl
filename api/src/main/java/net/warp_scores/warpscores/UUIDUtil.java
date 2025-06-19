@@ -28,7 +28,7 @@ public class UUIDUtil {
             throw new IllegalArgumentException("Identity must not be null");
         }
         if (identity instanceof net.warp_scores.warpscores.identity.SimpleIdentity) {
-            return UUID.fromString(identity.getId().substring(identity.getId().indexOf(Identity.DELIMITER) + 1));
+            return UUID.fromString(identity.getValue().substring(identity.getValue().indexOf(Identity.DELIMITER) + 1));
         } else if (identity instanceof net.warp_scores.warpscores.identity.CompositeIdentity) {
             String[] parts = ((net.warp_scores.warpscores.identity.CompositeIdentity) identity).getParts();
             if (parts.length > 0) {

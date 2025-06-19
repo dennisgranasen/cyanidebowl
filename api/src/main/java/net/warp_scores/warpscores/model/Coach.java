@@ -16,14 +16,10 @@ import java.util.Date;
 @EqualsAndHashCode(of = "identity")
 public class Coach {
     @Id
-    public Identity get_id() {
-        return identity;
-    }
-
     private final Identity identity;
 
     public String getCoachId() {
-        return identity != null ? identity.getId() : null;
+        return identity != null ? identity.getValue() : null;
     }
 
     private String name;

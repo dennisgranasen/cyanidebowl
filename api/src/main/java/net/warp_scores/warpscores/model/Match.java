@@ -17,12 +17,10 @@ import java.util.UUID;
 @Document
 public class Match {
     @Id
-    public Identity get_id() {
-        return identity;
-    }
-    public String getMatchId() { return identity != null ? identity.getId() : null; }
-
     private final Identity identity;
+
+    public String getMatchId() { return identity != null ? identity.getValue() : null; }
+
 
     public Match(Identity identity) {
         this.identity = identity;

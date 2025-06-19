@@ -3,6 +3,7 @@ package net.warp_scores.warpscores.identity;
 import java.util.Arrays;
 import java.util.Objects;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -12,11 +13,16 @@ import lombok.ToString;
  */
 @Getter
 @Setter
-@ToString(of = {"id", "opus", "parts"})
+@ToString(of = {"opus", "parts"})
+@EqualsAndHashCode(of = {"opus", "parts"})
 public class CompositeIdentity implements Identity {
-    private String id;
+    //private String id;
     private int opus;
     private String[] parts;
+
+    public String getValue() {
+        return String.join(DELIMITER, parts);
+    }
 
     public CompositeIdentity() {
     }
@@ -25,7 +31,7 @@ public class CompositeIdentity implements Identity {
         Objects.requireNonNull(parts, "parts must not be null");
         this.opus = opus;
         this.parts = Arrays.stream(parts).map(String::valueOf).toArray(String[]::new);
-        this.id = buildId(opus, this.parts);
+        //this.id = buildId(opus, this.parts);
     }
 
     private static String buildId(int opus, String[] parts) {

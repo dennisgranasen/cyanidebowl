@@ -18,11 +18,9 @@ import java.util.List;
 @ToString(of = {"identity"})
 public class CompetitionTeams {
     @Id
-    public Identity get_id() {
-        return identity;
-    }
-    public String getCompetitionId() { return identity != null ? identity.getId() : null; }   
     private final Identity identity;
+
+    public String getCompetitionId() { return identity != null ? identity.getValue() : null; }   
 
     public CompetitionTeams(Identity identity) {
         this.identity = identity;

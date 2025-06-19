@@ -18,12 +18,9 @@ import java.util.List;
 @ToString(of = {"name", "identity"})
 public class Player {
     @Id
-    public Identity get_id() {
-        return identity;
-    }
-    public String getPlayerId() { return identity != null ? identity.getId() : null; }
-
     private final Identity identity;
+
+    public String getPlayerId() { return identity != null ? identity.getValue() : null; }
 
     public Player(Identity identity) {
         this.identity = identity;

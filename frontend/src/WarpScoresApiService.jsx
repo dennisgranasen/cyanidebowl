@@ -143,8 +143,9 @@ export default {
     game,
     platform,
     ruleset,
-    collectData,
-    treatLadderAs,
+    isCollected,
+    isArchived,
+    ladderOption,
     getAccessTokenSilently,
     getAccessTokenWithPopup
   ) =>
@@ -158,8 +159,9 @@ export default {
         game: game.toUpperCase(),
         platform,
         ruleset: ruleset.toUpperCase(),
-        collectData: collectData ?? false,
-        treatLadderAs: treatLadderAs?.toUpperCase() || null,
+        isCollected: isCollected,
+        isArchived: isArchived,
+        ladderOption: ladderOption || null,
       },
       getAccessTokenSilently,
       getAccessTokenWithPopup
@@ -179,7 +181,21 @@ export default {
     )
       .then(returnData)
       .catch(handleError),
-  
+  updateCircuitLeg: async (
+    circuitId, 
+    circuitLegId, 
+    updateFields, 
+    getAccessTokenSilently, 
+    getAccessTokenWithPopup
+  ) =>
+    postDataWithAuthentication(
+      `/circuits/${circuitId}/legs/${circuitLegId}/update`,
+      updateFields,
+      getAccessTokenSilently,
+      getAccessTokenWithPopup
+    )
+      .then(returnData)
+      .catch(handleError),
   // leagues
   leagues: async (leagueUuid, opus) =>
     axios(`/leagues${leagueUuid ? `/${leagueUuid}` : ''}${opus !== undefined && opus !== null ? `?opus=${opus}` : ''}`)

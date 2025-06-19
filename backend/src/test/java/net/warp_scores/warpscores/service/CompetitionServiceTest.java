@@ -39,8 +39,8 @@ class CompetitionServiceTest {
 
     private final CompetitionService competitionService = 
         new CompetitionService(competitionRepository,
-            contestRepository,idService,
-            officialLeagueCompetitions, matchService, cyanideApiService);
+            contestRepository, officialLeagueCompetitions, 
+            matchService, cyanideApiService);
 
     @ParameterizedTest(name = "Expecting {1} rounds for {0} players.")
     @MethodSource("provideTestData")

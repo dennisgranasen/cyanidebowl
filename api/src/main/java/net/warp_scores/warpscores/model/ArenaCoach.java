@@ -4,6 +4,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Collection;
@@ -19,11 +21,13 @@ import net.warp_scores.warpscores.identity.Identity;
 @Document
 @Getter
 @Setter
-@EqualsAndHashCode(of = "coachId")
+@EqualsAndHashCode(of = "id")
 @ToString(of = "coachName", includeFieldNames = false)
 public class ArenaCoach {
+
+    @Id
+    private Identity id;
     private String coachName;
-    private Identity coachId;
     private Set<Race> completedRaces;
     private int activeNotCompletedRacesCount;
     private int activeTeamsCount;

@@ -43,7 +43,8 @@ public class CyanideApiService {
 
     public League loadLeague(Identity leagueIdentity) {
         LeagueRequest leagueRequest = new LeagueRequest();
-        leagueRequest.setLeague_id(leagueIdentity.getId());
+        System.out.println(leagueIdentity.getValue());
+        leagueRequest.setLeague_id(leagueIdentity.getValue());
         leagueRequest.setOpus(leagueIdentity.getOpus());
         LeagueResponse leagueResponse = cyanideCachedRestApiClient.getFromCacheOrApi(leagueRequest);
         return leagueDomainService.createOrUpdateLeague(leagueResponse);
@@ -52,7 +53,7 @@ public class CyanideApiService {
     public List<Team> loadTeams(Competition competition) {
         TeamsRequest teamsRequest = new TeamsRequest();
         teamsRequest.setCompetition_id(competition.getCompetitionId());
-        teamsRequest.setLeague_id(competition.getLeagueId().getId());
+        teamsRequest.setLeague_id(competition.getLeagueId().getValue());
         teamsRequest.setOpus(competition.getIdentity().getOpus());
         TeamsResponse teamsResponse = cyanideCachedRestApiClient.getFromCacheOrApi(teamsRequest);
         List<Team> teams = teamDomainService.createOrUpdateTeams(teamsResponse);
@@ -113,7 +114,7 @@ public class CyanideApiService {
             return null;
         }
         MatchRequest matchRequest = new MatchRequest();
-        matchRequest.setMatch_id(matchIdentity.getId());
+        matchRequest.setMatch_id(matchIdentity.getValue());
         matchRequest.setOpus(matchIdentity.getOpus());
         MatchResponse matchResponse = cyanideCachedRestApiClient.getFromCacheOrApi(matchRequest);
         return matchDomainService.createOrUpdateMatch(matchResponse);
@@ -146,7 +147,7 @@ public class CyanideApiService {
 
     public List<Competition> loadCompetitions(Identity leagueIdentity) {
         CompetitionsRequest competitionsRequest = new CompetitionsRequest();
-        competitionsRequest.setLeague_id(leagueIdentity.getId());
+        competitionsRequest.setLeague_id(leagueIdentity.getValue());
         competitionsRequest.setOpus(leagueIdentity.getOpus());
         CompetitionsResponse competitionsResponse =
                 cyanideCachedRestApiClient.getFromCacheOrApi(competitionsRequest);
@@ -159,7 +160,7 @@ public class CyanideApiService {
                         competition.getIdentity());
         ContestsRequest contestsRequest = new ContestsRequest();
         contestsRequest.setCompetition_id(competition.getCompetitionId());
-        contestsRequest.setLeague_id(competition.getLeagueId().getId());
+        contestsRequest.setLeague_id(competition.getLeagueId().getValue());
         contestsRequest.setOpus(competition.getIdentity().getOpus());
 
         int limitOffset = contestCount - ApiRequest.DEFAULT_FETCH_LIMIT;
