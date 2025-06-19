@@ -44,10 +44,10 @@ public class ContestService {
                 Optional<Integer> limit) {  
         Optional<Competition> competition = 
                 competitionService.loadCompetition(competitionId);
-        Set<Team> teams = new LinkedHashSet<>(teamDomainService
+        List<Team> teams = teamDomainService
                 .findByCompetitionId(competitionId)
                 .stream()
-                .toList());
+                .toList();
         Pageable pageable = limit.map(l -> (Pageable) PageRequest.of(0, l, Sort.by(Sort.Direction.DESC, "matchDate")))
                 .orElse(Pageable.unpaged());
         List<Contest> contests = contestRepository.findByCompetitionId(
