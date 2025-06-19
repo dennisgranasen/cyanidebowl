@@ -9,6 +9,7 @@ import lombok.Setter;
 import lombok.ToString;
 import net.warp_scores.warpscores.UUIDUtil;
 import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.aggregation.ArrayOperators.In;
@@ -53,7 +54,10 @@ public class Contest implements Comparable<Contest> {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date matchDate;
     private String gameId;
-    private UUID matchUuid;
+    private String matchId;
+    public Identity getMatchIdentity() {
+        return new SimpleIdentity(matchId, identity.getOpus());
+    }
     private Integer live;
     private List<Team> opponents;
     private Object winner;

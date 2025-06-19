@@ -1,6 +1,5 @@
 package net.warp_scores.warpscores.service;
 
-import com.fasterxml.uuid.Generators;
 import net.warp_scores.warpscores.model.CompetitionFormat;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Competition;
@@ -8,7 +7,6 @@ import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.Team;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -21,7 +19,6 @@ import java.util.UUID;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-//@Disabled
 public class ContestInitializationServiceTest {
     private final ContestInitializationService service = new ContestInitializationService();
 

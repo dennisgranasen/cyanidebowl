@@ -66,8 +66,10 @@ public class RankService {
         if (!competition.getFormat().equals(CompetitionFormat.Ladder)) {
             matches = matchRepository.findByCompetitionId(competitionId);
         }
-        Map<UUID, Match> matchByMatchId =
-            matches.stream().collect(Collectors.toMap(m -> UUID.fromString(m.getMatchId()), m -> m, (a, b) -> a, HashMap::new));
+        Map<Identity, Match> matchByMatchId =
+            matches.stream().collect(Collectors.toMap(m -> 
+                    m.getIdentity(),
+                    m -> m, (a, b) -> a, HashMap::new));
 
         return teams.stream()
                 .map(team -> toRank(
@@ -100,7 +102,7 @@ public class RankService {
 
     private Rank toRank(Team team,
             List<Contest> contests,
-            Map<UUID, Match> matchByMatchId,
+            Map<Identity, Match> matchByMatchId,
             List<RankComparisons> rankComparisons) {
         Rank rank = new Rank();
         rank.setTeam(team);
@@ -113,7 +115,7 @@ public class RankService {
         int inflictedCasualties = 0;
         int sustainedCasualties = 0;
         for (Contest contest : contests) {
-            Optional<Match> match = ofNullable(contest.getMatchUuid()).map(matchByMatchId::get);
+            Optional<Match> match = ofNullable(contest.getMatchIdentity()).map(matchByMatchId::get);
             List<Team> teamResults = match.map(Match::getTeams).orElse(contest.getOpponents());
 
             Optional<Team> ownTeam = getTeam(teamResults, team.getIdentity());

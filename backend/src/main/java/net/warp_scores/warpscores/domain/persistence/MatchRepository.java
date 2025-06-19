@@ -16,15 +16,13 @@ import org.springframework.stereotype.Repository;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
 public interface MatchRepository extends MongoRepository<Match, Identity> {
     List<Match> findByCompetitionId(Identity competitionId);
     //List<Match> findByOldCompetitionIdAndOpus(Integer oldId, Integer opus);
 
-    List<Match> findByMatchUuid(UUID matchId);
-    List<Match> findAllByMatchIdIn(List<UUID> matchIds);
+    List<Match> findAllByIdentity(List<Identity> matchIds);
 
     Integer countMatchesByCompetitionId(Identity competitionId);
     //Integer countMatchesByOldCompetitionIdAndOpus(Integer oldId, Integer opus);

@@ -183,7 +183,7 @@ public class FetchDataService {
                 .stream()
                 .filter(Contest::notScheduledNorCalculated)
                 .filter(Contest::notInProgressOrOlderThan4Hours)
-                .filter(contest -> nonNull(contest.getMatchUuid()))
+                .filter(contest -> nonNull(contest.getMatchIdentity()))
                 .toList();
 
         log.info("Found {} contests ({} played) with missing matches.", contests.size(),
@@ -191,7 +191,7 @@ public class FetchDataService {
 
         List<Identity> matchIds = playedContests
                 .stream()
-                .map((c) -> (Identity) new SimpleIdentity(c.getMatchUuid(), c.getIdentity().getOpus()))
+                .map(Contest::getMatchIdentity)
                 .toList();
         loadMatches(matchIds);
         updateTeams(matchIds);
@@ -345,11 +345,7 @@ public class FetchDataService {
     }
 
     private void updateTeams(List<Identity> matchIds) {
-        List<UUID> matchUuids = matchIds
-                .stream()
-                .map(UUIDUtil::getUUIDFromIdentity)
-                .toList();
-        List<Match> matches = matchRepository.findAllByMatchIdIn(matchUuids);
+        List<Match> matches = matchRepository.findAllByIdentity(matchIds);
         Map<Identity, List<Match>> matchesByTeam = new HashMap<>();
         matches.forEach(m -> {
             Identity teamAId = m.getTeams().get(0).getIdentity();

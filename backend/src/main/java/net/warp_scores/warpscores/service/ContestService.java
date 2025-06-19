@@ -111,24 +111,24 @@ public class ContestService {
     }
 
     private void loadMatchIntoAndAdjustCompetitionName(Contest contest) {
-        Optional<UUID> matchUuid = Optional.ofNullable(contest.getMatchUuid());
-        if (matchUuid.isEmpty()) {
+        Optional<Identity> matchId = Optional.ofNullable(contest.getMatchIdentity());
+        if (matchId.isEmpty()) {
             contest.setMatch(null);
             return;
         }
-        List<Match> match = matchRepository.findByMatchUuid(matchUuid.get());
+        Optional<Match> match = matchRepository.findById(matchId.get());
 
         officialLeagueAndCompetitions.adjustCompetitionName(contest.getLeagueId(), 
                 contest.getCompetitionName(),
                 contest::setCompetitionName);
         contest.setAdminResult(contest.isAdminResult() ||
-                (matchUuid.isEmpty() &&
+                (matchId.isEmpty() &&
                         MatchStatus.Validated.equals(contest.getStatus())));
         if (match.isEmpty()) {
             contest.setMatch(null);
             return;
         }
-        Match m = match.get(0);
+        Match m = match.get();
         contest.setMatch(m);
         officialLeagueAndCompetitions.adjustCompetitionName(
         m.getLeagueId(), m.getCompetitionName(), m::setCompetitionName);
