@@ -74,7 +74,7 @@ public class Contest implements Comparable<Contest> {
                 .orElse("n/a");
         String teamB = Optional.ofNullable(opponents).map(o -> o.size() > 1 ? o.get(1) : null).map(Team::getName)
                 .orElse("n/a");
-        return String.format("Contest[%s] Round: %s -> %s vs %s (next: %s)", identity, round, teamA, teamB,
+        return String.format("Contest[%s] Round: %s -> %s vs %s (next: %s)", identity.asMongoKey(), round, teamA, teamB,
                 nextContestUuid);
     }
 

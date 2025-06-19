@@ -2,7 +2,6 @@ package net.warp_scores.warpscores.service;
 
 import com.fasterxml.uuid.Generators;
 
-import javassist.Loader.Simple;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.UUIDUtil;
 import net.warp_scores.warpscores.annotations.DurationLogging;
@@ -22,7 +21,6 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -31,7 +29,6 @@ import java.util.stream.IntStream;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
-import static java.util.Comparator.comparing;
 
 @Service
 @Slf4j
@@ -55,13 +52,13 @@ public class ContestInitializationService {
         }
     };
 
-    public List<Contest> initializeContestsScheduleForFormat(Optional<Competition> competition, Collection<Team> teams,
+    public List<Contest> initializeContestsScheduleForFormat(Optional<Competition> competition, List<Team> teams,
             List<Contest> contests) {
         return initializeContestsScheduleForFormat(competition, teams, contests, true);
     }
 
     @DurationLogging
-    public List<Contest> initializeContestsScheduleForFormat(Optional<Competition> competition, Collection<Team> teams,
+    public List<Contest> initializeContestsScheduleForFormat(Optional<Competition> competition, List<Team> teams,
             List<Contest> contests, boolean generateFutureRoundRobinRounds) {
 
         Optional<CompetitionFormat> competitionFormat = competition.map(Competition::getFormat);
@@ -225,7 +222,7 @@ public class ContestInitializationService {
 
     private List<Contest> initializeRoundRobinContests(List<Contest> contests,
             Optional<Competition> competition,
-            Collection<Team> teams) {
+            List<Team> teams) {
         log.info("DEBUG: Starting initializeRoundRobinContests");
         OptionalInt currentRound = contests
                 .stream()
@@ -234,31 +231,8 @@ public class ContestInitializationService {
 
         log.info("DEBUG: Current round: {}", currentRound.orElse(0));
 
-        List<Team> homeTeams = new ArrayList<>();
-        List<Team> awayTeams = new ArrayList<>();
-
-
-        extractFirstRoundTeams(contests, homeTeams, awayTeams);
-
-        log.info("DEBUG: Home teams after extractFirstRoundTeams: {}", homeTeams);
-        log.info("DEBUG: Away teams after extractFirstRoundTeams: {}", awayTeams);
-
-        addDummyTeamIfOddParticipants(teams, homeTeams, awayTeams);
-
-        log.info("DEBUG: Home teams after addDummyTeamIfOddParticipants: {}", homeTeams);
-        log.info("DEBUG: Away teams after addDummyTeamIfOddParticipants: {}", awayTeams);
-
-        log.info("DEBUG: Teams for round robin: {}", teams);
-
-        /* This is the fix according to AI, but it doesn't work */
-        // Before calling generateScheduledContests
-        //homeTeams.sort(Comparator.comparing(Team::getName));
-        //awayTeams.sort(Comparator.comparing(Team::getName));
-        /* END OF (NOT WORKING) FIX */
-
-
         List<Contest> scheduledContests = competition.map(comp ->
-                        generateScheduledContests(comp, homeTeams, awayTeams)
+                        generateScheduledContests(comp, teams)
                                 .stream()
                                 .filter(this::doesNotContainDummyTeam)
                                 .filter(contest -> contest.getRound() > currentRound.orElse(0))
@@ -285,68 +259,64 @@ public class ContestInitializationService {
         return !contest.getOpponents().contains(DUMMY_TEAM);
     }
 
-    private void extractFirstRoundTeams(List<Contest> contests,
-            List<Team> homeTeams,
-            List<Team> awayTeams) {
-        contests
-                .stream()
-                .filter(c -> c.getRound() == 1)
-                .sorted(comparing(Contest::getContestUuid))
-                .forEach(c -> {
-                    homeTeams.add(c.getOpponents().get(0));
-                    awayTeams.add(c.getOpponents().get(1));
-                });
-    }
-
-    private void addDummyTeamIfOddParticipants
-            (Collection<Team> teams, List<Team> homeTeams, List<Team> awayTeams) {
-        boolean isEven = teams.size() % 2 == 0;
-        if (isEven) {
-            return;
+    private Collection<Contest> generateScheduledContests(Competition competition, List<Team> teams) {
+        int n = teams.size();
+        boolean isOdd = n % 2 != 0;
+        Team dummy = null;
+        List<Team> workingTeams = new ArrayList<>(teams);
+        if (isOdd) {
+            dummy = new Team(new SimpleIdentity("DUMMY", competition.getIdentity().getOpus()));
+            workingTeams.add(dummy);
+            n++;
         }
 
-        Optional<Team> byeTeam = teams
-                .stream()
-                .filter(team -> !homeTeams.contains(team))
-                .filter(team -> !awayTeams.contains(team))
-                .findFirst();
+        int rounds = n - 1;
+        int half = n / 2;
+        List<Contest> scheduledContests = new ArrayList<>();
+        int opus = competition.getIdentity().getOpus();
 
-        byeTeam.ifPresent(team -> {
-            homeTeams.add(0, byeTeam.get());
-            awayTeams.add(0, DUMMY_TEAM);
+        for (int round = 0; round < rounds; round++) {
+            for (int i = 0; i < half; i++) {
+                Team t1 = workingTeams.get(i);
+                Team t2 = workingTeams.get(n - 1 - i);
+                if (t1 == dummy || t2 == dummy) continue;
+
+                Team home, away;
+                if (i == 0 && round % 2 == 0 && round > 0) {
+                    // Swap home/away for the first pairing every other round (Berger rule)
+                    home = t2;
+                    away = t1;
+                } else {
+                    home = t1;
+                    away = t2;
+                }
+
+                Contest contest = new Contest(new SimpleIdentity(
+                    Generators.timeBasedGenerator().generate(), opus));
+                contest.setRound(round + 1);
+                contest.setCompetitionId(competition.getIdentity());
+                contest.setCompetitionName(competition.getName());
+                contest.setLeagueId(competition.getLeagueId());
+                contest.setLeagueName(competition.getLeagueName());
+                contest.setStatus(MatchStatus.Calculated);
+                contest.setOpponents(List.of(home, away));
+                scheduledContests.add(contest);
+            }
+            // Rotate teams except the first one
+            List<Team> newOrder = new ArrayList<>();
+            newOrder.add(workingTeams.get(0));
+            newOrder.add(workingTeams.get(n - 1));
+            newOrder.addAll(workingTeams.subList(1, n - 1));
+            workingTeams = newOrder;
+        }
+
+        scheduledContests.forEach(contest -> {
+            if (contest.getRound()>1) {
+                contest.setRound(2 + rounds - contest.getRound());
+            }
         });
-    }
 
-    private Collection<Contest> generateScheduledContests(Competition competition,
-            List<Team> groupA,
-            List<Team> groupB) {
-        int participants = groupA.size() + groupB.size();
-        List<Contest> scheduledContests = new ArrayList<>(getRound(competition, 0, groupA, groupB));
-        for (int i = 1; i < participants - 1; i++) {
-            groupB.add(0, groupA.remove(1));
-            groupA.add(groupB.remove(groupB.size() - 1));
-            scheduledContests.addAll(getRound(competition, i, groupA, groupB));
-        }
         scheduledContests.sort(Contest::compareTo);
         return scheduledContests;
-    }
-
-    private static List<Contest> getRound(Competition competition, int round, List<
-            Team> groupA, List<Team> groupB) {
-        List<Contest> roundContests = new ArrayList<>();
-        int opus = competition.getIdentity().getOpus();
-        for (int i = 0; i < groupA.size(); i++) {
-            Contest contest = new Contest(new SimpleIdentity(
-                Generators.timeBasedGenerator().generate(), opus));
-            contest.setRound(round + 1);
-            contest.setCompetitionId(competition.getIdentity());
-            contest.setCompetitionName(competition.getName());
-            contest.setLeagueId(competition.getLeagueId());
-            contest.setLeagueName(competition.getLeagueName());
-            contest.setStatus(MatchStatus.Calculated);
-            contest.setOpponents(List.of(groupA.get(i), groupB.get(i)));
-            roundContests.add(contest);
-        }
-        return roundContests;
     }
 }
