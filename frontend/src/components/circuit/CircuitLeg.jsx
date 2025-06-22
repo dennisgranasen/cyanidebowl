@@ -11,7 +11,7 @@ import useFetchCompetition from '../../hooks/useFetchCompetition';
 const { boxSize } = config;
 
 function CircuitLeg({ circuitLeg, onRemoveLeg, onCollectDataChanged, onArchivedChanged }) {
-  const [league, setLeague] = useState(null);
+  //const [league, setLeague] = useState(null);
   const [error, setError] = useState(null);
   // Example in CircuitLeg.jsx or parent
   const getOpusFromGame = (game) => {
@@ -22,12 +22,13 @@ function CircuitLeg({ circuitLeg, onRemoveLeg, onCollectDataChanged, onArchivedC
       default: return undefined;
     }
   };
-  const { fetchCompetition, competition, competitionLoading, error: competitionError } = 
-    useFetchCompetition(circuitLeg.leagueId, circuitLeg.competitionId,
-        getOpusFromGame(circuitLeg.game));
 
 
+    const { fetchCompetition, league, competition, competitionLoading, error: competitionError } = 
+    useFetchCompetition(circuitLeg.entityId);
 
+
+/*
   const fetchLeague = (leagueId, opus) => {
         logger.info('Fetched league: %o', opus);
     WarpScoresApiService.leagues(leagueId, opus)
@@ -39,17 +40,16 @@ function CircuitLeg({ circuitLeg, onRemoveLeg, onCollectDataChanged, onArchivedC
         setError({ type: 'error', message: reason.toLocaleString() });
       });
   };
-
+*/
   useEffect(() => {
     logger.info('Circuit leg is %o', circuitLeg);
     var opus = getOpusFromGame(circuitLeg.game)
     //if (circuitLeg && circuitLeg.legType === 'League') {
-    fetchLeague(circuitLeg.leagueId, opus);
+    //fetchLeague(circuitLeg.leagueId, opus);
 
-    if (circuitLeg && circuitLeg.legType === 'Competition' && circuitLeg.competitionId)
-    {
-      fetchCompetition(circuitLeg.leagueId, circuitLeg.competitionId, opus);
-    }
+    if (circuitLeg && circuitLeg.entityId)
+      fetchCompetition(circuitLeg.entityId);
+
 
     
   }, []);
