@@ -9,13 +9,11 @@ import net.warp_scores.warpscores.identity.Identity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.UUID;
-
 @Getter
 @Setter
 @Document
-@EqualsAndHashCode(of = {"leagueId", "opus"})
-@ToString(of = {"leagueName",  "leagueId"})
+@EqualsAndHashCode(of = {"identity"})
+@ToString(of = {"leagueName", "identity"})
 public class LeagueCollection {
     @Id
     private final Identity identity;

@@ -16,7 +16,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @EqualsAndHashCode(of = "circuitLegId")
 public class CircuitLeg implements Comparable<CircuitLeg> {
     @Id
-    private Long circuitLegId;
+    private Long circuitLegId;    
     private Identity entityId; // league or competition id
     private CircuitLegType legType;
     private String label;

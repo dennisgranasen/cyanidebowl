@@ -239,7 +239,7 @@ function AdminCircuitPage() {
       .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
       .finally(() => setLoading(false));
   };
-
+  
   const onAddLegClicked = (values, actions) => {
     WarpScoresApiService.addLegToCircuit(
       circuit.circuitId,

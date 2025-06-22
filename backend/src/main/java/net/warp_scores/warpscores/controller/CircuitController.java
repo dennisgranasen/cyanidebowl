@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.model.Circuit;
 import net.warp_scores.warpscores.model.CircuitLeg;
+import net.warp_scores.warpscores.requests.CircuitLegRequest;
 import net.warp_scores.warpscores.service.CircuitService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -67,7 +68,7 @@ public class CircuitController {
     @PreAuthorize(AUTHORITY_WRITE_LEAGUE_ADMIN) // ✨
     public ResponseEntity<Circuit> addCircuitLeg(
             @PathVariable(name = "circuitId") Long circuitId,
-            @RequestBody CircuitLeg circuitLeg) {
+            @RequestBody CircuitLegRequest circuitLeg) {
         try {            
             Optional<Circuit> circuit = circuitService.load(circuitId);
             return circuit
