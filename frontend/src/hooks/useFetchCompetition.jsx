@@ -51,7 +51,8 @@ export default function useFetchCompetition() {
               setCompetition([]);
               return;
             }
-            const competitionData = data.find((comp) => comp.competitionId === competitionId);
+            console.log(`Fetched competitions for league ${leagueId} with opus ${opus}:`, data);
+            const competitionData = data.find((comp) => comp.competitionId === entityId.value || comp.competitionId === competitionId);
             if (!competitionData) {
               logger.warn(`Competition ${competitionId} not found in league ${leagueId}`);
               setCompetition([]);
