@@ -23,9 +23,9 @@ function LatestMatches({ league, competition, embeddable, limit }) {
       .finally(() => setLoading(false));
   };
 
-  const fetchLatestCompetitionMatches = (competitionUuid, contestLimit) => {
+  const fetchLatestCompetitionMatches = (competitionUuid, opus, contestLimit) => {
     setLoading(true);
-    WarpScoresApiService.latestCompetitionMatches(competitionUuid, contestLimit)
+    WarpScoresApiService.latestCompetitionMatches(competitionUuid, opus, contestLimit)
       .then((data) => {
         data.sort(comparators.compareMatchesByMatchUuidAsDatesDesc);
         setContests(data);
@@ -39,7 +39,7 @@ function LatestMatches({ league, competition, embeddable, limit }) {
       fetchLatestLeagueMatches(league.uuid, limit);
     }
     if (competition) {
-      fetchLatestCompetitionMatches(competition.uuid, limit);
+      fetchLatestCompetitionMatches(competition.uuid, competition.identity.opus, limit);
     }
   }, [league, competition]);
 
