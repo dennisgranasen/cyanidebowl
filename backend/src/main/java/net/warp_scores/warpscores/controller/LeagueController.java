@@ -40,8 +40,11 @@ public class LeagueController {
         log.info("Fetching league with ID: {} and opus: {}", leagueId, opus);
         Optional<League> league;
         try {
+
             league = leagueService.loadById(new SimpleIdentity(leagueId, 
                 Optional.ofNullable(opus).orElse(defaultOpus)));
+            league.ifPresentOrElse(l -> log.info("Fetched league: {}", l),
+                                    () -> log.warn("League not found: {}", leagueId));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         }

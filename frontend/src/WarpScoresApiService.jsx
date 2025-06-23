@@ -225,12 +225,12 @@ export default {
   arenaCoachTeams: async (competitionUuid, coachUuid) =>
     axios(`/arena/${competitionUuid}/coach/${coachUuid}`).then(returnData).catch(handleError),
   // matches
-  latestCompetitionMatches: async (competitionUuid, limit) =>
-    axios(`/matches/competition/${competitionUuid}/latest${limit ? `/${limit}` : ''}`)
+  latestCompetitionMatches: async (competitionUuid, opus, limit) =>
+    axios(`/matches/competition/${competitionUuid}/latest${limit ? `/${limit}` : ''}${opus ? `?opus=${opus}` : ''}`)
       .then(returnData)
       .catch(handleError),
-  latestLeagueMatches: async (leagueUuid, limit) =>
-    axios(`/matches/league/${leagueUuid}/latest${limit ? `/${limit}` : ''}`)
+  latestLeagueMatches: async (leagueUuid, opus, limit) =>
+    axios(`/matches/league/${leagueUuid}/latest${limit ? `/${limit}` : ''}${opus ? `?opus=${opus}` : ''}`)
       .then(returnData)
       .catch(handleError),
   // competitions
