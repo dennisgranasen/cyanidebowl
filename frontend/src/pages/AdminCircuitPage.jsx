@@ -51,7 +51,7 @@ const initialFormValues = {
 
 // --- Helper functions ---
 
-const bbVersionToGameTypeKey = (bbVersion) => {
+const getOpus = (bbVersion) => {
   switch (String(bbVersion)) {
     case '1': return 'bb1';
     case '2': return 'bb2';
@@ -131,6 +131,17 @@ function AdminCircuitPage() {
 
   // --- Effects ---
   useEffect(() => { fetchCircuit(circuitId); }, []);
+/*
+    // ...inside Formik render function...
+  useEffect(() => {
+    // Map selectedGameType to opus value
+    let newOpus = '3';
+    if (selectedGameType === 'bb1') newOpus = '1';
+    else if (selectedGameType === 'bb2') newOpus = '2';
+    else if (selectedGameType === 'bb3') newOpus = '3';
+    props.setFieldValue('opus', newOpus);
+  }, [selectedGameType]);
+*/
   useEffect(() => {
     if (!selectedGameType) return;
     // Platform
@@ -139,6 +150,10 @@ function AdminCircuitPage() {
     // Ruleset
     const rulesets = getRulesets(selectedGameType);
     setSelectedRuleset(rulesets.length === 1 ? rulesets[0] : getDefaultRuleset(selectedGameType));
+
+    const opus = getOpus(selectedGameType);
+    setBbVersion(opus);
+
   }, [selectedGameType]);
 
 
@@ -256,7 +271,7 @@ function AdminCircuitPage() {
 
     const name = competition.name || competition.leagueName || 'Unknown Competition';
     setSelectedCompetition(competition);
-    const gameTypeKey = bbVersionToGameTypeKey(bbVersion);
+    const gameTypeKey = getOpus(bbVersion);
     setSelectedGameType(gameTypeKey);
     setSelectedPlatform(getDefaultPlatform(gameTypeKey));
     setSelectedRuleset(getDefaultRuleset(gameTypeKey));
@@ -294,7 +309,7 @@ function AdminCircuitPage() {
     setSelectedCompetitionId('');
     setSelectedLeagueId(league.id || league.leagueId || league.uuid);
     setLabel(league.name);
-    const gameTypeKey = bbVersionToGameTypeKey(bbVersion);
+    const gameTypeKey = getOpus(bbVersion);
     setSelectedGameType(gameTypeKey);
     setSelectedPlatform(getDefaultPlatform(gameTypeKey));
     setSelectedRuleset(getDefaultRuleset(gameTypeKey));
@@ -654,7 +669,7 @@ function AdminCircuitPage() {
 
                         }}
                         onClick={() => handleLeagueClick(item)}>
-                      {item.name || item.leagueName} ({item.id || item.uuid || item.leagueId})
+                      {item.name || item.leagueName}
                     </Box>
                   )})}
               </Box>
@@ -674,7 +689,7 @@ function AdminCircuitPage() {
                         style={isDetailed ? {} : { color: 'red', cursor: 'not-allowed' }}
                         onClick={isDetailed ? () => handleCompetitionClick(item) : undefined}
                       >
-                        {item.name || item.leagueName} ({item.id || item.uuid || item.competitionId})
+                        {item.name || item.leagueName}
                     </Box>
                   );
                 })}

@@ -93,10 +93,12 @@ public class ContestController {
     @PostMapping("/contests/competition/{competitionId}")
     @PreAuthorize(AUTHORITY_WRITE_LEAGUE_ADMIN) // ✨
     public ResponseEntity<Void> addContest(
-            @PathVariable(name = "competitionId") String competitionUuid,
+            @PathVariable(name = "competitionId") String competitionId,
+            @RequestParam(name = "opus", required = false) Integer opus,
             @RequestBody Contest contest) {
         try {
-            contestDomainService.addContest(contest, Optional.empty());
+            // todo: what is competitionId for?
+            contestDomainService.addContest(contest, Optional.ofNullable(opus).orElse(defaultOpus));
             return ResponseEntity.accepted().build();
         } catch (Exception ex) {
             log.error("Unable to add contests", ex);

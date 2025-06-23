@@ -57,9 +57,9 @@ public class DataCollectionController {
     private List<League> doCreateLeagueCollection(Identity id) {
         LookupRequest lookupRequest = new LookupRequest();
         lookupRequest.setLeague_id(id.getValue());
-        lookupRequest.setOpus(id.getOpus());
+        int opus = id.getOpus();
+        lookupRequest.setOpus(opus);
         LookupResponse lookup = cyanideApiService.lookup(lookupRequest);
-        int opus = lookup.getMeta().getOpus().orElse(defaultOpus);
         List<DataCollection> leagueCollections = Arrays.stream(lookup.getLeagues())
                 .map((idWithName) -> newLeagueCollection(
                     new SimpleIdentity(idWithName.getId(), opus), idWithName.getName()))

@@ -31,12 +31,11 @@ public class CompetitionDomainService {
     private int defaultOpus;
 
     @Transactional
-    public List<Competition> createOrUpdateCompetitions(CompetitionsResponse competitionsResponse) {
+    public List<Competition> createOrUpdateCompetitions(CompetitionsResponse competitionsResponse, int opus) {
         if (competitionsResponse == null || competitionsResponse.isEmpty()) {
             return Collections.emptyList();
         }
         log.info(competitionsResponse.toString());
-        Optional<Integer> opus = competitionsResponse.getMeta().getOpus();
         List<Competition> competitions = Arrays.stream(competitionsResponse.getCompetitions())
                 .map((comp) -> internalCreateOrUpdateCompetition(comp, opus))
                 .collect(Collectors.toList());
@@ -55,15 +54,14 @@ public class CompetitionDomainService {
     }
 
     private Competition internalCreateOrUpdateCompetition(ApiCompetition apiCompetition,
-                                                          Optional<Integer> opus) {
-        int myOpus = opus.orElse(defaultOpus);
+                                                          int opus) {
         Identity identity = new CompositeIdentity(
-            myOpus, apiCompetition.getLeague().getId(), apiCompetition.getId());
+            opus, apiCompetition.getLeague().getId(), apiCompetition.getId());
         
         Competition competition = newCompetitionOrFromDb(identity);
         if (competition != null) {
             populateCompetition(apiCompetition, competition, opus);
-            if (myOpus > 2)
+            if (opus > 2)
                 officialLeagueAndCompetitions.adjustCompetitionFormat(
                     competition.getLeagueId(),
                     competition.getName(),
@@ -78,17 +76,14 @@ public class CompetitionDomainService {
         return competition;
     }
 
-    private void populateCompetition(
-        ApiCompetition sourceApiCompetition,
-        Competition targetCompetition,
-        Optional<Integer> opus) {
+    private void populateCompetition(ApiCompetition sourceApiCompetition, Competition targetCompetition, int opus) {
         PopulatorUtil.copyNonNullProperties(sourceApiCompetition, targetCompetition);
         targetCompetition.setLeagueLogo(sourceApiCompetition.getLeague().getLogo());
         targetCompetition.setDateCreated(sourceApiCompetition.getDate_created());
         targetCompetition.setStatus(sourceApiCompetition.getStatus_name());        
 
         targetCompetition.setLeagueId(
-            new SimpleIdentity(sourceApiCompetition.getLeague().getId(), opus.orElse(defaultOpus))
+            new SimpleIdentity(sourceApiCompetition.getLeague().getId(), opus)
         );
         targetCompetition.setName(sourceApiCompetition.getName());
         targetCompetition.setLeagueName(sourceApiCompetition.getLeague().getName());

@@ -34,11 +34,10 @@ public class ContestDomainService {
 
 
     @Transactional
-    public List<Contest> createOrUpdateContests(ContestsResponse contestsResponse) {
+    public List<Contest> createOrUpdateContests(ContestsResponse contestsResponse, int opus) {
         if (contestsResponse == null || contestsResponse.isEmpty()) {
             return Collections.emptyList();
         }
-        Optional<Integer> opus = contestsResponse.getMeta().getOpus();
         
         List<Contest> contests = Arrays
                 .stream(contestsResponse.getContests())
@@ -53,20 +52,19 @@ public class ContestDomainService {
     }
 
     public Contest internalCreateOrUpdateContest(
-            ApiContest apiContest, Optional<Integer> opus) {
-        int myOpus = opus.orElse(defaultOpus);
-        SimpleIdentity id = new SimpleIdentity(apiContest.getContest_id(), myOpus);
+            ApiContest apiContest, int opus) {
+        SimpleIdentity id = new SimpleIdentity(apiContest.getContest_id(), opus);
         Contest contest = newContestOrFromDb(id);
         if (contest != null && !contest.isAdminResult()) {
-            populateContest(apiContest, contest, myOpus);
+            populateContest(apiContest, contest, opus);
         }
         return contest;
     }
 
-    public Contest addContest(Contest contest, Optional<Integer> opus) {
+    public Contest addContest(Contest contest, int opus) {
         Identity contestIdentity = contest.getIdentity();
         if (contestIdentity == null) {
-            contestIdentity = new SimpleIdentity(UUID.randomUUID(), opus.orElse(defaultOpus));
+            contestIdentity = new SimpleIdentity(UUID.randomUUID(), opus);
         }
         Optional<Contest> byId = contestRepository.findById(contestIdentity);
         if (!byId.isEmpty()) {

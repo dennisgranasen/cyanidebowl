@@ -39,11 +39,10 @@ public class TeamDomainService {
     private int defaultOpus;
 
     @Transactional
-    public List<Team> createOrUpdateTeams(TeamsResponse teamsResponse) {
+    public List<Team> createOrUpdateTeams(TeamsResponse teamsResponse, int opus) {
         if (teamsResponse == null || teamsResponse.isEmpty()) {
             return Collections.emptyList();
         }
-        Optional<Integer> opus = teamsResponse.getMeta().getOpus();
         List<Team> teams = Arrays.stream(teamsResponse.getTeams())
                 .map((apiTeam) -> internalCreateOrUpdateTeam(apiTeam, opus))
                 .collect(Collectors.toList());
@@ -51,11 +50,10 @@ public class TeamDomainService {
     }
 
     @Transactional
-    public Team createOrUpdateTeam(TeamResponse teamResponse) {
+    public Team createOrUpdateTeam(TeamResponse teamResponse, int opus) {
         if (teamResponse == null || teamResponse.isEmpty()) {
             return null;
         }
-        Optional<Integer> opus = teamResponse.getMeta().getOpus();
         Team team = internalCreateOrUpdateTeam(
             teamResponse.getTeam(), 
             teamResponse.getRoster(),
@@ -110,23 +108,22 @@ public class TeamDomainService {
                 });
     }
 
-    private Team internalCreateOrUpdateTeam(ApiTeam apiTeam, Optional<Integer> opus) {
-        int myOpus = opus.orElse(defaultOpus);
-        SimpleIdentity identity = new SimpleIdentity(apiTeam.getId(), myOpus);
+    private Team internalCreateOrUpdateTeam(ApiTeam apiTeam, int opus) {
+
+        SimpleIdentity identity = new SimpleIdentity(apiTeam.getId(), opus);
         Team team = newTeamOrFromDb(identity);
         if (team != null) {
-            teamPopulator.populateTeamTeam(apiTeam, new TeamResponse.Player[0], team, myOpus);
+            teamPopulator.populateTeamTeam(apiTeam, new TeamResponse.Player[0], team, opus);
         }
         return team;
     }
 
     private Team internalCreateOrUpdateTeam(
-            ApiTeam apiTeam, TeamResponse.Player[] players, Optional<Integer> opus) {
-        int myOpus = opus.orElse(defaultOpus);
-        SimpleIdentity identity = new SimpleIdentity(apiTeam.getId(), myOpus);
+            ApiTeam apiTeam, TeamResponse.Player[] players, int opus) {
+        SimpleIdentity identity = new SimpleIdentity(apiTeam.getId(), opus);
         Team team = newTeamOrFromDb(identity);
         if (team != null) {
-            teamPopulator.populateTeamTeam(apiTeam, players, team, myOpus);
+            teamPopulator.populateTeamTeam(apiTeam, players, team, opus);
         }
         return team;
     }
