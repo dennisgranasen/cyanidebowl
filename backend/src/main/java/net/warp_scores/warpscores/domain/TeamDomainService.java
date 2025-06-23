@@ -10,8 +10,8 @@ import net.warp_scores.warpscores.domain.persistence.TeamRepository;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Competition;
-import net.warp_scores.warpscores.model.CompetitionTeams;
 import net.warp_scores.warpscores.model.Team;
+import net.warp_scores.warpscores.model.TeamCollection;
 import net.warp_scores.warpscores.service.OfficialLeagueAndCompetitions;
 import net.warp_scores.warpscores.service.PopulatorUtil;
 import net.warp_scores.warpscores.service.TeamPopulator;
@@ -31,9 +31,7 @@ public class TeamDomainService {
     private final TeamRepository teamRepository;
     private final CompetitionRepository competitionRepository;
     private final TeamPopulator teamPopulator;
-    private final UUIDConverter uuidConverter;
-    private final CompetitionTeamsDomainService competitionTeamsDomainService;
-    private final IdService idService;
+    private final TeamCollectionDomainService competitionTeamsDomainService;
     private final OfficialLeagueAndCompetitions officialLeagueCompetitions;
     private final OfficialLeagueAndCompetitions officialLeagueAndCompetitions;
 
@@ -67,10 +65,10 @@ public class TeamDomainService {
 
     @Transactional
     public List<Team> findByCompetitionId(Identity competitionId) {
-        Optional<CompetitionTeams> competitionTeams =
+        Optional<TeamCollection> competitionTeams =
             competitionTeamsDomainService.findByCompetitionId(competitionId);
         List<String> teamIds =
-            competitionTeams.map(CompetitionTeams::getTeamIds).orElse(Collections.emptyList());
+            competitionTeams.map(TeamCollection::getTeamIds).orElse(Collections.emptyList());
         
         List<Identity> teamIdentities = teamIds.stream()
                 .map((id) -> new SimpleIdentity(id, competitionId.getOpus()))
@@ -94,7 +92,8 @@ public class TeamDomainService {
         Identity competitionId0 = team.getCompetitionIds()[0];
         Optional<Competition> competition = competitionRepository.findById(competitionId0);
         team.setLeagueName(competition.map(Competition::getLeagueName).orElse(null));
-        team.setLeagueIds(new Identity[]{competition.map(Competition::getLeagueId).orElse(null)});
+        team.setLeagueIds(new Identity[]{competition.map( c -> 
+            c.getLeagueId()).orElse(null)});
         competition.map(Competition::getLeagueId).ifPresent(id ->
                 officialLeagueAndCompetitions.adjustCompetitionName(
                     id, team.getCompetitionName(),

@@ -50,11 +50,27 @@ public class CompetitionService {
 
     @DurationLogging
     public List<Competition> loadForLeague(Identity leagueIdentity) {
-        List<Competition> competitions =
-            competitionRepository.findByLeagueId(leagueIdentity);
-        if (competitions.isEmpty()) {
-            competitions = cyanideApiService.loadCompetitions(leagueIdentity);
-        }
+        //List<Competition> competitions =
+            //competitionRepository.findByLeagueId(leagueIdentity);
+        //if (competitions.isEmpty()) {
+            //competitions = cyanideApiService.loadCompetitions(leagueIdentity);
+        //}
+        List<Competition> competitions  = cyanideApiService.loadCompetitions(leagueIdentity)
+            .stream()
+            .map(competition -> {
+                        //log.info("Competition {} for league {} @ opus:{}/{} fetched from Cyanide API, saving to DB...",
+                        //    competition.getCompetitionId(), leagueIdentity.getValue(), competition.getIdentity().getOpus(), leagueIdentity.getOpus());
+                        /*
+                        if (competition.getLeagueId() == null) {
+                            competition.setLeagueId(leagueIdentity.getValue());
+                        }*/
+                        adjustCompetitionNameAndLogo(competition);
+                        competitionRepository.save(competition);
+                        // here it could make sense to load the competition from the competiton endpoint as it has more details.
+                        return competition;
+                    })
+            .toList();
+                
         //competitions.forEach(this::adjustCompetitionNameAndLogo);
 
         return competitions;
@@ -62,6 +78,7 @@ public class CompetitionService {
 
     @DurationLogging
     public List<Competition> loadForLeagueAndInitialize(Identity leagueIdentity) {
+        log.info("Load/init competitions for league: {}", leagueIdentity.getValue());
         List<Competition> competitions = loadForLeague(leagueIdentity);
         return initializeForFormat(competitions);
     }
@@ -94,13 +111,15 @@ public class CompetitionService {
     }
 
     private void adjustCompetitionNameAndLogo(Competition competition) {
-        log.info("Adjusting competition name and logo for competition: {}", competition);
-        officialLeagueCompetitions
-                .adjustCompetitionNameAndLogo(
-                    competition.getLeagueId(),
-                    competition.getName(),
-                    competition::setName,
-                    competition::setLogo);
+        if (competition.getIdentity().getOpus() > 2) {
+            log.info("Adjusting competition name and logo for competition: {}", competition);
+            officialLeagueCompetitions
+                    .adjustCompetitionNameAndLogo(
+                        competition.getLeagueId(),
+                        competition.getName(),
+                        competition::setName,
+                        competition::setLogo);
+        }
     }
 
     private List<Competition> initializeForFormat(List<Competition> competitions) {

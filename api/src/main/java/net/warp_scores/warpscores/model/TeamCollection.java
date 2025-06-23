@@ -15,15 +15,15 @@ import java.util.List;
 @Setter
 @Document
 @EqualsAndHashCode(of = "identity")
-@ToString(of = {"identity"})
-public class CompetitionTeams {
+@ToString(of = {"identity", "collectionType"})
+public class TeamCollection {
     @Id
     private final Identity identity;
+    private final EntityType collectionType;
 
-    public String getCompetitionId() { return identity != null ? identity.getValue() : null; }   
-
-    public CompetitionTeams(Identity identity) {
+    public TeamCollection(Identity identity, EntityType collectionType) {
         this.identity = identity;
+        this.collectionType = collectionType;
     }
 
     private List<String> teamIds;

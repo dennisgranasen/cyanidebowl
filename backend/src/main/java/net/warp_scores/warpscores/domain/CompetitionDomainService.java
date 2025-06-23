@@ -7,6 +7,7 @@ import net.warp_scores.warpscores.cyanide.api.responses.CompetitionsResponse;
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
+import net.warp_scores.warpscores.identity.CompositeIdentity;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.service.OfficialLeagueAndCompetitions;
 import net.warp_scores.warpscores.service.PopulatorUtil;
@@ -37,7 +38,7 @@ public class CompetitionDomainService {
         log.info(competitionsResponse.toString());
         Optional<Integer> opus = competitionsResponse.getMeta().getOpus();
         List<Competition> competitions = Arrays.stream(competitionsResponse.getCompetitions())
-                .map((x) -> internalCreateOrUpdateCompetition(x, opus))
+                .map((comp) -> internalCreateOrUpdateCompetition(comp, opus))
                 .collect(Collectors.toList());
         return competitionRepository.saveAll(competitions);
     }
@@ -56,11 +57,12 @@ public class CompetitionDomainService {
     private Competition internalCreateOrUpdateCompetition(ApiCompetition apiCompetition,
                                                           Optional<Integer> opus) {
         int myOpus = opus.orElse(defaultOpus);
-        Identity identity = new SimpleIdentity(apiCompetition.getId(), myOpus);
+        Identity identity = new CompositeIdentity(
+            myOpus, apiCompetition.getLeague().getId(), apiCompetition.getId());
         
         Competition competition = newCompetitionOrFromDb(identity);
         if (competition != null) {
-            populateCompetition(apiCompetition, competition);
+            populateCompetition(apiCompetition, competition, opus);
             if (myOpus > 2)
                 officialLeagueAndCompetitions.adjustCompetitionFormat(
                     competition.getLeagueId(),
@@ -78,17 +80,23 @@ public class CompetitionDomainService {
 
     private void populateCompetition(
         ApiCompetition sourceApiCompetition,
-        Competition targetCompetition) {
+        Competition targetCompetition,
+        Optional<Integer> opus) {
         PopulatorUtil.copyNonNullProperties(sourceApiCompetition, targetCompetition);
         targetCompetition.setLeagueLogo(sourceApiCompetition.getLeague().getLogo());
         targetCompetition.setDateCreated(sourceApiCompetition.getDate_created());
-        targetCompetition.setStatus(sourceApiCompetition.getStatus_name());
+        targetCompetition.setStatus(sourceApiCompetition.getStatus_name());        
+
+        targetCompetition.setLeagueId(
+            new SimpleIdentity(sourceApiCompetition.getLeague().getId(), opus.orElse(defaultOpus))
+        );
+        targetCompetition.setName(sourceApiCompetition.getName());
         targetCompetition.setLeagueName(sourceApiCompetition.getLeague().getName());
         targetCompetition.setCurrentRound(sourceApiCompetition.getRound());
         targetCompetition.setTotalRounds(sourceApiCompetition.getRounds_count());
         targetCompetition.setTeamsCount(sourceApiCompetition.getTeams_count());
         targetCompetition.setTeamsMax(sourceApiCompetition.getTeams_max());
         targetCompetition.setTimeBonusDuration(sourceApiCompetition.getTime_bonus_duration());
-        targetCompetition.setTurnDuration(sourceApiCompetition.getTurn_duration());
+        targetCompetition.setTurnDuration(sourceApiCompetition.getTurn_duration());        
     }
 }

@@ -2,9 +2,18 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.cyanide.api.requests.LookupRequest;
+import net.warp_scores.warpscores.cyanide.api.responses.DetailedLookupResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.LookupResponse;
+import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
+import net.warp_scores.warpscores.model.Competition;
+import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
 import lombok.RequiredArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,11 +37,54 @@ public class LookupController {
         try {
             LookupResponse lookup = cyanideApiService.lookup(lookupRequest);
             log.info("Lookup response: {}", lookup);
-            return ResponseEntity.ok(lookup);
+            if (lookupRequest.getIncludeDetails() && lookup != null) {
+                log.info("Looking up details for {}", lookupRequest);
+                return lookupDetails(lookup, lookupRequest);
+            }
+            else
+                return ResponseEntity.ok(lookup);
         } catch (Exception ex) {
             log.error("Unable to perform lookup {}.", lookupRequest, ex);
             return ResponseEntity.internalServerError().build();
         }
     }
 
+    private ResponseEntity<LookupResponse> lookupDetails(LookupResponse lookup, LookupRequest lookupRequest) {
+
+        if (lookup == null || (lookup.getLeagues() == null && lookup.getCompetitions() == null && lookup.getCoaches() == null)) {
+            log.warn("Lookup response is null or league is null for request: {}", lookupRequest);
+            return ResponseEntity.ok(lookup);
+        }
+        try {
+            int opus = lookup.getMeta().getOpus().orElse(3);
+            List<League> leagues = new ArrayList<>();
+            List<Competition> competitions = new ArrayList<>();
+            for (var leagueIdWithName : lookup.getLeagues()) {
+                log.info("Looking up details for league: {}", leagueIdWithName.getId());
+                Identity leagueIdentity = new SimpleIdentity(leagueIdWithName.getId(), opus);
+                League l = cyanideApiService.loadLeague(leagueIdentity);
+                if (l == null) {
+                    log.warn("League {} not found in database, skipping.", leagueIdWithName.getId());
+                    continue;
+                }
+                leagues.add(l);
+                List<Competition> cs = cyanideApiService.loadCompetitions(leagueIdentity);
+                if (cs == null || cs.isEmpty()) {
+                    log.warn("No competitions found for league {}", leagueIdWithName.getId());
+                    continue;
+                }
+                competitions.addAll(cs);
+                log.info("Found {} competitions for league {}", cs.size(), leagueIdWithName.getId());
+            }
+            DetailedLookupResponse detailedLookup = new DetailedLookupResponse(
+                lookup,
+                leagues.toArray(new League[0]),
+                competitions.toArray(new Competition[0])
+            );
+            return ResponseEntity.ok(detailedLookup);
+        } catch (Exception ex) {
+            log.error("Error looking up details {}", ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }

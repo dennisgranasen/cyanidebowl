@@ -6,7 +6,7 @@ spring:
 logging:
   level:
     org.springframework.boot.autoconfigure.mongo: DEBUG
-    
+
 cyanide:
   check-api-status-cron: '0 */15 * * * ?'
   job-creation-scheduler-active: true
@@ -30,6 +30,8 @@ cyanide:
     period-in-seconds: 30
   defaults:  
     opus: 3
+    page-limit: 100
+    fetch-match-max-age-limit: 10000
     top-coaches: 5
     official-league-uuid: "00000000-0000-0000-0000-000000000025"    
 
