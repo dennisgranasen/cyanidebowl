@@ -17,6 +17,7 @@ import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import config from '../config';
 import gameTypes from '../util/gameTypes.js';
 import ladderOptions from '../util/ladderOptions.js';
+import entityTypes from '../util/entityTypes.js';
 import {bbVersions, getGameFromOpus, getOpusFromGame } from '../util/bbVersions.js';
 // --- Constants and helpers ---
 
@@ -205,11 +206,12 @@ function AdminCircuitPage() {
   };
   
   const onAddLegClicked = (values, actions) => {
+    console.log('Adding leg with values:', values);
     WarpScoresApiService.addLegToCircuit(
       circuit.circuitId,
       values.leagueId,
       values.competitionId,
-      values.legType,
+      values.competitionId ? entityTypes.competition : entityTypes.league,
       values.label,
       values.gameType,
       values.platform,
@@ -350,6 +352,18 @@ function AdminCircuitPage() {
               <Card as={Form} variant="outline" size="sm">
                 <CardHeader>New Leg</CardHeader>
                 <SimpleGrid as={CardBody} columns={{ base: 1, md: 2, xl: 3 }} gap="1rem">
+                  {/* Label */}
+                  <Box>
+                    <Field name="label" validate={value => value ? null : 'Label is required'}>
+                      {({ field, form }) => (
+                        <FormControl isInvalid={form.errors.label && form.touched.label}>
+                          <FormLabel>Label</FormLabel>
+                          <Input {...field} value={props.values.label} placeholder="Enter label" />
+                          <FormErrorMessage>{form.errors.label}</FormErrorMessage>
+                        </FormControl>
+                      )}
+                    </Field>
+                  </Box>
                   {/* Game Type */}
                   <Box>
                     <Field name="gameType" validate={value => value ? null : 'Select game type'}>
@@ -439,7 +453,7 @@ function AdminCircuitPage() {
                       <Box>
                         <Field
                           name="leagueId"
-                          validate={(value) => (value?.leagueId?.length > 0 ? null : 'League id required.')}
+                          validate={(value) => (value.length > 0 ? null : 'League id required.')}
                         >
                           {({ field, form }) => (
                             <FormControl isInvalid={form.errors.leagueId && form.touched.leagueId}>
