@@ -116,6 +116,7 @@ function AdminCircuitPage() {
   const [label, setLabel] = useState('');
   const [selectedLeague, setSelectedLeague] = useState(null);
   const [selectedCompetition, setSelectedCompetition] = useState(null);
+  const [selectedCompetitionFormat, setSelectedCompetitionFormat] = useState('');
   const [selectedGameType, setSelectedGameType] = useState('');
   const [selectedPlatform, setSelectedPlatform] = useState('');
   const [selectedRuleset, setSelectedRuleset] = useState('');
@@ -156,6 +157,7 @@ function AdminCircuitPage() {
     setSelectedGameType(gameTypeKey);
     setSelectedPlatform(getDefaultPlatform(gameTypeKey));
     setSelectedRuleset(getDefaultRuleset(gameTypeKey));
+    setSelectedCompetitionFormat(competition.format || compObj?.format || '');
     console.log(compObj);
     if (competition.leagueId) {
       setSelectedLeagueId(competition.leagueId);
@@ -423,8 +425,7 @@ function AdminCircuitPage() {
           A Circuit Leg is either a competition or a league (with all its competitions), specified by leg type.
           You may add a custom label and define if data from Cyanide API should be collected periodically.
           If you select "treat Ladder as Knockout", all competitions of type ladder will be rendered as if they were knockout tournaments.
-        </Box>
-        <Checkbox isChecked={isAuthenticated}>Auth</Checkbox>
+        </Box>        
         <HStack>
           <Formik
             initialValues={{ searchName: '', bbVersion: bbVersion, exact: true }}
@@ -578,6 +579,7 @@ function AdminCircuitPage() {
             gameType: selectedGameType,
             platform: selectedPlatform,
             ruleset: selectedRuleset,
+            competitionFormat: selectedCompetitionFormat || '',
           }}
           enableReinitialize
           onSubmit={onAddLegClicked}
@@ -593,6 +595,7 @@ function AdminCircuitPage() {
               props.setFieldValue('competitionId', selectedCompetitionId || '');
               props.setFieldValue('label', label || '');
             }, [selectedCompetitionId, label]);
+            /*
             useEffect(() => {
               if (selectedCompetition && selectedCompetition.format) {
                 props.setFieldValue('competitionFormat', selectedCompetition.format);
@@ -600,7 +603,7 @@ function AdminCircuitPage() {
                 props.setFieldValue('competitionFormat', '');
               }
             }, [selectedCompetition]);
-
+            */
             return (
               <Card as={Form} variant="outline" size="sm">
                 <CardHeader>New Leg</CardHeader>
@@ -829,7 +832,7 @@ function AdminCircuitPage() {
                   <Box>
                     {['bb1', 'bb2', 'bb3'].includes(selectedGameType) && (
                       <Box>
-                        <Field name="collectData" type="checkbox">
+                        <Field name="isCollected" type="checkbox">
                           {({ field }) => (
                             <FormControl>
                               <FormLabel>Data collection</FormLabel>
@@ -849,9 +852,9 @@ function AdminCircuitPage() {
                   </Box>
                   
                   {/* Ladder specific: only show if the competition format is ladder */}
-                  {['bb1', 'bb2', 'bb3'].includes(selectedGameType) && selectedCompetition?.format?.toLowerCase() === "ladder" && (
+                  {['bb1', 'bb2', 'bb3'].includes(selectedGameType) && selectedCompetitionFormat.toLowerCase() === "ladder" && (
                     <Box>
-                      <Field name="treatLadderAs">
+                      <Field name="ladderOption" validate={(value) => (value ? null : 'Select ladder option')}>
                         {({ field, form }) => (
                           <FormControl isInvalid={form.errors.treatLadderAs && form.touched.treatLadderAs}>
                             <FormLabel>Ladder specific</FormLabel>

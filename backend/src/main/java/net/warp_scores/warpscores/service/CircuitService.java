@@ -19,6 +19,7 @@ import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.model.LeagueCollection;
 import net.warp_scores.warpscores.model.Platform;
 import net.warp_scores.warpscores.requests.CircuitLegRequest;
+import net.warp_scores.warpscores.utils.EnumUtils;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -147,10 +148,16 @@ public class CircuitService {
             entityId = new SimpleIdentity(req.getLeagueId(), opus);
         }
         newLeg.setEntityId(entityId);
-        newLeg.setLegType(CircuitLegType.valueOf(req.getLegType()));
+        newLeg.setLegType(
+            EnumUtils.valueOfIgnoreCase(CircuitLegType.class,
+                req.getLegType()));
         newLeg.setLabel(req.getLabel());
-        newLeg.setGame(GameType.valueOf(req.getGame()));
-        newLeg.setPlatform(Platform.valueOf(req.getPlatform()));
+        newLeg.setGame(
+            EnumUtils.valueOfIgnoreCase(GameType.class, 
+                gameStr));
+        newLeg.setPlatform(
+            EnumUtils.valueOfIgnoreCase(Platform.class, 
+                req.getPlatform()));
         newLeg.setRuleset(req.getRuleset());
         if (req.getIsCollected() == null) {
             newLeg.setIsCollected(true); // Default to true if not specified
@@ -166,8 +173,13 @@ public class CircuitService {
         if (ladderOptionStr == null || ladderOptionStr.isEmpty()) 
             newLeg.setLadderOption(LadderOption.None); // Default to NONE if not specified
         else
-            newLeg.setLadderOption(LadderOption.valueOf(ladderOptionStr));
+            newLeg.setLadderOption(
+                EnumUtils.valueOfIgnoreCase(LadderOption.class, 
+                    ladderOptionStr.replace("-","")));
         circuit.addLeg(newLeg);
+        if (newLeg.getEntityId() != null && newLeg.getIsCollected() != null && newLeg.getIsCollected()) {
+            updateLeagueCollection(newLeg.getEntityId(), true);
+        }
         return circuitRepository.save(circuit);
     }
 
@@ -216,28 +228,36 @@ public class CircuitService {
                     : LadderOption.valueOf((String)circuitLeg.get("ladderOption")));
 
         //log.info("Updated leg {} in circuit {}.", circuitLegId, circuit.getCircuitId());
-        if (leg.getEntityId() != null) {
-            if (wasCollected && !leg.getIsCollected()) { 
-                log.info("Leg {} in circuit {} was collected, but is now removed from collection.", circuitLegId, circuit.getCircuitId());
-                log.info("Leg is : {}", leg);
-                if (collectionRepository.existsById(leg.getEntityId())) {
-                    log.info("Deleting collection for leg {} in circuit {}.", circuitLegId, circuit.getCircuitId());
-                    collectionRepository.deleteById(leg.getEntityId());
-                } else {
-                    log.warn("No collection found for leg {} in circuit {} to delete.", circuitLegId, circuit.getCircuitId());
-                }
-            } else if (!wasCollected && leg.getIsCollected()) {
-                log.info("Leg {} in circuit {} was not collected, but collection is now started.", circuitLegId, circuit.getCircuitId());
-                LeagueCollection lc = new LeagueCollection(leg.getEntityId());
-                collectionRepository.save(lc);
-            }
-        }
+        if (leg.getEntityId() != null && wasCollected != leg.getIsCollected())
+            updateLeagueCollection(leg.getEntityId(), leg.getIsCollected());
         return circuitRepository.save(circuit);
     }
 
     public Circuit removeLeg(Circuit circuit, Long circuitLegId) {
         log.info("Removing leg {} from circuit {}.", circuitLegId, circuit.getCircuitId());
-        circuit.getCircuitLegs().removeIf(leg -> circuitLegId.equals(leg.getCircuitLegId()));
+        CircuitLeg leg = circuit.getCircuitLeg(circuitLegId);
+        if (leg == null) {
+            log.warn("Circuit leg with ID {} not found in circuit {}.", circuitLegId, circuit.getCircuitId());
+            return circuit; // No changes made
+        }
+        if (leg.getEntityId() != null && leg.getIsCollected() != null && leg.getIsCollected()) {
+            log.info("Leg {} in circuit {} is collected, removing collection.", circuitLegId, circuit.getCircuitId());
+            updateLeagueCollection(leg.getEntityId(), false);
+        }        
+        // Remove the leg from the circuit
+        circuit.getCircuitLegs().removeIf(l -> circuitLegId.equals(l.getCircuitLegId()));
         return circuitRepository.save(circuit);
+    }
+
+    private void updateLeagueCollection(Identity leagueId, boolean toBeCollected) {
+        if (!toBeCollected) {
+            if (collectionRepository.existsById(leagueId))
+                collectionRepository.deleteById(leagueId);
+            else
+                log.warn("No collection found for identity {} to delete.", leagueId);        
+        } else {
+            LeagueCollection lc = new LeagueCollection(leagueId);
+            collectionRepository.save(lc);
+        }
     }
 }
