@@ -109,11 +109,10 @@ public class MatchDomainService {
     }
 
     @Transactional
-    public List<Match> createOrUpdateMatches(MatchesResponse matchesResponse) {
+    public List<Match> createOrUpdateMatches(MatchesResponse matchesResponse, int opus) {
         if (matchesResponse == null || matchesResponse.isEmpty()) {
             return Collections.emptyList();
         }
-        Optional<Integer> opus = matchesResponse.getMeta().getOpus();
 
         List<Match> matches = Arrays
                 .stream(matchesResponse.getMatches())
@@ -123,21 +122,20 @@ public class MatchDomainService {
     }
 
     @Transactional
-    public Match createOrUpdateMatch(MatchResponse matchResponse) {
+    public Match createOrUpdateMatch(MatchResponse matchResponse, int opus) {
         if (matchResponse == null || matchResponse.isEmpty()) {
             return null;
         }
-        Optional<Integer> opus = matchResponse.getMeta().getOpus();
+        
         Optional<ApiMatch> apiMatch = ofNullable(matchResponse.getMatch());
         Optional<Match> match = apiMatch.map((x) -> internalCreateOrUpdateMatch(x, opus));
         return match.map(matchRepository::save).orElse(null);
     }
 
-    private Match internalCreateOrUpdateMatch(ApiMatch apiMatch, Optional<Integer> opus) {
-        int myOpus = opus.orElse(defaultOpus);
+    private Match internalCreateOrUpdateMatch(ApiMatch apiMatch, int opus) {        
         Match match = newMatchOrFromDb(
-            new SimpleIdentity(apiMatch.getId(), myOpus));
-        populateMatch(apiMatch, myOpus, match);
+            new SimpleIdentity(apiMatch.getId(), opus));
+        populateMatch(apiMatch, opus, match);
         return match;
     }
 

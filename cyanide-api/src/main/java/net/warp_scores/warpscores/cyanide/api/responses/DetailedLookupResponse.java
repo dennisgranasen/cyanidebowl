@@ -1,6 +1,5 @@
 package net.warp_scores.warpscores.cyanide.api.responses;
 
-import net.warp_scores.warpscores.cyanide.api.model.common.IdWithName;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.League;
 import lombok.Getter;
@@ -11,11 +10,6 @@ import java.util.Optional;
 @Getter
 @Setter
 public class DetailedLookupResponse extends LookupResponse {
-    private IdWithName[] teams;
-    private IdWithName[] leagues;
-    private IdWithName[] coaches;
-    private IdWithName[] competitions;
-
     private League[] leagueDetails;
     private Competition[] competitionDetails;
 
@@ -23,8 +17,8 @@ public class DetailedLookupResponse extends LookupResponse {
     public String getInformationString() {
         return String.format("DetailedCompetitionsResponse[isEmpty=%s, competitions=%s, leagues=%s, changeable=%s]",
                 isEmpty(),
-                Optional.ofNullable(competitions).map(c -> String.valueOf(c.length)).orElse("n/a"),
-                Optional.ofNullable(leagues).map(l -> String.valueOf(l.length)).orElse("n/a"),
+                Optional.ofNullable(getCompetitions()).map(c -> String.valueOf(c.length)).orElse("n/a"),
+                Optional.ofNullable(getLeagues()).map(l -> String.valueOf(l.length)).orElse("n/a"),
                 isChangeableResponse());
     }
 
@@ -39,7 +33,7 @@ public class DetailedLookupResponse extends LookupResponse {
         this.setLeagues(lookupResponse.getLeagues());
         this.setCoaches(lookupResponse.getCoaches());
         this.setCompetitions(lookupResponse.getCompetitions());
-        this.setMeta(lookupResponse.getMeta());
+        //this.setMeta(lookupResponse.getMeta());
         this.leagueDetails = leagueDetails;
         this.competitionDetails = competitionDetails;
         //this.updateChangeableAttribute();

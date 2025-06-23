@@ -14,19 +14,23 @@ import lombok.RequiredArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RestController
 @RequiredArgsConstructor
 @Slf4j
 public class LookupController {
     private final CyanideApiService cyanideApiService;
+
+    @Value("${cyanide.defaults.opus:3}")
+    private int defaultOpus;
+
 
     @PostMapping("/lookup")
     @PreAuthorize(Authorities.AUTHORITY_WRITE_REGISTER_LEAGUE)
@@ -38,7 +42,6 @@ public class LookupController {
             LookupResponse lookup = cyanideApiService.lookup(lookupRequest);
             log.info("Lookup response: {}", lookup);
             if (lookupRequest.getIncludeDetails() && lookup != null) {
-                log.info("Looking up details for {}", lookupRequest);
                 return lookupDetails(lookup, lookupRequest);
             }
             else
@@ -56,7 +59,8 @@ public class LookupController {
             return ResponseEntity.ok(lookup);
         }
         try {
-            int opus = lookup.getMeta().getOpus().orElse(3);
+            int opus = lookupRequest.getOpus();
+            log.info("Opus: {}", opus);
             List<League> leagues = new ArrayList<>();
             List<Competition> competitions = new ArrayList<>();
             for (var leagueIdWithName : lookup.getLeagues()) {

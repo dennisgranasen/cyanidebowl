@@ -25,18 +25,16 @@ public class LeagueDomainService {
     private int defaultOpus;
 
     @Transactional
-    public League createOrUpdateLeague(LeagueResponse leagueResponse) {
+    public League createOrUpdateLeague(LeagueResponse leagueResponse, int opus) {
         if (leagueResponse == null || leagueResponse.isEmpty()) {
             return null;
-        }
-        Optional<Integer> opus = leagueResponse.getMeta().getOpus();
+        }        
         League league = internalCreateOrUpdateLeague(leagueResponse.getLeague(), opus);
         return leagueRepository.save(league);
     }
 
-    private League internalCreateOrUpdateLeague(ApiLeague apiLeague, Optional<Integer> opus) { 
-        int myOpus = opus.orElse(defaultOpus);
-        SimpleIdentity identity = new SimpleIdentity(apiLeague.getId(), myOpus);
+    private League internalCreateOrUpdateLeague(ApiLeague apiLeague, int opus) { 
+        SimpleIdentity identity = new SimpleIdentity(apiLeague.getId(), opus);
         League league = newOrFromDb(identity);
         if (league != null) {
             populateLeague(apiLeague, league);

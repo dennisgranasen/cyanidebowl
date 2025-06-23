@@ -50,7 +50,7 @@ public class CyanideApiService {
         leagueRequest.setLeague_id(leagueIdentity.getValue());
         leagueRequest.setOpus(leagueIdentity.getOpus());
         LeagueResponse leagueResponse = cyanideCachedRestApiClient.getFromCacheOrApi(leagueRequest);
-        return leagueDomainService.createOrUpdateLeague(leagueResponse);
+        return leagueDomainService.createOrUpdateLeague(leagueResponse, leagueIdentity.getOpus());
     }
 
     public List<Team> loadTeams(Identity id, EntityType entityType) {
@@ -65,12 +65,12 @@ public class CyanideApiService {
         }
         teamsRequest.setOpus(id.getOpus());
         TeamsResponse teamsResponse = cyanideCachedRestApiClient.getFromCacheOrApi(teamsRequest);
-        List<Team> teams = teamDomainService.createOrUpdateTeams(teamsResponse);
+        List<Team> teams = teamDomainService.createOrUpdateTeams(teamsResponse, id.getOpus());
 
         teams = teams.stream()
                 .map(this::createTeamRequestFor)
                 .map(cyanideCachedRestApiClient::getFromCacheOrApi)
-                .map(teamDomainService::createOrUpdateTeam)
+                .map(response -> teamDomainService.createOrUpdateTeam(response, id.getOpus()))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
@@ -126,7 +126,7 @@ public class CyanideApiService {
         matchRequest.setMatch_id(matchIdentity.getValue());
         matchRequest.setOpus(matchIdentity.getOpus());
         MatchResponse matchResponse = cyanideCachedRestApiClient.getFromCacheOrApi(matchRequest);
-        return matchDomainService.createOrUpdateMatch(matchResponse);
+        return matchDomainService.createOrUpdateMatch(matchResponse, matchIdentity.getOpus());
     }
 
     public List<Match> loadMatches(League league,
@@ -148,7 +148,7 @@ public class CyanideApiService {
                     "Loading matches for league {} starting from {}.",
                     league.getLeagueId(), startDate);
             MatchesResponse matchesResponse = cyanideCachedRestApiClient.getFromCacheOrApi(matchesRequest);
-            return matchDomainService.createOrUpdateMatches(matchesResponse);
+            return matchDomainService.createOrUpdateMatches(matchesResponse, league.getIdentity().getOpus());
         }
         log.info("No matches to load for league {}.", league.getLeagueId());
         return Collections.emptyList();
@@ -175,7 +175,7 @@ public class CyanideApiService {
                     "Loading matches for competition {} starting from {}.",
                     competition.getLeagueId(), startDate);
             MatchesResponse matchesResponse = cyanideCachedRestApiClient.getFromCacheOrApi(matchesRequest);
-            return matchDomainService.createOrUpdateMatches(matchesResponse);
+            return matchDomainService.createOrUpdateMatches(matchesResponse, competition.getIdentity().getOpus());
         }
         log.info("No matches to load for competition {}.", competition.getLeagueId());
         return Collections.emptyList();
@@ -188,7 +188,7 @@ public class CyanideApiService {
         competitionsRequest.setOpus(leagueIdentity.getOpus());
         CompetitionsResponse competitionsResponse =
                 cyanideCachedRestApiClient.getFromCacheOrApi(competitionsRequest);
-        return competitionDomainService.createOrUpdateCompetitions(competitionsResponse);
+        return competitionDomainService.createOrUpdateCompetitions(competitionsResponse, leagueIdentity.getOpus());
     }
 
     public List<Contest> loadContests(Competition competition) {
@@ -211,8 +211,8 @@ public class CyanideApiService {
 
     public List<Contest> loadContests(ContestsRequest contestsRequest) {
         ContestsResponse contestsResponse = cyanideCachedRestApiClient.getFromCacheOrApi(contestsRequest);
-        return contestDomainService.createOrUpdateContests(contestsResponse);
-    }   
+        return contestDomainService.createOrUpdateContests(contestsResponse, contestsRequest.getOpus());
+    }
 
     @Transactional
     public void checkApiStatus() {
