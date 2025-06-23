@@ -52,6 +52,35 @@ public class CompetitionController {
 
 
     @GetMapping("/competitions/league/{leagueId}")
+    public ResponseEntity<List<Competition>> getCompetitionsForLeague(
+            @PathVariable(name = "leagueId") String leagueId,
+            @RequestParam(name = "opus", required = false) Integer opus) {
+        try {
+            Identity leagueIdentity = 
+                new SimpleIdentity(leagueId, ofNullable(opus).orElse(defaultOpus));
+
+            log.info("Fetching competitions for league ID: {} with opus: {}", leagueId, opus);
+            List<Competition> competitions =                
+                competitionService.loadForLeague(leagueIdentity);
+            log.info("Found {} competitions for league ID: {}", competitions.size(), leagueId);
+            // Check for null competitions and log the full list as JSON if any are found
+            if (competitions.stream().anyMatch(c -> c == null)) {
+                try {
+                    ObjectMapper mapper = new ObjectMapper();
+                    String json = mapper.writeValueAsString(competitions);
+                    log.error("Null competition found in list for league {}: {}", leagueId, json);
+                } catch (Exception e) {
+                    log.error("Failed to serialize competitions list to JSON", e);
+                }
+            }
+            return ResponseEntity.ok(competitions);
+        } catch (Exception ex) {
+            log.error("Unable to get competitions for league id {}", leagueId, ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/competitions/league/{leagueId}/active")
     public ResponseEntity<List<Competition>> getActiveCompetitionsForLeague(
             @PathVariable(name = "leagueId") String leagueId,
             @RequestParam(name = "opus", required = false) Integer opus) {
@@ -59,9 +88,10 @@ public class CompetitionController {
             Identity leagueIdentity = 
                 new SimpleIdentity(leagueId, ofNullable(opus).orElse(defaultOpus));
 
+            log.info("Fetching active competitions for league ID: {} with opus: {}", leagueId, opus);
             List<Competition> competitions =                
                 competitionService.loadForLeague(leagueIdentity);
-
+            log.info("Found {} competitions for league ID: {}", competitions.size(), leagueId);
             // Check for null competitions and log the full list as JSON if any are found
             if (competitions.stream().anyMatch(c -> c == null)) {
                 try {
@@ -76,6 +106,7 @@ public class CompetitionController {
                     .filter(c -> c.getStatus() != null)
                     .sorted()
                     .toList();
+            log.info("Returning {} active competitions for league ID: {}", filtered.size(), leagueId);
             return ResponseEntity.ok(filtered);
         } catch (Exception ex) {
             log.error("Unable to get competitions for league id {}", leagueId, ex);

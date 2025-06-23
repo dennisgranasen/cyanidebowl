@@ -18,12 +18,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import org.springframework.beans.factory.annotation.Value;
 
 @Slf4j
 @Service
@@ -34,7 +30,6 @@ public class ContestService {
     private final CompetitionService competitionService;
     private final ContestInitializationService contestInitializationService;
     private final TeamDomainService teamDomainService;
-    private final IdService idService;
     private final OfficialLeagueAndCompetitions officialLeagueAndCompetitions;
     private final MatchService matchService;
 

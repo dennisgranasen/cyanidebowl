@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   Box, Button, Card, CardBody, CardFooter, CardHeader, Checkbox, FormControl, FormErrorMessage,
   FormHelperText, FormLabel, Heading, HStack, Input, Select, SimpleGrid, Table, TableContainer,
@@ -100,6 +100,12 @@ function TableColumns() {
 
 // --- Main component ---
 function AdminCircuitPage() {
+
+  const leagueRefs = useRef({});
+  const competitionRefs = useRef({});
+  const parentRef = useRef(null);
+  const [leagueOffsets, setLeagueOffsets] = useState({});
+
   // --- Auth and params ---
   const { isAuthenticated, isLoading, getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0WithUserPermissions();
   const { circuitId } = useParams();
@@ -135,21 +141,118 @@ function AdminCircuitPage() {
     setSelectedRuleset(rulesets.length === 1 ? rulesets[0] : getDefaultRuleset(selectedGameType));
   }, [selectedGameType]);
 
+
+  useEffect(() => {
+    if (!searchResults.leagueDetails || !searchResults.competitionDetails) return;
+    const newOffsets = {};
+    let accumulatedOffset = 0;
+    searchResults.leagueDetails.forEach(league => {
+      const leagueId = league.leagueId.toString();
+      const leagueEl = leagueRefs.current[leagueId];
+      if (!leagueEl) {
+        newOffsets[leagueId] = 0;
+        return;
+      }
+      // Get the league's natural top (relative to the container)
+      const leagueRect = leagueEl.getBoundingClientRect();
+      
+      // Find all competitions for this league
+      const comps = searchResults.competitionDetails.filter(c => c.leagueId?.value === leagueId);
+      console.log(`Calculating offset for league ${league.name} (${leagueId}) with ${comps.length} competitions`);
+
+      const compEls = comps
+        .map(c => competitionRefs.current[c.identity.value])
+        .filter(Boolean);
+      if (compEls.length) {
+        // Get bounding rects
+        const compRects = compEls.map(el => el.getBoundingClientRect());
+        
+        // Calculate the vertical center of the group
+        const top = compRects[0].top;
+        const bottom = compRects[compRects.length - 1].bottom;
+        const center = (top + bottom) / 2;
+        const leagueCenter = leagueRect.top + leagueRect.height / 2;
+        // Calculate offset relative to natural position, minus accumulated offset
+        const offset = center - leagueCenter - accumulatedOffset;
+        newOffsets[leagueId] = offset;
+        accumulatedOffset += offset;
+      } else {
+        newOffsets[leagueId] = 0;
+      }
+    });
+    setLeagueOffsets(newOffsets);
+  }, [searchResults.leagueDetails, searchResults.competitionDetails]);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      const newLines = [];
+      if (!searchResults.leagueDetails || !searchResults.competitionDetails) return;
+
+      searchResults.leagueDetails.forEach(league => {
+        const leagueId = league.leagueId.toString();
+        const leagueEl = leagueRefs.current[leagueId];
+        if (!leagueEl) return;
+
+        // Use offsetTop relative to the parent container, plus marginTop
+        const marginTop = parseFloat(leagueEl.style.marginTop || 0);
+        const leagueCenterY = leagueEl.offsetTop + marginTop + leagueEl.offsetHeight / 2;
+        const leagueRightX = leagueEl.offsetLeft + leagueEl.offsetWidth;
+
+        searchResults.competitionDetails
+          .filter(comp => comp.leagueId?.value === leagueId)
+          .forEach(comp => {
+
+            const compKey = comp.identity?.value?.toString();
+            const compEl = competitionRefs.current[compKey];
+            if (!compEl) return;
+
+            const parentRect = parentRef.current.getBoundingClientRect();
+            const leagueRect = leagueEl.getBoundingClientRect();
+            const compRect = compEl.getBoundingClientRect();
+
+            const leagueCenterY = leagueRect.top + leagueRect.height / 2 - parentRect.top;
+            const leagueRightX = leagueRect.right - parentRect.left;
+            const compCenterY = compRect.top + compRect.height / 2 - parentRect.top;
+            const compLeftX = compRect.left - parentRect.left;
+
+            newLines.push({
+              x1: leagueRightX + 2,
+              y1: leagueCenterY,
+              x2: compLeftX - 4,
+              y2: compCenterY,
+            });
+            /*
+            const compKey = comp.identity?.value?.toString();
+            const compEl = competitionRefs.current[compKey];
+            if (!compEl) return;
+            const compCenterY = compEl.offsetTop + compEl.offsetHeight / 2;
+            const compLeftX = compEl.offsetLeft;
+
+            newLines.push({
+              x1: leagueRightX,
+              y1: leagueCenterY,
+              x2: compLeftX,
+              y2: compCenterY,
+          });*/
+          
+        });
+      });
+
+      setLines(newLines);
+    }, 0);
+    return () => clearTimeout(timeout);
+  }, [searchResults.leagueDetails, searchResults.competitionDetails, leagueOffsets]);
+      
+
+
   // --- Handlers ---
   const handleCompetitionClick = (competition) => {
     setSelectedCompetitionId(competition.id || competition.uuid || competition.competitionId);
     setLabel(competition.name);
     
-    console.log(searchResults);
     const compObj = (searchResults.competitions || []).find(
       c => (c.id || c.uuid || c.competitionId) === competition.id
     );
-
-    /*
-      The search results are just {id, name}
-      How do I fetch the league Id if I don't know what league the competition belongs to?
-      Should probably load all leagues in the search results and then find the league.
-    */
 
     const name = competition.name || competition.leagueName || 'Unknown Competition';
     setSelectedCompetition(competition);
@@ -169,6 +272,7 @@ function AdminCircuitPage() {
         .catch((reason1) => {
           if (reason1.response && reason1.response.status === 404) {
             for (const league of searchResults.leagues) {
+              console.log('Checking league:', league.name, league.id, bbVersion);
               WarpScoresApiService.leagueCompetitions(league.id, bbVersion)
                 .then((competitions) => {
                   const foundComp = competitions.find((comp) => comp.uuid === competition.id);
@@ -314,6 +418,9 @@ function AdminCircuitPage() {
   };
   */
 
+  const [lines, setLines] = useState([]);
+
+
   const onSearchClicked = async (values, actions) => {
     setBbVersion(values.bbVersion);
     try {
@@ -322,11 +429,16 @@ function AdminCircuitPage() {
         opus: values.bbVersion,
         exact: values.exact ? 1 : 0,
         hint: 'HAS_CONTESTS',
-        fallback: 0
+        fallback: 0,
+        includeDetails: true
       });
 
-      let detailedLeagues = [];
+      /*
       if (res.leagues && res.leagues.length > 0) {
+        if (res.leagueDetails && res.leagueDetails.length > 0) {
+
+        }
+      }
         detailedLeagues = await Promise.all(
           res.leagues.map(async (league) => {
             try {
@@ -340,7 +452,8 @@ function AdminCircuitPage() {
                 competitions = await WarpScoresApiService.leagueCompetitions(
                   league.id || league.leagueId || league.uuid,
                   values.bbVersion
-                );
+                )
+                console.log('Fetched competitions for league:', league.name, competitions);
               } catch (e) {
                 competitions = [];
               }
@@ -359,9 +472,8 @@ function AdminCircuitPage() {
           let detailedComp = null;
           for (const league of detailedLeagues) {
             if (league.competitions) {
-              detailedComp = league.competitions.find(
-                c =>
-                  (c.id || c.uuid || c.competitionId) === (comp.id || comp.uuid || comp.competitionId)
+              detailedComp = league.competitions.find(                
+                c => (c.id || c.uuid || c.competitionId) === comp.id
               );
               if (detailedComp) break;
             }
@@ -369,18 +481,27 @@ function AdminCircuitPage() {
           return detailedComp || comp;
         });
       }
+      */
+
+      console.log("search: {}", {
+        ...res,
+        leagueDetails: res.leagueDetails || res.leagues || [],
+        competitionDetails: res.competitionDetails || res.competitions || [] // expandedCompetitions,
+      });
 
       setSearchResults({
         ...res,
-        leagues: detailedLeagues,
-        competitions: expandedCompetitions,
+        leagueDetails: res.leagueDetails || res.leagues || [],
+        competitionDetails: res.competitionDetails || res.competitions || [] // expandedCompetitions,
       });
-
+/*
       console.log('Search results:', {
         ...res,
         leagues: detailedLeagues,
         competitions: expandedCompetitions,
       });
+*/
+
     } catch (err) {
       setSearchResults([]);
     } finally {
@@ -432,9 +553,9 @@ function AdminCircuitPage() {
             onSubmit={onSearchClicked}
           >
             {(props) => (
-              <Card as={Form} variant="outline" size="sm">
+              <Card as={Form} variant="outline" size="sm" maxW="md">
                 <CardHeader>Search for id</CardHeader>
-                <SimpleGrid as={CardBody} columns={{ base: 1, md: 2, xl: 3 }} gap="1rem">
+                <SimpleGrid as={CardBody} columns={1} gap="1rem">
                   <Box>
                     <Field
                       name="searchName"
@@ -510,63 +631,80 @@ function AdminCircuitPage() {
             )}
           </Formik>
           {/* Search Results Table */}
-          {searchResults.leagues && searchResults.leagues.length > 0 && (
-            <Box mt={4}>
-              <Heading size="sm" mb={2}>Leagues</Heading>
-              <TableContainer>
-                <Table variant="simple" size="sm">
-                  <Thead>
-                    <Tr>
-                      <Th>Name</Th>
-                      <Th>ID</Th>
-                    </Tr>
-                  </Thead>
-                  <Tbody>
-                    {searchResults.leagues.map((item) => (
-                      <Tr key={item.id || item.uuid || item.leagueId}
-                                _hover={{ bg: 'gray.100', cursor: 'pointer' }}
-                                onClick={() => handleLeagueClick(item)}>
-                        <Td>{item.name || item.leagueName}</Td>
-                        <Td>{item.id || item.uuid || item.leagueId}</Td>
-                      </Tr>
-                    ))}
-                  </Tbody>
-                </Table>
-              </TableContainer>
-            </Box>
+          <Box ref={parentRef} display="flex" flexDirection="row" alignItems="flex-start" gap="4rem" position="relative">
+            {searchResults.leagueDetails && searchResults.leagueDetails.length > 0 && (
+              <Box mt={4}>
+                <Heading size="sm" mb={2}>Leagues</Heading>
+                {searchResults.leagueDetails.map((item) => {
+                  console.log(item);
+                  const leagueId = item.leagueId?.toString()
+                  return (
+                    <Box 
+                        key={leagueId}
+                        className='league-row'
+                        ref={(el) => {leagueRefs.current[leagueId] = el;}}                        
+                        _hover={{ bg: 'gray.100', opacity: 0.8,  color: 'black', cursor: 'pointer' }}
+                        style={{
+                            //position: "absolute",
+                            //top: leaguePositions[leagueId] ? leaguePositions[leagueId] - 12 : undefined, // 12 = half league row height
+                            marginTop: leagueOffsets[leagueId] || 0,
+                            //left: ,
+                            //width: "200px",
+                            //height: "24px"
+
+                        }}
+                        onClick={() => handleLeagueClick(item)}>
+                      {item.name || item.leagueName} ({item.id || item.uuid || item.leagueId})
+                    </Box>
+                  )})}
+              </Box>
+            )}
+            {searchResults.competitionDetails && searchResults.competitionDetails.length > 0 && (
+              <Box mt={4}>
+                <Heading size="sm" mb={2}>Competitions</Heading>
+                {searchResults.competitionDetails.map((item) => {
+                  // Check if this competition is detailed (has more than just id/name)
+                  const isDetailed = !!(item.format ||  item.leagueId || item.identity || item.status || item.teams || item.rounds);
+                  return (
+                    <Box 
+                        key={item.id || item.uuid || item.competitionId}
+                        className="competition-row"
+                        ref={el => {competitionRefs.current[item.identity?.value?.toString()] = el;}}
+                        _hover={isDetailed ? { bg: 'gray.100', opacity: 0.8, color: 'black', cursor: 'pointer' } : undefined}
+                        style={isDetailed ? {} : { color: 'red', cursor: 'not-allowed' }}
+                        onClick={isDetailed ? () => handleCompetitionClick(item) : undefined}
+                      >
+                        {item.name || item.leagueName} ({item.id || item.uuid || item.competitionId})
+                    </Box>
+                  );
+                })}
+              </Box>
           )}
-          {searchResults.competitions && searchResults.competitions.length > 0 && (
-            <Box mt={4}>
-              <Heading size="sm" mb={2}>Competitions</Heading>
-              <TableContainer>
-                <Table variant="simple" size="sm">
-                  <Thead>
-                    <Tr>
-                      <Th>Name</Th>
-                      <Th>ID</Th>
-                    </Tr>
-                  </Thead>
-                  <Tbody>
-                    {searchResults.competitions.map((item) => {
-                      // Check if this competition is detailed (has more than just id/name)
-                      const isDetailed = !!(item.format || item.leagueId || item.status || item.teams || item.rounds);
-                      return (
-                        <Tr
-                          key={item.id || item.uuid || item.competitionId}
-                          _hover={isDetailed ? { bg: 'gray.100', cursor: 'pointer' } : undefined}
-                          style={isDetailed ? {} : { color: 'red', cursor: 'not-allowed' }}
-                          onClick={isDetailed ? () => handleCompetitionClick(item) : undefined}
-                        >
-                          <Td>{item.name || item.leagueName}</Td>
-                          <Td>{item.id || item.uuid || item.competitionId}</Td>
-                        </Tr>
-                      );
-                    })}
-                  </Tbody>
-                </Table>
-              </TableContainer>
-            </Box>
-          )}
+                <svg
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          pointerEvents: "none",
+          width: "100%",
+          height: "100%",
+          zIndex: 10,
+        }}
+      >
+        {lines.map((line, idx) => (
+          <line
+            key={idx}
+            x1={line.x1}
+            y1={line.y1}
+            x2={line.x2}
+            y2={line.y2}
+            stroke="pink"
+            strokeWidth={1.2}
+            strokeDasharray="5,3"
+          />
+        ))}
+      </svg>
+          </Box>
         </HStack>
 
         {/* Add Leg Form */}
@@ -894,6 +1032,7 @@ function AdminCircuitPage() {
       </LoadingOrErrorWrapper>
     </VStack>
   );
+
 }
 
 export default AdminCircuitPage;

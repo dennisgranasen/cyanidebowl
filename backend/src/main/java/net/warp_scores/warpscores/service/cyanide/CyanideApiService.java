@@ -7,6 +7,7 @@ import net.warp_scores.warpscores.cyanide.api.responses.*;
 import net.warp_scores.warpscores.domain.*;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.StatusRepository;
+import net.warp_scores.warpscores.identity.CompositeIdentity;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.*;
@@ -17,6 +18,8 @@ import org.springframework.web.client.ResourceAccessException;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import javax.swing.text.html.parser.Entity;
 
 import static java.util.Optional.ofNullable;
 import static net.warp_scores.warpscores.cyanide.api.requests.StatusRequest.BB3_GAME_NAME;
@@ -34,7 +37,7 @@ public class CyanideApiService {
     private final ContestDomainService contestDomainService;
     private final LeagueDomainService leagueDomainService;
     private final CompetitionDomainService competitionDomainService;
-    private final CompetitionTeamsDomainService competitionTeamsDomainService;
+    private final TeamCollectionDomainService teamCollectionDomainService;
     private final ContestRepository contestRepository;
 
     public LookupResponse lookup(LookupRequest lookupRequest) {
@@ -50,11 +53,17 @@ public class CyanideApiService {
         return leagueDomainService.createOrUpdateLeague(leagueResponse);
     }
 
-    public List<Team> loadTeams(Competition competition) {
+    public List<Team> loadTeams(Identity id, EntityType entityType) {
         TeamsRequest teamsRequest = new TeamsRequest();
-        teamsRequest.setCompetition_id(competition.getCompetitionId());
-        teamsRequest.setLeague_id(competition.getLeagueId().getValue());
-        teamsRequest.setOpus(competition.getIdentity().getOpus());
+        if (entityType == EntityType.League) {
+            teamsRequest.setLeague_id(id.getValue());
+        } else if (entityType == EntityType.Competition && id instanceof CompositeIdentity cid) {
+            teamsRequest.setLeague_id(cid.getParts()[0]);
+            teamsRequest.setCompetition_id(cid.getParts()[1]);
+        } else {
+            throw new IllegalArgumentException("Unsupported id/entityType combo: " + id + "::" + entityType);
+        }
+        teamsRequest.setOpus(id.getOpus());
         TeamsResponse teamsResponse = cyanideCachedRestApiClient.getFromCacheOrApi(teamsRequest);
         List<Team> teams = teamDomainService.createOrUpdateTeams(teamsResponse);
 
@@ -65,7 +74,7 @@ public class CyanideApiService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
-        competitionTeamsDomainService.createOrUpdateCompetitionTeams(competition, teams);
+        teamCollectionDomainService.createOrUpdateTeamCollection(id, entityType, teams);
         return teams;
     }
 
@@ -144,6 +153,34 @@ public class CyanideApiService {
         log.info("No matches to load for league {}.", league.getLeagueId());
         return Collections.emptyList();
     }
+
+    public List<Match> loadMatches(Competition competition,
+                                   Optional<Date> earliestStartDate,
+                                   Optional<Date> lastMatchDateKnown,
+                                   Optional<Date> lastMatchDateReported) {
+        log.info(
+                "Checking if matches to be loaded for league {} competition {} (earliestStart: {}, lastMatchDateKnown: {}, lastMatchDateReported: {}).",
+                competition.getLeagueId(), competition.getCompetitionId(), 
+                earliestStartDate, lastMatchDateKnown, lastMatchDateReported);
+        Date startDate = lastMatchDateKnown.orElse(earliestStartDate.orElse(null));
+        if (startDate != null && (lastMatchDateReported.isEmpty() || startDate.before(lastMatchDateReported.get()))) {
+            MatchesRequest matchesRequest = new MatchesRequest();
+            matchesRequest.setLeague_id(competition.getLeagueId().getValue());
+            matchesRequest.setCompetition_id(competition.getCompetitionId());
+            matchesRequest.setOpus(competition.getIdentity().getOpus());
+            matchesRequest.setStart(startDate);
+            matchesRequest.setEnd(new Date());
+            matchesRequest.setLimitSize(null);
+            log.info(
+                    "Loading matches for competition {} starting from {}.",
+                    competition.getLeagueId(), startDate);
+            MatchesResponse matchesResponse = cyanideCachedRestApiClient.getFromCacheOrApi(matchesRequest);
+            return matchDomainService.createOrUpdateMatches(matchesResponse);
+        }
+        log.info("No matches to load for competition {}.", competition.getLeagueId());
+        return Collections.emptyList();
+    }
+
 
     public List<Competition> loadCompetitions(Identity leagueIdentity) {
         CompetitionsRequest competitionsRequest = new CompetitionsRequest();

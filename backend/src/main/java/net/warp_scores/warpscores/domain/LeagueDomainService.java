@@ -8,21 +8,18 @@ import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.domain.persistence.LeagueRepository;
 import net.warp_scores.warpscores.service.PopulatorUtil;
-import net.warp_scores.warpscores.service.UUIDConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Optional;
-import java.util.UUID;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class LeagueDomainService {
     private final LeagueRepository leagueRepository;
-    private final UUIDConverter uuidConverter;
 
     @Value("${cyanide.defaults.opus:3}")
     private int defaultOpus;

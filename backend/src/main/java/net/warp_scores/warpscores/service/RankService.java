@@ -3,7 +3,6 @@ package net.warp_scores.warpscores.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.annotations.DurationLogging;
-import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.identity.Identity;
@@ -14,7 +13,6 @@ import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Rank;
 import net.warp_scores.warpscores.model.Team;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -25,7 +23,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNullElse;
@@ -39,7 +36,6 @@ import static net.warp_scores.warpscores.model.MatchStatus.Validated;
 public class RankService {
     private final MatchRepository matchRepository;
     private final ContestRepository contestRepository;
-    private final TeamDomainService teamDomainService;
     private final CompetitionService competitionService;
 
 

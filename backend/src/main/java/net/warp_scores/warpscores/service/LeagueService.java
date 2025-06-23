@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @Slf4j
@@ -22,7 +21,6 @@ public class LeagueService {
 
     private final LeagueRepository leagueRepository;
     private final CyanideApiService cyanideApiService;
-    private final IdService idService;
 
     @Value("${cyanide.defaults.opus:3}")
     private int defaultOpus;

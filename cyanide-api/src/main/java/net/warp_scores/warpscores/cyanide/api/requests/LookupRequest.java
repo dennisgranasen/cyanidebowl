@@ -56,6 +56,7 @@ public class LookupRequest extends ApiRequest<LookupRequest, LookupResponse> {
     private String platform;
     private Integer opus;
     private Integer fallback;
+    private Boolean includeDetails;
 
     public LookupRequest() {
         super("bb/lookup", LookupRequest.class, LookupResponse.class);

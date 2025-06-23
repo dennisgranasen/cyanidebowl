@@ -18,7 +18,7 @@ public class CircuitLeg implements Comparable<CircuitLeg> {
     @Id
     private Long circuitLegId;    
     private Identity entityId; // league or competition id
-    private CircuitLegType legType;
+    private EntityType legType;
     private String label;
     private GameType game;
     private Platform platform;

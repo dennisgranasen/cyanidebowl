@@ -89,9 +89,9 @@ public class ContestDomainService {
     private void populateContest(ApiContest sourceApiContestMatch, Contest targetContest, int opus) {
         PopulatorUtil.copyNonNullProperties(sourceApiContestMatch, targetContest);
         //targetContest.setContestUuid(sourceApiContestMatch.getContest_id());
-        targetContest.setLeagueId(new SimpleIdentity(sourceApiContestMatch.getLeague_id(), 3));
+        targetContest.setLeagueId(new SimpleIdentity(sourceApiContestMatch.getLeague_id(), opus));
         targetContest.setLive(sourceApiContestMatch.getLive());
-        targetContest.setCompetitionId(new SimpleIdentity(sourceApiContestMatch.getCompetition_id(), 3));
+        targetContest.setCompetitionId(new SimpleIdentity(sourceApiContestMatch.getCompetition_id(), opus));
         targetContest.setCompetitionName(sourceApiContestMatch.getCompetition());
         targetContest.setLeagueName(sourceApiContestMatch.getLeague());
         targetContest.setGameId(sourceApiContestMatch.getGame_id());

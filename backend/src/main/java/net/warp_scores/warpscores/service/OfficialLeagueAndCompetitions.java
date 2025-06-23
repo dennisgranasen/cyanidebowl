@@ -31,7 +31,13 @@ public class OfficialLeagueAndCompetitions {
     public void adjustCompetitionNameAndLogo(Identity leagueId,
             String competitionName,
             Consumer<String> competitionNameConsumer, Consumer<String> competitionLogoConsumer) {
-        UUID leagueUuid = UUIDUtil.getUUIDFromIdentity(leagueId);
+        UUID leagueUuid = null;
+        try {
+            leagueUuid = UUIDUtil.getUUIDFromIdentity(leagueId);
+        } catch (IllegalArgumentException e) {
+            log.info("Invalid leagueId: {}", leagueId, e);
+            return;
+        }
         if (leagueUuid != null &&  
             getOfficialLeagueUuid().equals(leagueUuid)) {
 
@@ -43,7 +49,13 @@ public class OfficialLeagueAndCompetitions {
     public void adjustCompetitionName(Identity leagueId,
             String competitionName,
             Consumer<String> competitionNameConsumer) {
-        UUID leagueUuid = UUIDUtil.getUUIDFromIdentity(leagueId);
+        UUID leagueUuid = null;
+        try {
+            leagueUuid = UUIDUtil.getUUIDFromIdentity(leagueId);
+        } catch (IllegalArgumentException e) {
+            log.info("Invalid leagueId: {}", leagueId, e);
+            return;
+        }
         if (leagueUuid != null &&  
             getOfficialLeagueUuid().equals(leagueUuid)) {
             Optional<String> competitionNameMapping = Optional.ofNullable(
@@ -55,7 +67,13 @@ public class OfficialLeagueAndCompetitions {
     public void adjustCompetitionLogo(Identity leagueId,
             String competitionName,
             Consumer<String> competitionLogoConsumer) {
-        UUID leagueUuid = UUIDUtil.getUUIDFromIdentity(leagueId);
+        UUID leagueUuid = null;
+        try {
+            leagueUuid = UUIDUtil.getUUIDFromIdentity(leagueId);
+        } catch (IllegalArgumentException e) {
+            log.info("Invalid leagueId: {}", leagueId, e);
+            return;
+        }
         if (leagueUuid != null &&  
             getOfficialLeagueUuid().equals(leagueUuid)) {
             Optional<String> competitionLogoMapping = Optional.ofNullable(
@@ -67,7 +85,13 @@ public class OfficialLeagueAndCompetitions {
     public void adjustCompetitionFormat(Identity leagueId,
             String competitionName,
             Consumer<CompetitionFormat> competitionFormatConsumer) {
-        UUID leagueUuid = UUIDUtil.getUUIDFromIdentity(leagueId);
+        UUID leagueUuid = null;
+        try {
+            leagueUuid = UUIDUtil.getUUIDFromIdentity(leagueId);
+        } catch (IllegalArgumentException e) {
+            log.info("Invalid leagueId: {}", leagueId, e);
+            return;
+        }
         if (leagueUuid != null &&  
             getOfficialLeagueUuid().equals(leagueUuid) &&
             competitionName.matches(ARENA_MODE_COMPETITION_NAME_PATTERN)) {

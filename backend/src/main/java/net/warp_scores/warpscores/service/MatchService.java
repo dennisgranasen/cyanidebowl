@@ -15,6 +15,7 @@ import org.springframework.data.mongodb.core.aggregation.ArrayOperators.In;
 import org.springframework.expression.spel.ast.OpAnd;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,6 +29,9 @@ public class MatchService {
 
     @Value("${cyanide.defaults.opus:3}")
     private int defaultOpus;
+
+    @Value("${cyanide.defaults.pageLimit:100}")
+    private int defaultPageLimit;
 
     @DurationLogging
     public List<Match> findByTeamId(Identity teamId) {
@@ -47,6 +51,20 @@ public class MatchService {
     public List<Match> getLatestCompetitionMatches(Identity competitionId, int limit) {
         List<Match> matches = matchRepository.findTopByCompetitionIdAndFinishedNotNull(competitionId,
                 PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "finished")));
+        return adjustCompetitionNameAndLogoAndUpdateConcedeAndOvertimeInfo(matches);
+    }
+
+    @DurationLogging
+    public List<Match> getCompetitionMatchesSince(Identity competitionId, Date since, Optional<Integer> limit) {
+        List<Match> matches = matchRepository.findTopByCompetitionIdAndFinishedNotNull(competitionId,
+                PageRequest.of(0, limit.orElse(defaultPageLimit), Sort.by(Sort.Direction.DESC, "finished")));
+        return adjustCompetitionNameAndLogoAndUpdateConcedeAndOvertimeInfo(matches);
+    }
+
+    @DurationLogging
+    public List<Match> getLeagueMatchesSince(Identity leagueId, Date since, Optional<Integer> limit) {
+        List<Match> matches = matchRepository.findTopByLeagueIdAndFinishedNotNull(leagueId,
+                PageRequest.of(0, limit.orElse(defaultPageLimit), Sort.by(Sort.Direction.DESC, "finished")));
         return adjustCompetitionNameAndLogoAndUpdateConcedeAndOvertimeInfo(matches);
     }
 

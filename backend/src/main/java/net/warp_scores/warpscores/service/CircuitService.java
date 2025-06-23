@@ -5,18 +5,18 @@ import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.domain.SequenceGenerator;
 import net.warp_scores.warpscores.domain.persistence.CircuitRepository;
-import net.warp_scores.warpscores.domain.persistence.LeagueCollectionRepository;
+import net.warp_scores.warpscores.domain.persistence.DataCollectionRepository;
 import net.warp_scores.warpscores.identity.CompositeIdentity;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.IdentityUtil;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Circuit;
 import net.warp_scores.warpscores.model.CircuitLeg;
-import net.warp_scores.warpscores.model.CircuitLegType;
+import net.warp_scores.warpscores.model.EntityType;
+import net.warp_scores.warpscores.model.DataCollection;
 import net.warp_scores.warpscores.model.GameType;
 import net.warp_scores.warpscores.model.LadderOption;
 import net.warp_scores.warpscores.model.League;
-import net.warp_scores.warpscores.model.LeagueCollection;
 import net.warp_scores.warpscores.model.Platform;
 import net.warp_scores.warpscores.requests.CircuitLegRequest;
 import net.warp_scores.warpscores.utils.EnumUtils;
@@ -38,7 +38,7 @@ public class CircuitService {
     public static final long DUMMY_CIRCUIT_ID = -42L;
 
     private final CircuitRepository circuitRepository;
-    private final LeagueCollectionRepository collectionRepository;
+    private final DataCollectionRepository collectionRepository;
     private final SequenceGenerator sequenceGenerator;
     private final LeagueService leagueService;
 
@@ -82,7 +82,7 @@ public class CircuitService {
         Set<Identity> leagueIdsInCircuits = circuits
                 .stream()
                 .flatMap(c -> c.getCircuitLegs().stream())
-                .filter(cl -> cl.getLegType() == CircuitLegType.League)
+                .filter(cl -> cl.getLegType() == EntityType.League)
                 .map(CircuitLeg::getEntityId)
                 .collect(Collectors.toSet());
         // Use getLeagueId() or getIdentity().getId() depending on your League model
@@ -149,7 +149,7 @@ public class CircuitService {
         }
         newLeg.setEntityId(entityId);
         newLeg.setLegType(
-            EnumUtils.valueOfIgnoreCase(CircuitLegType.class,
+            EnumUtils.valueOfIgnoreCase(EntityType.class,
                 req.getLegType()));
         newLeg.setLabel(req.getLabel());
         newLeg.setGame(
@@ -178,7 +178,8 @@ public class CircuitService {
                     ladderOptionStr.replace("-","")));
         circuit.addLeg(newLeg);
         if (newLeg.getEntityId() != null && newLeg.getIsCollected() != null && newLeg.getIsCollected()) {
-            updateLeagueCollection(newLeg.getEntityId(), true);
+            updateLeagueCollection(
+                newLeg.getEntityId(), newLeg.getLegType(), true);
         }
         return circuitRepository.save(circuit);
     }
@@ -195,9 +196,9 @@ public class CircuitService {
                 leg.setEntityId(id);
         }
         if (circuitLeg.containsKey("legType"))
-            leg.setLegType(circuitLeg.get("legType") instanceof CircuitLegType
-                    ? (CircuitLegType) circuitLeg.get("legType")
-                    : CircuitLegType.valueOf((String) circuitLeg.get("legType")));
+            leg.setLegType(circuitLeg.get("legType") instanceof EntityType
+                    ? (EntityType) circuitLeg.get("legType")
+                    : EntityType.valueOf((String) circuitLeg.get("legType")));
         if (circuitLeg.containsKey("label"))
             leg.setLabel(circuitLeg.get("label") instanceof String
                     ? (String) circuitLeg.get("label")
@@ -229,7 +230,8 @@ public class CircuitService {
 
         //log.info("Updated leg {} in circuit {}.", circuitLegId, circuit.getCircuitId());
         if (leg.getEntityId() != null && wasCollected != leg.getIsCollected())
-            updateLeagueCollection(leg.getEntityId(), leg.getIsCollected());
+            updateLeagueCollection(
+                leg.getEntityId(), leg.getLegType(), leg.getIsCollected());
         return circuitRepository.save(circuit);
     }
 
@@ -242,21 +244,21 @@ public class CircuitService {
         }
         if (leg.getEntityId() != null && leg.getIsCollected() != null && leg.getIsCollected()) {
             log.info("Leg {} in circuit {} is collected, removing collection.", circuitLegId, circuit.getCircuitId());
-            updateLeagueCollection(leg.getEntityId(), false);
+            updateLeagueCollection(leg.getEntityId(), leg.getLegType(), false);
         }        
         // Remove the leg from the circuit
         circuit.getCircuitLegs().removeIf(l -> circuitLegId.equals(l.getCircuitLegId()));
         return circuitRepository.save(circuit);
     }
 
-    private void updateLeagueCollection(Identity leagueId, boolean toBeCollected) {
+    private void updateLeagueCollection(Identity leagueId, EntityType legType, boolean toBeCollected) {
         if (!toBeCollected) {
             if (collectionRepository.existsById(leagueId))
                 collectionRepository.deleteById(leagueId);
             else
                 log.warn("No collection found for identity {} to delete.", leagueId);        
         } else {
-            LeagueCollection lc = new LeagueCollection(leagueId);
+            DataCollection lc = new DataCollection(leagueId, legType);
             collectionRepository.save(lc);
         }
     }

@@ -2,14 +2,14 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.warp_scores.warpscores.cyanide.api.model.common.IdWithName;
 import net.warp_scores.warpscores.cyanide.api.requests.LookupRequest;
 import net.warp_scores.warpscores.cyanide.api.responses.LookupResponse;
-import net.warp_scores.warpscores.domain.persistence.LeagueCollectionRepository;
+import net.warp_scores.warpscores.domain.persistence.DataCollectionRepository;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
+import net.warp_scores.warpscores.model.DataCollection;
+import net.warp_scores.warpscores.model.EntityType;
 import net.warp_scores.warpscores.model.League;
-import net.warp_scores.warpscores.model.LeagueCollection;
 import net.warp_scores.warpscores.service.UUIDConverter;
 import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
 
@@ -24,8 +24,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
@@ -34,15 +32,14 @@ import static net.warp_scores.warpscores.controller.Authorities.AUTHORITY_WRITE_
 @RestController
 @RequiredArgsConstructor
 @Slf4j
-public class LeagueCollectionController {
+public class DataCollectionController {
 
-    private final LeagueCollectionRepository leagueCollectionRepository;
+    private final DataCollectionRepository dataCollectionRepository;
 
     private final CyanideApiService cyanideApiService;
 
-    private final UUIDConverter uuidConverter;
 
-        @Value("${cyanide.defaults.opus:3}")
+    @Value("${cyanide.defaults.opus:3}")
     private int defaultOpus;
 
 
@@ -63,12 +60,13 @@ public class LeagueCollectionController {
         lookupRequest.setOpus(id.getOpus());
         LookupResponse lookup = cyanideApiService.lookup(lookupRequest);
         int opus = lookup.getMeta().getOpus().orElse(defaultOpus);
-        List<LeagueCollection> leagueCollections = Arrays.stream(lookup.getLeagues())
-                .map((idWithName) -> newLeagueCollection(idWithName, opus))
+        List<DataCollection> leagueCollections = Arrays.stream(lookup.getLeagues())
+                .map((idWithName) -> newLeagueCollection(
+                    new SimpleIdentity(idWithName.getId(), opus), idWithName.getName()))
                 .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
-        leagueCollections = leagueCollectionRepository.saveAll(leagueCollections);
+        leagueCollections = dataCollectionRepository.saveAll(leagueCollections);
         log.info("Added league collections {}.", leagueCollections);
 
         return leagueCollections
@@ -77,11 +75,11 @@ public class LeagueCollectionController {
                 .toList();
     }
 
-    private LeagueCollection newLeagueCollection(IdWithName idWithName, int opus) {
-        String id = idWithName.getId();
-        LeagueCollection leagueCollection = new LeagueCollection(new SimpleIdentity(id, opus));
+    private DataCollection newLeagueCollection(Identity id, String name) {
+        DataCollection leagueCollection = new DataCollection(id, EntityType.League);
         leagueCollection.setCollectionActive(true);
-        leagueCollection.setLeagueName(idWithName.getName());
+        leagueCollection.setName(name); // not used in the UI, but can be useful for debugging
+        //leagueCollection.setLeagueName(idWithName.getName());
         return leagueCollection;
     }
 }

@@ -2,13 +2,12 @@ package net.warp_scores.warpscores.model;
 
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.UUID;
+import net.warp_scores.warpscores.identity.Identity;
 
 @Getter
 @Setter
 public class Rank {
-    private String competitionId;
+    private Identity competitionId;
     private Team team;
     private Integer rank = 0;
     private Integer gamesPlayed = 0;
@@ -21,5 +20,4 @@ public class Rank {
     private Integer inflictedCasualties = 0;
     private Integer sustainedCasualties = 0;
 
-    private Integer opus; // Opus is the version of the rank, used for compatibility with different game versions.
 }
