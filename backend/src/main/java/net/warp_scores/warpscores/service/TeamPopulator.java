@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.cyanide.api.model.ApiPlayer;
 import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
 import net.warp_scores.warpscores.cyanide.api.responses.TeamResponse;
+import net.warp_scores.warpscores.cyanide.api.responses.TeamResponse.Player.Attributes;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Player;
@@ -118,10 +119,16 @@ public class TeamPopulator {
         Player player = new Player(
             new SimpleIdentity(apiPlayer.getId(), opus));
         PopulatorUtil.copyNonNullProperties(apiPlayer, player);
-        player.setRaceId(apiPlayer.getIdraces());
-        player.setSuspendedNextMatch(apiPlayer.getSuspended_next_match());
-        player.setAttributes(toAttributes(apiPlayer.getAttributes()));
-        player.setExtendedAttributes(toExtendedAttributes(apiPlayer.getExtendedAttributes()));
+        //player.setRaceId(apiPlayer.getIdraces());
+        //player.setSuspendedNextMatch(apiPlayer.getSuspended_next_match());
+        Attributes attribs = apiPlayer.getAttributes();
+        if (attribs != null) {
+            player.setAttributes(toAttributes(attribs));
+        }
+        TeamResponse.Player.ExtendedAttributes ea = apiPlayer.getExtendedAttributes();
+        if (ea != null) {
+            player.setExtendedAttributes(toExtendedAttributes(ea));
+        }
         player.setCasualtiesStateIds(apiPlayer.getCasualties_state_id());
         player.setCasualtiesStates(apiPlayer.getCasualties_state());
         return player;

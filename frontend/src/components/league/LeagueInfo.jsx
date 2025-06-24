@@ -4,6 +4,7 @@ import InfoArea from '../common/InfoArea';
 import InfoItem from '../common/InfoItem';
 
 function LeagueInfo({ league }) {
+  console.log('Rendering LeagueInfo with league:', league);
   return (
     league && (
       <InfoArea w="100%">
