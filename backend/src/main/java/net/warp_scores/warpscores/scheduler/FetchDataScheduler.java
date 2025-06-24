@@ -22,28 +22,33 @@ import static net.warp_scores.warpscores.scheduler.Schedules.TWENTY_SECONDS;
 public class FetchDataScheduler {
     private final FetchDataService fetchDataService;
 
-    @Scheduled(initialDelay = TWENTY_SECONDS, fixedDelay = TEN_MINUTES)
+    //@Scheduled(initialDelay = TWENTY_SECONDS, fixedDelay = TEN_MINUTES)
     public void fetchLeagues() {
-        fetchDataService.fetchLeagues();
+        //fetchDataService.fetchLeagues();
+        fetchDataService.fetchLeagueData();
     }
 
-    @Scheduled(initialDelay = FIVE_MINUTES, fixedDelay = ONE_HOUR)
+    //@Scheduled(initialDelay = FIVE_MINUTES, fixedDelay = ONE_HOUR)
     public void fetchCompetitions() {
-        fetchDataService.fetchCompetitions();
+        //fetchDataService.fetchCompetitions();
+        fetchDataService.fetchCompetitionData();
     }    
 
-    @Scheduled(initialDelay = THREE_MINUTES, fixedDelay = FIFTEEN_MINUTES)
+    //@Scheduled(initialDelay = THREE_MINUTES, fixedDelay = FIFTEEN_MINUTES)
     public void fetchCompetitionContests() {
-        fetchDataService.fetchCompetitionContests();
+        //fetchDataService.fetchCompetitionContests();
     }
 
-    @Scheduled(initialDelay = THREE_MINUTES, fixedDelay = ONE_HOUR)
+    //@Scheduled(initialDelay = THREE_MINUTES, fixedDelay = ONE_HOUR)
+    @Scheduled(initialDelay = TWENTY_SECONDS, fixedDelay = TEN_MINUTES)
     public void fetchMissingMatches() {
-        fetchDataService.fetchMissingMatches();
+        //fetchDataService.fetchMissingMatches();
+        fetchDataService.fetchNewMatches();
     }
 
-    @Scheduled(cron = "0 0 3 * * ?")
+    //@Scheduled(cron = "0 0 3 * * ?")
     public void fetchTeams() {
-        fetchDataService.fetchTeams(); 
+        //fetchDataService.fetchTeams(); 
+        fetchDataService.fetchTeamData();
     }
 }
