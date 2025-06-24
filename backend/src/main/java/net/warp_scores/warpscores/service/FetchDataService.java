@@ -94,7 +94,8 @@ public class FetchDataService {
                         else
                                 dateLimit = dc.getDateLastCollectedMatches();
 
-                        List<Match> matches = List.of();
+                        log.info("Checking for new matches for {} since {}.", dc.getIdentity(), dateLimit);
+                        List<Match> matches = new ArrayList<>();
                         if (dc.getCollectionType() == EntityType.League)
                                 matches = matchService.getLeagueMatchesSince(dc.getIdentity(), dateLimit, Optional.empty());
                         else if (dc.getCollectionType() == EntityType.Competition)
@@ -165,8 +166,6 @@ public class FetchDataService {
                         dataCollectionRepository.save(dataCollection);
                     });
         }
-
-        
         
         // Load competitions for the leagues that are being collected.
         List<Competition> competitions = leaguesToCollect.stream()
