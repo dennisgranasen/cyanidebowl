@@ -62,7 +62,7 @@ public class DataCollectionController {
         LookupResponse lookup = cyanideApiService.lookup(lookupRequest);
         List<DataCollection> leagueCollections = Arrays.stream(lookup.getLeagues())
                 .map((idWithName) -> newLeagueCollection(
-                    new SimpleIdentity(idWithName.getId(), opus), idWithName.getName()))
+                    new SimpleIdentity(idWithName.getId(), opus)/*, idWithName.getName()*/))
                 .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
@@ -71,14 +71,14 @@ public class DataCollectionController {
 
         return leagueCollections
                 .stream()
-                .map(lc -> cyanideApiService.loadLeague(lc.getIdentity()))
+                .map(lc -> cyanideApiService.loadLeague(lc.getId()))
                 .toList();
     }
 
-    private DataCollection newLeagueCollection(Identity id, String name) {
+    private DataCollection newLeagueCollection(Identity id/* , String name*/) {
         DataCollection leagueCollection = new DataCollection(id, EntityType.League);
-        leagueCollection.setCollectionActive(true);
-        leagueCollection.setName(name); // not used in the UI, but can be useful for debugging
+        //leagueCollection.setCollectionActive(true);
+        //leagueCollection.setName(name); // not used in the UI, but can be useful for debugging
         //leagueCollection.setLeagueName(idWithName.getName());
         return leagueCollection;
     }

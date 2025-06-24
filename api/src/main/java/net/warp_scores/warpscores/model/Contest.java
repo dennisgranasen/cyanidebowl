@@ -23,15 +23,15 @@ import java.util.stream.Stream;
 @Getter
 @Setter
 @Document
-public class Contest implements Comparable<Contest> {
+public class Contest implements Comparable<Contest>, Identifiable {
 
     @Id
-    private Identity identity;
+    private Identity id;
    
-    public String getPlayerId() { return identity != null ? identity.getValue() : null; }
+    public String getPlayerId() { return id != null ? id.getValue() : null; }
 
     public UUID getContestUuid() {
-        return UUIDUtil.getUUIDFromIdentity(identity);
+        return UUIDUtil.getUUIDFromIdentity(id);
     }
 
     //private Integer oldContestId; // This is the old ID used in the legacy system, if applicable.
@@ -49,7 +49,7 @@ public class Contest implements Comparable<Contest> {
     private String gameId;
     private String matchId;
     public Identity getMatchIdentity() {
-        return new SimpleIdentity(matchId, identity.getOpus());
+        return new SimpleIdentity(matchId, id.getOpus());
     }
     private Integer live;
     private List<Team> opponents;
@@ -61,8 +61,8 @@ public class Contest implements Comparable<Contest> {
 
     private UUID nextContestUuid;
 
-    public Contest(Identity identity) {
-        this.identity = identity;
+    public Contest(Identity id) {
+        this.id = id;
     }
 
     @Override
@@ -71,7 +71,7 @@ public class Contest implements Comparable<Contest> {
                 .orElse("n/a");
         String teamB = Optional.ofNullable(opponents).map(o -> o.size() > 1 ? o.get(1) : null).map(Team::getName)
                 .orElse("n/a");
-        return String.format("Contest[%s] Round: %s -> %s vs %s (next: %s)", identity.asMongoKey(), round, teamA, teamB,
+        return String.format("Contest[%s] Round: %s -> %s vs %s (next: %s)", id.asMongoKey(), round, teamA, teamB,
                 nextContestUuid);
     }
 

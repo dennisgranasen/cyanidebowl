@@ -71,10 +71,10 @@ public class FetchDataService {
     @Value("${cyanide.defaults.opus:3}")
     private int defaultOpus;
 
-    @Value("${cyanide.defaults.fetchMatchMaxAgeLimit:30}")
+    @Value("${cyanide.defaults.fetchMatchMaxAgeLimit:5000}")
     private int defaultFetchMatchMaxAgeLimit;
 
-    @Value("${cyanide.defaults.pageLimit:100}")
+    @Value("${cyanide.defaults.pageLimit:10000}")
     private int defaultPageLimit;
 
     public void fetchNewMatches() {
@@ -83,8 +83,12 @@ public class FetchDataService {
             return;
         }
 
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(2001, Calendar.JANUARY, 1);
+        Date ZERO = calendar.getTime();
+
         log.info("Checking for new matches.");
-        dataCollectionRepository.findByCollectionActive(true)
+        dataCollectionRepository.findAll()
                 .stream()
                 .forEach((dc) -> {
                         Date dateLimit;
@@ -94,27 +98,60 @@ public class FetchDataService {
                         else
                                 dateLimit = dc.getDateLastCollectedMatches();
 
-                        log.info("Checking for new matches for {} since {}.", dc.getIdentity(), dateLimit);
+                        log.info("Checking for new matches for {} since {}.", dc.getId(), dateLimit);
+
+                        Date lastCollection = dc.getDateLastCollectedMatches();
+                        if (lastCollection == null || lastCollection.before(ZERO))
+                                lastCollection = ZERO;
+                        Optional<Integer> limit = ofNullable(10);
+                        List<Match> matches = cyanideApiService.loadMatches(dc.getId(), dc.getCollectionType(), ofNullable(lastCollection),
+                                Optional.empty(), Optional.empty(), limit);
+                        
+                        /* 
+                                List<Identity> matchIds = leagues
+                                        .stream()
+                                        .filter(Objects::nonNull)
+                                        .map(l -> {
+                                        Optional<Date> earliestStartDate = earliestStartDateByLeagueId.getOrDefault(l.getId(), Optional.empty());
+                                        Optional<Date> lastMatchDateKnown = lastMatchDateKnownByLeagueId.getOrDefault(l.getId(), Optional.empty());
+                                        Optional<Date> lastMatchDateReported = ofNullable(l.getDateLastMatch());
+                                        return cyanideApiService.loadMatches(l, earliestStartDate,
+                                                lastMatchDateKnown, lastMatchDateReported);
+                                        })
+                                        .flatMap(List::stream)
+                                        .filter(Objects::nonNull)
+                                        .map(Match::getId)
+                                        .toList();
+
+                                log.info("Got {} skeleton matches.", matchIds.size());
+
+                                loadMatches(matchIds);
+                        */
+
+                        /*
                         List<Match> matches = new ArrayList<>();
+
+
                         if (dc.getCollectionType() == EntityType.League)
-                                matches = matchService.getLeagueMatchesSince(dc.getIdentity(), dateLimit, Optional.empty());
+                                matches = matchService.getLeagueMatchesSince(dc.getId(), dateLimit, Optional.empty());
                         else if (dc.getCollectionType() == EntityType.Competition)
-                                matches = matchService.getCompetitionMatchesSince(dc.getIdentity(), dateLimit, Optional.empty());
+                                matches = matchService.getCompetitionMatchesSince(dc.getId(), dateLimit, Optional.empty());
                         else {
                                 log.warn("Unknown data collection type {} for identity {}. Skipping.",
-                                        dc.getCollectionType(), dc.getIdentity());
+                                        dc.getCollectionType(), dc.getId());
                                         return;
                         }
+                        */
                         if (!matches.isEmpty()) {
-                            log.info("Found {} new matches for {} since {}.", matches.size(), dc.getIdentity(), dateLimit);
-                            if (matches.size() == defaultPageLimit) {
+                            log.info("Found {} new matches for {} since {}.", matches.size(), dc.getId(), dateLimit);
+                            if (matches.size() == limit.get().intValue()) {
                                 log.warn("Found {} matches for {}. This is the default page limit, so there might be more matches available.",
-                                        matches.size(), dc.getIdentity());
+                                        matches.size(), dc.getId());
                             }
                         dc.setDateLastCollectedMatches(new Date());
                         dataCollectionRepository.save(dc);
                 } else {
-                            log.info("No new matches found for {}.", dc.getIdentity());
+                            log.info("No new matches found for {}.", dc.getId());
                         }
                 });
 
@@ -145,12 +182,11 @@ public class FetchDataService {
             return;
         }
         List<DataCollection> leaguesToCollect = 
-                dataCollectionRepository.findByCollectionTypeAndCollectionActive(
-                        EntityType.League, true);
+                dataCollectionRepository.findByCollectionType(EntityType.League);
 
         // Load leagues that are not already in the repository
         List<League> leagues = leaguesToCollect.stream()
-                .map(DataCollection::getIdentity)
+                .map(DataCollection::getId)
                 .filter(id -> !leagueRepository.existsById(id))
                 .map(leagueService::loadById)
                 .filter(Optional::isPresent)
@@ -159,8 +195,8 @@ public class FetchDataService {
         log.info("Loaded {} leagues for data collection.", leagues.size());
 
         for (League league : leagues) {
-            log.info(" - Processed league: {}", league.getIdentity());
-            dataCollectionRepository.findById(league.getIdentity())
+            log.info(" - Processed league: {}", league.getId());
+            dataCollectionRepository.findById(league.getId())
                     .ifPresent(dataCollection -> {
                         dataCollection.setDateLastCollectedInfo(new Date());
                         dataCollectionRepository.save(dataCollection);
@@ -169,13 +205,13 @@ public class FetchDataService {
         
         // Load competitions for the leagues that are being collected.
         List<Competition> competitions = leaguesToCollect.stream()
-                .map(DataCollection::getIdentity)
+                .map(DataCollection::getId)
                 .map(competitionService::loadForLeague)
                 .flatMap(List::stream).toList();
         log.info("Loaded {} leagues' competitions for data collection.", competitions.size());
         for (Competition competition : competitions) {
-            log.info(" - Processed (league's) competition: {}", competition.getIdentity());
-            dataCollectionRepository.findById(competition.getIdentity())
+            log.info(" - Processed (league's) competition: {}", competition.getId());
+            dataCollectionRepository.findById(competition.getId())
                     .ifPresent(dataCollection -> {
                         dataCollection.setDateLastCollectedInfo(new Date());
                         dataCollectionRepository.save(dataCollection);
@@ -190,11 +226,10 @@ public class FetchDataService {
         }
         
         List<DataCollection> competitionsToCollect = 
-                dataCollectionRepository.findByCollectionTypeAndCollectionActive(
-                        EntityType.Competition, true);  
+                dataCollectionRepository.findByCollectionType(EntityType.Competition);  
         // Load competitions that are not already in the repository
         List<Competition> competitions = competitionsToCollect.stream()
-                .map(DataCollection::getIdentity)
+                .map(DataCollection::getId)
                 .filter(id -> !competitionRepository.existsById(id))
                 .map(competitionService::loadCompetition)
                 .filter(Optional::isPresent)
@@ -202,8 +237,8 @@ public class FetchDataService {
                 .toList();
         log.info("Loaded {} competitions for data collection.", competitions.size());
         for (Competition competition : competitions) {
-            log.info(" - Processed competition: {}", competition.getIdentity());
-            dataCollectionRepository.findById(competition.getIdentity())
+            log.info(" - Processed competition: {}", competition.getId());
+            dataCollectionRepository.findById(competition.getId())
                     .ifPresent(dataCollection -> {
                         dataCollection.setDateLastCollectedInfo(new Date());
                         dataCollectionRepository.save(dataCollection);
@@ -219,12 +254,12 @@ public class FetchDataService {
         }
 
         List<DataCollection> toCollect = 
-                dataCollectionRepository.findByCollectionActive(true);
+                dataCollectionRepository.findAll();
        
         toCollect.stream().
                 forEach(dc -> {
-                        log.info("Fetching team data for {}: {}", dc.getCollectionType(), dc.getIdentity());
-                        cyanideApiService.loadTeams(dc.getIdentity(), dc.getCollectionType());;
+                        log.info("Fetching team data for {}: {}", dc.getCollectionType(), dc.getId());
+                        cyanideApiService.loadTeams(dc.getId(), dc.getCollectionType());;
                 }
 
 
@@ -233,14 +268,14 @@ public class FetchDataService {
         // Fetch teams for all collected competitions in repository.
         List<Competition> competitions = competitionRepository.findAllById(
                 toCollect.stream()
-                        .map(DataCollection::getIdentity)
+                        .map(DataCollection::getId)
                         .toList());
         log.info("Will load teams for {} competitions with active team collection.", competitions.size());
 
         competitions
                 .stream()
                 .filter(Objects::nonNull)
-                .forEach((c) -> cyanideApiService.loadTeams(c.getIdentity(), EntityType.Competition));
+                .forEach((c) -> cyanideApiService.loadTeams(c.getId(), EntityType.Competition));
     }
 
     
@@ -251,12 +286,11 @@ public class FetchDataService {
             return;
         }
         List<DataCollection> leaguesToCollect = 
-                dataCollectionRepository.findByCollectionTypeAndCollectionActive(
-                        EntityType.League, true);
+                dataCollectionRepository.findByCollectionType(EntityType.League);
         List<League> existingLeagues = leagueRepository.findAll();
         Map<Identity, Optional<Date>> lastKnownMatchDateByLeagueId = 
                 matchDomainService.getLastMatchDatesForLeagues(
-                        existingLeagues.stream().map(League::getIdentity).toList());
+                        existingLeagues.stream().map(League::getId).toList());
 
         log.info("Will load leagues for {} leagues with active league collection.",
                 leaguesToCollect.size());
@@ -269,7 +303,7 @@ public class FetchDataService {
 
         lastKnownMatchDateByLeagueId =
                 matchDomainService.getLastMatchDatesForLeagues(
-                        leagues.stream().map(League::getIdentity).toList());
+                        leagues.stream().map(League::getId).toList());
 
         fetchMatchesIfNecessary(leagues, lastKnownMatchDateByLeagueId);
     }
@@ -280,8 +314,7 @@ public class FetchDataService {
             return;
         }
         List<DataCollection> leaguesToCollect = 
-                dataCollectionRepository.findByCollectionTypeAndCollectionActive(
-                        EntityType.Competition, true);
+                dataCollectionRepository.findByCollectionType(EntityType.Competition);
 
         log.info("Will load competitions for {} leagues with active league collection.",
                 leaguesToCollect.size());
@@ -293,12 +326,12 @@ public class FetchDataService {
 
     private void fetchTeamsForCompetitionIfTeamsMissing(Competition competition) {
         List<Team> byCompetitionId =
-                teamDomainService.findByCompetitionId(competition.getIdentity());
+                teamDomainService.findByCompetitionId(competition.getId());
         if (!competition.getFormat()
                 .equals(CompetitionFormat.Ladder) && competition.getTeamsMax() != null && competition.getTeamsMax() > byCompetitionId.size()) {
-            log.info("Loading teams for competition {} as maxTeams ({}) > availableTeams ({}).", competition.getIdentity(),
+            log.info("Loading teams for competition {} as maxTeams ({}) > availableTeams ({}).", competition.getId(),
                     competition.getTeamsMax(), byCompetitionId.size());
-            cyanideApiService.loadTeams(competition.getIdentity(), EntityType.Competition);
+            cyanideApiService.loadTeams(competition.getId(), EntityType.Competition);
         }
     }
 
@@ -307,10 +340,10 @@ public class FetchDataService {
             log.info("Scheduler deactivated by configuration. Skipping fetchLeagueContests().");
             return;
         }
-        List<DataCollection> toCollect = dataCollectionRepository.findByCollectionTypeAndCollectionActive(EntityType.Competition, true);
+        List<DataCollection> toCollect = dataCollectionRepository.findByCollectionType(EntityType.Competition);
         List<Competition> competitions = competitionRepository.findAllById(
                 toCollect.stream()
-                        .map(DataCollection::getIdentity)
+                        .map(DataCollection::getId)
                         .toList());
         List<Competition> competitionsNeedingContests = competitions
                 .stream()
@@ -337,13 +370,13 @@ public class FetchDataService {
             return true;
         }
         Integer liveContests = contestRepository.countByCompetitionIdAndLive(
-                competition.getIdentity(), 1);
+                competition.getId(), 1);
         boolean hasLiveContests = liveContests != null && liveContests > 0;
         if (hasLiveContests) {
             return true;
         }
         Optional<Date> lastMatchDate = lastMatchDateByCompetitionId.getOrDefault(
-                competition.getIdentity(),
+                competition.getId(),
                 Optional.empty());
         return lastMatchDate
                 .map(Date::toInstant)
@@ -387,7 +420,7 @@ public class FetchDataService {
                 .filter(entry -> {
                     League league = entry.getKey();
                     Optional<Date> lastReportedMatchDate = entry.getValue();
-                    Optional<Date> lastKnownMatchDate = lastKnownMatchDateByLeagueId.getOrDefault(league.getIdentity(), Optional.empty());
+                    Optional<Date> lastKnownMatchDate = lastKnownMatchDateByLeagueId.getOrDefault(league.getId(), Optional.empty());
                     return lastReportedMatchDate.isPresent() && (lastKnownMatchDate.isEmpty() || lastKnownMatchDate.get().before(lastReportedMatchDate.get()));
                 })
                 .map(Map.Entry::getKey)
@@ -399,7 +432,7 @@ public class FetchDataService {
     }
 
     private void fetchMatchesForLeagues(List<League> leagues) {
-        List<Identity> leagueIds = leagues.stream().map(League::getIdentity).toList();
+        List<Identity> leagueIds = leagues.stream().map(League::getId).toList();
         Map<Identity, Optional<Date>> lastMatchDateKnownByLeagueId = matchDomainService.getLastMatchDatesForLeagues(
                 leagueIds);
         Map<Identity, Optional<Date>> earliestStartDateByLeagueId = competitionDomainService.getEarliestStartDatesFor(
@@ -408,7 +441,7 @@ public class FetchDataService {
         List<League> filteredLeagues = leagues.stream()
                 .filter(league -> leagueHasMatchesAfterLastKnown(
                         league,
-                        lastMatchDateKnownByLeagueId.getOrDefault(league.getIdentity(), Optional.empty())))
+                        lastMatchDateKnownByLeagueId.getOrDefault(league.getId(), Optional.empty())))
                 .toList();
 
         log.info("Will load matches for {} leagues.", filteredLeagues.size());
@@ -428,7 +461,7 @@ public class FetchDataService {
         List<Team> teams = competitions
                 .stream()
                 .filter(Objects::nonNull)
-                .map(c -> cyanideApiService.loadTeams(c.getIdentity(), EntityType.Competition))
+                .map(c -> cyanideApiService.loadTeams(c.getId(), EntityType.Competition))
                 .flatMap(List::stream)
                 .toList();
 
@@ -439,7 +472,7 @@ public class FetchDataService {
                 .stream()
                 .collect(
                         groupingBy(
-                                Team::getIdentity,
+                                Team::getId,
                                 Collectors.mapping(
                                         Team::getCreated,
                                         Collectors.minBy(Comparator.nullsFirst(Comparator.naturalOrder()))
@@ -448,7 +481,7 @@ public class FetchDataService {
                 );
         teams = teams.stream()
                 .filter(team -> teamHasMatchesAfterLastKnown(team,
-                        lastMatchDateKnownByTeamId.get(team.getIdentity())))
+                        lastMatchDateKnownByTeamId.get(team.getId())))
                 .toList();
 
         log.info("Will load matches for {} teams.", teams.size());
@@ -466,7 +499,7 @@ public class FetchDataService {
         List<League> leagues = leaguesToCollect
                 .stream()
                 .map(lc ->
-                        cyanideApiService.loadLeague(lc.getIdentity()))
+                        cyanideApiService.loadLeague(lc.getId()))
                 .collect(Collectors.toList());
         log.info("Loaded {} leagues.", leagues.size());
         return leagues;
@@ -475,12 +508,12 @@ public class FetchDataService {
     private List<Competition> loadCompetitionsFor(List<DataCollection> competitionsToCollect) {
         log.info("Loading competitions for data collection:");
         for (DataCollection dc : competitionsToCollect) {
-            log.info(" - {}", dc.getIdentity());
+            log.info(" - {}", dc.getId());
         };
         List<Competition> competitions = competitionsToCollect
                 .stream()
-                .filter(lc -> nonNull(lc.getIdentity()))
-                .map(lc -> cyanideApiService.loadCompetitions(lc.getIdentity()))
+                .filter(lc -> nonNull(lc.getId()))
+                .map(lc -> cyanideApiService.loadCompetitions(lc.getId()))
                 .flatMap(List::stream)
                 .toList();
         //List<League> leagues = leagueRepository.findAll();
@@ -495,7 +528,7 @@ public class FetchDataService {
 
     private void countCompetitions(League league) {
         Map<CompetitionStatus, Long> countsByStatus =
-                competitionService.countForLeague(league.getIdentity());
+                competitionService.countForLeague(league.getId());
         league.setCountsByCompetitionStatus(countsByStatus);
         leagueRepository.save(league);
     }
@@ -515,15 +548,15 @@ public class FetchDataService {
                 .stream()
                 .filter(Objects::nonNull)
                 .map(l -> {
-                    Optional<Date> earliestStartDate = earliestStartDateByLeagueId.getOrDefault(l.getIdentity(), Optional.empty());
-                    Optional<Date> lastMatchDateKnown = lastMatchDateKnownByLeagueId.getOrDefault(l.getIdentity(), Optional.empty());
+                    Optional<Date> earliestStartDate = earliestStartDateByLeagueId.getOrDefault(l.getId(), Optional.empty());
+                    Optional<Date> lastMatchDateKnown = lastMatchDateKnownByLeagueId.getOrDefault(l.getId(), Optional.empty());
                     Optional<Date> lastMatchDateReported = ofNullable(l.getDateLastMatch());
                     return cyanideApiService.loadMatches(l, earliestStartDate,
-                            lastMatchDateKnown, lastMatchDateReported);
+                            lastMatchDateKnown, lastMatchDateReported, Optional.empty());
                 })
                 .flatMap(List::stream)
                 .filter(Objects::nonNull)
-                .map(Match::getIdentity)
+                .map(Match::getId)
                 .toList();
 
         log.info("Got {} skeleton matches.", matchIds.size());
@@ -532,11 +565,11 @@ public class FetchDataService {
     }
 
     private void updateTeams(List<Identity> matchIds) {
-        List<Match> matches = matchRepository.findAllByIdentity(matchIds);
+        List<Match> matches = matchRepository.findAllById(matchIds);
         Map<Identity, List<Match>> matchesByTeam = new HashMap<>();
         matches.forEach(m -> {
-            Identity teamAId = m.getTeams().get(0).getIdentity();
-            Identity teamBId = m.getTeams().get(1).getIdentity();
+            Identity teamAId = m.getTeams().get(0).getId();
+            Identity teamBId = m.getTeams().get(1).getId();
             matchesByTeam.putIfAbsent(teamAId, new ArrayList<>());
             matchesByTeam.putIfAbsent(teamBId, new ArrayList<>());
             matchesByTeam.get(teamAId).add(m);
@@ -562,7 +595,7 @@ public class FetchDataService {
     }
 
     private Optional<Team> getTeamFromMatch(Identity id, Match match) {
-        return match.getTeams().stream().filter(t -> t.getIdentity().equals(id)).findFirst();
+        return match.getTeams().stream().filter(t -> t.getId().equals(id)).findFirst();
     }
 
     private void loadMatches(List<Identity> matchIds) {
@@ -576,8 +609,8 @@ public class FetchDataService {
                 .stream()
                 .filter(Objects::nonNull)
                 .forEach(team -> {
-                    Optional<Date> earliestStartDate = earliestStartDateByTeamId.getOrDefault(team.getIdentity(), Optional.empty());
-                    Optional<Date> lastMatchDateKnown = lastMatchDateKnownByTeamId.getOrDefault(team.getIdentity(), Optional.empty());
+                    Optional<Date> earliestStartDate = earliestStartDateByTeamId.getOrDefault(team.getId(), Optional.empty());
+                    Optional<Date> lastMatchDateKnown = lastMatchDateKnownByTeamId.getOrDefault(team.getId(), Optional.empty());
                     Optional<Date> lastMatchDateReported = ofNullable(team.getDateLastMatch());
                     cyanideApiService.loadTeamMatches(team, earliestStartDate, lastMatchDateKnown, lastMatchDateReported);
                 });
@@ -587,7 +620,7 @@ public class FetchDataService {
         Optional<Date> lastMatchDateReported = ofNullable(team.getDateLastMatch());
         log.info(
                 "Checking team {} for having matches reported after last known date (lastMatchDateKnown: {}, lastMatchDateReported: {}).",
-                team.getIdentity(), lastMatchDateKnown, lastMatchDateReported);
+                team.getId(), lastMatchDateKnown, lastMatchDateReported);
         return lastMatchDateReported.isPresent() && (lastMatchDateKnown.isEmpty() || lastMatchDateKnown.get()
                 .before(lastMatchDateReported.get()));
     }
@@ -596,7 +629,7 @@ public class FetchDataService {
         Optional<Date> lastMatchDateReported = ofNullable(league.getDateLastMatch());
         log.info(
                 "Checking league {} for having matches reported after last known date (lastMatchDateKnown: {}, lastMatchDateReported: {}).",
-                league.getIdentity(), lastMatchDateKnown, lastMatchDateReported);
+                league.getId(), lastMatchDateKnown, lastMatchDateReported);
         return lastMatchDateReported.isPresent() && (lastMatchDateKnown.isEmpty() || lastMatchDateKnown.get()
                 .before(lastMatchDateReported.get()));
     }

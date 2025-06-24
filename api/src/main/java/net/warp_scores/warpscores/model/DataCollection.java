@@ -16,30 +16,24 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 @Getter
 @Setter
 @Document
-@EqualsAndHashCode(of = {"identity"})
-@ToString(of = {"collectionType", "identity", "dateLastCollectedInfo"})
-public class DataCollection {
+@EqualsAndHashCode(of = {"id"})
+@ToString(of = {"collectionType", "id", "dateLastCollectedInfo"})
+public class DataCollection implements Identifiable {
     @Id
-    private final Identity identity;
+    private final Identity id;
     private final EntityType collectionType;
 
-    public DataCollection(Identity identity, EntityType collectionType) {
-        this.identity = identity;
+    public DataCollection(Identity id, EntityType collectionType) {
+        this.id = id;
         this.collectionType = collectionType;
     }
 
     //private Integer oldLeagueId;
-    
-    private String name;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date dateLastCollectedInfo;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date dateLastCollectedMatches;
-
-    private Boolean collectionActive;
-
-    private String platform;    
 
 }

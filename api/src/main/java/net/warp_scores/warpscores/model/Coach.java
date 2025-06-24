@@ -13,13 +13,13 @@ import java.util.Date;
 @Getter
 @Setter
 @Document
-@EqualsAndHashCode(of = "identity")
-public class Coach {
+@EqualsAndHashCode(of = "id")
+public class Coach implements Identifiable{
     @Id
-    private final Identity identity;
+    private final Identity id;
 
     public String getCoachId() {
-        return identity != null ? identity.getValue() : null;
+        return id != null ? id.getValue() : null;
     }
 
     private String name;
@@ -34,8 +34,8 @@ public class Coach {
     private String status;
     private Boolean matchValidation;
 
-    public Coach(Identity identity) {
-        this.identity = identity;
+    public Coach(Identity id) {
+        this.id = id;
     }
 
     @Override

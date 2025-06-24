@@ -33,10 +33,10 @@ public class ApiTeamTest {
         whenDeserialized("testFiles/team1.json");
 
         assertThat(apiTeam.getId(), is("b6a8f215-99f6-11ee-a745-02000090a64f"));
-        assertThat(apiTeam.getName(), is("A Team name"));
-        assertThat(apiTeam.getRace(), is(Race.orc));
+        assertThat(apiTeam.getName(), is("A Team name"));        
+        assertThat(Race.forValue(apiTeam.getRace(), null), is(Race.orc));
         assertThat(apiTeam.getLogo(), is("Logo_Orc_12"));
-        assertThat(apiTeam.getCoachId(), is(UUID.fromString("b6a8f215-99f6-11ee-a745-02000090a123")));
+        assertThat(apiTeam.getCoachId(), is("b6a8f215-99f6-11ee-a745-02000090a123"));
         assertThat(apiTeam.getLeagueId(), is("b6a8f215-99f6-11ee-a745-02000090a987"));
         assertThat(apiTeam.getLeagueName(), is("A league name"));
         assertThat(apiTeam.getCompetitionName(), is("A Competition name"));
@@ -52,9 +52,9 @@ public class ApiTeamTest {
         assertThat(apiTeam.getName(), is("[DBBC] Dead Street Boys"));
         assertThat(apiTeam.getId(), is("099a83d4-8a44-11ee-b910-02000090a64f"));
         assertThat(apiTeam.getCoachName(), is("chaoskopp"));
-        assertThat(apiTeam.getCoachId(), is(UUID.fromString("da26110b-b166-11ed-80a8-020000a4d571")));
+        assertThat(apiTeam.getCoachId(), is("da26110b-b166-11ed-80a8-020000a4d571"));
         assertThat(apiTeam.getLogo(), is("Logo_Human_01"));
-        assertThat(apiTeam.getRace(), is(Race.human));
+        assertThat(Race.forValue(apiTeam.getRace(), null), is(Race.human));
         assertThat(apiTeam.getMotto(), is("description"));
         assertThat(apiTeam.getDateLastMatch(), is(simpleDateFormat.parse("2024-01-09 20:22:53")));
         assertThat(apiTeam.getLeagueName(), is("DBBL  BB3"));
@@ -70,8 +70,8 @@ public class ApiTeamTest {
         whenDeserialized("testFiles/team3.json");
 
         assertThat(apiTeam.getId(), is("099a83d4-8a44-11ee-b910-02000090a64f"));
-        assertThat(apiTeam.getCoachId(), is(UUID.fromString("da26110b-b166-11ed-80a8-020000a4d571")));
-        assertThat(apiTeam.getRace(), is(Race.human));
+        assertThat(apiTeam.getCoachId(), is("da26110b-b166-11ed-80a8-020000a4d571"));
+        assertThat(Race.forValue(apiTeam.getRace(), null), is(Race.human));
         assertThat(apiTeam.getName(), is("[DBBC] Dead Street Boys"));
         assertThat(apiTeam.getValue(), is(BigDecimal.valueOf(1130)));
         assertThat(apiTeam.getCash(), is(95000));

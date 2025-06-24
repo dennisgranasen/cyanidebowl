@@ -12,13 +12,13 @@ import lombok.ToString;
  * Composite identity implementation for MongoDB and URLs.
  */
 @Getter
-@Setter
 @ToString(of = {"opus", "parts"})
 @EqualsAndHashCode(of = {"opus", "parts"})
 public class CompositeIdentity implements Identity {
     //private String id;
     private int opus;
     private String[] parts;
+    private String key;
 
     public String getValue() {
         return String.join(DELIMITER, parts);
@@ -31,6 +31,7 @@ public class CompositeIdentity implements Identity {
         Objects.requireNonNull(parts, "parts must not be null");
         this.opus = opus;
         this.parts = Arrays.stream(parts).map(String::valueOf).toArray(String[]::new);
+        this.key = asMongoKey();
         //this.id = buildId(opus, this.parts);
     }
 

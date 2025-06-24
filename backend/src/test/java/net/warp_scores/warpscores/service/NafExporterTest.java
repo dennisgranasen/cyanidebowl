@@ -167,7 +167,7 @@ public class NafExporterTest {
                 asArray(1, 3)));
         this.contests.add(createContest("2024-02-26 15:00",
                 asArray("HumanCoach", "UnknownCoach"),
-                asArray(Race.human, Race.amazon),
+                asArray(Race.human, Race.amazon3),
                 asArray(4, 2),
                 asArray(2, 4)));
         this.contests.add(createContest("2024-02-26 16:00",
@@ -207,7 +207,7 @@ public class NafExporterTest {
     private Team newOpponent(String coachName, Race race, Integer touchdowns, Integer casualties) {
         Team team = new Team(new SimpleIdentity(UUID.randomUUID(), 3));
         team.setCoachName(coachName);
-        team.setRace(race);
+        team.setRace(String.valueOf(race.getRaceId()));
         team.setScore(touchdowns);
         team.setInflictedcasualties(casualties);
         return team;

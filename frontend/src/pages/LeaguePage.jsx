@@ -12,7 +12,7 @@ import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import LeagueInfo from '../components/league/LeagueInfo';
 
 function LeaguePage() {
-  const { leagueUuid } = useParams();
+  const { opus, leagueId } = useParams();
   const [competitions, setCompetitions] = useState([]);
   const [league, setLeague] = useState();
   const [loading, setLoading] = useState(false);
@@ -31,7 +31,7 @@ function LeaguePage() {
 
   useEffect(() => {
     const fetchLeague = () => {
-      WarpScoresApiService.leagues(leagueUuid)
+      WarpScoresApiService.leagues(leagueId, opus)
         .then((data) => {
           setLeague(data);
         })
@@ -44,7 +44,7 @@ function LeaguePage() {
   }, []);
 
   useEffect(() => {
-    const fetchCompetitions = async (leagueId, initialized) => {
+    const fetchCompetitions = async (leagueId, opus, initialized) => {
       setError(undefined);
       setCompetitions([]);
       setLoading(true);
@@ -53,14 +53,14 @@ function LeaguePage() {
         setError({ type: 'info', message: 'No League selected.' });
         return;
       }
-      WarpScoresApiService.leagueCompetitions(leagueId, initialized)
+      WarpScoresApiService.leagueCompetitions(leagueId, opus, initialized)
         .then(setCompetitions)
         .then(() => setLoading(false))
         .catch((reason) => {
           setError({ type: 'error', message: reason.toLocaleString() });
         });
     };
-    if (league) fetchCompetitions(league?.uuid).then(fetchCompetitions(league?.uuid, true));
+    if (league) fetchCompetitions(leagueId, opus).then(fetchCompetitions(leagueId, opus, true));
   }, [league]);
 
   return (

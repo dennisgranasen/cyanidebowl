@@ -62,8 +62,8 @@ public class MatchDomainService {
 
         for (Competition competition : compData) {
             //Integer opus = competition.getOpus();
-            List<Identity> compIds = competition.getIdentity() != null
-                    ? Collections.singletonList(competition.getIdentity())
+            List<Identity> compIds = competition.getId() != null
+                    ? Collections.singletonList(competition.getId())
                     : Collections.emptyList();
             if (!compIds.isEmpty()) {
                 lastMatchDateByCompIds.addAll(matchRepository
@@ -103,7 +103,7 @@ public class MatchDomainService {
     public Map<Identity, Optional<Date>> getLastMatchDatesForTeams(List<Team> teams) {
         Map<Identity, Optional<Date>> lastMatchDatesByTeamId = new HashMap<>();
         teams.forEach(team ->
-             lastMatchDatesByTeamId.put(team.getIdentity(), matchRepository
+             lastMatchDatesByTeamId.put(team.getId(), matchRepository
                 .findTopByTeamsContainsOrderByStartedDesc(team).map(Match::getStarted)));
         return lastMatchDatesByTeamId;
     }

@@ -1,12 +1,10 @@
 package net.warp_scores.warpscores.cyanide.api.model;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.Setter;
 import net.warp_scores.warpscores.cyanide.api.model.common.IdWithName;
 
-import java.util.UUID;
 
 /*
 {
@@ -89,6 +87,7 @@ public class ApiPlayer extends IdWithName {
     @JsonAlias({"xp_gain"})
     private Integer xpGain;
     private Integer level;
+    @JsonAlias({"matchPlayed"})
     private Integer matchplayed;
     private Boolean mvp;
 

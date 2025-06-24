@@ -111,7 +111,7 @@ public class CompetitionService {
     }
 
     private void adjustCompetitionNameAndLogo(Competition competition) {
-        if (competition.getIdentity().getOpus() > 2) {
+        if (competition.getId().getOpus() > 2) {
             log.info("Adjusting competition name and logo for competition: {}", competition);
             officialLeagueCompetitions
                     .adjustCompetitionNameAndLogo(
@@ -149,16 +149,16 @@ public class CompetitionService {
         Integer teams = competition.getTeamsMax();
         boolean isOdd = teams % 2 == 1;
         Integer contestCount =
-            contestsRepository.countByCompetitionId(competition.getIdentity());
+            contestsRepository.countByCompetitionId(competition.getId());
         List<Contest> contests =
             contestsRepository.findByCompetitionId(
-                new SimpleIdentity(competition.getCompetitionId(), competition.getIdentity().getOpus()),
+                new SimpleIdentity(competition.getCompetitionId(), competition.getId().getOpus()),
                 Pageable.unpaged());
         Map<Identity, Optional<Contest>> uniqueContests = contests
                 .stream()
                 .collect(
                         groupingBy(
-                                Contest::getIdentity,
+                                Contest::getId,
                                 collectingAndThen(toList(), this::getLatest)));
         if (contests.size() != uniqueContests.size()) {
             log.info("Contests: {}, uniqueContests: {}.", contests.size(), uniqueContests.size());
@@ -180,7 +180,7 @@ public class CompetitionService {
     private void initializeWissen(Competition competition) {
         List<Contest> contests =
             contestsRepository.findByCompetitionId(new SimpleIdentity(
-                competition.getCompetitionId(), competition.getIdentity().getOpus()),
+                competition.getCompetitionId(), competition.getId().getOpus()),
                 Pageable.unpaged());
         OptionalInt currentRound = contests.stream().mapToInt(Contest::getRound).max();
         if (competition.getTotalRounds() == null) {
@@ -203,13 +203,13 @@ public class CompetitionService {
         int totalMatches = teams - 1 - byes;
         competition.setTotalMatches(totalMatches);
         List<Contest> contests = contestsRepository.findByCompetitionId(
-            competition.getIdentity(), Pageable.unpaged());
+            competition.getId(), Pageable.unpaged());
         competition.setCurrentRound(contests.stream().mapToInt(Contest::getRound).max().orElse(0));
         initializeMatchCount(competition, contests);
     }
 
     private void initializeLadder(Competition competition) {
-        Integer matchCount = matchService.countByCompetitionId(competition.getIdentity());
+        Integer matchCount = matchService.countByCompetitionId(competition.getId());
         if (matchCount == null) {
             competition.setTotalMatches(matchCount);
             competition.setPlayedMatches(matchCount);
@@ -219,10 +219,10 @@ public class CompetitionService {
     private void initializeMatchCount(Competition competition, List<Contest> contests) {
         Integer playedMatchesCount =
             contestsRepository.countByCompetitionIdAndMatchDateNotNull(
-                competition.getIdentity());
+                competition.getId());
         Integer liveMatches =
             contestsRepository.countByCompetitionIdAndLive(
-                competition.getIdentity(), 1);
+                competition.getId(), 1);
         Integer notPlayedAdministratedCount =
             getNotPlayedAdministratedMatchesCount(contests);
         Integer notValidatedCount = getNotValidatedMatchesCount(contests);

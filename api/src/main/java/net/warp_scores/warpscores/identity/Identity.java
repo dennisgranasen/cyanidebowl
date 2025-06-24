@@ -17,5 +17,6 @@ public interface Identity {
     //String getId();
     int getOpus();
     String getValue();
-    String asMongoKey();    
+    String asMongoKey();
+    String getKey();
 }

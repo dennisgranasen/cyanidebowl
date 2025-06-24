@@ -64,7 +64,7 @@ public class RankService {
         }
         Map<Identity, Match> matchByMatchId =
             matches.stream().collect(Collectors.toMap(m -> 
-                    m.getIdentity(),
+                    m.getId(),
                     m -> m, (a, b) -> a, HashMap::new));
 
         return teams.stream()
@@ -114,7 +114,7 @@ public class RankService {
             Optional<Match> match = ofNullable(contest.getMatchIdentity()).map(matchByMatchId::get);
             List<Team> teamResults = match.map(Match::getTeams).orElse(contest.getOpponents());
 
-            Optional<Team> ownTeam = getTeam(teamResults, team.getIdentity());
+            Optional<Team> ownTeam = getTeam(teamResults, team.getId());
             Optional<Team> otherTeam = getOtherTeam(teamResults, ownTeam);
             if (ownTeam.isPresent() && otherTeam.isPresent()) {
                 gamesPlayed++;
@@ -169,7 +169,7 @@ public class RankService {
             return empty();
         }
         List<Team> teams = teamResults.stream()
-                .filter(team -> !myTeam.get().getIdentity().equals(team.getIdentity()))
+                .filter(team -> !myTeam.get().getId().equals(team.getId()))
                 .toList();
         if (teams.isEmpty()) {
             return empty();
@@ -185,7 +185,7 @@ public class RankService {
             return empty();
         }
         List<Team> teams = teamResults.stream()
-                .filter(team -> teamId.equals(team.getIdentity()))
+                .filter(team -> teamId.equals(team.getId()))
                 .toList();
         if (teams.isEmpty()) {
             return empty();

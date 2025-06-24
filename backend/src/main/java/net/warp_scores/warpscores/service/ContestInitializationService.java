@@ -95,7 +95,7 @@ public class ContestInitializationService {
         List<Contest> initializedContests = new ArrayList<>(contests);
         initializedContests.addAll(createEmptyFutureContests(
             contests, totalMatches, totalRounds, 
-            contests.isEmpty() ? defaultOpus : contests.get(0).getIdentity().getOpus() 
+            contests.isEmpty() ? defaultOpus : contests.get(0).getId().getOpus() 
         ));
 
         initializedContests.sort((contest1, contest2) -> {
@@ -121,7 +121,7 @@ public class ContestInitializationService {
                 int nextMatchIndexWithinRound = (int) Math.floor((double) (matchIndex - currRoundOffset) / 2);
                 Contest nextContest = findNextContestByIndex(nextRoundOffset,
                         nextMatchIndexWithinRound, initializedContests);
-                int opus = currContest.getIdentity().getOpus();
+                int opus = currContest.getId().getOpus();
                 if (nextContest != null && !MatchStatus.Calculated.equals(nextContest.getStatus())) {
                     nextContest = findNextContestByWinner(currContest, currRound, initializedContests);
                 } else {
@@ -154,7 +154,7 @@ public class ContestInitializationService {
         return initializedContests
                 .stream()
                 .filter(contest -> contest.getRound().equals(currRound + 2))
-                .filter(contest -> contest.getOpponents().stream().map(Team::getIdentity)
+                .filter(contest -> contest.getOpponents().stream().map(Team::getId)
                         .anyMatch(id -> winnerTeamUuid.isPresent() && winnerTeamUuid.get().equals(id)))
                 .findFirst().orElse(null);
     }
@@ -180,7 +180,7 @@ public class ContestInitializationService {
         team.setName((String) teamMap.get("name"));
         team.setCoachName((String) coachMap.get("name"));
         team.setLogo((String) teamMap.get("logo"));
-        team.setRace(Race.forValue(teamMap.get("race")));
+        team.setRace((String) teamMap.get("race"));
         return team;
     }
 
@@ -265,7 +265,7 @@ public class ContestInitializationService {
         Team dummy = null;
         List<Team> workingTeams = new ArrayList<>(teams);
         if (isOdd) {
-            dummy = new Team(new SimpleIdentity("DUMMY", competition.getIdentity().getOpus()));
+            dummy = new Team(new SimpleIdentity("DUMMY", competition.getId().getOpus()));
             workingTeams.add(dummy);
             n++;
         }
@@ -273,7 +273,7 @@ public class ContestInitializationService {
         int rounds = n - 1;
         int half = n / 2;
         List<Contest> scheduledContests = new ArrayList<>();
-        int opus = competition.getIdentity().getOpus();
+        int opus = competition.getId().getOpus();
 
         for (int round = 0; round < rounds; round++) {
             for (int i = 0; i < half; i++) {
@@ -294,7 +294,7 @@ public class ContestInitializationService {
                 Contest contest = new Contest(new SimpleIdentity(
                     Generators.timeBasedGenerator().generate(), opus));
                 contest.setRound(round + 1);
-                contest.setCompetitionId(competition.getIdentity());
+                contest.setCompetitionId(competition.getId());
                 contest.setCompetitionName(competition.getName());
                 contest.setLeagueId(competition.getLeagueId());
                 contest.setLeagueName(competition.getLeagueName());

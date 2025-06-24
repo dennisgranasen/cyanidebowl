@@ -135,7 +135,7 @@ public class TeamDomainService {
     }
 
     public void createOrUpdateTeam(Team team) {
-        Optional<Team> teamFromDb = teamRepository.findById(team.getIdentity());
+        Optional<Team> teamFromDb = teamRepository.findById(team.getId());
         if (teamFromDb.isEmpty()) {
             teamRepository.save(team);
         } else {
