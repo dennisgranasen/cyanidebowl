@@ -39,7 +39,7 @@ public class Player implements Identifiable {
     private Integer[] casualtiesStateIds;
     private String[] casualtiesStates;
     private Boolean suspendedNextMatch;
-    private Object skills;
+    private String[] skills;
     private Boolean mvp;
     private Integer matchplayed;
     private Stats stats;

@@ -23,7 +23,7 @@ function LeaguesAccordionItem({ leagues, header }) {
         </AccordionButton>
         <AccordionPanel>
           {leagues.map((currLeague) => (
-            <LeagueCard mb={2} league={currLeague} key={currLeague.uuid} />
+            <LeagueCard mb={2} league={currLeague} key={currLeague.id.key} />
           ))}
         </AccordionPanel>
       </AccordionItem>
