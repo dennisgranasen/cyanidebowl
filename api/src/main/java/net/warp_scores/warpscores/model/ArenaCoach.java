@@ -23,7 +23,7 @@ import net.warp_scores.warpscores.identity.Identity;
 @Setter
 @EqualsAndHashCode(of = "id")
 @ToString(of = "coachName", includeFieldNames = false)
-public class ArenaCoach {
+public class ArenaCoach implements Identifiable {
 
     @Id
     private Identity id;

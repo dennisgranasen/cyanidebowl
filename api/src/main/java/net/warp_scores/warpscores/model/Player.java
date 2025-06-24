@@ -14,16 +14,16 @@ import java.util.List;
 @Getter
 @Setter
 @Document
-@EqualsAndHashCode(of = "identity")
-@ToString(of = {"name", "identity"})
-public class Player {
+@EqualsAndHashCode(of = "id")
+@ToString(of = {"name", "id"})
+public class Player implements Identifiable {
     @Id
-    private final Identity identity;
+    private final Identity id;
 
-    public String getPlayerId() { return identity != null ? identity.getValue() : null; }
+    public String getPlayerId() { return id != null ? id.getValue() : null; }
 
-    public Player(Identity identity) {
-        this.identity = identity;
+    public Player(Identity id) {
+        this.id = id;
     } 
 
     private String name;

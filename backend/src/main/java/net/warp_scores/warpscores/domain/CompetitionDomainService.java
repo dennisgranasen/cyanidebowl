@@ -78,6 +78,7 @@ public class CompetitionDomainService {
 
     private void populateCompetition(ApiCompetition sourceApiCompetition, Competition targetCompetition, int opus) {
         PopulatorUtil.copyNonNullProperties(sourceApiCompetition, targetCompetition);
+        /*
         targetCompetition.setLeagueLogo(sourceApiCompetition.getLeague().getLogo());
         targetCompetition.setDateCreated(sourceApiCompetition.getDate_created());
         targetCompetition.setStatus(sourceApiCompetition.getStatus_name());        
@@ -93,5 +94,6 @@ public class CompetitionDomainService {
         targetCompetition.setTeamsMax(sourceApiCompetition.getTeams_max());
         targetCompetition.setTimeBonusDuration(sourceApiCompetition.getTime_bonus_duration());
         targetCompetition.setTurnDuration(sourceApiCompetition.getTurn_duration());        
+    */
     }
 }

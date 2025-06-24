@@ -24,7 +24,7 @@ public class TeamCollectionDomainService {
     public TeamCollection createOrUpdateTeamCollection(Identity id, EntityType collectionType, List<Team> teams) {
         TeamCollection competitionTeams = new TeamCollection(id, collectionType);
         // TODO: There is not updating here...
-        competitionTeams.setTeamIds(teams.stream().map(t -> t.getIdentity().getValue()).toList());
+        competitionTeams.setTeamIds(teams.stream().map(t -> t.getId().getValue()).toList());
         return teamCollectionRepository.save(competitionTeams);
     }
 

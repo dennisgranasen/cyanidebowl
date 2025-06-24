@@ -62,7 +62,7 @@ public class ContestDomainService {
     }
 
     public Contest addContest(Contest contest, int opus) {
-        Identity contestIdentity = contest.getIdentity();
+        Identity contestIdentity = contest.getId();
         if (contestIdentity == null) {
             contestIdentity = new SimpleIdentity(UUID.randomUUID(), opus);
         }
@@ -70,7 +70,7 @@ public class ContestDomainService {
         if (!byId.isEmpty()) {
             throw new IllegalArgumentException("Contest with uuid " + contestIdentity + " already exists");
         }
-        contest.setIdentity(contestIdentity);
+        contest.setId(contestIdentity);
         return contestRepository.save(contest);
     }
 
@@ -119,8 +119,6 @@ public class ContestDomainService {
         Team team = new Team(id);
         ApiContest.Team apiTeam = apiOpponent.getTeam();
         PopulatorUtil.copyNonNullProperties(apiTeam, team);
-        team.setCoachId(apiOpponent.getCoach().getId().toString());
-        team.setCoachName(apiOpponent.getCoach().getName());
         return team;
     }
 }

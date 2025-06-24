@@ -69,15 +69,15 @@ function AppRoutes() {
         path="/CHANGELOG.md"
         element={<MarkdownPage markdownDocument="/CHANGELOG.md" title="Changelog" />}
       />
-      <Route path="/:leagueUuid" element={<LeaguePage />} />
-      <Route path="/latestMatches/:leagueUuid" element={<LatestMatchesPage />} />
-      <Route path="/latestMatches/:leagueUuid/:limit" element={<LatestMatchesPage />} />
-      <Route path="/liveMatches/:leagueUuid" element={<LiveMatchesPage />} />
-      <Route path="/team/:teamUuid" element={<TeamPage />} />
-      <Route path="/competition/:competitionUuid" element={<CompetitionPage />} />
-      <Route path="/competition/:competitionUuid/arena/:race" element={<ArenaPage />} />
-      <Route path="/competition/:competitionUuid/arena/coach/:coachUuid" element={<ArenaCoachPage />} />
-      <Route path="/competition/:competitionUuid/team/:teamUuid" element={<TeamPage />} />
+      <Route path="/league/:opus/:leagueId" element={<LeaguePage />} />
+      <Route path="/latestMatches/:opus/:leagueId" element={<LatestMatchesPage />} />
+      <Route path="/latestMatches/:opus/:leagueId/:limit" element={<LatestMatchesPage />} />
+      <Route path="/liveMatches/:opus/:leagueId" element={<LiveMatchesPage />} />
+      <Route path="/team/:opus/:teamId" element={<TeamPage />} />
+      <Route path="/competition/:opus/:competitionId" element={<CompetitionPage />} />
+      <Route path="/competition/:opus/:competitionId/arena/:race" element={<ArenaPage />} />
+      <Route path="/competition/:opus/:competitionId/arena/coach/:coachId" element={<ArenaCoachPage />} />
+      <Route path="/competition/:opus/:competitionId/team/:teamUuid" element={<TeamPage />} />
       <Route path="/circuit/:circuitId" element={<CircuitPage />} />
       {/* Protected Routes/Needing authentication */}
       <Route path="/coachPage" element={<ProtectedRoute component={CoachPage} />} />

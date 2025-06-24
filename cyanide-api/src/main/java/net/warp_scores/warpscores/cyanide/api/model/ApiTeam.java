@@ -2,13 +2,14 @@ package net.warp_scores.warpscores.cyanide.api.model;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonSetter;
+
 import lombok.Getter;
 import lombok.Setter;
-import net.warp_scores.warpscores.model.Race;
+//import net.warp_scores.warpscores.model.Race;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.UUID;
 
 @Getter
 @Setter
@@ -18,7 +19,7 @@ public class ApiTeam {
     @JsonAlias({"teamname", "team"})
     private String name;
     @JsonAlias({"idraces", "race_id"})
-    private Race race;
+    private String race;
 
     @JsonAlias({"teamlogo"})
     private String logo;
@@ -27,7 +28,7 @@ public class ApiTeam {
     private String motto;
 
     @JsonAlias({"idcoach", "coach_id"})
-    private UUID coachId;
+    private String coachId;
     @JsonAlias({"coach"})
     private String coachName;
 
@@ -63,23 +64,69 @@ public class ApiTeam {
 
     private BigDecimal nbsupporters;
 
-    private Integer inflictedpasses;
-    private Integer inflictedcatches;
-    private Integer inflictedinterceptions;
-    private Integer inflictedtouchdowns;
-    private Integer inflictedcasualties;
-    private Integer inflictedtackles;
-    private Integer inflictedko;
-    private Integer inflictedinjuries;
-    private Integer inflicteddead;
-    private Integer inflictedmetersrunning;
-    private Integer inflictedmeterspassing;
-    private Integer inflictedpushouts;
-    private Integer sustainedexpulsions;
-    private Integer sustainedtouchdowns;
-    private Integer sustainedcasualties;
-    private Integer sustainedko;
-    private Integer sustainedinjuries;
-    private Integer sustaineddead;
+    @JsonAlias({"inflictedpasses"})
+    private Integer inflictedPasses;
+    @JsonAlias({"inflictedcatches"})
+    private Integer inflictedCatches;
+    @JsonAlias({"inflictedinterceptions"})
+    private Integer inflictedInterceptions;    
+    @JsonAlias({"inflictedtouchdowns"})
+    private Integer inflictedTouchdowns;
+    @JsonAlias({"inflictedcasualties"})
+    private Integer inflictedCasualties;
+    @JsonAlias({"inflictedtackles"})
+    private Integer inflictedTackles;
+    @JsonAlias({"inflictedko"})
+    private Integer inflictedKO;
+    @JsonAlias({"inflictedinjuries"})
+    private Integer inflictedInjuries;
+    @JsonAlias({"inflicteddead"})
+    private Integer inflictedDead;
+    @JsonAlias({"inflictedmetersrunning"})
+    private Integer inflictedMetersRunning;
+    @JsonAlias({"inflictedmeterspassing"})
+    private Integer inflictedMetersPassing;
+    @JsonAlias({"inflictedpushouts"})
+    private Integer inflictedPushouts;
+    @JsonAlias({"sustainedexpulsions"})
+    private Integer sustainedExpulsions;
+    @JsonAlias({"sustainedtouchdowns"})
+    private Integer sustainedTouchdowns;
+    @JsonAlias({"sustainedcasualties"})
+    private Integer sustainedCasualties;
+    @JsonAlias({"sustainedko"})
+    private Integer sustainedKO;
+    @JsonAlias({"sustainedinjuries"})
+    private Integer sustainedInjuries;
+    @JsonAlias({"sustaineddead"})
+    private Integer sustainedDead;
     private Object[] cards;
+
+    @JsonAlias({"popularitybeforematch"})
+    private Integer popularityBeforeMatch;
+    @JsonAlias({"popularitygain"})
+    private Integer popularityGain;
+    @JsonAlias({"cashbeforematch"})
+    private Integer cashBeforeMatch;
+    @JsonAlias({"cashspentinducements"})
+    private Integer cashSpentInducements;
+    @JsonAlias({"cashearned"})
+    private Integer cashEarned;
+    @JsonAlias({"cashearnedbeforeconcession"})
+    private Integer cashEarnedBeforeConcession;
+    @JsonAlias({"winningsdice"})
+    private Integer winningsDice;
+    @JsonAlias({"spirallingexpenses"})
+    private Integer spirallingExpenses;
+
+    @JsonAlias({"possessionball"})
+    private Integer possessionBall;
+    @JsonAlias({"occupationown"})
+    private Integer occupationOwn;
+    @JsonAlias({"occupationtheir"})
+    private Integer occupationTheir;
+    private Integer mvp;
+
+    @JsonSetter("id")
+    public void setId(Object id) { this.id = id == null ? null : id.toString(); }
 }

@@ -177,7 +177,7 @@ public class ArenaService {
     private ArenaCoach toArenaCoach(Coach coach, Map<ArenaTeam.RunType, List<ArenaTeam>> arenaTeamsByRunType) {
         ArenaCoach arenaCoach = new ArenaCoach();
         arenaCoach.setCoachName(coach.getName());
-        arenaCoach.setId(coach.getIdentity());
+        arenaCoach.setId(coach.getId());
 
         Map<ArenaTeam.RunType, Set<Identity>> teamUuidsByRunType = new HashMap<>();
         Map<ArenaTeam.RunType, Set<Race>> racesByRunType = new HashMap<>();
@@ -260,7 +260,7 @@ public class ArenaService {
                 .map(Match::getTeams)
                 .orElse(emptyList())
                 .stream()
-                .filter(t -> t.getIdentity().equals(arenaTeam.getTeamId()))
+                .filter(t -> t.getId().equals(arenaTeam.getTeamId()))
                 .findFirst();
         team.ifPresent(t -> {
             arenaTeam.setTeamLogo(t.getLogo());
@@ -448,7 +448,7 @@ public class ArenaService {
                 .getTeams()
                 .stream()
                 .max(comparing(Team::getScore))
-                .map(Team::getIdentity)
+                .map(Team::getId)
                 .orElse(null);
     }
 

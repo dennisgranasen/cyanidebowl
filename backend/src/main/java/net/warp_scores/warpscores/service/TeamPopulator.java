@@ -10,6 +10,9 @@ import net.warp_scores.warpscores.model.Player;
 import net.warp_scores.warpscores.model.Team;
 import org.springframework.stereotype.Service;
 
+import static java.util.Comparator.nullsLast;
+
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -65,7 +68,10 @@ public class TeamPopulator {
         //targetTeam.setIdentity(sourceApiTeam.getId());
 
         // Append the new competition id to the existing array if not already present
-        Identity[] existing = targetTeam.getCompetitionIds();
+        List<Identity> existing;
+        Identity newId;
+        /*
+        existing = targetTeam.getCompetitionIds();
         String bb3Id = sourceApiTeam.getBb3_competition_id();
         Identity newId = new SimpleIdentity(bb3Id,3);
         if (newId != null && !bb3Id.isEmpty()) {
@@ -80,21 +86,23 @@ public class TeamPopulator {
                 }
             }
         }
-
+        */
         // Append the new league id to the existing array if not already present
-        existing = targetTeam.getLeagueIds();
-        newId = new SimpleIdentity(sourceApiTeam.getLeagueId(), opus);
-        if (newId != null && newId != null) {
-            boolean alreadyExists = existing != null && Arrays.asList(existing).contains(newId);
-            if (!alreadyExists) {
-                if (existing == null) {
-                    targetTeam.setLeagueIds(new Identity[]{newId});
-                } else {
-                    Identity[] combined = Arrays.copyOf(existing, existing.length + 1);
-                    combined[existing.length] = newId;
-                    targetTeam.setLeagueIds(combined);
-                }
-            }
+
+        String str_lid = sourceApiTeam.getLeagueId();
+        if (str_lid == null || str_lid.isEmpty()) {
+            return; // No league id to process
+        }
+        newId = new SimpleIdentity(str_lid, opus);
+        Identity[] lids = targetTeam.getLeagueIds();
+        if (lids != null) {
+            existing = Arrays.asList(lids);
+        } else {
+            existing = new ArrayList<Identity>();
+        }
+        if (newId != null && !existing.contains(newId)) {
+            existing.add(newId);
+            targetTeam.setLeagueIds(existing.toArray(new Identity[0]));
         }
     }
 

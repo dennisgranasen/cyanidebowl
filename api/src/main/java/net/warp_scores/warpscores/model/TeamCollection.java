@@ -14,15 +14,15 @@ import java.util.List;
 @Getter
 @Setter
 @Document
-@EqualsAndHashCode(of = "identity")
-@ToString(of = {"identity", "collectionType"})
-public class TeamCollection {
+@EqualsAndHashCode(of = "id")
+@ToString(of = {"id", "collectionType"})
+public class TeamCollection implements Identifiable{
     @Id
-    private final Identity identity;
+    private final Identity id;
     private final EntityType collectionType;
 
-    public TeamCollection(Identity identity, EntityType collectionType) {
-        this.identity = identity;
+    public TeamCollection(Identity id, EntityType collectionType) {
+        this.id = id;
         this.collectionType = collectionType;
     }
 

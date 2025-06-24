@@ -88,7 +88,7 @@ public class CircuitService {
         // Use getLeagueId() or getIdentity().getId() depending on your League model
         return leagues
                 .stream()
-                .filter(league -> !leagueIdsInCircuits.contains(league.getIdentity()))
+                .filter(league -> !leagueIdsInCircuits.contains(league.getId()))
                 .collect(Collectors.toList());
     }
 

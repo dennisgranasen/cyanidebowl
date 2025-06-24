@@ -7,7 +7,8 @@ import LeagueInfo from './LeagueInfo';
 function LeagueCard({ league, ...props }) {
   const navigate = useNavigate();
   const goToLeague = () => {
-    navigate(`/${league.uuid}`);
+    console.log("Navigating to league:", league);
+    navigate(`/league/${league.id.opus}/${league.id.value}`);
   };
   return (
     <Card
@@ -19,7 +20,7 @@ function LeagueCard({ league, ...props }) {
       {...props}
     >
       <Box p="0.5rem">
-        <Image objectFit="contain" maxW="140px" src={imageUrls.logo(league.logo, league?.opus)} fallback={null} />
+        <Image objectFit="contain" maxW="140px" src={imageUrls.logo(league.logo, league?.id?.opus)} fallback={null} />
       </Box>
       <Flex minWidth="max-content" w="100%">
         <CardBody>

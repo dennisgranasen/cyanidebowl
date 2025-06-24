@@ -11,6 +11,7 @@ import {
 import LeagueCard from './LeagueCard';
 
 function LeaguesAccordionItem({ leagues, header }) {
+  console.log(`Rendering LeaguesAccordionItem with header: ${header} and leagues:`, leagues);
   return (
     leagues?.length > 0 && (
       <AccordionItem>
@@ -31,6 +32,7 @@ function LeaguesAccordionItem({ leagues, header }) {
 }
 
 function Leagues({ leagues }) {
+  console.log('Rendering Leagues component with leagues:', leagues);
   return (
     <Accordion variant="simple" allowMultiple defaultIndex={[0]}>
       <LeaguesAccordionItem

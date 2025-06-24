@@ -53,7 +53,7 @@ public class NafExporter {
         }
 
         List<Contest> competitionContests = 
-            contestService.getCompetitionContests(competition.getIdentity(), Optional.empty());
+            contestService.getCompetitionContests(competition.getId(), Optional.empty());
         return Optional.of(export(competitionContests, exporterName));
     }
 
@@ -106,7 +106,8 @@ public class NafExporter {
 
     private PlayerRecord toPlayerRecord(Team team, NafCoach nafCoach) {
         PlayerRecord playerRecord = new PlayerRecord();
-        playerRecord.setTeam(team.getRace().getNafRaceName());
+        Race race = Race.forValue(team.getRace(), team.getId().getOpus());
+        playerRecord.setTeam(race.getNafRaceName());
         playerRecord.setName(nafCoach.getNafName());
         playerRecord.setTeamRating(DEFAULT_TEAM_RATING);
         playerRecord.setNumber(nafCoach.getNafId());
@@ -143,7 +144,7 @@ public class NafExporter {
     private String uniqueOrMultipleRacesQualifier(List<Team> teams) {
         List<Race> distinctRaces = teams
                 .stream()
-                .map(Team::getRace)
+                .map(t -> Race.forValue(t.getRace(), t.getId().getOpus()))
                 .distinct()
                 .toList();
         return distinctRaces.size() == 1 ? distinctRaces.get(0).getNafRaceName() : MULTIPLE_RACES;

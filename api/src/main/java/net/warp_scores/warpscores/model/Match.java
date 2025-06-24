@@ -1,8 +1,11 @@
 package net.warp_scores.warpscores.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import net.warp_scores.warpscores.identity.Identity;
 
 import org.springframework.data.annotation.Id;
@@ -10,20 +13,21 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 @Getter
 @Setter
 @Document
-public class Match {
+@EqualsAndHashCode(of = "id")
+@ToString(of = {"id", "leagueName","competitionName", "round", "teams"})
+public class Match implements Identifiable {
     @Id
-    private final Identity identity;
+    private final Identity id;
 
-    public String getMatchId() { return identity != null ? identity.getValue() : null; }
+    public String getMatchId() { return id != null ? id.getValue() : null; }
 
 
-    public Match(Identity identity) {
-        this.identity = identity;
+    public Match(Identity id) {
+        this.id = id;
     }
 
     //private UUID matchId;

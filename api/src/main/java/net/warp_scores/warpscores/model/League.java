@@ -15,18 +15,18 @@ import java.util.Map;
 @Getter
 @Setter
 @Document
-@EqualsAndHashCode(of = "identity")
-@ToString(of = {"name", "identity"})
+@EqualsAndHashCode(of = "id")
+@ToString(of = {"name", "id"})
 public class League {
 
     @Id
-    private final Identity identity;
+    private final Identity id;
 
-    public League(Identity identity) {
-        this.identity = identity;
+    public League(Identity id) {
+        this.id = id;
     }
 
-    public String getLeagueId() { return identity != null ? identity.getValue() : null; }
+    public String getLeagueId() { return id != null ? id.getValue() : null; }
 
     private String logo;
     private String name;

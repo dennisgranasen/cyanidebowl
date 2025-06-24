@@ -22,7 +22,7 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
     List<Match> findByCompetitionId(Identity competitionId);
     //List<Match> findByOldCompetitionIdAndOpus(Integer oldId, Integer opus);
 
-    List<Match> findAllByIdentity(List<Identity> matchIds);
+    List<Match> findAllById(List<Identity> matchIds);
 
     Integer countMatchesByCompetitionId(Identity competitionId);
     //Integer countMatchesByOldCompetitionIdAndOpus(Integer oldId, Integer opus);

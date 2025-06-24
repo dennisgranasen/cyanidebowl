@@ -18,13 +18,13 @@ import static net.warp_scores.warpscores.model.CompetitionFormat.Ladder;
 @Getter
 @Setter
 @Document
-@EqualsAndHashCode(of = "identity")
-@ToString(of = {"name", "identity"})
-public class Competition implements Comparable<Competition> {
+@EqualsAndHashCode(of = "id")
+@ToString(of = {"name", "id"})
+public class Competition implements Comparable<Competition>, Identifiable {
     @Id
-    private final Identity identity;
+    private final Identity id;
 
-    public String getCompetitionId() { return identity != null ? identity.getValue() : null; }
+    public String getCompetitionId() { return id != null ? id.getValue() : null; }
 
     private String name;
     private String logo;
@@ -48,8 +48,8 @@ public class Competition implements Comparable<Competition> {
     private Integer playedMatches;
     private Integer totalMatches;
 
-    public Competition(Identity identity) {
-        this.identity = identity;
+    public Competition(Identity id) {
+        this.id = id;
     }
 
     @Override

@@ -5,26 +5,32 @@ import java.util.UUID;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 
 /**
  * Simple identity implementation for MongoDB and URLs.
  */
 @Getter
-@Setter
 @ToString(of = {"opus", "value"})
 @EqualsAndHashCode(of = {"opus", "value"})
 public class SimpleIdentity implements Identity {
     private int opus;
     private String value;
+    private String key;
 
     public SimpleIdentity() {
+    }
+
+    public SimpleIdentity(Object value, int opus) {
+        this.value = Objects.requireNonNull(value, "value must not be null").toString();
+        this.opus = opus;
+        this.key = asMongoKey();
     }
 
     public SimpleIdentity(String value, int opus) {
         this.value = Objects.requireNonNull(value, "value must not be null");
         this.opus = opus;
+        this.key = asMongoKey();
     }
 
     public SimpleIdentity(UUID uuid, int opus) {

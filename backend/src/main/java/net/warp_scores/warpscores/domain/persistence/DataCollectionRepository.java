@@ -11,7 +11,5 @@ import java.util.List;
 @Repository
 public interface DataCollectionRepository extends MongoRepository<DataCollection, Identity> {
 
-    List<DataCollection> findByCollectionActive(Boolean collectionActive);
     List<DataCollection> findByCollectionType(EntityType type);
-    List<DataCollection> findByCollectionTypeAndCollectionActive(EntityType type, Boolean collectionActive);
 }

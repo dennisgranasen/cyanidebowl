@@ -64,8 +64,8 @@ function WarpScores() {
       <>
         <HeaderCard
           mainImageSrc={imageUrls.warpscoresLogoPng('medium')}
-          heading="Warp-Scores"
-          subHeading="Welcome to warp-scores, a Spike-like facade to BB3 data provided by Cyanide's BB3-API."
+          heading="BlaskScores"
+          subHeading="Välkommen till Blödareblaskans resultatservice."
         />
         <Box>
           <LoadingOrErrorWrapper loading={loading} error={error}>

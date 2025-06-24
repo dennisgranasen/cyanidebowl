@@ -6,7 +6,7 @@ import WarpScoresApiService from '../WarpScoresApiService';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 
 function LatestMatchesPage() {
-  const { leagueUuid, limit } = useParams();
+  const { leagueId, limit } = useParams();
   const [league, setLeague] = useState();
   const [loading, setLoading] = useState();
   const [error, setError] = useState(undefined);
@@ -14,7 +14,7 @@ function LatestMatchesPage() {
   useEffect(() => {
     const fetchLeague = () => {
       setLoading(true);
-      WarpScoresApiService.leagues(leagueUuid)
+      WarpScoresApiService.leagues(leagueId.value, leagueId.opus)
         .then((data) => {
           setLeague(data);
         })

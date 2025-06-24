@@ -16,23 +16,23 @@ import java.util.List;
 @Getter
 @Setter
 @Document
-@EqualsAndHashCode(of = "identity")
-@ToString(of = {"name", "race", "identity"})
-public class Team {
+@EqualsAndHashCode(of = "id")
+@ToString(of = {"id", "name", "race"})
+public class Team implements Identifiable {
     @Id
-    private final Identity identity;
+    private final Identity id;
 
-    public String getTeamId() { return identity != null ? identity.getValue() : null; }
+    public String getTeamId() { return id != null ? id.getValue() : null; }
 
-    public Team(Identity identity) {
-        this.identity = identity;
+    public Team(Identity id) {
+        this.id = id;
     }
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date created;
     private String name;
     private String logo;
-    private Race race;
+    private String race;
     private String motto;
     private BigDecimal value;
     private Integer cash;
@@ -43,7 +43,7 @@ public class Team {
     private Integer cheerleaders;
     private Integer coachAssistants;
 
-    private String coachId;
+    private Identity coachId;
     private String coachName;
 
     private Identity[] leagueIds;
