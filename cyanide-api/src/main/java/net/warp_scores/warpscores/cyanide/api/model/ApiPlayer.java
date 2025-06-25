@@ -80,6 +80,7 @@ import net.warp_scores.warpscores.cyanide.api.model.common.IdWithName;
 @Getter
 @Setter
 public class ApiPlayer extends IdWithName {
+    @JsonAlias({"raceId"})
     private Integer idraces;
     private Integer number;
     private Integer value;
@@ -96,8 +97,11 @@ public class ApiPlayer extends IdWithName {
     private ExtendedAttributes extendedAttributes;
 
     private String type;
+    @JsonAlias({"casualtiesStateId"})
     private Integer[] casualties_state_id;
+    @JsonAlias({"casualtiesState"})
     private String[] casualties_state;
+    @JsonAlias({"suspendedNextMatch"})
     private Boolean suspended_next_match;
     private Stats stats;
 

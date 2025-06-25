@@ -21,6 +21,7 @@ import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Team;
 import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
+import net.warp_scores.warpscores.service.TeamService;
 
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,6 +64,8 @@ public class FetchDataService {
     private CompetitionDomainService competitionDomainService;
     @Autowired
     private ContestRepository contestRepository;
+    @Autowired
+    private TeamService teamService;
     @Autowired
     private TeamDomainService teamDomainService;
     @Autowired
@@ -276,6 +279,13 @@ public class FetchDataService {
                 .stream()
                 .filter(Objects::nonNull)
                 .forEach((c) -> cyanideApiService.loadTeams(c.getId(), EntityType.Competition));
+
+        List<Team> teams = teamService.loadAll();
+        log.info("Updating {} teams from the repository.", teams.size());
+        teams.stream()
+                .filter(Objects::nonNull)
+                .forEach(team -> 
+                        cyanideApiService.loadTeam(team.getId(), true, ofNullable(true)));
     }
 
     

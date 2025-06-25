@@ -37,7 +37,7 @@ public class Player implements Identifiable {
     private ExtendedAttributes extendedAttributes;
     private String type;
     private Integer[] casualtiesStateIds;
-    private String[] casualtiesStates;
+    private String[] casualtiesState;
     private Boolean suspendedNextMatch;
     private String[] skills;
     private Boolean mvp;

@@ -87,9 +87,10 @@ public class TeamDomainService {
         
         competitionId.ifPresent((id) -> setRelevantCompetition(Collections.singletonList(team), id));
         
+        // Need to analyze this... 
         Identity competitionId0 = team.getCompetitionIds()[0];
         Optional<Competition> competition = competitionRepository.findById(competitionId0);
-        team.setLeagueName(competition.map(Competition::getLeagueName).orElse(null));
+        team.setLeagueNames(competition.map(Competition::getLeagueName).orElse(null));
         team.setLeagueIds(new Identity[]{competition.map( c -> 
             c.getLeagueId()).orElse(null)});
         competition.map(Competition::getLeagueId).ifPresent(id ->
@@ -109,13 +110,7 @@ public class TeamDomainService {
     }
 
     private Team internalCreateOrUpdateTeam(ApiTeam apiTeam, int opus) {
-
-        SimpleIdentity identity = new SimpleIdentity(apiTeam.getId(), opus);
-        Team team = newTeamOrFromDb(identity);
-        if (team != null) {
-            teamPopulator.populateTeamTeam(apiTeam, new TeamResponse.Player[0], team, opus);
-        }
-        return team;
+        return internalCreateOrUpdateTeam(apiTeam, new TeamResponse.Player[0], opus);
     }
 
     private Team internalCreateOrUpdateTeam(

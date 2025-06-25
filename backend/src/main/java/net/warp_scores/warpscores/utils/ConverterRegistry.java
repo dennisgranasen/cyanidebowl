@@ -43,7 +43,7 @@ public class ConverterRegistry {
         TypeConverter<S, T> converter = (TypeConverter<S, T>) converters.get(new ClassPair<>(sourceType, targetType));
         if (converter == null) {
             // If no specific converter is found, use the default converter
-            log.info("No specific converter found for {} to {}, using default converter", sourceType.getName(), targetType.getName());
+            log.debug("No specific converter found for {} to {}, using default converter", sourceType.getName(), targetType.getName());
             return new DefaultConverter<S, T>(targetType);
         }
         return converter;

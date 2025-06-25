@@ -52,6 +52,20 @@ public class CyanideApiService {
         LeagueResponse leagueResponse = cyanideCachedRestApiClient.getFromCacheOrApi(leagueRequest);
         return leagueDomainService.createOrUpdateLeague(leagueResponse, leagueIdentity.getOpus());
     }
+    
+    public Optional<Team> loadTeam(Identity id, Boolean includeStats, Optional<Boolean> includeRoster) {
+        TeamRequest teamRequest = new TeamRequest();
+        teamRequest.setId(id.getValue());
+        teamRequest.setOpus(id.getOpus());
+        teamRequest.setStatistics(includeStats ? 1 : 0);
+        if (includeRoster.isPresent()) {
+            teamRequest.setRoster(includeRoster.get() ? 1 : 0);
+        }
+        TeamResponse teamResponse = cyanideCachedRestApiClient.getFromCacheOrApi(teamRequest);
+        if (teamResponse.isEmpty())
+            return Optional.empty();
+        return ofNullable(teamDomainService.createOrUpdateTeam(teamResponse, id.getOpus()));
+    }
 
     public List<Team> loadTeams(Identity id, EntityType entityType) {
         TeamsRequest teamsRequest = new TeamsRequest();

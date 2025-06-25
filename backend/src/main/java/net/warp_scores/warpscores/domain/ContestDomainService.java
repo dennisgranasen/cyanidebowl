@@ -87,24 +87,25 @@ public class ContestDomainService {
     private void populateContest(ApiContest sourceApiContestMatch, Contest targetContest, int opus) {
         PopulatorUtil.copyNonNullProperties(sourceApiContestMatch, targetContest);
         //targetContest.setContestUuid(sourceApiContestMatch.getContest_id());
-        targetContest.setLeagueId(new SimpleIdentity(sourceApiContestMatch.getLeague_id(), opus));
-        targetContest.setLive(sourceApiContestMatch.getLive());
-        targetContest.setCompetitionId(new SimpleIdentity(sourceApiContestMatch.getCompetition_id(), opus));
-        targetContest.setCompetitionName(sourceApiContestMatch.getCompetition());
-        targetContest.setLeagueName(sourceApiContestMatch.getLeague());
-        targetContest.setGameId(sourceApiContestMatch.getGame_id());
-        targetContest.setMatchId(sourceApiContestMatch.getGame_id());
-                //Optional.ofNullable(sourceApiContestMatch.getGame_id()).map(UUID::fromString).orElse(null));
-        targetContest.setMatchDate(sourceApiContestMatch.getMatch_date());
-        targetContest.setOpponents(toOpponents(sourceApiContestMatch.getOpponents(), opus));
-
+        /*
+            targetContest.setLeagueId(new SimpleIdentity(sourceApiContestMatch.getLeague_id(), opus));
+            targetContest.setLive(sourceApiContestMatch.getLive());
+            targetContest.setCompetitionId(new SimpleIdentity(sourceApiContestMatch.getCompetition_id(), opus));
+            targetContest.setCompetitionName(sourceApiContestMatch.getCompetition());
+            targetContest.setLeagueName(sourceApiContestMatch.getLeague());
+            targetContest.setGameId(sourceApiContestMatch.getGame_id());
+            targetContest.setMatchId(sourceApiContestMatch.getGame_id());
+                    //Optional.ofNullable(sourceApiContestMatch.getGame_id()).map(UUID::fromString).orElse(null));
+            targetContest.setMatchDate(sourceApiContestMatch.getMatch_date());
+            targetContest.setOpponents(toOpponents(sourceApiContestMatch.getOpponents(), opus));
+        */
         undeprecateMatchStatus(targetContest);
     }
 
     private void undeprecateMatchStatus(Contest contest) {
         contest.setStatus(contest.getStatus().undeprecate());
     }
-
+    /*
     private List<Team> toOpponents(ApiContest.Opponent[] apiOpponents, int opus) {
         if (apiOpponents == null) {
             return Collections.emptyList();
@@ -121,4 +122,5 @@ public class ContestDomainService {
         PopulatorUtil.copyNonNullProperties(apiTeam, team);
         return team;
     }
+    */
 }
