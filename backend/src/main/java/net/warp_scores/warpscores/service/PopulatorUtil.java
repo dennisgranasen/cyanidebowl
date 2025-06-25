@@ -38,26 +38,7 @@ public class PopulatorUtil {
     public static void copyProperties(Object source, Object destination, boolean ignoreNullProperties) {
         copyWithAliases(source, destination, ignoreNullProperties);
     }
-/*
-        String[] ignorePropertyNames = ignoreNullProperties ? getNullPropertyNames(source) : new String[0];
-        BeanUtils.copyProperties(source, destination, ignorePropertyNames);
-        
-    }
 
-    private static String[] getNullPropertyNames(Object source) {
-        final BeanWrapper src = new BeanWrapperImpl(source);
-        java.beans.PropertyDescriptor[] pds = src.getPropertyDescriptors();
-        Set<String> emptyNames = new HashSet<>();
-        for (java.beans.PropertyDescriptor pd : pds) {
-            //check if value of this property is null then add it to the collection
-            Object srcValue = src.getPropertyValue(pd.getName());
-            if (srcValue == null) {
-                emptyNames.add(pd.getName());
-            }
-        }
-        return emptyNames.toArray(emptyNames.toArray(new String[0]));
-    }
-*/
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private static void copyWithAliases(Object source, Object target, boolean ignoreNullProperties) {
         Map<String, Field> targetFields = new HashMap<>();

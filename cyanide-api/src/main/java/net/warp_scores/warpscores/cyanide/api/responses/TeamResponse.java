@@ -501,6 +501,7 @@ public class TeamResponse extends ApiResponse {
     @Getter
     @Setter
     public static class Player extends IdWithName {
+        @JsonAlias({"raceId"})
         private Integer idraces;
         private Integer number;
         private Integer value;
@@ -512,8 +513,11 @@ public class TeamResponse extends ApiResponse {
         private ExtendedAttributes extendedAttributes;
 
         private String type;
+        @JsonAlias({"casualtiesStateId"})
         private Integer[] casualties_state_id;
+        @JsonAlias({"casualtiesState"})
         private String[] casualties_state;
+        @JsonAlias({"suspendedNextMatch"})
         private Boolean suspended_next_match;
         private String[] skills;
 

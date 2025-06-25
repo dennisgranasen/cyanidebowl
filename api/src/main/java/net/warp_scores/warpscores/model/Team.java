@@ -33,12 +33,14 @@ public class Team implements Identifiable {
     private String name;
     private String logo;
     private String race;
+    private Integer raceId;
     private String motto;
     private BigDecimal value;
     private Integer cash;
 
     private Integer rerolls;
     private Integer apothecary;
+    private Integer balms;
     private Integer dedicatedFans;
     private Integer cheerleaders;
     private Integer coachAssistants;
@@ -47,12 +49,17 @@ public class Team implements Identifiable {
     private Identity coachId;
     private String coachName;
 
+    private Integer supporters;
+
     private Identity[] leagueIds;
-    private String leagueName;
+    private String[] leagueNames;
 
     private Identity[] competitionIds;
-    private String competitionName;
+    private String[] competitionNames;
     
+    private String stadiumName;
+    private Integer stadiumLevel;
+    private String stadiumType;
     private String building;
     private String sponsor;
 

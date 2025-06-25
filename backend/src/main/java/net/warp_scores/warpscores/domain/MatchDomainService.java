@@ -149,7 +149,7 @@ public class MatchDomainService {
 
     public void populateMatch(ApiMatch sourceApiMatch, int opus, Match targetMatch) {
         PopulatorUtil.copyNonNullProperties(sourceApiMatch, targetMatch);
-
+/*
         targetMatch.setCoaches(
                 Arrays.stream(sourceApiMatch.getCoaches())
                         .map((apiCoach) -> toCoach(apiCoach))
@@ -158,8 +158,9 @@ public class MatchDomainService {
                 Arrays.stream(sourceApiMatch.getTeams())
                         .map((apiTeam) -> toTeam(apiTeam, opus))
                         .collect(Collectors.toList()));
+*/
     }
-
+/*
     private Match.Coach toCoach(ApiCoach apiCoach) {
         Match.Coach coach = new Match.Coach();
         PopulatorUtil.copyNonNullProperties(apiCoach, coach);
@@ -171,5 +172,5 @@ public class MatchDomainService {
         teamPopulator.populateMatchTeam(apiTeam, team, opus);
         return team;
     }
-
+*/
 }
