@@ -100,7 +100,7 @@ public class ApiTeam {
     private Integer sustainedInjuries;
     @JsonAlias({"sustaineddead"})
     private Integer sustainedDead;
-    private Object[] cards;
+    private ApiCard[] cards;
 
     @JsonAlias({"popularitybeforematch"})
     private Integer popularityBeforeMatch;

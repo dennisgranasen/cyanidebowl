@@ -43,7 +43,7 @@ public class ApiContest {
 
     @Getter
     @Setter
-    @JsonIgnoreProperties(ignoreUnknown = true)
+    //@JsonIgnoreProperties(ignoreUnknown = true)
     public static class Opponent {
         private Coach coach;
         private Team team;
@@ -51,7 +51,7 @@ public class ApiContest {
 
     @Getter
     @Setter
-    @JsonIgnoreProperties(ignoreUnknown = true)
+    //@JsonIgnoreProperties(ignoreUnknown = true)
     public static class Coach {
         private String id;
         private String name;
@@ -64,7 +64,7 @@ public class ApiContest {
 
     @Getter
     @Setter
-    @JsonIgnoreProperties(ignoreUnknown = true)
+    //@JsonIgnoreProperties(ignoreUnknown = true)
     public static class Team {
         private String id;
         private String name;

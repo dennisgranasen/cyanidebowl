@@ -42,6 +42,7 @@ public class Team implements Identifiable {
     private Integer dedicatedFans;
     private Integer cheerleaders;
     private Integer coachAssistants;
+    private Integer necromancers;
 
     private Identity coachId;
     private String coachName;
@@ -51,6 +52,9 @@ public class Team implements Identifiable {
 
     private Identity[] competitionIds;
     private String competitionName;
+    
+    private String building;
+    private String sponsor;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date dateLastMatch;

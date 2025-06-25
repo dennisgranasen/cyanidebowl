@@ -1,6 +1,8 @@
 package net.warp_scores.warpscores.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -14,6 +16,7 @@ import java.util.Date;
 @Setter
 @Document
 @ToString
+@EqualsAndHashCode(of = "gameName")
 @NoArgsConstructor
 public class Status {
     @Id
