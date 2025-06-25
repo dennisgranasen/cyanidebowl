@@ -4,6 +4,7 @@ package net.warp_scores.warpscores.service;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 
+import net.warp_scores.warpscores.cyanide.api.model.ApiContest.Team;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Identifiable;
@@ -30,6 +31,31 @@ public class PopulatorUtil {
     private static final Logger log = LoggerFactory.getLogger(PopulatorUtil.class);
     protected static final ConverterRegistry converterRegistry = new ConverterRegistry();
     protected static final FieldHandlerRegistry fieldHandlerRegistry = new FieldHandlerRegistry();
+
+    private static class CommaSeparatedStringArrayHandler implements FieldHandler<String> {
+        private final String targetFieldName;
+        public CommaSeparatedStringArrayHandler(String targetFieldName) {
+            this.targetFieldName = targetFieldName;
+        }
+        @Override
+        public void handle(String sourceValue, Object target) throws Exception {
+            if (sourceValue == null || !(sourceValue instanceof String)  || sourceValue.isEmpty()) {
+                return; // No league names to process
+            }
+            String[] newValues = sourceValue.split(",");
+            target.getClass().getMethod("set" + 
+                Character.toUpperCase(targetFieldName.charAt(0)) + 
+                targetFieldName.substring(1), String[].class)
+                .invoke(target, (Object) newValues);
+        }
+    };
+
+    static {
+        fieldHandlerRegistry.register("leagueNames", Team.class, new CommaSeparatedStringArrayHandler("leagueNames"));
+        fieldHandlerRegistry.register("leagueIds", Team.class, new CommaSeparatedStringArrayHandler("leagueIds"));
+        fieldHandlerRegistry.register("competitionIds", Team.class, new CommaSeparatedStringArrayHandler("competitionIds"));
+        fieldHandlerRegistry.register("competitionName", Team.class, new CommaSeparatedStringArrayHandler("competitionNames"));
+    }
 
     public static void copyNonNullProperties(Object source, Object destination) {
         copyProperties(source, destination, true);

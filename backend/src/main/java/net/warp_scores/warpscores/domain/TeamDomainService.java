@@ -2,10 +2,12 @@ package net.warp_scores.warpscores.domain;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.controller.CompetitionController;
 import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
 import net.warp_scores.warpscores.cyanide.api.responses.TeamResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.TeamsResponse;
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
+import net.warp_scores.warpscores.domain.persistence.TeamCollectionRepository;
 import net.warp_scores.warpscores.domain.persistence.TeamRepository;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
@@ -19,7 +21,10 @@ import net.warp_scores.warpscores.service.UUIDConverter;
 import net.warp_scores.warpscores.service.IdService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+
+import static java.util.Optional.ofNullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -28,15 +33,18 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class TeamDomainService {
+
+
+    @Autowired
     private final TeamRepository teamRepository;
-    private final CompetitionRepository competitionRepository;
+    @Autowired
     private final TeamPopulator teamPopulator;
+    @Autowired
     private final TeamCollectionDomainService competitionTeamsDomainService;
-    private final OfficialLeagueAndCompetitions officialLeagueCompetitions;
-    private final OfficialLeagueAndCompetitions officialLeagueAndCompetitions;
 
     @Value("${cyanide.defaults.opus:3}")
     private int defaultOpus;
+
 
     @Transactional
     public List<Team> createOrUpdateTeams(TeamsResponse teamsResponse, int opus) {
@@ -73,33 +81,21 @@ public class TeamDomainService {
                 .collect(Collectors.toList());
 
         List<Team> teams = this.teamRepository.findAllById(teamIdentities);
-        setRelevantCompetition(teams, competitionId);
+        //setRelevantCompetition(teams, competitionId);
         return teams;
     }
 
     @Transactional
-    public Optional<Team> findTeam(Identity teamId, Optional<Identity> competitionId) {
+    public Optional<Team> findTeam(Identity teamId) {
         Team team = teamRepository.findById(teamId).orElse(null);
         if (team == null) {
             log.warn("Team with id {} not found.", teamId);
             return Optional.empty();
-        } 
-        
-        competitionId.ifPresent((id) -> setRelevantCompetition(Collections.singletonList(team), id));
-        
-        // Need to analyze this... 
-        Identity competitionId0 = team.getCompetitionIds()[0];
-        Optional<Competition> competition = competitionRepository.findById(competitionId0);
-        team.setLeagueNames(competition.map(Competition::getLeagueName).orElse(null));
-        team.setLeagueIds(new Identity[]{competition.map( c -> 
-            c.getLeagueId()).orElse(null)});
-        competition.map(Competition::getLeagueId).ifPresent(id ->
-                officialLeagueAndCompetitions.adjustCompetitionName(
-                    id, team.getCompetitionName(),
-                    team::setCompetitionName));
+        }         
         return Optional.of(team);
     }
 
+    /*
     private void setRelevantCompetition(List<Team> teams, Identity competitionId) {
         Optional<Competition> competition = this.competitionRepository.findById(competitionId);
         teams
@@ -108,6 +104,7 @@ public class TeamDomainService {
                     competition.ifPresent(c -> team.setCompetitionName(c.getName()));
                 });
     }
+    */
 
     private Team internalCreateOrUpdateTeam(ApiTeam apiTeam, int opus) {
         return internalCreateOrUpdateTeam(apiTeam, new TeamResponse.Player[0], opus);
