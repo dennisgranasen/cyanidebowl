@@ -1,6 +1,7 @@
 package net.warp_scores.warpscores.service;
 
 import lombok.RequiredArgsConstructor;
+import net.warp_scores.warpscores.cyanide.api.model.ApiCard;
 import net.warp_scores.warpscores.cyanide.api.model.ApiPlayer;
 import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
 import net.warp_scores.warpscores.cyanide.api.responses.TeamResponse;
@@ -9,11 +10,18 @@ import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Player;
 import net.warp_scores.warpscores.model.Team;
+import net.warp_scores.warpscores.utils.FieldHandler;
+import net.warp_scores.warpscores.utils.TypeConverter;
+
 import org.springframework.stereotype.Service;
 
 import static java.util.Comparator.nullsLast;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,20 +33,111 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class TeamPopulator {
+    private static final Logger log = LoggerFactory.getLogger(TeamPopulator.class);
 
-    private final UUIDConverter uuidConverter;
+
+    /*
+    private static class AttributeConverter implements TypeConverter<TeamResponse.Player.Attributes, Player.Attributes> {
+        @Override
+        public Player.Attributes convert(TeamResponse.Player.Attributes source) {            
+            Player.Attributes target = new Player.Attributes();
+            PopulatorUtil.copyNonNullProperties(source, target);
+            return target;
+        }
+    }
+
+    static{
+        // Register default converters if needed
+        // converterRegistry.register(...);
+        PopulatorUtil.converterRegistry.register(
+            TeamResponse.Player.Attributes.class,
+            Player.Attributes.class,
+            new AttributeConverter());
+    };
+    */
+
+    private static class LeagueIdHandler implements FieldHandler<String> {
+        @Override
+        public void handle(String sourceValue, Object target) throws Exception {
+            if (sourceValue == null || !(sourceValue instanceof String)) {
+                return; // No league id to process
+            }
+            String str_lid = (String) sourceValue;
+            if (str_lid.isEmpty()) {
+                return; // No league id to process
+            }
+            Team targetTeam = (Team) target;
+            List<Identity> existing = new ArrayList<>(Arrays.asList(targetTeam.getLeagueIds()));
+            Identity newId = new SimpleIdentity(str_lid, targetTeam.getId().getOpus());
+            if (!existing.contains(newId)) {
+                existing.add(newId);
+                targetTeam.setLeagueIds(existing.toArray(new Identity[0]));
+            }
+        }
+    }
+
+    private static class CardHandler implements FieldHandler<ApiCard[]> {
+        @Override
+        public void handle(ApiCard[] sourceValue, Object target) throws Exception {
+            if (sourceValue == null) {
+                return; // No card id to process
+            }
+            Team targetTeam = (Team) target;
+            for (ApiCard card : sourceValue) {
+                if (card == null || card.getType() == null || card.getName() == null) {
+                    continue; // Skip null cards
+                }
+                String cardType = card.getType().toLowerCase();
+                String cardName = card.getName().toLowerCase();
+                if ("staff".equals(cardType)) {
+                    if ("cheerleader".equals(cardName)) {
+                        targetTeam.setCheerleaders(card.getAmount());
+                    } else if ("reroll".equals(cardName)) {
+                        targetTeam.setRerolls(card.getAmount());
+                    } else if ("fanfactor".equals(cardName)) {
+                        targetTeam.setDedicatedFans(card.getAmount());
+                    } else if ("apothecary".equals(cardName)) {
+                        targetTeam.setApothecary(card.getAmount());
+                    } else if ("assistant".equals(cardName)) {
+                        targetTeam.setCoachAssistants(card.getAmount());
+                    } else if ("necromancer".equals(cardName)) {
+                        targetTeam.setNecromancers(card.getAmount());
+                    } else {
+                        log.warn("Unknown staff card name: {}", cardName);
+                    }
+                } else if ("sponsor".equals(cardType)) {
+                    targetTeam.setSponsor(card.getName());
+                } else if ("building".equals(cardType)) {
+                    targetTeam.setBuilding(card.getName());
+                } else {
+                    log.warn("Unknown card [type: {}, name: {}, amount: {}]", 
+                        card.getType(), card.getName(), card.getAmount());
+                }
+            }
+        }
+    } 
+    
+    
+    {
+        PopulatorUtil.fieldHandlerRegistry.register("leagueId",  
+            Team.class, new LeagueIdHandler());
+        PopulatorUtil.fieldHandlerRegistry.register("cards",  
+            Team.class, new CardHandler());
+    }
+    
 
     public void populateTeamTeam(ApiTeam sourceApiTeam, 
         TeamResponse.Player[] apiPlayers, Team targetTeam, int opus) {
         populateTeam(sourceApiTeam, targetTeam, opus);
-        targetTeam.setPlayers(toPlayersFromTeamTeam(apiPlayers, opus));
+        //targetTeam.setPlayers(toPlayersFromTeamTeam(apiPlayers, opus));
     }
 
     public void populateMatchTeam(ApiTeam sourceApiTeam, Team targetTeam, int opus) {
         populateTeam(sourceApiTeam, targetTeam, opus);
-        targetTeam.setPlayers(toPlayersFromMatchTeam(sourceApiTeam.getRoster(), opus));
+        //targetTeam.setPlayers(toPlayersFromMatchTeam(sourceApiTeam.getRoster(), opus));
     }
 
+    /*
     private List<Player> toPlayersFromMatchTeam(ApiPlayer[] apiPlayers, int opus) {
         if (apiPlayers == null) {
             return Collections.emptyList();
@@ -51,6 +150,7 @@ public class TeamPopulator {
         Player player = new Player(new SimpleIdentity(apiPlayer.getId(), opus));
         PopulatorUtil.copyNonNullProperties(apiPlayer, player);
         //player.setId(apiPlayer.getId());
+        
         player.setValue(apiPlayer.getValue());
         player.setRaceId(apiPlayer.getIdraces());
         player.setSuspendedNextMatch(apiPlayer.getSuspended_next_match());
@@ -61,17 +161,19 @@ public class TeamPopulator {
         player.setExtendedAttributes(toExtendedAttributes(apiPlayer.getExtendedAttributes()));
         player.setCasualtiesStateIds(apiPlayer.getCasualties_state_id());
         player.setCasualtiesStates(apiPlayer.getCasualties_state());
+        
         return player;
     }
+        */
 
     private void populateTeam(ApiTeam sourceApiTeam, Team targetTeam, int opus) {
         PopulatorUtil.copyNonNullProperties(sourceApiTeam, targetTeam);
         //targetTeam.setIdentity(sourceApiTeam.getId());
-
-        // Append the new competition id to the existing array if not already present
-        List<Identity> existing;
-        Identity newId;
         /*
+        // Append the new competition id to the existing array if not already present
+        List<Identity> existing = new ArrayList<Identity>();
+        Identity newId;
+        
         existing = targetTeam.getCompetitionIds();
         String bb3Id = sourceApiTeam.getBb3_competition_id();
         Identity newId = new SimpleIdentity(bb3Id,3);
@@ -87,7 +189,7 @@ public class TeamPopulator {
                 }
             }
         }
-        */
+        
         // Append the new league id to the existing array if not already present
 
         String str_lid = sourceApiTeam.getLeagueId();
@@ -96,17 +198,16 @@ public class TeamPopulator {
         }
         newId = new SimpleIdentity(str_lid, opus);
         Identity[] lids = targetTeam.getLeagueIds();
-        if (lids != null) {
-            existing = Arrays.asList(lids);
-        } else {
-            existing = new ArrayList<Identity>();
-        }
+        if (lids != null)
+            existing.addAll(Arrays.asList(lids));
         if (newId != null && !existing.contains(newId)) {
             existing.add(newId);
             targetTeam.setLeagueIds(existing.toArray(new Identity[0]));
         }
+        */
     }
 
+    /*
     private List<Player> toPlayersFromTeamTeam(TeamResponse.Player[] apiPlayers, int opus) {
         if (apiPlayers == null) {
             return Collections.emptyList();
@@ -121,6 +222,7 @@ public class TeamPopulator {
         PopulatorUtil.copyNonNullProperties(apiPlayer, player);
         //player.setRaceId(apiPlayer.getIdraces());
         //player.setSuspendedNextMatch(apiPlayer.getSuspended_next_match());
+        
         Attributes attribs = apiPlayer.getAttributes();
         if (attribs != null) {
             player.setAttributes(toAttributes(attribs));
@@ -131,6 +233,7 @@ public class TeamPopulator {
         }
         player.setCasualtiesStateIds(apiPlayer.getCasualties_state_id());
         player.setCasualtiesStates(apiPlayer.getCasualties_state());
+        
         return player;
     }
 
@@ -205,5 +308,6 @@ public class TeamPopulator {
         map.put(name, value);
         return map;
     }
+    */
 
 }
