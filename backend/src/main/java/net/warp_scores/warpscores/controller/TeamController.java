@@ -42,7 +42,7 @@ public class TeamController {
             @RequestParam(name = "opus", required = false) Integer opus ) {
         try {
             Identity teamIdentity = new SimpleIdentity(teamId, ofNullable(opus).orElse(3));
-            Optional<Team> team = teamDomainService.findTeam(teamIdentity, Optional.empty());
+            Optional<Team> team = teamDomainService.findTeam(teamIdentity);
             return team
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());

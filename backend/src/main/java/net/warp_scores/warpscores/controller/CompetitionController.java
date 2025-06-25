@@ -207,7 +207,7 @@ public class CompetitionController {
                 new SimpleIdentity(competitionId, ofNullable(opus).orElse(defaultOpus));
 
             Optional<Team> team = 
-                teamDomainService.findTeam(teamIdentity, Optional.of(competitionIdentity));
+                teamDomainService.findTeam(teamIdentity/*, Optional.of(competitionIdentity)*/);
             return team
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
