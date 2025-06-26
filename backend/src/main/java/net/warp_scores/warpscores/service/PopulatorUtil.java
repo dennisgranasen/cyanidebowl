@@ -5,8 +5,11 @@ package net.warp_scores.warpscores.service;
 import com.fasterxml.jackson.annotation.JsonAlias;
 
 import net.warp_scores.warpscores.cyanide.api.model.ApiContest.Team;
+import net.warp_scores.warpscores.cyanide.api.model.ApiLeague;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
+import net.warp_scores.warpscores.model.Competition;
+import net.warp_scores.warpscores.model.CompetitionStatus;
 import net.warp_scores.warpscores.model.Identifiable;
 import net.warp_scores.warpscores.utils.ConverterRegistry;
 import net.warp_scores.warpscores.utils.FieldHandler;
@@ -50,11 +53,53 @@ public class PopulatorUtil {
         }
     };
 
+    private static class CompetitionStatusNameHandler implements FieldHandler<CompetitionStatus> {
+        @Override
+        public void handle(CompetitionStatus sourceValue, Object target) throws Exception {
+            if (sourceValue == null || !(sourceValue instanceof CompetitionStatus)) {
+                log.error("Invalid source value for CompetitionStatusNameHandler: {}", sourceValue);
+                return; // No status name to process
+            }
+            Competition competition = (Competition) target;
+            competition.setStatus(sourceValue);
+        }
+    }
+
+    private static class CompetitionStatusHandler implements FieldHandler<Integer> {
+        @Override
+        public void handle(Integer sourceValue, Object target) throws Exception {
+            if (sourceValue == null || !(sourceValue instanceof Integer)) {
+                log.error("Invalid source value for CompetitionStatusHandler: {}", sourceValue);
+                return; // No status to process
+            }
+            Competition competition = (Competition) target;
+            competition.setStatusNumber(sourceValue); // Convert to zero-based index
+        }
+    }
+
+    private static class CompetitionLeagueHandler implements FieldHandler<ApiLeague> {
+        @Override
+        public void handle(ApiLeague sourceValue, Object target) throws Exception {
+            if (sourceValue == null || !(sourceValue instanceof ApiLeague)) {
+                log.error("Invalid source value for CompetitionLeagueHandler: {}", sourceValue);
+                return; // No league to process
+            }
+            Competition competition = (Competition) target;
+            competition.setLeagueId(
+                new SimpleIdentity(sourceValue.getId(),
+                                    competition.getId().getOpus()));
+            competition.setLeagueName(sourceValue.getName());
+        }
+    }
+
     static {
         fieldHandlerRegistry.register("leagueNames", Team.class, new CommaSeparatedStringArrayHandler("leagueNames"));
         fieldHandlerRegistry.register("leagueIds", Team.class, new CommaSeparatedStringArrayHandler("leagueIds"));
         fieldHandlerRegistry.register("competitionIds", Team.class, new CommaSeparatedStringArrayHandler("competitionIds"));
         fieldHandlerRegistry.register("competitionName", Team.class, new CommaSeparatedStringArrayHandler("competitionNames"));
+        fieldHandlerRegistry.register("statusName", Competition.class, new CompetitionStatusNameHandler());
+        fieldHandlerRegistry.register("status", Competition.class, new CompetitionStatusHandler());
+        fieldHandlerRegistry.register("league", Competition.class, new CompetitionLeagueHandler());
     }
 
     public static void copyNonNullProperties(Object source, Object destination) {

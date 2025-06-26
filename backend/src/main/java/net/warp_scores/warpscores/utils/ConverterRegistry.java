@@ -23,11 +23,23 @@ public class ConverterRegistry {
             this.targetClass = targetClass;
         }
 
+        @SuppressWarnings({ "rawtypes", "unchecked" })
         @Override
         public T convert(S source, Integer opus) {
             try {
                 T target;
-                if (Identifiable.class.isAssignableFrom(targetClass)) {
+                if (Enum.class.isAssignableFrom(targetClass) &&  source instanceof String) {
+                    // If the target class is an Enum, we can use valueOf to create a new instance
+                    return (T) Enum.valueOf((Class<? extends Enum>) targetClass, (String) source);
+                } else if (Enum.class.isAssignableFrom(targetClass) &&  source instanceof Integer) {
+                    // If the target class is an Enum, we can use valueOf to create a new instance
+                    T[] enumConstants = targetClass.getEnumConstants();
+                    int ordinal = (Integer)source - 1; // Convert to zero-based index
+                    if (ordinal < 0 || ordinal >= enumConstants.length) {
+                        throw new IllegalArgumentException("Invalid ordinal for enum " + targetClass.getName() + ": " + ordinal);
+                    }
+                    return enumConstants[ordinal];
+                } else if (Identifiable.class.isAssignableFrom(targetClass)) {
                     // If the target class is Identifiable, we can use its Id to create a new instance
                     Object id = null;
                     boolean isDeleted = false;
