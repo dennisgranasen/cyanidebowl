@@ -88,7 +88,7 @@ public class CyanideRestApiClient {
             log.info("Bucket refilled, resuming...");
         }
 
-        log.info("Loading from real api (request: {}).", apiRequest);
+        //log.info("Loading from real api (request: {}).", apiRequest);
         RestTemplate restTemplate = new RestTemplateBuilder()
                 .setConnectTimeout(apiRequest.getConnectTimeout())
                 .setReadTimeout(apiRequest.getReadTimeout())
@@ -115,7 +115,7 @@ public class CyanideRestApiClient {
     public <RequestType, ResponseType> URI
     createUri(ApiRequest<RequestType, ResponseType> apiRequest, String apiKey) {
         MultiValueMap<String, String> queryParams = apiRequest.toQueryParams();
-        log.info("Query params: {}", queryParams); // <-- Add this line
+        //log.info("Query params: {}", queryParams); // <-- Add this line
         queryParams.add("key", apiKey);
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder
                 .fromUriString(String.format("%s/%s/", cyanideApiProperties.getApiConfig().getBaseUrl(),

@@ -11,14 +11,12 @@ import net.warp_scores.warpscores.model.Player;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.core.aggregation.ArrayOperators.In;
-import org.springframework.expression.spel.ast.OpAnd;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -105,23 +103,23 @@ public class MatchService {
     }
 
     private boolean teamWithoutMvp(Match match) {
-        if (match.getTeams() == null || match.getTeams().isEmpty()) {
+        if (match.getTeams() == null || match.getTeams().length == 0) {
             return false;
         }
-        boolean teamAHasMvp = hasMvp(match.getTeams().get(0).getPlayers());
-        boolean teamBHasMvp = hasMvp(match.getTeams().get(1).getPlayers());
+        boolean teamAHasMvp = hasMvp(match.getTeams()[0].getPlayers());
+        boolean teamBHasMvp = hasMvp(match.getTeams()[1].getPlayers());
         return !teamAHasMvp || !teamBHasMvp;
     }
 
-    private boolean hasMvp(List<Player> players) {
+    private boolean hasMvp(Player[] players) {
         if (players == null) {
             return false;
         }
-        return players.stream().anyMatch(p -> Optional.ofNullable(p.getMvp()).orElse(false));
+        return Arrays.stream(players).anyMatch(p -> Optional.ofNullable(p.getMvp()).orElse(false));
     }
 
     public boolean scoreDiffersTouchdowns(Match match) {
-        if (match.getTeams() == null || match.getTeams().isEmpty()) {
+        if (match.getTeams() == null || match.getTeams().length == 0) {
             return false;
         }
         int scoreA = getScore(match, 0);
@@ -133,10 +131,10 @@ public class MatchService {
     }
 
     private int getInflictedTd(Match match, int teamIndex) {
-        return Optional.ofNullable(match.getTeams().get(teamIndex).getInflictedtouchdowns()).orElse(0);
+        return Optional.ofNullable(match.getTeams()[teamIndex].getInflictedtouchdowns()).orElse(0);
     }
 
     private int getScore(Match match, int teamIndex) {
-        return Optional.ofNullable(match.getTeams().get(teamIndex).getScore()).orElse(0);
+        return Optional.ofNullable(match.getTeams()[teamIndex].getScore()).orElse(0);
     }
 }

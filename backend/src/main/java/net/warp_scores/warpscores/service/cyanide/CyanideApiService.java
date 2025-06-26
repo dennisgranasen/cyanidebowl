@@ -117,30 +117,30 @@ public class CyanideApiService {
                 "Loading matches for team {} starting from {}.",
                 team.getTeamId(), startDate);
         TeamMatchesResponse teamMatchesResponse = cyanideCachedRestApiClient.getFromCacheOrApi(teamMatchesRequest);
-        List<UUID> matchUuids = ofNullable(teamMatchesResponse)
+        List<String> matchUuids = ofNullable(teamMatchesResponse)
                 .stream()
                 .flatMap(t -> Arrays.stream(
                         ofNullable(t.getMatchIds())
                                 .orElse(new TeamMatchesResponse.MatchId[0])))
-                .map(TeamMatchesResponse.MatchId::getUuid)
+                .map(x -> x.getUuid().toString())
                 .toList();
         List<Match> matches = matchUuids
                 .stream()
                 .filter(Objects::nonNull)
-                .map((uuid) -> loadMatch(new SimpleIdentity(uuid, team.getId().getOpus())))
+                .map(id -> loadMatch(id, team.getId().getOpus()))
                 .toList();
         log.info("Loaded {} matches for team {}.", matches.size(), team.getTeamId());
     }
 
-    public Match loadMatch(Identity matchIdentity) {
-        if (matchIdentity == null) {
+    public Match loadMatch(String matchId, int opus) {
+        if (matchId == null) {
             return null;
         }
         MatchRequest matchRequest = new MatchRequest();
-        matchRequest.setMatch_id(matchIdentity.getValue());
-        matchRequest.setOpus(matchIdentity.getOpus());
+        matchRequest.setMatch_id(matchId);
+        matchRequest.setOpus(opus);
         MatchResponse matchResponse = cyanideCachedRestApiClient.getFromCacheOrApi(matchRequest);
-        return matchDomainService.createOrUpdateMatch(matchResponse, matchIdentity.getOpus());
+        return matchDomainService.createOrUpdateMatch(matchResponse, opus);
     }
 
     public List<Match> loadMatches(Identity entityId, EntityType entityType,

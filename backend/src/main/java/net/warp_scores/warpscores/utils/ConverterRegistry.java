@@ -2,7 +2,11 @@ package net.warp_scores.warpscores.utils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
+import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
+import net.warp_scores.warpscores.model.Identifiable;
 import net.warp_scores.warpscores.service.PopulatorUtil;
 
 import org.slf4j.Logger;
@@ -20,13 +24,53 @@ public class ConverterRegistry {
         }
 
         @Override
-        public T convert(S source) {
+        public T convert(S source, Integer opus) {
             try {
-                T target = targetClass.getDeclaredConstructor().newInstance();
+                T target;
+                if (Identifiable.class.isAssignableFrom(targetClass)) {
+                    // If the target class is Identifiable, we can use its Id to create a new instance
+                    Object id = null;
+                    boolean isDeleted = false;
+                    try {
+                        // Try to get "getId()" method
+                        id = source.getClass().getMethod("getId").invoke(source);
+                    } catch (NoSuchMethodException e) {
+                        try {
+                            // Try to access "id" field directly
+                            var field = source.getClass().getDeclaredField("id");
+                            field.setAccessible(true);
+                            id = field.get(source);
+                        } catch (NoSuchFieldException | IllegalAccessException ignore) {
+                            // id remains null if not found
+                            log.warn("No id found in source object: {}", source.getClass().getName());
+                            return null;
+                        }
+                    }
+                    if (id == null) {
+                        id = new SimpleIdentity(UUID.randomUUID(), opus); // Create a new identity with a random UUID
+                        log.debug("Source object {} has no id, it was probably deleted from the game. Generating random {}", source.getClass().getSimpleName(), id);
+                        isDeleted = true;
+                    }
+                    Identity  identity = id instanceof Identity ? (Identity) id : new SimpleIdentity(id.toString(), opus);
+                    target = targetClass.getDeclaredConstructor(Identity.class).newInstance(identity);
+                    if (isDeleted) {
+                        try {
+                            var field = target.getClass().getDeclaredField("isDeleted");
+                            field.setAccessible(true);
+                            field.set(target, true);
+                        } catch (NoSuchFieldException | IllegalAccessException e) {
+                            log.error("Target class {} does not have 'isDeleted' field, skipping", targetClass.getName());
+                            throw e;
+                        }   
+                    }
+                }
+                else 
+                    target = targetClass.getDeclaredConstructor().newInstance();
                 PopulatorUtil.copyProperties(source, target, true);
                 return target;
             } catch (Exception e) {
-                throw new RuntimeException("Failed to instantiate target class", e);
+                log.error("Failed to convert {} to {}: {}", source.getClass().getName(), targetClass.getName(), e.getMessage());
+                throw new RuntimeException("Failed to instantiate target class ", e);
             }
         }
     }

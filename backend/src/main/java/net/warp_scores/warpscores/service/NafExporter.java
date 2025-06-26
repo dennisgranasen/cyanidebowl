@@ -15,12 +15,12 @@ import net.warp_scores.warpscores.model.Race;
 import net.warp_scores.warpscores.model.Team;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.groupingBy;
@@ -75,9 +75,7 @@ public class NafExporter {
     }
 
     private boolean noneArtificialIntelligenceGame(Contest contest) {
-        return contest
-                .getOpponents()
-                .stream()
+        return java.util.Arrays.stream(contest.getOpponents())
                 .map(Team::getCoachName)
                 .filter(BB3_AI_COACH_NAME::equals)
                 .findFirst()
@@ -91,9 +89,8 @@ public class NafExporter {
         return game;
     }
 
-    private List<PlayerRecord> toPlayerRecords(List<Team> opponents) {
-        return opponents
-                .stream()
+    private List<PlayerRecord> toPlayerRecords(Team[] opponents) {
+        return Arrays.stream(opponents)
                 .map(this::toPlayerRecord)
                 .filter(Objects::nonNull)
                 .toList();
@@ -120,7 +117,7 @@ public class NafExporter {
         List<Team> teams = contests
                 .stream()
                 .map(Contest::getOpponents)
-                .flatMap(List::stream)
+                .flatMap(Arrays::stream)
                 .distinct()
                 .toList();
         return toCoachesFromTeams(teams);

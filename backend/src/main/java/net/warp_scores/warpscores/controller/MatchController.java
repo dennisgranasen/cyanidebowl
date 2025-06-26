@@ -2,14 +2,12 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.service.CompetitionService;
 import net.warp_scores.warpscores.service.MatchService;
-import net.warp_scores.warpscores.service.OfficialLeagueAndCompetitions;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -21,9 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -143,7 +139,7 @@ public class MatchController {
     }
 
     public void setRound(Match match, Integer currentMatchNumber, Competition c) {
-        match.setRound(determineRound(currentMatchNumber, c));
+        match.setRound(determineRound(currentMatchNumber, c).toString());
     }
 
     private Integer determineRound(Integer currentMatchNumber, Competition competition) {

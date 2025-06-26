@@ -29,11 +29,12 @@ public class ApiMatch {
     @JsonAlias("leaguename")
     private String leagueName;
     private String stadium;
-    @JsonAlias("levelstadium")
+    @JsonAlias({"levelstadium", "stadiumLevel"})
     private Integer levelStadium;
-    @JsonAlias("structstadium")
+    @JsonAlias({"structstadium", "stadiumStruct"})
     private String structStadium;
     private String round;
+    @JsonAlias("apiMatch")
     private String api_match;
     private String winner;
     private ApiCoach[] coaches;

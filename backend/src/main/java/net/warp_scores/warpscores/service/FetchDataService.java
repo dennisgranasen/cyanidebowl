@@ -11,6 +11,7 @@ import net.warp_scores.warpscores.domain.persistence.DataCollectionRepository;
 import net.warp_scores.warpscores.domain.persistence.LeagueRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.CompetitionFormat;
 import net.warp_scores.warpscores.model.CompetitionStatus;
@@ -90,10 +91,10 @@ public class FetchDataService {
         calendar.set(2001, Calendar.JANUARY, 1);
         Date ZERO = calendar.getTime();
 
-        log.info("Checking for new matches.");
+        log.debug("Checking for new matches.");
         dataCollectionRepository.findAll()
                 .stream()
-                .forEach((dc) -> {
+                .forEach(dc -> {
                         Date dateLimit;
                         Date maxAge = Date.from(Instant.now().minus(Duration.ofDays(defaultFetchMatchMaxAgeLimit)));
                         if (dc.getDateLastCollectedMatches() == null || dc.getDateLastCollectedMatches().before(maxAge))
@@ -107,44 +108,17 @@ public class FetchDataService {
                         if (lastCollection == null || lastCollection.before(ZERO))
                                 lastCollection = ZERO;
                         Optional<Integer> limit = ofNullable(10);
-                        List<Match> matches = cyanideApiService.loadMatches(dc.getId(), dc.getCollectionType(), ofNullable(lastCollection),
-                                Optional.empty(), Optional.empty(), limit);
-                        
-                        /* 
-                                List<Identity> matchIds = leagues
-                                        .stream()
-                                        .filter(Objects::nonNull)
-                                        .map(l -> {
-                                        Optional<Date> earliestStartDate = earliestStartDateByLeagueId.getOrDefault(l.getId(), Optional.empty());
-                                        Optional<Date> lastMatchDateKnown = lastMatchDateKnownByLeagueId.getOrDefault(l.getId(), Optional.empty());
-                                        Optional<Date> lastMatchDateReported = ofNullable(l.getDateLastMatch());
-                                        return cyanideApiService.loadMatches(l, earliestStartDate,
-                                                lastMatchDateKnown, lastMatchDateReported);
-                                        })
-                                        .flatMap(List::stream)
-                                        .filter(Objects::nonNull)
-                                        .map(Match::getId)
-                                        .toList();
-
-                                log.info("Got {} skeleton matches.", matchIds.size());
-
-                                loadMatches(matchIds);
-                        */
-
-                        /*
-                        List<Match> matches = new ArrayList<>();
-
-
-                        if (dc.getCollectionType() == EntityType.League)
-                                matches = matchService.getLeagueMatchesSince(dc.getId(), dateLimit, Optional.empty());
-                        else if (dc.getCollectionType() == EntityType.Competition)
-                                matches = matchService.getCompetitionMatchesSince(dc.getId(), dateLimit, Optional.empty());
-                        else {
-                                log.warn("Unknown data collection type {} for identity {}. Skipping.",
-                                        dc.getCollectionType(), dc.getId());
-                                        return;
+                        Optional<Date> lastReportedMatchDate = Optional.empty();
+                        if (dc.getCollectionType() == EntityType.League) {
+                                lastReportedMatchDate = matchRepository.findLastMatchDateForLeague(dc.getId());
+                        } else if (dc.getCollectionType() == EntityType.Competition) {
+                                lastReportedMatchDate = matchRepository.findLastMatchDateForCompetition(dc.getId());
                         }
-                        */
+                        
+                        List<Match> matches = cyanideApiService.loadMatches(
+                                dc.getId(), dc.getCollectionType(), ofNullable(lastCollection),
+                                Optional.empty(), lastReportedMatchDate, limit);
+                        
                         if (!matches.isEmpty()) {
                             log.info("Found {} new matches for {} since {}.", matches.size(), dc.getId(), dateLimit);
                             if (matches.size() == limit.get().intValue()) {
@@ -157,6 +131,23 @@ public class FetchDataService {
                             log.info("No new matches found for {}.", dc.getId());
                         }
                 });
+        //matchRepository.findAll().stream().filter(m -> m.getId().getOpus() == 2)
+        matchRepository.findNonFinalized().stream()
+                .filter(m -> m.getFinished() != null && m.getFinished().after(ZERO))
+                //.filter(m -> m.getId().getOpus() > 1) 
+                .forEach(match -> {
+                        Match fullMatch = cyanideApiService.loadMatch(match.getMatchId(), match.getId().getOpus());
+                        if (fullMatch == null) {
+                            log.warn("Match {} not found in API, setting flag False.", match.getId());
+                            match.setIsFinalized(false);
+                            matchRepository.save(match);
+                            return;
+                        }
+                        log.debug("Updating match {} with data from API and setting finalized True.", fullMatch.getId());
+                        fullMatch.setIsFinalized(true);
+                        matchRepository.save(fullMatch);
+                });
+        
 
 /*        List<Contest> contests = contestRepository.findContestsWithoutMatches();
         List<Contest> playedContests = contests
@@ -413,10 +404,11 @@ public class FetchDataService {
 
         List<Identity> matchIds = playedContests
                 .stream()
-                .map(Contest::getMatchIdentity)
+                .map(c -> (Identity)new SimpleIdentity(c.getMatchId(), c.getId().getOpus()))
                 .toList();
-        loadMatches(matchIds);
-        updateTeams(matchIds);
+        // NB: matchIds are not the same as Match.id. CyanideApi needs the MatchId. Not the match.id.
+        List<Match> matches = loadMatches(matchIds); 
+        updateTeams(matches);
     }
 
     private void fetchMatchesIfNecessary(List<League> leagues, Map<Identity, Optional<Date>> lastKnownMatchDateByLeagueId) {
@@ -566,7 +558,7 @@ public class FetchDataService {
                 })
                 .flatMap(List::stream)
                 .filter(Objects::nonNull)
-                .map(Match::getId)
+                .map(m -> (Identity)new SimpleIdentity(m.getMatchId(), m.getId().getOpus()))
                 .toList();
 
         log.info("Got {} skeleton matches.", matchIds.size());
@@ -574,12 +566,12 @@ public class FetchDataService {
         loadMatches(matchIds);
     }
 
-    private void updateTeams(List<Identity> matchIds) {
-        List<Match> matches = matchRepository.findAllById(matchIds);
+    private void updateTeams(List<Match> matches) {
+        //List<Match> matches = matchRepository.findAllById(matchIds);
         Map<Identity, List<Match>> matchesByTeam = new HashMap<>();
         matches.forEach(m -> {
-            Identity teamAId = m.getTeams().get(0).getId();
-            Identity teamBId = m.getTeams().get(1).getId();
+            Identity teamAId = m.getTeams()[0].getId();
+            Identity teamBId = m.getTeams()[1].getId();
             matchesByTeam.putIfAbsent(teamAId, new ArrayList<>());
             matchesByTeam.putIfAbsent(teamBId, new ArrayList<>());
             matchesByTeam.get(teamAId).add(m);
@@ -605,12 +597,17 @@ public class FetchDataService {
     }
 
     private Optional<Team> getTeamFromMatch(Identity id, Match match) {
-        return match.getTeams().stream().filter(t -> t.getId().equals(id)).findFirst();
+        return Arrays.stream(match.getTeams()).filter(t -> t.getId().equals(id)).findFirst();
     }
 
-    private void loadMatches(List<Identity> matchIds) {
-        matchIds.forEach(cyanideApiService::loadMatch);
-        log.info("Loaded {} matches.", matchIds.size());
+    private List<Match> loadMatches(List<Identity> matchIds) {
+        List<Match> ids = matchIds.stream()
+                                .map(mid -> cyanideApiService.loadMatch(mid.getValue(), mid.getOpus()))
+                                .filter(Objects::nonNull)
+                                .toList();
+
+        log.info("Loaded {} matches and got {} responses.", matchIds.size(), ids.size());
+        return ids;
     }
 
     private void loadMatchesForTeams(List<Team> teams, Map<Identity, Optional<Date>> lastMatchDateKnownByTeamId,

@@ -12,7 +12,6 @@ import net.warp_scores.warpscores.model.CompetitionFormat;
 import net.warp_scores.warpscores.model.CompetitionStatus;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.MatchStatus;
-import net.warp_scores.warpscores.model.Race;
 import net.warp_scores.warpscores.model.Team;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +29,8 @@ import java.util.stream.IntStream;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
+
+
 
 @Service
 @Slf4j
@@ -126,8 +128,10 @@ public class ContestInitializationService {
                     nextContest = findNextContestByWinner(currContest, currRound, initializedContests);
                 } else {
                     if (currContest.getWinner() != null && nextContest != null) {
-                        List<Team> opponents = nextContest.getOpponents();
-                        opponents.add(createTeamFor((Map) currContest.getWinner(), opus));
+                        Team[] opponents = nextContest.getOpponents();
+                        Team newOpponent = createTeamFor((Map) currContest.getWinner(), opus);
+                        opponents = Arrays.copyOf(opponents, opponents.length + 1);
+                        opponents[opponents.length - 1] = newOpponent;
                         nextContest.setOpponents(opponents);
                     }
                 }
@@ -154,7 +158,7 @@ public class ContestInitializationService {
         return initializedContests
                 .stream()
                 .filter(contest -> contest.getRound().equals(currRound + 2))
-                .filter(contest -> contest.getOpponents().stream().map(Team::getId)
+                .filter(contest -> Arrays.stream(contest.getOpponents()).map(Team::getId)
                         .anyMatch(id -> winnerTeamUuid.isPresent() && winnerTeamUuid.get().equals(id)))
                 .findFirst().orElse(null);
     }
@@ -215,7 +219,7 @@ public class ContestInitializationService {
                 Generators.timeBasedGenerator().generate(), opus);
         Contest contest = new Contest(identity);
         contest.setRound(round);
-        contest.setOpponents(new ArrayList<>());
+        contest.setOpponents(new Team[0]);
         contest.setStatus(MatchStatus.Calculated);
         return contest;
     }
@@ -241,7 +245,7 @@ public class ContestInitializationService {
 
         log.info("DEBUG: Scheduled contests: {}", scheduledContests.size());
         for (Contest c : scheduledContests) {
-            log.info("DEBUG: Scheduled Contest round={}, home={}, away={}", c.getRound(), c.getOpponents().get(0).getName(), c.getOpponents().get(1).getName());
+            log.info("DEBUG: Scheduled Contest round={}, home={}, away={}", c.getRound(), c.getOpponents()[0].getName(), c.getOpponents()[1].getName());
         }
 
         List<Contest> initializedContests = new ArrayList<>(contests);
@@ -249,14 +253,14 @@ public class ContestInitializationService {
 
         log.info("DEBUG: Initialized contests: {}", initializedContests.size());
         for (Contest c : initializedContests) {
-            log.info("DEBUG: Initialized Contest round={}, home={}, away={}", c.getRound(), c.getOpponents().get(0).getName(), c.getOpponents().get(1).getName());
+            log.info("DEBUG: Initialized Contest round={}, home={}, away={}", c.getRound(), c.getOpponents()[0].getName(), c.getOpponents()[1].getName());
         }
 
         return initializedContests;
     }
 
     private boolean doesNotContainDummyTeam(Contest contest) {
-        return !contest.getOpponents().contains(DUMMY_TEAM);
+        return !Arrays.stream(contest.getOpponents()).anyMatch(x -> x.equals(DUMMY_TEAM));
     }
 
     private Collection<Contest> generateScheduledContests(Competition competition, List<Team> teams) {
@@ -298,8 +302,8 @@ public class ContestInitializationService {
                 contest.setCompetitionName(competition.getName());
                 contest.setLeagueId(competition.getLeagueId());
                 contest.setLeagueName(competition.getLeagueName());
-                contest.setStatus(MatchStatus.Calculated);
-                contest.setOpponents(List.of(home, away));
+                contest.setStatus(MatchStatus.Calculated);                
+                contest.setOpponents(new Team[]{home, away});
                 scheduledContests.add(contest);
             }
             // Rotate teams except the first one

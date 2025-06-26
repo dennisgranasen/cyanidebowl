@@ -80,6 +80,11 @@ public class PopulatorUtil {
                 }
             }
         }
+        Integer opus = null;
+        if (Identifiable.class.isAssignableFrom(target.getClass())) {
+            Identity id = ((Identifiable) target).getId();
+            opus = id.getOpus();
+        }
         // Iterate source fields (including superclasses)
         for (Class<?> clazz = source.getClass(); clazz != null; clazz = clazz.getSuperclass()) {
             for (Field srcField : clazz.getDeclaredFields()) {
@@ -97,117 +102,121 @@ public class PopulatorUtil {
                 JsonAlias srcAlias = srcField.getAnnotation(JsonAlias.class);
                 if (srcAlias != null) {
                     possibleNames.addAll(Arrays.asList(srcAlias.value()));
-                }
+                }                
 
-                Field tgtField = null;
+                // If there is a custom handler for this field, use it
+                FieldHandler handler = null;
                 for (String name : possibleNames) {
-                    tgtField = targetFields.get(name);
-                    if (tgtField != null) break;
+                    handler = fieldHandlerRegistry.getHandler(name, target.getClass());
+                    if (handler != null) break;
                 }
-
-                if (tgtField == null) {
-                    // No matching target field found, try custom handler
-                    FieldHandler handler = null;
-                    for (String name : possibleNames) {
-                        handler = fieldHandlerRegistry.getHandler(name, target.getClass());
-                        if (handler != null) break;
-                    }
-                    if (handler != null) {
-                        try {
-                            handler.handle(value, target);
-                        } catch (Exception e) {
-                            log.error("Custom handler failed for {}: {}", srcField.getName(), e.getMessage(), e);
-                        }
-                    } else {
-                        log.warn("No target field or handler found for source field: {}", srcField.getName());
-                    }
-                    continue; // Skip to next source field
-                }
-
-                if (Modifier.isFinal(tgtField.getModifiers())) {
-                        if (tgtField.getName().equals("id")) {
-                            continue; // Skip Identity id as it is handled in the constructor
-                        }
-                        log.warn("Skipping final field: {}.{}", 
-                            target.getClass().getSimpleName(), tgtField.getName());
-                        continue; // Skip final fields                        
-                    }
-                else {
-                    String setterName = "set" +
-                        Character.toUpperCase(tgtField.getName().charAt(0)) +
-                        tgtField.getName().substring(1);
-                    Object newValue = value;
-
-                    if (tgtField.getType() != srcField.getType()) {
-                        if (tgtField.getType().isArray()) {
-                            if (srcField.getType().isArray()) {
-                                Class<?> tgtComponentType = tgtField.getType().getComponentType();
-                                Class<?> srcComponentType = srcField.getType().getComponentType();
-                                if (tgtComponentType.equals(srcComponentType)) {
-                                    // Safe to copy the array
-                                    newValue = value;
-                                } else {
-                                    TypeConverter c = converterRegistry.getConverter(srcComponentType, tgtComponentType);
-                                    if (c != null) {
-                                        Object[] srcArray = (Object[]) value;
-                                        Object[] tgtArray = (Object[]) java.lang.reflect.Array.newInstance(tgtComponentType, srcArray.length);
-                                        for (int i = 0; i < srcArray.length; i++) {
-                                            tgtArray[i] = c.convert(srcArray[i]);
-                                        }
-                                        newValue = tgtArray;
-                                    } else {
-                                        log.warn("No converter found for {} to {} for field: {}.{}",
-                                            srcComponentType.getSimpleName(), tgtComponentType.getSimpleName(),
-                                            target.getClass().getSimpleName(), tgtField.getName());
-                                        continue;
-                                    }
-                                }
-                            } else {
-                                log.warn("Cannot assign non-array to array field: {}.{}", 
-                                    target.getClass().getSimpleName(), tgtField.getName());
-                                continue;
-                            }
-                        } else if (Collection.class.isAssignableFrom(tgtField.getType())) {
-                            log.warn("Collection fields are not handled in this method: {}.{}",
-                                target.getClass().getSimpleName(), tgtField.getName());
-                            continue; // All collections are handled outside this loop
-                        } else if (Identity.class.isAssignableFrom(tgtField.getType()) &&
-                                   Identifiable.class.isAssignableFrom(target.getClass())) {
-                            Identity id = ((Identifiable) target).getId();
-                            int opus = id.getOpus();
-                            Identity newId = new SimpleIdentity(value, opus);
-                            newValue = newId;
-                        } else {
-                            TypeConverter c = converterRegistry.getConverter(srcField.getType(), tgtField.getType());
-                            if (c != null) {                                
-                                newValue = c.convert(value); // Ensure the converter is called;
-                            } else {
-                                log.warn("No converter found for {} to {} for field: {}.{}",
-                                    srcField.getType().getSimpleName(), tgtField.getType().getSimpleName(),
-                                    target.getClass().getSimpleName(), tgtField.getName());
-                                continue;
-                            }
-    
-                        }
-                    }
-
+                if (handler != null) {
                     try {
-                        Method setter = target.getClass().getMethod(setterName, tgtField.getType());
-                        setter.invoke(target, newValue);
-                        continue;
-                    } catch (NoSuchMethodException e) {
-                        tgtField.setAccessible(true);
-                        try {
-                            tgtField.set(target, newValue);
-                        } catch (IllegalAccessException ignored) {
-                            log.warn("Cannot access field {} on {}: {}", tgtField.getName(), target.getClass().getSimpleName(), ignored.getMessage());
-                            continue; // Skip inaccessible fields
+                        handler.handle(value, target);
+                        continue; // When handled, skip the restp
+                    } catch (Exception e) {
+                        log.error("Custom handler failed for {}: {}", srcField.getName(), e.getMessage(), e);
+                    }
+                } else {
+                    // No custom handler, find matching target field
+                    Field tgtField = null;
+                    for (String name : possibleNames) {
+                        tgtField = targetFields.get(name);
+                        if (tgtField != null) break;
+                    }
+
+                    if (tgtField == null) {
+                        // No matching target field found. This is odd.
+                        log.error(null != opus ?
+                            "No matching field found for {}.{} of type {} in {} (opus: {})" :
+                            "No matching field found for {}.{} of type {} in {}",
+                            clazz.getName(), srcField.getName(), 
+                            srcField.getType().getSimpleName(),
+                            target.getClass().getSimpleName(), opus);
+                        continue; // Skip to next source field
+                    }
+
+                    if (Modifier.isFinal(tgtField.getModifiers())) {
+                            if (tgtField.getName().equals("id")) {
+                                continue; // Skip Identity id as it is handled in the constructor
+                            }
+                            log.warn("Skipping final field: {}.{}", 
+                                target.getClass().getSimpleName(), tgtField.getName());
+                            continue; // Skip final fields                        
                         }
-                    } catch (IllegalAccessException ignored) {
-                        log.warn("Cannot access setter {} on {}: {}", setterName, target.getClass().getSimpleName(), ignored.getMessage());
-                        continue; // Skip inaccessible setters
-                    } catch (InvocationTargetException e) {
-                        log.error("Error invoking setter {} on {}: {}", setterName, target.getClass().getSimpleName(), e.getMessage(), e);
+                    else {
+                        String setterName = "set" +
+                            Character.toUpperCase(tgtField.getName().charAt(0)) +
+                            tgtField.getName().substring(1);
+                        Object newValue = value;
+
+                        if (tgtField.getType() != srcField.getType()) {
+                            if (tgtField.getType().isArray()) {
+                                if (srcField.getType().isArray()) {
+                                    Class<?> tgtComponentType = tgtField.getType().getComponentType();
+                                    Class<?> srcComponentType = srcField.getType().getComponentType();
+                                    if (tgtComponentType.equals(srcComponentType)) {
+                                        // Safe to copy the array
+                                        newValue = value;
+                                    } else {
+                                        TypeConverter c = converterRegistry.getConverter(srcComponentType, tgtComponentType);
+                                        if (c != null) {
+                                            Object[] srcArray = (Object[]) value;
+                                            Object[] tgtArray = (Object[]) java.lang.reflect.Array.newInstance(tgtComponentType, srcArray.length);
+                                            for (int i = 0; i < srcArray.length; i++) {
+                                                tgtArray[i] = c.convert(srcArray[i], opus);
+                                            }
+                                            newValue = tgtArray;
+                                        } else {
+                                            log.warn("No converter found for {} to {} for field: {}.{}",
+                                                srcComponentType.getSimpleName(), tgtComponentType.getSimpleName(),
+                                                target.getClass().getSimpleName(), tgtField.getName());
+                                            continue;
+                                        }
+                                    }
+                                } else {
+                                    log.warn("Cannot assign non-array to array field: {}.{}", 
+                                        target.getClass().getSimpleName(), tgtField.getName());
+                                    continue;
+                                }
+                            } else if (Collection.class.isAssignableFrom(tgtField.getType())) {
+                                log.warn("Collection fields are not handled in this method: {}.{}",
+                                    target.getClass().getSimpleName(), tgtField.getName());
+                                continue; // All collections are handled outside this loop
+                            } else if (Identity.class.isAssignableFrom(tgtField.getType()) && opus != null) {
+                                newValue = new SimpleIdentity(value, opus);
+                            } else {
+                                TypeConverter c = converterRegistry.getConverter(srcField.getType(), tgtField.getType());
+                                if (c != null) {                                
+                                    newValue = c.convert(value, opus); // Ensure the converter is called;
+                                } else {
+                                    log.warn("No converter found for {} to {} for field: {}.{}",
+                                        srcField.getType().getSimpleName(), tgtField.getType().getSimpleName(),
+                                        target.getClass().getSimpleName(), tgtField.getName());
+                                    continue;
+                                }
+        
+                            }
+                        }                    
+
+                        try {
+                            Method setter = target.getClass().getMethod(setterName, tgtField.getType());
+                            setter.invoke(target, newValue);
+                            continue;
+                        } catch (NoSuchMethodException e) {
+                            tgtField.setAccessible(true);
+                            try {
+                                tgtField.set(target, newValue);
+                            } catch (IllegalAccessException ignored) {
+                                log.warn("Cannot access field {} on {}: {}", tgtField.getName(), target.getClass().getSimpleName(), ignored.getMessage());
+                                continue; // Skip inaccessible fields
+                            }
+                        } catch (IllegalAccessException ignored) {
+                            log.warn("Cannot access setter {} on {}: {}", setterName, target.getClass().getSimpleName(), ignored.getMessage());
+                            continue; // Skip inaccessible setters
+                        } catch (InvocationTargetException e) {
+                            log.error("Error invoking setter {} on {}: {}", setterName, target.getClass().getSimpleName(), e.getMessage(), e);
+                        }
                     }
                 }
             }

@@ -17,13 +17,13 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.Arrays;
 
 import static java.util.Objects.requireNonNullElse;
 import static java.util.Optional.empty;
@@ -52,12 +52,12 @@ public class RankService {
 
         List<Contest> contests = 
             contestRepository.findByCompetitionIdAndStatus(competitionId, Validated);
-        Set<Team> teams = new HashSet<>();
-        contests
+
+        Set<Team> teams = contests
                 .stream()
-                .map(Contest::getOpponents)
-                .flatMap(List::stream)
-                .collect(Collectors.toCollection(() -> teams));
+                .flatMap((Contest contest) -> Arrays.stream(contest.getOpponents()))
+                .collect(Collectors.toSet());
+                
         List<Match> matches = Collections.emptyList();
         if (!competition.getFormat().equals(CompetitionFormat.Ladder)) {
             matches = matchRepository.findByCompetitionId(competitionId);
@@ -112,7 +112,7 @@ public class RankService {
         int sustainedCasualties = 0;
         for (Contest contest : contests) {
             Optional<Match> match = ofNullable(contest.getMatchIdentity()).map(matchByMatchId::get);
-            List<Team> teamResults = match.map(Match::getTeams).orElse(contest.getOpponents());
+            Team[] teamResults = match.map(Match::getTeams).orElse(contest.getOpponents());
 
             Optional<Team> ownTeam = getTeam(teamResults, team.getId());
             Optional<Team> otherTeam = getOtherTeam(teamResults, ownTeam);
@@ -164,11 +164,11 @@ public class RankService {
         return 0;
     }
 
-    private Optional<Team> getOtherTeam(List<Team> teamResults, Optional<Team> myTeam) {
+    private Optional<Team> getOtherTeam(Team[] teamResults, Optional<Team> myTeam) {
         if (myTeam.isEmpty()) {
             return empty();
         }
-        List<Team> teams = teamResults.stream()
+        List<Team> teams = Arrays.stream(teamResults)
                 .filter(team -> !myTeam.get().getId().equals(team.getId()))
                 .toList();
         if (teams.isEmpty()) {
@@ -180,11 +180,11 @@ public class RankService {
         return Optional.of(teams.get(0));
     }
 
-    private Optional<Team> getTeam(List<Team> teamResults, Identity teamId) {
+    private Optional<Team> getTeam(Team[] teamResults, Identity teamId) {
         if (teamResults == null) {
             return empty();
         }
-        List<Team> teams = teamResults.stream()
+        List<Team> teams = Arrays.stream(teamResults)
                 .filter(team -> teamId.equals(team.getId()))
                 .toList();
         if (teams.isEmpty()) {

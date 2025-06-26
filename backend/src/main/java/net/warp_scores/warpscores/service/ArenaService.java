@@ -23,6 +23,7 @@ import static org.springframework.data.domain.Pageable.unpaged;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
@@ -253,13 +254,13 @@ public class ArenaService {
     }
 
     private void updateLogoAndNameFromContestsData(ArenaTeam arenaTeam) {
-        Optional<Team> team = arenaTeam
-                .getMatches()
+        List<Match> matches = arenaTeam.getMatches() != null ? arenaTeam.getMatches() : Collections.emptyList();
+        Optional<Team> team = matches
                 .stream()
                 .max(comparing(Match::getFinished))
                 .map(Match::getTeams)
-                .orElse(emptyList())
-                .stream()
+                .map(Arrays::stream)
+                .orElseGet(Stream::empty)
                 .filter(t -> t.getId().equals(arenaTeam.getTeamId()))
                 .findFirst();
         team.ifPresent(t -> {
@@ -332,7 +333,7 @@ public class ArenaService {
                             arenaTeam
                                     .getMatches()
                                     .stream()
-                                    .filter(c -> c.getTeams().stream().map(Team::getRace)
+                                    .filter(c -> Arrays.stream(c.getTeams()).map(Team::getRace)
                                             .anyMatch(r -> r.equals(race)))
                                     .map(Match::getMatchId)
                                     .collect(Collectors.toSet()));
@@ -444,12 +445,14 @@ public class ArenaService {
     }
 
     private Identity getWinnerTeamIdOrNull(Match match) {
-        return match
-                .getTeams()
-                .stream()
-                .max(comparing(Team::getScore))
-                .map(Team::getId)
-                .orElse(null);
+        if (match != null && match.getTeams() != null && match.getTeams().length == 2) {
+            // Assuming the winner is the team with the highest score
+            return Arrays.stream(match.getTeams())
+                    .max(Comparator.comparingInt(Team::getScore))
+                    .map(Team::getId)
+                    .orElse(null);
+        }
+        return null;
     }
 
     private Coach toCoach(ArenaTeam arenaTeam) {

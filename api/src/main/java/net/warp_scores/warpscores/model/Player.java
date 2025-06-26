@@ -24,7 +24,9 @@ public class Player implements Identifiable {
 
     public Player(Identity id) {
         this.id = id;
-    } 
+    }
+    
+    private Boolean isDeleted;
 
     private String name;
     private Integer raceId;
@@ -38,8 +40,11 @@ public class Player implements Identifiable {
     private String type;
     private Integer[] casualtiesStateIds;
     private String[] casualtiesState;
+    private Casualties casualties;
+
     private Boolean suspendedNextMatch;
-    private String[] skills;
+    private String[] skillStrings;
+    private Skills skills;
     private Boolean mvp;
     private Integer matchplayed;
     private Stats stats;
@@ -53,13 +58,32 @@ public class Player implements Identifiable {
         private Integer ag;
         private Integer av;
     }
+    /*
+        @Getter
+        @Setter
+        public static class ExtendedAttributes {
+            private Attributes defaultAttributes;
+            private List<LinkedHashMap<String, Integer>> bonus;
+            private List<LinkedHashMap<String, Integer>> malus;
+        }
+    */
 
     @Getter
     @Setter
     public static class ExtendedAttributes {
-        private Attributes defaultAttributes;
-        private List<LinkedHashMap<String, Integer>> bonus;
-        private List<LinkedHashMap<String, Integer>> malus;
+        private ExtendedAttribute ma;
+        private ExtendedAttribute pa;
+        private ExtendedAttribute st;
+        private ExtendedAttribute ag;
+        private ExtendedAttribute av;
+
+        @Getter
+        @Setter
+        public static class ExtendedAttribute {
+            private Integer value;
+            private Integer bonuses;
+            private Integer maluses;
+        }
     }
 
     @Getter
@@ -97,7 +121,51 @@ public class Player implements Identifiable {
         private Integer foul_sustained;
         private Integer throw_team_mate_try;
         private Integer throw_team_mate_success;
+
+        private Integer inflictedcasualties;
+        private Integer inflictedstuns;
+        private Integer inflictedpasses;
+        private Integer inflictedmeterspassing;
+        private Integer inflictedtackles;
+        private Integer inflictedko;
+        private Integer inflicteddead;
+        private Integer inflictedinterceptions;
+        private Integer inflictedpushouts;
+        private Integer inflictedcatches;
+        private Integer inflictedinjuries;
+        private Integer inflictedmetersrunning;
+        private Integer inflictedtouchdowns;
+        private Integer sustainedinterceptions;
+        private Integer sustainedtackles;
+        private Integer sustainedinjuries;
+        private Integer sustaineddead;
+        private Integer sustainedko;
+        private Integer sustainedcasualties;
+        private Integer sustainedstuns;
+    }
+
+    @Getter
+    @Setter
+    @ToString(of = {"acquiredSkills", "innateSkills"})
+    @EqualsAndHashCode(of = {"acquiredSkills", "innateSkills"})
+    public static class Skills {
+        private String[] acquiredSkills;
+        private String[] innateSkills;
+
+        public Skills() {
+            // Default constructor for deserialization
+        }
+
+        public Skills(String[] acquiredSkills, String[] innateSkills) {
+            this.acquiredSkills = acquiredSkills;
+            this.innateSkills = innateSkills;
+        }
+    }
+
+    @Getter
+    @Setter
+    public static class Casualties {
+        private String[] previousCasualties;
+        private String[] newCasualties;
     }
 }
-
-

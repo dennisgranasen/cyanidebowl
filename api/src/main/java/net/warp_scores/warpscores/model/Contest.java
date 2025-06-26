@@ -52,7 +52,7 @@ public class Contest implements Comparable<Contest>, Identifiable {
         return new SimpleIdentity(matchId, id.getOpus());
     }
     private Integer live;
-    private List<Team> opponents;
+    private Team[] opponents;
     private Object winner;
     private boolean adminResult;
     private Match match;
@@ -67,9 +67,9 @@ public class Contest implements Comparable<Contest>, Identifiable {
 
     @Override
     public String toString() {
-        String teamA = Optional.ofNullable(opponents).map(o -> !o.isEmpty() ? o.get(0) : null).map(Team::getName)
+        String teamA = Optional.ofNullable(opponents).map(o -> o != null && o.length > 0 ? o[0] : null).map(Team::getName)
                 .orElse("n/a");
-        String teamB = Optional.ofNullable(opponents).map(o -> o.size() > 1 ? o.get(1) : null).map(Team::getName)
+        String teamB = Optional.ofNullable(opponents).map(o -> o != null && o.length > 1 ? o[1] : null).map(Team::getName)
                 .orElse("n/a");
         return String.format("Contest[%s] Round: %s -> %s vs %s (next: %s)", id.asMongoKey(), round, teamA, teamB,
                 nextContestUuid);

@@ -28,6 +28,8 @@ public class Team implements Identifiable {
         this.id = id;
     }
 
+    private Boolean isDeleted;
+
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date created;
     private String name;
@@ -49,7 +51,7 @@ public class Team implements Identifiable {
     private Identity coachId;
     private String coachName;
 
-    private Integer supporters;
+    private Float supporters;
 
     private Identity[] leagueIds;
     private String[] leagueNames;
@@ -71,7 +73,7 @@ public class Team implements Identifiable {
 
     private Integer death;
 
-    private List<Player> players;
+    private Player[] players;
 
     private Integer inflictedpasses;
     private Integer inflictedcatches;
@@ -91,4 +93,19 @@ public class Team implements Identifiable {
     private Integer sustainedko;
     private Integer sustainedinjuries;
     private Integer sustaineddead;
+
+    private Integer cashBeforeMatch;
+    private Integer cashEarned;
+    private Integer cashEarnedBeforeConcession;
+    private Integer winningsDice;
+    private Integer possessionBall;
+    private Integer occupationOwn;
+    private Integer occupationTheir;
+    private Integer mvp;
+
+    private Integer popularityBeforeMatch;
+    private Integer popularityGain;
+    private Integer cashSpentInducements;
+    private Integer spirallingExpenses;
+
 }

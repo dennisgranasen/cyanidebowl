@@ -105,7 +105,7 @@ public class ApiPlayer extends IdWithName {
     private Boolean suspended_next_match;
     private Stats stats;
 
-    private Skills skills;
+    private Object skills; // String[] for legacy, Skills for BB3
     private Casualties casualties;
 
     @Getter
@@ -116,16 +116,14 @@ public class ApiPlayer extends IdWithName {
         @JsonAlias({"InnateSkills"})
         private String[] innateSkills;
     }
-
     @Getter
     @Setter
     public static class Casualties {
-        @JsonAlias({"PreviousCasualty"})
+        @JsonAlias({"PreviousCasualty", "previousCasualties"})
         private String[] previousCasualty;
-        @JsonAlias({"NewCasualty"})
+        @JsonAlias({"NewCasualty", "newCasualties"})
         private String[] newCasualty;
     }
-
     @Getter
     @Setter
     public static class Stats {
@@ -161,6 +159,27 @@ public class ApiPlayer extends IdWithName {
         private Integer foul_sustained;
         private Integer throw_team_mate_try;
         private Integer throw_team_mate_success;
+
+        private Integer inflictedcasualties;
+        private Integer inflictedstuns;
+        private Integer inflictedpasses;
+        private Integer inflictedmeterspassing;
+        private Integer inflictedtackles;
+        private Integer inflictedko;
+        private Integer inflicteddead;
+        private Integer inflictedinterceptions;
+        private Integer inflictedpushouts;
+        private Integer inflictedcatches;
+        private Integer inflictedinjuries;
+        private Integer inflictedmetersrunning;
+        private Integer inflictedtouchdowns;
+        private Integer sustainedinterceptions;
+        private Integer sustainedtackles;
+        private Integer sustainedinjuries;
+        private Integer sustaineddead;
+        private Integer sustainedko;
+        private Integer sustainedcasualties;
+        private Integer sustainedstuns;
     }
 
     @Getter
