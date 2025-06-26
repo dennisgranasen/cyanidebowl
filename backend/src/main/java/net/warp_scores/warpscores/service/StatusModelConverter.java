@@ -7,6 +7,7 @@ import net.warp_scores.warpscores.model.Status.ServiceStatus;
 import net.warp_scores.warpscores.utils.FieldHandler;
 
 import java.lang.reflect.Field;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
@@ -30,6 +31,41 @@ public class StatusModelConverter {
                 .toArray(ServiceStatus[]::new);
     }
     */
+
+    protected static class NewsMessageHandler implements FieldHandler<Object> {
+        @Override
+        public void handle(Object sourceValue, Object target) throws Exception {
+            if (target != null) {
+                try {
+                    if (sourceValue instanceof String) {
+                        Field field = target.getClass().getDeclaredField("message");
+                        field.setAccessible(true);
+                        field.set(target, sourceValue);
+                    } else if (LinkedHashMap.class.isAssignableFrom(sourceValue.getClass())) {
+                        LinkedHashMap<?, ?> map = (LinkedHashMap<?, ?>) sourceValue;
+                        for (Map.Entry<?, ?> entry : map.entrySet()) {
+                            try{
+                                Field field = target.getClass().getDeclaredField(entry.getKey().toString());
+                                field.setAccessible(true);
+                                field.set(target, entry.getValue());
+                            } catch (NoSuchFieldException e) {
+                                log.warn("Field '" + entry.getKey() + "' not found in target class: " + target.getClass().getName());   
+                                // Field does not exist, do nothing
+                            }                                    
+                        }
+                    } else {
+                        log.warn("Unexpected type for 'message': " + sourceValue.getClass().getName());
+                    }
+                } catch (NoSuchFieldException ignored) {
+                    // Field does not exist, do nothing
+                    log.error("Field 'message' not found in target class: " + target.getClass().getName());
+                } catch (IllegalAccessException e) {
+                    log.error("Failed to access field 'message' in target class: " + target.getClass().getName(), e);
+                }   
+            }
+        }
+    }   
+
     protected static class ServiceStatusHandler implements FieldHandler<Map<String, Boolean>> {
         @Override
         public void handle(Map<String, Boolean> sourceValue, Object target) throws Exception {
@@ -78,60 +114,6 @@ public class StatusModelConverter {
             }
         }
     }
-
-    protected static class NewsHandler implements FieldHandler<StatusResponse.News> {
-        @Override
-        public void handle( StatusResponse.News sourceValue, Object target) throws Exception {
-            if (target != null) {
-                Status statusTarget = (Status)target;                
-                try {
-                    var field = target.getClass().getDeclaredField("news");
-                    
-                    if (sourceValue != null) {
-                        log.debug("Setting news: {}", sourceValue.getTitle());
-                    } else {
-                        log.debug("News is null, not setting field");
-                        return;
-                    }
-                    String title = sourceValue.getTitle();
-                    Object msg = sourceValue.getMessage();
-                    if (msg instanceof String) {
-                        News news = new News();
-                        news.setTitle(title);
-                        news.setMessage((String) msg);
-                    } else if (msg instanceof Map) {
-                        Map<?,?> complexMessage = (Map<?, ?>) msg; 
-                        Status.RichNews richNews = new Status.RichNews();
-                        richNews.setTitle(title);
-                        for (Map.Entry<?, ?> entry : complexMessage.entrySet()) {
-                            if (entry.getKey() instanceof String && entry.getValue() instanceof String) {
-                                String key = (String) entry.getKey();
-                                Object value = entry.getValue();
-                                Field fieldToSet = richNews.getClass().getDeclaredField(key);
-                                if (fieldToSet != null) {
-                                    fieldToSet.setAccessible(true);
-                                    try{
-                                        fieldToSet.set(richNews, value);
-                                    }
-                                    catch (IllegalAccessException e) {
-                                        log.error("Failed to set field '{}' in RichNews class: {}", key, e.getMessage());
-                                    }
-                                } else {
-                                    log.error("Field '{}' not found in RichNews class", key);                                    
-                                }
-                            }
-                        }
-                        //statusTarget.setNews(richNews);
-                    } else {
-                        throw new IllegalArgumentException("Unsupported message type: " + msg.getClass().getName());
-                    }
-                } catch (NoSuchFieldException ignored) {
-                    throw new NoSuchFieldException("Field 'news' not found in target class: " + target.getClass().getName());
-                }
-            }            
-        }
-    }
-
     static {
         PopulatorUtil.fieldHandlerRegistry.register(
             "service_statuses", 
@@ -145,9 +127,9 @@ public class StatusModelConverter {
             new ServicesHandler()
         );
         PopulatorUtil.fieldHandlerRegistry.register(
-            "news", 
-            Status.class,
-            new NewsHandler()
+            "message", 
+            Status.News.class,
+            new NewsMessageHandler()
         );        
     }
 
