@@ -12,7 +12,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
-import java.util.List;
 
 @Getter
 @Setter
@@ -23,14 +22,12 @@ public class Match implements Identifiable {
     @Id
     private final Identity id;
 
-    public String getMatchId() { return id != null ? id.getValue() : null; }
-
-
     public Match(Identity id) {
         this.id = id;
     }
 
-    //private UUID matchId;
+    private Boolean isFinalized;
+    private String matchId;
     private Identity competitionId;
     //private Integer oldCompetitionId; // This is the old ID used in the legacy system, if applicable.
     private String competitionName;
@@ -43,18 +40,29 @@ public class Match implements Identifiable {
     private String leagueName;
     private String leagueLogo;
     private String stadium;
-    private Integer round;
-    private List<Coach> coaches;
-    private List<Team> teams;
+    private Integer stadiumLevel;
+    private String stadiumStruct;
+
+    private String round;
+    private Coach[] coaches;
+    private Team[] teams;
     private boolean adminResult = false;
     private boolean concede = false;
     private boolean overtime = false;
+    private String platform;
+
+    private String apiMatch;
 
     @Getter
     @Setter
     public static class Coach {
         private String id;
         private String name;
+        private String cyanEarned;
+        private String xpEarned;
+        private String platform;
+        private Long oldRating;
+        private Long newRating;
     }
 
 }

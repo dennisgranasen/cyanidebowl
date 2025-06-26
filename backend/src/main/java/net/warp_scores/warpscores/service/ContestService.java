@@ -17,7 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,8 +47,10 @@ public class ContestService {
                 .orElse(Pageable.unpaged());
         List<Contest> contests = contestRepository.findByCompetitionId(
                 competitionId, pageable);
-        teams.addAll(contests.stream().map(
-                Contest::getOpponents).flatMap(Collection::stream).toList());
+        teams.addAll(contests.stream()
+                .map(Contest::getOpponents)
+                .flatMap(Arrays::stream)
+                .toList());
         contests.forEach(this::loadMatchIntoAndAdjustCompetitionName);
 
         return contestInitializationService.initializeContestsScheduleForFormat(

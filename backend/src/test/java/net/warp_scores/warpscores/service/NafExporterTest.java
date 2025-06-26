@@ -195,12 +195,12 @@ public class NafExporterTest {
             Object[] teamCasualties) {
         Contest contest = new Contest(new SimpleIdentity(42,1));
         contest.setMatchDate(parseDateOrNullIgnoringExceptions(matchDateValue));
-        contest.setOpponents(List.of(
+        contest.setOpponents(new Team[]{
                 newOpponent((String) teamCoachNames[0], (Race) teamRaces[0], (Integer) teamTouchdowns[0],
                         (Integer) teamCasualties[0]),
                 newOpponent((String) teamCoachNames[1], (Race) teamRaces[1], (Integer) teamTouchdowns[1],
                         (Integer) teamCasualties[1])
-        ));
+            });
         return contest;
     }
 

@@ -181,16 +181,16 @@ public class ContestInitializationServiceTest {
             Contest expectedContest = expectedContests.get(i);
             assertThat(String.format("Contest#%s is same round (%s)", i + 1, expectedContest.getRound()),
                     initializedContest.getRound(), is(expectedContest.getRound()));
-            String expectedHomeTeam = expectedContest.getOpponents().get(0).getName();
-            String expectedAwayTeam = expectedContest.getOpponents().get(1).getName();
+            String expectedHomeTeam = expectedContest.getOpponents()[0].getName();
+            String expectedAwayTeam = expectedContest.getOpponents()[1].getName();
 
             assertThat(String.format("Home team for Contest#%s.%s to be %s", expectedContest.getRound(), (i % 3) + 1,
                             expectedHomeTeam),
-                    initializedContest.getOpponents().get(0).getName(),
+                    initializedContest.getOpponents()[0].getName(),
                     is(expectedHomeTeam));
             assertThat(String.format("Away team for Contest#%s.%s to be %s", expectedContest.getRound(), (i % 3) + 1,
                             expectedAwayTeam),
-                    initializedContest.getOpponents().get(1).getName(),
+                    initializedContest.getOpponents()[1].getName(),
                     is(expectedAwayTeam));
         }
     }
@@ -232,7 +232,7 @@ public class ContestInitializationServiceTest {
         Contest contest = new Contest(new SimpleIdentity(UUID.randomUUID(), 3));
         Team teamA = createTeam(teamNameA);
         Team teamB = createTeam(teamNameB);
-        contest.setOpponents(List.of(teamA, teamB));
+        contest.setOpponents(new Team[]{teamA, teamB});
         contest.setRound(round);
         return contest;
     }

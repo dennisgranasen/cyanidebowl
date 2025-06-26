@@ -14,7 +14,7 @@ import java.util.Date;
 
 /*
 BB1 Teams listing
-         {
+         {StatusResponse.
             "team": "Grey Rebels",
             "id": 553775,
             "coach": "uglydoll",
@@ -406,12 +406,13 @@ public class ApiTeam {
     @JsonAlias({"stadiumlevel"})
     private Integer stadiumLevel;
     @JsonAlias({"stadiumtype"})
-    private Integer stadiumType;
+    private String stadiumType;
 
+    @JsonAlias({"players"})
     private ApiPlayer[] roster;
 
     @JsonAlias({"nbsupporters"})
-    private Integer supporters;
+    private Float supporters;
 
     @JsonAlias({"inflictedpasses"})
     private Integer inflictedPasses;

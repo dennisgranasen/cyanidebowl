@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.service;
 
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.cyanide.api.model.ApiCard;
+import net.warp_scores.warpscores.cyanide.api.model.ApiPlayer;
 import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
 import net.warp_scores.warpscores.cyanide.api.responses.TeamResponse;
 import net.warp_scores.warpscores.identity.Identity;
@@ -12,12 +13,14 @@ import net.warp_scores.warpscores.utils.FieldHandler;
 
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.annotation.JsonAppend.Prop;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -85,18 +88,55 @@ public class TeamPopulator {
                 }
             }
         }
-    } 
+    }
+
+    private static class SkillsHandler implements FieldHandler<Object> {
+        @Override
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        public void handle(Object sourceValue, Object target) throws Exception {
+            Player targetPlayer = (Player) target;
+            if (sourceValue == null) {
+                targetPlayer.setSkills(null);
+                return; // No skills to process
+            }
+            if (sourceValue instanceof String[]) {
+                targetPlayer.setSkillStrings((String[]) sourceValue);
+            } else if (sourceValue instanceof ApiPlayer.Skills) {
+                ApiPlayer.Skills aSkills = (ApiPlayer.Skills) sourceValue;
+                Player.Skills pSkills = new Player.Skills();
+                PopulatorUtil.copyNonNullProperties(aSkills, pSkills);
+                targetPlayer.setSkills(pSkills);
+            } else if (sourceValue instanceof ArrayList) { //BB1 and BB2
+                String[] skills = ((List<?>) sourceValue).stream()
+                    .filter(item -> item instanceof String)
+                    .map(item -> (String) item)
+                    .collect(Collectors.toList())
+                    .toArray(new String[0]);
+                targetPlayer.setSkillStrings(skills);
+            } else if (sourceValue instanceof LinkedHashMap) { //BB3
+                ArrayList<String> is = ((ArrayList<String>)((LinkedHashMap)sourceValue).get("InnateSkills"));
+                ArrayList<String> ac = ((ArrayList<String>)((LinkedHashMap)sourceValue).get("AcquiredSkills"));
+                Player.Skills skills = new Player.Skills();
+                if (is != null) {
+                    skills.setInnateSkills(is.toArray(new String[0]));
+                }
+                if (ac != null) {
+                    skills.setAcquiredSkills(ac.toArray(new String[0]));
+                }
+                targetPlayer.setSkills(skills);
+                //targetPlayer.setSkillStrings(skills);
+            } else {
+                log.error("Unexpected skills type: {}", sourceValue.getClass().getName());
+            }
+        }
+    }   
     
     private static class CasualtiesStateIdHandler implements FieldHandler<Integer[]> {
         @Override
         public void handle(Integer[] sourceValue, Object target) throws Exception {
             Player targetPlayer = (Player) target;
-            if (sourceValue == null || sourceValue.length == 0) {
-                targetPlayer.setCasualtiesStateIds(null);
-                return; // No casualties state ids to process
-            }
-
-            targetPlayer.setCasualtiesStateIds(sourceValue);            
+            if (sourceValue != null)
+                targetPlayer.setCasualtiesStateIds(sourceValue);            
         }
     }
 
@@ -104,11 +144,8 @@ public class TeamPopulator {
         @Override
         public void handle(String[] sourceValue, Object target) throws Exception {
             Player targetPlayer = (Player) target;
-            if (sourceValue == null || sourceValue.length == 0) {
-                targetPlayer.setCasualtiesState(null);
-                return; // No casualties states to process
-            }
-            targetPlayer.setCasualtiesState(sourceValue);            
+            if (sourceValue != null)
+                targetPlayer.setCasualtiesState(sourceValue);            
         }
     }
 
@@ -132,6 +169,8 @@ public class TeamPopulator {
             Player.class, new CasualtiesStateHandler());
         PopulatorUtil.fieldHandlerRegistry.register("suspended_next_match",
             Player.class, new SuspendedNextMatchHandler());
+        PopulatorUtil.fieldHandlerRegistry.register("skills",
+            Player.class, new SkillsHandler());
     }
     
     public void populateTeamTeam(ApiTeam sourceApiTeam, 
@@ -145,8 +184,9 @@ public class TeamPopulator {
                     Player player = new Player(new SimpleIdentity(apiPlayer.getId(), opus));
                     PopulatorUtil.copyNonNullProperties(apiPlayer, player);
                     return player;
-                } )
-                .collect(Collectors.toList()));            
+                })
+                .toArray(Player[]::new)
+        );            
     }
 
     public void populateMatchTeam(ApiTeam sourceApiTeam, Team targetTeam, int opus) {

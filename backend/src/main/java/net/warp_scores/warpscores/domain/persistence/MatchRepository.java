@@ -23,6 +23,14 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
     //List<Match> findByOldCompetitionIdAndOpus(Integer oldId, Integer opus);
 
     List<Match> findAllById(List<Identity> matchIds);
+    //List<Match> findAllByFinishedNullOrNotFinished();
+
+    @Aggregation(pipeline = {
+        " { $match: { $or: [{isFinalized: {$exists: false}}, {isFinalized: false} ] } }"
+    })
+    List<Match> findNonFinalized();
+
+    List<Match> findByLeagueId(Identity leagueId);
 
     Integer countMatchesByCompetitionId(Identity competitionId);
     //Integer countMatchesByOldCompetitionIdAndOpus(Integer oldId, Integer opus);
@@ -48,6 +56,18 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
             "{ $project: { uuid: $_id, date: 1, _id: 0 } }"
     })
     List<DateForId> findLastMatchDateByLeagueIds(List<Identity> leagueIds);
+    
+    @Aggregation(pipeline = {
+                "{ $match: {competitionId: ?0 } }",
+                "{ $group: { _id: $competitionId, date: { $max: $finished }} }",
+                "{ $project: { date: 1, _id: 0 } }"})
+    Optional<Date> findLastMatchDateForCompetition(Identity leagueId);
+
+    @Aggregation(pipeline = {
+                "{ $match: {leagueId: ?0 } }",
+                "{ $group: { _id: $leagueId, date: { $max: $finished }} }",
+                "{ $project: { date: 1, _id: 0 } }"})
+    Optional<Date> findLastMatchDateForLeague(Identity leagueId);
 
     @Aggregation(pipeline = {
             "{ $match: {competitionId: { $in: ?0 } } }",

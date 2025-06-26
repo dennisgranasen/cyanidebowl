@@ -64,7 +64,7 @@ public class LookupController {
             List<League> leagues = new ArrayList<>();
             List<Competition> competitions = new ArrayList<>();
             for (var leagueIdWithName : lookup.getLeagues()) {
-                log.info("Looking up details for league: {}", leagueIdWithName.getId());
+                //log.info("Looking up details for league: {}", leagueIdWithName.getId());
                 Identity leagueIdentity = new SimpleIdentity(leagueIdWithName.getId(), opus);
                 League l = cyanideApiService.loadLeague(leagueIdentity);
                 if (l == null) {
