@@ -201,6 +201,12 @@ public class ApiPlayer extends IdWithName {
         private ExtendedAttribute ag;
         private ExtendedAttribute av;
 
+        //private String[] bonus;
+        //private String[] malus;
+
+        @JsonAlias({"default"})
+        private Attributes defaultAttributes;
+
         @Getter
         @Setter
         public static class ExtendedAttribute {

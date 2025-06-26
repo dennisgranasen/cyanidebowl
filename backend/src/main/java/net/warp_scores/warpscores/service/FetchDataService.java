@@ -279,6 +279,11 @@ public class FetchDataService {
                         cyanideApiService.loadTeam(team.getId(), true, ofNullable(true)));
     }
 
+
+    public void fetchStatus() {        
+        log.info("Fetching status from Cyanide API.");
+        cyanideApiService.checkApiStatus();
+    }
     
 
     public void fetchLeagues() {

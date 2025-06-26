@@ -76,6 +76,9 @@ public class Player implements Identifiable {
         private ExtendedAttribute st;
         private ExtendedAttribute ag;
         private ExtendedAttribute av;
+        private Attributes defaultAttributes;
+        private List<LinkedHashMap<String, Integer>> bonus;
+        private List<LinkedHashMap<String, Integer>> malus;
 
         @Getter
         @Setter

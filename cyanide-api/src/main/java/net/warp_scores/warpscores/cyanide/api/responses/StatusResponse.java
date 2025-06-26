@@ -183,8 +183,10 @@ public class StatusResponse extends ApiResponse {
         @JsonAlias({"gameName"})
         private String name;
         private Status status;
+        @JsonAlias({"serviceStatuses"})
         private Map<String, Boolean> service_statuses;
         private News[] news;
+        @JsonAlias({"socialLinks"})
         private String[] social_links;
         private Maintenance maintenance;
     }

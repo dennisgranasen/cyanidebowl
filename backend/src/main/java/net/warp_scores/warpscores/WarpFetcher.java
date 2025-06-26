@@ -11,7 +11,7 @@ public class WarpFetcher {
     public static void main(String[] args) {
         System.out.println("Starting WarpFetcher...");
         SpringApplication app = new SpringApplication(WarpFetcher.class);
-        app.setDefaultProperties(java.util.Map.of("scheduler.enabled", "false"));
+        app.setDefaultProperties(java.util.Map.of("scheduler.enabled", "false"));        
         ApplicationContext context = app.run(args);
         FetchDataService fetcher = context.getBean(FetchDataService.class);
         System.out.println("Running WarpFetcher...");
@@ -31,7 +31,10 @@ public class WarpFetcher {
             } else if (arg.equals("teams")) {
                 //fetcher.fetchTeams();
                 fetcher.fetchTeamData(); // kl 03 varje dag            
+            } else if (arg.equals("status")) {
+                fetcher.fetchStatus();
             } else {
+
                 System.out.println("Unknown argument: " + arg);
                 System.exit(1);
             }

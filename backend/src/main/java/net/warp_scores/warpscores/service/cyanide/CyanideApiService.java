@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import javax.swing.text.html.parser.Entity;
 
 import static java.util.Optional.ofNullable;
+import static net.warp_scores.warpscores.cyanide.api.requests.StatusRequest.BB2_GAME_NAME;
 import static net.warp_scores.warpscores.cyanide.api.requests.StatusRequest.BB3_GAME_NAME;
 
 @Slf4j
@@ -239,7 +240,7 @@ public class CyanideApiService {
             status = statusResponse
                     .stream()
                     .flatMap(sr -> Arrays.stream(sr.getGames()))
-                    .filter(game -> BB3_GAME_NAME.equals(game.getName()))
+                    .filter(game -> BB3_GAME_NAME.equals(game.getName()) || BB2_GAME_NAME.equals(game.getName()))
                     .findFirst()
                     .map(statusModelConverter::toStatus)
                     .orElse(createEmptyStatus());

@@ -89,7 +89,47 @@ public class TeamPopulator {
             }
         }
     }
+/*
+ 
+    private static class TeamLeagueIdHandler implements FieldHandler<String> {
 
+        
+        @Override
+        public void handle(String sourceValue, Object target) throws Exception {
+            if (sourceValue == null || !(sourceValue instanceof String) || ((String) sourceValue).isEmpty()) {
+                log.error("League ID is null or not a String: {}", sourceValue);
+                return; // No league id to process
+            }
+            String str_lids = (String) sourceValue;
+            Team targetTeam = (Team) target;
+            targetTeam.setLeagueIds(
+                Arrays.stream(str_lids.split(","))
+                    .filter(str_lid -> !str_lid.isEmpty())
+                    .map(str_lid -> new SimpleIdentity(str_lid, targetTeam.getId().getOpus()))
+                    .distinct()
+                    .toArray(Identity[]::new)
+            );
+        }
+    }
+
+    private static class TeamLeagueNamesHandler implements FieldHandler<String> {
+        @Override
+        public void handle(String sourceValue, Object target) throws Exception {
+            if (sourceValue == null || !(sourceValue instanceof String) || ((String) sourceValue).isEmpty()) {
+                log.error("League names are null or not a String: {}", sourceValue);
+                return; // No league names to process
+            }
+            String str_lnames = (String) sourceValue;
+            Team targetTeam = (Team) target;
+            targetTeam.setLeagueNames(
+                Arrays.stream(str_lnames.split(","))
+                    .filter(str_lname -> !str_lname.isEmpty())
+                    .distinct()
+                    .toArray(String[]::new)
+            );
+        }
+    }   
+*/
     private static class SkillsHandler implements FieldHandler<Object> {
         @Override
         @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -171,6 +211,13 @@ public class TeamPopulator {
             Player.class, new SuspendedNextMatchHandler());
         PopulatorUtil.fieldHandlerRegistry.register("skills",
             Player.class, new SkillsHandler());
+            /*
+        PopulatorUtil.fieldHandlerRegistry.register("leagueIds",
+            Team.class, new TeamLeagueIdHandler());
+        PopulatorUtil.fieldHandlerRegistry.register("leagueNames",
+            Team.class, new TeamLeagueNamesHandler());
+            */
+
     }
     
     public void populateTeamTeam(ApiTeam sourceApiTeam, 

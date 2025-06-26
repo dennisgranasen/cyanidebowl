@@ -4,7 +4,7 @@ package net.warp_scores.warpscores.service;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 
-import net.warp_scores.warpscores.cyanide.api.model.ApiContest.Team;
+import net.warp_scores.warpscores.model.Team;
 import net.warp_scores.warpscores.cyanide.api.model.ApiLeague;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
@@ -53,6 +53,38 @@ public class PopulatorUtil {
         }
     };
 
+    private static class CommaSeparatedIdArrayHandler implements FieldHandler<String> {
+        private final String targetFieldName;
+        public CommaSeparatedIdArrayHandler(String targetFieldName) {
+            this.targetFieldName = targetFieldName;
+        }
+        @Override
+        public void handle(String sourceValue, Object target) throws Exception {
+            if (sourceValue == null || !(sourceValue instanceof String)  || sourceValue.isEmpty()) {
+                return; // No league names to process
+            }
+            if (Identifiable.class.isAssignableFrom(target.getClass())) {
+                Identity targetId = ((Identifiable) target).getId();
+                if (targetId == null) {
+                    log.error("Target object {} has no valid opus for field {}", target, targetFieldName);
+                    return; // No opus to process
+                }
+                int  opus = targetId.getOpus();
+                String[] ids = sourceValue.split(",");
+                Identity[] newValues = Arrays.stream(ids)
+                    .map(id -> new SimpleIdentity(id.trim(), opus))
+                    .toArray(Identity[]::new);
+                target.getClass().getMethod("set" +
+                    Character.toUpperCase(targetFieldName.charAt(0)) + 
+                    targetFieldName.substring(1), Identity[].class)
+                    .invoke(target, (Object) newValues);                    
+            } else {
+                log.error("Target object {} is not Identifiable for field {}", target, targetFieldName);
+                return; // No opus to process
+            }
+        }
+    };
+
     private static class CompetitionStatusNameHandler implements FieldHandler<CompetitionStatus> {
         @Override
         public void handle(CompetitionStatus sourceValue, Object target) throws Exception {
@@ -94,9 +126,11 @@ public class PopulatorUtil {
 
     static {
         fieldHandlerRegistry.register("leagueNames", Team.class, new CommaSeparatedStringArrayHandler("leagueNames"));
-        fieldHandlerRegistry.register("leagueIds", Team.class, new CommaSeparatedStringArrayHandler("leagueIds"));
-        fieldHandlerRegistry.register("competitionIds", Team.class, new CommaSeparatedStringArrayHandler("competitionIds"));
-        fieldHandlerRegistry.register("competitionName", Team.class, new CommaSeparatedStringArrayHandler("competitionNames"));
+        //fieldHandlerRegistry.register("leagueId", Team.class, new CommaSeparatedStringArrayHandler("leagueIds"));
+        fieldHandlerRegistry.register("leagueIds", Team.class, new CommaSeparatedIdArrayHandler("leagueIds"));
+        fieldHandlerRegistry.register("leagueNames", Team.class, new CommaSeparatedStringArrayHandler("leagueNames"));
+        fieldHandlerRegistry.register("competitionIds", Team.class, new CommaSeparatedIdArrayHandler("competitionIds"));
+        fieldHandlerRegistry.register("competitionNames", Team.class, new CommaSeparatedStringArrayHandler("competitionNames"));        
         fieldHandlerRegistry.register("statusName", Competition.class, new CompetitionStatusNameHandler());
         fieldHandlerRegistry.register("status", Competition.class, new CompetitionStatusHandler());
         fieldHandlerRegistry.register("league", Competition.class, new CompetitionLeagueHandler());

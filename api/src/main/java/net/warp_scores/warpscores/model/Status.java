@@ -66,29 +66,13 @@ public class Status {
     public static class News {
         private String title;
         private String message;
-    }
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @ToString
-    public static class RichNews extends News {
         private String description;
-        @Override
-        public String getMessage() {
-            return description != null ? description : super.getMessage();
-        }
-        @Override
-        public void setMessage(String message) {
-            this.description = message;
-        }
         private String backgroundImageURL;
         private boolean isBackgroundLocalURL;
         private String urlToRedirect;
         private boolean isRedirectLocalURL;
         private String localURLType;
-        private String itemID;
-
+        private String itemID;   
     }
 
     @Getter
