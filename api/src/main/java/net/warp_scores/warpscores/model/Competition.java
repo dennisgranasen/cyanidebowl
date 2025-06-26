@@ -35,6 +35,7 @@ public class Competition implements Comparable<Competition>, Identifiable {
     private Date dateCreated;
     private CompetitionFormat format;
     private CompetitionStatus status;
+    private Integer statusNumber;
     private Integer teamsCount;
     private Integer teamsMax;
     private Integer timeBonusDuration;
