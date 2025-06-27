@@ -3,20 +3,15 @@ package net.warp_scores.warpscores.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.domain.ContestDomainService;
+import net.warp_scores.warpscores.identity.CompositeIdentity;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
-import net.warp_scores.warpscores.model.ArenaInfo;
-import net.warp_scores.warpscores.model.ArenaTeam;
-import net.warp_scores.warpscores.model.Coach;
 import net.warp_scores.warpscores.model.Contest;
-import net.warp_scores.warpscores.model.Race;
 import net.warp_scores.warpscores.service.ContestService;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.expression.spel.ast.OpAnd;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.util.StopWatch;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,16 +19,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
 import static net.warp_scores.warpscores.controller.Authorities.AUTHORITY_WRITE_LEAGUE_ADMIN;
@@ -60,9 +47,11 @@ public class ContestController {
             @RequestParam(name = "limit", required = false) Integer limit) {
         try {
             limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT_FOR_LIVE_CONTESTS);
+
+            String[] parts = competitionId.split(Identity.DELIMITER);
             Identity competitionIdentity = 
-                new SimpleIdentity(competitionId, ofNullable(opus).orElse(defaultOpus));
-            
+                new CompositeIdentity(ofNullable(opus).orElse(defaultOpus), parts);
+
             List<Contest> contests = contestService.getLatestCompetitionContests(
                 competitionIdentity, limit);
             return ResponseEntity.ok(contests);
@@ -78,8 +67,9 @@ public class ContestController {
             @RequestParam(name = "limit", required = false) Integer limit,
             @RequestParam(name = "opus", required = false) Integer opus) {
         try {
+            String[] parts = competitionId.split(Identity.DELIMITER);
             Identity competitionIdentity = 
-                new SimpleIdentity(competitionId, ofNullable(opus).orElse(defaultOpus));
+                new CompositeIdentity(ofNullable(opus).orElse(defaultOpus), parts);            
             List<Contest> contests = contestService.getCompetitionContests(
                 competitionIdentity,
                 Optional.ofNullable(limit));

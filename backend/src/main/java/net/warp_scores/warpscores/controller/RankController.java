@@ -2,8 +2,8 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.identity.CompositeIdentity;
 import net.warp_scores.warpscores.identity.Identity;
-import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Rank;
 import net.warp_scores.warpscores.service.RankService;
 
@@ -14,11 +14,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import static java.util.Optional.ofNullable;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -40,8 +41,9 @@ public class RankController {
             return ResponseEntity.badRequest().build();
         }
         try {
+            String[] parts = competitionId.split(Identity.DELIMITER);
             Identity competitionIdentity = 
-                new SimpleIdentity(competitionId, Optional.ofNullable(opus).orElse(defaultOpus));
+                new CompositeIdentity(ofNullable(opus).orElse(defaultOpus), parts);
 
             List<Rank> ranks = rankService.getRanksForCompetition(
                 competitionIdentity,

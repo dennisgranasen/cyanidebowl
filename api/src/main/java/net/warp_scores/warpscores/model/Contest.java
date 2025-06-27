@@ -40,10 +40,14 @@ public class Contest implements Comparable<Contest>, Identifiable {
     private String leagueName;
     private Identity competitionId;
     private String competitionName;
+    private UUID contestId;
     private String stadium;
+    private String contestFormat;
     private MatchType type;
     private MatchStatus status;
+    private MatchStatus matchStatus; // Is this the same as status?
     private Integer round;
+    private Integer competitionRound; // is this not always the same as round?
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date matchDate;
     private String gameId;

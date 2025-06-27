@@ -96,6 +96,7 @@ public class CyanideRestApiClient {
         URI uri = createUri(apiRequest, cyanideApiProperties.getApiConfig().getKey());
         ResponseEntity<Object> response;
         try {
+            log.info("Requesting URI: [{}].", uri);
             response = restTemplate.getForEntity(uri, Object.class);
             log.debug("Got response: [{}].", objectMapper.writeValueAsString(response));
             Object body = response.getBody();

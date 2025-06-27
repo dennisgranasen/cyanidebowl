@@ -32,6 +32,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
@@ -279,6 +280,56 @@ public class FetchDataService {
                         cyanideApiService.loadTeam(team.getId(), true, ofNullable(true)));
     }
 
+    public void fetchCompetitionContestData() {
+        if (!cyanideApiProperties.isJobCreationSchedulerActive()) {
+            log.info("Scheduler deactivated by configuration. Skipping fetchLeagueContests().");
+            return;
+        }
+        List<DataCollection> dcCompetitions = dataCollectionRepository.findByCollectionType(EntityType.Competition);
+        List<DataCollection> dcLeagues = dataCollectionRepository.findByCollectionType(EntityType.League);
+
+        List<Competition> competitions = competitionRepository.findAllById(
+                dcCompetitions.stream()
+                                .map(DataCollection::getId)
+                                .toList());
+        List<Competition> competitionsNeedingContests = competitions
+                .stream()
+                .filter(Competition::needsContests)
+                .toList();
+
+        Map<Identity, Optional<Date>> lastMatchDateByCompetitionId =
+                matchDomainService.getLastMatchDatesForCompetitions(competitionsNeedingContests);
+
+        Stream<Competition> competitionsToCollect = 
+                competitionsNeedingContests.stream()
+                        .filter(c -> this.shouldLoadContests(c, lastMatchDateByCompetitionId));
+
+        List<Identity> leagueIds = dcLeagues.stream()
+                .map(DataCollection::getId)
+                .toList();
+        List<League> leagues = leagueRepository.findAllById(leagueIds);
+        List<Competition> leagueComps = competitionRepository.findAllByLeagueIdIn(leagueIds);
+
+        List<Competition> competitionsForLeaguesWithContests = leagueComps
+                .stream()
+                .filter(Competition::needsContests)
+                .toList();
+        List<Competition> allComps = new ArrayList<>();
+        allComps.addAll(competitionsToCollect.toList());
+        allComps.addAll(competitionsForLeaguesWithContests);
+        allComps = allComps.stream().distinct().toList();
+
+        long distinctLeagueCount = allComps.stream().map(Competition::getLeagueId).distinct().count();
+        log.info("Will load contests for {} active competitions needing contests of {} different leagues.",
+                allComps.size(), distinctLeagueCount);
+                
+        loadContestsForCompetitions(allComps);
+        
+        List<League> bb1leagues = leagues.stream().filter(l -> l.getId().getOpus() == 1).toList();
+        log.info("Will load contests for {} BB1 leagues with active league collection.", bb1leagues.size());
+        loadContestsForLeagues(bb1leagues);
+}
+
 
     public void fetchStatus() {        
         log.info("Fetching status from Cyanide API.");
@@ -367,7 +418,7 @@ public class FetchDataService {
         log.info("Will load contests for {} active competitions needing contests of {} different leagues.",
                 competitionsToCollect.size(), distinctLeagueCount);
 
-        loadContestsFor(competitionsToCollect);
+        loadContestsForCompetitions(competitionsToCollect);
     }
 
     private boolean shouldLoadContests(Competition competition,
@@ -540,8 +591,24 @@ public class FetchDataService {
         leagueRepository.save(league);
     }
 
-    private void loadContestsFor(List<Competition> competitions) {
+    private void loadContestsForCompetitions(List<Competition> competitions) {
         List<Contest> contests = competitions
+                .stream()
+                .map(c -> 
+                {
+                        log.info(null != c.getLeagueId()
+                                ? "Loading contests for competition {} in league {}."
+                                : "Loading contests for competition {}.",
+                                c.getId(), c.getLeagueId());
+                        return cyanideApiService.loadContests(c);
+                })
+                .flatMap(List::stream)
+                .toList();
+        log.info("Loaded {} contests.", contests.size());
+    }
+
+    private void loadContestsForLeagues(List<League> leagues) {
+        List<Contest> contests = leagues
                 .stream()
                 .map(cyanideApiService::loadContests)
                 .flatMap(List::stream)
