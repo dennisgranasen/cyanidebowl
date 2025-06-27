@@ -31,24 +31,36 @@ function LeaguesAccordionItem({ leagues, header }) {
   );
 }
 
-function Leagues({ leagues }) {
+function Leagues({ leagues, competitionCountByStatusPerLeague }) {
   console.log('Rendering Leagues component with leagues:', leagues);
+  
+  function getCompetitionCountByStatus(league) {
+    return competitionCountByStatusPerLeague?.[league.id.key] || {};
+  }
+
   return (
     <Accordion variant="simple" allowMultiple defaultIndex={[0]}>
       <LeaguesAccordionItem
         key="Active"
         header="Active Leagues"
         leagues={leagues?.filter(
-          (league) =>
-            league.countsByCompetitionStatus?.InProgress > 0 || league.countsByCompetitionStatus?.Registration > 0
+          (league) => 
+            { 
+              var counts = getCompetitionCountByStatus(league);
+              return league.teamCount > 0 || counts?.InProgress > 0 || counts?.Registration > 0;
+            }
         )}
       />
       <LeaguesAccordionItem
         key="Inactive"
         header="Inactive Leagues"
         leagues={leagues?.filter(
-          (league) => league.teamCount === 0 || league.countsByCompetitionStatus?.InProgress === 0
-        )}
+          (league) =>             
+            { 
+              var counts = getCompetitionCountByStatus(league);
+              return league.teamCount === 0 || counts?.InProgress === 0;
+            }
+          )}      
       />
     </Accordion>
   );

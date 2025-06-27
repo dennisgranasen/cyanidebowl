@@ -16,6 +16,7 @@ function WarpScores() {
   const [circuits, setCircuits] = useState([]);
   const { authenticationReady, userPermissions } = useAuth0WithUserPermissions();
   const [leagues, setLeagues] = useState([]);
+  const [competitionCountsByStatus, setCompetitionCountsByStatus] = useState({});
   const [loading, setLoading] = useState(false);
   const [showCircuits, setShowCircuits] = useState(false);
   const [error, setError] = useState(undefined);
@@ -44,11 +45,25 @@ function WarpScores() {
       });
   };
 
+  const fetchCountsByCompetitionStatus = (leagues) => {
+    setLoading(true);
+    if (leagues && leagues.length > 0)
+      WarpScoresApiService.fetchCompetitionCountByStatus(leagues)
+        .then((data) => {
+          setCompetitionCountsByStatus(data);
+        })
+        .then(() => setLoading(false))
+        .catch((reason) => {
+          setError({ type: 'error', message: reason.toLocaleString() });
+        });
+  }
+
   useEffect(() => {
     if (showCircuits) {
       fetchCircuits();
     } else {
       fetchLeagues();
+      fetchCountsByCompetitionStatus(leagues);
     }
   }, [showCircuits]);
 
@@ -72,7 +87,7 @@ function WarpScores() {
             {showCircuits ? (
               circuits.map((currCircuit) => <CircuitCard mb={2} circuit={currCircuit} key={currCircuit.id} />)
             ) : (
-              <Leagues leagues={leagues} />
+              <Leagues leagues={leagues} competitionCountByStatusPerLeague={competitionCountsByStatus} />
             )}
           </LoadingOrErrorWrapper>
         </Box>
