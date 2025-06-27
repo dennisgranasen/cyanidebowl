@@ -24,7 +24,7 @@ public class WarpFetcher {
                 //fetcher.fetchCompetitions();
                 fetcher.fetchCompetitionData(); // 5m -> 1h
             } else if (arg.equals("contests")) {
-                fetcher.fetchCompetitionContests();
+                fetcher.fetchCompetitionContestData();
             } else if (arg.equals("matches")) {
                 //fetcher.fetchMissingMatches();
                 fetcher.fetchNewMatches(); // 3m -> 1h

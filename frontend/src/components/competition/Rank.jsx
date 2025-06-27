@@ -10,13 +10,13 @@ import Race from '../common/Race';
 
 const { boxSize, smallScreenBreakpointValues } = config;
 
-function Rank({ rank, competitionUuid }) {
+function Rank({ rank, competitionId }) {
   const navigate = useNavigate();
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
   const goToTeam = () => {
     if (rank?.team?.competitionIds || competitionUuid) {
-      const id = competitionUuid || rank?.team?.competitionIds[0];
-      navigate(`/competition/${id}/team/${rank.team.id}`);
+      const id = competitionId || rank?.team?.competitionIds[0];
+      navigate(`/competition/${id.opus}/${id.value}/team/${rank.team.id}`);
     }
   };
   return rank !== null ? (

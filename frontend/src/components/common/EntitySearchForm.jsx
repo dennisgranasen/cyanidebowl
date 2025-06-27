@@ -28,20 +28,20 @@ function EntitySearchForm({ handleLeagueClick, handleCompetitionClick }) {
     const newOffsets = {};
     let accumulatedOffset = 0;
     searchResults.leagueDetails.forEach(league => {
-      const leagueId = league.leagueId.toString();
-      const leagueEl = leagueRefs.current[leagueId];
+      const leagueId = league.id;
+      const leagueEl = leagueRefs.current[leagueId.key];
       if (!leagueEl) {
-        newOffsets[leagueId] = 0;
+        newOffsets[leagueId.key] = 0;
         return;
       }
       // Get the league's natural top (relative to the container)
       const leagueRect = leagueEl.getBoundingClientRect();
       
       // Find all competitions for this league
-      const comps = searchResults.competitionDetails.filter(c => c.leagueId?.value === leagueId);      
+      const comps = searchResults.competitionDetails.filter(c => c.leagueId?.value === leagueId.value);
 
       const compEls = comps
-        .map(c => competitionRefs.current[c.identity.value])
+        .map(c => competitionRefs.current[c.id.key])
         .filter(Boolean);
       if (compEls.length) {
         // Get bounding rects
@@ -54,10 +54,10 @@ function EntitySearchForm({ handleLeagueClick, handleCompetitionClick }) {
         const leagueCenter = leagueRect.top + leagueRect.height / 2;
         // Calculate offset relative to natural position, minus accumulated offset
         const offset = center - leagueCenter - accumulatedOffset;
-        newOffsets[leagueId] = offset;
+        newOffsets[leagueId.key] = offset;
         accumulatedOffset += offset;
       } else {
-        newOffsets[leagueId] = 0;
+        newOffsets[leagueId.key] = 0;
       }
     });
     setLeagueOffsets(newOffsets);
@@ -69,8 +69,8 @@ function EntitySearchForm({ handleLeagueClick, handleCompetitionClick }) {
       if (!searchResults.leagueDetails || !searchResults.competitionDetails) return;
 
       searchResults.leagueDetails.forEach(league => {
-        const leagueId = league.leagueId.toString();
-        const leagueEl = leagueRefs.current[leagueId];
+        const leagueId = league.id.value;
+        const leagueEl = leagueRefs.current[league.id.key];
         if (!leagueEl) return;
 
         // Use offsetTop relative to the parent container, plus marginTop
@@ -82,7 +82,7 @@ function EntitySearchForm({ handleLeagueClick, handleCompetitionClick }) {
           .filter(comp => comp.leagueId?.value === leagueId)
           .forEach(comp => {
 
-            const compKey = comp.identity?.value?.toString();
+            const compKey = comp.id.key;
             const compEl = competitionRefs.current[compKey];
             if (!compEl) return;
 
@@ -126,13 +126,13 @@ function EntitySearchForm({ handleLeagueClick, handleCompetitionClick }) {
   const myHandleCompetitionClick = (item) => {
     console.log('Competition clicked:', item);
     
-    if (!item || !item.identity || !item.identity.value) {
+    if (!item || !item.id || !item.id.value) {
       console.warn('Invalid competition item clicked:', item);
       return;
     }
     WarpScoresApiService.latestCompetitionMatches()
         .then((matches) => {
-            console.log('Latest matches for competition:', item.identity.value, matches);
+            console.log('Latest matches for competition:', item.id.value, matches);
         })
         .catch((err) => {
         });
@@ -319,8 +319,8 @@ function EntitySearchForm({ handleLeagueClick, handleCompetitionClick }) {
             {searchResults.leagueDetails && searchResults.leagueDetails.length > 0 && (
               <Box mt={4}>
                 <Heading size="sm" mb={2}>Leagues</Heading>
-                {searchResults.leagueDetails.map((item) => {                  
-                  const leagueId = item.leagueId?.toString()
+                {searchResults.leagueDetails.map((item) => {                            
+                  const leagueId = item.id.key
                   return (
                     <Box 
                         key={leagueId}
@@ -344,9 +344,9 @@ function EntitySearchForm({ handleLeagueClick, handleCompetitionClick }) {
                   const isDetailed = !!(item.format ||  item.leagueId || item.identity || item.status || item.teams || item.rounds);
                   return (
                     <Box 
-                        key={item.id || item.uuid || item.competitionId}
+                        key={item.id.key}
                         className="competition-row"
-                        ref={el => {competitionRefs.current[item.identity?.value?.toString()] = el;}}
+                        ref={el => {competitionRefs.current[item.id.key] = el;}}
                         _hover={isDetailed ? { bg: 'gray.100', opacity: 0.8, color: 'black', cursor: 'pointer' } : undefined}
                         style={isDetailed ? {} : { color: 'red', cursor: 'not-allowed' }}
                         onClick={isDetailed ? () => myHandleCompetitionClick(item) : undefined}

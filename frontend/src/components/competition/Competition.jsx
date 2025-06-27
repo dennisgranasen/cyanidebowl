@@ -15,15 +15,16 @@ function Competition({ competition, league }) {
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
 
   const goToCompetition = () => {
-    navigate(`/competition/${competition.uuid}`);
+    navigate(`/competition/${competition.id.opus}/${competition.id.value}`);
   };
 
+  console.log('Competition', competition);
   return competition !== null ? (
     <Tr onClick={goToCompetition}>
       <Td>
         <HStack>
           <Image
-            src={ImageUrls.logo(competition.logo || league?.logo, competition.opus || league?.opus)}
+            src={ImageUrls.logo(competition.logo || league?.logo, competition.id.opus || league?.id.opus)}
             boxSize={boxSize}
             objectFit="scale-down"
             fallback={<QuestionOutlineIcon boxSize={boxSize} />}

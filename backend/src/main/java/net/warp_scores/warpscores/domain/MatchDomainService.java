@@ -8,6 +8,8 @@ import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
 import net.warp_scores.warpscores.cyanide.api.responses.MatchResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.MatchesResponse;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
+import net.warp_scores.warpscores.domain.persistence.MatchRepository.DateForId;
+import net.warp_scores.warpscores.identity.CompositeIdentity;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Competition;
@@ -20,6 +22,8 @@ import net.warp_scores.warpscores.service.UUIDConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.fasterxml.jackson.databind.introspect.TypeResolutionContext.Empty;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -57,25 +61,27 @@ public class MatchDomainService {
     @Transactional
     public Map<Identity, Optional<Date>> getLastMatchDatesForCompetitions(
             List<Competition> compData) {
+      
+        List<Identity> compIds = compData.stream()
+                .filter(competition -> competition.getId() != null)
+                .map(comp -> (Identity)new SimpleIdentity(
+                        ((CompositeIdentity)comp.getId()).getParts()[1],
+                        comp.getId().getOpus()
+                    ))
+                .distinct()
+                .toList();
 
-        List<MatchRepository.DateForId> lastMatchDateByCompIds = Collections.emptyList();
-
-        for (Competition competition : compData) {
-            //Integer opus = competition.getOpus();
-            List<Identity> compIds = competition.getId() != null
-                    ? Collections.singletonList(competition.getId())
-                    : Collections.emptyList();
-            if (!compIds.isEmpty()) {
-                lastMatchDateByCompIds.addAll(matchRepository
-                        .findLastMatchDateByCompetitionIds(compIds));
-            }
+        if (!compIds.isEmpty()) {
+            return matchRepository
+                    .findLastMatchDateByCompetitionIds(compIds)
+                    .stream()
+                    .collect(Collectors.toMap(
+                        d -> d.id(),
+                        d -> Optional.ofNullable(d.date())
+                    ));                    
         }
-        return lastMatchDateByCompIds
-                .stream()
-                .collect(Collectors.toMap(
-                    d -> d.id(),
-                    d -> Optional.ofNullable(d.date())
-                ));
+
+       return Map.of(); // Return an empty map if no competitions are provided
     }
 
 
@@ -86,6 +92,7 @@ public class MatchDomainService {
     
         List<MatchRepository.DateForId> lastMatchDateByLeagueIds = 
             Collections.emptyList();
+
         if (!leagueIds.isEmpty()) {
             lastMatchDateByLeagueIds.addAll(matchRepository
                     .findLastMatchDateByLeagueIds(leagueIds));

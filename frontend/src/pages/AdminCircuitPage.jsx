@@ -130,13 +130,13 @@ function AdminCircuitPage() {
   // --- Handlers ---
   const handleCompetitionClick = (competition) => {
     console.log('Competition clicked:', competition);
-    setSelectedCompetitionId(competition.identity.parts[1]);
-    setSelectedLeagueId(competition.identity.parts[0]);
+    setSelectedCompetitionId(competition.id.parts[1]);
+    setSelectedLeagueId(competition.id.parts[0]);
     setLabel(competition.name);
     
     const name = competition.name || competition.leagueName || 'Unknown Competition';
     setSelectedCompetition(competition);
-    const opus = competition.identity.opus
+    const opus = competition.id.opus
     const gameTypeKey = getGameFromOpus(opus).toLowerCase();
     setSelectedGameType(gameTypeKey);
     setSelectedPlatform(getDefaultPlatform(gameTypeKey));
@@ -147,16 +147,16 @@ function AdminCircuitPage() {
   const handleLeagueClick = (league) => {
     console.log('League clicked:', league);
     setSelectedCompetitionId('');
-    setSelectedLeagueId(league.id || league.leagueId || league.uuid);
+    setSelectedLeagueId(league.id.value);
     setLabel(league.name);
-    const gameTypeKey = getGameFromOpus(league.identity.opus).toLowerCase();
+    const gameTypeKey = getGameFromOpus(league.id.opus).toLowerCase();
     setSelectedGameType(gameTypeKey);
     setSelectedPlatform(getDefaultPlatform(gameTypeKey));
     setSelectedRuleset(getDefaultRuleset(gameTypeKey));
-    console.log('Fetching league 155:', league.leagueId, league.identity.opus);
+    console.log('Fetching league 155:', league.leagueId, league.id.opus);
     if ((league.id == null || league.id === '') && league.leagueId == undefined) 
       console.log('League has no ID, cannot fetch details:', league);
-    WarpScoresApiService.leagues(league.id || league.leagueId, league.identity.opus)
+    WarpScoresApiService.leagues(league.id.value, league.id.opus)
       .then((res) => setSelectedLeague(res))
       .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }));
   };

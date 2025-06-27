@@ -10,5 +10,6 @@ import lombok.Setter;
 public class Context {
     private String[] leagues;
     private String[] competitions;
-    private String[] ladder;
+    //private String[] ladder;
+    private Boolean ladder;
 }

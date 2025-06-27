@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.export.naf.NafReport;
+import net.warp_scores.warpscores.identity.CompositeIdentity;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Competition;
@@ -133,14 +134,16 @@ public class CompetitionController {
         }
     }
 
-    @GetMapping("/competitions/{competitionId}")
+    @GetMapping("/competition/{competitionId}")
     public ResponseEntity<Competition> getCompetition(
             @PathVariable(name = "competitionId") String competitionId,
             @RequestParam(name = "opus", required = false) Integer opus) {
                 // Need to do this like leagueController... 
 
+        String[] parts = competitionId.split(Identity.DELIMITER);
         Identity competitionIdentity = 
-            new SimpleIdentity(competitionId, ofNullable(opus).orElse(defaultOpus));
+            new CompositeIdentity(ofNullable(opus).orElse(defaultOpus), parts);
+
         log.info("Fetching competition with ID: {} and opus: {}", competitionId, opus);
         Optional<Competition> competition =
             competitionService.loadCompetition(competitionIdentity);
@@ -151,7 +154,7 @@ public class CompetitionController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/competitions/{competitionId}/exportNafData")
+    @GetMapping("/competition/{competitionId}/exportNafData")
     @PreAuthorize(AUTHORITY_WRITE_LEAGUE_ADMIN) // ✨
     public DeferredResult<byte[]> exportNafData(
             @PathVariable(name = "competitionId") String competitionId,
@@ -178,7 +181,7 @@ public class CompetitionController {
         }
     }
 
-    @GetMapping("/competitions/{competitionId}/teams")
+    @GetMapping("/competition/{competitionId}/teams")
     public ResponseEntity<List<Team>> getTeamsForCompetition(
             @PathVariable(name = "competitionId") String competitionId,
             @RequestParam(name = "opus", required = false) Integer opus) {
@@ -194,7 +197,7 @@ public class CompetitionController {
         }
     }
 
-    @GetMapping("/competitions/{competitionId}/team/{teamId}")
+    @GetMapping("/competition/{competitionId}/team/{teamId}")
     public ResponseEntity<Team> getTeam(
             @PathVariable(name = "competitionId") String competitionId,
             @PathVariable(name = "teamId") String teamId,

@@ -52,10 +52,12 @@ public class ContestsRequest extends ApiRequest<ContestsRequest, ContestsRespons
 
     private String league_name;
     private String league_id;
+    private String competition_name;
     private String competition_id;
     private String status;
     private Integer round;
-    private Integer opus;
+    private Integer bb;
+    private Integer exact;
 
     public ContestsRequest() {
         super("bb/contests", ContestsRequest.class, ContestsResponse.class);

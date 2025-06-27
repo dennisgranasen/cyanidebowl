@@ -35,6 +35,7 @@ public interface ContestRepository extends MongoRepository<Contest, Identity> {
         MatchStatus matchStatus, Pageable pageable);
 
     Integer countByCompetitionId(Identity competitionId);
+    Integer countByLeagueId(Identity leagueId);
 
     Integer countByCompetitionIdAndMatchDateNotNull(Identity competitionId);
 

@@ -207,14 +207,41 @@ public class CyanideApiService {
         return competitionDomainService.createOrUpdateCompetitions(competitionsResponse, leagueIdentity.getOpus());
     }
 
-    public List<Contest> loadContests(Competition competition) {
+    public List<Contest> loadContests(Competition competition) {        
         Integer contestCount =
                 contestRepository.countByCompetitionId(
                         competition.getId());
         ContestsRequest contestsRequest = new ContestsRequest();
-        contestsRequest.setCompetition_id(competition.getCompetitionId());
-        contestsRequest.setLeague_id(competition.getLeagueId().getValue());
-        contestsRequest.setOpus(competition.getId().getOpus());
+        int opus = competition.getId().getOpus();
+        if (opus == 2) {
+            contestsRequest.setCompetition_name(competition.getName());
+            contestsRequest.setLeague_name(competition.getLeagueName());
+            contestsRequest.setExact(0);            
+        } else if (opus > 2) {
+            String cid = competition.getCompetitionId().split(Identity.DELIMITER)[1];
+            contestsRequest.setCompetition_id(cid);
+            contestsRequest.setLeague_id(competition.getLeagueId().getValue());
+        } else {
+            throw new IllegalArgumentException("Unsupported opus: " + opus);
+        }
+        contestsRequest.setBb(competition.getId().getOpus());
+
+
+        int limitOffset = contestCount - ApiRequest.DEFAULT_FETCH_LIMIT;
+        if (limitOffset < 0) {
+            limitOffset = 0;
+        }
+        contestsRequest.setStatus("*");
+        contestsRequest.setLimitOffset(limitOffset);
+        return new ArrayList<>(loadContests(contestsRequest));
+    }
+
+    public List<Contest> loadContests(League league) {
+        Integer contestCount =
+                contestRepository.countByLeagueId(league.getId());
+        ContestsRequest contestsRequest = new ContestsRequest();
+        contestsRequest.setLeague_id(league.getId().getValue());
+        contestsRequest.setBb(league.getId().getOpus());
 
         int limitOffset = contestCount - ApiRequest.DEFAULT_FETCH_LIMIT;
         if (limitOffset < 0) {
@@ -227,7 +254,7 @@ public class CyanideApiService {
 
     public List<Contest> loadContests(ContestsRequest contestsRequest) {
         ContestsResponse contestsResponse = cyanideCachedRestApiClient.getFromCacheOrApi(contestsRequest);
-        return contestDomainService.createOrUpdateContests(contestsResponse, contestsRequest.getOpus());
+        return contestDomainService.createOrUpdateContests(contestsResponse, contestsRequest.getBb());
     }
 
     @Transactional

@@ -67,7 +67,7 @@ function TableColumns() {
   );
 }
 
-function Ranks({ ranks, competitionUuid, loading, error }) {
+function Ranks({ ranks, competitionId, loading, error }) {
   return (
     <LoadingOrErrorWrapper loading={loading} error={error}>
       <TableContainer>
@@ -77,7 +77,7 @@ function Ranks({ ranks, competitionUuid, loading, error }) {
           </Thead>
           <Tbody>
             {ranks?.map((rank) => {
-              return <Rank competitionUuid={competitionUuid} rank={rank} key={rank.team.id} />;
+              return <Rank competitionId={competitionId} rank={rank} key={rank.team.id.asKey} />;
             })}
           </Tbody>
           <Tfoot>

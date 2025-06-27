@@ -53,7 +53,7 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
     @Aggregation(pipeline = {
             "{ $match: {leagueId: { $in: ?0 } } }",
             "{ $group: { _id: $leagueId, date: { $max: $finished }} }",
-            "{ $project: { uuid: $_id, date: 1, _id: 0 } }"
+            "{ $project: { _id: 1, date: 1 } }"
     })
     List<DateForId> findLastMatchDateByLeagueIds(List<Identity> leagueIds);
     
@@ -72,7 +72,7 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
     @Aggregation(pipeline = {
             "{ $match: {competitionId: { $in: ?0 } } }",
             "{ $group: { _id: $competitionId, date: { $max: $finished }} }",
-            "{ $project: { uuid: $_id, date: 1, _id: 0 } }"
+            "{ $project: { _id: 1, date: 1 } }"
     })
     List<DateForId> findLastMatchDateByCompetitionIds(List<Identity> competitionIds);
 

@@ -27,6 +27,14 @@ public class CompositeIdentity implements Identity {
     public CompositeIdentity() {
     }
 
+    public CompositeIdentity(int opus, String[] parts) {
+        Objects.requireNonNull(parts, "parts must not be null");
+        this.opus = opus;
+        this.parts = parts.clone();
+        this.key = asMongoKey();
+        //this.id = buildId(opus, this.parts);
+    }
+
     public CompositeIdentity(int opus, Object... parts) {
         Objects.requireNonNull(parts, "parts must not be null");
         this.opus = opus;
