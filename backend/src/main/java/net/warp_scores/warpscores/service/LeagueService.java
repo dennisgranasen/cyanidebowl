@@ -5,13 +5,16 @@ import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.domain.persistence.LeagueRepository;
 import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.model.CompetitionStatus;
 import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
 
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -53,6 +56,11 @@ public class LeagueService {
         }
     }
 
+    @DurationLogging
+    public Map<Identity, Map<CompetitionStatus, Integer>> getCompetitionCountByStatus(Collection<Identity> leagueIds) {
+        Map<Identity, Map<CompetitionStatus, Integer>> counts = leagueRepository.countCompetitionsByStatus(leagueIds);   
+        return counts;
+    }
     /*
     public Optional<League> loadByOldId(Integer id, Optional<Integer> opus) {
         Optional<League> league = leagueRepository.findByOldIdAndOpus(id, 

@@ -201,6 +201,9 @@ export default {
     axios(`/leagues${leagueUuid ? `/${leagueUuid}` : ''}${opus !== undefined && opus !== null ? `?opus=${opus}` : ''}`)
       .then(returnData)
       .catch(handleError),
+  fetchCompetitionCountByStatus: async (leagues) => 
+    axios(`/league/competitionCountByStatus?leagueIds=${leagues.map((l) => l.id.key).join(',')}`) 
+      .then(returnData).catch(handleError),
   // contests
   liveLeagueContests: async (leagueUuid, limit) =>
     axios(`/contests/league/${leagueUuid}/live${limit ? `/${limit}` : ''}`)
