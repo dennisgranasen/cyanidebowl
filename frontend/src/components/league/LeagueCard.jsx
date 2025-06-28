@@ -1,15 +1,28 @@
 import React from 'react';
 import { Box, Card, CardBody, Flex, Heading, Image } from '@chakra-ui/react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import imageUrls from '../../imageUrls';
 import LeagueInfo from './LeagueInfo';
+import WarpScoresApiService from '../../WarpScoresApiService';
 
 function LeagueCard({ league, ...props }) {
   const navigate = useNavigate();
+
+  const [competitionCountByStatus, setCompetitionCountByStatus] = useState({});
+  
+
   const goToLeague = () => {
     console.log("Navigating to league:", league);
     navigate(`/league/${league.id.opus}/${league.id.value}`);
   };
+
+  useEffect(() => {
+    WarpScoresApiService.competitionCountByStatus([league.id])
+      .then((counts) => setCompetitionCountByStatus(counts))
+      .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
+  }, []);
+
   return (
     <Card
       backgroundColor="warpScoresBackgroundColor"
@@ -28,7 +41,7 @@ function LeagueCard({ league, ...props }) {
             <Heading size="md" mb="0.5rem">
               {league.name}
             </Heading>
-            <LeagueInfo league={league} />
+            <LeagueInfo league={league} competitionCountByStatus={competitionCountByStatus}/>
           </Box>
         </CardBody>
       </Flex>

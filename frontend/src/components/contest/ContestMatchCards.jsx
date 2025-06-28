@@ -8,13 +8,13 @@ function ContestMatchCards({ contests, noContentIcon, noContentHeading, noConten
     <SimpleGrid columns={{ lg: 3, sm: 1, md: 2 }} spacing="1.25rem">
       {contests.map((contest) => (
         <ContestMatchCard
-          key={contest.contestUuid}
+          key={contest.id?.key || contest.id }
           contestOrMatch={contest}
           contestHeader={
             embeddable ? (
               contest?.competitionName
             ) : (
-              <RouteLink to={`/competition/${contest?.competitionId}`}>{contest?.competitionName}</RouteLink>
+              <RouteLink to={`/competition/${contest?.competitionId?.key}`}>{contest?.competitionName}</RouteLink>
             )
           }
           variant="outline"

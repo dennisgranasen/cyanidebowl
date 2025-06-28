@@ -43,6 +43,7 @@ function LatestMatches({ league, competition, embeddable, limit }) {
     }
   }, [league, competition]);
 
+  console.debug('LatestMatches', { league, competition, embeddable, limit, contests, loading, error });
   return (
     <>
       {!embeddable && <Heading size="md">Latest matches</Heading>}

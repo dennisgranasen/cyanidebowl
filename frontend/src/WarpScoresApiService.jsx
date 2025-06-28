@@ -201,12 +201,22 @@ export default {
     axios(`/leagues${leagueUuid ? `/${leagueUuid}` : ''}${opus !== undefined && opus !== null ? `?opus=${opus}` : ''}`)
       .then(returnData)
       .catch(handleError),
-  fetchCompetitionCountByStatus: async (leagues) => 
-    axios(`/league/competitionCountByStatus?leagueIds=${leagues.map((l) => l.id.key).join(',')}`) 
-      .then(returnData).catch(handleError),
+  competitionCountByStatus: async (leagues) => {
+    console.log('Fetching competition count by status for leagues:', leagues.map((l) => l.key).join(','));
+    return axios(`/league/competitionCountByStatus?leagueIds=${leagues.map((l) => l.key).join(',')}`) 
+      .then(returnData).catch(handleError)
+  },
+  leagueRanks: async (leagueId, opus, limit) =>
+    axios(`/ranks/league/${leagueId}${limit ? `/${limit}` : ''}${opus !== undefined && opus !== null ? `?opus=${opus}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
+  leagueTeams: async (leagueId, opus) =>
+    axios(`/teams/league/${leagueId}${opus !== undefined && opus !== null ? `?opus=${opus}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
   // contests
-  liveLeagueContests: async (leagueUuid, limit) =>
-    axios(`/contests/league/${leagueUuid}/live${limit ? `/${limit}` : ''}`)
+  liveLeagueContests: async (leagueId, limit) =>
+    axios(`/contests/league/${leagueId}/live${limit ? `/${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
   liveCompetitionContests: async (competitionUuid, limit) =>
@@ -249,6 +259,10 @@ export default {
       .catch(handleError),
   competitionTeam: async (competitionUuid, teamUuid) =>
     axios(`/competitions/${competitionUuid}/team/${teamUuid}`).then(returnData).catch(handleError),
+  competitionTeams: async (competitionUuid, opus) =>
+    axios(`/teams/competition/${competitionUuid}${opus !== undefined && opus !== null ? `?opus=${opus}` : ''} `)
+      .then(returnData)
+      .catch(handleError),
   competitionRanks: async (competitionId, opus, limit) =>
     axios(`/ranks/competition/${competitionId}${limit ? `/${limit}` : ''}${opus !== undefined && opus !== null ? `?opus=${opus}` : ''}`)
       .then(returnData)

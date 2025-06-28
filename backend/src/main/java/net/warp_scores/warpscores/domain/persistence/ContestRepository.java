@@ -9,12 +9,11 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.UUID;
-import java.util.Optional;
+
 
 @Repository
 public interface ContestRepository extends MongoRepository<Contest, Identity> {
-    List<Contest> findByContestUuid(UUID contestUUid);
+    List<Contest> findByContestId(Identity contestId);
 
     List<Contest> findByCompetitionIdAndStatus(Identity competitionId, 
         MatchStatus matchStatus);

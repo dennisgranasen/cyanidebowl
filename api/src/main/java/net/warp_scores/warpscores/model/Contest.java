@@ -17,7 +17,6 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Stream;
 
 @Getter
@@ -29,18 +28,18 @@ public class Contest implements Comparable<Contest>, Identifiable {
     private Identity id;
    
     public String getPlayerId() { return id != null ? id.getValue() : null; }
-
+/*
     public UUID getContestUuid() {
         return UUIDUtil.getUUIDFromIdentity(id);
     }
-
+*/
     //private Integer oldContestId; // This is the old ID used in the legacy system, if applicable.
     private CompetitionFormat format;
     private Identity leagueId;
     private String leagueName;
     private Identity competitionId;
     private String competitionName;
-    private UUID contestId;
+    private Identity contestId;
     private String stadium;
     private String contestFormat;
     private MatchType type;
@@ -63,7 +62,7 @@ public class Contest implements Comparable<Contest>, Identifiable {
     private boolean concede;
     private boolean overtime;
 
-    private UUID nextContestUuid;
+    private Identity nextContestId;
 
     public Contest(Identity id) {
         this.id = id;
@@ -76,7 +75,7 @@ public class Contest implements Comparable<Contest>, Identifiable {
         String teamB = Optional.ofNullable(opponents).map(o -> o != null && o.length > 1 ? o[1] : null).map(Team::getName)
                 .orElse("n/a");
         return String.format("Contest[%s] Round: %s -> %s vs %s (next: %s)", id.asMongoKey(), round, teamA, teamB,
-                nextContestUuid);
+                nextContestId);
     }
 
     public int compareTo(@Nullable Contest otherContest) {
@@ -85,10 +84,17 @@ public class Contest implements Comparable<Contest>, Identifiable {
         }
 
         int compare = round != null && otherContest.round != null ? Integer.compare(round, otherContest.round) : 0;
-        UUID contestUuid = getContestUuid();
+        
         if (compare == 0) {
-            compare = UUIDUtil.getInstantFromUUID(contestUuid)
-                    .compareTo(UUIDUtil.getInstantFromUUID(otherContest.getContestUuid()));
+            compare = Optional.ofNullable(matchDate)
+                    .map(date -> date.compareTo(otherContest.matchDate))
+                    .orElse(0);                    
+        }
+        if (compare == 0) {
+            compare = Optional.ofNullable(id)
+                    .map(Identity::getValue)
+                    .map(value -> value.compareTo(otherContest.id.getValue()))
+                    .orElse(0);
         }
         return compare;
     }

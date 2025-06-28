@@ -16,7 +16,10 @@ import lombok.ToString;
 public class SimpleIdentity implements Identity {
     private int opus;
     private String value;
-    private String key;
+
+    public String getKey() {
+        return asMongoKey();
+    }
 
     public SimpleIdentity() {
     }
@@ -24,13 +27,11 @@ public class SimpleIdentity implements Identity {
     public SimpleIdentity(Object value, int opus) {
         this.value = Objects.requireNonNull(value, "value must not be null").toString();
         this.opus = opus;
-        this.key = asMongoKey();
     }
 
     public SimpleIdentity(String value, int opus) {
         this.value = Objects.requireNonNull(value, "value must not be null");
         this.opus = opus;
-        this.key = asMongoKey();
     }
 
     public SimpleIdentity(UUID uuid, int opus) {
@@ -42,7 +43,7 @@ public class SimpleIdentity implements Identity {
     }
 
     public String asMongoKey() {
-        return opus + DELIMITER + value;
+        return (opus + DELIMITER + value).toLowerCase();
     }
 
     /**

@@ -18,7 +18,10 @@ public class CompositeIdentity implements Identity {
     //private String id;
     private int opus;
     private String[] parts;
-    private String key;
+
+    public String getKey() {
+        return asMongoKey();
+    }
 
     public String getValue() {
         return String.join(DELIMITER, parts);
@@ -31,16 +34,12 @@ public class CompositeIdentity implements Identity {
         Objects.requireNonNull(parts, "parts must not be null");
         this.opus = opus;
         this.parts = parts.clone();
-        this.key = asMongoKey();
-        //this.id = buildId(opus, this.parts);
     }
 
     public CompositeIdentity(int opus, Object... parts) {
         Objects.requireNonNull(parts, "parts must not be null");
         this.opus = opus;
         this.parts = Arrays.stream(parts).map(String::valueOf).toArray(String[]::new);
-        this.key = asMongoKey();
-        //this.id = buildId(opus, this.parts);
     }
 
     private static String buildId(int opus, String[] parts) {
@@ -49,7 +48,7 @@ public class CompositeIdentity implements Identity {
         for (String part : parts) {
             sb.append(DELIMITER).append(part);
         }
-        return sb.toString();
+        return sb.toString().toLowerCase();
     }
 
     public String[] getParts() {
@@ -72,5 +71,12 @@ public class CompositeIdentity implements Identity {
         int opus = Integer.parseInt(tokens[0]);
         String[] parts = Arrays.copyOfRange(tokens, 1, tokens.length);
         return new CompositeIdentity(opus, (Object[]) parts);
+    }
+
+    public SimpleIdentity asSimpleIdentity(int partIndex){
+        if (partIndex < 0 || partIndex >= parts.length) {
+            throw new IndexOutOfBoundsException("Part index out of bounds: " + partIndex);
+        }
+        return new SimpleIdentity(parts[partIndex], opus);   
     }
 }

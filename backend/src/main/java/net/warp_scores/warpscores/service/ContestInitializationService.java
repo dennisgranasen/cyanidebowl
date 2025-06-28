@@ -105,9 +105,7 @@ public class ContestInitializationService {
             if (compareResult != 0) {
                 return compareResult;
             }
-            Instant instant1 = UUIDUtil.getInstantFromUUID(contest1.getContestUuid());
-            Instant instant2 = UUIDUtil.getInstantFromUUID(contest2.getContestUuid());
-            return instant1.compareTo(instant2);
+            return contest1.compareTo(contest2);
         });
 
         int[] roundMatches = new int[totalRounds];
@@ -136,7 +134,7 @@ public class ContestInitializationService {
                     }
                 }
                 if (nextContest != null) {
-                    currContest.setNextContestUuid(nextContest.getContestUuid());
+                    currContest.setNextContestId(nextContest.getContestId());
                 }
             }
             currRoundOffset = nextRoundOffset;

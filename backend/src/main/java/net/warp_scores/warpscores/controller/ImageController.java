@@ -142,6 +142,7 @@ public class ImageController {
     }
 
     private ResponseEntity<byte[]> loadImage(Optional<String> imageUrl) {
+        log.info(imageUrl.orElse("null image URL"));
         return loadImage(imageUrl, Optional.empty());
     }
 
@@ -177,7 +178,8 @@ public class ImageController {
         String url = String.format("%s/%s%s%s", baseUrl, name,
                 ext.startsWith(".") ? "" : ".",
                 ext);
-       return Optional.of(url.replace("{OPUS}", 
+        log.info(url);
+        return Optional.of(url.replace("{OPUS}", 
             opus.orElse(getDefaultOpus()).toString()));
     }
 }

@@ -3,6 +3,7 @@ package net.warp_scores.warpscores.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.IdentityUtil;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.CompetitionStatus;
 import net.warp_scores.warpscores.model.League;
@@ -63,26 +64,7 @@ public class LeagueController {
         return league
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
-    }
-
-    @GetMapping("/leagues/competitionCountByStatus/")
-    public ResponseEntity<Map<Identity,Map<CompetitionStatus, Integer>>> getCompetitionCountByStatus(
-        @PathVariable(name = "id") String leagueIds) {
-        String[] ids = leagueIds.split(",");
-        Collection<Identity> ids = leagues.getIdentifiables();
-        if (ids == null || ids.isEmpty()) {
-            log.warn("No leagues provided for competition count");
-            return ResponseEntity.badRequest().build();
-        }
-        try {
-            return  
-                ResponseEntity.ok(leagueService.getCompetitionCountByStatus(ids));
-        } catch (Exception e) {
-            log.error("Error fetching competition count by status", e);
-            return ResponseEntity.status(500).build();
-        }   
-    }
-    
+    }    
 
     /*
       fetchCompetitionCountByStatus: async (leagues) => 

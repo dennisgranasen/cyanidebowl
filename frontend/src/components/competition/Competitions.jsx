@@ -56,7 +56,7 @@ function CompetitionsAccordionItem({ competitions, league, header }) {
               <Tbody>
                 {competitions ? (
                   competitions.map((competition) => (
-                    <Competition competition={competition} league={league} key={competition.id} />
+                    <Competition competition={competition} league={league} key={competition.id.key} />
                   ))
                 ) : (
                   <Spinner />

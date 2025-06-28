@@ -48,7 +48,7 @@ function WarpScores() {
   const fetchCountsByCompetitionStatus = (leagues) => {
     setLoading(true);
     if (leagues && leagues.length > 0)
-      WarpScoresApiService.fetchCompetitionCountByStatus(leagues)
+      WarpScoresApiService.competitionCountByStatus(leagues)
         .then((data) => {
           setCompetitionCountsByStatus(data);
         })
