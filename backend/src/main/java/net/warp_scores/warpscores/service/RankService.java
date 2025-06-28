@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
+import net.warp_scores.warpscores.domain.persistence.MatchRepository.TeamRankingRecord;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.CompetitionFormat;
@@ -94,6 +95,15 @@ public class RankService {
                     return entry.getKey();
                 })
                 .collect(Collectors.toList());
+    }
+
+    @DurationLogging
+    public List<TeamRankingRecord> getRanksForLeague(Identity leagueId, 
+            Optional<List<RankComparisons>> rankComparisons,
+            Optional<Integer> limit) {
+        List<TeamRankingRecord> ranks = matchRepository.findTeamRankingsByLeagueId(leagueId);
+        ranks.stream().forEach(record -> log.info("Team ranking record: {}", record));
+        return ranks;
     }
 
     private Rank toRank(Team team,

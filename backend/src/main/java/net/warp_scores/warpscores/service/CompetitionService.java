@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
+import net.warp_scores.warpscores.domain.persistence.CompetitionRepository.CompetitionStatusCountRecord;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -261,6 +263,38 @@ public class CompetitionService {
                 .collect(
                         groupingBy(Competition::getStatus, Collectors.counting()));
     }
+
+    @DurationLogging
+    public List<CompetitionStatusCountRecord> getCompetitionCountByStatus(Collection<Identity> leagueIds) {
+        List<CompetitionStatusCountRecord> counts = competitionRepository.countCompetitionsByStatusPerLeague(leagueIds);   
+        log.info("Fetched competition counts by status for leagues: {}.\n {}", leagueIds, counts);
+        return counts;
+    }
+    /*
+    public Optional<League> loadByOldId(Integer id, Optional<Integer> opus) {
+        Optional<League> league = leagueRepository.findByOldIdAndOpus(id, 
+            opus.orElse(defaultOpus)); // Default opus if not provided
+        log.info("Loading league by old ID: {}, opus: {}", id, opus.orElse(defaultOpus));
+        if (league.isPresent()) {
+            log.info("League found in DB.", league.get());
+            return league;
+        } else {
+            // Try to fetch from Cyanide API
+            log.info("League {} not found in DB, fetching from Cyanide API...", id);
+            net.warp_scores.warpscores.model.League fetched = cyanideApiService.loadOldLeague(id, opus);
+            // Optionally save to DB if found
+            if (fetched != null) {
+                log.info("League {} fetched from Cyanide API, saving to DB...", id);
+                leagueRepository.save(fetched);
+                return Optional.of(fetched);
+            } else {
+                log.warn("League {} not found in Cyanide API either.", id);
+                return Optional.empty();
+            }
+        }
+    }
+    */
+
 
     public Integer calcWissenTotalRounds(Integer teamsMax) {
         int numTeams = teamsMax;

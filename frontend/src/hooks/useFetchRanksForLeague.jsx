@@ -6,10 +6,10 @@ export default function useFetchRanks() {
   const [ranks, setRanks] = useState([]);
   const [error, setError] = useState(null);
 
-  const fetchRanks = (competition, limit) => {
+  const fetchRanks = (league, limit) => {
     setRanksLoading(true);
-    console.log('Fetching ranks for competition:', competition.id.value, competition.id.opus, limit);
-    WarpScoresApiService.competitionRanks(competition.id.value, competition.id.opus, limit)
+    console.log('Fetching ranks for league:', league.id.value, league.id.opus, limit);
+    WarpScoresApiService.leagueRanks(league.id.value, league.id.opus, limit)
       .then((data) => {
         data.sort((rankA, rankB) => rankA.rank - rankB.rank);
         setRanks(data);

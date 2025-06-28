@@ -15,7 +15,7 @@ function RaceAvatar({ race, boxSize, size }) {
         size={size}
         fontFamily="bigStar"
         src={`/img/raceAvatars/${race}.png`}
-        name={prettyPrint(race)}
+        name={/*prettyPrint(*/race/*)*/}
       />
     </DelayedIconTooltip>
   );
@@ -25,7 +25,7 @@ function Race({ race, size, boxSize, asAvatar }) {
   return asAvatar ? (
     <RaceAvatar race={race} size={size} boxSize={boxSize} />
   ) : (
-    <Text size={size}>{prettyPrint(race)}</Text>
+    <Text size={size}>{/*prettyPrint(*/race/*)*/}</Text>
   );
 }
 

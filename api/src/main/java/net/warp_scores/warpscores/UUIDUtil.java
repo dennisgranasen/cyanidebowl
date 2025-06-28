@@ -23,6 +23,7 @@ public class UUIDUtil {
         final long nanoAdjustment = ((hundredNanosSinceUnixEpoch % NUM_HUNDRED_NANOS_IN_A_SECOND) * 100);
         return Instant.ofEpochSecond(secondsSinceUnixEpoch, nanoAdjustment);
     }
+    /*
     public static UUID getUUIDFromIdentity(final Identity identity) {
         if (identity == null) {
             throw new IllegalArgumentException("Identity must not be null");
@@ -40,4 +41,5 @@ public class UUIDUtil {
             throw new IllegalArgumentException("Unsupported identity type: " + identity.getClass().getName());
         }
     }
+        */
 }

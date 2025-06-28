@@ -3,8 +3,14 @@ import { Center, Table, TableContainer, Tbody, Tfoot, Th, Thead, Tr, useBreakpoi
 import Rank from './Rank';
 import config from '../../config';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
+import WarpScoresApiService from '../../WarpScoresApiService';
 
 const { smallScreenBreakpointValues } = config;
+
+function getLogoForTeam(teamId, teams) {
+  const team = teams.find((t) => t.id.key === teamId.key);
+  return team ? team.logo : null;
+}
 
 function TableColumns() {
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
@@ -67,7 +73,7 @@ function TableColumns() {
   );
 }
 
-function Ranks({ ranks, competitionId, loading, error }) {
+function Ranks({ ranks, teams, leagueId, loading, error }) {
   return (
     <LoadingOrErrorWrapper loading={loading} error={error}>
       <TableContainer>
@@ -76,9 +82,9 @@ function Ranks({ ranks, competitionId, loading, error }) {
             <TableColumns />
           </Thead>
           <Tbody>
-            {ranks?.map((rank) => {
-              console.log('Rendering rank for team:', rank.team.id.asKey);
-              return <Rank competitionId={competitionId} rank={rank} key={rank.team.id.asKey} />;
+            { ranks?.map((rank, index) => {
+                const teamLogo = getLogoForTeam(rank.teamId, teams);
+                return <Rank leagueId={leagueId} logo={teamLogo} rank={rank} position={index + 1} key={rank.teamId.key} />;
             })}
           </Tbody>
           <Tfoot>

@@ -57,6 +57,28 @@ public class TeamService {
     }
 
     @DurationLogging
+    public List<Team> getTeamsForLeague(Identity leagueId) {
+        List<Team> teams = teamRepository.findByLeagueId(leagueId);
+        if (teams.isEmpty()) {
+            log.warn("No teams found for league ID {}", leagueId);
+            return List.of();
+        }
+        log.info("Found {} teams for league ID {}", teams.size(), leagueId);
+        return teams;
+    } 
+
+    @DurationLogging
+    public List<Team> getTeamsForCompetition(Identity competitionId) { 
+        List<Team> teams = teamRepository.findByCompetitionId(competitionId);
+        if (teams.isEmpty()) {
+            log.warn("No teams found for competition ID {}", competitionId);
+            return List.of();
+        }
+        log.info("Found {} teams for competition ID {}", teams.size(), competitionId);
+        return teams;
+    }
+
+    @DurationLogging
     public List<Team> loadAll() {
         return teamRepository.findAll();
     }

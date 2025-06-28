@@ -4,11 +4,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.domain.MatchDomainService;
 import net.warp_scores.warpscores.domain.TeamDomainService;
+import net.warp_scores.warpscores.domain.persistence.TeamRepository;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Team;
 import net.warp_scores.warpscores.service.OfficialLeagueAndCompetitions;
+import net.warp_scores.warpscores.service.TeamService;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +30,7 @@ import java.util.Optional;
 public class TeamController {
 
     private final TeamDomainService teamDomainService;
+    private final TeamService teamService;
 
     private final MatchDomainService matchDomainService;
 
@@ -67,6 +70,36 @@ public class TeamController {
             return ResponseEntity.ok(matchesForTeam);
         } catch (Exception ex) {
             log.error("Unable to get matches for team uuid {}.", teamId, ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/teams/league/{leagueId}")
+    public ResponseEntity<List<Team>> getTeamsForLeague(
+            @PathVariable(name = "leagueId") String leagueId,
+            @RequestParam(name = "opus", required = false) Integer opus) {
+        try {
+            Identity leagueIdentity = 
+                new SimpleIdentity(leagueId, ofNullable(opus).orElse(defaultOpus));
+            List<Team> teamsForLeague = teamService.getTeamsForLeague(leagueIdentity);
+            return ResponseEntity.ok(teamsForLeague);
+        } catch (Exception ex) {
+            log.error("Unable to get teams for league id {}.", leagueId, ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/teams/competition/{competitionId}")
+    public ResponseEntity<List<Team>> getTeamsForCompetition(
+            @PathVariable(name = "competitionId") String competitionId,
+            @RequestParam(name = "opus", required = false) Integer opus) {
+        try {
+            Identity teamIdentity = 
+                new SimpleIdentity(competitionId, ofNullable(opus).orElse(defaultOpus));
+            List<Team> teamsForCompetition = teamService.getTeamsForCompetition(teamIdentity);
+            return ResponseEntity.ok(teamsForCompetition);
+        } catch (Exception ex) {
+            log.error("Unable to get teams for competition id {}.", competitionId, ex);
             return ResponseEntity.internalServerError().build();
         }
     }

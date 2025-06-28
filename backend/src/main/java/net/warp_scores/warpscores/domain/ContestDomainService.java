@@ -8,7 +8,6 @@ import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.model.Contest;
-import net.warp_scores.warpscores.model.Team;
 import net.warp_scores.warpscores.service.PopulatorUtil;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -86,41 +85,10 @@ public class ContestDomainService {
 
     private void populateContest(ApiContest sourceApiContestMatch, Contest targetContest, int opus) {
         PopulatorUtil.copyNonNullProperties(sourceApiContestMatch, targetContest);
-        //targetContest.setContestUuid(sourceApiContestMatch.getContest_id());
-        /*
-            targetContest.setLeagueId(new SimpleIdentity(sourceApiContestMatch.getLeague_id(), opus));
-            targetContest.setLive(sourceApiContestMatch.getLive());
-            targetContest.setCompetitionId(new SimpleIdentity(sourceApiContestMatch.getCompetition_id(), opus));
-            targetContest.setCompetitionName(sourceApiContestMatch.getCompetition());
-            targetContest.setLeagueName(sourceApiContestMatch.getLeague());
-            targetContest.setGameId(sourceApiContestMatch.getGame_id());
-            targetContest.setMatchId(sourceApiContestMatch.getGame_id());
-                    //Optional.ofNullable(sourceApiContestMatch.getGame_id()).map(UUID::fromString).orElse(null));
-            targetContest.setMatchDate(sourceApiContestMatch.getMatch_date());
-            targetContest.setOpponents(toOpponents(sourceApiContestMatch.getOpponents(), opus));
-        */
         undeprecateMatchStatus(targetContest);
     }
 
     private void undeprecateMatchStatus(Contest contest) {
         contest.setStatus(contest.getStatus().undeprecate());
     }
-    /*
-    private List<Team> toOpponents(ApiContest.Opponent[] apiOpponents, int opus) {
-        if (apiOpponents == null) {
-            return Collections.emptyList();
-        }
-        return Arrays.stream(apiOpponents)
-            .map((apiTeam) -> toOpponent(apiTeam, opus))
-            .collect(Collectors.toList());
-    }
-
-    private Team toOpponent(ApiContest.Opponent apiOpponent, int opus) {
-        SimpleIdentity id = new SimpleIdentity(apiOpponent.getTeam().getId(), opus);
-        Team team = new Team(id);
-        ApiContest.Team apiTeam = apiOpponent.getTeam();
-        PopulatorUtil.copyNonNullProperties(apiTeam, team);
-        return team;
-    }
-    */
 }

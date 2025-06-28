@@ -61,4 +61,4 @@ docker-compose-production.yaml
 my-compose.yaml
 frontend/package-lock.json
 backend/test.data
-mongodb_playground.js
+*playground*.js
