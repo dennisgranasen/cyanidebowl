@@ -73,7 +73,7 @@ function LeaguePage() {
         <Navigation currentPage="league" league={[league?.id.value, league?.name]} />
       </Box>
       {league && (
-        <HeaderCard heading={league.name} detailsHeading="League details" mainImageSrc={imageUrls.logo(league.logo,league?.opus)}>
+        <HeaderCard heading={league.name} detailsHeading="League details" mainImageSrc={imageUrls.logo(league.logo,league?.id?.opus)}>
           <LeagueInfo league={league} componentCountByStatus={componentCountByStatus}/>
         </HeaderCard>
       )}

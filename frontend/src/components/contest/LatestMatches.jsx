@@ -16,7 +16,8 @@ function LatestMatches({ league, competition, embeddable, limit }) {
     setLoading(true);
     WarpScoresApiService.latestLeagueMatches(leagueId, opus, contestLimit)
       .then((data) => {
-        data.sort(comparators.compareMatchesByMatchUuidAsDatesDesc);
+        data.sort((x,y) => x.finished - y.finished);
+        //data.sort(comparators.compareMatchesByMatchUuidAsDatesDesc);
         setContests(data);
       })
       .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
@@ -27,7 +28,7 @@ function LatestMatches({ league, competition, embeddable, limit }) {
     setLoading(true);
     WarpScoresApiService.latestCompetitionMatches(competitionId, opus, contestLimit)
       .then((data) => {
-        data.sort(comparators.compareMatchesByMatchUuidAsDatesDesc);
+        data.sort((x,y) => x.finished - y.finished);
         setContests(data);
       })
       .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))

@@ -121,7 +121,7 @@ function ArenaCoachPage() {
           heading={`Coach: ${coachName ? `${coachName}` : ''}`}
           subHeading={<RouteLink to={`/competition/${competitionUuid}`}>Competition: {competition?.name}</RouteLink>}
           detailsHeading="Arena Coach Details"
-          mainImageSrc={competition?.logo ? imageUrls.logo(competition?.logo, competition?.opus) : imageUrls.logo(competition?.leagueLogo, competition?.opus)}
+          mainImageSrc={competition?.logo ? imageUrls.logo(competition?.logo, competition?.id?.opus) : imageUrls.logo(competition?.leagueLogo, competition?.id?.opus)}
         >
           <LoadingOrErrorWrapper loading={arenaCoachTeamsLoading} error={arenaCoachTeamsError}>
             <InfoArea>

@@ -6,7 +6,7 @@ import formatter from '../../util/formatter';
 import config from '../../config';
 import ScoreOrIcon from './ScoreOrIcon';
 import prettyPrint from '../../util/prettyPrint';
-
+import { toRace } from '../../util/raceUtil';
 const { boxSize } = config;
 
 function TeamAndCoach({ teamName, coachName, race, reverse }) {
@@ -25,7 +25,7 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
   let finished;
   let teams;
   let coaches;
-  if (contestOrMatch?.contestUuid) {
+  if (contestOrMatch?.contestId) {
     started = contestOrMatch.match ? contestOrMatch.match.started : contestOrMatch.matchDate;
     finished = contestOrMatch.match && !contestOrMatch.live ? contestOrMatch.match.finished : null;
     teams = contestOrMatch.opponents;
@@ -36,6 +36,9 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
     teams = contestOrMatch.teams;
     coaches = contestOrMatch.coaches;
   }
+  console.log(teams);
+  if (teams && teams.length > 0)
+    console.log(imageUrls.logo(teams[0]?.logo, teams[0]?.opus));
   return (
     <Card direction="row" overflow="hidden" variant={variant} align="center">
       {!contestOrMatch && noContentIcon && (
@@ -55,14 +58,14 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
                 <TeamAndCoach
                   teamName={teams[0]?.name}
                   coachName={coaches[0].coachName || coaches[0].name}
-                  race={teams[0].race}
+                  race={teams[0].race || toRace(teams[0].raceId, teams[0].id.opus)}
                 />
               </GridItem>
               <GridItem colSpan={4} align="right">
                 <TeamAndCoach
                   teamName={teams[1].name}
                   coachName={coaches[1].coachName || coaches[1].name}
-                  race={teams[1].race}
+                  race={teams[1].race || toRace(teams[1].raceId, teams[1].id.opus)}
                   reverse
                 />
               </GridItem>
@@ -71,7 +74,7 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
                   <Image
                     objectFit="contain"
                     maxW="64px"
-                    src={imageUrls.logo(teams[0].logo, teams[1]?.opus)}
+                    src={imageUrls.logo(teams[0].logo, teams[0].id.opus)}
                     fallback={<QuestionOutlineIcon boxSize={boxSize} />}
                   />
                 </Center>
@@ -84,7 +87,7 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
                   <Image
                     objectFit="contain"
                     maxW="64px"
-                    src={imageUrls.logo(teams[1].logo, teams[1]?.opus)}
+                    src={imageUrls.logo(teams[1].logo, teams[1].id.opus)}
                     fallback={<QuestionOutlineIcon boxSize={boxSize} />}
                   />
                 </Center>

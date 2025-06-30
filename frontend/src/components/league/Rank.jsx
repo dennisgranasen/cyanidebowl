@@ -7,10 +7,11 @@ import config from '../../config';
 import imageUrls from '../../imageUrls';
 import prettyPrint from '../../util/prettyPrint';
 import Race from '../common/Race';
+import { toRace } from '../../util/raceUtil'
 
 const { boxSize, smallScreenBreakpointValues } = config;
 
-function Rank({ rank, logo, leagueId, position }) {
+function Rank({ rank, leagueId, position }) {
   const navigate = useNavigate();
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
   const goToTeam = () => {
@@ -19,7 +20,8 @@ function Rank({ rank, logo, leagueId, position }) {
       navigate(`/competition/${id.opus}/${id.value}/team/${rank.team.id}`);
     }
   };
-  console.log(rank)
+  const race = rank?.raceId ? toRace(rank.raceId, leagueId.value.opus) : null;
+  //console.log(rank)
   return rank !== null ? (
     <Tr onClick={goToTeam}>
       <Td>
@@ -32,13 +34,13 @@ function Rank({ rank, logo, leagueId, position }) {
           <Td>
             <Text fontSize="sm">{rank.teamName}</Text>
             <Text fontSize="sm" color="grey">
-              {/*prettyPrint(*/rank.raceId/*.toString())*/} ({rank.coachName})
+              {prettyPrint(race)} ({rank.coachName})
             </Text>
           </Td>
           <Td>
-            {logo || rank.teamLogo ? (
+            {rank.teamLogo ? (
               <Image
-                src={`${imageUrls.logo(logo || rank.teamLogo, rank?.opus)}`}
+                src={`${imageUrls.logo(rank.teamLogo, rank.teamId.opus)}`}
                 boxSize={boxSize}
                 fallback={<QuestionOutlineIcon boxSize={boxSize} />}
                 objectFit="scale-down"
@@ -54,9 +56,9 @@ function Rank({ rank, logo, leagueId, position }) {
         <>
           <Td>{rank.teamName}</Td>
           <Td>
-            {logo || rank.teamLogo ? (
+            {rank.teamLogo ? (
               <Image
-                src={`${imageUrls.logo(logo || rank.teamLogo, rank.teamId?.opus)}`}
+                src={`${imageUrls.logo(rank.teamLogo, rank.teamId.opus)}`}
                 boxSize={boxSize}
                 fallback={<QuestionOutlineIcon boxSize={boxSize} />}
                 objectFit="scale-down"
@@ -70,7 +72,7 @@ function Rank({ rank, logo, leagueId, position }) {
           </Td>
           <Td>{rank.coachName}</Td>
           <Td>
-            <Race size="sm" race={rank.raceId} />
+            <Race size="sm" race={prettyPrint(race)} />
           </Td>
         </>
       )}
