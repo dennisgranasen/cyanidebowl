@@ -195,8 +195,21 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
         "    'totalCasualtiesAgainst': { '$sum': '$casualtiesAgainst' }" +
         "  }" +
         "}",
+        // Add lookup to get team logo
+        "{" +
+        "  '$lookup': {" +
+        "    'from': 'team'," +
+        "    'let': { 'teamIdValue': '$_id' }," +
+        "    'pipeline': [" +
+        "      { '$match': { '$expr': { '$eq': ['$_id.value', '$$teamIdValue'] } } }," +
+        "      { '$project': { 'logo': 1, '_id': 0 } }" +
+        "    ]," +
+        "    'as': 'teamInfo'" +
+        "  }" +
+        "}",
         "{" +
         "  '$addFields': {" +
+        "    'teamLogo': { '$arrayElemAt': ['$teamInfo.logo', 0] }," +
         "    'latestTeamValue': {" +
         "      '$arrayElemAt': [" +
         "        {" +
@@ -221,6 +234,7 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
         "  '$project': {" +
         "    'teamId': { 'type': 'SimpleIdentity', 'value': '$_id' }," +
         "    'teamName': 1," +
+        "    'teamLogo': 1," +
         "    'raceId': 1," +
         "    'coachId': 1," +
         "    'coachName': 1," +
@@ -245,6 +259,7 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
     record TeamRankingRecord(
         Identity teamId,
         String teamName,
+        String teamLogo,
         Integer raceId,
         String coachId,
         String coachName,

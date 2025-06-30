@@ -98,8 +98,8 @@ function TeamPage() {
                 heading={team?.name}
                 subHeading={`Coach: ${team?.coachName}`}
                 detailsHeading="Team details"
-                mainImageSrc={imageUrls.logo(team?.logo, team?.opus)}
-                additionalImageSrc={imageUrls.race(team?.race, race?.opus)}
+                mainImageSrc={imageUrls.logo(team?.logo, team?.id?.opus)}
+                additionalImageSrc={imageUrls.race(team?.race, race?.id?.opus)}
               >
                 <InfoArea>
                   <InfoItem key="race" label="Race" info={prettyPrint(team.race)} />

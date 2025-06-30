@@ -87,8 +87,8 @@ function CompetitionPage() {
           heading={competition?.name}
           subHeading={<RouteLink to={`/${competition?.leagueId}`}>League: {competition?.leagueName}</RouteLink>}
           detailsHeading="Competition details"
-          mainImageSrc={competition?.logo ? imageUrls.logo(competition?.logo, competition?.opus) : imageUrls.logo(competition?.leagueLogo, competition?.opus)}
-          additionalImageSrc={competition?.logo ? imageUrls.logo(competition?.leagueLogo, competition?.opus) : null}
+          mainImageSrc={competition?.logo ? imageUrls.logo(competition?.logo, competition?.id?.opus) : imageUrls.logo(competition?.leagueLogo, competition?.id?.opus)}
+          additionalImageSrc={competition?.logo ? imageUrls.logo(competition?.leagueLogo, competition?.id?.opus) : null}
         >
           <InfoArea>
             <InfoItem key="Created" label="Created" info={formatter.formatAsDate(competition?.dateCreated)} />

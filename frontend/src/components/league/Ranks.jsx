@@ -6,12 +6,12 @@ import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 import WarpScoresApiService from '../../WarpScoresApiService';
 
 const { smallScreenBreakpointValues } = config;
-
+/*
 function getLogoForTeam(teamId, teams) {
   const team = teams.find((t) => t.id.key === teamId.key);
   return team ? team.logo : null;
 }
-
+*/
 function TableColumns() {
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
   return (
@@ -83,8 +83,8 @@ function Ranks({ ranks, teams, leagueId, loading, error }) {
           </Thead>
           <Tbody>
             { ranks?.map((rank, index) => {
-                const teamLogo = getLogoForTeam(rank.teamId, teams);
-                return <Rank leagueId={leagueId} logo={teamLogo} rank={rank} position={index + 1} key={rank.teamId.key} />;
+                //const teamLogo = getLogoForTeam(rank.teamId, teams);
+                return <Rank leagueId={leagueId} /*logo={teamLogo}*/ rank={rank} position={index + 1} key={rank.teamId.key} />;
             })}
           </Tbody>
           <Tfoot>

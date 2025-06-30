@@ -60,7 +60,7 @@ function CircuitLeg({ circuitLeg, onRemoveLeg, onCollectDataChanged, onArchivedC
         <Td>
           {(competition?.logo || competition?.leagueLogo || league?.logo) && (
             <Image
-              src={`${imageUrls.logo(competition?.logo || competition?.leagueLogo || league?.logo, league?.opus)}`}
+              src={`${imageUrls.logo(competition?.logo || competition?.leagueLogo || league?.logo, league?.id?.opus)}`}
               boxSize={boxSize}
               fallback={<QuestionOutlineIcon boxSize={boxSize} />}
               objectFit="scale-down"
