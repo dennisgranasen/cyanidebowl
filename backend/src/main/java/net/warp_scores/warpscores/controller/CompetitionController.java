@@ -2,7 +2,9 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.domain.CompetitionStatsDomainService;
 import net.warp_scores.warpscores.domain.TeamDomainService;
+import net.warp_scores.warpscores.domain.persistence.CompetitionStatsRepository;
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository.CompetitionStatusCountRecord;
 import net.warp_scores.warpscores.export.naf.NafReport;
 import net.warp_scores.warpscores.identity.CompositeIdentity;
@@ -10,12 +12,16 @@ import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.IdentityUtil;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Competition;
+import net.warp_scores.warpscores.model.CompetitionStats;
 import net.warp_scores.warpscores.model.CompetitionStatus;
 import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.model.Team;
+import net.warp_scores.warpscores.model.TeamAndRaceStats;
 import net.warp_scores.warpscores.service.CompetitionService;
+import net.warp_scores.warpscores.service.MatchService;
 import net.warp_scores.warpscores.service.NafExporter;
 import net.warp_scores.warpscores.service.NafXmlCreator;
+import net.warp_scores.warpscores.service.StatsService;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -52,6 +58,10 @@ public class CompetitionController {
     private final NafXmlCreator nafXmlCreator;
 
     private final ExecutorService nafExporterExecutor = Executors.newFixedThreadPool(5);
+    private final MatchService matchService;
+    private final StatsService statsService;
+    private final CompetitionStatsDomainService competitionStatsDomainService;
+    private final CompetitionStatsRepository competitionStatsRepository;
 
     @Value("${cyanide.defaults.opus:3}")
     private int defaultOpus;
@@ -135,6 +145,18 @@ public class CompetitionController {
             return ResponseEntity.ok(competitions);
         } catch (Exception ex) {
             log.error("Unable to get competitions for league id {}", leagueId, ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping(value = "/competitions/{competitionId}/stats", produces = "application/json")
+    public ResponseEntity<CompetitionStats> getCompetitionStats(@PathVariable(name = "competitionId") UUID competitionId) {
+        try
+        {
+            Optional<CompetitionStats> competitionStats = competitionStatsRepository.findById(competitionId);
+            return competitionStats.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        } catch (Exception ex) {
+            log.error("Unable to get stats for competition {}", competitionId, ex);
             return ResponseEntity.internalServerError().build();
         }
     }

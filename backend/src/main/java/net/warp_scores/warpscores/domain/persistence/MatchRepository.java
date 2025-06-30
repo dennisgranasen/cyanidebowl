@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
+
 public interface MatchRepository extends MongoRepository<Match, Identity> {
     List<Match> findByCompetitionId(Identity competitionId);
     //List<Match> findByOldCompetitionIdAndOpus(Integer oldId, Integer opus);
@@ -35,6 +36,8 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
 
     Integer countMatchesByCompetitionId(Identity competitionId);
     //Integer countMatchesByOldCompetitionIdAndOpus(Integer oldId, Integer opus);
+
+    List<Match> findByCompetitionId(UUID competitionId, Pageable pageable);
 
     Optional<Match> findTopByTeamsContainsOrderByStartedDesc(Team team);
 

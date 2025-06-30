@@ -21,7 +21,10 @@ import AdminCircuitLegPage from './pages/AdminCircuitLegPage';
 import Fonts from './theme/Fonts';
 import ArenaPage from './pages/ArenaPage';
 import ArenaCoachPage from './pages/ArenaCoachPage';
+import CompetitionStatsPage from './pages/CompetitionStatsPage';
+
 import { MockAuth0Provider } from './components/misc/MockAuthProvider';
+
 
 const { isProduction } = config;
 
@@ -75,9 +78,10 @@ function AppRoutes() {
       <Route path="/liveMatches/:opus/:leagueId" element={<LiveMatchesPage />} />
       <Route path="/team/:opus/:teamId" element={<TeamPage />} />
       <Route path="/competition/:opus/:competitionId" element={<CompetitionPage />} />
+      <Route path="/competition/:opus/:competitionId/stats" element={<CompetitionStatsPage />} />
       <Route path="/competition/:opus/:competitionId/arena/:race" element={<ArenaPage />} />
       <Route path="/competition/:opus/:competitionId/arena/coach/:coachId" element={<ArenaCoachPage />} />
-      <Route path="/competition/:opus/:competitionId/team/:teamUuid" element={<TeamPage />} />
+      <Route path="/competition/:opus/:competitionId/team/:teamId" element={<TeamPage />} />
       <Route path="/circuit/:circuitId" element={<CircuitPage />} />
       {/* Protected Routes/Needing authentication */}
       <Route path="/coachPage" element={<ProtectedRoute component={CoachPage} />} />
@@ -97,8 +101,9 @@ function App() {
       <ChakraProvider theme={warpScoresTheme}>
         <CSSReset />
         <Fonts />
-        <Box padding="4">
+        <Box>
           <Router>
+
             {isProduction ? (
               <Auth0ProviderWithRedirectCallback
                 domain={config.auth0Domain}

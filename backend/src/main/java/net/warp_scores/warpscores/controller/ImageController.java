@@ -39,6 +39,7 @@ public class ImageController {
         } else if (name != null && name.startsWith("Logo_")) {
             name = "Logo_" + StringUtils.capitalize(name.substring("Logo_".length()));
         }
+
         Optional<String> imageUrl = 
             getImageUrlFor(cyanideApiProperties.getUrls().getImages().getLogos(),
                 name, Optional.ofNullable(opus));
@@ -115,6 +116,7 @@ public class ImageController {
             @PathVariable(name = "name") String name,
             @RequestParam(name = "opus", required = false) Integer opus) {
         String imageName = translateRaceToRaceImageName(name);
+
         Optional<String> imageUrl = 
             getImageUrlFor(cyanideApiProperties.getUrls().getImages().getRaces(), 
                 imageName, Optional.ofNullable(opus));
@@ -141,13 +143,21 @@ public class ImageController {
         return loadImage(imageUrl);
     }
 
+
     private ResponseEntity<byte[]> loadImage(Optional<String> imageUrl) {
         log.info(imageUrl.orElse("null image URL"));
         return loadImage(imageUrl, Optional.empty());
     }
 
-    private ResponseEntity<byte[]> loadImage(Optional<String> imageUrl, Optional<Integer> maxWidth) {
+    private ResponseEntity<byte[]> loadImage(Optional<String> imageUrl,
+            Optional<Integer> maxWidth,
+            Optional<String>... fallbackImageUrls) {
         Optional<byte[]> imageData = imageUrl.flatMap(url -> imageService.loadImage(url, maxWidth));
+        for (Optional<String> fallbackImageUrl : fallbackImageUrls) {
+            if (imageData.isEmpty() && fallbackImageUrl.isPresent()) {
+                imageData = fallbackImageUrl.flatMap(url -> imageService.loadImage(url, maxWidth));
+            }
+        }
         return imageData
                 .map(ImageController::ok)
                 .orElse(noContent());
