@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
@@ -35,7 +36,6 @@ import static net.warp_scores.warpscores.model.MatchStatus.Validated;
 @Slf4j
 @RequiredArgsConstructor
 public class RankService {
-    private final MatchRepository matchRepository;
     private final ContestRepository contestRepository;
     private final CompetitionService competitionService;
 
@@ -43,6 +43,7 @@ public class RankService {
     private final List<RankComparisons> defaultRankComparisons = List.of(RankComparisons.SCORE_310,
             RankComparisons.WINS,
             RankComparisons.INFLICTED_TOUCHDOWNS, RankComparisons.TOUCHDOWN_DIFFERENCE);
+    private final MatchService matchService;
 
     @DurationLogging
     public List<Rank> getRanksForCompetition(Identity competitionId, 

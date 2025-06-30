@@ -7,6 +7,7 @@ import net.warp_scores.warpscores.cyanide.api.model.ApiMatch;
 import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
 import net.warp_scores.warpscores.cyanide.api.responses.MatchResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.MatchesResponse;
+import net.warp_scores.warpscores.domain.persistence.DateForUuid;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository.DateForId;
 import net.warp_scores.warpscores.identity.CompositeIdentity;

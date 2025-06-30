@@ -257,6 +257,10 @@ export default {
     axios(`/competition${competitionUuid ? `/${competitionUuid}` : ''}${opus !== undefined && opus !== null ? `?opus=${opus}` : ''}`)
       .then(returnData)
       .catch(handleError),
+
+  competitionStats: async (competitionUuid) =>
+    axios(`/competitions/${competitionUuid}/stats`).then(returnData).catch(handleError),
+
   competitionTeam: async (competitionUuid, teamUuid) =>
     axios(`/competitions/${competitionUuid}/team/${teamUuid}`).then(returnData).catch(handleError),
   competitionTeams: async (competitionUuid, opus) =>

@@ -1,4 +1,4 @@
-import { extendTheme, theme as base } from '@chakra-ui/react';
+import { extendTheme, space, theme as base } from '@chakra-ui/react';
 import linkTheme from './components/Link';
 import tableTheme from './components/Table';
 import progressTheme from './components/Progress';
@@ -61,6 +61,20 @@ const warpScoresTheme = extendTheme({
     RouteLink: linkTheme,
     Table: tableTheme,
     Progress: progressTheme,
+  },
+  styles: {
+    global: {
+      'h1, h2, h3, h4, h5, h6': {
+        letterSpacing: '0.06rem',
+      },
+      html: {
+        paddingTop: '0.5rem',
+        paddingInline: { base: '0.4rem', md: '1rem' },
+      },
+      body: {
+        padding: 0,
+      },
+    },
   },
 });
 
