@@ -114,5 +114,5 @@ public class ContestController {
             log.error("Unable to retrieve contests", ex);
             return ResponseEntity.internalServerError().build();
         }
-    }
+    }    
 }

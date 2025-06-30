@@ -215,14 +215,19 @@ export default {
       .then(returnData)
       .catch(handleError),
   // contests
-  liveLeagueContests: async (leagueId, limit) =>
-    axios(`/contests/league/${leagueId}/live${limit ? `/${limit}` : ''}`)
+  liveLeagueContests: async (leagueId, limit) => {
+    console.log('Fetching live contests for league:', leagueId);    
+    return axios(`/contests/league/${leagueId.value}/live${limit ? `/${limit}` : ''}${leagueId.opus !== undefined && leagueId.opus !== null ? `?opus=${leagueId.opus}` : ''}`)
       .then(returnData)
-      .catch(handleError),
-  liveCompetitionContests: async (competitionUuid, limit) =>
-    axios(`/contests/competition/${competitionUuid}/live${limit ? `/${limit}` : ''}`)
+      .catch(handleError)
+  },
+  liveCompetitionContests: async (competitionId, limit) => {
+    console.log('Fetching live contests for competition:', competitionId);
+    var competitionId = competitionId || '';
+    return axios(`/contests/competition/${competitionId.opus}/${competitionId.value}/live${limit ? `/${limit}` : ''}`)
       .then(returnData)
-      .catch(handleError),
+      .catch(handleError);
+  },
   competitionContests: async (competitionUuid, limit) =>
     axios(`/contests/competition/${competitionUuid}${limit ? `/${limit}` : ''}`)
       .then(returnData)
