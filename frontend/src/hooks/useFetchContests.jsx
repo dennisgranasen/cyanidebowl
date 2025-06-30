@@ -11,7 +11,7 @@ export default function useFetchContests() {
   const fetchContests = (competition, limit = null) => {
     setContestsLoading(true);
     logger.debug('Fetching contests for competition: %o', competition);
-    WarpScoresApiService.competitionContests(competition.uuid, limit)
+    WarpScoresApiService.competitionContests(competition.id, limit)
       .then((data) => {
         data.sort(comparators.compareContestsByMatchOrContestUuidAsDatesDesc);
         setContests(data);

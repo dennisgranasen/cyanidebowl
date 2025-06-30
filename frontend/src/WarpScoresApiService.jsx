@@ -221,13 +221,12 @@ export default {
   },
   liveCompetitionContests: async (competitionId, limit) => {
     console.log('Fetching live contests for competition:', competitionId);
-    var competitionId = competitionId || '';
     return axios(`/contests/competition/${competitionId.opus}/${competitionId.value}/live${limit ? `/${limit}` : ''}`)
       .then(returnData)
       .catch(handleError);
   },
   competitionContests: async (competitionId, limit) =>
-    axios(`/contests/competition/${competitionId}${limit ? `/${limit}` : ''}`)
+    axios(`/contests/competition/${competitionId.value}${limit ? `/${limit}` : ''}?opus=${competitionId.opus}`)
       .then(returnData)
       .catch(handleError),
   arenaTopCoaches: async (competitionId) =>

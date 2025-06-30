@@ -13,8 +13,6 @@ function Navigation({ currentPage, parentPage, league, competition, circuit, tea
   const isPage = (pageName, currentPageName) => {
     return pageName === currentPageName;
   };
-  console.log('Leag: ', league);
-
   const leagueLink = league && league.length > 0 && league[0] ? `/league/${league[0].opus}/${league[0].value}` : '/';
   const competitionLink = competition && competition.length > 0 && competition[0] ? `/competition/${competition[0].opus}/${competition[0].value}` : '';
   const teamLink = team ? `${competitionLink}/team/${team[0]}` : '';

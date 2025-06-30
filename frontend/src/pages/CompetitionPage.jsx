@@ -30,15 +30,21 @@ const getTeamsFor = (competition) => {
 };
 
 function TypedCompetition({ competition, competitionLoading }) {
+  console.log('TypedCompetition', competition, competitionLoading);
   switch (competition?.format) {
     case 'Knockout':
+    case 'single_elimination':
+    case 'double_elimination':
       return <KnockoutCompetition competition={competition} competitionLoading={competitionLoading} />;
     case 'Arena':
       return <ArenaCompetition competition={competition} competitionLoading={competitionLoading} />;
     case 'Ladder':
+    case 'ladder':
       return <LadderCompetition competition={competition} competitionLoading={competitionLoading} />;
     case 'RoundRobin':
+    case 'round_robin':
     case 'Wissen':
+    case'swiss':
       return <RoundRobinAndWissenCompetition competition={competition} competitionLoading={competitionLoading} />;
     default:
       return competitionLoading ? <Spinner /> : null;
