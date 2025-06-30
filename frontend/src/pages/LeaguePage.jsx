@@ -87,7 +87,7 @@ function LeaguePage() {
   return (
     <Stack>
       <Box>
-        <Navigation currentPage="league" league={[league?.id.value, league?.name]} />
+        <Navigation currentPage="league" league={[league?.id, league?.name]} />
       </Box>
       {league && (
         <HeaderCard heading={league.name} detailsHeading="League details" mainImageSrc={imageUrls.logo(league.logo,league?.id?.opus)}>

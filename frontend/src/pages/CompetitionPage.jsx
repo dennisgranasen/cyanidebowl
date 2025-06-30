@@ -79,7 +79,7 @@ function CompetitionPage() {
         <Navigation
           currentPage="competition"
           league={competition ? [competition.leagueId, competition.leagueName] : []}
-          competition={[opus + "_" + competitionId, competition ? competition.name : '']}
+          competition={competition ? [competition.id, competition.name]: [] }
         />
       </Box>
       <LoadingOrErrorWrapper loading={competitionLoading} error={error}>
