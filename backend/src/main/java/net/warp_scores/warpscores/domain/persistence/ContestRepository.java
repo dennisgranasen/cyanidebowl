@@ -41,7 +41,7 @@ public interface ContestRepository extends MongoRepository<Contest, Identity> {
     Integer countByCompetitionIdAndLive(Identity competitionId, Integer live);
 
     @Aggregation(pipeline = {
-            "{'$lookup': { 'from': 'match', 'localField': 'matchUuid', 'foreignField': '_id', 'as': 'dbMatch'}}",
+            "{'$lookup': { 'from': 'match', 'localField': 'matchId', 'foreignField': '_id', 'as': 'dbMatch'}}",
             "{'$match': { '$and': [{'adminResult': false},{'matchDate': { $ne:null}},{'dbMatch._id': { $exists: false }}]}}"
     })
     List<Contest> findContestsWithoutMatches();

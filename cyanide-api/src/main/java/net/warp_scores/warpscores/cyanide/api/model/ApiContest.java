@@ -2,7 +2,6 @@ package net.warp_scores.warpscores.cyanide.api.model;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -27,7 +26,7 @@ public class ApiContest {
     @JsonAlias({"format", "competition_format"})
     private CompetitionFormat format;
     @JsonAlias({"contestId"})
-    private UUID contest_id;
+    private String contest_id;
     private Integer round;
     @JsonAlias({"competitionRound"})
     private Integer competition_round;

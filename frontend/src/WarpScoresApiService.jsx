@@ -197,15 +197,13 @@ export default {
       .then(returnData)
       .catch(handleError),
   // leagues
-  leagues: async (leagueUuid, opus) =>
-    axios(`/leagues${leagueUuid ? `/${leagueUuid}` : ''}${opus !== undefined && opus !== null ? `?opus=${opus}` : ''}`)
+  leagues: async (leagueId, opus) =>
+    axios(`/leagues${leagueId ? `/${leagueId}` : ''}${opus !== undefined && opus !== null ? `?opus=${opus}` : ''}`)
       .then(returnData)
       .catch(handleError),
-  competitionCountByStatus: async (leagues) => {
-    console.log('Fetching competition count by status for leagues:', leagues.map((l) => l.key).join(','));
-    return axios(`/league/competitionCountByStatus?leagueIds=${leagues.map((l) => l.key).join(',')}`) 
-      .then(returnData).catch(handleError)
-  },
+  competitionCountByStatus: async (leagues) =>
+    axios(`/league/competitionCountByStatus?leagueIds=${leagues.map((l) => l.key).join(',')}`)
+      .then(returnData).catch(handleError),
   leagueRanks: async (leagueId, opus, limit) =>
     axios(`/ranks/league/${leagueId}${limit ? `/${limit}` : ''}${opus !== undefined && opus !== null ? `?opus=${opus}` : ''}`)
       .then(returnData)
@@ -228,48 +226,48 @@ export default {
       .then(returnData)
       .catch(handleError);
   },
-  competitionContests: async (competitionUuid, limit) =>
-    axios(`/contests/competition/${competitionUuid}${limit ? `/${limit}` : ''}`)
+  competitionContests: async (competitionId, limit) =>
+    axios(`/contests/competition/${competitionId}${limit ? `/${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
-  arenaTopCoaches: async (competitionUuid) =>
-    axios(`/arena/${competitionUuid}/topCoaches`).then(returnData).catch(handleError),
-  arenaInfos: async (competitionUuid, race) =>
-    axios(`/arena/${competitionUuid}/info${race ? `/${race}` : ''}`)
+  arenaTopCoaches: async (competitionId) =>
+    axios(`/arena/${competitionId}/topCoaches`).then(returnData).catch(handleError),
+  arenaInfos: async (competitionId, race) =>
+    axios(`/arena/${competitionId}/info${race ? `/${race}` : ''}`)
       .then(returnData)
       .catch(handleError),
-  arenaTeams: async (competitionUuid, race, runType) =>
-    axios(`/arena/${competitionUuid}/race/${race}/${runType}`).then(returnData).catch(handleError),
-  arenaCoachTeams: async (competitionUuid, coachUuid) =>
-    axios(`/arena/${competitionUuid}/coach/${coachUuid}`).then(returnData).catch(handleError),
+  arenaTeams: async (competitionId, race, runType) =>
+    axios(`/arena/${competitionId}/race/${race}/${runType}`).then(returnData).catch(handleError),
+  arenaCoachTeams: async (competitionId, coachId) =>
+    axios(`/arena/${competitionId}/coach/${coachId}`).then(returnData).catch(handleError),
   // matches
-  latestCompetitionMatches: async (competitionUuid, opus, limit) =>
-    axios(`/matches/competition/${competitionUuid}/latest${limit ? `/${limit}` : ''}${opus ? `?opus=${opus}` : ''}`)
+  latestCompetitionMatches: async (competitionId, opus, limit) =>
+    axios(`/matches/competition/${competitionId}/latest${limit ? `/${limit}` : ''}${opus ? `?opus=${opus}` : ''}`)
       .then(returnData)
       .catch(handleError),
-  latestLeagueMatches: async (leagueUuid, opus, limit) =>
-    axios(`/matches/league/${leagueUuid}/latest${limit ? `/${limit}` : ''}${opus ? `?opus=${opus}` : ''}`)
+  latestLeagueMatches: async (leagueId, opus, limit) =>
+    axios(`/matches/league/${leagueId}/latest${limit ? `/${limit}` : ''}${opus ? `?opus=${opus}` : ''}`)
       .then(returnData)
       .catch(handleError),
   // competitions
-  leagueCompetitions: async (leagueUuid, opus, initialized) =>
+  leagueCompetitions: async (leagueId, opus, initialized) =>
     axios(
-      `/competitions/league/${leagueUuid}${initialized ? '/initialized' : ''}${opus !== undefined && opus !== null ? `?opus=${opus}`: ''}`
+      `/competitions/league/${leagueId}${initialized ? '/initialized' : ''}${opus !== undefined && opus !== null ? `?opus=${opus}`: ''}`
     )
       .then(returnData)
       .catch(handleError),
-  competition: async (competitionUuid, opus) =>
-    axios(`/competition${competitionUuid ? `/${competitionUuid}` : ''}${opus !== undefined && opus !== null ? `?opus=${opus}` : ''}`)
+  competition: async (competitionId, opus) =>
+    axios(`/competition${competitionId ? `/${competitionId}` : ''}${opus !== undefined && opus !== null ? `?opus=${opus}` : ''}`)
       .then(returnData)
       .catch(handleError),
 
-  competitionStats: async (competitionUuid) =>
-    axios(`/competitions/${competitionUuid}/stats`).then(returnData).catch(handleError),
+  competitionStats: async (competitionId) =>
+    axios(`/competitions/${competitionId}/stats`).then(returnData).catch(handleError),
 
-  competitionTeam: async (competitionUuid, teamUuid) =>
-    axios(`/competitions/${competitionUuid}/team/${teamUuid}`).then(returnData).catch(handleError),
-  competitionTeams: async (competitionUuid, opus) =>
-    axios(`/teams/competition/${competitionUuid}${opus !== undefined && opus !== null ? `?opus=${opus}` : ''} `)
+  competitionTeam: async (competitionId, teamId) =>
+    axios(`/competitions/${competitionId}/team/${teamId}`).then(returnData).catch(handleError),
+  competitionTeams: async (competitionId, opus) =>
+    axios(`/teams/competition/${competitionId}${opus !== undefined && opus !== null ? `?opus=${opus}` : ''} `)
       .then(returnData)
       .catch(handleError),
   competitionRanks: async (competitionId, opus, limit) =>
@@ -277,20 +275,20 @@ export default {
       .then(returnData)
       .catch(handleError),
   // team
-  team: async (teamUuid) => axios(`/teams/${teamUuid}`).then(returnData).catch(handleError),
-  teamMatches: async (teamUuid) => axios(`/teams/${teamUuid}/matches`).then(returnData).catch(handleError),
+  team: async (teamId) => axios(`/teams/${teamId}`).then(returnData).catch(handleError),
+  teamMatches: async (teamId) => axios(`/teams/${teamId}/matches`).then(returnData).catch(handleError),
   // user
   userPermissions: async (getAccessTokenSilently, getAccessTokenWithPopup, requestToken) =>
     getDataWithAuthentication('/userPermissions', getAccessTokenSilently, getAccessTokenWithPopup, requestToken)
       .then(returnData)
       .catch(handleError),
-  exportNafXml: async (competitionUuid, getAccessTokenSilently, getAccessTokenWithPopup, requestToken) =>
+  exportNafXml: async (competitionId, getAccessTokenSilently, getAccessTokenWithPopup, requestToken) =>
     getDataWithAuthentication(
-      `/competitions/${competitionUuid}/exportNafData`,
+      `/competitions/${competitionId}/exportNafData`,
       getAccessTokenSilently,
       getAccessTokenWithPopup,
       requestToken
     )
-      .then((result) => offerDownloadData(result, `${competitionUuid}-nafReport.xml`, 'application/xml'))
+      .then((result) => offerDownloadData(result, `${competitionId}-nafReport.xml`, 'application/xml'))
       .catch(handleError),
 };

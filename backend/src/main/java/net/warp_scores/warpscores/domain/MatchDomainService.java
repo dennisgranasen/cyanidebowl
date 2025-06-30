@@ -2,14 +2,11 @@ package net.warp_scores.warpscores.domain;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.warp_scores.warpscores.cyanide.api.model.ApiCoach;
 import net.warp_scores.warpscores.cyanide.api.model.ApiMatch;
-import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
 import net.warp_scores.warpscores.cyanide.api.responses.MatchResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.MatchesResponse;
-import net.warp_scores.warpscores.domain.persistence.DateForUuid;
+import net.warp_scores.warpscores.domain.persistence.DateForId;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
-import net.warp_scores.warpscores.domain.persistence.MatchRepository.DateForId;
 import net.warp_scores.warpscores.identity.CompositeIdentity;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
@@ -18,13 +15,10 @@ import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Team;
 import net.warp_scores.warpscores.service.PopulatorUtil;
 import net.warp_scores.warpscores.service.TeamPopulator;
-import net.warp_scores.warpscores.service.UUIDConverter;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.fasterxml.jackson.databind.introspect.TypeResolutionContext.Empty;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -91,7 +85,7 @@ public class MatchDomainService {
     public Map<Identity, Optional<Date>> getLastMatchDatesForLeagues(
             List<Identity> leagueIds) {
     
-        List<MatchRepository.DateForId> lastMatchDateByLeagueIds = 
+        List<DateForId> lastMatchDateByLeagueIds = 
             Collections.emptyList();
 
         if (!leagueIds.isEmpty()) {

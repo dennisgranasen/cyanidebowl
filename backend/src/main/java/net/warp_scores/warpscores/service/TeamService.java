@@ -7,22 +7,14 @@ import net.warp_scores.warpscores.model.Team;
 import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
 import net.warp_scores.warpscores.domain.persistence.TeamRepository;
 import net.warp_scores.warpscores.identity.Identity;
-import net.warp_scores.warpscores.model.Match;
-import net.warp_scores.warpscores.model.Player;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.core.aggregation.ArrayOperators.In;
-import org.springframework.expression.spel.ast.OpAnd;
 import org.springframework.stereotype.Service;
 
 import static java.util.Optional.ofNullable;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Slf4j
 @Service

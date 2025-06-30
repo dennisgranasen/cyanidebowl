@@ -56,16 +56,6 @@ public class MatchService {
     }
 
     @DurationLogging
-/*
-    public List<Match> findByCompetitionId(UUID competitionId) {
-        List<Match> matches = new ArrayList<>();
-        Integer totalMatches = matchRepository.countMatchesByCompetitionId(competitionId);
-        for (int i = 0; i < totalMatches; i += 1000) {
-            matches.addAll(adjustCompetitionNameAndLogoAndUpdateConcedeAndOvertimeInfo(matchRepository.findByCompetitionId(competitionId, PageRequest.of(i, 1000))));
-        }
-        return matches;
- */
-=======
     public List<Match> getCompetitionMatchesSince(Identity competitionId, Date since, Optional<Integer> limit) {
         List<Match> matches = matchRepository.findTopByCompetitionIdAndFinishedNotNull(competitionId,
                 PageRequest.of(0, limit.orElse(defaultPageLimit), Sort.by(Sort.Direction.DESC, "finished")));

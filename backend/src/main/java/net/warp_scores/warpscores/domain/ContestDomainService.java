@@ -63,6 +63,7 @@ public class ContestDomainService {
     public Contest addContest(Contest contest, int opus) {
         Identity contestIdentity = contest.getId();
         if (contestIdentity == null) {
+            log.warn("Contest has no identity, generating a new one.");
             contestIdentity = new SimpleIdentity(UUID.randomUUID(), opus);
         }
         Optional<Contest> byId = contestRepository.findById(contestIdentity);

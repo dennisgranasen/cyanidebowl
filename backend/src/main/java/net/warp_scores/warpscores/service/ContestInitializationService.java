@@ -1,9 +1,6 @@
 package net.warp_scores.warpscores.service;
 
-import com.fasterxml.uuid.Generators;
-
 import lombok.extern.slf4j.Slf4j;
-import net.warp_scores.warpscores.UUIDUtil;
 import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
@@ -17,7 +14,8 @@ import net.warp_scores.warpscores.model.Team;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
+import com.fasterxml.uuid.Generators;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -152,16 +150,16 @@ public class ContestInitializationService {
     private static Contest findNextContestByWinner(Contest currContest,
             int currRound,
             List<Contest> initializedContests) {
-        Optional<Identity> winnerTeamUuid = getWinnerTeamUuidFrom(currContest);
+        Optional<Identity> winnerTeamId = getWinnerTeamIdFrom(currContest);
         return initializedContests
                 .stream()
                 .filter(contest -> contest.getRound().equals(currRound + 2))
                 .filter(contest -> Arrays.stream(contest.getOpponents()).map(Team::getId)
-                        .anyMatch(id -> winnerTeamUuid.isPresent() && winnerTeamUuid.get().equals(id)))
+                        .anyMatch(id -> winnerTeamId.isPresent() && winnerTeamId.get().equals(id)))
                 .findFirst().orElse(null);
     }
 
-    private static Optional<Identity> getWinnerTeamUuidFrom(Contest contest) {
+    private static Optional<Identity> getWinnerTeamIdFrom(Contest contest) {
         if (contest == null || contest.getWinner() == null) {
             return Optional.empty();
         }

@@ -201,7 +201,7 @@ public class FetchDataService {
         // Load competitions for the leagues that are being collected.
         List<Competition> competitions = leaguesToCollect.stream()
                 .map(DataCollection::getId)
-                .map(competitionService::loadForLeague)
+                .map(competitionService::loadForLeagueAndInitialize)
                 .flatMap(List::stream).toList();
         log.info("Loaded {} leagues' competitions for data collection.", competitions.size());
         for (Competition competition : competitions) {
@@ -384,7 +384,7 @@ public class FetchDataService {
     private void fetchTeamsForCompetitionIfTeamsMissing(Competition competition) {
         List<Team> byCompetitionId =
                 teamDomainService.findByCompetitionId(competition.getId());
-        if (!competition.getFormat()
+        if (!competition.getFormat().getCanonical()
                 .equals(CompetitionFormat.Ladder) && competition.getTeamsMax() != null && competition.getTeamsMax() > byCompetitionId.size()) {
             log.info("Loading teams for competition {} as maxTeams ({}) > availableTeams ({}).", competition.getId(),
                     competition.getTeamsMax(), byCompetitionId.size());
@@ -452,7 +452,7 @@ public class FetchDataService {
                 .stream()
                 .filter(Contest::notScheduledNorCalculated)
                 .filter(Contest::notInProgressOrOlderThan4Hours)
-                .filter(contest -> nonNull(contest.getMatchIdentity()))
+                .filter(contest -> nonNull(contest.getMatchId()))
                 .toList();
 
         log.info("Found {} contests ({} played) with missing matches.", contests.size(),

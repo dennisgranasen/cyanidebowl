@@ -115,4 +115,22 @@ public class ContestController {
             return ResponseEntity.internalServerError().build();
         }
     }    
+
+    @GetMapping("/contests/league/{leagueId}/live")
+    public ResponseEntity<List<Contest>> getLiveLeagueContests(
+            @PathVariable(name = "leagueId") String leagueId,
+            @RequestParam(name = "opus", required = false) Integer opus, 
+            @RequestParam(name = "limit", required = false) Integer limit
+            ) {
+        try {
+            Integer contestLimit = ofNullable(limit).orElse(DEFAULT_LIMIT_FOR_LIVE_CONTESTS);
+            List<Contest> contests = contestService.getLiveLeagueContests(
+                new SimpleIdentity(leagueId, ofNullable(opus).orElse(defaultOpus)),
+                contestLimit);
+            return ResponseEntity.ok(contests);
+        } catch (Exception ex) {
+            log.error("Unable to retrieve contests", ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }

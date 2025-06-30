@@ -10,7 +10,6 @@ import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.DataCollection;
 import net.warp_scores.warpscores.model.EntityType;
 import net.warp_scores.warpscores.model.League;
-import net.warp_scores.warpscores.service.UUIDConverter;
 import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
 
 import org.springframework.beans.factory.annotation.Value;

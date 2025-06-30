@@ -6,6 +6,7 @@ import net.warp_scores.warpscores.model.Team;
 import net.warp_scores.warpscores.model.TeamAndRaceStats;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,8 +20,8 @@ public class StatsService {
     }
 
     private void collectStats(Match match, TeamAndRaceStats competitionStats) {
-        List<Team> teams = match.getTeams();
-        teams.forEach(team -> collectTeamAndRaceStats(team, match, competitionStats));
+        Team[] teams = match.getTeams();
+        Arrays.stream(teams).forEach(team -> collectTeamAndRaceStats(team, match, competitionStats));
     }
 
     private void collectTeamAndRaceStats(Team team, Match match, TeamAndRaceStats competitionStats) {
@@ -49,7 +50,7 @@ public class StatsService {
     }
 
     private static Optional<Team> getTeam(Match match, Team team) {
-        return match.getTeams().stream().filter(t -> !t.getId().equals(team.getId())).findFirst();
+        return Arrays.stream(match.getTeams()).filter(t -> !t.getId().equals(team.getId())).findFirst();
     }
 
     private boolean isLoss(Team team, Optional<Team> otherTeam) {

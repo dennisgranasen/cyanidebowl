@@ -6,13 +6,13 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import net.warp_scores.warpscores.identity.CompositeIdentity;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
-
 import static net.warp_scores.warpscores.model.CompetitionFormat.Ladder;
 
 @Getter
@@ -24,7 +24,17 @@ public class Competition implements Comparable<Competition>, Identifiable {
     @Id
     private final Identity id;
 
-    public String getCompetitionId() { return id != null ? id.getValue() : null; }
+    //public String getCompetitionId() { return id != null ? id.getValue() : null; }
+    public Identity getCompetitionId() {
+        if (id instanceof SimpleIdentity) {
+            return id;
+        }
+        if (id instanceof CompositeIdentity) {
+            String cid = id.getKey().split(Identity.DELIMITER)[2];
+            return new SimpleIdentity(cid, id.getOpus());
+        }
+        throw new IllegalStateException("Unknown identity type: " + id.getClass().getName());
+    }
 
     private String name;
     private String logo;
@@ -36,6 +46,16 @@ public class Competition implements Comparable<Competition>, Identifiable {
     private CompetitionFormat format;
     private CompetitionStatus status;
     private Integer statusNumber;
+    public CompetitionStatus getStatus() {
+        if (status != null) {
+            return status;
+        }
+        if (statusNumber != null) {
+            return CompetitionStatus.fromNumber(statusNumber);
+        }
+        return null;
+    }
+
     private Integer teamsCount;
     private Integer teamsMax;
     private Integer timeBonusDuration;

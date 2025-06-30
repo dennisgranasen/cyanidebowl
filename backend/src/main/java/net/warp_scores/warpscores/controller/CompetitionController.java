@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.domain.CompetitionStatsDomainService;
 import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.domain.persistence.CompetitionStatsRepository;
-import net.warp_scores.warpscores.domain.persistence.CompetitionRepository.CompetitionStatusCountRecord;
+import net.warp_scores.warpscores.domain.persistence.CompetitionRepository.LeagueCompetitionStatusCounts;
 import net.warp_scores.warpscores.export.naf.NafReport;
 import net.warp_scores.warpscores.identity.CompositeIdentity;
 import net.warp_scores.warpscores.identity.Identity;
@@ -36,9 +36,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Stream;
@@ -150,10 +148,14 @@ public class CompetitionController {
     }
 
     @GetMapping(value = "/competitions/{competitionId}/stats", produces = "application/json")
-    public ResponseEntity<CompetitionStats> getCompetitionStats(@PathVariable(name = "competitionId") UUID competitionId) {
+    public ResponseEntity<CompetitionStats> getCompetitionStats(
+            @PathVariable(name = "competitionId") String competitionId,
+            @RequestParam(name = "opus", required = false) Integer opus) {
         try
         {
-            Optional<CompetitionStats> competitionStats = competitionStatsRepository.findById(competitionId);
+            Optional<CompetitionStats> competitionStats = 
+                competitionStatsRepository.findById(
+                    new SimpleIdentity(competitionId, ofNullable(opus).orElse(defaultOpus)));
             return competitionStats.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
         } catch (Exception ex) {
             log.error("Unable to get stats for competition {}", competitionId, ex);
@@ -176,6 +178,7 @@ public class CompetitionController {
             competitionService.loadCompetition(competitionIdentity);
 
         log.info(competitionId, opus, competition);
+        
         return competition
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -248,7 +251,7 @@ public class CompetitionController {
     }
     
     @GetMapping("/league/competitionCountByStatus")
-    public ResponseEntity<List<CompetitionStatusCountRecord>> getCompetitionCountByStatus(
+    public ResponseEntity<List<LeagueCompetitionStatusCounts>> getCompetitionCountByStatus(
         @RequestParam(name = "leagueIds", required = true) String leagueIds) {
         log.info("Fetching competition count by status for leagues: {}", leagueIds);
         String[] parts = leagueIds.split(",");

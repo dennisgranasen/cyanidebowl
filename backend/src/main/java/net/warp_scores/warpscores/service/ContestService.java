@@ -108,7 +108,7 @@ public class ContestService {
     }
 
     private void loadMatchIntoAndAdjustCompetitionName(Contest contest) {
-        Optional<Identity> matchId = Optional.ofNullable(contest.getMatchIdentity());
+        Optional<Identity> matchId = Optional.ofNullable(contest.getMatchId());
         if (matchId.isEmpty()) {
             contest.setMatch(null);
             return;

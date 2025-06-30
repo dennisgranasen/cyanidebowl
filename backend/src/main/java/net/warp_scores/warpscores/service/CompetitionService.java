@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
-import net.warp_scores.warpscores.domain.persistence.CompetitionRepository.CompetitionStatusCountRecord;
+import net.warp_scores.warpscores.domain.persistence.CompetitionRepository.LeagueCompetitionStatusCounts;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
@@ -131,15 +131,16 @@ public class CompetitionService {
     }
 
     private Competition initializeForFormat(Competition competition) {
-        if (CompetitionStatus.InProgress == competition.getStatus()) {
-            switch (competition.getFormat()) {
+        log.info("Initializing competition {} for format {} with status {}", competition.getId().getValue(), competition.getFormat(), competition.getStatus());
+        //if (CompetitionStatus.InProgress == competition.getStatus()) {
+            switch (competition.getFormat().getCanonical()) {
                 case RoundRobin -> initializeRoundRobin(competition);
                 case Wissen -> initializeWissen(competition);
                 case Knockout -> initializeKnockout(competition);
                 case Ladder, Arena -> initializeLadder(competition);
                 default -> notYetImplemented(competition.getFormat());
             }
-        }
+        //}
         return competition;
     }
 
@@ -148,21 +149,24 @@ public class CompetitionService {
     }
 
     private void initializeRoundRobin(Competition competition) {
+        Identity competitionId = competition.getCompetitionId();
+        log.info("Initializing round robin competition with ID: {}", competitionId.getKey());
         Integer teams = competition.getTeamsMax();
         boolean isOdd = teams % 2 == 1;
         Integer contestCount =
-            contestsRepository.countByCompetitionId(competition.getId());
+            contestsRepository.countByCompetitionId(competitionId);
+        log.info("Contest count for competition {}: {}", competitionId.getValue(), contestCount);
         List<Contest> contests =
-            contestsRepository.findByCompetitionId(
-                new SimpleIdentity(competition.getCompetitionId(), competition.getId().getOpus()),
+            contestsRepository.findByCompetitionId(competitionId,
                 Pageable.unpaged());
+        log.info("Contests size() for competition {}: {}", competitionId.getValue(), contests.size());
         Map<Identity, Optional<Contest>> uniqueContests = contests
                 .stream()
                 .collect(
                         groupingBy(
                                 Contest::getId,
                                 collectingAndThen(toList(), this::getLatest)));
-        if (contests.size() != uniqueContests.size()) {
+        if (true || contests.size() != uniqueContests.size()) {
             log.info("Contests: {}, uniqueContests: {}.", contests.size(), uniqueContests.size());
         }
         int totalRounds = isOdd ? teams : teams - 1;
@@ -236,8 +240,8 @@ public class CompetitionService {
     private static Integer getNotValidatedMatchesCount(List<Contest> contests) {
         Map<Identity, List<MatchStatus>> matchStatuses = contests
                 .stream()
-                .filter(contest -> Objects.nonNull(contest.getMatchIdentity()))
-                .collect(groupingBy(Contest::getMatchIdentity,
+                .filter(contest -> Objects.nonNull(contest.getMatchId()))
+                .collect(groupingBy(Contest::getMatchId,
                         mapping(Contest::getStatus, toList())));
         long notValidatedCount = matchStatuses
                 .entrySet()
@@ -250,7 +254,7 @@ public class CompetitionService {
     private static Integer getNotPlayedAdministratedMatchesCount(List<Contest> contests) {
         long count = contests
                 .stream()
-                .filter(contest -> Objects.isNull(contest.getMatchIdentity()))
+                .filter(contest -> Objects.isNull(contest.getMatchId()))
                 .filter(contest -> MatchStatus.Validated.equals(contest.getStatus()))
                 .count();
         return Long.valueOf(count).intValue();
@@ -265,8 +269,8 @@ public class CompetitionService {
     }
 
     @DurationLogging
-    public List<CompetitionStatusCountRecord> getCompetitionCountByStatus(Collection<Identity> leagueIds) {
-        List<CompetitionStatusCountRecord> counts = competitionRepository.countCompetitionsByStatusPerLeague(leagueIds);   
+    public List<LeagueCompetitionStatusCounts> getCompetitionCountByStatus(Collection<Identity> leagueIds) {
+        List<LeagueCompetitionStatusCounts> counts = competitionRepository.countCompetitionsByStatusPerLeague(leagueIds);   
         log.info("Fetched competition counts by status for leagues: {}.\n {}", leagueIds, counts);
         return counts;
     }

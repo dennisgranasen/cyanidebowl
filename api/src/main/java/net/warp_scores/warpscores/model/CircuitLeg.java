@@ -38,18 +38,4 @@ public class CircuitLeg implements Comparable<CircuitLeg> {
         return result;
     }
 }
-/*
-public class BB1CircuitCompetition extends CircuitCompetition {
-    private Integer indexOfFirstMatch;
-    private Integer indexOfLastMatch;
-    private List<Integer> ignoredMatches;
-}
 
-public class BB2CircuitCompetition extends CircuitCompetition {
-    private Optional<UUID> competitionId;
-}
-
-public class BB3CircuitCompetition extends CircuitCompetition {
-    private Optional<UUID> competitionId;
-}
-*/

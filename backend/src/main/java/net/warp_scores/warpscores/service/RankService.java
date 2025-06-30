@@ -38,7 +38,7 @@ import static net.warp_scores.warpscores.model.MatchStatus.Validated;
 public class RankService {
     private final ContestRepository contestRepository;
     private final CompetitionService competitionService;
-
+    private final MatchRepository matchRepository;
 
     private final List<RankComparisons> defaultRankComparisons = List.of(RankComparisons.SCORE_310,
             RankComparisons.WINS,
@@ -61,7 +61,7 @@ public class RankService {
                 .collect(Collectors.toSet());
                 
         List<Match> matches = Collections.emptyList();
-        if (!competition.getFormat().equals(CompetitionFormat.Ladder)) {
+        if (!competition.getFormat().getCanonical().equals(CompetitionFormat.Ladder)) {
             matches = matchRepository.findByCompetitionId(competitionId);
         }
         Map<Identity, Match> matchByMatchId =
@@ -122,7 +122,7 @@ public class RankService {
         int inflictedCasualties = 0;
         int sustainedCasualties = 0;
         for (Contest contest : contests) {
-            Optional<Match> match = ofNullable(contest.getMatchIdentity()).map(matchByMatchId::get);
+            Optional<Match> match = ofNullable(contest.getMatchId()).map(matchByMatchId::get);
             Team[] teamResults = match.map(Match::getTeams).orElse(contest.getOpponents());
 
             Optional<Team> ownTeam = getTeam(teamResults, team.getId());

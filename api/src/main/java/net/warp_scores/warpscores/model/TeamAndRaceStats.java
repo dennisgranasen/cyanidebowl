@@ -1,5 +1,14 @@
 package net.warp_scores.warpscores.model;
 
+
+import net.warp_scores.warpscores.identity.Identity;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -7,12 +16,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.With;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 @Getter
 @Setter
@@ -21,9 +24,9 @@ public class TeamAndRaceStats {
     @Id
     String _id;
 
-    private Map<UUID, Stats> teamStats = new HashMap<>();
-    private Map<Race, Stats> raceStats = new HashMap<>();
-    private Map<UUID, SimpleTeam> teams = new HashMap<>();
+    private Map<Identity, Stats> teamStats = new HashMap<>();
+    private Map<String, Stats> raceStats = new HashMap<>();
+    private Map<Identity, SimpleTeam> teams = new HashMap<>();
 
     public void collectInto(Team team, Stats stats) {
         teamStats.computeIfAbsent(team.getId(), t -> new Stats());
@@ -36,7 +39,7 @@ public class TeamAndRaceStats {
 
     private SimpleTeam toSimpleTeam(Team team) {
         return new SimpleTeam()
-                .withTeamUuid(team.getId())
+                .withTeamId(team.getId())
                 .withTeamName(team.getName())
                 .withRace(team.getRace())
                 .withCoachId(team.getCoachId())
@@ -49,14 +52,14 @@ public class TeamAndRaceStats {
     @With
     @AllArgsConstructor
     @NoArgsConstructor
-    @EqualsAndHashCode(of = "teamUuid")
-    @ToString(of = {"teamUuid", "teamName", "coachId", "coachName", "race"})
+    @EqualsAndHashCode(of = "teamId")
+    @ToString(of = {"teamId", "teamName", "coachId", "coachName", "race"})
     public static class SimpleTeam {
-        private UUID teamUuid;
+        private Identity teamId;
         private String teamName;
-        private String coachId;
+        private Identity coachId;
         private String coachName;
-        private Race race;
+        private String race;
         private String logo;
     }
 }

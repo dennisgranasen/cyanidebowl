@@ -74,6 +74,7 @@ function CompetitionsAccordionItem({ competitions, league, header }) {
 }
 
 function Competitions({ competitions, league }) {
+  console.log('Rendering Competitions with competitions:', competitions);
   return (
     <Accordion variant="simple" allowMultiple defaultIndex={[0]}>
       <CompetitionsAccordionItem
@@ -93,6 +94,16 @@ function Competitions({ competitions, league }) {
         header="Finished Competitions"
         league={league}
         competitions={competitions?.filter((competition) => competition.status === 'Finished')}
+      />
+      <CompetitionsAccordionItem
+        key="Unknown"
+        header="Competitions with Unknown Status"
+        league={league}
+        competitions={competitions?.filter((competition) => 
+            competition.status === 'Unknown' || 
+            !competition.status || 
+            competition.status === null || 
+            competition.status === undefined)}
       />
     </Accordion>
   );

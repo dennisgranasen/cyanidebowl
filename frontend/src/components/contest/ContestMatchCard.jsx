@@ -36,9 +36,6 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
     teams = contestOrMatch.teams;
     coaches = contestOrMatch.coaches;
   }
-  console.log(teams);
-  if (teams && teams.length > 0)
-    console.log(imageUrls.logo(teams[0]?.logo, teams[0]?.opus));
   return (
     <Card direction="row" overflow="hidden" variant={variant} align="center">
       {!contestOrMatch && noContentIcon && (

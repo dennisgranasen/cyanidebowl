@@ -40,7 +40,7 @@ function Competition({ competition, league }) {
             status={competition.status}
             format={competition.format}
             teamsMax={competition.teamsMax}
-            currentRound={competition.currentRound}
+            currentRound={competition.currentRound} /* Fix this. */
             totalRounds={competition.totalRounds}
             totalMatches={competition.totalMatches}
             playedMatches={competition.playedMatches}

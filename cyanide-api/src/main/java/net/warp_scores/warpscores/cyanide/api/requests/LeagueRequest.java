@@ -6,7 +6,6 @@ import lombok.Setter;
 import lombok.ToString;
 import net.warp_scores.warpscores.cyanide.api.responses.LeagueResponse;
 
-import java.util.UUID;
 /*
     {
       "game": "bb3",

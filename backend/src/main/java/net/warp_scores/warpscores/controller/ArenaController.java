@@ -24,7 +24,6 @@ import static java.util.Optional.ofNullable;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -85,7 +84,7 @@ public class ArenaController {
 
     @GetMapping("/arena/{competitionId}/race/{race}/{runType}/{limit}/{offset}")
     public ResponseEntity<Map<ArenaTeam.RunType, List<ArenaTeam>>> getArenaTeamsFor(
-            @PathVariable(name = "competitionUuid") String competitionId,
+            @PathVariable(name = "competitionId") String competitionId,
             @PathVariable(name = "race") Race race,
             @PathVariable(name = "runType") ArenaTeam.RunType runType,
             @PathVariable(name = "limit") Integer limit,

@@ -69,7 +69,7 @@ public class TeamController {
                     match.getCompetitionName(), match::setCompetitionName));
             return ResponseEntity.ok(matchesForTeam);
         } catch (Exception ex) {
-            log.error("Unable to get matches for team uuid {}.", teamId, ex);
+            log.error("Unable to get matches for team id {}.", teamId, ex);
             return ResponseEntity.internalServerError().build();
         }
     }
