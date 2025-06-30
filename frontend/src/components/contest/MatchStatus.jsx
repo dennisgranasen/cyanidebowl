@@ -15,7 +15,7 @@ function StatusAsIcon({ status, stadium }) {
     case 'played':
       return (
         <Avatar
-          src={`${imageUrls.stadium(stadium)}`}
+          src={`${imageUrls.stadium(stadium, stadium?.opus)}`}
           boxSize={boxSize}
           icon={<QuestionOutlineIcon boxSize={boxSize} />}
         />

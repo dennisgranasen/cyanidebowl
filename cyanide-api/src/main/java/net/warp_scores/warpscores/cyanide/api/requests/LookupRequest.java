@@ -1,6 +1,8 @@
 package net.warp_scores.warpscores.cyanide.api.requests;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import net.warp_scores.warpscores.cyanide.api.responses.LookupResponse;
 import lombok.Getter;
 import lombok.Setter;
@@ -41,20 +43,23 @@ import java.util.UUID;
 public class LookupRequest extends ApiRequest<LookupRequest, LookupResponse> {
 
     private String league_name;
-    private UUID league_id;
+    private String league_id;
     private ApiRequest.Order order;
     private String competition_name;
-    private UUID competition_id;
+    private String competition_id;
     private String team_name;
-    private UUID team_id;
+    private String team_id;
     private String coach_name;
-    private UUID coach_id;
+    private String coach_id;
     private Integer exact;
     private String instruction;
-    private Boolean fallback;
+    private String platform;
+    private Integer opus;
+    private Integer fallback;
+    private Boolean includeDetails;
 
     public LookupRequest() {
-        super("bb3/lookup", LookupRequest.class, LookupResponse.class);
+        super("bb/lookup", LookupRequest.class, LookupResponse.class);
         setCacheValidity(CacheValidityDurations.FIVE_MINUTES);
         setLimitSize(null);
     }

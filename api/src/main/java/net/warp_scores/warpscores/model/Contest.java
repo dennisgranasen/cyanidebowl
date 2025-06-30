@@ -2,9 +2,13 @@ package net.warp_scores.warpscores.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.mongodb.lang.Nullable;
+
 import lombok.Getter;
 import lombok.Setter;
 import net.warp_scores.warpscores.UUIDUtil;
+import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -13,46 +17,65 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Stream;
 
 @Getter
 @Setter
 @Document
-public class Contest implements Comparable<Contest> {
+public class Contest implements Comparable<Contest>, Identifiable {
+
     @Id
-    private UUID contestUuid;
+    private Identity id;
+   
+    public String getPlayerId() { return id != null ? id.getValue() : null; }
+/*
+    public UUID getContestUuid() {
+        return UUIDUtil.getUUIDFromIdentity(id);
+    }
+*/
+    //private Integer oldContestId; // This is the old ID used in the legacy system, if applicable.
     private CompetitionFormat format;
-    private UUID leagueId;
+    private Identity leagueId;
     private String leagueName;
-    private UUID competitionId;
+    private Identity competitionId;
     private String competitionName;
+    private Identity contestId;
     private String stadium;
+    private String contestFormat;
     private MatchType type;
     private MatchStatus status;
+    private MatchStatus matchStatus; // Is this the same as status?
     private Integer round;
+    private Integer competitionRound; // is this not always the same as round?
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date matchDate;
     private String gameId;
-    private UUID matchUuid;
+    private String matchId;
+    public Identity getMatchIdentity() {
+        return new SimpleIdentity(matchId, id.getOpus());
+    }
     private Integer live;
-    private List<Team> opponents;
+    private Team[] opponents;
     private Object winner;
     private boolean adminResult;
     private Match match;
     private boolean concede;
     private boolean overtime;
 
-    private UUID nextContestUuid;
+    private Identity nextContestId;
+
+    public Contest(Identity id) {
+        this.id = id;
+    }
 
     @Override
     public String toString() {
-        String teamA = Optional.ofNullable(opponents).map(o -> !o.isEmpty() ? o.get(0) : null).map(Team::getName)
+        String teamA = Optional.ofNullable(opponents).map(o -> o != null && o.length > 0 ? o[0] : null).map(Team::getName)
                 .orElse("n/a");
-        String teamB = Optional.ofNullable(opponents).map(o -> o.size() > 1 ? o.get(1) : null).map(Team::getName)
+        String teamB = Optional.ofNullable(opponents).map(o -> o != null && o.length > 1 ? o[1] : null).map(Team::getName)
                 .orElse("n/a");
-        return String.format("Contest[%s] Round: %s -> %s vs %s (next: %s)", contestUuid, round, teamA, teamB,
-                nextContestUuid);
+        return String.format("Contest[%s] Round: %s -> %s vs %s (next: %s)", id.asMongoKey(), round, teamA, teamB,
+                nextContestId);
     }
 
     public int compareTo(@Nullable Contest otherContest) {
@@ -61,9 +84,17 @@ public class Contest implements Comparable<Contest> {
         }
 
         int compare = round != null && otherContest.round != null ? Integer.compare(round, otherContest.round) : 0;
+        
         if (compare == 0) {
-            compare = UUIDUtil.getInstantFromUUID(contestUuid)
-                    .compareTo(UUIDUtil.getInstantFromUUID(otherContest.contestUuid));
+            compare = Optional.ofNullable(matchDate)
+                    .map(date -> date.compareTo(otherContest.matchDate))
+                    .orElse(0);                    
+        }
+        if (compare == 0) {
+            compare = Optional.ofNullable(id)
+                    .map(Identity::getValue)
+                    .map(value -> value.compareTo(otherContest.id.getValue()))
+                    .orElse(0);
         }
         return compare;
     }

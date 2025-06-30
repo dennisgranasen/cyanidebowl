@@ -6,8 +6,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.util.UUID;
-
 /*
     {
       "game": "bb3",
@@ -33,11 +31,12 @@ import java.util.UUID;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TopRequest extends ApiRequest<TopRequest, TopResponse> {
     public TopRequest() {
-        super("bb3/top", TopRequest.class, TopResponse.class);
+        super("bb/top", TopRequest.class, TopResponse.class);
     }
+    private String platform;
     private String league_name;
-    private UUID league_id;
+    private String league_id;
     private String competition_name;
-    private UUID competition_id;
-
+    private String competition_id;
+    private Integer opus;
 }

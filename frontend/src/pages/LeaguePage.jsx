@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import WarpScoresApiService from '../WarpScoresApiService';
 import Navigation from '../components/misc/Navigation';
 import Competitions from '../components/competition/Competitions';
+import RoundRobinAndWissenLeague from '../components/league/RoundRobinAndWissenLeague';
 import imageUrls from '../imageUrls';
 import HeaderCard from '../components/common/HeaderCard';
 import LiveContests from '../components/contest/LiveContests';
@@ -12,9 +13,10 @@ import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import LeagueInfo from '../components/league/LeagueInfo';
 
 function LeaguePage() {
-  const { leagueUuid } = useParams();
+  const {opus, leagueId} = useParams();
   const [competitions, setCompetitions] = useState([]);
   const [league, setLeague] = useState();
+  const [componentCountByStatus, setCompetitionCountByStatus] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(undefined);
   const [
@@ -30,21 +32,23 @@ function LeaguePage() {
   }, [competitions]);
 
   useEffect(() => {
-    const fetchLeague = () => {
-      WarpScoresApiService.leagues(leagueUuid)
-        .then((data) => {
-          setLeague(data);
-        })
-        .then(() => setLoading(false))
-        .catch((reason) => {
-          setError({ type: 'error', message: reason.toLocaleString() });
-        });
-    };
-    fetchLeague();
+    WarpScoresApiService.leagues(leagueId, opus)
+      .then((data) => {
+        setLeague(data);
+      })
+      .then(() => setLoading(false))
+      .catch((reason) => setError({ type: 'error', message: reason.toLocaleString()}) )
   }, []);
 
   useEffect(() => {
-    const fetchCompetitions = async (leagueId, initialized) => {
+    if (!league) return;
+    WarpScoresApiService.competitionCountByStatus([league.id])
+      .then((counts) => setCompetitionCountByStatus(counts))
+      .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
+  }, [league]);
+
+  useEffect(() => {
+    const fetchCompetitions = async (leagueId, opus, initialized) => {
       setError(undefined);
       setCompetitions([]);
       setLoading(true);
@@ -53,28 +57,36 @@ function LeaguePage() {
         setError({ type: 'info', message: 'No League selected.' });
         return;
       }
-      WarpScoresApiService.leagueCompetitions(leagueId, initialized)
+      WarpScoresApiService.leagueCompetitions(leagueId, opus, initialized)
         .then(setCompetitions)
         .then(() => setLoading(false))
         .catch((reason) => {
           setError({ type: 'error', message: reason.toLocaleString() });
         });
     };
-    if (league) fetchCompetitions(league?.uuid).then(fetchCompetitions(league?.uuid, true));
+    if (league) fetchCompetitions(leagueId, opus).then(fetchCompetitions(leagueId, opus, true));
   }, [league]);
 
   return (
     <Stack>
       <Box>
-        <Navigation currentPage="league" league={[league?.uuid, league?.name]} />
+        <Navigation currentPage="league" league={[league?.id.value, league?.name]} />
       </Box>
       {league && (
-        <HeaderCard heading={league.name} detailsHeading="League details" mainImageSrc={imageUrls.logo(league.logo)}>
-          <LeagueInfo league={league} />
+        <HeaderCard heading={league.name} detailsHeading="League details" mainImageSrc={imageUrls.logo(league.logo,league?.id?.opus)}>
+          <LeagueInfo league={league} componentCountByStatus={componentCountByStatus}/>
         </HeaderCard>
       )}
-      <LoadingOrErrorWrapper loading={loading} error={error}>
-        <Competitions competitions={competitions} league={league} />
+      <LoadingOrErrorWrapper loading={loading} error={error}>        
+        {opus === "1" ? (
+          <RoundRobinAndWissenLeague 
+            key={league?.id.value} 
+            league={league} 
+            leagueLoading={loading} 
+          />
+        ) : (
+          <Competitions competitions={competitions} league={league} />
+        )}
       </LoadingOrErrorWrapper>
       {activeCompetitionsIncludeRoundRobinOrWissenOrKnockoutTournaments && <LiveContests league={league} />}
       <LatestMatches league={league} />

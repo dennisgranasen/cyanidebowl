@@ -34,13 +34,16 @@ import java.util.UUID;
 @ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TeamMatchesRequest extends ApiRequest<TeamMatchesRequest, TeamMatchesResponse> {
-    private UUID team;
+    private String team;
     private Date start;
     private Date end;
     private MatchesRequest.Ordering ordering;
+    private String platform;
+    //private Integer limit;
+    private Integer opus;
 
     public TeamMatchesRequest() {
-        super("bb3/teammatches", TeamMatchesRequest.class, TeamMatchesResponse.class);
+        super("bb/teammatches", TeamMatchesRequest.class, TeamMatchesResponse.class);
         setCacheValidity(CacheValidityDurations.ONE_HOUR);
     }
 }

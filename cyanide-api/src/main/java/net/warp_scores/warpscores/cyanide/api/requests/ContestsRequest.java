@@ -6,7 +6,6 @@ import lombok.Setter;
 import lombok.ToString;
 import net.warp_scores.warpscores.cyanide.api.responses.ContestsResponse;
 
-import java.util.UUID;
 
 /*
     {
@@ -52,13 +51,16 @@ public class ContestsRequest extends ApiRequest<ContestsRequest, ContestsRespons
     public enum Status {Sheduled, Scheduled, InProgress, Validated, Played}
 
     private String league_name;
-    private UUID league_id;
-    private UUID competition_id;
+    private String league_id;
+    private String competition_name;
+    private String competition_id;
     private String status;
     private Integer round;
+    private Integer bb;
+    private Integer exact;
 
     public ContestsRequest() {
-        super("bb3/contests", ContestsRequest.class, ContestsResponse.class);
+        super("bb/contests", ContestsRequest.class, ContestsResponse.class);
         setCacheValidity(CacheValidityDurations.FIFTEEN_MINUTES);
     }
 }

@@ -38,7 +38,6 @@ frontend/public/index.js
 frontend/public/index.js.LICENSE.txt
 
 http-client.env.json
-application.yml
 frontend/coverage
 frontend/public/*.md
 frontend/public/version.json
@@ -46,10 +45,11 @@ frontend/public/version.json
 backend/src/main/resources/img/bb3
 
 /data
-
+.env
 sync.sh
 fetchMongoData.sh
-
+package-lock.json
+frontend/package-lock.json
 warpscores-*.tar
 cyanide-api/maven-build.xml
 cyanide-api/maven-build.properties
@@ -59,3 +59,6 @@ cyanide-api/build.xml
 backend/build.xml
 docker-compose-production.yaml
 my-compose.yaml
+frontend/package-lock.json
+backend/test.data
+*playground*.js

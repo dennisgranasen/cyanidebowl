@@ -2,54 +2,80 @@ package net.warp_scores.warpscores.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.warp_scores.warpscores.config.OfficialLeagueCompetitionNameProperties;
+import net.warp_scores.warpscores.config.properties.CyanideDefaultsProperties;
+import net.warp_scores.warpscores.config.properties.OfficialLeagueProperties;
+import net.warp_scores.warpscores.identity.CompositeIdentity;
+import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.CompetitionFormat;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.Consumer;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class OfficialLeagueAndCompetitions {
-    private final OfficialLeagueCompetitionNameProperties competitionNameProperties;
+    private final OfficialLeagueProperties competitionNameProperties;
+    private final CyanideDefaultsProperties cyanideDefaultsProperties;
 
-    private static final UUID OFFICIAL_LEAGUE_UUID = UUID.fromString("00000000-0000-0000-0000-000000000025");
     private static final String ARENA_MODE_COMPETITION_NAME_PATTERN = "ARENA_SEASON_[0-9]+_NAME";
 
-    public void adjustCompetitionNameAndLogo(UUID leagueId,
-            String competitionName,
-            Consumer<String> competitionNameConsumer, Consumer<String> competitionLogoConsumer) {
-        adjustCompetitionName(leagueId, competitionName, competitionNameConsumer);
-        adjustCompetitionLogo(leagueId, competitionName, competitionLogoConsumer);
+    private boolean isOfficialLeague(Identity leagueId) {
+        String key;
+        if (SimpleIdentity.class.isAssignableFrom(leagueId.getClass())) {
+            SimpleIdentity sid = (SimpleIdentity)leagueId;
+            key = sid.getKey();
+        }
+        else if (CompositeIdentity.class.isAssignableFrom(leagueId.getClass())) {
+            CompositeIdentity cid = (CompositeIdentity)leagueId;
+            key = cid.asSimpleIdentity(0).getKey().toLowerCase();
+        } else {
+            return false;
+        }
+        return Arrays.stream(cyanideDefaultsProperties.getOfficialLeagueIds())
+                .map(String::toLowerCase)
+                .anyMatch(key::equals);
     }
 
-    public void adjustCompetitionName(UUID leagueId,
+    public void adjustCompetitionNameAndLogo(Identity leagueId,
+            String competitionName,
+            Consumer<String> competitionNameConsumer, Consumer<String> competitionLogoConsumer) {
+        if (leagueId != null && isOfficialLeague(leagueId)) {
+            adjustCompetitionName(leagueId, competitionName, competitionNameConsumer);
+            adjustCompetitionLogo(leagueId, competitionName, competitionLogoConsumer);
+        }
+    }
+
+    public void adjustCompetitionName(Identity leagueId,
             String competitionName,
             Consumer<String> competitionNameConsumer) {
-        if (OFFICIAL_LEAGUE_UUID.equals(leagueId)) {
+        if (leagueId != null && isOfficialLeague(leagueId)) {
             Optional<String> competitionNameMapping = Optional.ofNullable(
                     competitionNameProperties.getCompetitionName(competitionName));
             competitionNameConsumer.accept(competitionNameMapping.orElse(competitionName));
         }
     }
 
-    public void adjustCompetitionLogo(UUID leagueId,
+    public void adjustCompetitionLogo(Identity leagueId,
             String competitionName,
             Consumer<String> competitionLogoConsumer) {
-        if (OFFICIAL_LEAGUE_UUID.equals(leagueId)) {
+        if (leagueId != null && isOfficialLeague(leagueId)) {
             Optional<String> competitionLogoMapping = Optional.ofNullable(
                     competitionNameProperties.getCompetitionLogo(competitionName));
             competitionLogoMapping.ifPresent(competitionLogoConsumer);
         }
     }
 
-    public void adjustCompetitionFormat(UUID leagueId,
+    public void adjustCompetitionFormat(Identity leagueId,
             String competitionName,
             Consumer<CompetitionFormat> competitionFormatConsumer) {
-        if (OFFICIAL_LEAGUE_UUID.equals(leagueId) && competitionName.matches(ARENA_MODE_COMPETITION_NAME_PATTERN)) {
+        if (leagueId != null && isOfficialLeague(leagueId) &&
+            competitionName.matches(ARENA_MODE_COMPETITION_NAME_PATTERN)) {
             competitionFormatConsumer.accept(CompetitionFormat.Arena);
         }
     }

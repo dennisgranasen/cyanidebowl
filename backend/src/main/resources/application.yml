@@ -1,0 +1,47 @@
+spring:
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb://${MONGO_USER:USER}:${MONGO_PASS:PASS}@localhost:32768/${MONGO_DB:cyanidebowl}?authSource=admin}
+
+logging:
+  level:
+    org.springframework.boot.autoconfigure.mongo: DEBUG
+
+cyanide:
+  check-api-status-cron: '0 */15 * * * ?'
+  job-creation-scheduler-active: true
+  job-execution-scheduler-active: true
+  fetch-active: true
+  urls:
+    images-extension: png
+    images:
+      logos: https://images.cyanide-studio.com/bb{OPUS}/logos
+      races: https://images.cyanide-studio.com/bb{OPUS}/races
+      portraits: https://images.cyanide-studio.com/bb{OPUS}/portraits
+      skills: https://images.cyanide-studio.com/bb{OPUS}/skillicons/colorset2
+      stadiums: https://images.cyanide-studio.com/bb{OPUS}/stadiums
+  api-config:
+    base-url: https://web.cyanide-studio.com/ws
+    key: ${CYANIDE_API_KEY:}
+  images-cache:
+    max-validity-in-minutes: 600
+  request-limit:
+    capacity: 30
+    period-in-seconds: 30
+  defaults:  
+    opus: 3
+    page-limit: 100
+    fetch-match-max-age-limit: 10000
+    top-coaches: 5
+    official-league-ids:
+      - 3_00000000-0000-0000-0000-000000000025
+
+application:
+  naf-coach-lookup-url-template: https://www.thenaf.net/coachcheck.php?naf_name=%s
+  default-spring-cache-ttl: 21600000
+  client-origin-url: ${FRONTEND_URI:http://localhost:8022}
+  backend-origin-url: ${BACKEND_URI:http://localhost:${SERVER_PORT}:8080}
+
+scheduler:
+  enabled: true
+

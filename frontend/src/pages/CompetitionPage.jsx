@@ -54,7 +54,7 @@ function CompetitionPage() {
     getAccessTokenSilently,
     getAccessTokenWithPopup,
   } = useAuth0WithUserPermissions();
-  const { competitionUuid } = useParams();
+  const { competitionId, opus } = useParams();
   const [competition, setCompetition] = useState(null);
   const [competitionLoading, setCompetitionLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -62,7 +62,7 @@ function CompetitionPage() {
   useEffect(() => {
     const fetchCompetition = () => {
       setCompetitionLoading(true);
-      WarpScoresApiService.competition(competitionUuid)
+      WarpScoresApiService.competition(competitionId, opus)
         .then((data) => {
           setCompetition(data);
         })
@@ -79,7 +79,7 @@ function CompetitionPage() {
         <Navigation
           currentPage="competition"
           league={competition ? [competition.leagueId, competition.leagueName] : []}
-          competition={[competitionUuid, competition ? competition.name : '']}
+          competition={[opus + "_" + competitionId, competition ? competition.name : '']}
         />
       </Box>
       <LoadingOrErrorWrapper loading={competitionLoading} error={error}>
@@ -87,8 +87,8 @@ function CompetitionPage() {
           heading={competition?.name}
           subHeading={<RouteLink to={`/${competition?.leagueId}`}>League: {competition?.leagueName}</RouteLink>}
           detailsHeading="Competition details"
-          mainImageSrc={competition?.logo ? imageUrls.logo(competition?.logo) : imageUrls.logo(competition?.leagueLogo)}
-          additionalImageSrc={competition?.logo ? imageUrls.logo(competition?.leagueLogo) : null}
+          mainImageSrc={competition?.logo ? imageUrls.logo(competition?.logo, competition?.id?.opus) : imageUrls.logo(competition?.leagueLogo, competition?.id?.opus)}
+          additionalImageSrc={competition?.logo ? imageUrls.logo(competition?.leagueLogo, competition?.id?.opus) : null}
         >
           <InfoArea>
             <InfoItem key="Created" label="Created" info={formatter.formatAsDate(competition?.dateCreated)} />
@@ -129,7 +129,8 @@ function CompetitionPage() {
                       isAuthenticated={isAuthenticated}
                       getAccessTokenSilently={getAccessTokenSilently}
                       getAccessTokenWithPopup={getAccessTokenWithPopup}
-                      competitionUuid={competition?.uuid}
+                      competitionId={competition?.id.value}
+                      opus={competition?.id.opus}
                     />
                   }
                 />

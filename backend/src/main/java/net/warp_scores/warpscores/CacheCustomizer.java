@@ -20,7 +20,8 @@ public class CacheCustomizer implements CacheManagerCustomizer<ConcurrentMapCach
     @Override
     public void customize(ConcurrentMapCacheManager cacheManager) {
         cacheManager.setCacheNames(
-                List.of(REST_NAF_COACH, DOMAIN_NAF_COACH, ARENA_TEAMS, ARENA_COACHES, ARENA_COACH_TEAMS, ARENA_RACES,
+                List.of(REST_NAF_COACH, DOMAIN_NAF_COACH, ARENA_TEAMS, ARENA_COACHES,
+                        ARENA_COACH_TEAMS, ARENA_RACES,
                         ARENA_INFOS));
     }
 }

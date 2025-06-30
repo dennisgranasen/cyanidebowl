@@ -47,19 +47,21 @@ import java.util.UUID;
 public class MatchesRequest extends ApiRequest<MatchesRequest, MatchesResponse> {
     public enum Ordering {started, finished}
 
+    private String platform;
     private String league_name;
-    private UUID league_id;
+    private String league_id;
     private String competition_name;
-    private UUID competition_id;
+    private String competition_id;
     private Date start;
     private Date end;
     private Ordering ordering;
     private Integer id_only;
-    private UUID team_id;
+    private String team_id;
     private Integer team_stats;
+    private Integer opus;
 
     public MatchesRequest() {
-        super("bb3/matches", MatchesRequest.class, MatchesResponse.class);
+        super("bb/matches", MatchesRequest.class, MatchesResponse.class);
         setCacheValidity(CacheValidityDurations.FIFTEEN_MINUTES);
     }
 }

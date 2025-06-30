@@ -1,7 +1,7 @@
 import React from 'react';
-import { Box, Card, CardBody, Center, Grid, GridItem, Heading, HStack, Link, Text } from '@chakra-ui/react';
+import { Box, Card, CardBody, Center, Grid, GridItem, Heading, HStack, Link, Text, Tooltip } from '@chakra-ui/react';
 import { Icon } from '@chakra-ui/icons';
-import { FaGear } from 'react-icons/fa6';
+import { FaGear,FaXmark } from 'react-icons/fa6';
 import { Link as RouteLink } from 'react-router-dom';
 
 function CircuitCard({ circuit, showConfigureLink, noContentIcon, noContentHeading, noContentText, variant }) {
@@ -30,9 +30,16 @@ function CircuitCard({ circuit, showConfigureLink, noContentIcon, noContentHeadi
                     <Link as={RouteLink} to={`circuit/${circuit.circuitId}`}>
                       {circuit.circuitName}
                     </Link>
-                    <Link as={RouteLink} to={`circuit/${circuit.circuitId}`}>
-                      {showConfigureLink && <Icon as={FaGear} />}
-                    </Link>
+                    <Tooltip  label={"configure " + circuit.circuitName} placement="top"> 
+                      <Link as={RouteLink} to={`circuit/${circuit.circuitId}`}>
+                        {showConfigureLink && <Icon as={FaGear} />}
+                      </Link>
+                    </Tooltip>
+                    <Tooltip  label={"[NOT IMPLEMENTED YET] delete " + circuit.circuitName} placement="top"> 
+                      <Link as={RouteLink} to={`circuit/${circuit.circuitId}`}>
+                        {showConfigureLink && <Icon as={FaXmark} color="red" />}
+                      </Link>
+                    </Tooltip>
                   </HStack>
                 </Center>
               </GridItem>

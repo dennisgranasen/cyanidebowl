@@ -38,11 +38,12 @@ import java.util.UUID;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MatchRequest extends ApiRequest<MatchRequest, MatchResponse> {
 
-    private UUID match_id;
+    private String match_id;
     private Integer rosters = 1;
+    private Integer opus;
 
     public MatchRequest() {
-        super("bb3/match", MatchRequest.class, MatchResponse.class);
+        super("bb/match", MatchRequest.class, MatchResponse.class);
         setCacheValidity(CacheValidityDurations.ONE_HOUR);
         setLimitSize(null);
     }

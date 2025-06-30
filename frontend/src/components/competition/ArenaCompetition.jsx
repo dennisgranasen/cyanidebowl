@@ -102,7 +102,7 @@ function ArenaInfoCard({ competitionUuid, race }) {
       overflow="hidden"
       align="center"
     >
-      <Image maxH="120px" src={imageUrls.race(race)} />
+      <Image maxH="120px" src={imageUrls.race(race, race.opus)} />
       <CardBody p={2} height="100%">
         <VStack align="left" height="100%">
           <Heading>

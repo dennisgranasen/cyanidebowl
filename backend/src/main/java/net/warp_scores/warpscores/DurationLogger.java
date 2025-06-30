@@ -12,7 +12,8 @@ public class DurationLogger {
 
     public static <T> T executeLoggingDuration(Callable<T> callable) {
         ClassAndMethodName classAndMethodName = getClassAndMethodName();
-        return executeLoggingDuration(callable, classAndMethodName.className, classAndMethodName.methodName,
+        return executeLoggingDuration(callable,
+                classAndMethodName.className, classAndMethodName.methodName,
                 DurationLogging.DEFAULT_INFO_THRESHOLD_MILLIS,
                 DurationLogging.DEFAULT_WARN_THRESHOLD_MILLIS, DurationLogging.DEFAULT_ERROR_THRESHOLD_MILLIS);
     }
@@ -22,7 +23,8 @@ public class DurationLogger {
             long warnThresholdMillis,
             long errorThresholdMillis) {
         ClassAndMethodName classAndMethodName = getClassAndMethodName();
-        return executeLoggingDuration(callable, classAndMethodName.className, classAndMethodName.methodName,
+        return executeLoggingDuration(callable,
+                classAndMethodName.className, classAndMethodName.methodName,
                 infoThresholdMillis, warnThresholdMillis,
                 errorThresholdMillis);
     }
@@ -52,14 +54,16 @@ public class DurationLogger {
                 logLevel = Level.INFO;
             }
             log.atLevel(logLevel)
-                    .log("Calling {} duration: {}ms (tolerated: {}/{}/{}ms).", taskInfo.getTaskName(), totalTimeMillis,
+                    .log("Calling {} duration: {}ms (tolerated: {}/{}/{}ms).",
+                            taskInfo.getTaskName(), totalTimeMillis,
                             infoThresholdMillis, warnThresholdMillis, errorThresholdMillis);
         }
     }
 
     private static ClassAndMethodName getClassAndMethodName() {
         String fullQualifiedClassName = getCallerStackFrame().getClassName();
-        String className = fullQualifiedClassName.substring(fullQualifiedClassName.lastIndexOf('.') + 1);
+        String className = fullQualifiedClassName.substring(
+            fullQualifiedClassName.lastIndexOf('.') + 1);
         String methodName = getCallerStackFrame().getMethodName();
         return new ClassAndMethodName(className, methodName);
     }

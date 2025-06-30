@@ -4,25 +4,26 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import net.warp_scores.warpscores.identity.Identity;
+
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @Document
 @Getter
 @Setter
-@EqualsAndHashCode(of = {"coachUuid", "teamUuid"})
+@EqualsAndHashCode(of = {"coachId", "teamId"})
 @ToString(of = {"coachName", "teamName"}, includeFieldNames = false)
 public class ArenaTeam {
     public enum RunType {completed, active, failed}
 
     private String coachName;
-    private UUID coachUuid;
+    private Identity coachId;
     private String teamName;
     private String teamLogo;
-    private UUID teamUuid;
+    private Identity teamId;
     private Race race;
     private int totalGames;
     private List<Result> results;

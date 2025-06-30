@@ -1,6 +1,7 @@
 package net.warp_scores.warpscores.service;
 
 import net.warp_scores.warpscores.export.naf.NafReport;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.NafCoach;
 import net.warp_scores.warpscores.model.Race;
@@ -166,7 +167,7 @@ public class NafExporterTest {
                 asArray(1, 3)));
         this.contests.add(createContest("2024-02-26 15:00",
                 asArray("HumanCoach", "UnknownCoach"),
-                asArray(Race.human, Race.amazon),
+                asArray(Race.human, Race.amazon3),
                 asArray(4, 2),
                 asArray(2, 4)));
         this.contests.add(createContest("2024-02-26 16:00",
@@ -192,22 +193,21 @@ public class NafExporterTest {
             Object[] teamRaces,
             Object[] teamTouchdowns,
             Object[] teamCasualties) {
-        Contest contest = new Contest();
+        Contest contest = new Contest(new SimpleIdentity(42,1));
         contest.setMatchDate(parseDateOrNullIgnoringExceptions(matchDateValue));
-        contest.setOpponents(List.of(
+        contest.setOpponents(new Team[]{
                 newOpponent((String) teamCoachNames[0], (Race) teamRaces[0], (Integer) teamTouchdowns[0],
                         (Integer) teamCasualties[0]),
                 newOpponent((String) teamCoachNames[1], (Race) teamRaces[1], (Integer) teamTouchdowns[1],
                         (Integer) teamCasualties[1])
-        ));
+            });
         return contest;
     }
 
     private Team newOpponent(String coachName, Race race, Integer touchdowns, Integer casualties) {
-        Team team = new Team();
-        team.setId(UUID.randomUUID());
+        Team team = new Team(new SimpleIdentity(UUID.randomUUID(), 3));
         team.setCoachName(coachName);
-        team.setRace(race);
+        team.setRace(String.valueOf(race.getRaceId()));
         team.setScore(touchdowns);
         team.setInflictedcasualties(casualties);
         return team;

@@ -19,7 +19,8 @@ public class UUIDConverter {
         try {
             return Optional.of(UUID.fromString(id));
         } catch (Exception ex) {
-            log.error("Not a UUID? (value: {}), callerMethod: {}.", id, getCallerMethodName());
+            log.error("Not a UUID? (value: {}), callerMethod: {}.", id,
+                 getCallerMethodName());
             return Optional.empty();
         }
     }

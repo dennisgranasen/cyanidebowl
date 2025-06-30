@@ -6,6 +6,7 @@ import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
+import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.Match;
@@ -16,12 +17,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
-import java.util.LinkedHashSet;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -36,16 +34,23 @@ public class ContestService {
     private final MatchService matchService;
 
     @DurationLogging
-    public List<Contest> getCompetitionContests(UUID competitionUuid, Optional<Integer> limit) {
-        Optional<Competition> competition = competitionService.loadCompetition(competitionUuid);
-        Set<Team> teams = new LinkedHashSet<>(teamDomainService
-                .findByCompetitionId(competitionUuid)
+    public List<Contest> getCompetitionContests(
+                Identity competitionId,
+                Optional<Integer> limit) {  
+        Optional<Competition> competition = 
+                competitionService.loadCompetition(competitionId);
+        List<Team> teams = teamDomainService
+                .findByCompetitionId(competitionId)
                 .stream()
-                .toList());
+                .toList();
         Pageable pageable = limit.map(l -> (Pageable) PageRequest.of(0, l, Sort.by(Sort.Direction.DESC, "matchDate")))
                 .orElse(Pageable.unpaged());
-        List<Contest> contests = contestRepository.findByCompetitionId(competitionUuid, pageable);
-        teams.addAll(contests.stream().map(Contest::getOpponents).flatMap(Collection::stream).toList());
+        List<Contest> contests = contestRepository.findByCompetitionId(
+                competitionId, pageable);
+        teams.addAll(contests.stream()
+                .map(Contest::getOpponents)
+                .flatMap(Arrays::stream)
+                .toList());
         contests.forEach(this::loadMatchIntoAndAdjustCompetitionName);
 
         return contestInitializationService.initializeContestsScheduleForFormat(
@@ -53,57 +58,81 @@ public class ContestService {
     }
 
     @DurationLogging
-    public List<Contest> getLatestLeagueContests(UUID leagueUuid, int limit) {
-        List<Contest> contests = contestRepository.findByLeagueIdAndStatusOrderByMatchDateDesc(leagueUuid,
-                MatchStatus.Validated, PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "matchDate")));
+    public List<Contest> getLatestLeagueContests(
+                Identity leagueId,
+                int limit) {
+        List<Contest> contests = 
+                contestRepository.findByLeagueIdAndStatusOrderByMatchDateDesc(leagueId,
+                        MatchStatus.Validated, 
+                        PageRequest.of(0, limit, 
+                                Sort.by(Sort.Direction.DESC, "matchDate")));
         contests.forEach(this::loadMatchIntoAndAdjustCompetitionName);
         return contests;
     }
 
     @DurationLogging
-    public List<Contest> getLiveLeagueContests(UUID leagueUuid, int limit) {
-        List<Contest> contests = contestRepository.findByLeagueIdAndLiveOrderByMatchDateDesc(leagueUuid, 1,
-                PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "matchDate")));
+    public List<Contest> getLiveLeagueContests(
+                Identity leagueId,
+                int limit) {
+        List<Contest> contests = 
+                contestRepository.findByLeagueIdAndLiveOrderByMatchDateDesc(
+                        leagueId, 1,
+                        PageRequest.of(0, limit, 
+                                Sort.by(Sort.Direction.DESC, "matchDate")));
         contests.forEach(this::loadMatchIntoAndAdjustCompetitionName);
         return contests;
     }
 
     @DurationLogging
-    public List<Contest> getLatestCompetitionContests(UUID competitionUuid, int limit) {
-        List<Contest> contests = contestRepository.findByCompetitionIdAndStatusOrderByMatchDateDesc(competitionUuid,
-                MatchStatus.Validated, PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "matchDate")));
+    public List<Contest> getLatestCompetitionContests(
+                Identity competitionId, int limit) {
+        List<Contest> contests = 
+                contestRepository.findByCompetitionIdAndStatusOrderByMatchDateDesc(
+                        competitionId, MatchStatus.Validated, 
+                        PageRequest.of(0, limit, 
+                                Sort.by(Sort.Direction.DESC, "matchDate")));
         contests.forEach(this::loadMatchIntoAndAdjustCompetitionName);
         return contests;
     }
 
     @DurationLogging
-    public List<Contest> getLiveCompetitionContests(UUID competitionUuid, int limit) {
-        List<Contest> contests = contestRepository.findByCompetitionIdAndLiveOrderByMatchDateDesc(competitionUuid, 1,
-                PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "matchDate")));
+    public List<Contest> getLiveCompetitionContests(
+                Identity competitionId, int limit) {
+        List<Contest> contests =
+                contestRepository.findByCompetitionIdAndLiveOrderByMatchDateDesc(
+                        competitionId, 1, 
+                                PageRequest.of(0, limit, 
+                                        Sort.by(Sort.Direction.DESC, "matchDate")));
         contests.forEach(this::loadMatchIntoAndAdjustCompetitionName);
         return contests;
     }
 
     private void loadMatchIntoAndAdjustCompetitionName(Contest contest) {
-        Optional<UUID> matchUuid = Optional.ofNullable(contest.getMatchUuid());
-        Optional<Match> match = matchUuid.flatMap(matchRepository::findById);
+        Optional<Identity> matchId = Optional.ofNullable(contest.getMatchIdentity());
+        if (matchId.isEmpty()) {
+            contest.setMatch(null);
+            return;
+        }
+        Optional<Match> match = matchRepository.findById(matchId.get());
 
-        officialLeagueAndCompetitions.adjustCompetitionName(contest.getLeagueId(), contest.getCompetitionName(),
+        officialLeagueAndCompetitions.adjustCompetitionName(contest.getLeagueId(), 
+                contest.getCompetitionName(),
                 contest::setCompetitionName);
         contest.setAdminResult(contest.isAdminResult() ||
-                (matchUuid.isEmpty() &&
+                (matchId.isEmpty() &&
                         MatchStatus.Validated.equals(contest.getStatus())));
-        match.ifPresent(
-                m -> {
-                    contest.setMatch(m);
-                    officialLeagueAndCompetitions.adjustCompetitionName(m.getLeagueId(), m.getCompetitionName(),
-                            m::setCompetitionName);
-                    officialLeagueAndCompetitions.adjustCompetitionLogo(m.getLeagueId(), m.getCompetitionName(),
-                            m::setCompetitionLogo);
-                    contest.setLive(m.getFinished() == null ? 1 : 0);
-                    contest.setConcede(matchService.isConcede(m));
-                    contest.setOvertime(matchService.isOvertime(m));
-                });
+        if (match.isEmpty()) {
+            contest.setMatch(null);
+            return;
+        }
+        Match m = match.get();
+        contest.setMatch(m);
+        officialLeagueAndCompetitions.adjustCompetitionName(
+                m.getLeagueId(), m.getCompetitionName(), m::setCompetitionName);
+        officialLeagueAndCompetitions.adjustCompetitionLogo(
+                m.getLeagueId(), m.getCompetitionName(), m::setCompetitionLogo);
+        contest.setLive(m.getFinished() == null ? 1 : 0);
+        contest.setConcede(matchService.isConcede(m));
+        contest.setOvertime(matchService.isOvertime(m));
     }
-
 }

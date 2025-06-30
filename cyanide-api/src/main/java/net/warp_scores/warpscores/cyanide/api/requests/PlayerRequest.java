@@ -28,4 +28,8 @@ import lombok.ToString;
 @ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PlayerRequest {
+      private String platform;
+      private String id;
+      private String name;
+      private Integer opus;
 }

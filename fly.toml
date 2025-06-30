@@ -1,0 +1,26 @@
+app = "cyanidebowl"
+
+[build]
+  # Uncomment if you want to specify a Dockerfile path
+  dockerfile = "backend/docker/Dockerfile"
+
+[env]
+  SERVER_PORT="8080"
+  BACKEND_URI="https://cyanidebowl.fly.dev"
+  FRONTEND_URI="https://bloodbowl.granasen.com"
+  REACT_APP_BACKEND_URI="https://cyanidebowl.fly.dev"
+  AUTH_URI="https://nst-scores.eu.auth0.com/"
+  AUTH_AUDIENCE="nst-scores-backend"
+  SPRING_PROFILES_ACTIVE="server"
+
+[[services]]
+  internal_port = 8080
+  protocol = "tcp"
+
+  [[services.ports]]
+    handlers = ["http"]
+    port = 80
+
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = 443

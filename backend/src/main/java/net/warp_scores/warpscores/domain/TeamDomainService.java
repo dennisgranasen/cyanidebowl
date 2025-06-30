@@ -2,126 +2,127 @@ package net.warp_scores.warpscores.domain;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.controller.CompetitionController;
 import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
 import net.warp_scores.warpscores.cyanide.api.responses.TeamResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.TeamsResponse;
 import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
+import net.warp_scores.warpscores.domain.persistence.TeamCollectionRepository;
 import net.warp_scores.warpscores.domain.persistence.TeamRepository;
+import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Competition;
-import net.warp_scores.warpscores.model.CompetitionTeams;
 import net.warp_scores.warpscores.model.Team;
+import net.warp_scores.warpscores.model.TeamCollection;
 import net.warp_scores.warpscores.service.OfficialLeagueAndCompetitions;
 import net.warp_scores.warpscores.service.PopulatorUtil;
 import net.warp_scores.warpscores.service.TeamPopulator;
 import net.warp_scores.warpscores.service.UUIDConverter;
+import net.warp_scores.warpscores.service.IdService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import static java.util.Optional.ofNullable;
+
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class TeamDomainService {
+
+
+    @Autowired
     private final TeamRepository teamRepository;
-
-    private final CompetitionRepository competitionRepository;
-
+    @Autowired
     private final TeamPopulator teamPopulator;
+    @Autowired
+    private final TeamCollectionDomainService competitionTeamsDomainService;
 
-    private final UUIDConverter uuidConverter;
-    private final CompetitionTeamsDomainService competitionTeamsDomainService;
-    private final OfficialLeagueAndCompetitions officialLeagueCompetitions;
-    private final OfficialLeagueAndCompetitions officialLeagueAndCompetitions;
+    @Value("${cyanide.defaults.opus:3}")
+    private int defaultOpus;
+
 
     @Transactional
-    public List<Team> createOrUpdateTeams(TeamsResponse teamsResponse) {
+    public List<Team> createOrUpdateTeams(TeamsResponse teamsResponse, int opus) {
         if (teamsResponse == null || teamsResponse.isEmpty()) {
             return Collections.emptyList();
         }
         List<Team> teams = Arrays.stream(teamsResponse.getTeams())
-                .map(this::internalCreateOrUpdateTeam)
+                .map((apiTeam) -> internalCreateOrUpdateTeam(apiTeam, opus))
                 .collect(Collectors.toList());
         return teamRepository.saveAll(teams);
     }
 
     @Transactional
-    public Team createOrUpdateTeam(TeamResponse teamResponse) {
+    public Team createOrUpdateTeam(TeamResponse teamResponse, int opus) {
         if (teamResponse == null || teamResponse.isEmpty()) {
             return null;
         }
-        Team team = internalCreateOrUpdateTeam(teamResponse.getTeam(), teamResponse.getRoster());
+        Team team = internalCreateOrUpdateTeam(
+            teamResponse.getTeam(), 
+            teamResponse.getRoster(),
+            opus);
         return teamRepository.save(team);
     }
 
     @Transactional
-    public List<Team> findByCompetitionId(UUID competitionUuid) {
-        Optional<CompetitionTeams> competitionTeams = competitionTeamsDomainService.findByCompetitionId(
-                competitionUuid);
-        List<UUID> teamUuids = competitionTeams.map(CompetitionTeams::getTeamUuids).orElse(Collections.emptyList());
-        List<Team> teams = this.teamRepository.findAllById(teamUuids);
-        setRelevantCompetition(teams, competitionUuid);
+    public List<Team> findByCompetitionId(Identity competitionId) {
+        Optional<TeamCollection> competitionTeams =
+            competitionTeamsDomainService.findByCompetitionId(competitionId);
+        List<String> teamIds =
+            competitionTeams.map(TeamCollection::getTeamIds).orElse(Collections.emptyList());
+        
+        List<Identity> teamIdentities = teamIds.stream()
+                .map((id) -> new SimpleIdentity(id, competitionId.getOpus()))
+                .collect(Collectors.toList());
+
+        List<Team> teams = this.teamRepository.findAllById(teamIdentities);
+        //setRelevantCompetition(teams, competitionId);
         return teams;
     }
 
     @Transactional
-    public Optional<Team> findTeam(UUID teamUuid, Optional<UUID> competitionUuid) {
-        List<Team> teams = teamRepository.findAllById(List.of(teamUuid));
-        if (teams.size() == 1) {
-            competitionUuid.ifPresent((uuid) -> setRelevantCompetition(teams, uuid));
-            Team team = teams.get(0);
-            UUID competitionId = team.getCompetitionIds()[0];
-            Optional<Competition> competition = competitionRepository.findById(competitionId);
-            team.setLeagueName(competition.map(Competition::getLeagueName).orElse(null));
-            Optional<UUID> leagueId = competition.map(Competition::getLeagueId);
-            team.setLeagueIds(leagueId.map(id -> new UUID[]{id}).orElse(null));
-            leagueId.ifPresent(id ->
-                    officialLeagueAndCompetitions.adjustCompetitionName(id, team.getCompetitionName(),
-                            team::setCompetitionName));
-            return Optional.of(team);
-        } else {
+    public Optional<Team> findTeam(Identity teamId) {
+        Team team = teamRepository.findById(teamId).orElse(null);
+        if (team == null) {
+            log.warn("Team with id {} not found.", teamId);
             return Optional.empty();
-        }
+        }         
+        return Optional.of(team);
     }
 
-    private void setRelevantCompetition(List<Team> teams, UUID competitionUuid) {
-        Optional<Competition> competition = this.competitionRepository.findById(competitionUuid);
+    /*
+    private void setRelevantCompetition(List<Team> teams, Identity competitionId) {
+        Optional<Competition> competition = this.competitionRepository.findById(competitionId);
         teams
                 .forEach(team -> {
-                    team.setCompetitionIds(new UUID[]{competitionUuid});
+                    team.setCompetitionIds(new Identity[]{competitionId});
                     competition.ifPresent(c -> team.setCompetitionName(c.getName()));
                 });
     }
+    */
 
-    private Team internalCreateOrUpdateTeam(ApiTeam apiTeam) {
-        Team team = newTeamOrFromDb(uuidConverter.toUuid(apiTeam.getId()), apiTeam.getName());
+    private Team internalCreateOrUpdateTeam(ApiTeam apiTeam, int opus) {
+        return internalCreateOrUpdateTeam(apiTeam, new TeamResponse.Player[0], opus);
+    }
+
+    private Team internalCreateOrUpdateTeam(
+            ApiTeam apiTeam, TeamResponse.Player[] players, int opus) {
+        SimpleIdentity identity = new SimpleIdentity(apiTeam.getId(), opus);
+        Team team = newTeamOrFromDb(identity);
         if (team != null) {
-            teamPopulator.populateTeamTeam(apiTeam, new TeamResponse.Player[0], team);
+            teamPopulator.populateTeamTeam(apiTeam, players, team, opus);
         }
         return team;
     }
 
-    private Team internalCreateOrUpdateTeam(ApiTeam apiTeam, TeamResponse.Player[] players) {
-        Team team = newTeamOrFromDb(uuidConverter.toUuid(apiTeam.getId()), apiTeam.getName());
-        if (team != null) {
-            teamPopulator.populateTeamTeam(apiTeam, players, team);
-        }
-        return team;
-    }
-
-    private Team newTeamOrFromDb(Optional<UUID> uuid, String name) {
-        if (uuid.isEmpty()) {
-            log.error("Can't convert team '{}'. Need an UUID.", name);
-            return null;
-        }
-        Optional<Team> teamFromDb = uuid.flatMap(teamRepository::findById);
-        Team team = teamFromDb.orElse(new Team());
-        team.setId(uuid.get());
+    private Team newTeamOrFromDb(Identity identity) {
+        Optional<Team> teamFromDb = teamRepository.findById(identity);
+        Team team = teamFromDb.orElse(new Team(identity));
         return team;
     }
 

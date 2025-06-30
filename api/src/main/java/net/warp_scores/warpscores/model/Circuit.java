@@ -26,6 +26,13 @@ public class Circuit {
 
     private List<CircuitLeg> circuitLegs = new ArrayList<>();
 
+    public CircuitLeg getCircuitLeg(Long legId) {
+        return circuitLegs.stream()
+                .filter(leg -> leg.getCircuitLegId().equals(legId))
+                .findFirst()
+                .orElse(null);
+    }
+
     public void addLeg(CircuitLeg circuitLeg) {
         circuitLegs.add(circuitLeg);
     }

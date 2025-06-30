@@ -2,23 +2,24 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.warp_scores.warpscores.domain.persistence.MatchRepository;
+import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.service.CompetitionService;
 import net.warp_scores.warpscores.service.MatchService;
-import net.warp_scores.warpscores.service.OfficialLeagueAndCompetitions;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -30,29 +31,43 @@ public class MatchController {
     private final CompetitionService competitionService;
     private final MatchService matchService;
 
-    @GetMapping("/matches/team/{teamUuid}")
-    public ResponseEntity<List<Match>> getTeamMatches(@PathVariable(name = "teamUuid") UUID teamUuid) {
+    @Value("${cyanide.defaults.opus:3}")
+    private int defaultOpus;
+
+
+    @GetMapping("/matches/team/{teamId}")
+    public ResponseEntity<List<Match>> getTeamMatches(
+            @PathVariable(name = "teamId") String teamId, 
+            @RequestParam(name = "opus", required = false) Integer opus) {
         try {
-            List<Match> byTeamId = matchService.findByTeamId(teamUuid);
+            List<Match> byTeamId = 
+            matchService.findByTeamId(new SimpleIdentity(
+                teamId, Optional.ofNullable(opus).orElse(defaultOpus)));
             return ResponseEntity.ok(byTeamId);
         } catch (Exception ex) {
-            log.error("Unable to retrieve matches for team {}", teamUuid, ex);
+            log.error("Unable to retrieve matches for team {}", teamId, ex);
             return ResponseEntity.internalServerError().build();
         }
     }
 
-    @GetMapping("/matches/league/{leagueUuid}/latest")
-    public ResponseEntity<List<Match>> getLatestLeagueContests(@PathVariable(name = "leagueUuid") UUID leagueUuid) {
-        return getLatestLeagueMatches(leagueUuid, null);
+    @GetMapping("/matches/league/{leagueId}/latest")
+    public ResponseEntity<List<Match>> getLatestLeagueContests(
+        @PathVariable(name = "leagueId") String leagueId,
+        @RequestParam(name = "opus", required = false) Integer opus) {
+        return getLatestLeagueMatches(leagueId, null, opus);
     }
 
-    @GetMapping("/matches/league/{leagueUuid}/latest/{limit}")
-    public ResponseEntity<List<Match>> getLatestLeagueMatches(@PathVariable(name = "leagueUuid") UUID leagueUuid,
-            @PathVariable(name = "limit") Integer limit) {
+    @GetMapping("/matches/league/{leagueId}/latest/{limit}")
+    public ResponseEntity<List<Match>> getLatestLeagueMatches(
+        @PathVariable(name = "leagueId") String leagueId,
+            @PathVariable(name = "limit") Integer limit,
+            @RequestParam(name = "opus", required = false) Integer opus) {
         limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT_FOR_LATEST_MATCHES);
         limit = Math.min(limit, MAX_LIMIT_FOR_LATEST_MATCHES);
         try {
-            List<Match> matches = matchService.getLatestLeagueMatches(leagueUuid, limit);
+            Identity leagueIdentity = new SimpleIdentity(
+                leagueId, Optional.ofNullable(opus).orElse(defaultOpus));
+            List<Match> matches = matchService.getLatestLeagueMatches(leagueIdentity, limit);
             return ResponseEntity.ok(matches);
         } catch (Exception ex) {
             log.error("Unable to retrieve matches", ex);
@@ -61,30 +76,44 @@ public class MatchController {
     }
 
     @GetMapping("/matches/competition/{competitionId}")
-    public ResponseEntity<List<Match>> getCompetitionMatches(@PathVariable(name = "competitionId") UUID competitionId) {
+    public ResponseEntity<List<Match>> getCompetitionMatches(
+            @PathVariable(name = "competitionId") String competitionId,
+            @RequestParam(name = "opus", required = false) Integer opus) {
         try {
-            Optional<Competition> competition = competitionService.loadCompetition(competitionId);
-            List<Match> byCompetitionId = matchService.findByCompetitionId(competitionId);
+            Identity competitionIdentity = new SimpleIdentity(
+                competitionId, Optional.ofNullable(opus).orElse(defaultOpus));
+            Optional<Competition> competition =
+                competitionService.loadCompetition(competitionIdentity);
+            List<Match> byCompetitionId = matchService.findByCompetitionId(competitionIdentity);
             List<Match> matches = initializeForCompetition(byCompetitionId, competition);
             return ResponseEntity.ok(matches);
         } catch (Exception ex) {
-            log.error("Unable to retrieve matches for competition {}", competitionId, ex);
+            log.error("Unable to retrieve matches for competition {}", 
+                competitionId, ex);
             return ResponseEntity.internalServerError().build();
         }
     }
 
     @GetMapping("/matches/competition/{competitionId}/latest")
-    public ResponseEntity<List<Match>> getLatestCompetitionMatches(@PathVariable(name = "competitionId") UUID competitionId) {
-        return getLatestCompetitionMatches(competitionId, null);
+    public ResponseEntity<List<Match>> getLatestCompetitionMatches(
+            @PathVariable(name = "competitionId") String competitionId,
+            @RequestParam(name = "opus", required = false) Integer opus) {
+        return getLatestCompetitionMatches(competitionId, null, opus);
     }
 
     @GetMapping("/matches/competition/{competitionId}/latest/{limit}")
-    public ResponseEntity<List<Match>> getLatestCompetitionMatches(@PathVariable(name = "competitionId") UUID competitionId,
-            @PathVariable(name = "limit") Integer limit) {
+    public ResponseEntity<List<Match>> getLatestCompetitionMatches(
+            @PathVariable(name = "competitionId") String competitionId,
+            @PathVariable(name = "limit") Integer limit,
+            @RequestParam(name = "opus", required = false) Integer opus) {
         limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT_FOR_LATEST_MATCHES);
         limit = Math.min(limit, MAX_LIMIT_FOR_LATEST_MATCHES);
         try {
-            List<Match> matches = matchService.getLatestCompetitionMatches(competitionId, limit);
+            Identity competitionIdentity = 
+                new SimpleIdentity(competitionId, Optional.ofNullable(opus).orElse(defaultOpus));
+
+            List<Match> matches = matchService.getLatestCompetitionMatches(
+                competitionIdentity, limit);
             return ResponseEntity.ok(matches);
         } catch (Exception ex) {
             log.error("Unable to retrieve matches", ex);
@@ -92,7 +121,8 @@ public class MatchController {
         }
     }
 
-    private List<Match> initializeForCompetition(List<Match> matches, Optional<Competition> competition) {
+    private List<Match> initializeForCompetition(
+            List<Match> matches, Optional<Competition> competition) {
         List<Match> sorted = matches
                 .stream()
                 .sorted(Comparator.nullsLast(Comparator.comparing(Match::getStarted)))
@@ -102,13 +132,14 @@ public class MatchController {
         return sorted;
     }
 
-    private void setRound(Match match, Integer currentMatchNumber, Optional<Competition> competition) {
+    private void setRound(Match match, Integer currentMatchNumber,
+            Optional<Competition> competition) {
         competition
                 .ifPresent(c -> setRound(match, currentMatchNumber, c));
     }
 
     public void setRound(Match match, Integer currentMatchNumber, Competition c) {
-        match.setRound(determineRound(currentMatchNumber, c));
+        match.setRound(determineRound(currentMatchNumber, c).toString());
     }
 
     private Integer determineRound(Integer currentMatchNumber, Competition competition) {

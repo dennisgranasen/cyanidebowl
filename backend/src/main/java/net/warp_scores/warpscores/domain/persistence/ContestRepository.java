@@ -1,5 +1,6 @@
 package net.warp_scores.warpscores.domain.persistence;
 
+import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.MatchStatus;
 import org.springframework.data.domain.Pageable;
@@ -8,31 +9,36 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.UUID;
+
 
 @Repository
-public interface ContestRepository extends MongoRepository<Contest, UUID> {
-    List<Contest> findByCompetitionIdAndStatus(UUID competitionId, MatchStatus matchStatus);
+public interface ContestRepository extends MongoRepository<Contest, Identity> {
+    List<Contest> findByContestId(Identity contestId);
 
-    List<Contest> findByCompetitionId(UUID competitionId, Pageable pageable);
+    List<Contest> findByCompetitionIdAndStatus(Identity competitionId, 
+        MatchStatus matchStatus);
 
-    List<Contest> findByLeagueIdAndLiveOrderByMatchDateDesc(UUID leagueId, Integer live, Pageable pageable);
+    List<Contest> findByCompetitionId(Identity competitionId, Pageable pageable);
+    //List<Contest> findByOldCompetitionId(Integer oldId, Optional<Integer> opus, Pageable pageable);
 
-    List<Contest> findByLeagueIdAndStatusOrderByMatchDateDesc(UUID leagueId,
-            MatchStatus matchStatus,
-            Pageable pageable);
+    List<Contest> findByLeagueIdAndLiveOrderByMatchDateDesc(Identity leagueId, 
+        Integer live, Pageable pageable);
 
-    List<Contest> findByCompetitionIdAndLiveOrderByMatchDateDesc(UUID competitionId, Integer live, Pageable pageable);
+    List<Contest> findByLeagueIdAndStatusOrderByMatchDateDesc(Identity leagueId,
+        MatchStatus matchStatus, Pageable pageable);
 
-    List<Contest> findByCompetitionIdAndStatusOrderByMatchDateDesc(UUID leagueId,
-            MatchStatus matchStatus,
-            Pageable pageable);
+    List<Contest> findByCompetitionIdAndLiveOrderByMatchDateDesc(Identity competitionId,
+        Integer live, Pageable pageable);
 
-    Integer countByCompetitionId(UUID competitionId);
+    List<Contest> findByCompetitionIdAndStatusOrderByMatchDateDesc(Identity leagueId,
+        MatchStatus matchStatus, Pageable pageable);
 
-    Integer countByCompetitionIdAndMatchDateNotNull(UUID competitionId);
+    Integer countByCompetitionId(Identity competitionId);
+    Integer countByLeagueId(Identity leagueId);
 
-    Integer countByCompetitionIdAndLive(UUID competitionId, Integer live);
+    Integer countByCompetitionIdAndMatchDateNotNull(Identity competitionId);
+
+    Integer countByCompetitionIdAndLive(Identity competitionId, Integer live);
 
     @Aggregation(pipeline = {
             "{'$lookup': { 'from': 'match', 'localField': 'matchUuid', 'foreignField': '_id', 'as': 'dbMatch'}}",

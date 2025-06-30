@@ -13,7 +13,7 @@ function Skill({ skill }) {
     <DelayedIconTooltip label={prettyPrint(skill)}>
       <Box boxSize={boxSize}>
         <Image
-          src={`${imageUrls.skill(skill)}`}
+          src={`${imageUrls.skill(skill, skill?.opus)}`}
           alt={prettyPrint(skill)}
           objectFit="cover"
           fallback={<QuestionOutlineIcon boxSize={boxSize} />}

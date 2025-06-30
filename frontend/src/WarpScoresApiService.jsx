@@ -43,7 +43,11 @@ const getToken = async (getAccessTokenSilently, getAccessTokenWithPopup) => {
 
 const getAuthHeaders = async (getAccessTokenSilently, getAccessTokenWithPopup) => {
   if (!isProduction) {
-    return null;
+    return {
+      headers: {
+        Authorization: 'Bearer dev-token',
+      },
+    }; 
   }
   const token = await getToken(getAccessTokenSilently, getAccessTokenWithPopup);
   return {
@@ -66,9 +70,60 @@ const getDataWithAuthentication = async (endpoint, getAccessTokenSilently, getAc
   return axios(endpoint, authHeaders);
 };
 
+const deleteDataWithAuthentication = async (endpoint, getAccessTokenSilently, getAccessTokenWithPopup) => {
+  const authHeaders = await getAuthHeaders(getAccessTokenSilently, getAccessTokenWithPopup);
+  return axios.delete(endpoint, authHeaders);
+};
+
+/*
+    public List<IdWithName> lookupLeague(Optional<String> leagueName) {
+        if (leagueName.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        LookupRequest lookupRequest = new LookupRequest();
+        lookupRequest.setLeague_name(leagueName.get());
+        AuthenticatedHttpEntity<LookupRequest> authenticatedHttpEntity = new AuthenticatedHttpEntity<>(
+                Optional.of(lookupRequest));
+
+        RestTemplate restTemplate = new RestTemplate();
+        ParameterizedTypeReference<LookupResponse> lookupResponseRef = new ParameterizedTypeReference<>() {};
+
+        IdWithName[] leagues = null;
+        try {
+            ResponseEntity<LookupResponse> lookupResponse = restTemplate.exchange(
+                    String.format("%s/lookup", warpScoresProperties.getBaseUrls().getApiBackend()),
+                    HttpMethod.POST,
+                    authenticatedHttpEntity.create(), lookupResponseRef);
+            leagues = Optional.ofNullable(lookupResponse.getBody())
+                    .map(LookupResponse::getLeagues)
+                    .orElse(null);
+        }  catch (HttpClientErrorException e) {
+            if (404 == e.getStatusCode().value()) {
+                log.warn("Lookup for {} did return {}.", leagueName, e.getStatusCode());
+            } else {
+                log.error("Error {} while lookup.", e.getStatusCode());
+            }
+        }
+        if (leagues == null || leagues.length == 0) {
+            return Collections.emptyList();
+        } else {
+            return List.of(leagues);
+        }
+    }
+*/
+
 export default {
   // misc
   backendVersion: async () => axios(`/version.json`).then(returnData).catch(handleError),
+
+
+  lookup: async(lookupFields, getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const authHeaders = await getAuthHeaders(getAccessTokenSilently, getAccessTokenWithPopup);
+    return axios.post('/lookup', lookupFields, authHeaders)
+        .then(returnData)
+        .catch(handleError)
+  },
   status: async () => axios(`/status`).then(returnData).catch(handleError),
   // circuits
   newCircuit: async (name, getAccessTokenSilently, getAccessTokenWithPopup) =>
@@ -81,40 +136,87 @@ export default {
       .catch(handleError),
   addLegToCircuit: async (
     circuitId,
+    leagueId,
     competitionId,
     legType,
     customLabel,
     game,
     platform,
-    isCompleted,
-    isKnockout,
+    ruleset,
+    isCollected,
+    isArchived,
+    ladderOption,
     getAccessTokenSilently,
     getAccessTokenWithPopup
   ) =>
     postDataWithAuthentication(
       `/circuits/${circuitId}/legs`,
       {
-        competitionId,
+        leagueId,
+        competitionId: competitionId  || null,
         legType,
         label: customLabel,
-        game,
+        game: game.toUpperCase(),
         platform,
-        isCompleted,
-        isKnockout,
+        ruleset: ruleset.toUpperCase(),
+        isCollected: isCollected,
+        isArchived: isArchived,
+        ladderOption: ladderOption || null,
       },
       getAccessTokenSilently,
       getAccessTokenWithPopup
     )
       .then(returnData)
       .catch(handleError),
+  removeCircuitLeg: async (
+    circuitId, 
+    circuitLegId,
+    getAccessTokenSilently,
+    getAccessTokenWithPopup
+  ) =>
+    deleteDataWithAuthentication(
+      `/circuits/${circuitId}/legs/${circuitLegId}`,
+      getAccessTokenSilently,
+      getAccessTokenWithPopup
+    )
+      .then(returnData)
+      .catch(handleError),
+  updateCircuitLeg: async (
+    circuitId, 
+    circuitLegId, 
+    updateFields, 
+    getAccessTokenSilently, 
+    getAccessTokenWithPopup
+  ) =>
+    postDataWithAuthentication(
+      `/circuits/${circuitId}/legs/${circuitLegId}/update`,
+      updateFields,
+      getAccessTokenSilently,
+      getAccessTokenWithPopup
+    )
+      .then(returnData)
+      .catch(handleError),
   // leagues
-  leagues: async (leagueUuid) =>
-    axios(`/leagues${leagueUuid ? `/${leagueUuid}` : ''}`)
+  leagues: async (leagueUuid, opus) =>
+    axios(`/leagues${leagueUuid ? `/${leagueUuid}` : ''}${opus !== undefined && opus !== null ? `?opus=${opus}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
+  competitionCountByStatus: async (leagues) => {
+    console.log('Fetching competition count by status for leagues:', leagues.map((l) => l.key).join(','));
+    return axios(`/league/competitionCountByStatus?leagueIds=${leagues.map((l) => l.key).join(',')}`) 
+      .then(returnData).catch(handleError)
+  },
+  leagueRanks: async (leagueId, opus, limit) =>
+    axios(`/ranks/league/${leagueId}${limit ? `/${limit}` : ''}${opus !== undefined && opus !== null ? `?opus=${opus}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
+  leagueTeams: async (leagueId, opus) =>
+    axios(`/teams/league/${leagueId}${opus !== undefined && opus !== null ? `?opus=${opus}` : ''}`)
       .then(returnData)
       .catch(handleError),
   // contests
-  liveLeagueContests: async (leagueUuid, limit) =>
-    axios(`/contests/league/${leagueUuid}/live${limit ? `/${limit}` : ''}`)
+  liveLeagueContests: async (leagueId, limit) =>
+    axios(`/contests/league/${leagueId}/live${limit ? `/${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
   liveCompetitionContests: async (competitionUuid, limit) =>
@@ -136,26 +238,37 @@ export default {
   arenaCoachTeams: async (competitionUuid, coachUuid) =>
     axios(`/arena/${competitionUuid}/coach/${coachUuid}`).then(returnData).catch(handleError),
   // matches
-  latestCompetitionMatches: async (competitionUuid, limit) =>
-    axios(`/matches/competition/${competitionUuid}/latest${limit ? `/${limit}` : ''}`)
+  latestCompetitionMatches: async (competitionUuid, opus, limit) =>
+    axios(`/matches/competition/${competitionUuid}/latest${limit ? `/${limit}` : ''}${opus ? `?opus=${opus}` : ''}`)
       .then(returnData)
       .catch(handleError),
-  latestLeagueMatches: async (leagueUuid, limit) =>
-    axios(`/matches/league/${leagueUuid}/latest${limit ? `/${limit}` : ''}`)
+  latestLeagueMatches: async (leagueUuid, opus, limit) =>
+    axios(`/matches/league/${leagueUuid}/latest${limit ? `/${limit}` : ''}${opus ? `?opus=${opus}` : ''}`)
       .then(returnData)
       .catch(handleError),
   // competitions
-  leagueCompetitions: async (leagueUuid, initialized) =>
-    axios(`/competitions/league/${leagueUuid}${initialized ? '/initialized' : ''}`)
+  leagueCompetitions: async (leagueUuid, opus, initialized) =>
+    axios(
+      `/competitions/league/${leagueUuid}${initialized ? '/initialized' : ''}${opus !== undefined && opus !== null ? `?opus=${opus}`: ''}`
+    )
       .then(returnData)
       .catch(handleError),
-  competition: async (competitionUuid) => axios(`/competitions/${competitionUuid}`).then(returnData).catch(handleError),
+  competition: async (competitionUuid, opus) =>
+    axios(`/competition${competitionUuid ? `/${competitionUuid}` : ''}${opus !== undefined && opus !== null ? `?opus=${opus}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
+
   competitionStats: async (competitionUuid) =>
     axios(`/competitions/${competitionUuid}/stats`).then(returnData).catch(handleError),
+
   competitionTeam: async (competitionUuid, teamUuid) =>
     axios(`/competitions/${competitionUuid}/team/${teamUuid}`).then(returnData).catch(handleError),
-  competitionRanks: async (competitionUuid, limit) =>
-    axios(`/ranks/competition/${competitionUuid}${limit ? `/${limit}` : ''}`)
+  competitionTeams: async (competitionUuid, opus) =>
+    axios(`/teams/competition/${competitionUuid}${opus !== undefined && opus !== null ? `?opus=${opus}` : ''} `)
+      .then(returnData)
+      .catch(handleError),
+  competitionRanks: async (competitionId, opus, limit) =>
+    axios(`/ranks/competition/${competitionId}${limit ? `/${limit}` : ''}${opus !== undefined && opus !== null ? `?opus=${opus}` : ''}`)
       .then(returnData)
       .catch(handleError),
   // team

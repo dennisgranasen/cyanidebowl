@@ -1,10 +1,12 @@
 package net.warp_scores.warpscores.service;
 
-import com.fasterxml.uuid.Generators;
 import net.warp_scores.warpscores.model.CompetitionFormat;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.Team;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -26,21 +28,33 @@ public class ContestInitializationServiceTest {
 
     private List<Contest> initializedContests;
 
+    @BeforeEach
+    public void setUp() {
+        givenCompetition = null;
+        givenSeedContests = new ArrayList<>();
+        givenTeams = new ArrayList<>();
+        initializedContests = new ArrayList<>();
+    }
+
     @Test
     public void roundRobinCompetitionContestsAreGenerated() {
+        System.out.println("DEBUG: Starting test: roundRobinCompetitionContestsAreGenerated");
         givenCompetition(CompetitionFormat.RoundRobin);
         givenTeams("A", "B", "C", "D", "E", "F");
         givenSeedContests(new String[]{"A", "F", "B", "E", "C", "D"});
 
+        System.out.println("STARTING test: roundRobinCompetitionContestsAreGenerated");
         whenContestsInitialized();
+        System.out.println("VERIFYING test: roundRobinCompetitionContestsAreGenerated");
 
         thenExpectRoundRobinGeneratedContests(
                 new String[]{"A", "F", "B", "E", "C", "D"},
-                new String[]{"A", "B", "C", "F", "D", "E"},
+                new String[]{"B", "A", "C", "F", "D", "E"},
                 new String[]{"A", "C", "D", "B", "E", "F"},
-                new String[]{"A", "D", "E", "C", "F", "B"},
+                new String[]{"D", "A", "E", "C", "F", "B"},
                 new String[]{"A", "E", "F", "D", "B", "C"}
         );
+        System.out.println("FINISHING test: roundRobinCompetitionContestsAreGenerated");
     }
 
     @Test
@@ -53,15 +67,18 @@ public class ContestInitializationServiceTest {
                 new String[]{"V", "W", "X", "Y", "Z", "U"}
         );
 
+        System.out.println("STARTING test: generationForRoundRobinDoesNotOverrideGivenContests");
         whenContestsInitialized();
+        System.out.println("VERIFYING test: generationForRoundRobinDoesNotOverrideGivenContests");
 
         thenExpectRoundRobinGeneratedContests(
                 new String[]{"A", "F", "B", "E", "C", "D"},
                 new String[]{"U", "V", "W", "X", "Y", "Z"},
                 new String[]{"V", "W", "X", "Y", "Z", "U"},
-                new String[]{"A", "D", "E", "C", "F", "B"},
+                new String[]{"D", "A", "E", "C", "F", "B"},
                 new String[]{"A", "E", "F", "D", "B", "C"}
         );
+        System.out.println("FINISHING test: generationForRoundRobinDoesNotOverrideGivenContests");
     }
 
     @Test
@@ -70,17 +87,20 @@ public class ContestInitializationServiceTest {
         givenTeams("A", "B", "C", "D", "E", "F", "G");
         givenSeedContests(new String[]{"B", "G", "C", "F", "D", "E"});
 
+        System.out.println("STARTING test: roundRobinCompetitionContestsAreGeneratedForOddNumberOfParticipants");
         whenContestsInitialized();
+        System.out.println("VERIFYING test: roundRobinCompetitionContestsAreGeneratedForOddNumberOfParticipants");
 
         thenExpectRoundRobinGeneratedContests(
                 new String[]{"B", "G", "C", "F", "D", "E"},
-                new String[]{"A", "B", "D", "G", "E", "F"},
+                new String[]{"B", "A", "D", "G", "E", "F"},
                 new String[]{"A", "C", "D", "B", "F", "G"},
-                new String[]{"A", "D", "E", "C", "F", "B"},
+                new String[]{"D", "A", "E", "C", "F", "B"},
                 new String[]{"A", "E", "F", "D", "G", "C"},
-                new String[]{"A", "F", "G", "E", "B", "C"},
+                new String[]{"F", "A", "G", "E", "B", "C"},
                 new String[]{"A", "G", "B", "E", "C", "D"}
         );
+        System.out.println("FINISHING test: roundRobinCompetitionContestsAreGeneratedForOddNumberOfParticipants");
     }
 
     @Test
@@ -161,22 +181,22 @@ public class ContestInitializationServiceTest {
             Contest expectedContest = expectedContests.get(i);
             assertThat(String.format("Contest#%s is same round (%s)", i + 1, expectedContest.getRound()),
                     initializedContest.getRound(), is(expectedContest.getRound()));
-            String expectedHomeTeam = expectedContest.getOpponents().get(0).getName();
-            String expectedAwayTeam = expectedContest.getOpponents().get(1).getName();
+            String expectedHomeTeam = expectedContest.getOpponents()[0].getName();
+            String expectedAwayTeam = expectedContest.getOpponents()[1].getName();
 
             assertThat(String.format("Home team for Contest#%s.%s to be %s", expectedContest.getRound(), (i % 3) + 1,
                             expectedHomeTeam),
-                    initializedContest.getOpponents().get(0).getName(),
+                    initializedContest.getOpponents()[0].getName(),
                     is(expectedHomeTeam));
             assertThat(String.format("Away team for Contest#%s.%s to be %s", expectedContest.getRound(), (i % 3) + 1,
                             expectedAwayTeam),
-                    initializedContest.getOpponents().get(1).getName(),
+                    initializedContest.getOpponents()[1].getName(),
                     is(expectedAwayTeam));
         }
     }
 
     private void givenCompetition(CompetitionFormat competitionFormat) {
-        this.givenCompetition = new Competition();
+        this.givenCompetition = new Competition(new SimpleIdentity(1,1));
         this.givenCompetition.setFormat(competitionFormat);
         this.givenCompetition.setName("Test Competition");
     }
@@ -192,8 +212,7 @@ public class ContestInitializationServiceTest {
     private void givenTeams(String... teamNames) {
         List<Team> teams = new ArrayList<>();
         for (String teamName : teamNames) {
-            Team team = new Team();
-            team.setId(UUID.randomUUID());
+            Team team = new Team(new SimpleIdentity(UUID.randomUUID(), 3));
             team.setName(teamName);
             teams.add(team);
         }
@@ -201,23 +220,25 @@ public class ContestInitializationServiceTest {
     }
 
     private void whenContestsInitialized() {
+        // Add debug trace before and after initialization
+        //System.out.println("DEBUG: Initializing contests with teams: " + givenTeams);
         this.initializedContests = this.service.initializeContestsScheduleForFormat(Optional.of(givenCompetition),
                 givenTeams,
                 givenSeedContests);
+        //System.out.println("DEBUG: Contests initialized: " + this.initializedContests);
     }
 
     private static Contest createContest(int round, String teamNameA, String teamNameB) {
-        Contest contest = new Contest();
-        contest.setContestUuid(Generators.timeBasedGenerator().generate());
+        Contest contest = new Contest(new SimpleIdentity(UUID.randomUUID(), 3));
         Team teamA = createTeam(teamNameA);
         Team teamB = createTeam(teamNameB);
-        contest.setOpponents(List.of(teamA, teamB));
+        contest.setOpponents(new Team[]{teamA, teamB});
         contest.setRound(round);
         return contest;
     }
 
     private static Team createTeam(String teamName) {
-        Team team = new Team();
+        Team team = new Team(new SimpleIdentity(2, 2));
         team.setName(teamName);
         return team;
     }

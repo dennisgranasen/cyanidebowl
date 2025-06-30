@@ -4,11 +4,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.model.Circuit;
 import net.warp_scores.warpscores.model.CircuitLeg;
+import net.warp_scores.warpscores.requests.CircuitLegRequest;
 import net.warp_scores.warpscores.service.CircuitService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static net.warp_scores.warpscores.controller.Authorities.AUTHORITY_WRITE_LEAGUE_ADMIN;
@@ -40,7 +43,8 @@ public class CircuitController {
     }
 
     @GetMapping("/circuits/{circuitId}")
-    public ResponseEntity<Circuit> getCircuit(@PathVariable(name = "circuitId") Long circuitId) {
+    public ResponseEntity<Circuit> getCircuit(
+            @PathVariable(name = "circuitId") Long circuitId) {
         try {
             Optional<Circuit> circuit = circuitService.load(circuitId);
             return circuit
@@ -54,16 +58,18 @@ public class CircuitController {
 
     @PostMapping("/circuits")
     @PreAuthorize(AUTHORITY_WRITE_LEAGUE_ADMIN) // ✨
-    public ResponseEntity<Circuit> createCircuit(@RequestBody Circuit circuit) {
+    public ResponseEntity<Circuit> createCircuit(
+            @RequestBody Circuit circuit) {
         circuit = circuitService.createCircuit(circuit);
         return new ResponseEntity<>(circuit, HttpStatusCode.valueOf(HttpStatus.CREATED.value()));
     }
 
     @PostMapping("/circuits/{circuitId}/legs")
     @PreAuthorize(AUTHORITY_WRITE_LEAGUE_ADMIN) // ✨
-    public ResponseEntity<Circuit> addCircuitLeg(@PathVariable(name = "circuitId") Long circuitId,
-            @RequestBody CircuitLeg circuitLeg) {
-        try {
+    public ResponseEntity<Circuit> addCircuitLeg(
+            @PathVariable(name = "circuitId") Long circuitId,
+            @RequestBody CircuitLegRequest circuitLeg) {
+        try {            
             Optional<Circuit> circuit = circuitService.load(circuitId);
             return circuit
                     .map(c ->
@@ -76,4 +82,45 @@ public class CircuitController {
 
     }
 
+    @DeleteMapping("/circuits/{circuitId}/legs/{circuitLegId}")
+    @PreAuthorize(AUTHORITY_WRITE_LEAGUE_ADMIN)
+    public ResponseEntity<Circuit> removeCircuitLeg(
+            @PathVariable(name = "circuitId") Long circuitId,
+            @PathVariable(name = "circuitLegId") Long circuitLegId) {
+        try {
+            Optional<Circuit> circuit = circuitService.load(circuitId);
+            if (circuit.isPresent()) {
+                Circuit updated = circuitService.removeLeg(circuit.get(), circuitLegId);
+                return ResponseEntity.ok(updated);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception ex) {
+            log.error("Unable to remove leg {} from circuit {}.", circuitLegId, circuitId, ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping("/circuits/{circuitId}/legs/{circuitLegId}/update")
+    @PreAuthorize(AUTHORITY_WRITE_LEAGUE_ADMIN)
+    public ResponseEntity<Circuit> updateCircuitLeg(
+            @PathVariable(name = "circuitId") Long circuitId,
+            @PathVariable(name = "circuitLegId") Long circuitLegId,
+            @RequestBody Map<String, Object> updateData) {
+        try {
+            log.info("Updating circuit leg {} for circuit {}", circuitLegId, circuitId);
+            log.info("Circuit leg data: {}", updateData);
+            Optional<Circuit> circuit = circuitService.load(circuitId);
+            if (circuit.isPresent()) {
+                Circuit updated = circuitService.updateLeg(
+                    circuit.get(), circuitLegId, updateData);
+                return ResponseEntity.ok(updated);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception ex) {
+            log.error("Unable to update leg {} from circuit {}.", circuitLegId, circuitId, ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }

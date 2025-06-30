@@ -7,7 +7,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Getter
 @Setter
@@ -16,7 +15,7 @@ public class WarpScoresUser {
     @Id
     private Long id;
 
-    private UUID coachId;
+    private String[] coachIds;
 
     private String username;
 
@@ -25,6 +24,6 @@ public class WarpScoresUser {
     private String provider;
 
     private List<Long> adminForCircuits = new ArrayList<>();
-    private List<UUID> adminForLeagues = new ArrayList<>();
-    private List<UUID> adminForCompetitions = new ArrayList<>();
+    private List<String> adminForLeagues = new ArrayList<>();
+    private List<String> adminForCompetitions = new ArrayList<>();
 }

@@ -71,7 +71,7 @@
             <artifactId>caffeine</artifactId>
         </dependency>
 
-        <!-- OAuth -->
+    <!-- OAuth -->
         <dependency>
             <groupId>com.okta.spring</groupId>
             <artifactId>okta-spring-boot-starter</artifactId>
@@ -124,19 +124,60 @@
             <artifactId>java-uuid-generator</artifactId>
         </dependency>
 
+        <!-- actuator -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
         <!-- test dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- For debugging -->
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>5.0.0</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>fetcher</id>
+            <properties>
+                <startClass>net.warp_scores.warpscores.WarpFetcher</startClass>
+            </properties>
+        </profile>
+        <profile>
+            <id>server</id>
+            <properties>
+                <startClass>net.warp_scores.warpscores.WarpScoresApp</startClass>
+            </properties>
+        </profile>
+        <profile>
+            <id>dev</id>
+            <properties>
+                <startClass>net.warp_scores.warpscores.WarpScoresApp</startClass>
+            </properties>
+        </profile>
+    </profiles>
+
     <build>
         <finalName>${project.artifactId}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -165,7 +206,8 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <executable>true</executable>
-                    <mainClass>net.warp_scores.warpscores.WarpScoresApp</mainClass>
+                    <!--<mainClass>net.warp_scores.warpscores.WarpScoresApp</mainClass>-->
+                    <mainClass>${startClass}</mainClass>
                     <addResources>true</addResources>
                 </configuration>
                 <executions>

@@ -3,7 +3,9 @@ import formatter from '../../util/formatter';
 import InfoArea from '../common/InfoArea';
 import InfoItem from '../common/InfoItem';
 
-function LeagueInfo({ league }) {
+function LeagueInfo({ league, competitionCountByStatus }) {
+  console.log('Rendering LeagueInfo with league:', league);
+  console.log('Competition count by status:', competitionCountByStatus);
   return (
     league && (
       <InfoArea w="100%">
@@ -11,17 +13,17 @@ function LeagueInfo({ league }) {
         <InfoItem
           key="inProgress"
           label="Active Competitions"
-          info={league?.countsByCompetitionStatus?.InProgress || '-'}
+          info={competitionCountByStatus?.InProgress || '-'}
         />
         <InfoItem
           key="registration"
           label="Competitions in registration"
-          info={league?.countsByCompetitionStatus?.Registration || '-'}
+          info={competitionCountByStatus?.Registration || '-'}
         />
         <InfoItem
           key="finished"
           label="Finished competitions"
-          info={league?.countsByCompetitionStatus?.Finished || '-'}
+          info={competitionCountByStatus?.Finished || '-'}
         />
         <InfoItem key="lastMatch" label="Last match" info={formatter.formatAsDate(league.dateLastMatch, '-')} />
       </InfoArea>

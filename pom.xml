@@ -26,13 +26,54 @@
         <url>https://gitlab.com/warp-scores/warp-scores/</url>
         <tag>HEAD</tag>
     </scm>
-    <modules>
-        <module>cyanide-api</module>
-        <module>api</module>
-        <module>backend</module>
-        <module>frontend</module>
-        <module>discord-bot</module>
-    </modules>
+    <profiles>
+        <profile>
+            <id>server</id>
+            <modules>
+                <module>cyanide-api</module>
+                <module>api</module>
+                <module>backend</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>dev</id>
+            <modules>
+                <module>cyanide-api</module>
+                <module>api</module>
+                <module>backend</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>fetcher</id>
+            <modules>
+                <module>cyanide-api</module>
+                <module>api</module>
+                <module>backend</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>frontend</id>
+            <modules>
+                <module>frontend</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>discord-bot</id>
+            <modules>
+                <module>discord-bot</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>all</id>
+            <modules>
+                <module>cyanide-api</module>
+                <module>api</module>
+                <module>backend</module>
+                <module>frontend</module>
+                <module>discord-bot</module>
+            </modules>
+        </profile>
+    </profiles>
 
     <dependencyManagement>
         <dependencies>
@@ -132,7 +173,6 @@
                 <version>5.1.0</version>
             </dependency>
 
-
             <!-- tests dependencies -->
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
@@ -177,6 +217,11 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <compilerArgs>
+                            <arg>-parameters</arg>
+                        </compilerArgs>
+                    </configuration>                   
                     <version>3.11.0</version>
                 </plugin>
                 <plugin>
@@ -219,6 +264,9 @@
                     <groupId>com.spotify</groupId>
                     <artifactId>dockerfile-maven-plugin</artifactId>
                     <version>1.4.13</version>
+                    <configuration>
+                        <skip>${skipDocker}</skip>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
