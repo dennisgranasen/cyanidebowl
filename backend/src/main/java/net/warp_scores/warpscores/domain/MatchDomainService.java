@@ -9,13 +9,22 @@ import net.warp_scores.warpscores.cyanide.api.responses.MatchResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.MatchesResponse;
 import net.warp_scores.warpscores.domain.persistence.DateForUuid;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
+import net.warp_scores.warpscores.domain.persistence.MatchRepository.DateForId;
+import net.warp_scores.warpscores.identity.CompositeIdentity;
+import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
+import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Team;
 import net.warp_scores.warpscores.service.PopulatorUtil;
 import net.warp_scores.warpscores.service.TeamPopulator;
 import net.warp_scores.warpscores.service.UUIDConverter;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.fasterxml.jackson.databind.introspect.TypeResolutionContext.Empty;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,11 +34,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
+
 import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.toMap;
 
 @Slf4j
 @Service
@@ -37,107 +45,140 @@ import static java.util.stream.Collectors.toMap;
 public class MatchDomainService {
     private final MatchRepository matchRepository;
     private final TeamPopulator teamPopulator;
-    private final UUIDConverter uuidConverter;
+
+    @Value("${cyanide.defaults.opus:3}")
+    private int defaultOpus;
 
     @Transactional
-    public List<Match> findMatchesForTeam(UUID teamUuid) {
-        List<Match> teamMatches = matchRepository.findMatchesByTeamId(teamUuid);
+    public List<Match> findMatchesForTeam(Identity teamId) {
+        List<Match> teamMatches = 
+            matchRepository.findMatchesByTeamId(teamId);
         return teamMatches.stream()
                 .sorted(Comparator.comparing(Match::getStarted).reversed())
                 .collect(Collectors.toList());
     }
 
+    
     @Transactional
-    public Map<UUID, Optional<Date>> getLastMatchDatesForCompetitions(List<UUID> competitionUuids) {
-        List<DateForUuid> lastMatchDateByCompetitionIds = matchRepository
-                .findLastMatchDateByCompetitionIds(competitionUuids);
-        return lastMatchDateByCompetitionIds
-                .stream()
-                .collect(toMap(DateForUuid::uuid,
-                        r -> ofNullable(r.date())));
+    public Map<Identity, Optional<Date>> getLastMatchDatesForCompetitions(
+            List<Competition> compData) {
+      
+        List<Identity> compIds = compData.stream()
+                .filter(competition -> competition.getId() != null)
+                .map(comp -> (Identity)new SimpleIdentity(
+                        ((CompositeIdentity)comp.getId()).getParts()[1],
+                        comp.getId().getOpus()
+                    ))
+                .distinct()
+                .toList();
+
+        if (!compIds.isEmpty()) {
+            return matchRepository
+                    .findLastMatchDateByCompetitionIds(compIds)
+                    .stream()
+                    .collect(Collectors.toMap(
+                        d -> d.id(),
+                        d -> Optional.ofNullable(d.date())
+                    ));                    
+        }
+
+       return Map.of(); // Return an empty map if no competitions are provided
     }
 
+
+            
     @Transactional
-    public Map<UUID, Optional<Date>> getLastMatchDatesForLeagues(List<UUID> leagueUuids) {
-        List<DateForUuid> lastMatchDateByLeagueIds = matchRepository
-                .findLastMatchDateByLeagueIds(leagueUuids);
+    public Map<Identity, Optional<Date>> getLastMatchDatesForLeagues(
+            List<Identity> leagueIds) {
+    
+        List<MatchRepository.DateForId> lastMatchDateByLeagueIds = 
+            Collections.emptyList();
+
+        if (!leagueIds.isEmpty()) {
+            lastMatchDateByLeagueIds.addAll(matchRepository
+                    .findLastMatchDateByLeagueIds(leagueIds));
+        }
+        
         return lastMatchDateByLeagueIds
                 .stream()
-                .collect(toMap(DateForUuid::uuid,
-                        r -> ofNullable(r.date())));
+                .collect(Collectors.toMap(
+                    d -> d.id(),
+                    d -> Optional.ofNullable(d.date())
+                ));
     }
 
     @Transactional
-    public Map<UUID, Optional<Date>> getLastMatchDatesForTeams(List<Team> teams) {
-        Map<UUID, Optional<Date>> lastMatchDatesByTeamUuid = new HashMap<>();
-        teams
-                .forEach(team ->
-                        lastMatchDatesByTeamUuid.put(team.getId(), matchRepository
-                                .findTopByTeamsContainsOrderByStartedDesc(team).map(Match::getStarted)));
-        return lastMatchDatesByTeamUuid;
+    public Map<Identity, Optional<Date>> getLastMatchDatesForTeams(List<Team> teams) {
+        Map<Identity, Optional<Date>> lastMatchDatesByTeamId = new HashMap<>();
+        teams.forEach(team ->
+             lastMatchDatesByTeamId.put(team.getId(), matchRepository
+                .findTopByTeamsContainsOrderByStartedDesc(team).map(Match::getStarted)));
+        return lastMatchDatesByTeamId;
     }
 
     @Transactional
-    public List<Match> createOrUpdateMatches(MatchesResponse matchesResponse) {
+    public List<Match> createOrUpdateMatches(MatchesResponse matchesResponse, int opus) {
         if (matchesResponse == null || matchesResponse.isEmpty()) {
             return Collections.emptyList();
         }
 
         List<Match> matches = Arrays
                 .stream(matchesResponse.getMatches())
-                .map(this::internalCreateOrUpdateMatch)
+                .map((apiMatch) -> internalCreateOrUpdateMatch(apiMatch, opus))
                 .toList();
         return matchRepository.saveAll(matches);
     }
 
     @Transactional
-    public Match createOrUpdateMatch(MatchResponse matchResponse) {
+    public Match createOrUpdateMatch(MatchResponse matchResponse, int opus) {
         if (matchResponse == null || matchResponse.isEmpty()) {
             return null;
         }
-
+        
         Optional<ApiMatch> apiMatch = ofNullable(matchResponse.getMatch());
-        Optional<Match> match = apiMatch.map(this::internalCreateOrUpdateMatch);
+        Optional<Match> match = apiMatch.map((x) -> internalCreateOrUpdateMatch(x, opus));
         return match.map(matchRepository::save).orElse(null);
     }
 
-    private Match internalCreateOrUpdateMatch(ApiMatch apiMatch) {
+    private Match internalCreateOrUpdateMatch(ApiMatch apiMatch, int opus) {        
         Match match = newMatchOrFromDb(
-                uuidConverter.getNonNull(apiMatch.getMatchId(), uuidConverter.toUuid(apiMatch.getId()).orElse(null)));
-        populateMatch(apiMatch, match);
+            new SimpleIdentity(apiMatch.getId(), opus));
+        populateMatch(apiMatch, opus, match);
         return match;
     }
 
-    private Match newMatchOrFromDb(UUID uuid) {
-        Optional<Match> matchFromDb = matchRepository.findById(uuid);
-        Match match = matchFromDb.orElse(new Match());
-        match.setMatchId(uuid);
-        return match;
+    private Match newMatchOrFromDb(Identity id) {
+        Optional<Match> matchFromDb = matchRepository.findById(id);
+        if (matchFromDb.isPresent()) {
+            return matchFromDb.get();
+        }
+        return new Match(id);
     }
 
-    public void populateMatch(ApiMatch sourceApiMatch, Match targetMatch) {
+    public void populateMatch(ApiMatch sourceApiMatch, int opus, Match targetMatch) {
         PopulatorUtil.copyNonNullProperties(sourceApiMatch, targetMatch);
-
+/*
         targetMatch.setCoaches(
                 Arrays.stream(sourceApiMatch.getCoaches())
-                        .map(this::toCoach)
+                        .map((apiCoach) -> toCoach(apiCoach))
                         .collect(Collectors.toList()));
         targetMatch.setTeams(
                 Arrays.stream(sourceApiMatch.getTeams())
-                        .map(this::toTeam)
+                        .map((apiTeam) -> toTeam(apiTeam, opus))
                         .collect(Collectors.toList()));
+*/
     }
-
+/*
     private Match.Coach toCoach(ApiCoach apiCoach) {
         Match.Coach coach = new Match.Coach();
         PopulatorUtil.copyNonNullProperties(apiCoach, coach);
         return coach;
     }
 
-    private Team toTeam(ApiTeam apiTeam) {
-        Team team = new Team();
-        teamPopulator.populateMatchTeam(apiTeam, team);
+    private Team toTeam(ApiTeam apiTeam, int opus) {
+        Team team = new Team(new SimpleIdentity(apiTeam.getId(), opus));
+        teamPopulator.populateMatchTeam(apiTeam, team, opus);
         return team;
     }
-
+*/
 }

@@ -42,16 +42,18 @@ import java.util.UUID;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TeamRequest extends ApiRequest<TeamRequest, TeamResponse> {
 
-    private UUID id;
+    private String platform;
+    private String id;
     private String name;
     private Integer coach;
     private Integer roster;
     private Integer statistics;
     private Integer skills;
     private Integer casualties;
+    private Integer opus;
 
     public TeamRequest() {
-        super("bb3/team", TeamRequest.class, TeamResponse.class);
+        super("bb/team", TeamRequest.class, TeamResponse.class);
         setCacheValidity(CacheValidityDurations.ONE_HOUR);
         setLimitSize(null);
     }

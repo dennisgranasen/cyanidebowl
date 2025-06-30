@@ -21,7 +21,7 @@ function RoundRobinAndWissenCompetition({ competition, competitionLoading }) {
       <Heading size="md">Ranking</Heading>
       <Ranks
         loading={competitionLoading || ranksLoading}
-        competitionUuid={competition?.uuid}
+        competitionId={competition?.id}
         ranks={ranks}
         error={ranksError}
       />

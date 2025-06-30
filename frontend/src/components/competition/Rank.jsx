@@ -10,13 +10,13 @@ import Race from '../common/Race';
 
 const { boxSize, smallScreenBreakpointValues } = config;
 
-function Rank({ rank, competitionUuid }) {
+function Rank({ rank, competitionId }) {
   const navigate = useNavigate();
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
   const goToTeam = () => {
     if (rank?.team?.competitionIds || competitionUuid) {
-      const id = competitionUuid || rank?.team?.competitionIds[0];
-      navigate(`/competition/${id}/team/${rank.team.id}`);
+      const id = competitionId || rank?.team?.competitionIds[0];
+      navigate(`/competition/${id.opus}/${id.value}/team/${rank.team.id}`);
     }
   };
   return rank !== null ? (
@@ -36,7 +36,7 @@ function Rank({ rank, competitionUuid }) {
           </Td>
           <Td>
             <Image
-              src={`${imageUrls.logo(rank.team.logo)}`}
+              src={`${imageUrls.logo(rank.team.logo, rank.id.opus)}`}
               boxSize={boxSize}
               fallback={<QuestionOutlineIcon boxSize={boxSize} />}
               objectFit="scale-down"
@@ -48,7 +48,7 @@ function Rank({ rank, competitionUuid }) {
           <Td>{rank.team.name}</Td>
           <Td>
             <Image
-              src={`${imageUrls.logo(rank.team.logo)}`}
+              src={`${imageUrls.logo(rank.team.logo, rank.id.opus)}`}
               boxSize={boxSize}
               fallback={<QuestionOutlineIcon boxSize={boxSize} />}
               objectFit="scale-down"

@@ -60,8 +60,8 @@ function ArenaPage() {
           heading={`${competition?.name} - ${prettyPrint(race)}`}
           subHeading={<RouteLink to={`/${competition?.leagueId}`}>League: {competition?.leagueName}</RouteLink>}
           detailsHeading="Arena details"
-          mainImageSrc={competition?.logo ? imageUrls.logo(competition?.logo) : imageUrls.logo(competition?.leagueLogo)}
-          additionalImageSrc={imageUrls.race(race)}
+          mainImageSrc={competition?.logo ? imageUrls.logo(competition?.logo, competition?.id?.opus) : imageUrls.logo(competition?.leagueLogo, competition?.id?.opus)}
+          additionalImageSrc={imageUrls.race(race, competition?.opus)}
         >
           <LoadingOrErrorWrapper loading={arenaInfoLoading} error={arenaError}>
             <InfoArea>

@@ -8,12 +8,13 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class WarpScoresConfig {
+/*
     @Bean
     @ConfigurationProperties(prefix = "cyanide", ignoreUnknownFields = false)
     public CyanideApiProperties getCyanideApiProperties() {
         return new CyanideApiProperties();
     }
-
+*/
     @Bean
     @ConfigurationProperties(prefix = "application", ignoreUnknownFields = false)
     public ApplicationProperties getApplicationProperties() {

@@ -1,4 +1,4 @@
-package net.warp_scores.warpscores.config;
+package net.warp_scores.warpscores.config.properties;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.PropertySource;
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 @PropertySource("classpath:officialLeagueCompetitionNames.properties")
 @RequiredArgsConstructor
-public class OfficialLeagueCompetitionNameProperties {
+public class OfficialLeagueProperties {
 
     private final Environment env;
 

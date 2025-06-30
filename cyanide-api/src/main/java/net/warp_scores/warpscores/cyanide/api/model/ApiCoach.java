@@ -2,6 +2,8 @@ package net.warp_scores.warpscores.cyanide.api.model;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonSetter;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,7 +14,7 @@ import java.util.UUID;
 @Setter
 public class ApiCoach {
     @JsonAlias({"idcoach"})
-    private UUID id;
+    private String id;
     @JsonAlias({"coachname"})
     private String name;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
@@ -33,4 +35,11 @@ public class ApiCoach {
     private String lang;
     private Status status;
 
+    @JsonAlias({"coachcyanearned"})
+    private String cyanEarned;
+    @JsonAlias({"coachxpearned"})
+    private String xpEarned;
+
+    @JsonSetter("id")
+    public void setId(Object id) { this.id = id == null ? null : id.toString(); }    
 }

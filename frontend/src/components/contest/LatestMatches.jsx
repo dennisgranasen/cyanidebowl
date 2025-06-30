@@ -12,22 +12,23 @@ function LatestMatches({ league, competition, embeddable, limit }) {
   const [loading, setLoading] = useState();
   const [error, setError] = useState();
 
-  const fetchLatestLeagueMatches = (leagueUuid, contestLimit) => {
+  const fetchLatestLeagueMatches = (leagueId, opus, contestLimit) => {
     setLoading(true);
-    WarpScoresApiService.latestLeagueMatches(leagueUuid, contestLimit)
+    WarpScoresApiService.latestLeagueMatches(leagueId, opus, contestLimit)
       .then((data) => {
-        data.sort(comparators.compareMatchesByMatchUuidAsDatesDesc);
+        data.sort((x,y) => x.finished - y.finished);
+        //data.sort(comparators.compareMatchesByMatchUuidAsDatesDesc);
         setContests(data);
       })
       .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
       .finally(() => setLoading(false));
   };
 
-  const fetchLatestCompetitionMatches = (competitionUuid, contestLimit) => {
+  const fetchLatestCompetitionMatches = (competitionId, opus, contestLimit) => {
     setLoading(true);
-    WarpScoresApiService.latestCompetitionMatches(competitionUuid, contestLimit)
+    WarpScoresApiService.latestCompetitionMatches(competitionId, opus, contestLimit)
       .then((data) => {
-        data.sort(comparators.compareMatchesByMatchUuidAsDatesDesc);
+        data.sort((x,y) => x.finished - y.finished);
         setContests(data);
       })
       .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
@@ -36,13 +37,14 @@ function LatestMatches({ league, competition, embeddable, limit }) {
 
   useEffect(() => {
     if (league) {
-      fetchLatestLeagueMatches(league.uuid, limit);
+      fetchLatestLeagueMatches(league.id.value, league.id.opus, limit);
     }
     if (competition) {
-      fetchLatestCompetitionMatches(competition.uuid, limit);
+      fetchLatestCompetitionMatches(competition.id.value, competition.id.opus, limit);
     }
   }, [league, competition]);
 
+  console.debug('LatestMatches', { league, competition, embeddable, limit, contests, loading, error });
   return (
     <>
       {!embeddable && <Heading size="md">Latest matches</Heading>}

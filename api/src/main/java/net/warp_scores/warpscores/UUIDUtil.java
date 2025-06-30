@@ -3,6 +3,9 @@ package net.warp_scores.warpscores;
 import java.time.Instant;
 import java.util.UUID;
 
+import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.IdentityUtil;
+
 public class UUIDUtil {
     private static final long NUM_HUNDRED_NANOS_IN_A_SECOND = 10_000_000L;
 
@@ -20,4 +23,23 @@ public class UUIDUtil {
         final long nanoAdjustment = ((hundredNanosSinceUnixEpoch % NUM_HUNDRED_NANOS_IN_A_SECOND) * 100);
         return Instant.ofEpochSecond(secondsSinceUnixEpoch, nanoAdjustment);
     }
+    /*
+    public static UUID getUUIDFromIdentity(final Identity identity) {
+        if (identity == null) {
+            throw new IllegalArgumentException("Identity must not be null");
+        }
+        if (identity instanceof net.warp_scores.warpscores.identity.SimpleIdentity) {
+            return UUID.fromString(identity.getValue().substring(identity.getValue().indexOf(Identity.DELIMITER) + 1));
+        } else if (identity instanceof net.warp_scores.warpscores.identity.CompositeIdentity) {
+            String[] parts = ((net.warp_scores.warpscores.identity.CompositeIdentity) identity).getParts();
+            if (parts.length > 0) {
+                return UUID.fromString(parts[0]);
+            } else {
+                throw new IllegalArgumentException("Composite identity must have at least one part");
+            }
+        } else {
+            throw new IllegalArgumentException("Unsupported identity type: " + identity.getClass().getName());
+        }
+    }
+        */
 }

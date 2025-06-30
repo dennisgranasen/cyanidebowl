@@ -20,7 +20,8 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(@NonNull CorsRegistry registry) {
                 registry.addMapping("/**").allowedOrigins(applicationProperties.getClientOriginUrl(),
-                        applicationProperties.getBackendOriginUrl());
+                        applicationProperties.getBackendOriginUrl())
+                        .allowedMethods("*");
             }
         };
     }

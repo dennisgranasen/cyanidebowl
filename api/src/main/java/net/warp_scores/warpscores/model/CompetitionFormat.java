@@ -1,5 +1,7 @@
 package net.warp_scores.warpscores.model;
 
 public enum CompetitionFormat implements Comparable<CompetitionFormat> {
-    RoundRobin, Knockout, Wissen, Ladder, Arena
+    undefined,
+    /*BB2*/ round_robin, single_elimination, ladder, swiss,
+    /*BB3*/ RoundRobin, Knockout, Wissen, Ladder, Arena
 }

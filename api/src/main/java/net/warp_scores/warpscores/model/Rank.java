@@ -2,13 +2,12 @@ package net.warp_scores.warpscores.model;
 
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.UUID;
+import net.warp_scores.warpscores.identity.Identity;
 
 @Getter
 @Setter
 public class Rank {
-    private UUID competitionId;
+    private Identity competitionId;
     private Team team;
     private Integer rank = 0;
     private Integer gamesPlayed = 0;
@@ -20,4 +19,5 @@ public class Rank {
     private Integer sustainedTouchdowns = 0;
     private Integer inflictedCasualties = 0;
     private Integer sustainedCasualties = 0;
+
 }

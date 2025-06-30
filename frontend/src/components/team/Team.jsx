@@ -20,7 +20,7 @@ function Team({ team }) {
       <Td>{team.name}</Td>
       <Td>
         <Image
-          src={`${imageUrls.logo(team.logo)}`}
+          src={`${imageUrls.logo(team.logo, team.id.opus)}`}
           boxSize={boxSize}
           fallback={<QuestionOutlineIcon boxSize={boxSize} />}
           objectFit="scale-down"

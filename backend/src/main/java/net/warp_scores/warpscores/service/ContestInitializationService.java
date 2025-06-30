@@ -1,50 +1,66 @@
 package net.warp_scores.warpscores.service;
 
 import com.fasterxml.uuid.Generators;
+
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.UUIDUtil;
 import net.warp_scores.warpscores.annotations.DurationLogging;
+import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.CompetitionFormat;
 import net.warp_scores.warpscores.model.CompetitionStatus;
 import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.MatchStatus;
-import net.warp_scores.warpscores.model.Race;
 import net.warp_scores.warpscores.model.Team;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
-import java.util.UUID;
 import java.util.stream.IntStream;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
-import static java.util.Comparator.comparing;
+
+
 
 @Service
 @Slf4j
 public class ContestInitializationService {
 
-    private static final Team DUMMY_TEAM = new Team();
+    @Value("${cyanide.defaults.opus:3}")
+    private int defaultOpus;
 
-    static {
-        DUMMY_TEAM.setName("Dummy Team");
-        DUMMY_TEAM.setId(Generators.timeBasedGenerator().generate());
-    }
+    private final Team DUMMY_TEAM = new Team(
+        new SimpleIdentity(Generators.timeBasedGenerator().generate(), 
+                           defaultOpus))
+    {
+        @Override
+        public String getName() {
+            return "Dummy Team";
+        }
 
-    public List<Contest> initializeContestsScheduleForFormat(Optional<Competition> competition, Collection<Team> teams,
+        @Override
+        public String getLogo() {
+            return "https://cdn.warp-scores.net/teams/dummy-team.png";
+        }
+    };
+
+    public List<Contest> initializeContestsScheduleForFormat(Optional<Competition> competition, List<Team> teams,
             List<Contest> contests) {
         return initializeContestsScheduleForFormat(competition, teams, contests, true);
     }
 
     @DurationLogging
-    public List<Contest> initializeContestsScheduleForFormat(Optional<Competition> competition, Collection<Team> teams,
+    public List<Contest> initializeContestsScheduleForFormat(Optional<Competition> competition, List<Team> teams,
             List<Contest> contests, boolean generateFutureRoundRobinRounds) {
 
         Optional<CompetitionFormat> competitionFormat = competition.map(Competition::getFormat);
@@ -52,12 +68,14 @@ public class ContestInitializationService {
             return contests;
         }
 
+        /* updated with BB2 competition formats */
         return switch (competitionFormat.get()) {
-            case RoundRobin -> generateFutureRoundRobinRounds ?
+            case undefined -> emptyList();
+            case RoundRobin, round_robin -> generateFutureRoundRobinRounds ?
                     initializeRoundRobinContests(unmodifiableList(contests), competition, teams) :
                     contests;
-            case Knockout -> initializeKnockoutContests(unmodifiableList(contests), teams);
-            case Wissen, Ladder, Arena -> contests;
+            case Knockout, single_elimination -> initializeKnockoutContests(unmodifiableList(contests), teams);
+            case Wissen, Ladder, Arena, swiss, ladder -> contests;
         };
     }
 
@@ -77,16 +95,17 @@ public class ContestInitializationService {
         int byes = players - teamCount;
         int totalMatches = Integer.max(teamCount - 1 - byes, contests.size());
         List<Contest> initializedContests = new ArrayList<>(contests);
-        initializedContests.addAll(createEmptyFutureContests(contests, totalMatches, totalRounds));
+        initializedContests.addAll(createEmptyFutureContests(
+            contests, totalMatches, totalRounds, 
+            contests.isEmpty() ? defaultOpus : contests.get(0).getId().getOpus() 
+        ));
 
         initializedContests.sort((contest1, contest2) -> {
             int compareResult = Integer.compare(contest1.getRound(), contest2.getRound());
             if (compareResult != 0) {
                 return compareResult;
             }
-            Instant instant1 = UUIDUtil.getInstantFromUUID(contest1.getContestUuid());
-            Instant instant2 = UUIDUtil.getInstantFromUUID(contest2.getContestUuid());
-            return instant1.compareTo(instant2);
+            return contest1.compareTo(contest2);
         });
 
         int[] roundMatches = new int[totalRounds];
@@ -102,17 +121,20 @@ public class ContestInitializationService {
                 int nextMatchIndexWithinRound = (int) Math.floor((double) (matchIndex - currRoundOffset) / 2);
                 Contest nextContest = findNextContestByIndex(nextRoundOffset,
                         nextMatchIndexWithinRound, initializedContests);
+                int opus = currContest.getId().getOpus();
                 if (nextContest != null && !MatchStatus.Calculated.equals(nextContest.getStatus())) {
                     nextContest = findNextContestByWinner(currContest, currRound, initializedContests);
                 } else {
                     if (currContest.getWinner() != null && nextContest != null) {
-                        List<Team> opponents = nextContest.getOpponents();
-                        opponents.add(createTeamFor((Map) currContest.getWinner()));
+                        Team[] opponents = nextContest.getOpponents();
+                        Team newOpponent = createTeamFor((Map) currContest.getWinner(), opus);
+                        opponents = Arrays.copyOf(opponents, opponents.length + 1);
+                        opponents[opponents.length - 1] = newOpponent;
                         nextContest.setOpponents(opponents);
                     }
                 }
                 if (nextContest != null) {
-                    currContest.setNextContestUuid(nextContest.getContestUuid());
+                    currContest.setNextContestId(nextContest.getContestId());
                 }
             }
             currRoundOffset = nextRoundOffset;
@@ -130,45 +152,47 @@ public class ContestInitializationService {
     private static Contest findNextContestByWinner(Contest currContest,
             int currRound,
             List<Contest> initializedContests) {
-        Optional<UUID> winnerTeamUuid = getWinnerTeamUuidFrom(currContest);
+        Optional<Identity> winnerTeamUuid = getWinnerTeamUuidFrom(currContest);
         return initializedContests
                 .stream()
                 .filter(contest -> contest.getRound().equals(currRound + 2))
-                .filter(contest -> contest.getOpponents().stream().map(Team::getId)
+                .filter(contest -> Arrays.stream(contest.getOpponents()).map(Team::getId)
                         .anyMatch(id -> winnerTeamUuid.isPresent() && winnerTeamUuid.get().equals(id)))
                 .findFirst().orElse(null);
     }
 
-    private static Optional<UUID> getWinnerTeamUuidFrom(Contest contest) {
+    private static Optional<Identity> getWinnerTeamUuidFrom(Contest contest) {
         if (contest == null || contest.getWinner() == null) {
             return Optional.empty();
         }
         @SuppressWarnings("rawtypes")
         Map team = (Map) ((Map) contest.getWinner()).get("team");
-        String winnerTeamUuidValue = (String) team.get("id");
-        UUID winnerTeamUuid = UUID.fromString(winnerTeamUuidValue);
-        return Optional.of(winnerTeamUuid);
+        Identity winnerTeamId = (Identity) team.get("identity");
+        return Optional.of(winnerTeamId);
     }
 
     @SuppressWarnings("rawtypes")
-    private Team createTeamFor(Map winner) {
+    private Team createTeamFor(Map winner, int opus) {
         Map teamMap = (Map) winner.get("team");
         Map coachMap = (Map) winner.get("coach");
-        Team team = new Team();
-        team.setId(UUID.fromString((String) teamMap.get("id")));
+        SimpleIdentity teamId = new SimpleIdentity(
+            (String) teamMap.get("id"), 
+            opus);
+        Team team = new Team(teamId);
         team.setName((String) teamMap.get("name"));
         team.setCoachName((String) coachMap.get("name"));
         team.setLogo((String) teamMap.get("logo"));
-        team.setRace(Race.forValue(teamMap.get("race")));
+        team.setRace((String) teamMap.get("race"));
         return team;
     }
 
-    private List<Contest> createEmptyFutureContests(List<Contest> contests, int totalMatches, int totalRounds) {
+    private List<Contest> createEmptyFutureContests(
+            List<Contest> contests, int totalMatches, int totalRounds, int opus) {
         int currRound = contests.stream().map(Contest::getRound).max(Integer::compareTo).orElse(0);
         int currRoundSize = contests.stream().filter(contest -> contest.getRound() == currRound).toList().size();
         List<Contest> futureContests = new ArrayList<>();
         if (contests.size() < totalMatches) {
-            createNextRounds(futureContests, currRound + 1, currRoundSize / 2, totalRounds);
+            createNextRounds(futureContests, currRound + 1, currRoundSize / 2, totalRounds, opus);
         }
         if (contests.size() + futureContests.size() != totalMatches) {
             throw new IllegalStateException(
@@ -178,115 +202,123 @@ public class ContestInitializationService {
         return futureContests;
     }
 
-    private void createNextRounds(List<Contest> contests, int currRound, int currRoundSize, int totalRounds) {
+    private void createNextRounds(List<Contest> contests, 
+            int currRound, int currRoundSize, int totalRounds, int opus) {
         if (currRound > totalRounds) {
             return;
         }
         IntStream.range(0, currRoundSize)
-                .forEach(index -> contests.add(newContest(currRound)));
-        createNextRounds(contests, currRound + 1, currRoundSize / 2, totalRounds);
+                .forEach(index -> contests.add(newContest(currRound, opus)));
+        createNextRounds(contests, currRound + 1, currRoundSize / 2, totalRounds, opus);
     }
 
-    private Contest newContest(int round) {
-        Contest contest = new Contest();
+    private Contest newContest(int round, int opus) {
+        SimpleIdentity identity = new SimpleIdentity(
+                Generators.timeBasedGenerator().generate(), opus);
+        Contest contest = new Contest(identity);
         contest.setRound(round);
-        contest.setContestUuid(Generators.timeBasedGenerator().generate());
-        contest.setOpponents(new ArrayList<>());
+        contest.setOpponents(new Team[0]);
         contest.setStatus(MatchStatus.Calculated);
         return contest;
     }
 
     private List<Contest> initializeRoundRobinContests(List<Contest> contests,
             Optional<Competition> competition,
-            Collection<Team> teams) {
+            List<Team> teams) {
+        log.info("DEBUG: Starting initializeRoundRobinContests");
         OptionalInt currentRound = contests
                 .stream()
                 .mapToInt(Contest::getRound)
                 .max();
 
-        List<Team> homeTeams = new ArrayList<>();
-        List<Team> awayTeams = new ArrayList<>();
-        extractFirstRoundTeams(contests, homeTeams, awayTeams);
-        addDummyTeamIfOddParticipants(teams, homeTeams, awayTeams);
+        log.info("DEBUG: Current round: {}", currentRound.orElse(0));
 
         List<Contest> scheduledContests = competition.map(comp ->
-                        generateScheduledContests(comp, homeTeams, awayTeams)
+                        generateScheduledContests(comp, teams)
                                 .stream()
                                 .filter(this::doesNotContainDummyTeam)
                                 .filter(contest -> contest.getRound() > currentRound.orElse(0))
                                 .toList())
                 .orElse(emptyList());
 
+        log.info("DEBUG: Scheduled contests: {}", scheduledContests.size());
+        for (Contest c : scheduledContests) {
+            log.info("DEBUG: Scheduled Contest round={}, home={}, away={}", c.getRound(), c.getOpponents()[0].getName(), c.getOpponents()[1].getName());
+        }
+
         List<Contest> initializedContests = new ArrayList<>(contests);
         initializedContests.addAll(scheduledContests);
+
+        log.info("DEBUG: Initialized contests: {}", initializedContests.size());
+        for (Contest c : initializedContests) {
+            log.info("DEBUG: Initialized Contest round={}, home={}, away={}", c.getRound(), c.getOpponents()[0].getName(), c.getOpponents()[1].getName());
+        }
+
         return initializedContests;
     }
 
     private boolean doesNotContainDummyTeam(Contest contest) {
-        return !contest.getOpponents().contains(DUMMY_TEAM);
+        return !Arrays.stream(contest.getOpponents()).anyMatch(x -> x.equals(DUMMY_TEAM));
     }
 
-    private void extractFirstRoundTeams(List<Contest> contests,
-            List<Team> homeTeams,
-            List<Team> awayTeams) {
-        contests
-                .stream()
-                .filter(c -> c.getRound() == 1)
-                .sorted(comparing(Contest::getContestUuid))
-                .forEach(c -> {
-                    homeTeams.add(c.getOpponents().get(0));
-                    awayTeams.add(c.getOpponents().get(1));
-                });
-    }
-
-    private void addDummyTeamIfOddParticipants
-            (Collection<Team> teams, List<Team> homeTeams, List<Team> awayTeams) {
-        boolean isEven = teams.size() % 2 == 0;
-        if (isEven) {
-            return;
+    private Collection<Contest> generateScheduledContests(Competition competition, List<Team> teams) {
+        int n = teams.size();
+        boolean isOdd = n % 2 != 0;
+        Team dummy = null;
+        List<Team> workingTeams = new ArrayList<>(teams);
+        if (isOdd) {
+            dummy = new Team(new SimpleIdentity("DUMMY", competition.getId().getOpus()));
+            workingTeams.add(dummy);
+            n++;
         }
 
-        Optional<Team> byeTeam = teams
-                .stream()
-                .filter(team -> !homeTeams.contains(team))
-                .filter(team -> !awayTeams.contains(team))
-                .findFirst();
+        int rounds = n - 1;
+        int half = n / 2;
+        List<Contest> scheduledContests = new ArrayList<>();
+        int opus = competition.getId().getOpus();
 
-        byeTeam.ifPresent(team -> {
-            homeTeams.add(0, byeTeam.get());
-            awayTeams.add(0, DUMMY_TEAM);
+        for (int round = 0; round < rounds; round++) {
+            for (int i = 0; i < half; i++) {
+                Team t1 = workingTeams.get(i);
+                Team t2 = workingTeams.get(n - 1 - i);
+                if (t1 == dummy || t2 == dummy) continue;
+
+                Team home, away;
+                if (i == 0 && round % 2 == 0 && round > 0) {
+                    // Swap home/away for the first pairing every other round (Berger rule)
+                    home = t2;
+                    away = t1;
+                } else {
+                    home = t1;
+                    away = t2;
+                }
+
+                Contest contest = new Contest(new SimpleIdentity(
+                    Generators.timeBasedGenerator().generate(), opus));
+                contest.setRound(round + 1);
+                contest.setCompetitionId(competition.getId());
+                contest.setCompetitionName(competition.getName());
+                contest.setLeagueId(competition.getLeagueId());
+                contest.setLeagueName(competition.getLeagueName());
+                contest.setStatus(MatchStatus.Calculated);                
+                contest.setOpponents(new Team[]{home, away});
+                scheduledContests.add(contest);
+            }
+            // Rotate teams except the first one
+            List<Team> newOrder = new ArrayList<>();
+            newOrder.add(workingTeams.get(0));
+            newOrder.add(workingTeams.get(n - 1));
+            newOrder.addAll(workingTeams.subList(1, n - 1));
+            workingTeams = newOrder;
+        }
+
+        scheduledContests.forEach(contest -> {
+            if (contest.getRound()>1) {
+                contest.setRound(2 + rounds - contest.getRound());
+            }
         });
-    }
 
-    private Collection<Contest> generateScheduledContests(Competition competition,
-            List<Team> groupA,
-            List<Team> groupB) {
-        int participants = groupA.size() + groupB.size();
-        List<Contest> scheduledContests = new ArrayList<>(getRound(competition, 0, groupA, groupB));
-        for (int i = 1; i < participants - 1; i++) {
-            groupB.add(0, groupA.remove(1));
-            groupA.add(groupB.remove(groupB.size() - 1));
-            scheduledContests.addAll(getRound(competition, i, groupA, groupB));
-        }
         scheduledContests.sort(Contest::compareTo);
         return scheduledContests;
-    }
-
-    private static List<Contest> getRound(Competition competition, int round, List<
-            Team> groupA, List<Team> groupB) {
-        List<Contest> roundContests = new ArrayList<>();
-        for (int i = 0; i < groupA.size(); i++) {
-            Contest contest = new Contest();
-            contest.setRound(round + 1);
-            contest.setCompetitionId(competition.getUuid());
-            contest.setCompetitionName(competition.getName());
-            contest.setLeagueId(competition.getLeagueId());
-            contest.setLeagueName(competition.getLeagueName());
-            contest.setStatus(MatchStatus.Calculated);
-            contest.setContestUuid(Generators.timeBasedGenerator().generate());
-            contest.setOpponents(List.of(groupA.get(i), groupB.get(i)));
-            roundContests.add(contest);
-        }
-        return roundContests;
     }
 }

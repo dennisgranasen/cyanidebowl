@@ -27,7 +27,11 @@ import lombok.ToString;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RulesRequest extends ApiRequest<RulesRequest, RulesResponse> {
     public RulesRequest() {
-        super("bb3/rules", RulesRequest.class, RulesResponse.class);
+        super("bb/rules", RulesRequest.class, RulesResponse.class);
         setCacheValidity(CacheValidityDurations.ONE_DAY);
     }
+
+    private String platform;
+    private String opus;
+    private String ruleset; // Alias for rule, rules, ruleset for compatibility with BB
 }

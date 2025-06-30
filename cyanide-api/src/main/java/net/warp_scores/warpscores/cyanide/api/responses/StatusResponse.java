@@ -1,9 +1,11 @@
 package net.warp_scores.warpscores.cyanide.api.responses;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Map;
 import java.util.Optional;
 
 /*
@@ -178,10 +180,13 @@ public class StatusResponse extends ApiResponse {
     public static class Game {
         private String codename;
         private String title;
+        @JsonAlias({"gameName"})
         private String name;
         private Status status;
-        private Object service_statuses;
+        @JsonAlias({"serviceStatuses"})
+        private Map<String, Boolean> service_statuses;
         private News[] news;
+        @JsonAlias({"socialLinks"})
         private String[] social_links;
         private Maintenance maintenance;
     }
@@ -191,7 +196,7 @@ public class StatusResponse extends ApiResponse {
     public static class Status {
         private boolean ok;
         private Platform[] platforms;
-        private Object services;
+        private Map<String, Boolean> services;
     }
 
     @Getter
@@ -201,7 +206,7 @@ public class StatusResponse extends ApiResponse {
         private String title;
         private boolean ok;
         private Region[] regions;
-        private Object services;
+        private Map<String, Boolean> services;
     }
 
     @Getter

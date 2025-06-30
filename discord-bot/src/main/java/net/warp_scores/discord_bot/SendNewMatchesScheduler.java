@@ -14,6 +14,8 @@ import net.warp_scores.discord_bot.domain.ChannelLeagueRegistrationRepository;
 import net.warp_scores.discord_bot.service.WarpScoresBackendService;
 import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.model.Match;
+
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +30,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "scheduler.enabled", havingValue = "true", matchIfMissing = true)
 public class SendNewMatchesScheduler {
 
     private final GatewayDiscordClient discordClient;

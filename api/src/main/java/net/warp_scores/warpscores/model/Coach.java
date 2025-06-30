@@ -4,19 +4,24 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import net.warp_scores.warpscores.identity.Identity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
-import java.util.UUID;
 
 @Getter
 @Setter
 @Document
 @EqualsAndHashCode(of = "id")
-public class Coach {
+public class Coach implements Identifiable{
     @Id
-    private UUID id;
+    private final Identity id;
+
+    public String getCoachId() {
+        return id != null ? id.getValue() : null;
+    }
+
     private String name;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date created;
@@ -29,8 +34,12 @@ public class Coach {
     private String status;
     private Boolean matchValidation;
 
+    public Coach(Identity id) {
+        this.id = id;
+    }
+
     @Override
     public String toString() {
-            return String.format("Coach[%s] %s", id, name);
+        return String.format("Coach[%s] %s", getCoachId(), name);
     }
 }

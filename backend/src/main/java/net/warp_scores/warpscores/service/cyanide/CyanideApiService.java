@@ -2,56 +2,27 @@ package net.warp_scores.warpscores.service.cyanide;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.warp_scores.warpscores.cyanide.api.requests.ApiRequest;
-import net.warp_scores.warpscores.cyanide.api.requests.CompetitionsRequest;
-import net.warp_scores.warpscores.cyanide.api.requests.ContestsRequest;
-import net.warp_scores.warpscores.cyanide.api.requests.LeagueRequest;
-import net.warp_scores.warpscores.cyanide.api.requests.LookupRequest;
-import net.warp_scores.warpscores.cyanide.api.requests.MatchRequest;
-import net.warp_scores.warpscores.cyanide.api.requests.MatchesRequest;
-import net.warp_scores.warpscores.cyanide.api.requests.StatusRequest;
-import net.warp_scores.warpscores.cyanide.api.requests.TeamMatchesRequest;
-import net.warp_scores.warpscores.cyanide.api.requests.TeamRequest;
-import net.warp_scores.warpscores.cyanide.api.requests.TeamsRequest;
-import net.warp_scores.warpscores.cyanide.api.responses.CompetitionsResponse;
-import net.warp_scores.warpscores.cyanide.api.responses.ContestsResponse;
-import net.warp_scores.warpscores.cyanide.api.responses.LeagueResponse;
-import net.warp_scores.warpscores.cyanide.api.responses.LookupResponse;
-import net.warp_scores.warpscores.cyanide.api.responses.MatchResponse;
-import net.warp_scores.warpscores.cyanide.api.responses.MatchesResponse;
-import net.warp_scores.warpscores.cyanide.api.responses.StatusResponse;
-import net.warp_scores.warpscores.cyanide.api.responses.TeamMatchesResponse;
-import net.warp_scores.warpscores.cyanide.api.responses.TeamsResponse;
-import net.warp_scores.warpscores.domain.CompetitionDomainService;
-import net.warp_scores.warpscores.domain.CompetitionTeamsDomainService;
-import net.warp_scores.warpscores.domain.ContestDomainService;
-import net.warp_scores.warpscores.domain.LeagueDomainService;
-import net.warp_scores.warpscores.domain.MatchDomainService;
-import net.warp_scores.warpscores.domain.TeamDomainService;
+import net.warp_scores.warpscores.cyanide.api.requests.*;
+import net.warp_scores.warpscores.cyanide.api.responses.*;
+import net.warp_scores.warpscores.domain.*;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.StatusRepository;
-import net.warp_scores.warpscores.model.Competition;
-import net.warp_scores.warpscores.model.Contest;
-import net.warp_scores.warpscores.model.League;
-import net.warp_scores.warpscores.model.Match;
-import net.warp_scores.warpscores.model.Status;
-import net.warp_scores.warpscores.model.Team;
+import net.warp_scores.warpscores.identity.CompositeIdentity;
+import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
+import net.warp_scores.warpscores.model.*;
 import net.warp_scores.warpscores.service.StatusModelConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.ResourceAccessException;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.swing.text.html.parser.Entity;
+
 import static java.util.Optional.ofNullable;
+import static net.warp_scores.warpscores.cyanide.api.requests.StatusRequest.BB2_GAME_NAME;
 import static net.warp_scores.warpscores.cyanide.api.requests.StatusRequest.BB3_GAME_NAME;
 
 @Slf4j
@@ -59,138 +30,202 @@ import static net.warp_scores.warpscores.cyanide.api.requests.StatusRequest.BB3_
 @RequiredArgsConstructor
 public class CyanideApiService {
     private final CyanideCachedRestApiClient cyanideCachedRestApiClient;
-
     private final CyanideRestApiClient cyanideRestApiClient;
-
     private final StatusRepository statusRepository;
-
     private final StatusModelConverter statusModelConverter;
-
     private final TeamDomainService teamDomainService;
-
     private final MatchDomainService matchDomainService;
-
     private final ContestDomainService contestDomainService;
-
     private final LeagueDomainService leagueDomainService;
-
     private final CompetitionDomainService competitionDomainService;
-
-    private final CompetitionTeamsDomainService competitionTeamsDomainService;
+    private final TeamCollectionDomainService teamCollectionDomainService;
     private final ContestRepository contestRepository;
 
     public LookupResponse lookup(LookupRequest lookupRequest) {
         return cyanideCachedRestApiClient.getFromCacheOrApi(lookupRequest);
     }
 
-    public League loadLeague(UUID leagueId) {
+    public League loadLeague(Identity leagueIdentity) {
         LeagueRequest leagueRequest = new LeagueRequest();
-        leagueRequest.setLeague_id(leagueId);
+        System.out.println(leagueIdentity.getValue());
+        leagueRequest.setLeague_id(leagueIdentity.getValue());
+        leagueRequest.setOpus(leagueIdentity.getOpus());
         LeagueResponse leagueResponse = cyanideCachedRestApiClient.getFromCacheOrApi(leagueRequest);
-        return leagueDomainService.createOrUpdateLeague(leagueResponse);
+        return leagueDomainService.createOrUpdateLeague(leagueResponse, leagueIdentity.getOpus());
+    }
+    
+    public Optional<Team> loadTeam(Identity id, Boolean includeStats, Optional<Boolean> includeRoster) {
+        TeamRequest teamRequest = new TeamRequest();
+        teamRequest.setId(id.getValue());
+        teamRequest.setOpus(id.getOpus());
+        teamRequest.setStatistics(includeStats ? 1 : 0);
+        if (includeRoster.isPresent()) {
+            teamRequest.setRoster(includeRoster.get() ? 1 : 0);
+        }
+        TeamResponse teamResponse = cyanideCachedRestApiClient.getFromCacheOrApi(teamRequest);
+        if (teamResponse.isEmpty())
+            return Optional.empty();
+        return ofNullable(teamDomainService.createOrUpdateTeam(teamResponse, id.getOpus()));
     }
 
-    public List<Team> loadTeams(Competition competition) {
+    public List<Team> loadTeams(Identity id, EntityType entityType) {
         TeamsRequest teamsRequest = new TeamsRequest();
-        teamsRequest.setCompetition_id(competition.getUuid());
-        teamsRequest.setLeague_id(competition.getLeagueId());
+        if (entityType == EntityType.League) {
+            teamsRequest.setLeague_id(id.getValue());
+        } else if (entityType == EntityType.Competition && id instanceof CompositeIdentity cid) {
+            teamsRequest.setLeague_id(cid.getParts()[0]);
+            teamsRequest.setCompetition_id(cid.getParts()[1]);
+        } else {
+            throw new IllegalArgumentException("Unsupported id/entityType combo: " + id + "::" + entityType);
+        }
+        teamsRequest.setOpus(id.getOpus());
         TeamsResponse teamsResponse = cyanideCachedRestApiClient.getFromCacheOrApi(teamsRequest);
-        List<Team> teams = teamDomainService.createOrUpdateTeams(teamsResponse);
+        List<Team> teams = teamDomainService.createOrUpdateTeams(teamsResponse, id.getOpus());
 
         teams = teams.stream()
                 .map(this::createTeamRequestFor)
                 .map(cyanideCachedRestApiClient::getFromCacheOrApi)
-                .map(teamDomainService::createOrUpdateTeam)
+                .map(response -> teamDomainService.createOrUpdateTeam(response, id.getOpus()))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
-        competitionTeamsDomainService.createOrUpdateCompetitionTeams(competition, teams);
+        teamCollectionDomainService.createOrUpdateTeamCollection(id, entityType, teams);
         return teams;
     }
 
     public void loadTeamMatches(Team team, Optional<Date> earliestStartDate, Optional<Date> lastMatchDateKnown,
-            Optional<Date> lastMatchDateReported) {
+                               Optional<Date> lastMatchDateReported) {
         if (team == null || team.getId() == null) {
             return;
         }
         log.info(
                 "Checking if matches to be loaded for team {} (earliestStart: {}, lastMatchDateKnown: {}, lastMatchDateReported: {}).",
-                team.getId(), earliestStartDate, lastMatchDateKnown, lastMatchDateReported);
+                team.getTeamId(), earliestStartDate, lastMatchDateKnown, lastMatchDateReported);
         Date startDate = lastMatchDateKnown.orElse(earliestStartDate.orElse(null));
+
         if (startDate == null || (lastMatchDateReported.isPresent() && !startDate.before(
                 lastMatchDateReported.get()))) {
-            log.info("No matches to load for team {}.", team.getId());
+            log.info("No matches to load for team {}.", team.getTeamId());
             return;
         }
 
         TeamMatchesRequest teamMatchesRequest = new TeamMatchesRequest();
-        teamMatchesRequest.setTeam(team.getId());
+        teamMatchesRequest.setTeam(team.getTeamId());
+        teamMatchesRequest.setOpus(team.getId().getOpus());
         teamMatchesRequest.setStart(startDate);
         teamMatchesRequest.setEnd(new Date());
         log.info(
                 "Loading matches for team {} starting from {}.",
-                team.getId(), startDate);
+                team.getTeamId(), startDate);
         TeamMatchesResponse teamMatchesResponse = cyanideCachedRestApiClient.getFromCacheOrApi(teamMatchesRequest);
-        List<UUID> matchUuids = ofNullable(teamMatchesResponse)
+        List<String> matchUuids = ofNullable(teamMatchesResponse)
                 .stream()
                 .flatMap(t -> Arrays.stream(
                         ofNullable(t.getMatchIds())
                                 .orElse(new TeamMatchesResponse.MatchId[0])))
-                .map(TeamMatchesResponse.MatchId::getUuid)
+                .map(x -> x.getUuid().toString())
                 .toList();
         List<Match> matches = matchUuids
                 .stream()
                 .filter(Objects::nonNull)
-                .map(this::loadMatch)
+                .map(id -> loadMatch(id, team.getId().getOpus()))
                 .toList();
-        log.info("Loaded {} matches for team {}.", matches.size(), team.getId());
+        log.info("Loaded {} matches for team {}.", matches.size(), team.getTeamId());
     }
 
-    public Match loadMatch(UUID matchUuid) {
-        if (matchUuid == null) {
+    public Match loadMatch(String matchId, int opus) {
+        if (matchId == null) {
             return null;
         }
         MatchRequest matchRequest = new MatchRequest();
-        matchRequest.setMatch_id(matchUuid);
+        matchRequest.setMatch_id(matchId);
+        matchRequest.setOpus(opus);
         MatchResponse matchResponse = cyanideCachedRestApiClient.getFromCacheOrApi(matchRequest);
-        return matchDomainService.createOrUpdateMatch(matchResponse);
+        return matchDomainService.createOrUpdateMatch(matchResponse, opus);
     }
 
-    public List<Match> loadMatches(League league,
-            Optional<Date> earliestStartDate,
-            Optional<Date> lastMatchDateKnown,
-            Optional<Date> lastMatchDateReported) {
+    public List<Match> loadMatches(Identity entityId, EntityType entityType,
+                                   Optional<Date> earliestStartDate,
+                                   Optional<Date> lastMatchDateKnown,
+                                   Optional<Date> lastMatchDateReported, 
+                                   Optional<Integer> limit) {
+        if (entityId == null || entityType == null)
+            return Collections.emptyList();        
+            
         log.info(
-                "Checking if matches to be loaded for league {} (earliestStart: {}, lastMatchDateKnown: {}, lastMatchDateReported: {}).",
-                league.getUuid(), earliestStartDate, lastMatchDateKnown, lastMatchDateReported);
+            "Checking if matches to be loaded for entity {} (type: {}, earliestStart: {}, lastMatchDateKnown: {}, lastMatchDateReported: {}).",
+            entityId, entityType, earliestStartDate, lastMatchDateKnown, lastMatchDateReported);
         Date startDate = lastMatchDateKnown.orElse(earliestStartDate.orElse(null));
         if (startDate != null && (lastMatchDateReported.isEmpty() || startDate.before(lastMatchDateReported.get()))) {
             MatchesRequest matchesRequest = new MatchesRequest();
-            matchesRequest.setLeague_id(league.getUuid());
+            if (entityType == EntityType.League) {
+                matchesRequest.setLeague_id(entityId.getValue());
+            } else if (entityType == EntityType.Competition && entityId instanceof CompositeIdentity cid) {
+                matchesRequest.setLeague_id(cid.getParts()[0]);
+                matchesRequest.setCompetition_id(cid.getParts()[1]);
+            } else {
+                throw new IllegalArgumentException("Unsupported entityId/entityType combo: " + entityId + "::" + entityType);
+            }
+            matchesRequest.setOpus(entityId.getOpus());
             matchesRequest.setStart(startDate);
             matchesRequest.setEnd(new Date());
-            matchesRequest.setLimitSize(null);
+            matchesRequest.setLimitSize(/*limit.orElse(ApiRequest.DEFAULT_FETCH_LIMIT)*/ null);
             log.info(
-                    "Loading matches for league {} starting from {}.",
-                    league.getUuid(), startDate);
+                    "Loading matches for {} {} starting from {}.",
+                    entityType, entityId, startDate);
             MatchesResponse matchesResponse = cyanideCachedRestApiClient.getFromCacheOrApi(matchesRequest);
-            return matchDomainService.createOrUpdateMatches(matchesResponse);
+            return matchDomainService.createOrUpdateMatches(matchesResponse, entityId.getOpus());
         }
-        log.info("No matches to load for league {}.", league.getUuid());
+        log.info("No matches to load for {} {}.", entityType, entityId);
         return Collections.emptyList();
     }
 
-    public List<Competition> loadCompetitions(UUID leagueId) {
-        CompetitionsRequest competitionsRequest = new CompetitionsRequest();
-        competitionsRequest.setLeague_id(leagueId);
-        CompetitionsResponse competitionsResponse = cyanideCachedRestApiClient.getFromCacheOrApi(competitionsRequest);
-        return competitionDomainService.createOrUpdateCompetitions(competitionsResponse);
+
+    public List<Match> loadMatches(League league,
+                                   Optional<Date> earliestStartDate,
+                                   Optional<Date> lastMatchDateKnown,
+                                   Optional<Date> lastMatchDateReported,
+                                   Optional<Integer> limit) {
+        return loadMatches(league.getId(), EntityType.League, earliestStartDate, lastMatchDateKnown, lastMatchDateReported, limit);
     }
 
-    public List<Contest> loadContests(Competition competition) {
-        Integer contestCount = contestRepository.countByCompetitionId(competition.getUuid());
+    public List<Match> loadMatches(Competition competition,
+                                   Optional<Date> earliestStartDate,
+                                   Optional<Date> lastMatchDateKnown,
+                                   Optional<Date> lastMatchDateReported,
+                                   Optional<Integer> limit) {
+        return loadMatches(competition.getId(), EntityType.Competition, earliestStartDate, lastMatchDateKnown, lastMatchDateReported, limit);
+    }
+
+
+    public List<Competition> loadCompetitions(Identity leagueIdentity) {
+        CompetitionsRequest competitionsRequest = new CompetitionsRequest();
+        competitionsRequest.setLeague_id(leagueIdentity.getValue());
+        competitionsRequest.setOpus(leagueIdentity.getOpus());
+        CompetitionsResponse competitionsResponse =
+                cyanideCachedRestApiClient.getFromCacheOrApi(competitionsRequest);
+        return competitionDomainService.createOrUpdateCompetitions(competitionsResponse, leagueIdentity.getOpus());
+    }
+
+    public List<Contest> loadContests(Competition competition) {        
+        Integer contestCount =
+                contestRepository.countByCompetitionId(
+                        competition.getId());
         ContestsRequest contestsRequest = new ContestsRequest();
-        contestsRequest.setCompetition_id(competition.getUuid());
+        int opus = competition.getId().getOpus();
+        if (opus == 2) {
+            contestsRequest.setCompetition_name(competition.getName());
+            contestsRequest.setLeague_name(competition.getLeagueName());
+            contestsRequest.setExact(0);            
+        } else if (opus > 2) {
+            String cid = competition.getCompetitionId().split(Identity.DELIMITER)[1];
+            contestsRequest.setCompetition_id(cid);
+            contestsRequest.setLeague_id(competition.getLeagueId().getValue());
+        } else {
+            throw new IllegalArgumentException("Unsupported opus: " + opus);
+        }
+        contestsRequest.setBb(competition.getId().getOpus());
+
 
         int limitOffset = contestCount - ApiRequest.DEFAULT_FETCH_LIMIT;
         if (limitOffset < 0) {
@@ -201,9 +236,25 @@ public class CyanideApiService {
         return new ArrayList<>(loadContests(contestsRequest));
     }
 
-    private List<Contest> loadContests(ContestsRequest contestsRequest) {
+    public List<Contest> loadContests(League league) {
+        Integer contestCount =
+                contestRepository.countByLeagueId(league.getId());
+        ContestsRequest contestsRequest = new ContestsRequest();
+        contestsRequest.setLeague_id(league.getId().getValue());
+        contestsRequest.setBb(league.getId().getOpus());
+
+        int limitOffset = contestCount - ApiRequest.DEFAULT_FETCH_LIMIT;
+        if (limitOffset < 0) {
+            limitOffset = 0;
+        }
+        contestsRequest.setStatus("*");
+        contestsRequest.setLimitOffset(limitOffset);
+        return new ArrayList<>(loadContests(contestsRequest));
+    }
+
+    public List<Contest> loadContests(ContestsRequest contestsRequest) {
         ContestsResponse contestsResponse = cyanideCachedRestApiClient.getFromCacheOrApi(contestsRequest);
-        return contestDomainService.createOrUpdateContests(contestsResponse);
+        return contestDomainService.createOrUpdateContests(contestsResponse, contestsRequest.getBb());
     }
 
     @Transactional
@@ -216,7 +267,7 @@ public class CyanideApiService {
             status = statusResponse
                     .stream()
                     .flatMap(sr -> Arrays.stream(sr.getGames()))
-                    .filter(game -> BB3_GAME_NAME.equals(game.getName()))
+                    .filter(game -> BB3_GAME_NAME.equals(game.getName()) || BB2_GAME_NAME.equals(game.getName()))
                     .findFirst()
                     .map(statusModelConverter::toStatus)
                     .orElse(createEmptyStatus());
@@ -231,7 +282,8 @@ public class CyanideApiService {
 
     private TeamRequest createTeamRequestFor(Team team) {
         TeamRequest teamRequest = new TeamRequest();
-        teamRequest.setId(team.getId());
+        teamRequest.setId(team.getTeamId());
+        teamRequest.setOpus(team.getId().getOpus());
         return teamRequest;
     }
 

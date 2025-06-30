@@ -310,6 +310,7 @@ public class ContestsResponse extends ApiResponse {
 
     @Override
     public void updateChangeableAttribute() {
+      try {
         List<ApiContest> notValidatedOrNotOldEnoughContests = Arrays.stream(contests)
                 .filter(c -> MatchStatus.Validated.equals(c.getStatus()) && dateWithinLast(c.getMatch_date(),
                         DateUtil.TEN_DAYS))
@@ -318,6 +319,10 @@ public class ContestsResponse extends ApiResponse {
         if (notValidatedOrNotOldEnoughContests.isEmpty()) {
             updateChangeableAttributeTo(true);
         }
+      } catch (NullPointerException e) {
+        // If contests is null, we assume the response is empty and not changeable.
+        updateChangeableAttributeTo(false);
+      }
     }
 
     @Override

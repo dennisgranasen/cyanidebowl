@@ -32,7 +32,7 @@ class CyanideRestApiClientTest {
         URI uri = cyanideRestApiClient.createUri(contestsRequest, "apiKey");
 
         // then
-        String expectedUri = "https://web.cyanide-studio.com/ws/bb3/contests/?limit=42,+23&key=apiKey";
+        String expectedUri = "https://web.cyanide-studio.com/ws/bb/contests/?limit=42,+23&key=apiKey";
         assertEquals(expectedUri, uri.toString());
     }
 }

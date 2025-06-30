@@ -33,10 +33,12 @@ import java.util.UUID;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LeagueRequest extends ApiRequest<LeagueRequest, LeagueResponse> {
     private String league_name;
-    private UUID league_id;
+    private String league_id;
+    private Integer id; // Alias for league_id for compatibility with BB1
+    private Integer opus;
 
     public LeagueRequest() {
-        super("bb3/league", LeagueRequest.class, LeagueResponse.class);
+        super("bb/league", LeagueRequest.class, LeagueResponse.class);
         setCacheValidity(CacheValidityDurations.FIFTEEN_MINUTES);
         setLimitSize(null);
     }

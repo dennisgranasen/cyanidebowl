@@ -6,6 +6,7 @@ import net.warp_scores.warpscores.export.naf.Coach;
 import net.warp_scores.warpscores.export.naf.Game;
 import net.warp_scores.warpscores.export.naf.NafReport;
 import net.warp_scores.warpscores.export.naf.PlayerRecord;
+import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.CompetitionStatus;
 import net.warp_scores.warpscores.model.Contest;
@@ -14,12 +15,12 @@ import net.warp_scores.warpscores.model.Race;
 import net.warp_scores.warpscores.model.Team;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.groupingBy;
@@ -38,8 +39,9 @@ public class NafExporter {
     private final CompetitionService competitionService;
     private final NafCoachService nafCoachService;
 
-    public Optional<NafReport> export(UUID competitionUuid, String exporterName) {
-        Optional<Competition> competition = competitionService.loadCompetition(competitionUuid);
+    public Optional<NafReport> export(Identity competitionId, String exporterName) {
+        Optional<Competition> competition = 
+            competitionService.loadCompetition(competitionId);
         return competition.flatMap(comp -> export(comp, exporterName));
     }
 
@@ -50,8 +52,8 @@ public class NafExporter {
             return Optional.empty();
         }
 
-        List<Contest> competitionContests = contestService.getCompetitionContests(competition.getUuid(),
-                Optional.empty());
+        List<Contest> competitionContests = 
+            contestService.getCompetitionContests(competition.getId(), Optional.empty());
         return Optional.of(export(competitionContests, exporterName));
     }
 
@@ -73,9 +75,7 @@ public class NafExporter {
     }
 
     private boolean noneArtificialIntelligenceGame(Contest contest) {
-        return contest
-                .getOpponents()
-                .stream()
+        return java.util.Arrays.stream(contest.getOpponents())
                 .map(Team::getCoachName)
                 .filter(BB3_AI_COACH_NAME::equals)
                 .findFirst()
@@ -89,9 +89,8 @@ public class NafExporter {
         return game;
     }
 
-    private List<PlayerRecord> toPlayerRecords(List<Team> opponents) {
-        return opponents
-                .stream()
+    private List<PlayerRecord> toPlayerRecords(Team[] opponents) {
+        return Arrays.stream(opponents)
                 .map(this::toPlayerRecord)
                 .filter(Objects::nonNull)
                 .toList();
@@ -104,7 +103,8 @@ public class NafExporter {
 
     private PlayerRecord toPlayerRecord(Team team, NafCoach nafCoach) {
         PlayerRecord playerRecord = new PlayerRecord();
-        playerRecord.setTeam(team.getRace().getNafRaceName());
+        Race race = Race.forValue(team.getRace(), team.getId().getOpus());
+        playerRecord.setTeam(race.getNafRaceName());
         playerRecord.setName(nafCoach.getNafName());
         playerRecord.setTeamRating(DEFAULT_TEAM_RATING);
         playerRecord.setNumber(nafCoach.getNafId());
@@ -117,7 +117,7 @@ public class NafExporter {
         List<Team> teams = contests
                 .stream()
                 .map(Contest::getOpponents)
-                .flatMap(List::stream)
+                .flatMap(Arrays::stream)
                 .distinct()
                 .toList();
         return toCoachesFromTeams(teams);
@@ -141,7 +141,7 @@ public class NafExporter {
     private String uniqueOrMultipleRacesQualifier(List<Team> teams) {
         List<Race> distinctRaces = teams
                 .stream()
-                .map(Team::getRace)
+                .map(t -> Race.forValue(t.getRace(), t.getId().getOpus()))
                 .distinct()
                 .toList();
         return distinctRaces.size() == 1 ? distinctRaces.get(0).getNafRaceName() : MULTIPLE_RACES;

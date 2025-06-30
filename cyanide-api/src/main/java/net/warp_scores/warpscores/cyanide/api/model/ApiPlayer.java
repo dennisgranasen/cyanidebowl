@@ -1,12 +1,10 @@
 package net.warp_scores.warpscores.cyanide.api.model;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.Setter;
 import net.warp_scores.warpscores.cyanide.api.model.common.IdWithName;
 
-import java.util.UUID;
 
 /*
 {
@@ -82,6 +80,7 @@ import java.util.UUID;
 @Getter
 @Setter
 public class ApiPlayer extends IdWithName {
+    @JsonAlias({"raceId"})
     private Integer idraces;
     private Integer number;
     private Integer value;
@@ -89,6 +88,7 @@ public class ApiPlayer extends IdWithName {
     @JsonAlias({"xp_gain"})
     private Integer xpGain;
     private Integer level;
+    @JsonAlias({"matchPlayed"})
     private Integer matchplayed;
     private Boolean mvp;
 
@@ -97,12 +97,15 @@ public class ApiPlayer extends IdWithName {
     private ExtendedAttributes extendedAttributes;
 
     private String type;
+    @JsonAlias({"casualtiesStateId"})
     private Integer[] casualties_state_id;
+    @JsonAlias({"casualtiesState"})
     private String[] casualties_state;
+    @JsonAlias({"suspendedNextMatch"})
     private Boolean suspended_next_match;
     private Stats stats;
 
-    private Skills skills;
+    private Object skills; // String[] for legacy, Skills for BB3
     private Casualties casualties;
 
     @Getter
@@ -113,16 +116,14 @@ public class ApiPlayer extends IdWithName {
         @JsonAlias({"InnateSkills"})
         private String[] innateSkills;
     }
-
     @Getter
     @Setter
     public static class Casualties {
-        @JsonAlias({"PreviousCasualty"})
+        @JsonAlias({"PreviousCasualty", "previousCasualties"})
         private String[] previousCasualty;
-        @JsonAlias({"NewCasualty"})
+        @JsonAlias({"NewCasualty", "newCasualties"})
         private String[] newCasualty;
     }
-
     @Getter
     @Setter
     public static class Stats {
@@ -158,6 +159,27 @@ public class ApiPlayer extends IdWithName {
         private Integer foul_sustained;
         private Integer throw_team_mate_try;
         private Integer throw_team_mate_success;
+
+        private Integer inflictedcasualties;
+        private Integer inflictedstuns;
+        private Integer inflictedpasses;
+        private Integer inflictedmeterspassing;
+        private Integer inflictedtackles;
+        private Integer inflictedko;
+        private Integer inflicteddead;
+        private Integer inflictedinterceptions;
+        private Integer inflictedpushouts;
+        private Integer inflictedcatches;
+        private Integer inflictedinjuries;
+        private Integer inflictedmetersrunning;
+        private Integer inflictedtouchdowns;
+        private Integer sustainedinterceptions;
+        private Integer sustainedtackles;
+        private Integer sustainedinjuries;
+        private Integer sustaineddead;
+        private Integer sustainedko;
+        private Integer sustainedcasualties;
+        private Integer sustainedstuns;
     }
 
     @Getter
@@ -178,6 +200,12 @@ public class ApiPlayer extends IdWithName {
         private ExtendedAttribute st;
         private ExtendedAttribute ag;
         private ExtendedAttribute av;
+
+        //private String[] bonus;
+        //private String[] malus;
+
+        @JsonAlias({"default"})
+        private Attributes defaultAttributes;
 
         @Getter
         @Setter

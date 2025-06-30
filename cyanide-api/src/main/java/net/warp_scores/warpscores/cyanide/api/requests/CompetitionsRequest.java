@@ -6,7 +6,6 @@ import lombok.Setter;
 import lombok.ToString;
 import net.warp_scores.warpscores.cyanide.api.responses.CompetitionsResponse;
 
-import java.util.UUID;
 
 /*
     {
@@ -40,12 +39,13 @@ import java.util.UUID;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CompetitionsRequest extends ApiRequest<CompetitionsRequest, CompetitionsResponse> {
     private String league_name;
-    private UUID league_id;
+    private String league_id;
     private Integer competitions_limit;
     private Integer leagues_limit;
+    private Integer opus;
 
     public CompetitionsRequest() {
-        super("bb3/competitions", CompetitionsRequest.class, CompetitionsResponse.class);
+        super("bb/competitions", CompetitionsRequest.class, CompetitionsResponse.class);
         setCacheValidity(CacheValidityDurations.ONE_HOUR);
         setLimitSize(null);
     }

@@ -1,6 +1,6 @@
-# Warp Scores
+# cyanidebowl
 
-Welcome to [Warp Scores](https://warp-scores.net), a Spike-like facade for Cyanide's BB3 API.
+Welcome to [cyanidebowl](https://bloodbowl.granasen.com), a Spike-like facade for Cyanide's BB3 API based on warp-scores (https://warp-scores.net)
 
 ## Overview
 
@@ -35,6 +35,55 @@ This is a Spike-like web page to show match results and data from BB3 obtained t
 - 🟢 Finished
 - 🟡 In Progress
 - 🔴 Obsolete/Canceled
+
+### Configuration
+The following variables need to be set.
+
+## For development
+Set these variables in your .env file:
+FRONTEND_URI=http://localhost:8022
+BACKEND_URI=http://localhost:8080
+REACT_APP_BACKEND_URI=http://localhost:8080
+AUTH_URI="http://localhost:8080/"
+SPRING_PROFILES_ACTIVE="dev"
+SERVER_PORT=8080
+AUTH_AUDIENCE="nst-scores-backend"
+
+## For production
+Set these variables in your deployment system, e.g. using fly.toml:
+FRONTEND_URI=<Your frontend URI>
+BACKEND_URI=<Your backend URI>
+REACT_APP_BACKEND_URI=<Same as BACKEND_URI>
+AUTH_URI=<Your Auth0 Prodiver URI>
+SPRING_PROFILES_ACTIVE="production"
+SERVER_PORT=8080
+AUTH_AUDIENCE="nst-scores-backend"
+
+## Secrets
+The following secrets should be set, in production mode they should be set according to your host platform. For local development they can reside in your .env file, but don't share them with anyone.
+SPRING_DATA_MONGODB_URI=<Your MongoDb Connection String>
+CYANIDE_API_KEY=<Cyanide API Key>
+
+### Building
+To build the server for running locally, run the command:
+mvn clean package -P server -DskipDocker -DskipTest -pl api,cyanide-api,backend -am
+
+If you have made changes to api or cyanide-api respectively, you may need to run mvn install in their respective folder.
+
+### Testing
+To test the system, I recommend running the server on your development machine with all settings loaded from your .env file.
+
+First, if you haven't already, install dotenv-cli to be able to load .env file into your environment:
+npm install dotenv-cli
+
+Then, to run the server:
+npx dotenv --  mvn spring-boot:run -P server -pl backend
+
+Or, to run the data-fetcher:
+npx dotenv --  mvn spring-boot:run -P fetcher -pl backend
+
+To run the frontend:
+cd frontend; npm run dev
 
 ### Discord Bot
 
