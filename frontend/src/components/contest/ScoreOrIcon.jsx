@@ -30,7 +30,8 @@ function ScoreOrIcon({ contestOrMatch, size, boxSize }) {
   if (contestOrMatch.adminResult) color = 'orange';
   if (contestOrMatch.concede) color = 'red';
 
-  const teams = contestOrMatch.contestUuid ? contestOrMatch.opponents : contestOrMatch.teams;
+  const teams = contestOrMatch.contestId ? contestOrMatch.opponents : contestOrMatch.teams;
+  console.log('ScoreOrIcon', { contestOrMatch, teams, matchPlayed, matchValidated, color });
   const scoreA = teams[0].score;
   const scoreB = teams[1].score;
   const scoreText = `${scoreA} - ${scoreB}`;

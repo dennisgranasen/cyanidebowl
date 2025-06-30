@@ -25,6 +25,7 @@ import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
 import net.warp_scores.warpscores.service.TeamService;
 
 import org.springframework.stereotype.Service;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -255,10 +256,14 @@ public class FetchDataService {
                 forEach(dc -> {
                         log.info("Fetching team data for {}: {}", dc.getCollectionType(), dc.getId());
                         cyanideApiService.loadTeams(dc.getId(), dc.getCollectionType());;
+                        if (dc.getCollectionType() == EntityType.League) {
+                                for (Competition competition : competitionRepository.findByLeagueId(dc.getId())) {
+                                    log.info("Fetching teams for competition {} in league {}.", competition.getId(), dc.getId());
+                                    cyanideApiService.loadTeams(competition.getId(), EntityType.Competition);
+                                }
+                        }
                 }
-
-
-                );
+        );
 
         // Fetch teams for all collected competitions in repository.
         List<Competition> competitions = competitionRepository.findAllById(

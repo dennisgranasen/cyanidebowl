@@ -17,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -36,25 +37,41 @@ public class ContestService {
     @DurationLogging
     public List<Contest> getCompetitionContests(
                 Identity competitionId,
-                Optional<Integer> limit) {  
-        Optional<Competition> competition = 
-                competitionService.loadCompetition(competitionId);
-        List<Team> teams = teamDomainService
+                Optional<Integer> limit) {
+        log.info("Retrieving contests for competition: {}", competitionId);                        
+        Competition competition = 
+                competitionService.loadCompetition(competitionId).orElseThrow();
+
+        List<Team> teams = new ArrayList<>(teamDomainService  // Create mutable ArrayList
                 .findByCompetitionId(competitionId)
                 .stream()
-                .toList();
+                .toList());
+        log.info("Teams found for competition {}: {}", competitionId, teams.size());
         Pageable pageable = limit.map(l -> (Pageable) PageRequest.of(0, l, Sort.by(Sort.Direction.DESC, "matchDate")))
                 .orElse(Pageable.unpaged());
         List<Contest> contests = contestRepository.findByCompetitionId(
-                competitionId, pageable);
-        teams.addAll(contests.stream()
-                .map(Contest::getOpponents)
-                .flatMap(Arrays::stream)
-                .toList());
-        contests.forEach(this::loadMatchIntoAndAdjustCompetitionName);
+                competition.getCompetitionId(), pageable);
+        if (contests.isEmpty()) {
+                log.info("No contests found for competition {}, initializing contests.", competitionId);
 
-        return contestInitializationService.initializeContestsScheduleForFormat(
-                competition, teams, contests);
+                return List.of();
+        } else {
+                log.info("Contests found for competition {}: {}", competitionId, contests.size());
+                if (contests.size() > 0) {
+                        log.info("{}", contests.get(0));
+                }
+                teams.addAll(contests.stream()
+                        .map(Contest::getOpponents)
+                        .filter(x -> x != null && x.length > 0)
+                        .flatMap(Arrays::stream)
+                        .toList());
+                log.info("Total teams including opponents: {}", teams.size());
+                contests.forEach(this::loadMatchIntoAndAdjustCompetitionName);
+                log.info("Loaded matches into contests and adjusted competition names.");
+
+                return contestInitializationService.initializeContestsScheduleForFormat(
+                        competition, teams, contests);
+        }
     }
 
     @DurationLogging

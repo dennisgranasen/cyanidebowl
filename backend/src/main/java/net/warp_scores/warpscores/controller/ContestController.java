@@ -67,12 +67,15 @@ public class ContestController {
             @RequestParam(name = "limit", required = false) Integer limit,
             @RequestParam(name = "opus", required = false) Integer opus) {
         try {
+            log.warn("Using endpoint /contests/competition/{competitionId} ", competitionId);
             String[] parts = competitionId.split(Identity.DELIMITER);
             Identity competitionIdentity = 
-                new CompositeIdentity(ofNullable(opus).orElse(defaultOpus), parts);            
+                new CompositeIdentity(ofNullable(opus).orElse(defaultOpus), parts);         
+            log.info("Retrieving contests for competition: {}", competitionIdentity);
             List<Contest> contests = contestService.getCompetitionContests(
                 competitionIdentity,
                 Optional.ofNullable(limit));
+            log.info("Retrieved {} contests for competition: {}", contests.size(), competitionIdentity);
             return ResponseEntity.ok(contests);
         } catch (Exception ex) {
             log.error("Unable to retrieve contests", ex);
@@ -111,7 +114,7 @@ public class ContestController {
                 leagueIdentity, limit);
             return ResponseEntity.ok(contests);
         } catch (Exception ex) {
-            log.error("Unable to retrieve contests", ex);
+            log.error("Unable to retrieve contests for " + leagueId + " with opus " + opus, ex);
             return ResponseEntity.internalServerError().build();
         }
     }    

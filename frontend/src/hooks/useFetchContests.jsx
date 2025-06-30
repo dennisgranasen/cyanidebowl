@@ -10,10 +10,11 @@ export default function useFetchContests() {
 
   const fetchContests = (competition, limit = null) => {
     setContestsLoading(true);
-    logger.debug('Fetching contests for competition: %o', competition);
+    logger.info('Fetching contests for competition: %o', competition.id);
     WarpScoresApiService.competitionContests(competition.id, limit)
       .then((data) => {
-        data.sort(comparators.compareContestsByMatchOrContestUuidAsDatesDesc);
+        console.debug('Fetched contests:', data);
+        data.sort((x,y) => x.started - y.started);
         setContests(data);
       })
       .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))

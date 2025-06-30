@@ -216,7 +216,7 @@ public class CyanideApiService {
         if (opus == 2) {
             contestsRequest.setCompetition_name(competition.getName());
             contestsRequest.setLeague_name(competition.getLeagueName());
-            contestsRequest.setExact(0);            
+            contestsRequest.setExact(1);            
         } else if (opus > 2) {
             String cid = competition.getCompetitionId().getValue();
             contestsRequest.setCompetition_id(cid);
@@ -253,6 +253,7 @@ public class CyanideApiService {
     }
 
     public List<Contest> loadContests(ContestsRequest contestsRequest) {
+        
         ContestsResponse contestsResponse = cyanideCachedRestApiClient.getFromCacheOrApi(contestsRequest);
         return contestDomainService.createOrUpdateContests(contestsResponse, contestsRequest.getBb());
     }

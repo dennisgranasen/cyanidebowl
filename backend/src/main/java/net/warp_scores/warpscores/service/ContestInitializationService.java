@@ -52,22 +52,22 @@ public class ContestInitializationService {
         }
     };
 
-    public List<Contest> initializeContestsScheduleForFormat(Optional<Competition> competition, List<Team> teams,
+    public List<Contest> initializeContestsScheduleForFormat(Competition competition, List<Team> teams,
             List<Contest> contests) {
         return initializeContestsScheduleForFormat(competition, teams, contests, true);
     }
 
     @DurationLogging
-    public List<Contest> initializeContestsScheduleForFormat(Optional<Competition> competition, List<Team> teams,
+    public List<Contest> initializeContestsScheduleForFormat(Competition competition, List<Team> teams,
             List<Contest> contests, boolean generateFutureRoundRobinRounds) {
 
-        Optional<CompetitionFormat> competitionFormat = competition.map(Competition::getFormat);
-        if (teams.isEmpty() || competitionFormat.isEmpty() || competitionNotStarted(competition)) {
+        CompetitionFormat competitionFormat = competition.getFormat();
+        if (teams.isEmpty() || competitionNotStarted(competition)) {
             return contests;
         }
 
         /* updated with BB2 competition formats */
-        return switch (competitionFormat.get()) {
+        return switch (competitionFormat) {
             case undefined -> emptyList();
             case RoundRobin, round_robin -> generateFutureRoundRobinRounds ?
                     initializeRoundRobinContests(unmodifiableList(contests), competition, teams) :
@@ -77,8 +77,8 @@ public class ContestInitializationService {
         };
     }
 
-    private boolean competitionNotStarted(Optional<Competition> competition) {
-        return competition.map(value -> CompetitionStatus.Registration.equals(value.getStatus())).orElse(true);
+    private boolean competitionNotStarted(Competition competition) {
+        return CompetitionStatus.Registration.equals(competition.getStatus());
     }
 
     @SuppressWarnings("rawtypes")
@@ -221,7 +221,7 @@ public class ContestInitializationService {
     }
 
     private List<Contest> initializeRoundRobinContests(List<Contest> contests,
-            Optional<Competition> competition,
+            Competition competition,
             List<Team> teams) {
         log.info("DEBUG: Starting initializeRoundRobinContests");
         OptionalInt currentRound = contests
@@ -231,13 +231,12 @@ public class ContestInitializationService {
 
         log.info("DEBUG: Current round: {}", currentRound.orElse(0));
 
-        List<Contest> scheduledContests = competition.map(comp ->
-                        generateScheduledContests(comp, teams)
-                                .stream()
-                                .filter(this::doesNotContainDummyTeam)
-                                .filter(contest -> contest.getRound() > currentRound.orElse(0))
-                                .toList())
-                .orElse(emptyList());
+        List<Contest> scheduledContests = 
+            generateScheduledContests(competition, teams)
+                    .stream()
+                    .filter(this::doesNotContainDummyTeam)
+                    .filter(contest -> contest.getRound() > currentRound.orElse(0))
+                    .toList();                
 
         log.info("DEBUG: Scheduled contests: {}", scheduledContests.size());
         for (Contest c : scheduledContests) {

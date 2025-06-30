@@ -222,7 +222,7 @@ public class ContestInitializationServiceTest {
     private void whenContestsInitialized() {
         // Add debug trace before and after initialization
         //System.out.println("DEBUG: Initializing contests with teams: " + givenTeams);
-        this.initializedContests = this.service.initializeContestsScheduleForFormat(Optional.of(givenCompetition),
+        this.initializedContests = this.service.initializeContestsScheduleForFormat(givenCompetition,
                 givenTeams,
                 givenSeedContests);
         //System.out.println("DEBUG: Contests initialized: " + this.initializedContests);
