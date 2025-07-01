@@ -10,10 +10,10 @@ const raceTable = {
   9: "Dark Elf",
   10: "Shambling Undead",
   11: "Halfling",
-  12: "Norse", // default
-  13: "Amazon", // default
-  14: "Elven Union",
-  15: "High Elf", // default
+  12: "Amazon", // default
+  13: "Amazon", // currently not used in BB3 ??
+  14: "Elven Union", // default
+  15: "Norse", // default
   16: "Tomb Kings",
   17: "Necromantic Horror",
   18: "Nurgle",
@@ -22,7 +22,7 @@ const raceTable = {
   21: "Chaos Dwarf",
   22: "Underworld Denizen",
   23: "Khorne",
-  24: "Bretonnia", // default
+  24: "Imperial Nobility", // default
   25: "Slann",
   1000: "Black Orc",
   1001: "Chaos Renegade",
@@ -30,24 +30,31 @@ const raceTable = {
 };
 
 const opusSpecificRaces = {
-  "3_12": "Amazon",    // Amazon for opus 3, race 12
-  "2_13": "Amazon",    // Amazon for opus 2, race 13
-  "2_15": "High Elf",  // High Elf for opus 2, race 15
-  "3_15": "Norse",     // Norse for opus 3, race 15
-  "3_24": "Imperial Nobility" // Imperial Nobility for opus 3, race 24
+  "1_12": "Norse",    // Amazon for BB3
+  "1_13": "Amazon",    // Amazon for BB2
+  "2_13": "Amazon",    // Amazon for BB2
+  "1_14": "Elf",       // Just Elf in BB1 and 2
+  "2_14": "Elf",   
+  "1_15": "High Elf",
+  "2_15": "High Elf",
+  "1_16": "Khemri",
+  "2_16": "Khemri",
+  "2_24": "Bretonnia", // Bretonnia for BB3
 };
 
 const _getRaceLogo = (raceId, opus) => {
   // TODO: Implement logic to return the race logo based on raceName or raceId
   switch (raceId) {
     case 5: return "Lizardman";
+    case 8: if (opus < 3) 
+      return "Chaos"; // BB3 uses Chaos Chosen
     case 10: return "Undead";
     case 17: return "Necromantic";
     case 22: return "Underworld";
     case 25: return (opus === 2) ? "Kislev" : "Slann";
     default:
-      return toRace(raceId, opus).replace(/\s+/g, ''); //  
   }
+  return toRace(raceId, opus).replace(/\s+/g, ''); //  
 };
 
 const getRaceLogo = (raceId, opus) => {

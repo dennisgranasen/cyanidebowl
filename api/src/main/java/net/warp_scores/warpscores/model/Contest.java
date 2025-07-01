@@ -44,6 +44,7 @@ public class Contest implements Comparable<Contest>, Identifiable {
     private Date matchDate;
     private String gameId;
     private Identity matchId;
+    private String matchUuid;
     private Integer live;
     private Team[] opponents;
     private Object winner;

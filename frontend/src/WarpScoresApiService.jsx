@@ -262,6 +262,11 @@ export default {
 
   competitionStats: async (competitionId) =>
     axios(`/competitions/${competitionId}/stats`).then(returnData).catch(handleError),
+  
+  competitionMatches: async (competitionId, limit) =>
+    axios(`/matches/competition/${competitionId.value}${limit ? `/${limit}` : ''}${competitionId.opus !== undefined && competitionId.opus !== null ? `?opus=${competitionId.opus}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
 
   competitionTeam: async (competitionId, teamId) =>
     axios(`/competitions/${competitionId}/team/${teamId}`).then(returnData).catch(handleError),

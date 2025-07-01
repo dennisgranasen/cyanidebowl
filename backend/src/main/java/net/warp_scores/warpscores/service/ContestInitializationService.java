@@ -150,6 +150,7 @@ public class ContestInitializationService {
     private static Contest findNextContestByWinner(Contest currContest,
             int currRound,
             List<Contest> initializedContests) {
+        log.info(currContest.getId() + " -" + currContest.getWinner());
         Optional<Identity> winnerTeamId = getWinnerTeamIdFrom(currContest);
         return initializedContests
                 .stream()
@@ -165,8 +166,9 @@ public class ContestInitializationService {
         }
         @SuppressWarnings("rawtypes")
         Map team = (Map) ((Map) contest.getWinner()).get("team");
-        Identity winnerTeamId = (Identity) team.get("identity");
-        return Optional.of(winnerTeamId);
+
+        Object winnerTeamId = (Object) team.get("id");
+        return Optional.of(new SimpleIdentity(winnerTeamId, contest.getId().getOpus()));
     }
 
     @SuppressWarnings("rawtypes")

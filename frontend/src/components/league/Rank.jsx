@@ -7,7 +7,7 @@ import config from '../../config';
 import imageUrls from '../../imageUrls';
 import prettyPrint from '../../util/prettyPrint';
 import Race from '../common/Race';
-import { toRace } from '../../util/raceUtil'
+import { getRaceLogo, toRace } from '../../util/raceUtil'
 
 const { boxSize, smallScreenBreakpointValues, showRaceLogo } = config;
 
@@ -18,7 +18,8 @@ function Rank({ rank, leagueId, position }) {
       navigate(`/league/${leagueId.opus}/${leagueId.value}/team/${rank.teamId.value}`);
   };
   const race = rank?.raceId ? toRace(rank.raceId, leagueId.opus) : null;
-  //console.log(rank)
+  const raceLogo = rank?.raceId ? getRaceLogo(rank.raceId, leagueId.opus) : null;
+  console.log(raceLogo)
   return rank !== null ? (
     <Tr onClick={goToTeam}>
       <Td>

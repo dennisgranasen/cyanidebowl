@@ -17,9 +17,10 @@ function Rank({ rank, competitionId, position }) {
   const goToTeam = () => {
     navigate(`/competition/${competitionId.opus}/${competitionId.value}/team/${rank.teamId.value}`);
   };
-  console.log('Rank', rank, 'competitionId', competitionId);
-  const race = rank?.raceId ? toRace(rank.raceId, competitionId.opus) : null;
-  const raceLogo = getRaceLogo(rank.raceId, competitionId.opus);
+  //console.log('Rank', rank, 'competitionId', competitionId);
+  const opus = 2 ||   competitionId?.opus || rank?.teamId?.opus || 3; // Fallback to opus from rank if not provided
+  const race = rank?.raceId ? toRace(rank.raceId, opus) : null;
+  const raceLogo = getRaceLogo(rank.raceId, opus);
   //console.log(rank)
   return rank !== null ? (
     <Tr onClick={goToTeam}>
@@ -39,7 +40,7 @@ function Rank({ rank, competitionId, position }) {
           <Td>
             {rank.teamLogo ? (
               <Image
-                src={`${imageUrls.logo(rank.teamLogo, rank.teamId.opus)}`}
+                src={`${imageUrls.logo(rank.teamLogo, opus)}`}
                 boxSize={boxSize}
                 fallback={<QuestionOutlineIcon boxSize={boxSize} />}
                 objectFit="scale-down"
@@ -57,7 +58,7 @@ function Rank({ rank, competitionId, position }) {
           <Td>
             {rank.teamLogo ? (
               <Image
-                src={`${imageUrls.logo(rank.teamLogo, rank.teamId.opus)}`}
+                src={`${imageUrls.logo(rank.teamLogo, opus)}`}
                 boxSize={boxSize}
                 fallback={<QuestionOutlineIcon boxSize={boxSize} />}
                 objectFit="scale-down"
@@ -73,7 +74,7 @@ function Rank({ rank, competitionId, position }) {
           <Td>
             { showRaceLogo && raceLogo ?  
               <Image
-                src={`${imageUrls.logo(raceLogo, rank.teamId.opus)}`}
+                src={`${imageUrls.logo(raceLogo, opus)}`}
                 boxSize={boxSize}
                 title={prettyPrint(race)}
                 fallback={<Race size="sm" race={prettyPrint(race)} />}

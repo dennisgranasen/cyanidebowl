@@ -21,7 +21,7 @@ import DelayedIconTooltip from '../common/DelayedIconTooltip';
 import formatter from '../../util/formatter';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 import config from '../../config';
-import useFetchContests from '../../hooks/useFetchContests';
+import useFetchContestsWithMatches from '../../hooks/useFetchContestsWithMatches';
 import useFetchRanks from '../../hooks/useFetchRanks';
 import Ranks from './Ranks';
 import { FaRegFaceSadTear } from 'react-icons/fa6';
@@ -32,7 +32,7 @@ function toParticipant(opponent, winner) {
   return {
     id: opponent?.id,
     resultText: opponent ? `${opponent.score}` : null,
-    isWinner: winner?.team?.id === opponent?.id,
+    isWinner: winner?.team?.id === opponent?.id.value,
     status: opponent ? 'PLAYED' : null,
     teamName: opponent?.name,
     coachName: opponent?.coachName,
@@ -47,25 +47,6 @@ function toParticipants(opponents, index, winner) {
     opponents.forEach((opponent) => participants.push(toParticipant(opponent, winner)));
   }
   return participants;
-}
-
-function toBracketMatch(contest) {
-  return {
-    id: contest?.contestUuid,
-    nextMatchId: contest?.nextContestUuid,
-    participants: toParticipants(contest?.opponents, contest?.winner),
-    startTime: formatter.formatAsDate(contest?.matchDate, '-'),
-    state: contest?.matchDate ? 'DONE' : null,
-    tournamentRoundText: `${contest?.round}`,
-  };
-}
-
-function toBracketMatches(contests) {
-  const matches = [];
-  if (contests) {
-    contests.forEach((contest) => matches.push(toBracketMatch(contest)));
-  }
-  return matches;
 }
 
 function Participant({
@@ -197,16 +178,17 @@ function MatchComponent({
 }
 
 function KnockoutCompetition({ competition, competitionLoading }) {
-  const { fetchContests, contests, contestsLoading, error: contestError } = useFetchContests();
-  const { fetchRanks, ranks, ranksLoading, error: ranksError } = useFetchRanks();
+  const { fetchContestsWithMatches, contests, contestsLoading, error: contestError } = useFetchContestsWithMatches();
+  const { fetchRanks, ranks, ranksLoading, error: ranksError } = useFetchRanks();  
   const [matches, setMatches] = useState([]);
 
   useEffect(() => {
     if (competition) {
-      fetchContests(competition);
+      fetchContestsWithMatches(competition);
       fetchRanks(competition);
     }
   }, [competition]);
+  console.log('KnockoutCompetition', competition, competitionLoading);
 
   useEffect(() => {
     if (!competitionLoading && competition && !contestsLoading && contests) {
@@ -216,6 +198,48 @@ function KnockoutCompetition({ competition, competitionLoading }) {
       setMatches([]);
     }
   }, [competition, competitionLoading, contests, contestsLoading]);
+
+
+  function getNextContest(contest, index) {
+    if (contest === null) {
+      return null;
+    }
+    for (let i = index +1; i < contests.length; i++) {
+      if (contests[i].opponents.length > 1) {
+        if ((contests[i].opponents[0].id === contest.winner.team.id)
+          || (contests[i].opponents[0].id === contest.winner.team.id))
+        return contests[i];
+      }
+    }
+    console.log('No next contest found for', contest, 'at index', index);
+    return null;
+  }
+
+  function toBracketMatch(contest, index) {
+    console.log('toBracketMatch', contest);
+    console.log('Winner', contest?.winner);
+    console.log('{} ::: {}', contest?.round, index);
+    return {
+      id: contest?.contestId,
+      nextMatchId: contest?.nextContestId || getNextContest(contest, index)?.id || null,
+      participants: toParticipants(contest?.opponents, contest?.winner),
+      startTime: formatter.formatAsDate(contest?.matchDate, '-'),
+      state: contest?.status === 'Validated' || contest?.matchDate ? 'DONE' : null,
+      tournamentRoundText: `${contest?.round}`,
+    };
+  }
+
+  function toBracketMatches(contests) {
+    const matches = [];
+
+    if (contests) {
+      //contests.reverse();
+      contests.forEach((contest,i) => matches.push(toBracketMatch(contest, i)));
+    }
+    console.log('toBracketMatches', matches);
+    return matches;
+  }
+
 
   return (
     <Accordion defaultIndex={[0]} allowMultiple>
@@ -248,7 +272,7 @@ function KnockoutCompetition({ competition, competitionLoading }) {
         </AccordionButton>
         <AccordionPanel>
           <Ranks
-            competitionUuid={competition?.uuid}
+            competitionId={competition?.id}
             loading={competitionLoading || ranksLoading}
             ranks={ranks}
             error={ranksError}

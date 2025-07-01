@@ -42,6 +42,10 @@ public class ApiContest {
     private String stadium;
     @JsonAlias({"gameId"})
     private String game_id;
+    @JsonAlias({"matchId"})
+    private String match_id;
+    @JsonAlias({"matchUuid"}) 
+    private String match_uuid; // weirdly named in Cyanide API, this is not a UUID
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     @JsonAlias({"matchDate"})
     private Date match_date;
