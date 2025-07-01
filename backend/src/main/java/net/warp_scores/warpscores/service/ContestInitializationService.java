@@ -52,13 +52,13 @@ public class ContestInitializationService {
         }
     };
 
-    public List<Contest> initializeContestsScheduleForFormat(Competition competition, List<Team> teams,
+    public List<Contest> initializeContestsScheduleForFormat(Competition competition, Collection<Team> teams,
             List<Contest> contests) {
         return initializeContestsScheduleForFormat(competition, teams, contests, true);
     }
 
     @DurationLogging
-    public List<Contest> initializeContestsScheduleForFormat(Competition competition, List<Team> teams,
+    public List<Contest> initializeContestsScheduleForFormat(Competition competition, Collection<Team> teams,
             List<Contest> contests, boolean generateFutureRoundRobinRounds) {
 
         CompetitionFormat competitionFormat = competition.getFormat();
@@ -222,7 +222,7 @@ public class ContestInitializationService {
 
     private List<Contest> initializeRoundRobinContests(List<Contest> contests,
             Competition competition,
-            List<Team> teams) {
+            Collection<Team> teams) {
         log.info("DEBUG: Starting initializeRoundRobinContests");
         OptionalInt currentRound = contests
                 .stream()
@@ -239,18 +239,20 @@ public class ContestInitializationService {
                     .toList();                
 
         log.info("DEBUG: Scheduled contests: {}", scheduledContests.size());
+        /*
         for (Contest c : scheduledContests) {
             log.info("DEBUG: Scheduled Contest round={}, home={}, away={}", c.getRound(), c.getOpponents()[0].getName(), c.getOpponents()[1].getName());
         }
-
+        */
         List<Contest> initializedContests = new ArrayList<>(contests);
         initializedContests.addAll(scheduledContests);
 
         log.info("DEBUG: Initialized contests: {}", initializedContests.size());
+/*
         for (Contest c : initializedContests) {
             log.info("DEBUG: Initialized Contest round={}, home={}, away={}", c.getRound(), c.getOpponents()[0].getName(), c.getOpponents()[1].getName());
         }
-
+*/
         return initializedContests;
     }
 
@@ -258,7 +260,7 @@ public class ContestInitializationService {
         return !Arrays.stream(contest.getOpponents()).anyMatch(x -> x.equals(DUMMY_TEAM));
     }
 
-    private Collection<Contest> generateScheduledContests(Competition competition, List<Team> teams) {
+    private Collection<Contest> generateScheduledContests(Competition competition, Collection<Team> teams) {
         int n = teams.size();
         boolean isOdd = n % 2 != 0;
         Team dummy = null;

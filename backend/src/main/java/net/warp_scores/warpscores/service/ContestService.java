@@ -19,8 +19,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -42,7 +45,7 @@ public class ContestService {
         Competition competition = 
                 competitionService.loadCompetition(competitionId).orElseThrow();
 
-        List<Team> teams = new ArrayList<>(teamDomainService  // Create mutable ArrayList
+        Set<Team> teams = new HashSet<>(teamDomainService  // Create mutable ArrayList
                 .findByCompetitionId(competitionId)
                 .stream()
                 .toList());
@@ -64,7 +67,7 @@ public class ContestService {
                         .map(Contest::getOpponents)
                         .filter(x -> x != null && x.length > 0)
                         .flatMap(Arrays::stream)
-                        .toList());
+                        .collect(Collectors.toSet()));
                 log.info("Total teams including opponents: {}", teams.size());
                 contests.forEach(this::loadMatchIntoAndAdjustCompetitionName);
                 log.info("Loaded matches into contests and adjusted competition names.");

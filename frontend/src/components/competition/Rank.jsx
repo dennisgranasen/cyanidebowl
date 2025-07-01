@@ -7,23 +7,25 @@ import config from '../../config';
 import imageUrls from '../../imageUrls';
 import prettyPrint from '../../util/prettyPrint';
 import Race from '../common/Race';
+import { toRace, getRaceLogo } from '../../util/raceUtil'
 
-const { boxSize, smallScreenBreakpointValues } = config;
+const { boxSize, smallScreenBreakpointValues, showRaceLogo } = config;
 
-function Rank({ rank, competitionId }) {
+function Rank({ rank, competitionId, position }) {
   const navigate = useNavigate();
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
   const goToTeam = () => {
-    if (rank?.team?.competitionIds || competitionUuid) {
-      const id = competitionId || rank?.team?.competitionIds[0];
-      navigate(`/competition/${id.opus}/${id.value}/team/${rank.team.id}`);
-    }
+    navigate(`/competition/${competitionId.opus}/${competitionId.value}/team/${rank.teamId.value}`);
   };
+  console.log('Rank', rank, 'competitionId', competitionId);
+  const race = rank?.raceId ? toRace(rank.raceId, competitionId.opus) : null;
+  const raceLogo = getRaceLogo(rank.raceId, competitionId.opus);
+  //console.log(rank)
   return rank !== null ? (
     <Tr onClick={goToTeam}>
       <Td>
         <Center>
-          <Heading size="sm">{rank.rank}</Heading>
+          <Heading size="sm">{position}</Heading>
         </Center>
       </Td>
       {isSmallScreen ? (
@@ -31,69 +33,91 @@ function Rank({ rank, competitionId }) {
           <Td>
             <Text fontSize="sm">{rank.teamName}</Text>
             <Text fontSize="sm" color="grey">
-              {prettyPrint(rank.race)} ({rank.coachName})
+              {prettyPrint(race)} ({rank.coachName})
             </Text>
           </Td>
           <Td>
-            <Image
-              src={`${imageUrls.logo(rank.logo, rank.teamId.opus)}`}
-              boxSize={boxSize}
-              fallback={<QuestionOutlineIcon boxSize={boxSize} />}
-              objectFit="scale-down"
-            />
+            {rank.teamLogo ? (
+              <Image
+                src={`${imageUrls.logo(rank.teamLogo, rank.teamId.opus)}`}
+                boxSize={boxSize}
+                fallback={<QuestionOutlineIcon boxSize={boxSize} />}
+                objectFit="scale-down"
+              />
+              ) : (
+                <>
+                </>
+              )
+            }
           </Td>
         </>
       ) : (
         <>
           <Td>{rank.teamName}</Td>
           <Td>
-            <Image
-              src={`${imageUrls.logo(rank.logo, rank.teamId.opus)}`}
-              boxSize={boxSize}
-              fallback={<QuestionOutlineIcon boxSize={boxSize} />}
-              objectFit="scale-down"
-            />
+            {rank.teamLogo ? (
+              <Image
+                src={`${imageUrls.logo(rank.teamLogo, rank.teamId.opus)}`}
+                boxSize={boxSize}
+                fallback={<QuestionOutlineIcon boxSize={boxSize} />}
+                objectFit="scale-down"
+              />
+              ) : (
+                <>
+                </>
+              )
+              }
+
           </Td>
           <Td>{rank.coachName}</Td>
           <Td>
-            <Race size="sm" race={rank.race} />
+            { showRaceLogo && raceLogo ?  
+              <Image
+                src={`${imageUrls.logo(raceLogo, rank.teamId.opus)}`}
+                boxSize={boxSize}
+                title={prettyPrint(race)}
+                fallback={<Race size="sm" race={prettyPrint(race)} />}
+                objectFit="scale-down"
+              /> : 
+              <Race size="sm" race={prettyPrint(race)} />
+            }
           </Td>
         </>
       )}
       <Td>
-        <Center>{formatter.formatAsNumber(rank.score)}</Center>
+        <Center>{formatter.formatAsNumber(rank.points)}</Center>
       </Td>
       <Td>
-        <Center>{formatter.formatAsNumber(rank.gamesWon)}</Center>
+        <Center>{formatter.formatAsNumber(rank.wins)}</Center>
       </Td>
       <Td>
-        <Center>{formatter.formatAsNumber(rank.gamesDrawn)}</Center>
+        <Center>{formatter.formatAsNumber(rank.draws)}</Center>
       </Td>
       <Td>
-        <Center>{formatter.formatAsNumber(rank.gamesLost)}</Center>
+        <Center>{formatter.formatAsNumber(rank.losses)}</Center>
       </Td>
       <Td>
-        <Center> {formatter.formatAsNumber(rank.gamesPlayed)}</Center>
+        <Center> {formatter.formatAsNumber(rank.matchCount)}</Center>
       </Td>
       {!isSmallScreen && (
         <>
           <Td>
-            <Center>{formatter.formatAsNumber(rank.inflictedTouchdowns)}</Center>
+            <Center>{formatter.formatAsNumber(rank.totalTouchdownsFor)}</Center>
           </Td>
           <Td>
-            <Center>{formatter.formatAsNumber(rank.sustainedTouchdowns)}</Center>
+            <Center>{formatter.formatAsNumber(rank.totalTouchdownsAgainst)}</Center>
           </Td>
           <Td>
-            <Center>{formatter.formatAsNumber(rank.inflictedTouchdowns - rank.sustainedTouchdowns)}</Center>
+            <Center>{formatter.formatAsNumber(rank.netTouchdowns)}</Center>
           </Td>
           <Td>
-            <Center>{formatter.formatAsNumber(rank.inflictedCasualties)}</Center>
+            <Center>{formatter.formatAsNumber(rank.totalCasualtiesFor)}</Center>
           </Td>
           <Td>
-            <Center>{formatter.formatAsNumber(rank.sustainedCasualties)}</Center>
+            <Center>{formatter.formatAsNumber(rank.totalCasualtiesAgainst)}</Center>
           </Td>
           <Td>
-            <Center>{formatter.formatAsNumber(rank.inflictedCasualties - rank.sustainedCasualties)}</Center>
+            <Center>{formatter.formatAsNumber(rank.netCasualties)}</Center>
           </Td>
         </>
       )}

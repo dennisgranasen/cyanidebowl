@@ -9,18 +9,15 @@ import prettyPrint from '../../util/prettyPrint';
 import Race from '../common/Race';
 import { toRace } from '../../util/raceUtil'
 
-const { boxSize, smallScreenBreakpointValues } = config;
+const { boxSize, smallScreenBreakpointValues, showRaceLogo } = config;
 
 function Rank({ rank, leagueId, position }) {
   const navigate = useNavigate();
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
   const goToTeam = () => {
-    if (rank?.team?.competitionIds || competitionUuid) {
-      const id = competitionId || rank?.team?.competitionIds[0];
-      navigate(`/competition/${id.opus}/${id.value}/team/${rank.team.id}`);
-    }
+      navigate(`/league/${leagueId.opus}/${leagueId.value}/team/${rank.teamId.value}`);
   };
-  const race = rank?.raceId ? toRace(rank.raceId, leagueId.value.opus) : null;
+  const race = rank?.raceId ? toRace(rank.raceId, leagueId.opus) : null;
   //console.log(rank)
   return rank !== null ? (
     <Tr onClick={goToTeam}>
@@ -40,7 +37,7 @@ function Rank({ rank, leagueId, position }) {
           <Td>
             {rank.teamLogo ? (
               <Image
-                src={`${imageUrls.logo(rank.teamLogo, rank.teamId.opus)}`}
+                src={`${imageUrls.logo(rank.teamLogo, rank.opus)}`}
                 boxSize={boxSize}
                 fallback={<QuestionOutlineIcon boxSize={boxSize} />}
                 objectFit="scale-down"
@@ -72,7 +69,16 @@ function Rank({ rank, leagueId, position }) {
           </Td>
           <Td>{rank.coachName}</Td>
           <Td>
-            <Race size="sm" race={prettyPrint(race)} />
+              { showRaceLogo && raceLogo ?  
+              <Image
+                src={`${imageUrls.logo(raceLogo, rank.teamId.opus)}`}
+                boxSize={boxSize}
+                title={prettyPrint(race)}
+                fallback={<Race size="sm" race={prettyPrint(race)} />}
+                objectFit="scale-down"
+              /> : 
+              <Race size="sm" race={prettyPrint(race)} />
+            }
           </Td>
         </>
       )}

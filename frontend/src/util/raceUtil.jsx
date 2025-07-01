@@ -37,6 +37,23 @@ const opusSpecificRaces = {
   "3_24": "Imperial Nobility" // Imperial Nobility for opus 3, race 24
 };
 
+const _getRaceLogo = (raceId, opus) => {
+  // TODO: Implement logic to return the race logo based on raceName or raceId
+  switch (raceId) {
+    case 5: return "Lizardman";
+    case 10: return "Undead";
+    case 17: return "Necromantic";
+    case 22: return "Underworld";
+    case 25: return (opus === 2) ? "Kislev" : "Slann";
+    default:
+      return toRace(raceId, opus).replace(/\s+/g, ''); //  
+  }
+};
+
+const getRaceLogo = (raceId, opus) => {
+  return _getRaceLogo(raceId, opus) + "_01";
+}
+
 const toRace = (raceId, opus) => {
   // First check for opus-specific race
   const opusKey = `${opus}_${raceId}`;
@@ -48,5 +65,6 @@ const toRace = (raceId, opus) => {
 }
 
 export {
+  getRaceLogo,
   toRace
 };

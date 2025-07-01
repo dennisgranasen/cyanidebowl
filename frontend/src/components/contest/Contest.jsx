@@ -48,12 +48,13 @@ function Contest({ contest }) {
 
   const winnerTeamUuid =
     contest.winner && contest.opponents[0].score !== contest.opponents[1].score ? contest.winner.team.id : null;
+    //console.log('Contest', contest, 'winnerTeamUuid', winnerTeamUuid);
   return contest ? (
-    <Tr onClick={openIfValidatedAndNotAdminResult}>
+    <Tr onClick={openIfValidatedAndNotAdminResult} key={contest.id.key}>
       <MatchModal isOpen={isOpen} onClose={onClose} contest={contest} />
       <Opponent
         opponent={contest.opponents[0]}
-        key={contest.opponents[0].id}
+        key={contest.opponents[0].id.key}
         winner={contest.opponents[0].id === winnerTeamUuid}
       />
       <Td>
@@ -65,7 +66,7 @@ function Contest({ contest }) {
       </Td>
       <Opponent
         opponent={contest.opponents[1]}
-        key={contest.opponents[1].id}
+        key={contest.opponents[1].id.key}
         winner={contest.opponents[1].id === winnerTeamUuid}
         reverse
       />
