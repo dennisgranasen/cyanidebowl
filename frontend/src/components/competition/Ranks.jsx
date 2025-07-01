@@ -77,8 +77,8 @@ function Ranks({ ranks, competitionId, loading, error }) {
           </Thead>
           <Tbody>
             {ranks?.map((rank) => {
-              console.log('Rendering rank for team:', rank.team.id.asKey);
-              return <Rank competitionId={competitionId} rank={rank} key={rank.team.id.asKey} />;
+              console.log('Rendering rank for team:', rank.teamId.asKey);
+              return <Rank competitionId={competitionId} rank={rank} key={rank.teamId.asKey} />;
             })}
           </Tbody>
           <Tfoot>

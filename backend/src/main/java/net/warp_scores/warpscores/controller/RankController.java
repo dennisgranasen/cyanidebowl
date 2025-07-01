@@ -34,7 +34,7 @@ public class RankController {
 
 
     @GetMapping("/ranks/competition/{competitionId}")
-    public ResponseEntity<List<Rank>> getRanksForCompetition(
+    public ResponseEntity<List<TeamRankingRecord>> getRanksForCompetition(
             @PathVariable(name = "competitionId") String competitionId,
             @RequestParam(name = "limit", required = false) Integer limit,
             @RequestParam(name = "opus", required = false) Integer opus) {
@@ -48,9 +48,15 @@ public class RankController {
             Identity competitionIdentity = 
                 new CompositeIdentity(ofNullable(opus).orElse(defaultOpus), parts);
 
+            /*
             List<Rank> ranks = rankService.getRanksForCompetition(
                 competitionIdentity,
                 Optional.empty(), Optional.ofNullable(limit));
+            */
+            List<TeamRankingRecord> ranks = rankService.getRanksForCompetition(
+                competitionIdentity, Optional.empty(), Optional.ofNullable(limit));
+            log.info("Ranks for competition: {}", ranks);
+
             if (ranks == null || ranks.isEmpty()) {
                 log.warn("No ranks found for competition with ID: {}", competitionId);
                 return ResponseEntity.ok(Collections.emptyList());

@@ -254,6 +254,139 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
     })
     List<TeamRankingRecord> findTeamRankingsByLeagueId(Identity leagueId);
 
+    @Aggregation(pipeline = {
+        "{ '$match': { 'competitionId': ?0 } }",
+        "{ '$addFields': { 'originalTeams': '$teams', 'originalCoaches': '$coaches', 'matchDate': '$finished' } }",
+        "{ '$unwind': { 'path': '$teams', 'includeArrayIndex': 'teamIndex' } }",
+        "{" +
+        "  '$project': {" +
+        "    'teamId': '$teams._id.value'," +
+        "    'teamName': '$teams.name'," +
+        "    'teamRaceId': '$teams.raceId'," +
+        "    'coachId': { '$arrayElemAt': ['$originalCoaches._id', '$teamIndex'] }," +
+        "    'coachName': { '$arrayElemAt': ['$originalCoaches.name', '$teamIndex'] }," +
+        "    'teamScore': '$teams.score'," +
+        "    'teamInflictedCasualties': '$teams.inflictedcasualties'," +
+        "    'teamValue': '$teams.value'," +
+        "    'matchDate': '$matchDate'," +
+        "    'opponent': {" +
+        "      '$arrayElemAt': [" +
+        "        {" +
+        "          '$filter': {" +
+        "            'input': '$originalTeams'," +
+        "            'as': 'opp'," +
+        "            'cond': { '$ne': ['$$opp._id.value', '$teams._id.value'] }" +
+        "          }" +
+        "        }," +
+        "        0" +
+        "      ]" +
+        "    }" +
+        "  }" +
+        "}",
+        "{" +
+        "  '$addFields': {" +
+        "    'points': {" +
+        "      '$switch': {" +
+        "        'branches': [" +
+        "          { 'case': { '$gt': ['$teamScore', '$opponent.score'] }, 'then': 3 }," +
+        "          { 'case': { '$eq': ['$teamScore', '$opponent.score'] }, 'then': 1 }" +
+        "        ]," +
+        "        'default': 0" +
+        "      }" +
+        "    }," +
+        "    'wins': { '$cond': { 'if': { '$gt': ['$teamScore', '$opponent.score'] }, 'then': 1, 'else': 0 } }," +
+        "    'draws': { '$cond': { 'if': { '$eq': ['$teamScore', '$opponent.score'] }, 'then': 1, 'else': 0 } }," +
+        "    'losses': { '$cond': { 'if': { '$lt': ['$teamScore', '$opponent.score'] }, 'then': 1, 'else': 0 } }," +
+        "    'netTouchdowns': { '$subtract': ['$teamScore', '$opponent.score'] }," +
+        "    'netCasualties': { '$subtract': ['$teamInflictedCasualties', '$opponent.inflictedcasualties'] }," +
+        "    'touchdownsFor': '$teamScore'," +
+        "    'touchdownsAgainst': '$opponent.score'," +
+        "    'casualtiesFor': '$teamInflictedCasualties'," +
+        "    'casualtiesAgainst': '$opponent.inflictedcasualties'" +
+        "  }" +
+        "}",
+        "{" +
+        "  '$group': {" +
+        "    '_id': '$teamId'," +
+        "    'teamName': { '$first': '$teamName' }," +
+        "    'raceId': { '$first': '$teamRaceId' }," +
+        "    'coachId': { '$first': '$coachId' }," +
+        "    'coachName': { '$first': '$coachName' }," +
+        "    'points': { '$sum': '$points' }," +
+        "    'wins': { '$sum': '$wins' }," +
+        "    'draws': { '$sum': '$draws' }," +
+        "    'losses': { '$sum': '$losses' }," +
+        "    'netTouchdowns': { '$sum': '$netTouchdowns' }," +
+        "    'netCasualties': { '$sum': '$netCasualties' }," +
+        "    'matchCount': { '$sum': 1 }," +
+        "    'latestMatchDate': { '$max': '$matchDate' }," +
+        "    'teamValues': { '$push': { 'value': '$teamValue', 'date': '$matchDate' } }," +
+        "    'totalTouchdownsFor': { '$sum': '$touchdownsFor' }," +
+        "    'totalTouchdownsAgainst': { '$sum': '$touchdownsAgainst' }," +
+        "    'totalCasualtiesFor': { '$sum': '$casualtiesFor' }," +
+        "    'totalCasualtiesAgainst': { '$sum': '$casualtiesAgainst' }" +
+        "  }" +
+        "}",
+        "{" +
+        "  '$lookup': {" +
+        "    'from': 'team'," +
+        "    'let': { 'teamIdValue': '$_id' }," +
+        "    'pipeline': [" +
+        "      { '$match': { '$expr': { '$eq': ['$_id.value', '$$teamIdValue'] } } }," +
+        "      { '$project': { 'logo': 1, '_id': 0 } }" +
+        "    ]," +
+        "    'as': 'teamInfo'" +
+        "  }" +
+        "}",
+        "{" +
+        "  '$addFields': {" +
+        "    'teamLogo': { '$arrayElemAt': ['$teamInfo.logo', 0] }," +
+        "    'latestTeamValue': {" +
+        "      '$arrayElemAt': [" +
+        "        {" +
+        "          '$map': {" +
+        "            'input': {" +
+        "              '$filter': {" +
+        "                'input': '$teamValues'," +
+        "                'as': 'tv'," +
+        "                'cond': { '$eq': ['$$tv.date', '$latestMatchDate'] }" +
+        "              }" +
+        "            }," +
+        "            'as': 'latest'," +
+        "            'in': '$$latest.value'" +
+        "          }" +
+        "        }," +
+        "        0" +
+        "      ]" +
+        "    }" +
+        "  }" +
+        "}",
+        "{" +
+        "  '$project': {" +
+        "    'teamId': { 'type': 'SimpleIdentity', 'value': '$_id' }," +
+        "    'teamName': 1," +
+        "    'teamLogo': 1," +
+        "    'raceId': 1," +
+        "    'coachId': 1," +
+        "    'coachName': 1," +
+        "    'points': 1," +
+        "    'wins': 1," +
+        "    'draws': 1," +
+        "    'losses': 1," +
+        "    'netTouchdowns': 1," +
+        "    'netCasualties': 1," +
+        "    'matchCount': 1," +
+        "    'latestTeamValue': 1," +
+        "    'totalTouchdownsFor': 1," +
+        "    'totalTouchdownsAgainst': 1," +
+        "    'totalCasualtiesFor': 1," +
+        "    'totalCasualtiesAgainst': 1" +
+        "  }" +
+        "}",
+        "{ '$sort': { 'points': -1, 'netTouchdowns': -1, 'netCasualties': -1 } }"
+    })
+    List<TeamRankingRecord> findTeamRankingsByCompetitionId(Identity leagueId);
+
     record TeamRankingRecord(
         Identity teamId,
         String teamName,
@@ -274,6 +407,8 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
         int totalCasualtiesFor,
         int totalCasualtiesAgainst
     ) {}
+
+
 }
 
 

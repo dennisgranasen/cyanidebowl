@@ -45,6 +45,7 @@ public class RankService {
             RankComparisons.INFLICTED_TOUCHDOWNS, RankComparisons.TOUCHDOWN_DIFFERENCE);
     private final MatchService matchService;
 
+    /*
     @DurationLogging
     public List<Rank> getRanksForCompetition(Identity competitionId, 
             Optional<List<RankComparisons>> rankComparisons,
@@ -97,7 +98,7 @@ public class RankService {
                 })
                 .collect(Collectors.toList());
     }
-
+    */
     @DurationLogging
     public List<TeamRankingRecord> getRanksForLeague(Identity leagueId, 
             Optional<List<RankComparisons>> rankComparisons,
@@ -107,6 +108,18 @@ public class RankService {
         return ranks;
     }
 
+    @DurationLogging
+    public List<TeamRankingRecord> getRanksForCompetition(Identity competitionId, 
+            Optional<List<RankComparisons>> rankComparisons,
+            Optional<Integer> limit) {
+        Competition competition = competitionService.loadCompetition(competitionId)
+                .orElseThrow(NoSuchElementException::new);            
+        List<TeamRankingRecord> ranks = matchRepository.findTeamRankingsByCompetitionId(competition.getCompetitionId());
+        ranks.stream().forEach(record -> log.info("Team ranking record: {}", record));
+        return ranks;
+    }
+
+    /*
     private Rank toRank(Team team,
             List<Contest> contests,
             Map<Identity, Match> matchByMatchId,
@@ -206,4 +219,5 @@ public class RankService {
         }
         return Optional.of(teams.get(0));
     }
+        */
 }

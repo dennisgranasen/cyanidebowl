@@ -29,14 +29,14 @@ function Rank({ rank, competitionId }) {
       {isSmallScreen ? (
         <>
           <Td>
-            <Text fontSize="sm">{rank.team.name}</Text>
+            <Text fontSize="sm">{rank.teamName}</Text>
             <Text fontSize="sm" color="grey">
-              {prettyPrint(rank.team.race)} ({rank.team.coachName})
+              {prettyPrint(rank.race)} ({rank.coachName})
             </Text>
           </Td>
           <Td>
             <Image
-              src={`${imageUrls.logo(rank.team.logo, rank.id.opus)}`}
+              src={`${imageUrls.logo(rank.logo, rank.teamId.opus)}`}
               boxSize={boxSize}
               fallback={<QuestionOutlineIcon boxSize={boxSize} />}
               objectFit="scale-down"
@@ -45,18 +45,18 @@ function Rank({ rank, competitionId }) {
         </>
       ) : (
         <>
-          <Td>{rank.team.name}</Td>
+          <Td>{rank.teamName}</Td>
           <Td>
             <Image
-              src={`${imageUrls.logo(rank.team.logo, rank.id.opus)}`}
+              src={`${imageUrls.logo(rank.logo, rank.teamId.opus)}`}
               boxSize={boxSize}
               fallback={<QuestionOutlineIcon boxSize={boxSize} />}
               objectFit="scale-down"
             />
           </Td>
-          <Td>{rank.team.coachName}</Td>
+          <Td>{rank.coachName}</Td>
           <Td>
-            <Race size="sm" race={rank.team.race} />
+            <Race size="sm" race={rank.race} />
           </Td>
         </>
       )}
