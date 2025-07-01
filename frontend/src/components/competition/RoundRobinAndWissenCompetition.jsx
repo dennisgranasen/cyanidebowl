@@ -15,7 +15,6 @@ function RoundRobinAndWissenCompetition({ competition, competitionLoading }) {
       fetchContests(competition);
     }
   }, [competition]);
-  console.log('RoundRobinAndWissenCompetition', competition, competitionLoading, contests, contestsLoading, contestError, ranks, ranksLoading, ranksError);
   return (
     <>
       <Heading size="md">Ranking</Heading>

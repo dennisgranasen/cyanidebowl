@@ -25,6 +25,7 @@ import useFetchContestsWithMatches from '../../hooks/useFetchContestsWithMatches
 import useFetchRanks from '../../hooks/useFetchRanks';
 import Ranks from './Ranks';
 import { FaRegFaceSadTear } from 'react-icons/fa6';
+import { MATCH_STATES } from 'react-tournament-brackets';
 
 const { boxSize } = config;
 
@@ -38,10 +39,16 @@ function toParticipant(opponent, winner) {
     coachName: opponent?.coachName,
     race: opponent?.race,
     picture: opponent?.logo,
+    onMatchClick: (matchId) => {
+      console.log('Match clicked:', matchId);
+    },
+    onPartyClick: (partyId) => {
+      console.log('Party clicked:', partyId);
+    }
   };
 }
 
-function toParticipants(opponents, index, winner) {
+function toParticipants(opponents, winner) {
   const participants = [];
   if (opponents) {
     opponents.forEach((opponent) => participants.push(toParticipant(opponent, winner)));
@@ -90,7 +97,7 @@ function Participant({
         <GridItem pl="4px" pr="4px" area="image" textAlign="center">
           <Center w="100%" h="100%">
             <Image
-              src={imageUrls.logo(party.picture, party?.opus)}
+              src={imageUrls.logo(party.picture, party?.id.opus)}
               fallback={<QuestionOutlineIcon boxSize={boxSize} />}
               objectFit="contain"
             />
@@ -188,40 +195,59 @@ function KnockoutCompetition({ competition, competitionLoading }) {
       fetchRanks(competition);
     }
   }, [competition]);
-  console.log('KnockoutCompetition', competition, competitionLoading);
 
   useEffect(() => {
     if (!competitionLoading && competition && !contestsLoading && contests) {
-      const bracketMatches = toBracketMatches(contests);
+      // Sort contests by round (earlier rounds first)
+      const sortedContests = [...contests].sort((a, b) => a.round - b.round);
+      const bracketMatches = toBracketMatches(sortedContests);
       setMatches(bracketMatches);
+      console.log('Matches updated:', bracketMatches);
     } else {
       setMatches([]);
     }
   }, [competition, competitionLoading, contests, contestsLoading]);
 
 
-  function getNextContest(contest, index) {
-    if (contest === null) {
+  function getNextContest(contest, sortedContests) {
+    if (contest === null || !contest.winner) {
       return null;
     }
-    for (let i = index +1; i < contests.length; i++) {
-      if (contests[i].opponents.length > 1) {
-        if ((contests[i].opponents[0].id === contest.winner.team.id)
-          || (contests[i].opponents[0].id === contest.winner.team.id))
-        return contests[i];
+    
+    // Look for a contest in the next round where this winner participates
+    const nextRound = contest.round + 1;
+    
+    for (let i = 0; i < sortedContests.length; i++) {
+      const nextContest = sortedContests[i];
+      
+      // Skip if it's not the next round
+      if (nextContest.round !== nextRound) {
+        continue;
+      }
+      
+      // Check if the winner of current contest participates in this next contest
+      if (nextContest.opponents && nextContest.opponents.length > 0) {
+        const winnerTeamId = contest.winner.team.id.toString();
+        const participatesInNext = nextContest.opponents.some(opponent => 
+          opponent && opponent.id && opponent.id.value === winnerTeamId
+        );
+        
+        if (participatesInNext) {
+          return nextContest;
+        }
       }
     }
-    console.log('No next contest found for', contest, 'at index', index);
+  
+    console.log('No next contest found for', contest);
     return null;
   }
 
-  function toBracketMatch(contest, index) {
-    console.log('toBracketMatch', contest);
-    console.log('Winner', contest?.winner);
-    console.log('{} ::: {}', contest?.round, index);
+  function toBracketMatch(contest, index, sortedContests) {
+    const nextContest = getNextContest(contest, sortedContests);
+    
     return {
-      id: contest?.contestId,
-      nextMatchId: contest?.nextContestId || getNextContest(contest, index)?.id || null,
+      id: contest?.id?.value || contest?.id,
+      nextMatchId: contest?.nextContestId?.value || nextContest?.id?.value || null,
       participants: toParticipants(contest?.opponents, contest?.winner),
       startTime: formatter.formatAsDate(contest?.matchDate, '-'),
       state: contest?.status === 'Validated' || contest?.matchDate ? 'DONE' : null,
@@ -229,17 +255,18 @@ function KnockoutCompetition({ competition, competitionLoading }) {
     };
   }
 
-  function toBracketMatches(contests) {
+  function toBracketMatches(sortedContests) {
     const matches = [];
 
-    if (contests) {
-      //contests.reverse();
-      contests.forEach((contest,i) => matches.push(toBracketMatch(contest, i)));
+    if (sortedContests) {
+      // Process contests in round order
+      sortedContests.forEach((contest, i) => {
+        const match = toBracketMatch(contest, i, sortedContests);
+        matches.push(match);
+      });
     }
-    console.log('toBracketMatches', matches);
     return matches;
   }
-
 
   return (
     <Accordion defaultIndex={[0]} allowMultiple>
