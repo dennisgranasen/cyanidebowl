@@ -6,6 +6,7 @@ import net.warp_scores.warpscores.cyanide.api.requests.LookupRequest;
 import net.warp_scores.warpscores.cyanide.api.responses.LookupResponse;
 import net.warp_scores.warpscores.domain.persistence.DataCollectionRepository;
 import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.IdentityUtil;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.DataCollection;
 import net.warp_scores.warpscores.model.EntityType;
@@ -45,10 +46,9 @@ public class DataCollectionController {
     @PostMapping("/leagueCollection/{leagueId}")
     @PreAuthorize(AUTHORITY_WRITE_REGISTER_LEAGUE) // ✨
     public ResponseEntity<List<League>> createLeagueCollection(
-        @PathVariable(name = "leagueId") String leagueId,
-        @RequestParam(name = "opus", required = false) Integer opus
+        @PathVariable(name = "leagueId") String leagueId
     ) {
-        Identity identity = new SimpleIdentity(leagueId, ofNullable(opus).orElse(defaultOpus));
+        Identity identity = IdentityUtil.fromId(leagueId);
         List<League> leagues = doCreateLeagueCollection(identity);
         return ResponseEntity.ok(leagues);
     }

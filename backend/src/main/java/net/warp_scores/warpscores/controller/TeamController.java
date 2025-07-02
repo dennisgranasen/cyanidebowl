@@ -6,6 +6,7 @@ import net.warp_scores.warpscores.domain.MatchDomainService;
 import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.domain.persistence.TeamRepository;
 import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.IdentityUtil;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Team;
@@ -41,10 +42,9 @@ public class TeamController {
 
     @GetMapping("/teams/{teamId}")
     public ResponseEntity<Team> getTeam(
-            @PathVariable(name = "teamId") String teamId,
-            @RequestParam(name = "opus", required = false) Integer opus ) {
+            @PathVariable(name = "teamId") String teamId) {
         try {
-            Identity teamIdentity = new SimpleIdentity(teamId, ofNullable(opus).orElse(3));
+            Identity teamIdentity = IdentityUtil.fromId(teamId);
             Optional<Team> team = teamDomainService.findTeam(teamIdentity);
             return team
                     .map(ResponseEntity::ok)
@@ -56,13 +56,9 @@ public class TeamController {
     }
 
     @GetMapping("/teams/{teamId}/matches")
-    public ResponseEntity<List<Match>> getMatches(
-            @PathVariable(name = "teamId") String teamId,
-            @RequestParam(name = "opus", required = false) Integer opus) {
+    public ResponseEntity<List<Match>> getMatches(@PathVariable(name = "teamId") String teamId) {
         try {
-
-            Identity teamIdentity = 
-                new SimpleIdentity(teamId, ofNullable(opus).orElse(defaultOpus));
+            Identity teamIdentity = IdentityUtil.fromId(teamId);
             List<Match> matchesForTeam = 
                 matchDomainService.findMatchesForTeam(teamIdentity);
             matchesForTeam.forEach(match -> officialLeagueAndCompetitions.adjustCompetitionName(match.getLeagueId(),
@@ -75,12 +71,9 @@ public class TeamController {
     }
 
     @GetMapping("/teams/league/{leagueId}")
-    public ResponseEntity<List<Team>> getTeamsForLeague(
-            @PathVariable(name = "leagueId") String leagueId,
-            @RequestParam(name = "opus", required = false) Integer opus) {
+    public ResponseEntity<List<Team>> getTeamsForLeague(@PathVariable(name = "leagueId") String leagueId) {
         try {
-            Identity leagueIdentity = 
-                new SimpleIdentity(leagueId, ofNullable(opus).orElse(defaultOpus));
+            Identity leagueIdentity = IdentityUtil.fromId(leagueId);
             List<Team> teamsForLeague = teamService.getTeamsForLeague(leagueIdentity);
             return ResponseEntity.ok(teamsForLeague);
         } catch (Exception ex) {
@@ -91,12 +84,10 @@ public class TeamController {
 
     @GetMapping("/teams/competition/{competitionId}")
     public ResponseEntity<List<Team>> getTeamsForCompetition(
-            @PathVariable(name = "competitionId") String competitionId,
-            @RequestParam(name = "opus", required = false) Integer opus) {
+            @PathVariable(name = "competitionId") String competitionId) {
         try {
-            Identity teamIdentity = 
-                new SimpleIdentity(competitionId, ofNullable(opus).orElse(defaultOpus));
-            List<Team> teamsForCompetition = teamService.getTeamsForCompetition(teamIdentity);
+            Identity competitionIdentity = IdentityUtil.fromId(competitionId);
+            List<Team> teamsForCompetition = teamService.getTeamsForCompetition(competitionIdentity);
             return ResponseEntity.ok(teamsForCompetition);
         } catch (Exception ex) {
             log.error("Unable to get teams for competition id {}.", competitionId, ex);

@@ -60,11 +60,11 @@ public class ContestDomainService {
         return contest;
     }
 
-    public Contest addContest(Contest contest, int opus) {
+    public Contest addContest(Contest contest) {
         Identity contestIdentity = contest.getId();
         if (contestIdentity == null) {
             log.warn("Contest has no identity, generating a new one.");
-            contestIdentity = new SimpleIdentity(UUID.randomUUID(), opus);
+            contestIdentity = new SimpleIdentity(UUID.randomUUID(), contest.getId().getOpus());
         }
         Optional<Contest> byId = contestRepository.findById(contestIdentity);
         if (!byId.isEmpty()) {

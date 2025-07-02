@@ -3,6 +3,7 @@ package net.warp_scores.warpscores.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.IdentityUtil;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Match;
@@ -36,13 +37,10 @@ public class MatchController {
 
 
     @GetMapping("/matches/team/{teamId}")
-    public ResponseEntity<List<Match>> getTeamMatches(
-            @PathVariable(name = "teamId") String teamId, 
-            @RequestParam(name = "opus", required = false) Integer opus) {
+    public ResponseEntity<List<Match>> getTeamMatches(@PathVariable(name = "teamId") String teamId) {
         try {
-            List<Match> byTeamId = 
-            matchService.findByTeamId(new SimpleIdentity(
-                teamId, Optional.ofNullable(opus).orElse(defaultOpus)));
+            Identity teamIdentity = IdentityUtil.fromId(teamId);
+            List<Match> byTeamId = matchService.findByTeamId(teamIdentity);
             return ResponseEntity.ok(byTeamId);
         } catch (Exception ex) {
             log.error("Unable to retrieve matches for team {}", teamId, ex);
@@ -52,21 +50,18 @@ public class MatchController {
 
     @GetMapping("/matches/league/{leagueId}/latest")
     public ResponseEntity<List<Match>> getLatestLeagueContests(
-        @PathVariable(name = "leagueId") String leagueId,
-        @RequestParam(name = "opus", required = false) Integer opus) {
-        return getLatestLeagueMatches(leagueId, null, opus);
+            @PathVariable(name = "leagueId") String leagueId) {
+        return getLatestLeagueMatches(leagueId, null);
     }
 
     @GetMapping("/matches/league/{leagueId}/latest/{limit}")
     public ResponseEntity<List<Match>> getLatestLeagueMatches(
-        @PathVariable(name = "leagueId") String leagueId,
-            @PathVariable(name = "limit") Integer limit,
-            @RequestParam(name = "opus", required = false) Integer opus) {
+            @PathVariable(name = "leagueId") String leagueId,
+            @RequestParam(name = "limit", required = false) Integer limit) {
         limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT_FOR_LATEST_MATCHES);
         limit = Math.min(limit, MAX_LIMIT_FOR_LATEST_MATCHES);
         try {
-            Identity leagueIdentity = new SimpleIdentity(
-                leagueId, Optional.ofNullable(opus).orElse(defaultOpus));
+            Identity leagueIdentity = IdentityUtil.fromId(leagueId);
             List<Match> matches = matchService.getLatestLeagueMatches(leagueIdentity, limit);
             return ResponseEntity.ok(matches);
         } catch (Exception ex) {
@@ -77,11 +72,9 @@ public class MatchController {
 
     @GetMapping("/matches/competition/{competitionId}")
     public ResponseEntity<List<Match>> getCompetitionMatches(
-            @PathVariable(name = "competitionId") String competitionId,
-            @RequestParam(name = "opus", required = false) Integer opus) {
+            @PathVariable(name = "competitionId") String competitionId) {
         try {
-            Identity competitionIdentity = new SimpleIdentity(
-                competitionId, Optional.ofNullable(opus).orElse(defaultOpus));
+            Identity competitionIdentity = IdentityUtil.fromId(competitionId);
             Optional<Competition> competition =
                 competitionService.loadCompetition(competitionIdentity);
             List<Match> byCompetitionId = matchService.findByCompetitionId(competitionIdentity);
@@ -96,21 +89,18 @@ public class MatchController {
 
     @GetMapping("/matches/competition/{competitionId}/latest")
     public ResponseEntity<List<Match>> getLatestCompetitionMatches(
-            @PathVariable(name = "competitionId") String competitionId,
-            @RequestParam(name = "opus", required = false) Integer opus) {
-        return getLatestCompetitionMatches(competitionId, null, opus);
+            @PathVariable(name = "competitionId") String competitionId) {
+        return getLatestCompetitionMatches(competitionId, null);
     }
 
     @GetMapping("/matches/competition/{competitionId}/latest/{limit}")
     public ResponseEntity<List<Match>> getLatestCompetitionMatches(
             @PathVariable(name = "competitionId") String competitionId,
-            @PathVariable(name = "limit") Integer limit,
-            @RequestParam(name = "opus", required = false) Integer opus) {
+            @RequestParam(name = "limit", required = false) Integer limit) {
         limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT_FOR_LATEST_MATCHES);
         limit = Math.min(limit, MAX_LIMIT_FOR_LATEST_MATCHES);
         try {
-            Identity competitionIdentity = 
-                new SimpleIdentity(competitionId, Optional.ofNullable(opus).orElse(defaultOpus));
+            Identity competitionIdentity = IdentityUtil.fromId(competitionId);
 
             List<Match> matches = matchService.getLatestCompetitionMatches(
                 competitionIdentity, limit);

@@ -34,8 +34,7 @@ public class LookupController {
 
     @PostMapping("/lookup")
     @PreAuthorize(Authorities.AUTHORITY_WRITE_REGISTER_LEAGUE)
-    public ResponseEntity<LookupResponse> performLookup(
-        @RequestBody LookupRequest lookupRequest) {
+    public ResponseEntity<LookupResponse> performLookup(@RequestBody LookupRequest lookupRequest) {
 
         log.info("Lookup request: {}", lookupRequest);
         try {

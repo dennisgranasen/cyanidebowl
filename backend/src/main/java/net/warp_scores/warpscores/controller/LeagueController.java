@@ -2,6 +2,8 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.IdentityUtil;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.service.LeagueService;
@@ -34,15 +36,12 @@ public class LeagueController {
     }
 
     @GetMapping("/leagues/{id}")
-    public ResponseEntity<League> getLeague(
-        @PathVariable(name = "id") String leagueId,
-        @RequestParam(name = "opus", required = false) Integer opus) {
-        log.info("Fetching league with ID: {} and opus: {}", leagueId, opus);
+    public ResponseEntity<League> getLeague(@PathVariable(name = "id") String leagueId) {
+        log.info("Fetching league with ID: {}", leagueId);
         Optional<League> league;
         try {
-
-            league = leagueService.loadById(new SimpleIdentity(leagueId, 
-                Optional.ofNullable(opus).orElse(defaultOpus)));
+            Identity lid = IdentityUtil.fromId(leagueId);
+            league = leagueService.loadById(lid);
             league.ifPresentOrElse(l -> log.info("Fetched league: {}", l),
                                     () -> log.warn("League not found: {}", leagueId));
         } catch (IllegalArgumentException e) {

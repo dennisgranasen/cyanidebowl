@@ -202,7 +202,7 @@ public class CompetitionController {
     public ResponseEntity<List<Team>> getTeamsForCompetition(
             @PathVariable(name = "competitionId") String competitionId) {
         try {
-            Identity compId = IdentityUtil.fromId(competitionId);
+            Identity competitionIdentity = IdentityUtil.fromId(competitionId);
             List<Team> teams =
                 teamDomainService.findByCompetitionId(competitionIdentity);
             return ResponseEntity.ok(teams);
@@ -212,14 +212,14 @@ public class CompetitionController {
         }
     }
 
+    @Deprecated() // TeamController should be used instead
     @GetMapping("/competition/{competitionId}/team/{teamId}")
     public ResponseEntity<Team> getTeam(
             @PathVariable(name = "competitionId") String competitionId,
             @PathVariable(name = "teamId") String teamId) {
         try {
             Identity tId = IdentityUtil.fromId(teamId);
-
-            Identity cId = IdentityUtil.fromId(competitionId);
+            Identity cId = IdentityUtil.fromId(competitionId); // not needed
 
             Optional<Team> team = 
                 teamDomainService.findTeam(tId/*, Optional.of(competitionIdentity)*/);

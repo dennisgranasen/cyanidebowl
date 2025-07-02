@@ -73,7 +73,7 @@ public class ArenaController {
             @PathVariable(name = "competitionId") String competitionId,
             @PathVariable(name = "race") Race race,
             @PathVariable(name = "runType") ArenaTeam.RunType runType,
-            @PathVariable(name = "limit") Integer limit) {
+            @RequestParam(name = "limit", required = false) Integer limit) {
         return getArenaTeamsFor(competitionId, race, runType, limit, 0);
     }
 
@@ -82,8 +82,8 @@ public class ArenaController {
             @PathVariable(name = "competitionId") String competitionId,
             @PathVariable(name = "race") Race race,
             @PathVariable(name = "runType") ArenaTeam.RunType runType,
-            @PathVariable(name = "limit") Integer limit,
-            @PathVariable(name = "offset") Integer offset) {
+            @RequestParam(name = "limit", required = false) Integer limit,
+            @RequestParam(name = "offset", required = false) Integer offset) {
         
         Identity competitionIdentity = IdentityUtil.fromId(competitionId);
 

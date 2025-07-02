@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository.TeamRankingRecord;
 import net.warp_scores.warpscores.identity.CompositeIdentity;
 import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.IdentityUtil;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Rank;
 import net.warp_scores.warpscores.service.RankService;
@@ -36,17 +37,13 @@ public class RankController {
     @GetMapping("/ranks/competition/{competitionId}")
     public ResponseEntity<List<TeamRankingRecord>> getRanksForCompetition(
             @PathVariable(name = "competitionId") String competitionId,
-            @RequestParam(name = "limit", required = false) Integer limit,
-            @RequestParam(name = "opus", required = false) Integer opus) {
-        log.info("Fetching ranks for competition with ID: {} and opus: {}", competitionId, opus);
+            @RequestParam(name = "limit", required = false) Integer limit) {
         if (competitionId == null) {
             log.error("competitionId is null");
             return ResponseEntity.badRequest().build();
         }
         try {
-            String[] parts = competitionId.split(Identity.DELIMITER);
-            Identity competitionIdentity = 
-                new CompositeIdentity(ofNullable(opus).orElse(defaultOpus), parts);
+            Identity competitionIdentity = IdentityUtil.fromId(competitionId);
 
             /*
             List<Rank> ranks = rankService.getRanksForCompetition(
@@ -74,17 +71,17 @@ public class RankController {
     @GetMapping("/ranks/league/{leagueId}")
     public ResponseEntity<List<TeamRankingRecord>> getRanksForLeague(
             @PathVariable(name = "leagueId") String leagueId,
-            @RequestParam(name = "limit", required = false) Integer limit,
-            @RequestParam(name = "opus", required = false) Integer opus) {
-        log.info("Fetching ranks for league with ID: {} and opus: {}", leagueId, opus);
+            @RequestParam(name = "limit", required = false) Integer limit) {
+        log.info("Fetching ranks for league with ID: {}", leagueId);
         if (leagueId == null) {
             log.error("leagueId is null");
             return ResponseEntity.badRequest().build();
         }
         try {
+            Identity leagueIdentity = IdentityUtil.fromId(leagueId);
+
             List<TeamRankingRecord> ranks = rankService.getRanksForLeague(
-                new SimpleIdentity(leagueId, Optional.ofNullable(opus).orElse(defaultOpus)),
-                Optional.empty(), Optional.ofNullable(limit));
+                leagueIdentity, Optional.empty(), Optional.ofNullable(limit));
             if (ranks == null || ranks.isEmpty()) {
                 log.warn("No ranks found for league with ID: {}", leagueId);
                 return ResponseEntity.ok(Collections.emptyList());
