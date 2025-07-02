@@ -15,7 +15,7 @@ function Competition({ competition, league }) {
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
 
   const goToCompetition = () => {
-    navigate(`/competition/${competition.id.opus}/${competition.id.value}`);
+    navigate(`/competition/${competition.id.key}`);
   };
 
   console.log('Competition', competition);

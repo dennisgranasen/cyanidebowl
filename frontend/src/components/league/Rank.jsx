@@ -8,6 +8,7 @@ import imageUrls from '../../imageUrls';
 import prettyPrint from '../../util/prettyPrint';
 import Race from '../common/Race';
 import { getRaceLogo, toRace } from '../../util/raceUtil'
+import { identityUtils } from '../../util/identityUtil';
 
 const { boxSize, smallScreenBreakpointValues, showRaceLogo } = config;
 
@@ -15,11 +16,11 @@ function Rank({ rank, leagueId, position }) {
   const navigate = useNavigate();
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
   const goToTeam = () => {
-      navigate(`/league/${leagueId.opus}/${leagueId.value}/team/${rank.teamId.value}`);
+      navigate(/*`/league/${identityUtils.key(leagueId)}*/`/team/${identityUtils.key(rank.teamId)}`);
   };
-  const race = rank?.raceId ? toRace(rank.raceId, leagueId.opus) : null;
-  const raceLogo = rank?.raceId ? getRaceLogo(rank.raceId, leagueId.opus) : null;
-  console.log(raceLogo)
+  const race = rank?.raceId ? toRace(rank.raceId, identityUtils.opus(leagueId)) : null;
+  const raceLogo = rank?.raceId ? getRaceLogo(rank.raceId, identityUtils.opus(leagueId)) : null;
+  //console.log(rank.teamLogo || raceLogo,imageUrls.logo(rank.teamLogo || raceLogo, identityUtils.opus(leagueId)));
   return rank !== null ? (
     <Tr onClick={goToTeam}>
       <Td>
@@ -36,43 +37,30 @@ function Rank({ rank, leagueId, position }) {
             </Text>
           </Td>
           <Td>
-            {rank.teamLogo ? (
-              <Image
-                src={`${imageUrls.logo(rank.teamLogo, rank.opus)}`}
-                boxSize={boxSize}
-                fallback={<QuestionOutlineIcon boxSize={boxSize} />}
-                objectFit="scale-down"
-              />
-              ) : (
-                <>
-                </>
-              )
-            }
+            <Image
+              src={`${imageUrls.logo(rank?.teamLogo || raceLogo, identityUtils.opus(leagueId))}`}
+              boxSize={boxSize}
+              fallback={<QuestionOutlineIcon boxSize={boxSize} />}
+              objectFit="scale-down"
+            />
           </Td>
         </>
       ) : (
         <>
           <Td>{rank.teamName}</Td>
           <Td>
-            {rank.teamLogo ? (
-              <Image
-                src={`${imageUrls.logo(rank.teamLogo, rank.teamId.opus)}`}
-                boxSize={boxSize}
-                fallback={<QuestionOutlineIcon boxSize={boxSize} />}
-                objectFit="scale-down"
-              />
-              ) : (
-                <>
-                </>
-              )
-              }
-
+            <Image
+              src={`${imageUrls.logo(rank.teamLogo || raceLogo, identityUtils.opus(leagueId))}`}
+              boxSize={boxSize}
+              fallback={<QuestionOutlineIcon boxSize={boxSize} />}
+              objectFit="scale-down"
+            />
           </Td>
           <Td>{rank.coachName}</Td>
           <Td>
               { showRaceLogo && raceLogo ?  
               <Image
-                src={`${imageUrls.logo(raceLogo, rank.teamId.opus)}`}
+                src={`${imageUrls.logo(raceLogo, identityUtils.opus(leagueId))}`}
                 boxSize={boxSize}
                 title={prettyPrint(race)}
                 fallback={<Race size="sm" race={prettyPrint(race)} />}

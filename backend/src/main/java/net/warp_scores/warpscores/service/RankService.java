@@ -103,7 +103,8 @@ public class RankService {
     public List<TeamRankingRecord> getRanksForLeague(Identity leagueId, 
             Optional<List<RankComparisons>> rankComparisons,
             Optional<Integer> limit) {
-        List<TeamRankingRecord> ranks = matchRepository.findTeamRankingsByLeagueId(leagueId);
+        List<TeamRankingRecord> ranks = 
+            matchRepository.findTeamRankingsByLeagueId(leagueId);
         ranks.stream().forEach(record -> log.info("Team ranking record: {}", record));
         return ranks;
     }

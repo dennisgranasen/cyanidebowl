@@ -35,13 +35,7 @@ import static net.warp_scores.warpscores.controller.Authorities.AUTHORITY_WRITE_
 public class DataCollectionController {
 
     private final DataCollectionRepository dataCollectionRepository;
-
     private final CyanideApiService cyanideApiService;
-
-
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
-
 
     @PostMapping("/leagueCollection/{leagueId}")
     @PreAuthorize(AUTHORITY_WRITE_REGISTER_LEAGUE) // ✨

@@ -33,10 +33,6 @@ public class TeamDomainService {
     @Autowired
     private final TeamCollectionDomainService competitionTeamsDomainService;
 
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
-
-
     @Transactional
     public List<Team> createOrUpdateTeams(TeamsResponse teamsResponse, int opus) {
         if (teamsResponse == null || teamsResponse.isEmpty()) {

@@ -42,6 +42,11 @@ public class MatchService {
     }
 
     @DurationLogging
+    public Optional<Match> findById(Identity matchId) {
+        return matchRepository.findById(matchId);
+    }
+
+    @DurationLogging
     public List<Match> getLatestLeagueMatches(Identity leagueId, int limit) {
         List<Match> matches = matchRepository.findTopByLeagueIdAndFinishedNotNull(leagueId,
                 PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "finished")));

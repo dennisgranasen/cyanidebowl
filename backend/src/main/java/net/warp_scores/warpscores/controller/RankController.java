@@ -30,9 +30,6 @@ import java.util.Optional;
 public class RankController {
 
     private final RankService rankService;
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
-
 
     @GetMapping("/ranks/competition/{competitionId}")
     public ResponseEntity<List<TeamRankingRecord>> getRanksForCompetition(

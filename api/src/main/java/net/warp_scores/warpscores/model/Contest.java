@@ -42,7 +42,7 @@ public class Contest implements Comparable<Contest>, Identifiable {
     private Integer competitionRound; // is this not always the same as round?
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date matchDate;
-    private String gameId;
+    private Identity gameId;
     private Identity matchId;
     private String matchUuid;
     private Integer live;

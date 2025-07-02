@@ -28,10 +28,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class LookupController {
     private final CyanideApiService cyanideApiService;
 
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
-
-
     @PostMapping("/lookup")
     @PreAuthorize(Authorities.AUTHORITY_WRITE_REGISTER_LEAGUE)
     public ResponseEntity<LookupResponse> performLookup(@RequestBody LookupRequest lookupRequest) {

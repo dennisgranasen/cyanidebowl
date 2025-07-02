@@ -26,9 +26,6 @@ public class LeagueController {
 
     private final LeagueService leagueService;
 
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
-
     @GetMapping("/leagues")
     public ResponseEntity<List<League>> getLeagues() {
         List<League> all = leagueService.loadAll();

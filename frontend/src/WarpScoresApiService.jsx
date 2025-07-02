@@ -6,6 +6,21 @@ const { isProduction } = config;
 
 axios.defaults.baseURL = config.backendUrl;
 
+/*
+axios.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response && error.response.status === 404) {
+      // Suppress 404 errors from being logged in the console
+      return Promise.reject(error);
+    }
+    // Log other errors as usual
+    logger.error('Backend call failed.', error);
+    return Promise.reject(error);
+  }
+);
+*/
+
 const authorizationParams = {
   authorizationParams: {
     audience: config.auth0Audience,
@@ -198,89 +213,102 @@ export default {
       .catch(handleError),
   // leagues
   leagues: async (leagueId) =>
-    axios(`/leagues${leagueId ? `/${leagueId}` : ''}`)
+    axios(`/leagues${leagueId ? `/${leagueId.key || leagueId}` : ''}`)
       .then(returnData)
       .catch(handleError),
   competitionCountByStatus: async (leagues) =>
-    axios(`/league/competitionCountByStatus?leagueIds=${leagues.map((l) => l.key).join(',')}`)
+    axios(`/league/competitionCountByStatus?leagueIds=${leagues.map((l) => l.key || l).join(',')}`)
       .then(returnData).catch(handleError),
   leagueRanks: async (leagueId, limit) =>
-    axios(`/ranks/league/${leagueId}${limit ? `/?limit=${limit}` : ''}}`)
+    axios(`/ranks/league/${leagueId.key || leagueId}${limit ? `/?limit=${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
   leagueTeams: async (leagueId) =>
-    axios(`/teams/league/${leagueId}`)
+    axios(`/teams/league/${leagueId.key || leagueId}`)
       .then(returnData)
       .catch(handleError),
   // contests
-  liveLeagueContests: async (leagueId, limit) => {
-    console.log('Fetching live contests for league:', leagueId);    
-    return axios(`/contests/league/${leagueId}/live${limit ? `/?limit=${limit}` : ''}`)
+  liveLeagueContests: async (leagueId, limit) => 
+    axios(`/contests/league/${leagueId.key || leagueId}/live${limit ? `/?limit=${limit}` : ''}`)
       .then(returnData)
-      .catch(handleError)
-  },
-  liveCompetitionContests: async (competitionId, limit) => {
-    console.log('Fetching live contests for competition:', competitionId);
-    return axios(`/contests/competition/${competitionId.opus}/${competitionId.value}/live${limit ? `/?limit=${limit}` : ''}`)
+      .catch(handleError),
+  liveCompetitionContests: async (competitionId, limit) =>
+    axios(`/contests/competition/${competitionId.key || competitionId}/live${limit ? `/?limit=${limit}` : ''}`)
       .then(returnData)
-      .catch(handleError);
-  },
+      .catch(handleError),
   competitionContests: async (competitionId, limit) =>
-    axios(`/contests/competition/${competitionId}${limit ? `/?limit=${limit}` : ''}`)
+    axios(`/contests/competition/${competitionId.key || competitionId}${limit ? `/?limit=${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
   arenaTopCoaches: async (competitionId) =>
-    axios(`/arena/${competitionId}/topCoaches`).then(returnData).catch(handleError),
+    axios(`/arena/${competitionId.key || competitionId}/topCoaches`).then(returnData).catch(handleError),
   arenaInfos: async (competitionId, race) =>
-    axios(`/arena/${competitionId}/info${race ? `/${race}` : ''}`)
+    axios(`/arena/${competitionId.key || competitionId}/info${race ? `/${race}` : ''}`)
       .then(returnData)
       .catch(handleError),
   arenaTeams: async (competitionId, race, runType) =>
-    axios(`/arena/${competitionId}/race/${race}/${runType}`).then(returnData).catch(handleError),
+    axios(`/arena/${competitionId.key || competitionId}/race/${race}/${runType}`).then(returnData).catch(handleError),
   arenaCoachTeams: async (competitionId, coachId) =>
-    axios(`/arena/${competitionId}/coach/${coachId}`).then(returnData).catch(handleError),
+    axios(`/arena/${competitionId.key || competitionId}/coach/${coachId.key || coachId}`).then(returnData).catch(handleError),
   // matches
   latestCompetitionMatches: async (competitionId, limit) =>
-    axios(`/matches/competition/${competitionId}/latest${limit ? `/?limit=${limit}` : ''}`)
+    axios(`/matches/competition/${competitionId.key || competitionId}/latest${limit ? `/?limit=${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
   latestLeagueMatches: async (leagueId, limit) =>
-    axios(`/matches/league/${leagueId}/latest${limit ? `/?limit=${limit}` : ''}`)
+    axios(`/matches/league/${leagueId.key || leagueId}/latest${limit ? `/?limit=${limit}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
+
+  match: async (matchId) =>
+    axios(`/matches/${matchId.key || matchId}`)
       .then(returnData)
       .catch(handleError),
   // competitions
   leagueCompetitions: async (leagueId, initialized) =>
     axios(
-      `/competitions/league/${leagueId}${initialized ? '/initialized' : ''}`
+      `/competitions/league/${leagueId.key || leagueId}${initialized ? '/initialized' : ''}`
     )
       .then(returnData)
       .catch(handleError),
   competition: async (competitionId) =>
-    axios(`/competition${competitionId ? `/${competitionId}` : ''}`)
+    axios(`/competition${competitionId ? `/${competitionId.key || competitionId}` : ''}`)
       .then(returnData)
       .catch(handleError),
 
   competitionStats: async (competitionId) =>
-    axios(`/competitions/${competitionId}/stats`).then(returnData).catch(handleError),
+    axios(`/competitions/${competitionId.key || competitionId}/stats`).then(returnData).catch(handleError),
   
   competitionMatches: async (competitionId, limit) =>
-    axios(`/matches/competition/${competitionId}${limit ? `/?limit=${limit}` : ''}`)
+    axios(`/matches/competition/${competitionId.key || competitionId}${limit ? `/?limit=${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
 
   competitionTeam: async (competitionId, teamId) =>
-    axios(`/competitions/${competitionId}/team/${teamId}`).then(returnData).catch(handleError),
+    axios(`/competitions/${competitionId.key || competitionId}/team/${teamId.key || teamId}`).then(returnData).catch(handleError),
   competitionTeams: async (competitionId) =>
-    axios(`/teams/competition/${competitionId} `)
+    axios(`/teams/competition/${competitionId.key || competitionId} `)
       .then(returnData)
       .catch(handleError),
   competitionRanks: async (competitionId, limit) =>
-    axios(`/ranks/competition/${competitionId}${limit ? `/?limit=${limit}` : ''}`)
+    axios(`/ranks/competition/${competitionId.key || competitionId}${limit ? `/?limit=${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
   // team
-  team: async (teamId) => axios(`/teams/${teamId}`).then(returnData).catch(handleError),
-  teamMatches: async (teamId) => axios(`/teams/${teamId}/matches`).then(returnData).catch(handleError),
+  team: async (teamId) => {
+    try {
+      const response = await axios(`/teams/${teamId.key || teamId}`);
+      return returnData(response);
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        // Silently return null for 404s without logging
+        return null;
+      } else {
+        handleError(error);
+      }
+    }
+  },
+  teamMatches: async (teamId) => axios(`/teams/${teamId.key || teamId}/matches`).then(returnData).catch(handleError),
   // user
   userPermissions: async (getAccessTokenSilently, getAccessTokenWithPopup, requestToken) =>
     getDataWithAuthentication('/userPermissions', getAccessTokenSilently, getAccessTokenWithPopup, requestToken)
@@ -288,11 +316,11 @@ export default {
       .catch(handleError),
   exportNafXml: async (competitionId, getAccessTokenSilently, getAccessTokenWithPopup, requestToken) =>
     getDataWithAuthentication(
-      `/competitions/${competitionId}/exportNafData`,
+      `/competitions/${competitionId.key || competitionId}/exportNafData`,
       getAccessTokenSilently,
       getAccessTokenWithPopup,
       requestToken
     )
-      .then((result) => offerDownloadData(result, `${competitionId}-nafReport.xml`, 'application/xml'))
+      .then((result) => offerDownloadData(result, `${competitionId.key || competitionId}-nafReport.xml`, 'application/xml'))
       .catch(handleError),
 };

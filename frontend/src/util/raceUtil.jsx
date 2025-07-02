@@ -58,6 +58,11 @@ const _getRaceLogo = (raceId, opus) => {
 };
 
 const getRaceLogo = (raceId, opus) => {
+  if (!raceId)
+    return null;
+  if (typeof raceId === 'string') {
+    return raceId.replace(/\s+/g, '') + "_01"; // Assuming raceId is a string like "Human", "Dwarf", etc.
+  }
   return _getRaceLogo(raceId, opus) + "_01";
 }
 

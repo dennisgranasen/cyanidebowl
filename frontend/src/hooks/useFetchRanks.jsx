@@ -9,7 +9,7 @@ export default function useFetchRanks() {
   const fetchRanks = (competition, limit) => {
     setRanksLoading(true);
     console.log('Fetching ranks for competition:', competition.id, limit);
-    WarpScoresApiService.competitionRanks(competition.id.value, competition.id.opus, limit)
+    WarpScoresApiService.competitionRanks(competition.id, limit)
       .then((data) => {
         data.sort((rankA, rankB) => rankA.rank - rankB.rank);
         setRanks(data);

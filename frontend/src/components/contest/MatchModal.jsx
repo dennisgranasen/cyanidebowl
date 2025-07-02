@@ -14,22 +14,54 @@ import {
   Tr,
 } from '@chakra-ui/react';
 import ContestMatchCard from './ContestMatchCard';
+import WarpScoresApiService from '../../WarpScoresApiService';
 
 function MatchModal({ isOpen, onClose, contest }) {
   const [match, setMatch] = useState();
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
-    let m = contest.match;
-    if (contest.adminResult) {
-      m = {
-        matchId: 'Admin Result',
-        finished: contest.matchDate,
-        teams: [{ name: contest.opponents[0].name }, { name: contest.opponents[1].name }],
-      };
+    if (!contest) {
+      console.error('No contest provided to MatchModal');
+      return;
     }
-    setMatch(m);
+    let m = contest.match
+    if (contest.match) {
+      if (contest.adminResult) {
+        m = {
+          matchId: 'Admin Result',
+          finished: contest.matchDate,
+          teams: [{ name: contest.opponents[0].name }, { name: contest.opponents[1].name }],
+        };
+      }
+      setMatch(m);
+    } else if (contest.status !== 'Calculated' && contest.matchId) {
+      console.log("Fetching contest match", contest);
+      WarpScoresApiService.match(contest.matchId)
+        .then((fetchedMatch) => {
+          if (fetchedMatch) {
+            setMatch(fetchedMatch);
+            console.log(`Fetched match with ID ${contest.matchId}:`, fetchedMatch);
+          } else {
+            console.error(`Match with ID ${contest.matchId} not found.`);
+          }
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.error(`Error fetching match with ID ${contest.matchId}:`, error);
+        });
+    } else {
+      console.warn('No match data available for contest:', contest);
+      setMatch(null);
+      console.log(contest);
+    }
   }, [contest]);
 
+  if (match)
+    console.log(match);
+
+
   return (
+    !loading && match.status !== 'Calculated' && 
     <Modal size={{ base: 'full', md: 'xl' }} isOpen={isOpen} onClose={onClose}>
       <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(5px)" />
       <ModalContent backgroundColor="warpScoresBackgroundColor">
@@ -39,8 +71,7 @@ function MatchModal({ isOpen, onClose, contest }) {
           <Box w="100%">
             <ContestMatchCard contestOrMatch={contest} contestHeader={null} variant="filled" />
           </Box>
-
-          {match && (
+          {match && match.teams && match.teams.length > 1 && (
             <TableContainer>
               <Table size="sm">
                 <Tbody>

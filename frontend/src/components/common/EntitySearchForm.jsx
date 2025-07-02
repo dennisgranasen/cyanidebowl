@@ -153,56 +153,6 @@ function EntitySearchForm({ handleLeagueClick, handleCompetitionClick }) {
         includeDetails: true
       });
 
-      /*
-      if (res.leagues && res.leagues.length > 0) {
-        if (res.leagueDetails && res.leagueDetails.length > 0) {
-
-        }
-      }
-        detailedLeagues = await Promise.all(
-          res.leagues.map(async (league) => {
-            try {
-              const details = await WarpScoresApiService.leagues(
-                league.id || league.leagueId || league.uuid,
-                values.bbVersion
-              );
-              // Fetch competitions for this league
-              let competitions = [];
-              try {
-                competitions = await WarpScoresApiService.leagueCompetitions(
-                  league.id || league.leagueId || league.uuid,
-                  values.bbVersion
-                )
-                console.log('Fetched competitions for league:', league.name, competitions);
-              } catch (e) {
-                competitions = [];
-              }
-              return { ...league, ...details, competitions };
-            } catch (e) {
-              return league;
-            }
-          })
-        );
-      }
-
-      // Expand competitions with detailed objects from leagues
-      let expandedCompetitions = res.competitions || [];
-      if (expandedCompetitions.length > 0 && detailedLeagues.length > 0) {
-        expandedCompetitions = expandedCompetitions.map((comp) => {
-          let detailedComp = null;
-          for (const league of detailedLeagues) {
-            if (league.competitions) {
-              detailedComp = league.competitions.find(                
-                c => (c.id || c.uuid || c.competitionId) === comp.id
-              );
-              if (detailedComp) break;
-            }
-          }
-          return detailedComp || comp;
-        });
-      }
-      */
-
       console.log("search: {}", {
         ...res,
         leagueDetails: res.leagueDetails || res.leagues || [],

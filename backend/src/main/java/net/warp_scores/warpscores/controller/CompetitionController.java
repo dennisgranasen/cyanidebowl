@@ -61,10 +61,6 @@ public class CompetitionController {
     private final CompetitionStatsDomainService competitionStatsDomainService;
     private final CompetitionStatsRepository competitionStatsRepository;
 
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
-
-
     @GetMapping("/competitions/league/{leagueId}")
     public ResponseEntity<List<Competition>> getCompetitionsForLeague(
             @PathVariable(name = "leagueId") String leagueId) {

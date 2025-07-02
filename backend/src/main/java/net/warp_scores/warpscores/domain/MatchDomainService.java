@@ -40,9 +40,6 @@ public class MatchDomainService {
     private final MatchRepository matchRepository;
     private final TeamPopulator teamPopulator;
 
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
-
     @Transactional
     public List<Match> findMatchesForTeam(Identity teamId) {
         List<Match> teamMatches = 

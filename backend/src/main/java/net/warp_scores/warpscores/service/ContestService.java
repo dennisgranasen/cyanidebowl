@@ -72,6 +72,19 @@ public class ContestService {
                 contests.forEach(this::loadMatchIntoAndAdjustCompetitionName);
                 log.info("Loaded matches into contests and adjusted competition names.");
 
+                contests.stream()
+                .filter(c -> c.getGameId() != null)
+                .peek(c -> log.info("Contest with gameId {} found: {}", c.getGameId()))
+                .forEach(c ->  {
+                        Optional<Match> m = matchRepository.findById(c.getGameId());
+                        if (m.isPresent()) {
+                                log.info("Match found for contest {}: {}", c.getId(), m.get());
+                                c.setMatch(m.get());
+                        } else {
+                                log.warn("No match found for contest {} with gameId {}", c.getId(), c.getGameId());
+                        }
+                 });
+
                 return contestInitializationService.initializeContestsScheduleForFormat(
                         competition, teams, contests);
         }

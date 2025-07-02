@@ -14,7 +14,7 @@ function LatestMatchesPage() {
   useEffect(() => {
     const fetchLeague = () => {
       setLoading(true);
-      WarpScoresApiService.leagues(leagueId.value, leagueId.opus)
+      WarpScoresApiService.leagues(leagueId.value)
         .then((data) => {
           setLeague(data);
         })
@@ -24,7 +24,7 @@ function LatestMatchesPage() {
         .finally(() => setLoading(false));
     };
     fetchLeague();
-  }, [leagueUuid, limit]);
+  }, [leagueId, limit]);
 
   return (
     <Stack>

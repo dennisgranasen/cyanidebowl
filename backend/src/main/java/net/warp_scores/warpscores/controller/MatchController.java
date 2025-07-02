@@ -32,8 +32,18 @@ public class MatchController {
     private final CompetitionService competitionService;
     private final MatchService matchService;
 
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
+    @GetMapping("/matches/{matchId}")
+    public ResponseEntity<Optional<Match>> getMatch(
+            @PathVariable(name = "matchId") String matchId) {
+        try {
+            Identity matchIdentity = IdentityUtil.fromId(matchId);
+            Optional<Match> byId = matchService.findById(matchIdentity);
+            return ResponseEntity.ok(byId);
+        } catch (Exception ex) {
+            log.error("Unable to retrieve matches for id {}", matchId, ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 
 
     @GetMapping("/matches/team/{teamId}")

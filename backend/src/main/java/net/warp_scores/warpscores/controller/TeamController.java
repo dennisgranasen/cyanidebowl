@@ -37,9 +37,6 @@ public class TeamController {
 
     private final OfficialLeagueAndCompetitions officialLeagueAndCompetitions;
 
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
-
     @GetMapping("/teams/{teamId}")
     public ResponseEntity<Team> getTeam(
             @PathVariable(name = "teamId") String teamId) {
@@ -48,7 +45,7 @@ public class TeamController {
             Optional<Team> team = teamDomainService.findTeam(teamIdentity);
             return team
                     .map(ResponseEntity::ok)
-                    .orElse(ResponseEntity.notFound().build());
+                    .orElse(ResponseEntity.noContent().build());
         } catch (Exception ex) {
             log.error("Unable to get team for id {}.", teamId, ex);
             return ResponseEntity.internalServerError().build();

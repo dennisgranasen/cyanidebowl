@@ -10,6 +10,7 @@ function RoundRobinAndWissenLeague({ league, leagueLoading }) {
 
   useEffect(() => {
     if (league) {
+      console.log(league);
       fetchRanks(league);
       fetchTeams(league.id);
       console.log('Ranks:', ranks);

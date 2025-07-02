@@ -12,16 +12,17 @@ import InfoItem from '../components/common/InfoItem';
 import Matches from '../components/contest/Matches';
 import HeaderCard from '../components/common/HeaderCard';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
+import { identityUtils } from '../util/identityUtil';
 
-function MatchesCount({ matches, teamUuid }) {
+function MatchesCount({ matches, teamId }) {
   if (!matches) return <Spinner />;
 
   let won = 0;
   let lost = 0;
 
   matches.forEach((match) => {
-    const myTeam = match.teams[0].id === teamUuid ? match.teams[0] : match.teams[1];
-    const otherTeam = match.teams[0].id !== teamUuid ? match.teams[0] : match.teams[1];
+    const myTeam = match.teams[0].id === teamId ? match.teams[0] : match.teams[1];
+    const otherTeam = match.teams[0].id !== teamId ? match.teams[0] : match.teams[1];
     if (myTeam.score > otherTeam.score) won += 1;
     else if (myTeam.score < otherTeam.score) lost += 1;
   });
@@ -31,7 +32,7 @@ function MatchesCount({ matches, teamUuid }) {
 }
 
 function TeamPage() {
-  const { competitionUuid, teamUuid } = useParams();
+  const { competitionId, teamId } = useParams();
   const [team, setTeam] = useState();
   const [matches, setMatches] = useState();
   const [players, setPlayers] = useState();
@@ -42,9 +43,9 @@ function TeamPage() {
 
   useEffect(() => {
     const fetchTeam = () => {
-      const teamResponse = competitionUuid
-        ? WarpScoresApiService.competitionTeam(competitionUuid, teamUuid)
-        : WarpScoresApiService.team(teamUuid);
+      const teamResponse = competitionId
+        ? WarpScoresApiService.competitionTeam(competitionId, teamId)
+        : WarpScoresApiService.team(teamId);
 
       teamResponse
         .then((data) => {
@@ -62,7 +63,7 @@ function TeamPage() {
     const fetchMatches = () => {
       setMatches([]);
       setLoadingMatches(true);
-      const matchesResponse = WarpScoresApiService.teamMatches(teamUuid);
+      const matchesResponse = WarpScoresApiService.teamMatches(teamId);
       matchesResponse
         .then((data) => {
           setLoadingMatches(false);
@@ -75,7 +76,7 @@ function TeamPage() {
 
     fetchTeam();
     fetchMatches();
-  }, [competitionUuid, teamUuid]);
+  }, [competitionId, teamId]);
 
   const navCompetition =
     team && team.competitionIds?.length === 1 ? [team.competitionIds[0], team.competitionName] : null;
@@ -85,9 +86,9 @@ function TeamPage() {
       <Box>
         <Navigation
           currentPage="team"
-          league={team && team.leagueIds ? [team.leagueIds[0], team.leagueName] : []}
+          league={team && team.leagueIds ? [team.leagueIds[0].key, team.leagueName] : []}
           competition={navCompetition}
-          team={team ? [teamUuid, team.name] : []}
+          team={team ? [teamId, team.name] : []}
         />
       </Box>
       <Box>
@@ -98,8 +99,8 @@ function TeamPage() {
                 heading={team?.name}
                 subHeading={`Coach: ${team?.coachName}`}
                 detailsHeading="Team details"
-                mainImageSrc={imageUrls.logo(team?.logo, team?.id?.opus)}
-                additionalImageSrc={imageUrls.race(team?.race, race?.id?.opus)}
+                mainImageSrc={imageUrls.logo(team?.logo, identityUtils.opus(teamId))}
+                additionalImageSrc={imageUrls.race(team?.race, identityUtils.opus(teamId.opus))}
               >
                 <InfoArea>
                   <InfoItem key="race" label="Race" info={prettyPrint(team.race)} />
@@ -114,7 +115,7 @@ function TeamPage() {
                   <InfoItem
                     key="matches"
                     label="Matches"
-                    info={<MatchesCount matches={matches} teamUuid={teamUuid} />}
+                    info={<MatchesCount matches={matches} teamId={teamId} />}
                   />
                 </InfoArea>
               </HeaderCard>

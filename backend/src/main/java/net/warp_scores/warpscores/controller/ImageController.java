@@ -6,6 +6,8 @@ import net.warp_scores.warpscores.config.properties.CyanideApiProperties;
 import net.warp_scores.warpscores.cyanide.api.model.common.Skill;
 import net.warp_scores.warpscores.model.Race;
 import net.warp_scores.warpscores.service.ImageService;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -25,10 +27,8 @@ public class ImageController {
     private final CyanideApiProperties cyanideApiProperties;
 
     private final ImageService imageService;
-
-    private Integer getDefaultOpus() {
-        return cyanideApiProperties.getDefaults().getOpus();
-    }
+    @Value("${cyanide.defaults.opus:3}")
+    private int defaultOpus;
 
     @GetMapping("/logo/{name}")
     public ResponseEntity<byte[]> getLogoImage(
@@ -43,6 +43,7 @@ public class ImageController {
         Optional<String> imageUrl = 
             getImageUrlFor(cyanideApiProperties.getUrls().getImages().getLogos(),
                 name, Optional.ofNullable(opus));
+        log.info("Image URL for logo: {}", imageUrl.orElse("null"));
         return loadImage(imageUrl);
     }
 
@@ -153,8 +154,9 @@ public class ImageController {
             Optional<Integer> maxWidth,
             Optional<String>... fallbackImageUrls) {
         Optional<byte[]> imageData = imageUrl.flatMap(url -> imageService.loadImage(url, maxWidth));
-        for (Optional<String> fallbackImageUrl : fallbackImageUrls) {
-            if (imageData.isEmpty() && fallbackImageUrl.isPresent()) {
+        for (int i = 0; i < fallbackImageUrls.length && imageData.isEmpty(); i++) {
+            Optional<String> fallbackImageUrl = fallbackImageUrls[i];
+            if (fallbackImageUrl.isPresent()) {
                 imageData = fallbackImageUrl.flatMap(url -> imageService.loadImage(url, maxWidth));
             }
         }
@@ -189,6 +191,6 @@ public class ImageController {
                 ext.startsWith(".") ? "" : ".",
                 ext);
         return Optional.of(url.replace("{OPUS}", 
-            opus.orElse(getDefaultOpus()).toString()));
+            opus.orElse(defaultOpus).toString()));
     }
 }

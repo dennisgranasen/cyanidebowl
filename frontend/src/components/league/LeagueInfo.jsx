@@ -4,8 +4,6 @@ import InfoArea from '../common/InfoArea';
 import InfoItem from '../common/InfoItem';
 
 function LeagueInfo({ league, competitionCountByStatus }) {
-  console.log('Rendering LeagueInfo with league:', league);
-  console.log('LI cc by status:', competitionCountByStatus);
   return (
     league && (
       <InfoArea w="100%">

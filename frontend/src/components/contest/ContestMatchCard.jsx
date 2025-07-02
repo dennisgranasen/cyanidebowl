@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Card, CardBody, Center, Grid, GridItem, Heading, Image, Text } from '@chakra-ui/react';
 import { Icon, QuestionOutlineIcon } from '@chakra-ui/icons';
 import imageUrls from '../../imageUrls';
@@ -6,7 +6,9 @@ import formatter from '../../util/formatter';
 import config from '../../config';
 import ScoreOrIcon from './ScoreOrIcon';
 import prettyPrint from '../../util/prettyPrint';
-import { toRace } from '../../util/raceUtil';
+import { toRace, getRaceLogo } from '../../util/raceUtil';
+import { identityUtils } from '../../util/identityUtil';
+import WarpScoresApiService from '../../WarpScoresApiService';
 const { boxSize } = config;
 
 function TeamAndCoach({ teamName, coachName, race, reverse }) {
@@ -21,21 +23,64 @@ function TeamAndCoach({ teamName, coachName, race, reverse }) {
 }
 
 function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noContentHeading, noContentText, variant }) {
+  const [teams, setTeams] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   let started;
   let finished;
-  let teams;
   let coaches;
+
+  useEffect(() => {
+    let opus = contestOrMatch?.id ? identityUtils.opus(contestOrMatch?.id) : 3;
+    if (contestOrMatch?.contestId) {
+      setTeams(contestOrMatch.opponents);
+    } else if (contestOrMatch?.matchId) {
+      const teamsData = [...contestOrMatch.teams];
+      setTeams(teamsData);
+      
+      // Fetch missing logos
+      teamsData.forEach((team, index) => {
+        if ((team.logo === null || team.logo === undefined) && team.teamId) {
+          WarpScoresApiService.team(team.id)
+            .then((fetchedTeam) => {
+              if (!fetchedTeam) {
+                setTeams(prevTeams => {
+                  const updatedTeams = [...prevTeams];
+                  updatedTeams[index] = { ...updatedTeams[index], logo: getRaceLogo(team.raceId, opus) };
+                  return updatedTeams;
+                });
+              } else {
+                setTeams(prevTeams => {
+                  const updatedTeams = [...prevTeams];
+                  updatedTeams[index] = { ...updatedTeams[index], logo: fetchedTeam.logo };
+                  return updatedTeams;
+                });
+              }
+            })
+            .catch((error) => {
+              console.error(`Error fetching team ${team.id}:`, error);
+              setTeams(prevTeams => {
+                const updatedTeams = [...prevTeams];
+                updatedTeams[index] = { ...updatedTeams[index], logo: getRaceLogo(team.raceId, opus) };
+                return updatedTeams;
+              });
+            });
+          }
+      });
+      setLoading(false);
+    }
+  }, [contestOrMatch]);
+
   if (contestOrMatch?.contestId) {
     started = contestOrMatch.match ? contestOrMatch.match.started : contestOrMatch.matchDate;
     finished = contestOrMatch.match && !contestOrMatch.live ? contestOrMatch.match.finished : null;
-    teams = contestOrMatch.opponents;
     coaches = contestOrMatch.opponents;
   } else if (contestOrMatch?.matchId) {
     started = contestOrMatch.started;
     finished = contestOrMatch.finished;
-    teams = contestOrMatch.teams;
     coaches = contestOrMatch.coaches;
   }
+  let opus = contestOrMatch?.id ? identityUtils.opus(contestOrMatch?.id) : 3;
   return (
     <Card direction="row" overflow="hidden" variant={variant} align="center">
       {!contestOrMatch && noContentIcon && (
@@ -45,8 +90,8 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
       )}
       <CardBody p={2}>
         <Box w="100%">
-          {!contestOrMatch && noContentHeading && <Heading size="md">{noContentHeading}</Heading>}
-          {contestOrMatch ? (
+          {loading || !contestOrMatch && noContentHeading && <Heading size="md">{noContentHeading}</Heading>}
+          {!loading && contestOrMatch ? (
             <Grid templateRows="repeat(4)" templateColumns="repeat(8, 1fr)" gap={4} w="100%">
               <GridItem colSpan={8}>
                 <Center color="grey">{contestHeader}</Center>
@@ -55,14 +100,14 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
                 <TeamAndCoach
                   teamName={teams[0]?.name}
                   coachName={coaches[0].coachName || coaches[0].name}
-                  race={teams[0].race || toRace(teams[0].raceId, teams[0].id.opus)}
+                  race={teams[0].race || toRace(teams[0].raceId, opus)}
                 />
               </GridItem>
               <GridItem colSpan={4} align="right">
                 <TeamAndCoach
                   teamName={teams[1].name}
                   coachName={coaches[1].coachName || coaches[1].name}
-                  race={teams[1].race || toRace(teams[1].raceId, teams[1].id.opus)}
+                  race={teams[1].race || toRace(teams[1].raceId, opus)}
                   reverse
                 />
               </GridItem>
@@ -71,7 +116,7 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
                   <Image
                     objectFit="contain"
                     maxW="64px"
-                    src={imageUrls.logo(teams[0].logo, teams[0].id.opus)}
+                    src={imageUrls.logo(teams[0].logo, opus)}
                     fallback={<QuestionOutlineIcon boxSize={boxSize} />}
                   />
                 </Center>
@@ -84,7 +129,7 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
                   <Image
                     objectFit="contain"
                     maxW="64px"
-                    src={imageUrls.logo(teams[1].logo, teams[1].id.opus)}
+                    src={imageUrls.logo(teams[1].logo || getRaceLogo(teams[1].race, opus), opus)}
                     fallback={<QuestionOutlineIcon boxSize={boxSize} />}
                   />
                 </Center>

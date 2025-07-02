@@ -21,9 +21,6 @@ import java.util.Optional;
 public class LeagueDomainService {
     private final LeagueRepository leagueRepository;
 
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
-
     @Transactional
     public League createOrUpdateLeague(LeagueResponse leagueResponse, int opus) {
         if (leagueResponse == null || leagueResponse.isEmpty()) {

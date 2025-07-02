@@ -35,8 +35,6 @@ public class ArenaController {
     
     @Value("${cyanide.defaults.topCoaches:6}")
     private int defaultTopCoaches;
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
 
     private static final int DEFAULT_LIMIT_FOR_ARENA_TEAMS = 100;
 

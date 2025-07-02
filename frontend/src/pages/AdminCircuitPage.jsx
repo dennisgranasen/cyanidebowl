@@ -156,7 +156,7 @@ function AdminCircuitPage() {
     console.log('Fetching league 155:', league.leagueId, league.id.opus);
     if ((league.id == null || league.id === '') && league.leagueId == undefined) 
       console.log('League has no ID, cannot fetch details:', league);
-    WarpScoresApiService.leagues(league.id.value, league.id.opus)
+    WarpScoresApiService.leagues(league.id)
       .then((res) => setSelectedLeague(res))
       .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }));
   };
@@ -478,7 +478,7 @@ function AdminCircuitPage() {
                             <FormControl isInvalid={form.errors.competitionId && form.touched.competitionId}>
                               <FormLabel>Competition Id</FormLabel>
                               <FormHelperText>Id of the Competition to add to Circuit</FormHelperText>
-                              <Input {...field} placeholder="Competition Uuid" value={selectedCompetitionId || field.value} readOnly={!!selectedCompetitionId} />
+                              <Input {...field} placeholder="Competition id" value={selectedCompetitionId || field.value} readOnly={!!selectedCompetitionId} />
                               <FormErrorMessage>{form.errors.competitionId}</FormErrorMessage>
                             </FormControl>
                           )}

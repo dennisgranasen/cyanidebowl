@@ -38,8 +38,6 @@ public class ContestController {
     private final ContestService contestService;
     private final ContestDomainService contestDomainService;
 
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
 
     @GetMapping("/contests/competition/{competitionId}/latest")
     public ResponseEntity<List<Contest>> getLatestCompetitionContests(

@@ -23,7 +23,7 @@ const transformCountsToObject = (statusCounts) => {
 
 
 function LeaguePage() {
-  const {opus, leagueId} = useParams();
+  const {leagueId} = useParams();
   const [competitions, setCompetitions] = useState([]);
   const [league, setLeague] = useState();
   const [competitionCountByStatus, setCompetitionCountByStatus] = useState({});
@@ -42,7 +42,7 @@ function LeaguePage() {
   }, [competitions]);
 
   useEffect(() => {
-    WarpScoresApiService.leagues(leagueId, opus)
+    WarpScoresApiService.leagues(leagueId)
       .then((data) => {
         setLeague(data);
       })
@@ -64,7 +64,7 @@ function LeaguePage() {
   }, [league]);
 
   useEffect(() => {
-    const fetchCompetitions = async (leagueId, opus) => {
+    const fetchCompetitions = async (leagueId) => {
       setError(undefined);
       setCompetitions([]);
       setLoading(true);
@@ -73,7 +73,7 @@ function LeaguePage() {
         setError({ type: 'info', message: 'No League selected.' });
         return;
       }
-      WarpScoresApiService.leagueCompetitions(leagueId, opus)
+      WarpScoresApiService.leagueCompetitions(leagueId)
         .then(setCompetitions)
         .then(() => setLoading(false))
         .catch((reason) => {
@@ -81,13 +81,12 @@ function LeaguePage() {
         });
     };
     if (league)
-      fetchCompetitions(leagueId, opus);
+      fetchCompetitions(leagueId);
   }, [league]);
-
   return (
     <Stack>
       <Box>
-        <Navigation currentPage="league" league={[league?.id, league?.name]} />
+        <Navigation currentPage="league" league={[league?.id.key, league?.name]} />
       </Box>
       {league && (
         <HeaderCard heading={league.name} detailsHeading="League details" mainImageSrc={imageUrls.logo(league.logo,league?.id?.opus)}>
@@ -95,7 +94,7 @@ function LeaguePage() {
         </HeaderCard>
       )}
       <LoadingOrErrorWrapper loading={loading} error={error}>        
-        {opus === "1" ? (
+        {league?.id?.opus === 1 || leagueId.startsWith("1_") ? (
           <RoundRobinAndWissenLeague 
             key={league?.id.value} 
             league={league} 

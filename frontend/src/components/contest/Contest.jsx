@@ -7,13 +7,14 @@ import config from '../../config';
 import MatchModal from './MatchModal';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
 import ScoreOrIcon from './ScoreOrIcon';
+import { identityUtils } from '../../util/identityUtil';
 
 const { smallBoxSize } = config;
 
 function ScoreOrIconTooltip({ contest }) {
   let matchPlayed = false;
   let matchValidated = false;
-
+  console.log('ScoreOrIconTooltip', contest);
   switch (contest.status) {
     case 'played':
     case 'Played':
@@ -43,19 +44,20 @@ function Contest({ contest }) {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const openIfValidatedAndNotAdminResult = () => {
-    if (contest.status === 'Validated' && !contest.adminResult) onOpen();
+    if (identityUtils.opus(contest.id) === 1 || ((contest.status === 'Validated' && !contest.adminResult))) 
+      onOpen();
   };
 
-  const winnerTeamUuid =
+  const winnerTeamId =
     contest.winner && contest.opponents[0].score !== contest.opponents[1].score ? contest.winner.team.id : null;
-    //console.log('Contest', contest, 'winnerTeamUuid', winnerTeamUuid);
+  console.log('Contest', { contest, winnerTeamId });
   return contest ? (
-    <Tr onClick={openIfValidatedAndNotAdminResult} key={contest.id.key}>
+    <Tr onClick={openIfValidatedAndNotAdminResult} key={identityUtils.key(contest.id)}>
       <MatchModal isOpen={isOpen} onClose={onClose} contest={contest} />
       <Opponent
         opponent={contest.opponents[0]}
-        key={contest.opponents[0].id.key}
-        winner={contest.opponents[0].id === winnerTeamUuid}
+        key={identityUtils.key(contest.opponents[0].id)}
+        winner={contest.opponents[0].id === winnerTeamId}
       />
       <Td>
         <DelayedIconTooltip label={<ScoreOrIconTooltip contest={contest} />}>
@@ -66,8 +68,8 @@ function Contest({ contest }) {
       </Td>
       <Opponent
         opponent={contest.opponents[1]}
-        key={contest.opponents[1].id.key}
-        winner={contest.opponents[1].id === winnerTeamUuid}
+        key={identityUtils.key(contest.opponents[1].id)}
+        winner={contest.opponents[1].id === winnerTeamId}
         reverse
       />
     </Tr>

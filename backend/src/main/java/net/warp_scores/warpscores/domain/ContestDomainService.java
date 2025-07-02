@@ -28,10 +28,6 @@ public class ContestDomainService {
 
     private final ContestRepository contestRepository;
 
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
-
-
     @Transactional
     public List<Contest> createOrUpdateContests(ContestsResponse contestsResponse, int opus) {
         if (contestsResponse == null || contestsResponse.isEmpty()) {

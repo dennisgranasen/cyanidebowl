@@ -15,7 +15,7 @@ function Rank({ rank, competitionId, position }) {
   const navigate = useNavigate();
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
   const goToTeam = () => {
-    navigate(`/competition/${competitionId.opus}/${competitionId.value}/team/${rank.teamId.value}`);
+    navigate(/*`/competition/${competitionId}*/`/team/${rank.teamId.value}`);
   };
   const opus = competitionId?.opus || rank?.teamId?.opus || 3; // Fallback to opus from rank if not provided
   const race = rank?.raceId ? toRace(rank.raceId, opus) : null;

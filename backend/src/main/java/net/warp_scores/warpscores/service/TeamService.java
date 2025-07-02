@@ -23,9 +23,6 @@ public class TeamService {
     private final TeamRepository teamRepository;
     private final CyanideApiService cyanideApiService;
 
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
-
     @Value("${cyanide.defaults.pageLimit:100}")
     private int defaultPageLimit;
 

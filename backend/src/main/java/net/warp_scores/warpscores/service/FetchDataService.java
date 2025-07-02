@@ -74,9 +74,6 @@ public class FetchDataService {
     @Autowired
     private MatchRepository matchRepository;
 
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
-
     @Value("${cyanide.defaults.fetchMatchMaxAgeLimit:5000}")
     private int defaultFetchMatchMaxAgeLimit;
 

@@ -72,16 +72,16 @@ function AppRoutes() {
         path="/CHANGELOG.md"
         element={<MarkdownPage markdownDocument="/CHANGELOG.md" title="Changelog" />}
       />
-      <Route path="/league/:opus/:leagueId" element={<LeaguePage />} />
-      <Route path="/latestMatches/:opus/:leagueId" element={<LatestMatchesPage />} />
-      <Route path="/latestMatches/:opus/:leagueId/:limit" element={<LatestMatchesPage />} />
-      <Route path="/liveMatches/:opus/:leagueId" element={<LiveMatchesPage />} />
-      <Route path="/team/:opus/:teamId" element={<TeamPage />} />
-      <Route path="/competition/:opus/:competitionId" element={<CompetitionPage />} />
-      <Route path="/competition/:opus/:competitionId/stats" element={<CompetitionStatsPage />} />
-      <Route path="/competition/:opus/:competitionId/arena/:race" element={<ArenaPage />} />
-      <Route path="/competition/:opus/:competitionId/arena/coach/:coachId" element={<ArenaCoachPage />} />
-      <Route path="/competition/:opus/:competitionId/team/:teamId" element={<TeamPage />} />
+      <Route path="/league/:leagueId" element={<LeaguePage />} />
+      <Route path="/latestMatches/:leagueId" element={<LatestMatchesPage />} />
+      <Route path="/latestMatches/:leagueId/:limit" element={<LatestMatchesPage />} />
+      <Route path="/liveMatches/:leagueId" element={<LiveMatchesPage />} />
+      <Route path="/team/:teamId" element={<TeamPage />} />
+      <Route path="/competition/:competitionId" element={<CompetitionPage />} />
+      <Route path="/competition/:competitionId/stats" element={<CompetitionStatsPage />} />
+      <Route path="/competition/:competitionId/arena/:race" element={<ArenaPage />} />
+      <Route path="/competition/:competitionId/arena/coach/:coachId" element={<ArenaCoachPage />} />
+      <Route path="/competition/:competitionId/team/:teamId" element={<TeamPage />} />
       <Route path="/circuit/:circuitId" element={<CircuitPage />} />
       {/* Protected Routes/Needing authentication */}
       <Route path="/coachPage" element={<ProtectedRoute component={CoachPage} />} />

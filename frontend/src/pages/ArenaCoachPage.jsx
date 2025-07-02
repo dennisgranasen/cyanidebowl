@@ -27,6 +27,7 @@ import ArenaRunAccordionItem from '../components/arena/ArenaRunAccordionItem';
 import WinRate from '../components/common/WinRate';
 import Race from '../components/common/Race';
 import prettyPrint from '../util/prettyPrint';
+import { identityUtils } from '../util/identityUtil';
 
 function getAllArenaTeams(arenaCoachTeamsByRunType) {
   if (!arenaCoachTeamsByRunType) return [];
@@ -68,7 +69,7 @@ function WinRateCard({ race, winRate }) {
 }
 
 function ArenaCoachPage() {
-  const { competitionUuid, coachUuid } = useParams();
+  const { competitionId, coachId } = useParams();
   const { fetchCompetition, competition, competitionLoading, error: competitionError } = useFetchCompetition();
   const [arenaCoach, setArenaCoach] = useState(null);
   const [arenaCoachTeams, setArenaCoachTeams] = useState(null);
@@ -76,8 +77,8 @@ function ArenaCoachPage() {
   const [arenaCoachTeamsError, setArenaCoachTeamsError] = useState(null);
 
   useEffect(() => {
-    if (competitionUuid) fetchCompetition(competitionUuid);
-  }, [competitionUuid]);
+    if (competitionId) fetchCompetition(competitionId);
+  }, [competitionId]);
 
   useEffect(() => {
     const fetchArenaCoachTeams = (competitionId, coachId) => {
@@ -90,7 +91,7 @@ function ArenaCoachPage() {
         .catch((reason) => setArenaCoachTeamsError({ type: 'error', message: reason.toLocaleString() }))
         .finally(() => setArenaCoachTeamsLoading(false));
     };
-    fetchArenaCoachTeams(competitionUuid, coachUuid);
+    fetchArenaCoachTeams(competitionId, coachId);
   }, []);
 
   const coachName = getCoachNameFrom(arenaCoachTeams);
@@ -111,17 +112,17 @@ function ArenaCoachPage() {
       <Box>
         <Navigation
           currentPage="coach"
-          league={competition ? [competition.leagueId, competition.leagueName] : []}
-          competition={[competitionUuid, competition ? competition.name : '']}
+          league={competition ? [competition.leagueId.key, competition.leagueName] : []}
+          competition={[competitionId, competition ? competition.name : '']}
           coach={coachName}
         />
       </Box>
       <LoadingOrErrorWrapper loading={competitionLoading} error={competitionError}>
         <HeaderCard
           heading={`Coach: ${coachName ? `${coachName}` : ''}`}
-          subHeading={<RouteLink to={`/competition/${competitionUuid}`}>Competition: {competition?.name}</RouteLink>}
+          subHeading={<RouteLink to={`/competition/${competitionId}`}>Competition: {competition?.name}</RouteLink>}
           detailsHeading="Arena Coach Details"
-          mainImageSrc={competition?.logo ? imageUrls.logo(competition?.logo, competition?.id?.opus) : imageUrls.logo(competition?.leagueLogo, competition?.id?.opus)}
+          mainImageSrc={competition?.logo ? imageUrls.logo(competition?.logo, competition?.id?.opus) : imageUrls.logo(competition?.leagueLogo, identityUtils.opus(competitionId))}
         >
           <LoadingOrErrorWrapper loading={arenaCoachTeamsLoading} error={arenaCoachTeamsError}>
             <InfoArea>
@@ -167,7 +168,7 @@ function ArenaCoachPage() {
           <ArenaRunAccordionItem
             key="completed"
             label={`Completed teams (${completedTeamsCount})`}
-            competitionUuid={competitionUuid}
+            competitionId={competitionId}
             loading={arenaCoachTeamsLoading}
             error={arenaCoachTeamsError}
             arenaTeams={arenaCoachTeams?.completed ?? []}
@@ -176,7 +177,7 @@ function ArenaCoachPage() {
           <ArenaRunAccordionItem
             key="active"
             label={`Active teams (${activeTeamsCount})`}
-            competitionUuid={competitionUuid}
+            competitionId={competitionId}
             loading={arenaCoachTeamsLoading}
             error={arenaCoachTeamsError}
             arenaTeams={arenaCoachTeams?.active ?? []}
@@ -185,7 +186,7 @@ function ArenaCoachPage() {
           <ArenaRunAccordionItem
             key="failed"
             label={`Failed teams (${failedTeamsCount})`}
-            competitionUuid={competitionUuid}
+            competitionId={competitionId}
             loading={arenaCoachTeamsLoading}
             error={arenaCoachTeamsError}
             arenaTeams={arenaCoachTeams?.failed ?? []}

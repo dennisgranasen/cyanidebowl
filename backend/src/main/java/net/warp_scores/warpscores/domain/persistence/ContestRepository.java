@@ -19,7 +19,6 @@ public interface ContestRepository extends MongoRepository<Contest, Identity> {
         MatchStatus matchStatus);
 
     List<Contest> findByCompetitionId(Identity competitionId, Pageable pageable);
-    //List<Contest> findByOldCompetitionId(Integer oldId, Optional<Integer> opus, Pageable pageable);
 
     List<Contest> findByLeagueIdAndLiveOrderByMatchDateDesc(Identity leagueId, 
         Integer live, Pageable pageable);
