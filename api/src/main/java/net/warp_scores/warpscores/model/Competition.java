@@ -89,6 +89,6 @@ public class Competition implements Comparable<Competition>, Identifiable {
     }
 
     public boolean needsContests() {
-        return Ladder != format;
+        return true;
     }
 }

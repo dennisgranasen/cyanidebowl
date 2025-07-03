@@ -4,7 +4,7 @@ import Opponent from './Opponent';
 import prettyPrint from '../../util/prettyPrint';
 import formatter from '../../util/formatter';
 import config from '../../config';
-import MatchModal from './MatchModal';
+import MatchModal from './MatchModalWithRosters';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
 import ScoreOrIcon from './ScoreOrIcon';
 import { identityUtils } from '../../util/identityUtil';
@@ -14,7 +14,6 @@ const { smallBoxSize } = config;
 function ScoreOrIconTooltip({ contest }) {
   let matchPlayed = false;
   let matchValidated = false;
-  console.log('ScoreOrIconTooltip', contest);
   switch (contest.status) {
     case 'played':
     case 'Played':
@@ -45,15 +44,16 @@ function Contest({ contest }) {
 
   const openIfValidatedAndNotAdminResult = () => {
     if (identityUtils.opus(contest.id) === 1 || ((contest.status === 'Validated' && !contest.adminResult))) 
+    {
+      console.log("Opening match modal for contest", contest);
       onOpen();
+    }
   };
 
   const winnerTeamId =
     contest.winner && contest.opponents[0].score !== contest.opponents[1].score ? contest.winner.team.id : null;
-  console.log('Contest', { contest, winnerTeamId });
   return contest ? (
     <Tr onClick={openIfValidatedAndNotAdminResult} key={identityUtils.key(contest.id)}>
-      <MatchModal isOpen={isOpen} onClose={onClose} contest={contest} />
       <Opponent
         opponent={contest.opponents[0]}
         key={identityUtils.key(contest.opponents[0].id)}
@@ -62,6 +62,7 @@ function Contest({ contest }) {
       <Td>
         <DelayedIconTooltip label={<ScoreOrIconTooltip contest={contest} />}>
           <Center>
+            <MatchModal isOpen={isOpen} onClose={onClose} contest={contest} />
             <ScoreOrIcon contestOrMatch={contest} boxSize={smallBoxSize} size="sm" />
           </Center>
         </DelayedIconTooltip>

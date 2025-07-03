@@ -43,7 +43,7 @@ public class ImageController {
         Optional<String> imageUrl = 
             getImageUrlFor(cyanideApiProperties.getUrls().getImages().getLogos(),
                 name, Optional.ofNullable(opus));
-        log.info("Image URL for logo: {}", imageUrl.orElse("null"));
+        //log.info("Image URL for logo: {}", imageUrl.orElse("null"));
         return loadImage(imageUrl);
     }
 

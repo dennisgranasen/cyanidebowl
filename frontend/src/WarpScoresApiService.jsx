@@ -220,7 +220,7 @@ export default {
     axios(`/league/competitionCountByStatus?leagueIds=${leagues.map((l) => l.key || l).join(',')}`)
       .then(returnData).catch(handleError),
   leagueRanks: async (leagueId, limit) =>
-    axios(`/ranks/league/${leagueId.key || leagueId}${limit ? `/?limit=${limit}` : ''}`)
+    axios(`/ranks/league/${leagueId.key || leagueId}${limit ? `?limit=${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
   leagueTeams: async (leagueId) =>
@@ -229,17 +229,26 @@ export default {
       .catch(handleError),
   // contests
   liveLeagueContests: async (leagueId, limit) => 
-    axios(`/contests/league/${leagueId.key || leagueId}/live${limit ? `/?limit=${limit}` : ''}`)
+    axios(`/contests/league/${leagueId.key || leagueId}/live${limit ? `?limit=${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
   liveCompetitionContests: async (competitionId, limit) =>
-    axios(`/contests/competition/${competitionId.key || competitionId}/live${limit ? `/?limit=${limit}` : ''}`)
+    axios(`/contests/competition/${competitionId.key || competitionId}/live${limit ? `?limit=${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
   competitionContests: async (competitionId, limit) =>
-    axios(`/contests/competition/${competitionId.key || competitionId}${limit ? `/?limit=${limit}` : ''}`)
+    axios(`/contests/competition/${competitionId.key || competitionId}${limit ? `?limit=${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
+  latestCompetitionContests: async (competitionId, limit) =>
+    axios(`/contests/competition/${competitionId.key || competitionId}/latest${limit ? `?limit=${limit}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
+  latestLeagueContests: async (leagueId, limit) =>
+    axios(`/contests/league/${leagueId.key || leagueId}/latest${limit ? `?limit=${limit}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
+
   arenaTopCoaches: async (competitionId) =>
     axios(`/arena/${competitionId.key || competitionId}/topCoaches`).then(returnData).catch(handleError),
   arenaInfos: async (competitionId, race) =>
@@ -252,11 +261,11 @@ export default {
     axios(`/arena/${competitionId.key || competitionId}/coach/${coachId.key || coachId}`).then(returnData).catch(handleError),
   // matches
   latestCompetitionMatches: async (competitionId, limit) =>
-    axios(`/matches/competition/${competitionId.key || competitionId}/latest${limit ? `/?limit=${limit}` : ''}`)
+    axios(`/matches/competition/${competitionId.key || competitionId}/latest${limit ? `?limit=${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
   latestLeagueMatches: async (leagueId, limit) =>
-    axios(`/matches/league/${leagueId.key || leagueId}/latest${limit ? `/?limit=${limit}` : ''}`)
+    axios(`/matches/league/${leagueId.key || leagueId}/latest${limit ? `?limit=${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
 
@@ -280,7 +289,7 @@ export default {
     axios(`/competitions/${competitionId.key || competitionId}/stats`).then(returnData).catch(handleError),
   
   competitionMatches: async (competitionId, limit) =>
-    axios(`/matches/competition/${competitionId.key || competitionId}${limit ? `/?limit=${limit}` : ''}`)
+    axios(`/matches/competition/${competitionId.key || competitionId}${limit ? `?limit=${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
 
@@ -291,7 +300,7 @@ export default {
       .then(returnData)
       .catch(handleError),
   competitionRanks: async (competitionId, limit) =>
-    axios(`/ranks/competition/${competitionId.key || competitionId}${limit ? `/?limit=${limit}` : ''}`)
+    axios(`/ranks/competition/${competitionId.key || competitionId}${limit ? `?limit=${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
   // team

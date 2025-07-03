@@ -95,6 +95,9 @@ public class CompetitionService {
             List<Competition> fetched =
                 cyanideApiService.loadCompetitions(competitionIdentity);
             if (fetched != null && !fetched.isEmpty()) {
+                if (fetched.size() > 1) {
+                    log.warn("Multiple competitions found for identity {} in Cyanide API, using the first one.", competitionIdentity.getValue());
+                }   
                 log.info("Competitions {} fetched from Cyanide API, saving to DB...", competitionIdentity.getValue());
                 for (Competition comp : fetched) {
                     log.info("Saving competition: {}", comp);

@@ -97,6 +97,7 @@ public class ContestController {
             @RequestParam(name = "limit", required = false) Integer limit) {
         limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT_FOR_LATEST_CONTESTS);
         limit = Math.min(limit, MAX_LIMIT_FOR_LATEST_CONTESTS);
+        log.info("Retrieving latest league contests for leagueId: {}, limit: {}", leagueId, limit);
         try {
             Identity lid = IdentityUtil.fromId(leagueId);
 

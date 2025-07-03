@@ -116,7 +116,7 @@ public class RankService {
         Competition competition = competitionService.loadCompetition(competitionId)
                 .orElseThrow(NoSuchElementException::new);            
         List<TeamRankingRecord> ranks = matchRepository.findTeamRankingsByCompetitionId(competition.getCompetitionId());
-        ranks.stream().forEach(record -> log.info("Team ranking record: {}", record));
+        //ranks.stream().forEach(record -> log.info("Team ranking record: {}", record));
         return ranks;
     }
 

@@ -55,11 +55,11 @@ public class ContestService {
         List<Contest> contests = contestRepository.findByCompetitionId(
                 competition.getCompetitionId(), pageable);
         if (contests.isEmpty()) {
-                log.info("No contests found for competition {}, initializing contests.", competitionId);
+                log.info("No contests found for competition {}, initializing contests.", competition.getCompetitionId());
 
                 return List.of();
         } else {
-                log.info("Contests found for competition {}: {}", competitionId, contests.size());
+                log.info("Contests found for competition {}: {}", competition.getCompetitionId(), contests.size());
                 if (contests.size() > 0) {
                         log.info("{}", contests.get(0));
                 }
@@ -95,7 +95,7 @@ public class ContestService {
                 Identity leagueId,
                 int limit) {
         List<Contest> contests = 
-                contestRepository.findByLeagueIdAndStatusOrderByMatchDateDesc(leagueId,
+                contestRepository.findByLeagueIdAndStatusOrStatusNullOrderByMatchDateDesc(leagueId,
                         MatchStatus.Validated, 
                         PageRequest.of(0, limit, 
                                 Sort.by(Sort.Direction.DESC, "matchDate")));
@@ -120,7 +120,7 @@ public class ContestService {
     public List<Contest> getLatestCompetitionContests(
                 Identity competitionId, int limit) {
         List<Contest> contests = 
-                contestRepository.findByCompetitionIdAndStatusOrderByMatchDateDesc(
+                contestRepository.findByCompetitionIdAndStatusOrStatusNullOrderByMatchDateDesc(
                         competitionId, MatchStatus.Validated, 
                         PageRequest.of(0, limit, 
                                 Sort.by(Sort.Direction.DESC, "matchDate")));

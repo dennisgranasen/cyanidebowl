@@ -27,23 +27,47 @@ function LatestMatches({ league, competition, embeddable, limit }) {
     setLoading(true);
     WarpScoresApiService.latestCompetitionMatches(competitionId, contestLimit)
       .then((data) => {
-        data.sort((x,y) => x.finished - y.finished);
+        console.log('LatestMatches fetched matches:', data);
+        //data.sort((x,y) => x.finished - y.finished);
+        setContests(data);
+      })
+      .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
+      .finally(setLoading(false));
+  };
+
+  const fetchLatestLeagueContests = (leagueId, contestLimit) => {
+    setLoading(true);
+    WarpScoresApiService.latestLeagueContests(leagueId, contestLimit)
+      .then((data) => {
+        console.log('LatestMatches fetched contests:', data);
+        data.sort(comparators.compareContestsByDateDesc);
         setContests(data);
       })
       .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
       .finally(() => setLoading(false));
   };
 
+  const fetchLatestCompetitionContests = (competitionId, contestLimit) => {
+    setLoading(true);
+    WarpScoresApiService.latestCompetitionContests(competitionId, contestLimit)
+      .then((data) => {
+        console.log('LatestMatches fetched contests:', data);
+        data.sort(comparators.compareContestsByDateDesc);
+        setContests(data);
+      })
+      .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
+      .finally(setLoading(false));
+  };
+
   useEffect(() => {
     if (league) {
-      fetchLatestLeagueMatches(league.id, limit);
+      fetchLatestLeagueContests(league.id, limit);
     }
     if (competition) {
-      fetchLatestCompetitionMatches(competition.id, limit);
+      fetchLatestCompetitionContests(competition.id, limit);
     }
   }, [league, competition]);
 
-  console.debug('LatestMatches', { league, competition, embeddable, limit, contests, loading, error });
   return (
     <>
       {!embeddable && <Heading size="md">Latest matches</Heading>}

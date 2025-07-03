@@ -48,8 +48,8 @@ public class RankController {
                 Optional.empty(), Optional.ofNullable(limit));
             */
             List<TeamRankingRecord> ranks = rankService.getRanksForCompetition(
-                competitionIdentity, Optional.empty(), Optional.ofNullable(limit));
-            log.info("Ranks for competition: {}", ranks);
+                competitionIdentity, Optional.empty(), Optional.empty()); //Optional.ofNullable(limit));
+            //log.info("Ranks for competition: {}", ranks);
 
             if (ranks == null || ranks.isEmpty()) {
                 log.warn("No ranks found for competition with ID: {}", competitionId);
@@ -69,7 +69,7 @@ public class RankController {
     public ResponseEntity<List<TeamRankingRecord>> getRanksForLeague(
             @PathVariable(name = "leagueId") String leagueId,
             @RequestParam(name = "limit", required = false) Integer limit) {
-        log.info("Fetching ranks for league with ID: {}", leagueId);
+        //log.info("Fetching ranks for league with ID: {}", leagueId);
         if (leagueId == null) {
             log.error("leagueId is null");
             return ResponseEntity.badRequest().build();

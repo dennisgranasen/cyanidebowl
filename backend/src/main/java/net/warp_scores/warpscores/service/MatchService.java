@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
+import net.warp_scores.warpscores.identity.CompositeIdentity;
 import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Player;
 
@@ -55,14 +57,39 @@ public class MatchService {
 
     @DurationLogging
     public List<Match> getLatestCompetitionMatches(Identity competitionId, int limit) {
-        List<Match> matches = matchRepository.findTopByCompetitionIdAndFinishedNotNull(competitionId,
+        log.info("getLatestCompetitionMatches: competitionId={}, limit={}", competitionId, limit);
+        Identity cid;
+        if (competitionId instanceof CompositeIdentity) {
+            CompositeIdentity compositeIdentity = (CompositeIdentity) competitionId;
+            Object[] parts = compositeIdentity.getParts();
+            Object lastPart = parts[parts.length - 1];
+            cid = new SimpleIdentity(lastPart, compositeIdentity.getOpus());
+        } else 
+        {
+            cid = competitionId;
+        }
+        log.info("getLatestCompetitionMatches: cid={}, limit={}", cid, limit);
+
+        List<Match> matches = matchRepository.findTopByCompetitionIdAndFinishedNotNull(cid,
                 PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "finished")));
+        log.info("getLatestCompetitionMatches: matches.size={}", matches.size());
         return adjustCompetitionNameAndLogoAndUpdateConcedeAndOvertimeInfo(matches);
     }
 
     @DurationLogging
     public List<Match> getCompetitionMatchesSince(Identity competitionId, Date since, Optional<Integer> limit) {
-        List<Match> matches = matchRepository.findTopByCompetitionIdAndFinishedNotNull(competitionId,
+        Identity cid;
+        if (competitionId instanceof CompositeIdentity) {
+            CompositeIdentity compositeIdentity = (CompositeIdentity) competitionId;
+            Object[] parts = compositeIdentity.getParts();
+            Object lastPart = parts[parts.length - 1];
+            cid = new SimpleIdentity(lastPart, compositeIdentity.getOpus());
+        } else 
+        {
+            cid = competitionId;
+        }
+
+        List<Match> matches = matchRepository.findTopByCompetitionIdAndFinishedNotNull(cid,
                 PageRequest.of(0, limit.orElse(defaultPageLimit), Sort.by(Sort.Direction.DESC, "finished")));
         return adjustCompetitionNameAndLogoAndUpdateConcedeAndOvertimeInfo(matches);
     }
@@ -76,7 +103,17 @@ public class MatchService {
 
     @DurationLogging
     public List<Match> findByCompetitionId(Identity competitionId) {
-        List<Match> matches = matchRepository.findByCompetitionId(competitionId);
+        Identity cid;
+        if (competitionId instanceof CompositeIdentity) {
+            CompositeIdentity compositeIdentity = (CompositeIdentity) competitionId;
+            Object[] parts = compositeIdentity.getParts();
+            Object lastPart = parts[parts.length - 1];
+            cid = new SimpleIdentity(lastPart, compositeIdentity.getOpus());
+        } else 
+        {
+            cid = competitionId;
+        }
+        List<Match> matches = matchRepository.findByCompetitionId(cid);
         return adjustCompetitionNameAndLogoAndUpdateConcedeAndOvertimeInfo(matches);
     }
 

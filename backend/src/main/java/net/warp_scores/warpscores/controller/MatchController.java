@@ -58,13 +58,14 @@ public class MatchController {
         }
     }
 
+    /*
     @GetMapping("/matches/league/{leagueId}/latest")
     public ResponseEntity<List<Match>> getLatestLeagueContests(
             @PathVariable(name = "leagueId") String leagueId) {
         return getLatestLeagueMatches(leagueId, null);
     }
-
-    @GetMapping("/matches/league/{leagueId}/latest/{limit}")
+    */
+    @GetMapping("/matches/league/{leagueId}/latest")
     public ResponseEntity<List<Match>> getLatestLeagueMatches(
             @PathVariable(name = "leagueId") String leagueId,
             @RequestParam(name = "limit", required = false) Integer limit) {
@@ -97,18 +98,21 @@ public class MatchController {
         }
     }
 
+    /*
     @GetMapping("/matches/competition/{competitionId}/latest")
     public ResponseEntity<List<Match>> getLatestCompetitionMatches(
             @PathVariable(name = "competitionId") String competitionId) {
         return getLatestCompetitionMatches(competitionId, null);
     }
-
-    @GetMapping("/matches/competition/{competitionId}/latest/{limit}")
+    */
+    @GetMapping("/matches/competition/{competitionId}/latest")
     public ResponseEntity<List<Match>> getLatestCompetitionMatches(
             @PathVariable(name = "competitionId") String competitionId,
             @RequestParam(name = "limit", required = false) Integer limit) {
         limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT_FOR_LATEST_MATCHES);
         limit = Math.min(limit, MAX_LIMIT_FOR_LATEST_MATCHES);
+        log.info(competitionId + " limit: " + limit + " (max: " + MAX_LIMIT_FOR_LATEST_MATCHES + ")");
+
         try {
             Identity competitionIdentity = IdentityUtil.fromId(competitionId);
 
