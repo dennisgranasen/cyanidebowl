@@ -30,7 +30,7 @@ const getTeamsFor = (competition) => {
 };
 
 function TypedCompetition({ competition, competitionLoading }) {
-  console.log('TypedCompetition', competition, competitionLoading);
+  //console.log('TypedCompetition', competition, competitionLoading);
   switch (competition?.format) {
     case 'Knockout':
     case 'single_elimination':

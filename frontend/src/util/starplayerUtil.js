@@ -100,6 +100,7 @@ const STAR_PLAYER_NAMES = {
   'SCRAPPASOREHEAD': "Scrappa Sorehead",
   'SINNEDBAD': "Sinnedbad",
   'SKITTER': "Skitter Stab-Stab",
+  'SKITTERSTABSTAB': "Skitter Stab-Stab",
   'SKRORG': "Skrorg Snowpelt",
   'SOAREN': "Soaren Hightower",
   'UGROTH': "Ugroth Bolgrot",

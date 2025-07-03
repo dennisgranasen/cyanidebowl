@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import static java.util.Optional.ofNullable;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,7 +38,7 @@ public class TeamController {
 
     private final OfficialLeagueAndCompetitions officialLeagueAndCompetitions;
 
-    @GetMapping("/teams/{teamId}")
+    @GetMapping("/team/{teamId}")
     public ResponseEntity<Team> getTeam(
             @PathVariable(name = "teamId") String teamId) {
         try {
@@ -51,6 +52,33 @@ public class TeamController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+    @GetMapping("/teams/{teamIds}")
+    public ResponseEntity<List<Team>> getTeams(
+            @PathVariable(name = "teamIds") String teamIds) {
+        String[] teamIdArray = teamIds.split(",");
+        if (teamIdArray.length == 0) {
+            return ResponseEntity.badRequest().build();
+        }
+        List<Identity> ids = Arrays.stream(teamIdArray)
+                .map(String::trim)
+                .filter(id -> !id.isEmpty())
+                .map(IdentityUtil::fromId)
+                .toList();
+        try {
+            List<Team> teams = teamDomainService.findTeams(ids);
+            if (teams.isEmpty()) {
+                log.warn("No teams found for ids: {}", teamIds);
+                return ResponseEntity.noContent().build();
+            }
+            // Adjust competition names for each team
+            return ResponseEntity.ok(teams);
+        } catch (Exception ex) {
+            log.error("Unable to get team for id {}.", teamIds, ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
 
     @GetMapping("/teams/{teamId}/matches")
     public ResponseEntity<List<Match>> getMatches(@PathVariable(name = "teamId") String teamId) {

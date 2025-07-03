@@ -18,7 +18,7 @@ function Competition({ competition, league }) {
     navigate(`/competition/${competition.id.key}`);
   };
 
-  console.log('Competition', competition);
+  //console.log('Competition', competition);
   return competition !== null ? (
     <Tr onClick={goToCompetition}>
       <Td>

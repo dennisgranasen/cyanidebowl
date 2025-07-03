@@ -103,6 +103,7 @@ public class ContestController {
 
             List<Contest> contests = contestService.getLatestLeagueContests(
                 lid, limit);
+            log.info("Retrieved {} contests for leagueId: {}", contests.size(), leagueId);
             return ResponseEntity.ok(contests);
         } catch (Exception ex) {
             log.error("Unable to retrieve contests for " + leagueId, ex);

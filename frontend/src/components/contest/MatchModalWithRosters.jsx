@@ -92,7 +92,7 @@ function MatchModal({ isOpen, onClose, contest }) {
           {match && contest.status === 'Validated' && (
             <>
               <Box w="100%">
-                <ContestMatchCard contestOrMatch={contest} contestHeader={null} variant="filled" />
+                <ContestMatchCard contestOrMatch={contest} contestHeader={null} variant="filled" clickable={false}/>
               </Box>
               
               <Tabs>

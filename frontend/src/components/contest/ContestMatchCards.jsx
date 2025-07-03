@@ -24,6 +24,7 @@ function ContestMatchCards({ contests, noContentIcon, noContentHeading, noConten
             )
           }
           variant="outline"
+          clickable={!contest.live}
         />
       ))}
     </SimpleGrid>
@@ -33,6 +34,7 @@ function ContestMatchCards({ contests, noContentIcon, noContentHeading, noConten
       noContentHeading={noContentHeading}
       noContentText={noContentText}
       variant="outline"
+      clickable={false}
     />
   );
 }

@@ -74,7 +74,7 @@ function CompetitionsAccordionItem({ competitions, league, header }) {
 }
 
 function Competitions({ competitions, league }) {
-  console.log('Rendering Competitions with competitions:', competitions);
+  //console.log('Rendering Competitions with competitions:', competitions);
   return (
     <Accordion variant="simple" allowMultiple defaultIndex={[0]}>
       <CompetitionsAccordionItem

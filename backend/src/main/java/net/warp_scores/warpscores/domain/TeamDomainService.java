@@ -82,6 +82,16 @@ public class TeamDomainService {
         return Optional.of(team);
     }
 
+    @Transactional
+    public List<Team> findTeams(Collection<Identity> teamIds) {
+        List<Team> teams = teamRepository.findAllById(teamIds);
+        if (teams == null || teams.isEmpty()) {
+            log.warn("No teams with ids in {} not found.", teamIds);
+            return Collections.emptyList();
+        }         
+        return teams;
+    }
+
     /*
     private void setRelevantCompetition(List<Team> teams, Identity competitionId) {
         Optional<Competition> competition = this.competitionRepository.findById(competitionId);

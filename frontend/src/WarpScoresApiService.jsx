@@ -306,7 +306,22 @@ export default {
   // team
   team: async (teamId) => {
     try {
-      const response = await axios(`/teams/${teamId.key || teamId}`);
+      const response = await axios(`/team/${teamId.key || teamId}`);
+      return returnData(response);
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        // Silently return null for 404s without logging
+        return null;
+      } else {
+        handleError(error);
+      }
+    }
+  },
+  teams: async (teamIds) => {
+    try {
+      teamIds = Array.isArray(teamIds) ? teamIds : [teamIds];
+      const teamIdString = teamIds.map((id) => id.key || id).join(',');
+      const response = await axios(`/teams/${teamIdString}`);
       return returnData(response);
     } catch (error) {
       if (error.response && error.response.status === 404) {

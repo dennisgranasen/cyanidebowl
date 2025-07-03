@@ -23,10 +23,8 @@ function TeamAndCoach({ teamName, coachName, race, reverse }) {
   );
 }
 
-function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noContentHeading, noContentText, variant }) {
+function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noContentHeading, noContentText, variant, clickable }) {
   const [teams, setTeams] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [contestLoading, setContestLoading] = useState(true);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [contest, setContest] = useState(contestOrMatch);
 
@@ -35,92 +33,63 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
   let coaches;
 
   useEffect(() => {
-    /*
-    if (contestOrMatch && contestOrMatch.gameId) { // this is a contest
-      setContest(contestOrMatch);
-      setContestLoading(false);
-    } else if (contestOrMatch && !contestOrMatch.gameId) { // this is a match, fetch the contest
-      
-      let newId = identityUtils.combine(contestOrMatch.leagueId, contestOrMatch.competitionId)
-      console.log("com", contestOrMatch);
-      console.log("ContestMatchCard useEffect for contestOrMatch", contestOrMatch, "with competition id", newId);
-      WarpScoresApiService.competitionContests(newId)      
-        .then((contests) => {
-          // Find the contest that matches the current contestOrMatch
-          console.log("Fetched contests for competition:", newId, contests);
-          const c = contests.find(c => c.gameId && c.gameId.key === contestOrMatch.id.key);
-          if (c && c.status === 'Validated' && !c.adminResult) {
-            console.log("Opening match modal for contest", c);
-            setContest(c);
-          } else {  
-            console.log("Freshly loaded contest is not valid for opening modal", c);
-          }
-          setContestLoading(false);
-        })
-        .catch((error) => { 
-          console.error("Error fetching contests for competition:", error);
-          setContestLoading(false);
-        });
-      }*/
+      if (contestOrMatch) {
+        if (identityUtils.opus(contestOrMatch.id) > 1) {
+          setContest(contestOrMatch);
+          setTeams(contestOrMatch.opponents);
+        } else {
 
-        setContest(contestOrMatch);
-        setContestLoading(false);
-      }, [contestOrMatch]);
-
-  useEffect(() => {
-    let opus = contestOrMatch?.id ? identityUtils.opus(contestOrMatch?.id) : 3;
-    if (contestOrMatch?.contestId) {
-      setTeams(contestOrMatch.opponents);
-    } else if (contestOrMatch?.matchId) {
-      const teamsData = [...contestOrMatch.teams];
-      setTeams(teamsData);
-      
-      // Fetch missing logos
-      teamsData.forEach((team, index) => {
-        if ((team.logo === null || team.logo === undefined) && team.teamId) {
-          console.log(`Fetching logo for team ${team.id} with raceId ${team.raceId} and opus ${opus}`);
-          WarpScoresApiService.team(team.id)
-            .then((fetchedTeam) => {
-              if (!fetchedTeam) {
-                setTeams(prevTeams => {
-                  const updatedTeams = [...prevTeams];
-                  updatedTeams[index] = { ...updatedTeams[index], logo: getRaceLogo(team.raceId, opus) };
-                  return updatedTeams;
+          // For opus 1, we need to fetch the team details
+          const ids = contestOrMatch.teams.map(team => team.id);
+          WarpScoresApiService.teams(ids)
+            .then((fetchedTeams) => {
+                const teamsWithLogos = contestOrMatch.teams.map(team => {
+                  const fetched = fetchedTeams.find(ft => identityUtils.key(ft.id) === identityUtils.key(team.id));
+                  return fetched ? { ...team, logo: fetched.logo } : team;
                 });
-              } else {
-                setTeams(prevTeams => {
-                  const updatedTeams = [...prevTeams];
-                  updatedTeams[index] = { ...updatedTeams[index], logo: fetchedTeam.logo };
-                  return updatedTeams;
-                });
-              }
+                setTeams(teamsWithLogos);
             })
             .catch((error) => {
-              console.error(`Error fetching team ${team.id}:`, error);
-              setTeams(prevTeams => {
-                const updatedTeams = [...prevTeams];
-                updatedTeams[index] = { ...updatedTeams[index], logo: getRaceLogo(team.raceId, opus) };
-                return updatedTeams;
-              });
+              console.warn("Error fetching teams for contestOrMatch", contestOrMatch, error);
+              setTeams(contestOrMatch.teams);
+            })
+            .finally(() => {              
+              //setContest(contestOrMatch);
             });
-          }
-      });
-      setLoading(false);
+        }
+      }
+    }, [contestOrMatch]);
+
+  function getIsClickable() {
+    // Use the current contest state, not the original prop!
+    if (!contest || !contest.status) {
+      if (contestOrMatch && (identityUtils.opus(contestOrMatch?.id) === 1))
+        return false; // This can be clickable, but need to change the modal
+      return false;
     }
-  }, [contestOrMatch]);
+    return clickable && contest.status === 'Validated';
+  }
 
   const handleCardClick = () => {
     // Only open modal if we have a valid match with status 'Validated'
-    if (contest) {
-      if (contest.status === 'Validated' && !contest.adminResult) {
-        onOpen();
-      }
-    } else if (identityUtils.opus(contestOrMatch.id) === 1 || ((contestOrMatch.status === 'Validated' && !contestOrMatch.adminResult))) 
-    {
-      console.log("Opening match modal for contest", contestOrMatch);
+    if (!getIsClickable())
+      return;
+    if (contest.match === null){ 
+      WarpScoresApiService.match(contest.gameId)
+        .then((match) => {
+          if (match) {
+            setContest(prevContest => ({ ...prevContest, match }));
+            onOpen();
+          } else {
+            console.warn("No match found for contest", contest);
+            setContest(prevContest => ({ ...prevContest, match: undefined }));
+          }
+        })
+        .catch((error) => {
+          console.warn("Error fetching match for contest", contest, error);
+        });
+    } else {
       onOpen();
-    }
-    else {
     }
   };
 
@@ -135,20 +104,18 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
   }
   
   let opus = contestOrMatch?.id ? identityUtils.opus(contestOrMatch?.id) : 3;
-  
   // Determine if the card should be clickable
-  const isClickable = contestOrMatch && contestOrMatch.status === 'Validated';
   
-  return ( loading || contestLoading) ? <Spinner/> :
-    (<>
+  return (
+    <>
       <Card 
         direction="row" 
         overflow="hidden" 
         variant={variant} 
         align="center"
-        cursor={isClickable ? "pointer" : "default"}
+        cursor={getIsClickable() ? "pointer" : "default"}
         onClick={handleCardClick}
-        _hover={isClickable ? { 
+        _hover={getIsClickable() ? { 
           transform: "scale(1.02)", 
           transition: "transform 0.2s",
           boxShadow: "lg" 
@@ -161,8 +128,8 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
         )}
         <CardBody p={2}>
           <Box w="100%">
-            {loading || !contestOrMatch && noContentHeading && <Heading size="md">{noContentHeading}</Heading>}
-            {!loading && contestOrMatch ? (
+            {!contestOrMatch && noContentHeading && <Heading size="md">{noContentHeading}</Heading>}
+            {contestOrMatch && teams && teams.length > 0? (
               <Grid templateRows="repeat(4)" templateColumns="repeat(8, 1fr)" gap={4} w="100%">
                 <GridItem colSpan={8}>
                   <Center color="grey">{contestHeader}</Center>
@@ -171,14 +138,14 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
                   <TeamAndCoach
                     teamName={teams[0]?.name}
                     coachName={coaches[0].coachName || coaches[0].name}
-                    race={teams[0].race || toRace(teams[0].raceId, opus)}
+                    race={teams[0].race || toRace(teams[0].race || teams[0].raceId, opus)}
                   />
                 </GridItem>
                 <GridItem colSpan={4} align="right">
                   <TeamAndCoach
                     teamName={teams[1].name}
                     coachName={coaches[1].coachName || coaches[1].name}
-                    race={teams[1].race || toRace(teams[1].raceId, opus)}
+                    race={teams[1].race || toRace(teams[1].race || teams[1].raceId, opus)}
                     reverse
                   />
                 </GridItem>
@@ -213,7 +180,7 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
                       finished
                     )}`}
                   </Center>
-                  {isClickable && (
+                  {getIsClickable() && (
                     <Center color="blue.500" fontSize="sm" mt={1}>
                       Click for detailed stats
                     </Center>
@@ -226,9 +193,8 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
           </Box>
         </CardBody>
       </Card>
-      <MatchModal isOpen={isOpen} onClose={onClose} contest={contest} />
+      {getIsClickable() && <MatchModal isOpen={isOpen} onClose={onClose} contest={contest} />}
     </>
-  );
-}
+);}
 
 export default ContestMatchCard;

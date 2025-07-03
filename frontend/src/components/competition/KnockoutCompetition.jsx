@@ -25,7 +25,9 @@ import useFetchContestsWithMatches from '../../hooks/useFetchContestsWithMatches
 import useFetchRanks from '../../hooks/useFetchRanks';
 import Ranks from './Ranks';
 import { FaRegFaceSadTear } from 'react-icons/fa6';
-import { MATCH_STATES } from 'react-tournament-brackets';
+import MatchModalWithRosters from '../contest/MatchModalWithRosters'; // Add this import
+import { useDisclosure } from '@chakra-ui/react';
+import { identityUtils } from '../../util/identityUtil';
 
 const { boxSize } = config;
 
@@ -69,7 +71,7 @@ function Participant({
   onMouseEnter,
   onMouseLeave,
   onMatchClick,
-  onPartyClick,
+  //onPartyClick,
 }) {
   const borderColor = hovered ? 'warpScoresHoverColor' : connectorColor;
   const backgroundColor = hovered ? 'warpScoresHoverColor' : null;
@@ -85,8 +87,13 @@ function Participant({
       backgroundColor={backgroundColor}
       onMouseEnter={() => onMouseEnter(party.id)}
       onMouseLeave={() => onMouseLeave(party.id)}
-      onPartyClick={onPartyClick}
-      onMatchClick={onMatchClick}
+      onClick={() => {
+        console.log('Participant clicked:', party.id);
+        onMatchClick && onMatchClick(match.id)}
+      }
+      style={{ cursor: 'pointer' }}
+      //onPartyClick={onPartyClick}
+      //onMatchClick={onMatchClick}
     >
       <Grid
         w="100%"
@@ -139,7 +146,7 @@ function MatchComponent({
   teamNameFallback,
   resultFallback,
   onPartyClick,
-  onMatchClick,
+  onMatchClick,  
   onMouseEnter,
   onMouseLeave,
 }) {
@@ -189,6 +196,10 @@ function KnockoutCompetition({ competition, competitionLoading }) {
   const { fetchRanks, ranks, ranksLoading, error: ranksError } = useFetchRanks();  
   const [matches, setMatches] = useState([]);
 
+  // Modal state
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [selectedContest, setSelectedContest] = useState(null);
+
   useEffect(() => {
     if (competition) {
       fetchContestsWithMatches(competition);
@@ -208,7 +219,13 @@ function KnockoutCompetition({ competition, competitionLoading }) {
     }
   }, [competition, competitionLoading, contests, contestsLoading]);
 
-
+  /*
+  useEffect(() => {
+    if (contest && !contest.match && contest.matchId) {
+      // fetch match and set it in local state
+    }
+  }, [contest]);
+  */
   function getNextContest(contest, sortedContests) {
     if (contest === null || !contest.winner) {
       return null;
@@ -268,6 +285,28 @@ function KnockoutCompetition({ competition, competitionLoading }) {
     return matches;
   }
 
+  // Pass this handler to the bracket
+  function handleMatchClick(matchId) {
+    // Find the contest by matchId (or id, depending on your data)
+    const contest = contests.find(c => identityUtils.value(c.id) === matchId);
+    console.log('Contest found:', contest);
+
+    if (contest) {
+      setSelectedContest(contest);
+      onOpen();
+    }
+  }
+
+  // Update MatchComponent to use this handler
+  function MatchComponentWithModal(props) {
+    return (
+      <MatchComponent
+        {...props}
+        onMatchClick={handleMatchClick}
+      />
+    );
+  }
+
   return (
     <Accordion defaultIndex={[0]} allowMultiple>
       <AccordionItem>
@@ -280,7 +319,10 @@ function KnockoutCompetition({ competition, competitionLoading }) {
         <AccordionPanel overflow="auto">
           <LoadingOrErrorWrapper loading={competitionLoading || contestsLoading} error={contestError}>
             {matches && matches.length > 0 ? (
-              <SingleEliminationBracket matches={matches} matchComponent={MatchComponent} />
+              <SingleEliminationBracket
+                matches={matches}
+                matchComponent={MatchComponentWithModal}
+              />
             ) : (
               <HStack gap="1rem">
                 <Icon as={FaRegFaceSadTear} boxSize={boxSize} />
@@ -288,6 +330,14 @@ function KnockoutCompetition({ competition, competitionLoading }) {
               </HStack>
             )}
           </LoadingOrErrorWrapper>
+          {/* Render the modal here */}
+          {selectedContest && (
+            <MatchModalWithRosters
+              isOpen={isOpen}
+              onClose={onClose}
+              contest={selectedContest}
+            />
+          )}
         </AccordionPanel>
       </AccordionItem>
       <AccordionItem>
