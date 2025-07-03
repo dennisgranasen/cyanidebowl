@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import {
   Box, Button, Card, CardBody, CardFooter, CardHeader, Checkbox, FormControl, FormErrorMessage,
@@ -12,10 +11,9 @@ import config from '../../config';
 
 
 
-function EntitySearchForm({ handleLeagueClick, handleCompetitionClick }) {
+function EntitySearchForm({ handleLeagueClick, handleCompetitionClick, onSearchResults, onSearchResultDragStart }) {
     const [bbVersion, setBbVersion] = useState(String(config.defaultOpus || 3));
     const { isAuthenticated, isLoading, getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0WithUserPermissions();
-    const [loading, setLoading] = useState(true);
     const [lines, setLines] = useState([]);
     const leagueRefs = useRef({});
     const competitionRefs = useRef({});
@@ -25,6 +23,8 @@ function EntitySearchForm({ handleLeagueClick, handleCompetitionClick }) {
     
   useEffect(() => {
     if (!searchResults.leagueDetails || !searchResults.competitionDetails) return;
+    if (onSearchResults)
+      onSearchResults(searchResults.leagueDetails, searchResults.competitionDetails);
     const newOffsets = {};
     let accumulatedOffset = 0;
     searchResults.leagueDetails.forEach(league => {
@@ -280,7 +280,20 @@ function EntitySearchForm({ handleLeagueClick, handleCompetitionClick }) {
                         style={{
                             marginTop: leagueOffsets[leagueId] || 0,
                         }}
-                        onClick={() => handleLeagueClick && handleLeagueClick(item)}>
+                        onClick={() => handleLeagueClick && handleLeagueClick(item)}
+                        draggable
+                        onDragStart={e => {
+                          e.dataTransfer.setData('application/json', JSON.stringify({
+                            type: 'league',
+                            id: item.id,
+                            opus: item.opus,
+                            name: item.name,
+                          }));
+                          if (onSearchResultDragStart) {
+                            onSearchResultDragStart(item);
+                          }
+                        }}
+                      >
                       {item.name || item.leagueName}
                     </Box>
                   )})}
@@ -300,6 +313,20 @@ function EntitySearchForm({ handleLeagueClick, handleCompetitionClick }) {
                         _hover={isDetailed ? { bg: 'gray.100', opacity: 0.8, color: 'black', cursor: 'pointer' } : undefined}
                         style={isDetailed ? {} : { color: 'red', cursor: 'not-allowed' }}
                         onClick={isDetailed ? () => myHandleCompetitionClick(item) : undefined}
+                        draggable
+                        onDragStart={e => {
+                          e.dataTransfer.setData('application/json', JSON.stringify({
+                            type: 'competition',
+                            id: item.id,
+                            opus: item.opus,
+                            name: item.name,
+                          }));
+                        if (onSearchResultDragStart) {
+                          onSearchResultDragStart(item);
+                        }
+
+                        }}
+                        
                       >
                         {item.name || item.leagueName}
                     </Box>

@@ -41,6 +41,7 @@ public class ContestDomainService {
                                 Comparator.nullsFirst(Comparator.naturalOrder())))))
                 .values()
                 .stream()
+                .filter(Objects::nonNull)
                 .map((x) -> internalCreateOrUpdateContest(x, opus))
                 .collect(Collectors.toList());
         return contestRepository.saveAll(contests);

@@ -79,4 +79,12 @@ public class CompositeIdentity implements Identity {
         }
         return new SimpleIdentity(parts[partIndex], opus);   
     }
+
+    @Override
+    public int compareTo(Identity other) {
+        if (other == null) {
+            return 1; // null is considered less than any non-null identity
+        }
+        return this.asMongoKey().compareTo(other.asMongoKey());
+    }
 }

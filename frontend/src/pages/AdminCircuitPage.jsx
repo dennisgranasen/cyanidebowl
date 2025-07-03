@@ -19,6 +19,7 @@ import gameTypes from '../util/gameTypes.js';
 import ladderOptions from '../util/ladderOptions.js';
 import entityTypes from '../util/entityTypes.js';
 import {bbVersions, getGameFromOpus, getOpusFromGame } from '../util/bbVersions.js';
+import { identityUtils } from '../util/identityUtil.jsx';
 // --- Constants and helpers ---
 
 const initialFormValues = {
@@ -60,8 +61,7 @@ function TableColumns() {
     <Tr>
       <Th />
       <Th>Label</Th>
-      <Th>League</Th>
-      <Th>Competition</Th>
+      <Th>Id</Th>
       <Th>LegType</Th>
       <Th>Game</Th>
       <Th>Platform</Th>
@@ -229,6 +229,38 @@ function AdminCircuitPage() {
       });
   };
 
+  const handleSearchResultDragStart = (item) => {
+    console.log('Search result drag started:', item);
+    if (item.competitionId) {
+      handleCompetitionClick(item);
+    } else if (item.leagueId) {
+      handleLeagueClick(item);
+    } else {
+      console.warn('Unknown item type for drag start:', item.type);
+    }
+  };  
+
+  const handleAddEntityToLeg = (circuitLegId, entityData) => {
+    console.log('Adding entity to leg:', circuitLegId, entityData);
+    WarpScoresApiService.addEntityToCircuitLeg(
+      circuit.circuitId,
+      circuitLegId,
+      {
+        entityId: identityUtils.key(entityData.id),
+        entityType: entityData.type,
+        name: entityData.name,
+        game: entityData.gameType || selectedGameType,
+        platform: entityData.platform || selectedPlatform,
+        ruleset: entityData.ruleset || selectedRuleset,
+        ladderOption: entityData.ladderOption || ''
+      },
+      getAccessTokenSilently,
+      getAccessTokenWithPopup
+    )
+      .then(() => fetchCircuit(circuitId))
+      .catch((err) => setError({ type: 'error', message: err.toLocaleString() }));
+  };
+
   const handleGameTypeChange = (e) => { 
     const gameType = e.target.value;
     console.log('Game type changed:', gameType);
@@ -292,6 +324,7 @@ function AdminCircuitPage() {
                   onCollectDataChanged={handleCircuitLegIsCollectedChanged}
                   onArchivedChanged={handleCircuitLegIsArchivedChanged}
                   onRemoveLeg={handleRemoveLeg}
+                  onAddEntityToLeg={handleAddEntityToLeg}
                 />
               ))}
             </Tbody>
@@ -304,6 +337,7 @@ function AdminCircuitPage() {
         <EntitySearchForm
           handleCompetitionClick={handleCompetitionClick} 
           handleLeagueClick={handleLeagueClick}
+          onSearchResultDragStart={handleSearchResultDragStart}
         />
         
         <Heading size="md">Add Leg</Heading>
@@ -478,7 +512,7 @@ function AdminCircuitPage() {
                             <FormControl isInvalid={form.errors.competitionId && form.touched.competitionId}>
                               <FormLabel>Competition Id</FormLabel>
                               <FormHelperText>Id of the Competition to add to Circuit</FormHelperText>
-                              <Input {...field} placeholder="Competition id" value={selectedCompetitionId || field.value} readOnly={!!selectedCompetitionId} />
+                              <Input {...field} placeholder="Competition Uuid" value={selectedCompetitionId || field.value} readOnly={!!selectedCompetitionId} />
                               <FormErrorMessage>{form.errors.competitionId}</FormErrorMessage>
                             </FormControl>
                           )}

@@ -149,6 +149,23 @@ export default {
     axios(`/circuits${circuitId ? `/${circuitId}` : ''}`)
       .then(returnData)
       .catch(handleError),
+
+  addEntityToCircuitLeg: async (
+    circuitId,
+    circuitLegId,
+    entityData,
+    getAccessTokenSilently,
+    getAccessTokenWithPopup
+  ) => 
+    postDataWithAuthentication(
+      `/circuits/${circuitId}/legs/${circuitLegId}/addEntity`,
+      entityData,
+      getAccessTokenSilently,
+      getAccessTokenWithPopup,
+    )
+        .then(() => fetchCircuit(circuitId))
+        .catch(handleError),
+      
   addLegToCircuit: async (
     circuitId,
     leagueId,

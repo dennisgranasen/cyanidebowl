@@ -1,106 +1,126 @@
 import React, { useEffect, useState } from 'react';
-import { Checkbox, Image, Td, Tr, Button } from '@chakra-ui/react';
-import { QuestionOutlineIcon } from '@chakra-ui/icons';
+import { Checkbox, Image, Td, Tr, Button, Input, IconButton } from '@chakra-ui/react';
+import { QuestionOutlineIcon, EditIcon, CheckIcon, CloseIcon } from '@chakra-ui/icons';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import imageUrls from '../../imageUrls';
 import config from '../../config';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 import logger from '../../util/logger';
 import useFetchCompetition from '../../hooks/useFetchCompetition';
+import { identityUtils } from '../../util/identityUtil';
 
 const { boxSize } = config;
 
-function CircuitLeg({ circuitLeg, onRemoveLeg, onCollectDataChanged, onArchivedChanged }) {
-  //const [league, setLeague] = useState(null);
+function CircuitLeg({
+  circuitLeg,
+  onRemoveLeg,
+  onCollectDataChanged,
+  onArchivedChanged,
+  onLabelChanged,
+  onAddEntityToLeg
+}) {
   const [error, setError] = useState(null);
-  // Example in CircuitLeg.jsx or parent
-  const getOpusFromGame = (game) => {
-    switch (game) {
-      case 'BB1': return 1;
-      case 'BB2': return 2;
-      case 'BB3': return 3;
-      default: return undefined;
-    }
-  };
+  const [editing, setEditing] = useState(false);
+  const [label, setLabel] = useState(circuitLeg.label);
 
-
-    const { fetchCompetition, league, competition, competitionLoading, error: competitionError } = 
-    useFetchCompetition(circuitLeg.entityId);
-
-
-/*
-  const fetchLeague = (leagueId, opus) => {
-        logger.info('Fetched league: %o', opus);
-    WarpScoresApiService.leagues(leagueId, opus)
-      .then((data) => {
-        setLeague(data, opus);
-        logger.info('Fetched league: %o', data);
-      })
-      .catch((reason) => {
-        setError({ type: 'error', message: reason.toLocaleString() });
-      });
-  };
-*/
-  useEffect(() => {
-    logger.info('Circuit leg is %o', circuitLeg);
-    var opus = getOpusFromGame(circuitLeg.game)
-    //if (circuitLeg && circuitLeg.legType === 'League') {
-    //fetchLeague(circuitLeg.leagueId, opus);
-
-    if (circuitLeg && circuitLeg.entityId)
-      fetchCompetition(circuitLeg.entityId);
-
-
-    
-  }, []);
-
-  return (
-    //<LoadingOrErrorWrapper loading={competitionLoading} error={error || competitionError}>
-      <Tr>
+  // Helper for entity fields
+  const renderRow = (entity, idx) => {
+    // You may want to fetch competition/league info here per entity if needed
+    // For now, just use entity fields directly
+    return (
+      <Tr key={`${circuitLeg.circuitLegId}-${idx}`}
+        onDragOver={e => e.preventDefault()}
+        onDrop={handleDrop}
+        style={{ background: 'inherit' }}>
+        <Td>{/* Logo or image if you want, or leave blank */}</Td>
         <Td>
-          {(competition?.logo || competition?.leagueLogo || league?.logo) && (
-            <Image
-              src={`${imageUrls.logo(competition?.logo || competition?.leagueLogo || league?.logo, league?.id?.opus)}`}
-              boxSize={boxSize}
-              fallback={<QuestionOutlineIcon boxSize={boxSize} />}
-              objectFit="scale-down"
+          {idx === 0 && editing ? (
+            <>
+              <Input
+                size="sm"
+                value={label}
+                onChange={e => setLabel(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') handleSave();
+                  if (e.key === 'Escape') { setLabel(circuitLeg.label); setEditing(false); }
+                }}
+                autoFocus
+                width="auto"
+              />
+              <IconButton icon={<CheckIcon />} size="sm" onClick={handleSave} aria-label="Save" ml={1} />
+              <IconButton icon={<CloseIcon />} size="sm" onClick={() => { setLabel(circuitLeg.label); setEditing(false); }} aria-label="Cancel" ml={1} />
+            </>
+          ) : (
+            <>
+              {idx === 0 && (
+                <>
+                  {circuitLeg.label}
+                  <IconButton icon={<EditIcon />} size="sm" onClick={() => setEditing(true)} aria-label="Edit" ml={2} />
+                </>
+              )}
+            </>
+          )}
+        </Td>
+        <Td>{entity.entityId?.value}</Td>
+        <Td>{entity.legType}</Td>
+        <Td>{entity.game}</Td>
+        <Td>{entity.platform}</Td>
+        <Td>{entity.ruleset}</Td>
+        <Td>{entity.ladderOption}</Td>
+        <Td>
+          {idx === 0 && (
+            <Checkbox
+              defaultChecked={circuitLeg.isCollected}
+              onChange={() => onCollectDataChanged &&
+                onCollectDataChanged(circuitLeg.circuitLegId, !circuitLeg.isCollected)}
             />
           )}
         </Td>
-        <Td>{circuitLeg.label}</Td>
-        <Td>{league?.name || circuitLeg.leagueId }</Td>
-        <Td>{competition?.name || "*"}</Td>
-        <Td>{circuitLeg.legType}</Td>
-        <Td>{circuitLeg.game}</Td>
-        <Td>{circuitLeg.platform}</Td>
-        <Td>{circuitLeg.ruleset}</Td>
-        <Td>{circuitLeg.ladderOption}</Td>
         <Td>
-          <Checkbox 
-            defaultChecked={circuitLeg.isCollected} 
-            onChange={() => onCollectDataChanged && 
-              onCollectDataChanged(circuitLeg.circuitLegId, !circuitLeg.isCollected)}
-          />
+          {idx === 0 && (
+            <Checkbox
+              defaultChecked={circuitLeg.isArchived}
+              onChange={() => onArchivedChanged &&
+                onArchivedChanged(circuitLeg.circuitLegId, !circuitLeg.isArchived)}
+            />
+          )}
         </Td>
         <Td>
-          <Checkbox 
-            defaultChecked={circuitLeg.isArchived} 
-            onChange={() => onArchivedChanged && 
-              onArchivedChanged(circuitLeg.circuitLegId, !circuitLeg.isArchived)}
-          />
+          {idx === 0 && (
+            <Button
+              colorScheme="red"
+              size="xs"
+              onClick={() => onRemoveLeg && onRemoveLeg(circuitLeg.circuitLegId)}
+            >
+              Remove
+            </Button>
+          )}
         </Td>
-        <Td>
-          <Button
-            colorScheme="red"
-            size="xs"
-            onClick={() => onRemoveLeg && onRemoveLeg(circuitLeg.circuitLegId)}
-          >
-            Remove
-          </Button>
-        </Td>
-
       </Tr>
-    //</LoadingOrErrorWrapper>
+    );
+  };
+
+  const handleSave = () => {
+    if (label !== circuitLeg.label) {
+      onLabelChanged(circuitLeg.circuitLegId, label);
+    }
+    setEditing(false);
+  };
+
+  // Drop handler
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const data = JSON.parse(e.dataTransfer.getData('application/json'));
+    // Call parent handler to add entity to this leg
+    if (onAddEntityToLeg) {
+      onAddEntityToLeg(circuitLeg.circuitLegId, data);
+    }
+  };
+
+  return (
+    <>
+      {(circuitLeg.entities || []).map((entity, idx) => renderRow(entity, idx))}
+    </>
   );
 }
 

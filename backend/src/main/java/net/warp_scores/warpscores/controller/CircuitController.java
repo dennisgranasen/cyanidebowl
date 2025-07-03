@@ -1,11 +1,11 @@
 package net.warp_scores.warpscores.controller;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import net.warp_scores.warpscores.model.Circuit;
-import net.warp_scores.warpscores.model.CircuitLeg;
-import net.warp_scores.warpscores.requests.CircuitLegRequest;
-import net.warp_scores.warpscores.service.CircuitService;
+import static net.warp_scores.warpscores.controller.Authorities.AUTHORITY_WRITE_LEAGUE_ADMIN;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -17,11 +17,18 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import static net.warp_scores.warpscores.controller.Authorities.AUTHORITY_WRITE_LEAGUE_ADMIN;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.identity.IdentityUtil;
+import net.warp_scores.warpscores.model.Circuit;
+import net.warp_scores.warpscores.model.CircuitLegEntity;
+import net.warp_scores.warpscores.model.EntityType;
+import net.warp_scores.warpscores.model.GameType;
+import net.warp_scores.warpscores.model.LadderOption;
+import net.warp_scores.warpscores.model.Platform;
+import net.warp_scores.warpscores.requests.CircuitLegRequest;
+import net.warp_scores.warpscores.service.CircuitService;
+import net.warp_scores.warpscores.utils.EnumUtils;
 
 @RestController
 @RequiredArgsConstructor
@@ -120,6 +127,53 @@ public class CircuitController {
             }
         } catch (Exception ex) {
             log.error("Unable to update leg {} from circuit {}.", circuitLegId, circuitId, ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping("/circuits/{circuitId}/legs/{circuitLegId}/addEntity")
+    @PreAuthorize(AUTHORITY_WRITE_LEAGUE_ADMIN)
+    public ResponseEntity<Circuit> addEntityToCircuitLeg(
+            @PathVariable(name = "circuitId") Long circuitId,
+            @PathVariable(name = "circuitLegId") Long circuitLegId,
+            @RequestBody Map<String, Object> entityData) {  
+        try {
+            log.info("Adding entity to circuit leg {} for circuit {}", circuitLegId, circuitId);
+            log.info("Entity data: {}", entityData);    
+            Optional<Circuit> circuit = circuitService.load(circuitId);
+            if (circuit.isPresent()) {
+                CircuitLegEntity entity = new CircuitLegEntity();
+                entity.setEntityId(IdentityUtil.fromId((String)entityData.get("entityId")));
+                String eType = (String)entityData.get("entityType");
+                String game = (String)entityData.get("game");
+                String platform = (String)entityData.get("platform");
+                String ruleset = (String)entityData.get("ruleset");
+                String ladderOpt = (String)entityData.get("ladderOption");
+                entity.setLegType(eType != null && !eType.isEmpty()
+                    ? EnumUtils.valueOfIgnoreCase(EntityType.class, eType)
+                    : null);
+                entity.setPlatform(platform != null && !platform.isEmpty()
+                    ? EnumUtils.valueOfIgnoreCase(Platform.class, platform)
+                    : null);
+                entity.setGame(game != null && !game.isEmpty()
+                    ? EnumUtils.valueOfIgnoreCase(GameType.class, game)
+                    : null);                
+                entity.setRuleset(ruleset);
+                entity.setLadderOption(ladderOpt != null && !ladderOpt.isEmpty() 
+                    ? EnumUtils.valueOfIgnoreCase(LadderOption.class, ladderOpt)
+                    : null);
+                //entity.setExcludes((List<String>) entityData.get("excludes"));
+                //entity.setIncludes((List<String>) entityData.get("includes"));
+                
+                Circuit updated = circuitService.addEntityToCircuitLeg(
+                    circuit.get(), circuitLegId, entity);
+                return ResponseEntity.ok(updated);
+            } else {
+                return ResponseEntity.notFound().build();   
+            }
+        } 
+        catch (Exception ex) {
+            log.error("Unable to add entity to leg {} from circuit {}.", circuitLegId, circuitId, ex);
             return ResponseEntity.internalServerError().build();
         }
     }

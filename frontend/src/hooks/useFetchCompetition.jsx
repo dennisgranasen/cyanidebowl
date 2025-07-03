@@ -18,7 +18,6 @@ export default function useFetchCompetition() {
       setError({ type: 'error', message: 'Invalid entityId' });
       return;
     }
-    console.log('entityid type is: ', entityId.type);
     var leagueId, competitionId;
     if (entityId.type === 'composite') {
       leagueId = entityId.parts[0];
@@ -33,7 +32,7 @@ export default function useFetchCompetition() {
       return;
     }
     setCompetitionLoading(true);
-    WarpScoresApiService.leagues(leagueId).then((league) => {
+    WarpScoresApiService.leagues(entityId).then((league) => {
       if (!league) {
         setError({ type: 'error', message: `League ${leagueId} not found` });
         setCompetitionLoading(false);
@@ -43,10 +42,10 @@ export default function useFetchCompetition() {
       logger.info(`Fetched league ${leagueId}`, league);
             //logger.info(`Loading competition ${leagueId} Comp ${competitionId}:`);
       if (competitionId) {
-        WarpScoresApiService.leagueCompetitions(leagueId)
+        WarpScoresApiService.leagueCompetitions(entityId)
           .then((data) => {
             if (!data || !data.length) {
-              logger.warn(`No competitions found for league ${leagueId}`);
+              logger.warn(`No competitions found for league ${entityId}`);
               setCompetition([]);
               return;
             }

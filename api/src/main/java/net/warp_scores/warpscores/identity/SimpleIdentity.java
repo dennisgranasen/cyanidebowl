@@ -59,4 +59,12 @@ public class SimpleIdentity implements Identity {
         String value = tokens[1];
         return new SimpleIdentity(value, opus);
     }
+
+    @Override
+    public int compareTo(Identity other) {
+        if (other == null) {
+            return 1; // null is considered less than any non-null identity
+        }
+        return this.asMongoKey().compareTo(other.asMongoKey());
+    }
 }
