@@ -38,6 +38,8 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
 
     Optional<Match> findTopByTeamsContainsOrderByStartedDesc(Team team);
 
+    List<Match> findByLeagueIdAndFinishedNotNull(Identity leagueId);
+
     List<Match> findTopByLeagueIdAndFinishedNotNull(Identity leagueId,
             Pageable pageable);
 

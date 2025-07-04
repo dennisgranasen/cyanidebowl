@@ -59,9 +59,10 @@ const compareLegs = (leg, otherLeg) => leg.label.localeCompare(otherLeg.label);
 function TableColumns() {
   return (
     <Tr>
-      <Th />
+      <Th></Th>
       <Th>Label</Th>
-      <Th>Id</Th>
+      <Th>League</Th>
+      <Th>Competition</Th>
       <Th>LegType</Th>
       <Th>Game</Th>
       <Th>Platform</Th>
@@ -87,6 +88,8 @@ function AdminCircuitPage() {
   const [circuit, setCircuit] = useState();
   const [selectedLeagueId, setSelectedLeagueId] = useState('');
   const [selectedCompetitionId, setSelectedCompetitionId] = useState('');
+  const [leagueName, setLeagueName] = useState('');
+  const [competitionName, setCompetitionName] = useState('');
   const [label, setLabel] = useState('');
   const [selectedLeague, setSelectedLeague] = useState(null);
   const [selectedCompetition, setSelectedCompetition] = useState(null);
@@ -94,13 +97,14 @@ function AdminCircuitPage() {
   const [selectedGameType, setSelectedGameType] = useState('');
   const [selectedPlatform, setSelectedPlatform] = useState('');
   const [selectedRuleset, setSelectedRuleset] = useState('');
+  const [searchResults, setSearchResults] = useState({});
   //const [isCollected, setIsCollected] = useState(initialFormValues.isCollected);
   //const [isArchived, setIsArchived] = useState(initialFormValues.isArchived);
 
   // --- Effects ---
   useEffect(() => { fetchCircuit(circuitId); }, []);
 /*
-    // ...inside Formik render function...
+    // ...inside Formik render function..
   useEffect(() => {
     // Map selectedGameType to opus value
     let newOpus = '3';
@@ -119,7 +123,12 @@ function AdminCircuitPage() {
     const rulesets = getRulesets(selectedGameType);
     setSelectedRuleset(rulesets.length === 1 ? rulesets[0] : getDefaultRuleset(selectedGameType));
 
-    //const opus = getOpus(selectedGameType);
+    //const opus = competition.id.opus;
+    // const gameTypeKey = getGameFromOpus(opus).toLowerCase();
+    // setSelectedGameType(gameTypeKey);
+    // setSelectedPlatform(getDefaultPlatform(gameTypeKey));
+    // setSelectedRuleset(getDefaultRuleset(gameTypeKey));
+    // setSelectedCompetitionFormat(competition.format || '');
     console.log('Setting BB version based on game type:', selectedGameType);
     setBbVersion(selectedGameType);
 
@@ -128,34 +137,44 @@ function AdminCircuitPage() {
 
 
   // --- Handlers ---
+  const fetchCircuit = (id) => {
+    setLoading(true);
+
+    WarpScoresApiService.circuits(id)
+      .then((res) => {
+        if (res.circuitLegs == null) res.circuitLegs = [];
+        else res.circuitLegs.sort(compareLegs);
+        setCircuit(res);
+      })
+      .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
+      .finally(() => setLoading(false));
+  };
+
   const handleCompetitionClick = (competition) => {
-    console.log('Competition clicked:', competition);
     setSelectedCompetitionId(competition.id.parts[1]);
     setSelectedLeagueId(competition.id.parts[0]);
     setLabel(competition.name);
-    
-    const name = competition.name || competition.leagueName || 'Unknown Competition';
+    setCompetitionName(competition.name || '');
+    setLeagueName(competition.leagueName || '');
     setSelectedCompetition(competition);
-    const opus = competition.id.opus
+    const opus = competition.id.opus;
     const gameTypeKey = getGameFromOpus(opus).toLowerCase();
     setSelectedGameType(gameTypeKey);
     setSelectedPlatform(getDefaultPlatform(gameTypeKey));
     setSelectedRuleset(getDefaultRuleset(gameTypeKey));
-    setSelectedCompetitionFormat(competition.format || compObj?.format || '');
+    setSelectedCompetitionFormat(competition.format || '');
   };
 
   const handleLeagueClick = (league) => {
-    console.log('League clicked:', league);
     setSelectedCompetitionId('');
     setSelectedLeagueId(league.id.value);
     setLabel(league.name);
+    setLeagueName(league.name || '');
+    setCompetitionName('');
     const gameTypeKey = getGameFromOpus(league.id.opus).toLowerCase();
     setSelectedGameType(gameTypeKey);
     setSelectedPlatform(getDefaultPlatform(gameTypeKey));
     setSelectedRuleset(getDefaultRuleset(gameTypeKey));
-    console.log('Fetching league 155:', league.leagueId, league.id.opus);
-    if ((league.id == null || league.id === '') && league.leagueId == undefined) 
-      console.log('League has no ID, cannot fetch details:', league);
     WarpScoresApiService.leagues(league.id)
       .then((res) => setSelectedLeague(res))
       .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }));
@@ -191,34 +210,27 @@ function AdminCircuitPage() {
       .then(() => fetchCircuit(circuitId))
       .catch((err) => setError({ type: 'error', message: err.toLocaleString() }));      
   };
-
-  const fetchCircuit = (id) => {
-    setLoading(true);
-
-    WarpScoresApiService.circuits(id)
-      .then((res) => {
-        if (res.circuitLegs == null) res.circuitLegs = [];
-        else res.circuitLegs.sort(compareLegs);
-        setCircuit(res);
-      })
-      .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
-      .finally(() => setLoading(false));
-  };
   
   const onAddLegClicked = (values, actions) => {
     console.log('Adding leg with values:', values);
+    const opus = getOpusFromGame(values.gameType);
     WarpScoresApiService.addLegToCircuit(
       circuit.circuitId,
-      values.leagueId,
-      values.competitionId,
-      values.competitionId ? entityTypes.competition : entityTypes.league,
       values.label,
-      values.gameType,
-      values.platform,
-      values.ruleset,
+      {
+        entityId: 
+          values.competitionId ? 
+            identityUtils.build(opus, values.leagueId, values.competitionId) : 
+            identityUtils.build(opus, values.leagueId),
+        entityType: values.competitionId ? entityTypes.competition : entityTypes.league,
+        entityNames: values.competitionId ? [values.leagueName, values.competitionName] : [values.leagueName],
+        game: values.gameType.toUpperCase(),
+        platform: values.platform.toUpperCase(),
+        ruleset: values.ruleset.toUpperCase(),
+        ladderOption: values.ladderOption.toUpperCase(),
+        isArchived: values.isArchived,
+      },
       values.isCollected,
-      values.isArchived,
-      values.ladderOption,
       getAccessTokenSilently,
       getAccessTokenWithPopup
     )
@@ -248,11 +260,13 @@ function AdminCircuitPage() {
       {
         entityId: identityUtils.key(entityData.id),
         entityType: entityData.type,
-        name: entityData.name,
-        game: entityData.gameType || selectedGameType,
-        platform: entityData.platform || selectedPlatform,
-        ruleset: entityData.ruleset || selectedRuleset,
-        ladderOption: entityData.ladderOption || ''
+        entityNames: entityData.entityNames,
+        game: selectedGameType?.toUpperCase(),
+        platform: selectedPlatform?.toUpperCase(),
+        ruleset: selectedRuleset?.toUpperCase(),
+        // ladderOption: selectedRuleset?.toUpperCase(), 
+        // default not set, user interaction needed?
+        isArchived: false
       },
       getAccessTokenSilently,
       getAccessTokenWithPopup
@@ -338,6 +352,8 @@ function AdminCircuitPage() {
           handleCompetitionClick={handleCompetitionClick} 
           handleLeagueClick={handleLeagueClick}
           onSearchResultDragStart={handleSearchResultDragStart}
+          searchResults={searchResults}
+          setSearchResults={setSearchResults}
         />
         
         <Heading size="md">Add Leg</Heading>
@@ -373,6 +389,10 @@ function AdminCircuitPage() {
               props.setFieldValue('competitionId', selectedCompetitionId || '');
               props.setFieldValue('label', label || '');
             }, [selectedCompetitionId, label]);
+            useEffect(() => {
+              props.setFieldValue('leagueName', leagueName || '');
+              props.setFieldValue('competitionName', competitionName || '');
+            }, [leagueName, competitionName]);
             /*
             useEffect(() => {
               if (selectedCompetition && selectedCompetition.format) {
@@ -500,7 +520,6 @@ function AdminCircuitPage() {
                         </Field>
                       </Box>
                     )}
-
                     {/* Competition Id field: only show when a competition is selected */}
                     {['bb1', 'bb2', 'bb3'].includes(selectedGameType) && selectedCompetitionId && (
                       <Box>
@@ -611,6 +630,42 @@ function AdminCircuitPage() {
                       </Field>
                     </Box>
                   )}
+                {selectedLeagueId && !selectedCompetitionId && (
+                  <Box>
+                    <Field name="leagueName">
+                      {({ field }) => (
+                        <FormControl>
+                          <FormLabel>League Name</FormLabel>
+                          <Input {...field} value={props.values.leagueName} placeholder="League Name" readOnly />
+                        </FormControl>
+                      )}
+                    </Field>
+                  </Box>
+                )}
+                {selectedCompetitionId && (
+                  <>
+                    <Box>
+                      <Field name="leagueName">
+                        {({ field }) => (
+                          <FormControl>
+                            <FormLabel>League Name</FormLabel>
+                            <Input {...field} value={props.values.leagueName} placeholder="League Name" readOnly />
+                          </FormControl>
+                        )}
+                      </Field>
+                    </Box>
+                    <Box>
+                      <Field name="competitionName">
+                        {({ field }) => (
+                          <FormControl>
+                            <FormLabel>Competition Name</FormLabel>
+                            <Input {...field} value={props.values.competitionName} placeholder="Competition Name" readOnly />
+                          </FormControl>
+                        )}
+                      </Field>
+                    </Box>
+                  </>
+                )}
                 </SimpleGrid>
                 <CardFooter>
                   <Box>

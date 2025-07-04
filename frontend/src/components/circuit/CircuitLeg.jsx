@@ -1,15 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { Checkbox, Image, Td, Tr, Button, Input, IconButton } from '@chakra-ui/react';
-import { QuestionOutlineIcon, EditIcon, CheckIcon, CloseIcon } from '@chakra-ui/icons';
+import React, { useState, useEffect } from 'react';
+import { Checkbox, Td, Tr, Button, Input, IconButton, Box, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, ModalCloseButton, useDisclosure, FormControl, FormLabel, Spinner, List, ListItem, ButtonGroup } from '@chakra-ui/react';
+import { EditIcon, CheckIcon, CloseIcon, ChevronDownIcon, ChevronRightIcon } from '@chakra-ui/icons';
 import WarpScoresApiService from '../../WarpScoresApiService';
-import imageUrls from '../../imageUrls';
-import config from '../../config';
-import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
-import logger from '../../util/logger';
-import useFetchCompetition from '../../hooks/useFetchCompetition';
-import { identityUtils } from '../../util/identityUtil';
-
-const { boxSize } = config;
+import MatchSelectionModal from './ModalMatchSelection';
 
 function CircuitLeg({
   circuitLeg,
@@ -17,24 +10,105 @@ function CircuitLeg({
   onCollectDataChanged,
   onArchivedChanged,
   onLabelChanged,
-  onAddEntityToLeg
+  onAddEntityToLeg,
+  onEditEntity // <-- add this prop for saving edits
 }) {
-  const [error, setError] = useState(null);
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(circuitLeg.label);
+  const [expanded, setExpanded] = useState(false);
 
-  // Helper for entity fields
-  const renderRow = (entity, idx) => {
-    // You may want to fetch competition/league info here per entity if needed
-    // For now, just use entity fields directly
-    return (
-      <Tr key={`${circuitLeg.circuitLegId}-${idx}`}
-        onDragOver={e => e.preventDefault()}
-        onDrop={handleDrop}
-        style={{ background: 'inherit' }}>
-        <Td>{/* Logo or image if you want, or leave blank */}</Td>
-        <Td>
-          {idx === 0 && editing ? (
+  // Modal state
+  const [selectedEntity, setSelectedEntity] = useState(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const [allMatches, setAllMatches] = useState([]);
+  const [loadingMatches, setLoadingMatches] = useState(false);
+
+  const handleSave = () => {
+    if (label !== circuitLeg.label) {
+      onLabelChanged(circuitLeg.circuitLegId, label);
+    }
+    setEditing(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const data = JSON.parse(e.dataTransfer.getData('application/json'));
+    if (onAddEntityToLeg) {
+      onAddEntityToLeg(circuitLeg.circuitLegId, data);
+    }
+  };
+
+  const handleEntityClick = async (entity) => {
+    setSelectedEntity(entity);
+    setLoadingMatches(true);
+    //const response = await fetch(`/api/legs/${circuitLeg.circuitLegId}/entities/${entity.entityId}/matches`);
+    //const matches = await response.json();
+    console.log("Fetching matches for entity:", entity);
+    let fetchMatches = () => {
+      console.log("Fetching matches for legType:", entity.legType);
+      switch (entity.legType) {
+        case 'Competition':
+          return WarpScoresApiService.competitionMatches(entity.entityId);
+        case 'League':
+          return WarpScoresApiService.leagueMatches(entity.entityId);
+        default:
+          return Promise.resolve([]);
+    }};
+    fetchMatches().then(matches => {
+      if (!Array.isArray(matches)) {
+        throw new Error('Invalid matches data');
+      }
+      console.log("Fetched matches:", matches);
+      let m = matches.map(m => ({
+        id: m.id,
+        name: m.name || m.id,
+        date: m.date,
+      }));
+      setAllMatches(m);
+    })
+    .catch(() => {
+      setAllMatches([])
+    })
+    .finally(() => {
+      setLoadingMatches(false);
+      onOpen();
+    });
+  };
+
+  const handleEntitySave = () => {
+    if (onEditEntity && selectedEntity) {
+      onEditEntity(circuitLeg.circuitLegId, selectedEntity);
+    }
+    onClose();
+  };
+
+  const renderRow = (entity, idx) => (
+    <Tr
+      key={`${circuitLeg.circuitLegId}-${idx}`}
+      onDrop={handleDrop}
+      onDragOver={e => e.preventDefault()}
+      onClick={() => handleEntityClick(entity)}
+      style={{ cursor: 'pointer' }}
+    >
+      <Td p={0} m={0} width="1%" onClick={e => e.stopPropagation()}>
+        {idx === 0 && (circuitLeg.entities?.length > 1) ? (
+          <IconButton
+            icon={expanded ? <ChevronDownIcon /> : <ChevronRightIcon />}
+            size="sm"
+            variant="ghost"
+            aria-label={expanded ? "Collapse" : "Expand"}
+            onClick={e => { e.stopPropagation(); setExpanded(ex => !ex); }}
+            m={0}
+            p={0}
+          />
+        ) : (
+          <Box width="32px" height="32px" />
+        )}
+      </Td>
+      <Td>
+        {idx === 0 ? (
+          editing ? (
             <>
               <Input
                 size="sm"
@@ -52,74 +126,70 @@ function CircuitLeg({
             </>
           ) : (
             <>
-              {idx === 0 && (
-                <>
-                  {circuitLeg.label}
-                  <IconButton icon={<EditIcon />} size="sm" onClick={() => setEditing(true)} aria-label="Edit" ml={2} />
-                </>
-              )}
+              {circuitLeg.label}
+              <IconButton icon={<EditIcon />} size="sm" onClick={() => setEditing(true)} aria-label="Edit" ml={2} />
             </>
-          )}
-        </Td>
-        <Td>{entity.entityId?.value}</Td>
-        <Td>{entity.legType}</Td>
-        <Td>{entity.game}</Td>
-        <Td>{entity.platform}</Td>
-        <Td>{entity.ruleset}</Td>
+          )
+        ) : null}
+      </Td>
+      <Td>{entity.entityNames && entity.entityNames[0] || ''}</Td>
+      <Td>{entity.entityNames ? (entity.entityNames.length > 1 ? entity.entityNames[1] : '*') : ''}</Td>
+      <Td>{entity.legType}</Td>
+      <Td>{entity.game}</Td>
+      <Td>{entity.platform}</Td>
+      <Td>{entity.ruleset}</Td>
+      {/* Conditionally render Ladder column */}
+      {entity.legType === 'COMPETITION' && entity.ladderOption ? (
         <Td>{entity.ladderOption}</Td>
-        <Td>
-          {idx === 0 && (
-            <Checkbox
-              defaultChecked={circuitLeg.isCollected}
-              onChange={() => onCollectDataChanged &&
-                onCollectDataChanged(circuitLeg.circuitLegId, !circuitLeg.isCollected)}
-            />
-          )}
-        </Td>
-        <Td>
-          {idx === 0 && (
-            <Checkbox
-              defaultChecked={circuitLeg.isArchived}
-              onChange={() => onArchivedChanged &&
-                onArchivedChanged(circuitLeg.circuitLegId, !circuitLeg.isArchived)}
-            />
-          )}
-        </Td>
-        <Td>
-          {idx === 0 && (
-            <Button
-              colorScheme="red"
-              size="xs"
-              onClick={() => onRemoveLeg && onRemoveLeg(circuitLeg.circuitLegId)}
-            >
-              Remove
-            </Button>
-          )}
-        </Td>
-      </Tr>
-    );
-  };
+      ) : (
+        <Td /> // Empty cell for alignment
+      )}
+      <Td>
+        {idx === 0 && (
+          <Checkbox
+            defaultChecked={circuitLeg.isCollected}
+            onChange={() => onCollectDataChanged &&
+              onCollectDataChanged(circuitLeg.circuitLegId, !circuitLeg.isCollected)}
+          />
+        )}
+      </Td>
+      <Td>
+        {idx === 0 && (
+          <Checkbox
+            defaultChecked={circuitLeg.isArchived}
+            onChange={() => onArchivedChanged &&
+              onArchivedChanged(circuitLeg.circuitLegId, !circuitLeg.isArchived)}
+          />
+        )}
+      </Td>
+      <Td>
+        {idx === 0 && (
+          <Button
+            colorScheme="red"
+            size="xs"
+            onClick={e => { e.stopPropagation(); onRemoveLeg && onRemoveLeg(circuitLeg.circuitLegId); }}
+          >
+            Remove
+          </Button>
+        )}
+      </Td>
+    </Tr>
+  );
 
-  const handleSave = () => {
-    if (label !== circuitLeg.label) {
-      onLabelChanged(circuitLeg.circuitLegId, label);
-    }
-    setEditing(false);
-  };
-
-  // Drop handler
-  const handleDrop = (e) => {
-    e.preventDefault();
-    const data = JSON.parse(e.dataTransfer.getData('application/json'));
-    // Call parent handler to add entity to this leg
-    if (onAddEntityToLeg) {
-      onAddEntityToLeg(circuitLeg.circuitLegId, data);
-    }
-  };
+  // Only show the first row if not expanded, otherwise show all
+  const rows = circuitLeg.entities && circuitLeg.entities.length > 0
+    ? (expanded
+        ? circuitLeg.entities.map(renderRow)
+        : [renderRow(circuitLeg.entities[0], 0)])
+    : [];
 
   return (
     <>
-      {(circuitLeg.entities || []).map((entity, idx) => renderRow(entity, idx))}
+      {rows}
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <MatchSelectionModal loadingMatches={loadingMatches} allMatches={allMatches} selectedEntity={selectedEntity} handleEntitySave={handleEntitySave} />
+      </Modal>
     </>
   );
 }

@@ -19,7 +19,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.identity.CompositeIdentity;
+import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.IdentityUtil;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Circuit;
 import net.warp_scores.warpscores.model.CircuitLegEntity;
 import net.warp_scores.warpscores.model.EntityType;
@@ -28,6 +31,7 @@ import net.warp_scores.warpscores.model.LadderOption;
 import net.warp_scores.warpscores.model.Platform;
 import net.warp_scores.warpscores.requests.CircuitLegRequest;
 import net.warp_scores.warpscores.service.CircuitService;
+import net.warp_scores.warpscores.service.PopulatorUtil;
 import net.warp_scores.warpscores.utils.EnumUtils;
 
 @RestController
@@ -131,6 +135,7 @@ public class CircuitController {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @PostMapping("/circuits/{circuitId}/legs/{circuitLegId}/addEntity")
     @PreAuthorize(AUTHORITY_WRITE_LEAGUE_ADMIN)
     public ResponseEntity<Circuit> addEntityToCircuitLeg(
@@ -142,13 +147,25 @@ public class CircuitController {
             log.info("Entity data: {}", entityData);    
             Optional<Circuit> circuit = circuitService.load(circuitId);
             if (circuit.isPresent()) {
-                CircuitLegEntity entity = new CircuitLegEntity();
-                entity.setEntityId(IdentityUtil.fromId((String)entityData.get("entityId")));
-                String eType = (String)entityData.get("entityType");
+                CircuitLegEntity entity = new CircuitLegEntity();   
+                /*{
+                entityId=3_55bdf1c7-5941-11ef-be7b-bc24112ec32e_615c0eea-d281-11ef-9e80-bc2411305479,
+                entityType=competition,
+                entityNames=[Nuffle Spitfire Trophy, Spitfire Cup XXVII],
+                game=BB3,
+                platform=PC,
+                ruleset=BB2020,
+                isArchived=false
+                }              
+                */
                 String game = (String)entityData.get("game");
+                String eType = (String)entityData.get("legType");
+                if (eType == null)
+                    eType = (String)entityData.get("entityType");
                 String platform = (String)entityData.get("platform");
                 String ruleset = (String)entityData.get("ruleset");
                 String ladderOpt = (String)entityData.get("ladderOption");
+                String entityIdString = (String)entityData.get("entityId");
                 entity.setLegType(eType != null && !eType.isEmpty()
                     ? EnumUtils.valueOfIgnoreCase(EntityType.class, eType)
                     : null);
@@ -157,11 +174,45 @@ public class CircuitController {
                     : null);
                 entity.setGame(game != null && !game.isEmpty()
                     ? EnumUtils.valueOfIgnoreCase(GameType.class, game)
-                    : null);                
+                    : null);
+                Object eNames = entityData.get("entityNames");
+                if (eNames != null) {
+                    log.info(eNames.getClass().getName());
+                    log.info(eNames.toString());                    
+                    entity.setEntityNames(((List<String>)eNames).toArray(new String[0]));
+                }
                 entity.setRuleset(ruleset);
                 entity.setLadderOption(ladderOpt != null && !ladderOpt.isEmpty() 
                     ? EnumUtils.valueOfIgnoreCase(LadderOption.class, ladderOpt)
                     : null);
+               
+                if (entityIdString != null && !entityIdString.isEmpty()) {
+                    entity.setEntityId(IdentityUtil.fromId(entityIdString));
+                } else {
+                    String leagueIdString = (String)entityData.get("leagueId");
+                    if (leagueIdString != null && !leagueIdString.isEmpty()) {
+                        String competitionIdString = (String)entityData.get("competitionId");
+                        Identity entityId;
+                        int opus;
+                        switch (entity.getGame()) {
+                            case BB1: opus = 1; break;
+                            case BB2: opus = 2; break;
+                            case BB3: opus = 3; break;
+                            default:
+                                log.error("Unsupported game type: {}", entity.getGame());
+                                return ResponseEntity.badRequest().build();
+                        }
+                        if (competitionIdString != null && !competitionIdString.isEmpty()) {
+                            entityId = new CompositeIdentity(opus, new String[] {leagueIdString, competitionIdString} );
+                        } else {
+                            entityId = new SimpleIdentity(leagueIdString, opus);
+                        }
+                        entity.setEntityId(entityId);
+                    } else {
+                        log.error("No entityId or leagueId provided in entity data: {}", entityData);
+                        return ResponseEntity.badRequest().build();
+                    }
+                }
                 //entity.setExcludes((List<String>) entityData.get("excludes"));
                 //entity.setIncludes((List<String>) entityData.get("includes"));
                 

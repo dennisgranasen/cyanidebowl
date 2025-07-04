@@ -49,5 +49,16 @@ export const identityUtils = {
         value2 = value2[value2.length - 1]; // Get the last part of value2
 
         return `${opus1}_${value1}_${value2}`;
+    },
+    build: (opus, ...parts) => {
+        if (typeof opus !== 'number') {
+            console.warn('Opus must be a number:', opus);
+            return null;
+        }
+        if (!parts || parts.length === 0) {
+            console.warn('No parts provided to build identity');
+            return `${opus}`;
+        }
+        return [opus, ...parts].join('_');
     }
 };

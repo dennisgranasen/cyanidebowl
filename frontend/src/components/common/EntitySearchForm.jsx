@@ -11,7 +11,7 @@ import config from '../../config';
 
 
 
-function EntitySearchForm({ handleLeagueClick, handleCompetitionClick, onSearchResults, onSearchResultDragStart }) {
+function EntitySearchForm({ handleLeagueClick, handleCompetitionClick, onSearchResultDragStart, searchResults, setSearchResults }) {
     const [bbVersion, setBbVersion] = useState(String(config.defaultOpus || 3));
     const { isAuthenticated, isLoading, getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0WithUserPermissions();
     const [lines, setLines] = useState([]);
@@ -19,12 +19,11 @@ function EntitySearchForm({ handleLeagueClick, handleCompetitionClick, onSearchR
     const competitionRefs = useRef({});
     const parentRef = useRef(null);
     const [leagueOffsets, setLeagueOffsets] = useState({});
-    const [searchResults, setSearchResults] = useState([]);
     
   useEffect(() => {
     if (!searchResults.leagueDetails || !searchResults.competitionDetails) return;
-    if (onSearchResults)
-      onSearchResults(searchResults.leagueDetails, searchResults.competitionDetails);
+    //if (onSearchResults)
+    //  onSearchResults(searchResults.leagueDetails, searchResults.competitionDetails);
     const newOffsets = {};
     let accumulatedOffset = 0;
     searchResults.leagueDetails.forEach(league => {
@@ -287,7 +286,7 @@ function EntitySearchForm({ handleLeagueClick, handleCompetitionClick, onSearchR
                             type: 'league',
                             id: item.id,
                             opus: item.opus,
-                            name: item.name,
+                            entityNames: [item.name],
                           }));
                           if (onSearchResultDragStart) {
                             onSearchResultDragStart(item);
@@ -319,7 +318,7 @@ function EntitySearchForm({ handleLeagueClick, handleCompetitionClick, onSearchR
                             type: 'competition',
                             id: item.id,
                             opus: item.opus,
-                            name: item.name,
+                            entityNames: [item.leagueName, item.name],
                           }));
                         if (onSearchResultDragStart) {
                           onSearchResultDragStart(item);
