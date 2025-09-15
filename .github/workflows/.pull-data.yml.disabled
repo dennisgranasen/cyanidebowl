@@ -3,7 +3,7 @@ name: Pull data from Cyanide and update MongoDB
 on:
   workflow_dispatch:  # allows manual triggering of the workflow
   schedule:
-    - cron: '0 * */15 * *'    # every 15 minutes
+    - cron: '*/2 * * * *'    # every 2 days
 jobs:
   fetch_data:
     runs-on: ubuntu-latest
