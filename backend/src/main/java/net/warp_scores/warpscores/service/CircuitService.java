@@ -89,41 +89,15 @@ public class CircuitService {
         CircuitLeg newLeg = new CircuitLeg();
         newLeg.setCircuitLegId(sequenceGenerator.nextIdFor(CircuitLeg.class));
 
-        // --- NEW: Build entities list ---
-        Collection<CircuitLegEntity> entities = req.getEntities();
-        if (entities != null)
-            newLeg.setEntities(entities.stream().toList());
-        else {          
-            Identity entityId = IdentityUtil.fromId(req.getEntityId());  
+        CircuitLegEntity entity = req.getEntity();
+        if (entity != null) {
+            ArrayList<CircuitLegEntity> entities = new ArrayList<>();
+            entities.add(entity);
+            newLeg.setEntities(entities);
+
+        } else {
+            log.warn("No entity provided in request, creating empty leg.");
             newLeg.setEntities(new ArrayList<>());
-            newLeg.getEntities().add(
-                new CircuitLegEntity(){
-                    {                        
-                        setEntityId(entityId);
-                        setLegType(entityId instanceof CompositeIdentity
-                            ? EntityType.Competition : EntityType.League);
-                        setGame(
-                            req.getGame() != null && !req.getGame().isEmpty()
-                                ? EnumUtils.valueOfIgnoreCase(GameType.class, req.getGame())
-                                : null
-                        );
-                        setPlatform(
-                            req.getPlatform() != null && !req.getPlatform().isEmpty()
-                                ? EnumUtils.valueOfIgnoreCase(Platform.class, req.getPlatform())
-                                : null
-                        );
-                        setRuleset(
-                            req.getRuleset() != null && !req.getRuleset().isEmpty()
-                                ? req.getRuleset()
-                                : null
-                        );
-                        setLadderOption(
-                            req.getLadderOption() != null && !req.getLadderOption().isEmpty()
-                                ? EnumUtils.valueOfIgnoreCase(LadderOption.class, req.getLadderOption())
-                                : null
-                        );
-                    }
-                });
         }
 
         newLeg.setLabel(req.getLabel());
@@ -131,11 +105,8 @@ public class CircuitService {
 
         circuit.addLeg(newLeg);
 
-        // Optionally: updateLeagueCollection for each entity
-        for (CircuitLegEntity entity : entities) {
-            if (entity.getEntityId() != null && newLeg.getIsCollected() != null && newLeg.getIsCollected()) {
-                updateLeagueCollection(entity.getEntityId(), entity.getLegType(), true);
-            }
+        if (entity != null && entity.getEntityId() != null && newLeg.getIsCollected() != null && newLeg.getIsCollected()) {
+            updateLeagueCollection(entity.getEntityId(), entity.getLegType(), true);
         }
 
         return circuitRepository.save(circuit);

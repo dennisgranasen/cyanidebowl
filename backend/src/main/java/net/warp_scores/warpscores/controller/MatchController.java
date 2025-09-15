@@ -65,6 +65,21 @@ public class MatchController {
         return getLatestLeagueMatches(leagueId, null);
     }
     */
+
+    @GetMapping("/matches/league/{leagueId}")
+    public ResponseEntity<List<Match>> getLeagueMatches(
+            @PathVariable(name = "leagueId") String leagueId,
+            @RequestParam(name = "limit", required = false) Integer limit) {
+        try {
+            Identity leagueIdentity = IdentityUtil.fromId(leagueId);
+            List<Match> matches = matchService.getLeagueMatches(leagueIdentity, limit);
+            return ResponseEntity.ok(matches);
+        } catch (Exception ex) {
+            log.error("Unable to retrieve matches", ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
     @GetMapping("/matches/league/{leagueId}/latest")
     public ResponseEntity<List<Match>> getLatestLeagueMatches(
             @PathVariable(name = "leagueId") String leagueId,

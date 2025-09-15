@@ -163,37 +163,23 @@ export default {
       getAccessTokenSilently,
       getAccessTokenWithPopup,
     )
-        .then(() => fetchCircuit(circuitId))
+        .then(returnData)
         .catch(handleError),
       
   addLegToCircuit: async (
     circuitId,
-    leagueId,
-    competitionId,
-    legType,
-    customLabel,
-    game,
-    platform,
-    ruleset,
+    label,
+    entityData,
     isCollected,
-    isArchived,
-    ladderOption,
     getAccessTokenSilently,
     getAccessTokenWithPopup
   ) =>
     postDataWithAuthentication(
       `/circuits/${circuitId}/legs`,
       {
-        leagueId,
-        competitionId: competitionId  || null,
-        legType,
-        label: customLabel,
-        game: game.toUpperCase(),
-        platform,
-        ruleset: ruleset.toUpperCase(),
-        isCollected: isCollected,
-        isArchived: isArchived,
-        ladderOption: ladderOption || null,
+        label: label,
+        entity: entityData,
+        isCollected: isCollected
       },
       getAccessTokenSilently,
       getAccessTokenWithPopup
@@ -285,7 +271,14 @@ export default {
     axios(`/matches/league/${leagueId.key || leagueId}/latest${limit ? `?limit=${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
-
+  leagueMatches: async (leagueId, limit) =>
+    axios(`/matches/league/${leagueId.key || leagueId}${limit ? `?limit=${limit}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
+  competitionMatches: async (competitionId, limit) =>
+    axios(`/matches/competition/${competitionId.key || competitionId}${limit ? `?limit=${limit}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
   match: async (matchId) =>
     axios(`/matches/${matchId.key || matchId}`)
       .then(returnData)

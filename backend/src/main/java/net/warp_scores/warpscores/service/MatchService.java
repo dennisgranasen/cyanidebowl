@@ -56,6 +56,17 @@ public class MatchService {
     }
 
     @DurationLogging
+    public List<Match> getLeagueMatches(Identity leagueId, Integer limit) {
+        List<Match> matches;
+        if (limit == null)
+            matches = matchRepository.findByLeagueIdAndFinishedNotNull(leagueId);
+        else
+            matches = matchRepository.findTopByLeagueIdAndFinishedNotNull(leagueId,
+                PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "finished")));
+        return adjustCompetitionNameAndLogoAndUpdateConcedeAndOvertimeInfo(matches);
+    }
+
+    @DurationLogging
     public List<Match> getLatestCompetitionMatches(Identity competitionId, int limit) {
         log.info("getLatestCompetitionMatches: competitionId={}, limit={}", competitionId, limit);
         Identity cid;

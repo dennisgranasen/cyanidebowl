@@ -21,6 +21,7 @@ public class CircuitLegEntity implements Comparable<CircuitLegEntity> {
     private EntityType legType;
     private List<Object> excludes;
     private List<Object> includes;
+    private String[] entityNames;
     private GameType game;
     private Platform platform;
     private String ruleset;
