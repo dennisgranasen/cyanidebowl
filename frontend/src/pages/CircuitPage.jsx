@@ -3,6 +3,7 @@ import { Box, Heading, Table, TableContainer, Tbody, Td, Tfoot, Th, Thead, Tr, V
 import { useParams } from 'react-router-dom';
 import WarpScoresApiService from '../WarpScoresApiService';
 import Navigation from '../components/misc/Navigation';
+import Circuit from '../components/circuit/Circuit';
 import HeaderCard from '../components/common/HeaderCard';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 
@@ -66,8 +67,8 @@ function CircuitPage() {
               <TableColumns />
             </Tfoot>
           </Table>
-          warpscores
         </TableContainer>
+        <Circuit circuit={circuit} circuitLoading={loading} />
       </LoadingOrErrorWrapper>
     </VStack>
   );

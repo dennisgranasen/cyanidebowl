@@ -214,6 +214,15 @@ export default {
     )
       .then(returnData)
       .catch(handleError),
+
+  circuitRanks: async (circuitId, limit) =>
+    axios(`/ranks/circuit/${circuitId.key || circuitId}${limit ? `?limit=${limit}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
+  circuitTeams: async (circuitId, limit) =>
+    axios(`/teams/circuit/${circuitId.key || circuitId}${limit ? `?limit=${limit}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
   // leagues
   leagues: async (leagueId) =>
     axios(`/leagues${leagueId ? `/${leagueId.key || leagueId}` : ''}`)

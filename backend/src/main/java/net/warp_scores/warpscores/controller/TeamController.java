@@ -119,4 +119,16 @@ public class TeamController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+    @GetMapping("/teams/circuit/{circuitId}")
+    public ResponseEntity<List<Team>> getTeamsForCircuit(
+            @PathVariable(name = "circuitId") Long circuitId) {
+        try {
+            List<Team> teamsForCircuit = teamService.getTeamsForCircuit(circuitId);
+            return ResponseEntity.ok(teamsForCircuit);
+        } catch (Exception ex) {
+            log.error("Unable to get teams for circuit id {}.", circuitId, ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }
