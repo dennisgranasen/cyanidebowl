@@ -131,4 +131,33 @@ public class TeamController {
             return ResponseEntity.internalServerError().build();
         }
     }
+    
+    @GetMapping("/teams/circuit/{circuitId}/leg/{circuitLegId}")
+    public ResponseEntity<List<Team>> getTeamsForCircuitLeg(
+            @PathVariable(name = "circuitId") Long circuitId,
+            @PathVariable(name = "circuitLegId") Long circuitLegId) {
+        try {
+            List<Team> teamsForCircuit = teamService.getTeamsForCircuitLeg(circuitId, circuitLegId);
+            return ResponseEntity.ok(teamsForCircuit);
+        } catch (Exception ex) {
+            log.error("Unable to get teams for circuit id {} and leg id {}.", circuitId, circuitLegId, ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/teams/circuit/{circuitId}/leg/{circuitLegId}/{entityId}")
+    public ResponseEntity<List<Team>> getTeamsForCircuitLegEntity(
+            @PathVariable(name = "circuitId") Long circuitId,
+            @PathVariable(name = "circuitLegId") Long circuitLegId,
+            @PathVariable(name = "entityId") String entityId) {
+        try {
+            Identity eid = IdentityUtil.fromId(entityId);
+
+            List<Team> teamsForCircuit = teamService.getTeamsForCircuitLegEntity(circuitId, circuitLegId, eid);
+            return ResponseEntity.ok(teamsForCircuit);
+        } catch (Exception ex) {
+            log.error("Unable to get teams for circuit id {} and leg id {} and entity id {}.", circuitId, circuitLegId, entityId, ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }

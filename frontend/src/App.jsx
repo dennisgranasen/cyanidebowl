@@ -9,6 +9,8 @@ import CompetitionPage from './pages/CompetitionPage';
 import AboutPage from './pages/AboutPage';
 import CoachPage from './pages/CoachPage';
 import AdminPage from './pages/AdminPage';
+import CircuitLegPage from './pages/CircuitLegPage';
+import CircuitLegEntityPage from './pages/CircuitLegEntityPage';
 import StatisticsPage from './pages/StatisticsPage';
 import LatestMatchesPage from './pages/LatestMatchesPage';
 import LiveMatchesPage from './pages/LiveMatchesPage';
@@ -82,6 +84,8 @@ function AppRoutes() {
       <Route path="/competition/:competitionId/arena/:race" element={<ArenaPage />} />
       <Route path="/competition/:competitionId/arena/coach/:coachId" element={<ArenaCoachPage />} />
       <Route path="/competition/:competitionId/team/:teamId" element={<TeamPage />} />
+      <Route path="/circuit/:circuitId/leg/:legId" element={<CircuitLegPage />} />
+      <Route path="/circuit/:circuitId/leg/:legId/:entityId" element={<CircuitLegEntityPage />} />
       <Route path="/circuit/:circuitId" element={<CircuitPage />} />
       {/* Protected Routes/Needing authentication */}
       <Route path="/coachPage" element={<ProtectedRoute component={CoachPage} />} />

@@ -4,7 +4,7 @@ import { EditIcon, CheckIcon, CloseIcon, ChevronDownIcon, ChevronRightIcon } fro
 import WarpScoresApiService from '../../WarpScoresApiService';
 import MatchSelectionModal from './ModalMatchSelection';
 
-function CircuitLeg({
+function AdminCircuitLeg({
   circuitLeg,
   onRemoveLeg,
   onCollectDataChanged,
@@ -194,4 +194,4 @@ function CircuitLeg({
   );
 }
 
-export default CircuitLeg;
+export default AdminCircuitLeg;

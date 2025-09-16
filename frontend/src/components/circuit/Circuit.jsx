@@ -21,13 +21,12 @@ function Circuit({ circuit, circuitLoading }) {
   return (
     <>
       <Heading size="md">Ranking</Heading>
-      
       <Ranks
         loading={circuitLoading || ranksLoading || teamsLoading}
         teams={teams}
-        leagueId={circuit?.id}
+        circuitId={circuit?.id}
         ranks={ranks}
-        error={ranksError}
+        error={ranksError || teamsError}
       />
     </>
   );

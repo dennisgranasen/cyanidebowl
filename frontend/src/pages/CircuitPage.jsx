@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import WarpScoresApiService from '../WarpScoresApiService';
 import Navigation from '../components/misc/Navigation';
 import Circuit from '../components/circuit/Circuit';
+import CircuitLegs from '../components/circuit/CircuitLegs';
 import HeaderCard from '../components/common/HeaderCard';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 
@@ -49,25 +50,8 @@ function CircuitPage() {
       </Box>
       <HeaderCard heading={circuit ? circuit.circuitName : 'Circuit'} detailsHeading="Circuit details" />
       <LoadingOrErrorWrapper loading={loading} error={error}>
-        <Heading size="md">Circuit legs</Heading>
-        <TableContainer mb="1rem">
-          <Table variant="simpleClickable" size="sm">
-            <Thead>
-              <TableColumns />
-            </Thead>
-            <Tbody>
-              {circuit?.circuitLegs.map((circuitLeg) => (
-                <Tr key={circuitLeg.competitionId}>
-                  <Td>{circuitLeg.label}</Td>
-                  <Td>{circuitLeg.legType}</Td>
-                </Tr>
-              ))}
-            </Tbody>
-            <Tfoot>
-              <TableColumns />
-            </Tfoot>
-          </Table>
-        </TableContainer>
+        <Heading size="md">{circuit ? circuit.circuitName : 'Loading...'}</Heading>
+        <CircuitLegs circuit={circuit} loading={loading} error={error} />
         <Circuit circuit={circuit} circuitLoading={loading} />
       </LoadingOrErrorWrapper>
     </VStack>

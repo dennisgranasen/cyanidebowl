@@ -9,7 +9,7 @@ import { Field, Form, Formik } from 'formik';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 import WarpScoresApiService from '../WarpScoresApiService';
 import Navigation from '../components/misc/Navigation';
-import CircuitLeg from '../components/circuit/CircuitLeg';
+import AdminCircuitLeg from '../components/circuit/AdminCircuitLeg';
 import HeaderCard from '../components/common/HeaderCard';
 import EntitySearchForm from '../components/common/EntitySearchForm';
 import prettyPrint from '../util/prettyPrint';

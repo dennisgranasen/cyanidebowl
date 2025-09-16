@@ -1,6 +1,6 @@
 package net.warp_scores.warpscores.domain.persistence;
 
-import net.warp_scores.warpscores.domain.persistence.MatchRepository.TeamRankingRecord;
+import net.warp_scores.warpscores.utils.TeamRankingRecord;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.model.ArenaTeam;
 import net.warp_scores.warpscores.model.Match;
@@ -256,7 +256,7 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
     })
     List<TeamRankingRecord> findTeamRankingsByLeagueId(Identity leagueId);
 
-    @Aggregation(pipeline = {
+   @Aggregation(pipeline = {
         "{ '$match': { 'competitionId': ?0 } }",
         "{ '$addFields': { 'originalTeams': '$teams', 'originalCoaches': '$coaches', 'matchDate': '$finished' } }",
         "{ '$unwind': { 'path': '$teams', 'includeArrayIndex': 'teamIndex' } }",
@@ -389,6 +389,7 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
     })
     List<TeamRankingRecord> findTeamRankingsByCompetitionId(Identity leagueId);
 
+    /*
     record TeamRankingRecord(
         Identity teamId,
         String teamName,
@@ -409,8 +410,7 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
         int totalCasualtiesFor,
         int totalCasualtiesAgainst
     ) {}
-
-
+        */
 }
 
 

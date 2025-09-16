@@ -6,11 +6,11 @@ export default function useFetchRanks() {
   const [ranks, setRanks] = useState([]);
   const [error, setError] = useState(null);
 
-  const fetchRanks = (circuit, limit) => {
+  const fetchRanks = (circuit, circuitLegId, limit) => {
     setRanksLoading(true);
     if (!circuit) return;
-    console.log('Fetching ranks for circuit:', circuit.circuitId, ". Limit: ",limit);
-    WarpScoresApiService.circuitRanks(circuit.circuitId, limit)
+    console.log('Fetching ranks for circuit:', circuit.circuitId, "CircuitLegId: ", circuitLegId, ". Limit: ",limit); 
+    WarpScoresApiService.circuitLegRanks(circuit.circuitId, circuitLegId, limit)
       .then((data) => {
         data.sort((rankA, rankB) => rankA.rank - rankB.rank);
         setRanks(data);

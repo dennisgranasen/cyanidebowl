@@ -134,6 +134,112 @@ public class TeamService {
         return teams.stream().toList();
     }
 
+
+    @DurationLogging
+    public List<Team> getTeamsForCircuitLeg(long circuitId, long circuitLegId) {
+        // 1. Find all circuitlegs for the circuit
+        Optional<Circuit> circuit = circuitRepository.findById(circuitId);
+        if (circuit.isEmpty()) {
+            log.warn("Circuit with ID {} not found.", circuitId);
+            return List.of();
+        }
+        Optional<CircuitLeg> legOpt = circuit.get().getCircuitLegs().stream()
+                .filter(cl -> cl.getCircuitLegId().equals(circuitLegId))
+                .findFirst();
+        if (legOpt.isEmpty()) {
+            log.warn("Circuit leg with ID {} not found.", circuitLegId);
+            return List.of();
+        }
+        CircuitLeg circuitLeg = legOpt.get(); 
+
+        // circuit.get().getCircuitLegs().forEach(leg -> 
+        // {
+        //     log.info("Circuit leg: {}", leg);
+        //     leg.getEntities().forEach(entity -> 
+        //     {
+        //         log.info("  Entity: {} {} {} {}", entity.getEntityId(), entity.getLegType(), entity.getPlatform(), entity.getGame());
+        //     });
+        // });
+
+        // 2. Find all leagues for those circuit legs
+        return circuitLeg.getEntities().stream()                
+                .flatMap(entity -> getTeamsForCircuitLegEntity(circuitId, circuitLegId, entity.getEntityId()).stream())
+                .collect(Collectors.toList());
+
+                /* 
+        Set<Identity> leagueIds = circuitLeg.getEntities().stream()
+                .filter(entity -> entity.getLegType() == EntityType.League)
+                .map(CircuitLegEntity::getEntityId)
+                .collect(Collectors.toSet());
+        Set<Team> teams = leagueIds.stream()
+                .flatMap(leagueId -> teamRepository.findByLeagueId(leagueId).stream())
+                .collect(Collectors.toSet());
+        // 3. Find all competitions for those circuit legs
+        Set<Identity> competitionIds = circuitLeg.getEntities().stream()
+                .filter(entity -> entity.getLegType() == EntityType.Competition)
+                .map(CircuitLegEntity::getEntityId)
+                .collect(Collectors.toSet());   
+        Set<Team> teamsFromCompetitions = competitionIds.stream()
+                .flatMap(compId -> teamRepository.findByCompetitionId(compId).stream()) 
+                .collect(Collectors.toSet());
+        teams.addAll(teamsFromCompetitions);
+        // 4. Recursively find all teams in nested circuits
+        Set<Identity> circuitIds = circuitLeg.getEntities().stream()
+                .filter(entity -> entity.getLegType() == EntityType.Circuit)
+                .map(CircuitLegEntity::getEntityId)
+                .collect(Collectors.toSet());
+        if (!circuitIds.isEmpty()) {
+            log.info("Recursively loading teams for nested circuits: {}", circuitIds);  
+            Set<Team> teamsFromCircuits = circuitIds.stream()
+                .flatMap(id -> getTeamsForCircuit(Long.parseLong(id.toString())).stream())
+                .collect(Collectors.toSet());
+            teams.addAll(teamsFromCircuits);
+        }
+        log.info("Found {} teams for circuit leg ID {}", teams.size(), circuitLegId);
+        return teams.stream().toList();
+         */
+    }
+
+    @DurationLogging
+    public List<Team> getTeamsForCircuitLegEntity(long circuitId, long circuitLegId, Identity entityId) {
+        // 1. Find all circuit legs for the circuit
+        Optional<Circuit> circuit = circuitRepository.findById(circuitId);
+        if (circuit.isEmpty()) {
+            log.warn("Circuit with ID {} not found.", circuitId);
+            return List.of();
+        }
+        Optional<CircuitLeg> legOpt = circuit.get().getCircuitLegs().stream()
+                .filter(cl -> cl.getCircuitLegId().equals(circuitLegId))
+                .findFirst();
+
+         if (legOpt.isEmpty()) {
+            log.warn("Circuit leg with ID {} not found.", circuitLegId);
+            return List.of();
+        }
+        Optional<CircuitLegEntity> entityOpt = legOpt.get().getEntities().stream()
+                .filter(e -> e.getEntityId().equals(entityId))
+                .findFirst();
+        if (entityOpt.isEmpty()) {
+            log.warn("Circuit leg entity with ID {} not found.", entityId);
+
+            return List.of();
+        }   
+        CircuitLegEntity entity = entityOpt.get();
+        switch(entity.getLegType()) {
+            case League:
+                return getTeamsForLeague(entity.getEntityId());
+            case Competition:
+                return getTeamsForCompetition(entity.getEntityId());
+            case Circuit:
+                return getTeamsForCircuit(Long.parseLong(entity.getEntityId().getValue()));
+            default:
+                log.warn("Unsupported entity type {} for entity ID {}", entity.getLegType(), entity.getEntityId());
+                return List.of();
+        }   
+    }
+
+
+
     @DurationLogging
     public List<Team> loadAll() {
         return teamRepository.findAll();

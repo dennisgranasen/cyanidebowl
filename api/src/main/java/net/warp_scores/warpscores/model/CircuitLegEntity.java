@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,6 +20,7 @@ import net.warp_scores.warpscores.identity.Identity;
 @EqualsAndHashCode(of = "entityId")
 public class CircuitLegEntity implements Comparable<CircuitLegEntity> {
     private Identity entityId; // league or competition id
+    @JsonAlias("entityType")
     private EntityType legType;
     private List<Object> excludes;
     private List<Object> includes;

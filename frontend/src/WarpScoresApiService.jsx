@@ -219,10 +219,27 @@ export default {
     axios(`/ranks/circuit/${circuitId.key || circuitId}${limit ? `?limit=${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
+  circuitLegRanks: async (circuitId, circuitLegId, limit) =>
+    axios(`/ranks/circuit/${circuitId.key || circuitId}/leg/${circuitLegId}${limit ? `?limit=${limit}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
+  circuitLegEntityRanks: async (circuitId, circuitLegId, entityId, limit) =>
+    axios(`/ranks/circuit/${circuitId.key || circuitId}/leg/${circuitLegId}/${entityId}${limit ? `?limit=${limit}` : ''}`)
+      .then(returnData)
+      .catch(handleError),  
   circuitTeams: async (circuitId, limit) =>
     axios(`/teams/circuit/${circuitId.key || circuitId}${limit ? `?limit=${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
+  circuitLegTeams: async (circuitId, circuitLegId, limit) =>
+    axios(`/teams/circuit/${circuitId.key || circuitId}/leg/${circuitLegId}${limit ? `?limit=${limit}` : ''}`)
+      .then(returnData)
+      .catch(handleError),  
+  circuitLegEntityTeams: async (circuitId, circuitLegId, entityId, limit) =>
+    axios(`/teams/circuit/${circuitId.key || circuitId}/leg/${circuitLegId}/${entityId}${limit ? `?limit=${limit}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
+  
   // leagues
   leagues: async (leagueId) =>
     axios(`/leagues${leagueId ? `/${leagueId.key || leagueId}` : ''}`)
