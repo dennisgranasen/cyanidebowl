@@ -7,7 +7,7 @@ import Competitions from '../components/competition/Competitions';
 import RoundRobinAndWissenLeague from '../components/league/RoundRobinAndWissenLeague';
 import imageUrls from '../imageUrls';
 import HeaderCard from '../components/common/HeaderCard';
-import CircuitLeg from '../components/circuit/CircuitLegInfo';
+import CircuitLegEntities from '../components/circuit/CircuitLegEntities';
 import LiveContests from '../components/contest/LiveContests';
 
 import Standings from '../components/common/Standings';
@@ -67,9 +67,6 @@ function CircuitLegPage() {
 
         fetchRanks(data, legId);
         fetchTeams(circuitId, legId);
-        console.log('Teams:', teams);
-        console.log('Ranks:', ranks);
-
       })
       .then(() => setLoading(false))
       .catch((reason) => setError({ type: 'error', message: reason.toLocaleString()}) )
@@ -113,16 +110,19 @@ function CircuitLegPage() {
   return (
     <Stack>
       <Box>
-        <Navigation currentPage={pageType} circuitId={circuitId} circuitLeg={[legId, circuitLeg?.label]} />
+        <Navigation currentPage={pageType} 
+          circuit={[circuitId, circuit?.circuitName || circuitId]}
+          circuitLeg={[legId, circuitLeg?.label || legId]}
+        />
       </Box>
       {circuitLeg && (
         <HeaderCard heading={circuitLeg.name} detailsHeading="CircuitLeg details">
           {
-          //<CircuitLegInfo circuitLeg={circuitLeg} />
+            <CircuitLegEntities circuitLeg={circuitLeg} />
           }
         </HeaderCard>
       )}
-      <LoadingOrErrorWrapper loading={loading} error={error}>        
+      <LoadingOrErrorWrapper loading={loading || ranksLoading || teamsLoading} error={error || ranksError || teamsError}>        
         {circuitLeg?
         <>
           <Standings ranks={ranks} loading={loading} teams={teams} error={error} /> 

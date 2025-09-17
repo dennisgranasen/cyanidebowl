@@ -9,14 +9,22 @@ import prettyPrint from '../../util/prettyPrint';
 
 const { isProduction } = config;
 
-function Navigation({ currentPage, parentPage, league, competition, circuit, team, race, coach }) {
+function Navigation({ currentPage, parentPage, league, competition, circuit, team, race, coach, circuitLeg, circuitLegEntity }) {
   const isPage = (pageName, currentPageName) => {
     return pageName === currentPageName;
   };
   const leagueLink = league && league.length > 0 && league[0] ? `/league/${league[0]}` : '/';
   const competitionLink = competition && competition.length > 0 && competition[0] ? `/competition/${competition[0]}` : '';
   const teamLink = team ? `${competitionLink}/team/${team[0]}` : '';
-  const circuitLink = circuit ? `${isPage('admin', parentPage) ? '/admin' : ''}/circuit/${circuit[0]}` : '';
+  //console.log("Circuit:",circuit," CircuitLeg:",circuitLeg,"CircuitLegEntity:",circuitLegEntity);
+  
+  const circuitLink = circuit ? `${isPage('admin', parentPage) ? '/admin' : ''}/circuit/${circuit[0]}` :
+  circuitLeg ? `${isPage('admin', parentPage) ? '/admin' : ''}/circuit/${circuitLeg[0].parts[0]}` : 
+  circuitLegEntity ? `${isPage('admin', parentPage) ? '/admin' : ''}/circuit/${circuitLegEntity[0].parts[0]}` : ''
+
+  ;
+  const circuitLegLink = circuitLeg ? `${circuitLink}/leg/${circuitLeg[0]}` : '';
+  const circuitLegEntityLink = circuitLegEntity ? `${circuitLegLink}/entity/${circuitLegEntity[0]}` : '';
 
   return (
     <Flex>
@@ -37,6 +45,20 @@ function Navigation({ currentPage, parentPage, league, competition, circuit, tea
           <BreadcrumbItem isCurrentPage={isPage('circuits', currentPage)} flexWrap>
             <BreadcrumbLink variant="menu" as={RouteLink} to={circuitLink}>
               {circuit[1]}
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+        )}
+        {circuitLeg && (
+          <BreadcrumbItem isCurrentPage={isPage('circuits', currentPage)} flexWrap>
+            <BreadcrumbLink variant="menu" as={RouteLink} to={circuitLegLink}>
+              {circuitLeg[1]}
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+        )}
+        {circuitLegEntity && (
+          <BreadcrumbItem isCurrentPage={isPage('circuits', currentPage)} flexWrap>
+            <BreadcrumbLink variant="menu" as={RouteLink} to={circuitLink}>
+              {circuitLegEntity[1]}
             </BreadcrumbLink>
           </BreadcrumbItem>
         )}

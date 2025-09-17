@@ -225,17 +225,27 @@ public class TeamService {
             return List.of();
         }   
         CircuitLegEntity entity = entityOpt.get();
-        switch(entity.getLegType()) {
-            case League:
-                return getTeamsForLeague(entity.getEntityId());
-            case Competition:
-                return getTeamsForCompetition(entity.getEntityId());
-            case Circuit:
-                return getTeamsForCircuit(Long.parseLong(entity.getEntityId().getValue()));
-            default:
-                log.warn("Unsupported entity type {} for entity ID {}", entity.getLegType(), entity.getEntityId());
-                return List.of();
-        }   
+        try{
+            switch(entity.getLegType()) {
+                case League:
+                    return getTeamsForLeague(entity.getEntityId());
+                case Competition:
+                    return getTeamsForCompetition(entity.getEntityId());
+                case Circuit:
+                    return getTeamsForCircuit(Long.parseLong(entity.getEntityId().getValue()));
+                default:
+                    log.warn("Unsupported entity type {} for entity ID {}", entity.getLegType(), entity.getEntityId());
+                    return List.of();
+            }
+        }
+        catch(NullPointerException npe) {
+            log.error("No leg type, circuitID {} entityID {}: {}", circuitId, entityId, npe.getMessage());
+            return List.of();
+        }
+        catch(Exception ex) {
+            log.error("Exception caught while processing circuitId {} entity ID {}: {}", circuitId, entityId, ex.getMessage());
+            return List.of();
+        }
     }
 
 

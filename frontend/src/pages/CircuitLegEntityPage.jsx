@@ -3,12 +3,18 @@ import { Box, Stack } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
 import WarpScoresApiService from '../WarpScoresApiService';
 import Navigation from '../components/misc/Navigation';
+import prettyPrint from '../util/prettyPrint';
 import Competitions from '../components/competition/Competitions';
 import RoundRobinAndWissenLeague from '../components/league/RoundRobinAndWissenLeague';
 import imageUrls from '../imageUrls';
 import HeaderCard from '../components/common/HeaderCard';
-import CircuitLeg from '../components/circuit/CircuitLegInfo';
+import CompetitionProgress from '../components/competition/CompetitionProgress';
+
 import LiveContests from '../components/contest/LiveContests';
+import InfoArea from '../components/common/InfoArea';
+import InfoItem from '../components/common/InfoItem';
+import formatter from '../util/formatter';
+
 
 import Standings from '../components/common/Standings';
 import LatestMatches from '../components/contest/LatestMatches';
@@ -33,8 +39,10 @@ function CircuitLegEntityPage() {
   const [entity, setEntity] = useState();
   const [circuitLeg, setCircuitLeg] = useState();
   const [circuit, setCircuit] = useState();
+  const [competition, setCompetition] = useState();
   const [competitionCountByStatus, setCompetitionCountByStatus] = useState({});
   const [loading, setLoading] = useState(false);
+  const [loadingCompetition, setLoadingCompetition] = useState(false);
   const [error, setError] = useState(undefined);
   const pageType = "circuitLegEntity";
 
@@ -72,13 +80,24 @@ function CircuitLegEntityPage() {
 
         fetchRanks(data, legId, entityId);
         console.log('Ranks:', ranks);
-        //fetchTeams(circuitId, legId, entityId);
-        //console.log('Teams:', teams);
 
       })
       .then(() => setLoading(false))
       .catch((reason) => setError({ type: 'error', message: reason.toLocaleString()}) )
   }, []);
+
+  useEffect(() => {
+    if (!entityId) return;
+    console.log("Fetching competition for entity:", entityId);
+    WarpScoresApiService.competition(entityId)
+      .then((comp) => {
+        setCompetition(comp);
+        setLoadingCompetition(false);
+      })
+      .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }));
+  
+  }, [entityId]);
+
 
 /*useEffect(() => {
     if (!league) return;
@@ -118,16 +137,50 @@ function CircuitLegEntityPage() {
   return (
     <Stack>
       <Box>
-        <Navigation currentPage={pageType} circuitId={circuitId} circuitLeg={[legId, circuitLeg?.label]} circuitLegEntity={[entity?.entityId, entity?.label]} />
+        <Navigation currentPage={pageType} 
+          circuit={[circuitId, circuit?.circuitName || circuitId]}
+          circuitLeg={[legId, circuitLeg?.label || legId]}
+          circuitLegEntity={[entityId, (entity?.entityNames && entity.entityNames.join(' - ')) || entityId]} 
+        />
       </Box>
-      {circuitLeg && (
-        <HeaderCard heading={circuitLeg.name} detailsHeading="CircuitLeg details">
-          {
-          //<CircuitLegInfo circuitLeg={circuitLeg} />
-          }
-        </HeaderCard>
-      )}
-      <LoadingOrErrorWrapper loading={loading} error={error}>        
+      <LoadingOrErrorWrapper loading={loading || loadingCompetition} error={error}>
+
+        {circuitLeg && (
+          <HeaderCard heading={circuit.name} detailsHeading="CircuitLeg details">
+            <InfoArea>
+              {competition && (
+                <>
+                  <InfoItem key="Created" label="Created" info={formatter.formatAsDate(competition.dateCreated, '-')} />
+                  <InfoItem key="Format" label="Format" info={prettyPrint(competition.format)} />
+                  <InfoItem
+                    key="Progress"
+                    label="Progress"
+                    info={
+                      <CompetitionProgress
+                        status={competition?.status}
+                        format={competition?.format}
+                        currentRound={competition?.currentRound}
+                        totalRounds={competition?.totalRounds}
+                        totalMatches={competition?.totalMatches}
+                        playedMatches={competition?.playedMatches}
+                        notValidatedMatches={competition?.notValidatedMatches}
+                        liveMatches={competition?.liveMatches}
+                        withPadding
+                      />
+                    }
+                  />
+                </>
+              )}
+              <InfoItem key="Teams" label="Teams" info={formatter.formatAsNumber(ranks.length)} />
+              <InfoItem
+                key="TimeSettings"
+                label="Time settings"
+                info={`Turn: ${formatter.formatAsNumber((competition?.turnDuration ?? 0) / 60)}m`}
+                additionalInfo={`Bonus: ${formatter.formatAsNumber((competition?.timeBonusDuration ?? 0) / 60)}m`}
+              />
+            </InfoArea>
+          </HeaderCard>
+        )}
         {circuitLeg?
         <>
           <Standings ranks={ranks} loading={loading} /*teams={teams}*/ error={error} /> 
@@ -145,3 +198,64 @@ function CircuitLegEntityPage() {
 }
 
 export default CircuitLegEntityPage;
+
+
+
+{/*
+        <HeaderCard
+          heading={competition?.name}
+          subHeading={<RouteLink to={`/${competition?.leagueId}`}>League: {competition?.leagueName}</RouteLink>}
+          detailsHeading="Competition details"
+          mainImageSrc={competition?.logo ? imageUrls.logo(competition?.logo, competition?.id?.opus) : imageUrls.logo(competition?.leagueLogo, competition?.id?.opus)}
+          additionalImageSrc={competition?.logo ? imageUrls.logo(competition?.leagueLogo, competition?.id?.opus) : null}
+        >
+          <InfoArea>
+            <InfoItem key="Created" label="Created" info={formatter.formatAsDate(competition?.dateCreated)} />
+            <InfoItem key="Format" label="Format" info={prettyPrint(competition?.format)} />
+            <InfoItem
+              key="Progress"
+              label="Progress"
+              info={
+                <CompetitionProgress
+                  status={competition?.status}
+                  format={competition?.format}
+                  currentRound={competition?.currentRound}
+                  totalRounds={competition?.totalRounds}
+                  totalMatches={competition?.totalMatches}
+                  playedMatches={competition?.playedMatches}
+                  notValidatedMatches={competition?.notValidatedMatches}
+                  liveMatches={competition?.liveMatches}
+                  withPadding
+                />
+              }
+            />
+            <InfoItem key="Teams" label="Teams" info={formatter.formatAsNumber(getTeamsFor(competition))} />
+            <InfoItem
+              key="TimeSettings"
+              label="Time settings"
+              info={`Turn: ${formatter.formatAsNumber((competition?.turnDuration ?? 0) / 60)}m`}
+              additionalInfo={`Bonus: ${formatter.formatAsNumber((competition?.timeBonusDuration ?? 0) / 60)}m`}
+            />
+            {competition?.status === 'Finished' &&
+              (!checkPermissions || (authenticationReady && userPermissions.writeLeagueAdmin)) && (
+                <InfoItem
+                  key="NafDataExport"
+                  label="Export"
+                  info={
+                    <NafExportButton
+                      authenticationReady={authenticationReady}
+                      checkPermissions={checkPermissions}
+                      isAuthenticated={isAuthenticated}
+                      getAccessTokenSilently={getAccessTokenSilently}
+                      getAccessTokenWithPopup={getAccessTokenWithPopup}
+                      competitionId={competition?.id}
+                    />
+                  }
+                />
+              )}
+          </InfoArea>
+          <RouteLink to={`/competition/${competition?.id}/stats`}>
+            <Button size="xs">Statistics</Button>
+          </RouteLink>
+        </HeaderCard>
+*/}
