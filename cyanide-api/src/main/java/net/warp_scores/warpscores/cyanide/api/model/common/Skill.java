@@ -22,7 +22,7 @@ public enum Skill {
     Block("Block"),
     Bloodlust("Bloodlust", "Bloodlust (.*)"),
     Bombardier("Bombardier"),
-    BoneHead("BoneHead", "Bone Head"),
+    BoneHead("BoneHead", "Bone Head"),  // lowercase 'h' intentional (Cyanide API quirk, it is lowercase for default color)
     Brawler("Brawler"),
     BreakTackle("BreakTackle", "Break Tackle"),
     Cannoneer("Cannonneer", "Cannoneer"),
@@ -43,7 +43,7 @@ public enum Skill {
     ExtraArms("ExtraArms", "Extra Arms"),
     Fend("Fend"),
     FoulAppearence("FoulAppearence", "Foul Appearance"),
-    Frenzy("Frenzy"),
+    Frenzy("Frenzy"), // lowercase 'f' intentional (Cyanide API quirk, it is lowercase for default color)
     FumbleRooskie("FumbleRooskie"),
     Grab("Grab"),
     Guard("Guard"),
@@ -51,6 +51,10 @@ public enum Skill {
     HitAndRun("HitAndRun", "Hit and run"),
     Horns("Horns"),
     HypnoticGaze("HypnoticGaze", "Hypnotic gaze"),
+    IncreaseAgility("IncreaseAgility", "Increase Agility"),
+    IncreaseArmour("IncreaseArmour", "Increase Armour"),
+    IncreaseMovement("IncreaseMovement", "Increase Movement"),
+    IncreaseStrength("IncreaseStrength", "Increase Strength"),
     IronHardSkin("IronHardSkin", "Iron hard skin"),
     Juggernaut("Juggernaut"),
     JumpUp("JumpUp", "Jump Up"),

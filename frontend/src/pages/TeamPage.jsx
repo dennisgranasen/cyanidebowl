@@ -49,7 +49,6 @@ function TeamPage() {
 
       teamResponse
         .then((data) => {
-          setLoadingTeam(false);
           setTeam(data);
           const currentPlayers = data.players || [];
           currentPlayers.sort((playerA, playerB) => playerA.number - playerB.number);
@@ -57,7 +56,8 @@ function TeamPage() {
         })
         .catch((reason) => {
           setTeamError({ type: 'error', message: reason.toLocaleString() });
-        });
+        })
+        .finally(() => setLoadingTeam(false));
     };
 
     const fetchMatches = () => {
@@ -66,12 +66,12 @@ function TeamPage() {
       const matchesResponse = WarpScoresApiService.teamMatches(teamId);
       matchesResponse
         .then((data) => {
-          setLoadingMatches(false);
           setMatches(data);
         })
         .catch((reason) => {
           setMatchesError({ type: 'error', message: reason.toLocaleString() });
-        });
+        })
+        .finally(() => setLoadingMatches(false));
     };
 
     fetchTeam();
@@ -79,14 +79,14 @@ function TeamPage() {
   }, [competitionId, teamId]);
 
   const navCompetition =
-    team && team.competitionIds?.length === 1 ? [team.competitionIds[0], team.competitionName] : null;
-
+    team && team.competitionIds?.length === 1 ? [team.competitionIds[0], team.competitionNames[0]] : null;
+  console.log('Rendering TeamPage', { team, players, matches });
   return (
     <VStack align="left">
       <Box>
         <Navigation
           currentPage="team"
-          league={team && team.leagueIds ? [team.leagueIds[0].key, team.leagueName] : []}
+          league={team && team.leagueIds ? [team.leagueIds[0].key, team.leagueNames[0]] : []}
           competition={navCompetition}
           team={team ? [teamId, team.name] : []}
         />
@@ -100,7 +100,7 @@ function TeamPage() {
                 subHeading={`Coach: ${team?.coachName}`}
                 detailsHeading="Team details"
                 mainImageSrc={imageUrls.logo(team?.logo, identityUtils.opus(teamId))}
-                additionalImageSrc={imageUrls.race(team?.race, identityUtils.opus(teamId.opus))}
+                additionalImageSrc={imageUrls.race(team?.race, identityUtils.opus(teamId))}
               >
                 <InfoArea>
                   <InfoItem key="race" label="Race" info={prettyPrint(team.race)} />
@@ -112,9 +112,7 @@ function TeamPage() {
                   <InfoItem key="apothecary" label="Apothecary" info={team.apothecary} />
                   <InfoItem key="cash" label="Cash" info={formatter.formatAsNumber(team.cash)} />
                   <InfoItem key="value" label="Value" info={formatter.formatAsNumber(team.value)} />
-                  <InfoItem
-                    key="matches"
-                    label="Matches"
+                  <InfoItem key="matches" label="Matches"
                     info={<MatchesCount matches={matches} teamId={teamId} />}
                   />
                 </InfoArea>

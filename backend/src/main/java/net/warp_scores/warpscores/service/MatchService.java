@@ -95,6 +95,24 @@ public class MatchService {
     }
 
     @DurationLogging
+    public List<Match> getCompetitionMatches(Identity competitionId, Optional<Integer> limit) {
+        Identity cid;
+        if (competitionId instanceof CompositeIdentity) {
+            CompositeIdentity compositeIdentity = (CompositeIdentity) competitionId;
+            Object[] parts = compositeIdentity.getParts();
+            Object lastPart = parts[parts.length - 1];
+            cid = new SimpleIdentity(lastPart, compositeIdentity.getOpus());
+        } else 
+        {
+            cid = competitionId;
+        }
+
+        List<Match> matches = matchRepository.findTopByCompetitionIdAndFinishedNotNull(cid,
+                PageRequest.of(0, limit.orElse(defaultPageLimit), Sort.by(Sort.Direction.DESC, "finished")));
+        return adjustCompetitionNameAndLogoAndUpdateConcedeAndOvertimeInfo(matches);
+    }
+
+    @DurationLogging
     public List<Match> getCompetitionMatchesSince(Identity competitionId, Date since, Optional<Integer> limit) {
         Identity cid;
         if (competitionId instanceof CompositeIdentity) {

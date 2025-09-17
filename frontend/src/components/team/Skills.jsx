@@ -164,14 +164,14 @@ const getAsSimpleArray = (skills) => {
   return result;
 };
 
-function Skills({ skills }) {
+function Skills({ skills, opus }) {
   const mySkills = getAsSimpleArray(skills);
   mySkills.sort(skillComparator);
 
   return (
     <Stack direction="row" spacing="2px">
       {mySkills.map((skill) => (
-        <Skill key={skill} skill={skill} />
+        <Skill key={skill} skill={skill} opus={opus} />
       ))}
     </Stack>
   );

@@ -305,6 +305,20 @@ export default {
     axios(`/matches/competition/${competitionId.key || competitionId}${limit ? `?limit=${limit}` : ''}`)
       .then(returnData)
       .catch(handleError),
+
+  circuitMatches: async (circuitId, limit) =>
+    axios(`/matches/circuit/${circuitId.key || circuitId}${limit ? `?limit=${limit}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
+  circuitLegMatches: async (circuitId, circuitLegId, limit) =>
+    axios(`/matches/circuit/${circuitId.key || circuitId}/leg/${circuitLegId.key || circuitLegId}${limit ? `?limit=${limit}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
+  circuitLegEntityMatches: async (circuitId, circuitLegId, entityId, limit) =>
+    axios(`/matches/circuit/${circuitId.key || circuitId}/leg/${circuitLegId.key || circuitLegId}/${entityId.key || entityId}${limit ? `?limit=${limit}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
+
   match: async (matchId) =>
     axios(`/matches/${matchId.key || matchId}`)
       .then(returnData)

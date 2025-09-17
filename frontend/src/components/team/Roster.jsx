@@ -1,6 +1,7 @@
 import React from 'react';
 import { Center, Spinner, Table, TableContainer, Tbody, Tfoot, Th, Thead, Tr } from '@chakra-ui/react';
 import Player from './Player';
+import { identityUtils } from '../../util/identityUtil';
 
 const TableColumns = (
   <Tr>
@@ -45,7 +46,7 @@ function Roster({ players }) {
         <Tbody>
           {players !== null ? (
             players.map((player) => {
-              return <Player player={player} key={player.id} />;
+              return <Player player={player} key={player.id.key} opus={identityUtils.opus(player.id)} />;
             })
           ) : (
             <Spinner />

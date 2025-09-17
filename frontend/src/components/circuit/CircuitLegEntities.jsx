@@ -22,7 +22,7 @@ function TableColumns() {
       {isSmallScreen ? (
         <>
           <Th>Label</Th>
-          <Th LegType/>
+          <Th>LegType</Th>
         </>
       ) : (
         <>
@@ -39,7 +39,7 @@ function TableColumns() {
   );
 }
 
-function CircuitLegEntities({ circuitId, circuitLeg, loading, error }) {
+function CircuitLegEntities({ circuitId, circuitLeg, expanded, loading, error }) {
   return (
     <LoadingOrErrorWrapper loading={loading} error={error}>
       <TableContainer>
@@ -49,7 +49,7 @@ function CircuitLegEntities({ circuitId, circuitLeg, loading, error }) {
           </Thead>
           <Tbody>
             { 
-                <CircuitLeg key={circuitLeg.competitionId} circuitLeg={circuitLeg} circuitId={circuitId} />
+                <CircuitLeg key={circuitLeg.competitionId} expanded={expanded} circuitLeg={circuitLeg} circuitId={circuitId} />
             }           
           </Tbody>
           <Tfoot>

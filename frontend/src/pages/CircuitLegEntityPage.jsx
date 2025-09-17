@@ -15,7 +15,6 @@ import InfoArea from '../components/common/InfoArea';
 import InfoItem from '../components/common/InfoItem';
 import formatter from '../util/formatter';
 
-
 import Standings from '../components/common/Standings';
 import LatestMatches from '../components/contest/LatestMatches';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
@@ -40,13 +39,13 @@ function CircuitLegEntityPage() {
   const [circuitLeg, setCircuitLeg] = useState();
   const [circuit, setCircuit] = useState();
   const [competition, setCompetition] = useState();
+  const [league, setLeague] = useState();
   const [competitionCountByStatus, setCompetitionCountByStatus] = useState({});
   const [loading, setLoading] = useState(false);
-  const [loadingCompetition, setLoadingCompetition] = useState(false);
+  const [loadingCompetition, setLoadingCompetition] = useState(true);
+  const [loadingLeague, setLoadingLeague] = useState(true);
   const [error, setError] = useState(undefined);
   const pageType = "circuitLegEntity";
-
-
 
   const { fetchRanks, ranks, ranksLoading, error: ranksError } = useFetchRanks();
   //const { fetchTeams, teams, teamsLoading, error: teamsError } = useFetchTeams();
@@ -88,15 +87,26 @@ function CircuitLegEntityPage() {
 
   useEffect(() => {
     if (!entityId) return;
-    console.log("Fetching competition for entity:", entityId);
-    WarpScoresApiService.competition(entityId)
-      .then((comp) => {
-        setCompetition(comp);
-        setLoadingCompetition(false);
-      })
-      .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }));
-  
-  }, [entityId]);
+    if (!entity) return;
+    console.log("Fetching competition for entity:", entityId);   
+    console.log("Entity :", entity);
+    const eType = entity.legType;
+    if (eType === 'Competition') {
+      WarpScoresApiService.competition(entityId)
+        .then((comp) => {
+          setCompetition(comp);
+          setLoadingCompetition(false);
+        })
+        .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }));
+    } else if (eType === 'League') {
+      WarpScoresApiService.leagues(entityId)
+        .then((league) => {
+          setLeague(league);
+          setLoadingLeague(false);
+        })
+        .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }));
+      }
+    }, [entity, entityId]);
 
 
 /*useEffect(() => {
@@ -140,10 +150,10 @@ function CircuitLegEntityPage() {
         <Navigation currentPage={pageType} 
           circuit={[circuitId, circuit?.circuitName || circuitId]}
           circuitLeg={[legId, circuitLeg?.label || legId]}
-          circuitLegEntity={[entityId, (entity?.entityNames && entity.entityNames.join(' - ')) || entityId]} 
+          circuitLegEntity={[entityId, (entity?.entityNames && entity.entityNames.join(' - ')) || entityId.replaceAll('_', '.')]} 
         />
       </Box>
-      <LoadingOrErrorWrapper loading={loading || loadingCompetition} error={error}>
+      <LoadingOrErrorWrapper loading={loading || (loadingCompetition && loadingLeague)} error={error}>
 
         {circuitLeg && (
           <HeaderCard heading={circuit.name} detailsHeading="CircuitLeg details">
@@ -185,6 +195,7 @@ function CircuitLegEntityPage() {
         <>
           <Standings ranks={ranks} loading={loading} /*teams={teams}*/ error={error} /> 
           {
+            <CircuitLegMatches circuitLeg={circuitLeg} />
             //<LatestMatches type={pageType} id={`${circuitId}-${circuitLeg.circuitLegId}`} data={circuitLeg} /> 
           }
         </>

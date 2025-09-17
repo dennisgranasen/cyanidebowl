@@ -5,8 +5,8 @@ import WarpScoresApiService from '../../WarpScoresApiService';
 import MatchSelectionModal from './ModalMatchSelection';
 import { useNavigate } from 'react-router-dom';
 
-function CircuitLeg({circuitId, circuitLeg}) {
-  const [expanded, setExpanded] = useState(false);
+function CircuitLeg({circuitId, circuitLeg, expanded: initialExpanded = false}) {
+  const [expanded, setExpanded] = useState(initialExpanded);
   const navigate = useNavigate();
 
   // Modal state
@@ -108,6 +108,7 @@ function CircuitLeg({circuitId, circuitLeg}) {
     </Tr>
   );
 
+  console.log("CircuitLeg render:", circuitLeg, expanded);
   // Only show the first row if not expanded, otherwise show all
   const rows = circuitLeg.entities && circuitLeg.entities.length > 0
     ? (expanded

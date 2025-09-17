@@ -3,6 +3,7 @@ package net.warp_scores.warpscores.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.config.properties.CyanideApiProperties;
+import net.warp_scores.warpscores.config.properties.CyanideApiProperties.Images;
 import net.warp_scores.warpscores.cyanide.api.model.common.Skill;
 import net.warp_scores.warpscores.model.Race;
 import net.warp_scores.warpscores.service.ImageService;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Slf4j
@@ -106,9 +108,25 @@ public class ImageController {
             @PathVariable(name = "name") String name,
             @RequestParam(name = "opus", required = false) Integer opus) {
         String imageName = translateSkillToImageName(name);
+        Images imgs = cyanideApiProperties.getUrls().getImages();
+        if (opus == null) {
+            opus = defaultOpus;
+        }
+        String dir;
+        switch(opus){
+            case 1:
+                dir = imgs.getSkills1();
+                break;
+            case 2:
+                dir = imgs.getSkills2();
+                break;
+            case 3:
+            default:
+                dir = imgs.getSkills3();
+                break;
+        }
         Optional<String> imageUrl = 
-            getImageUrlFor(cyanideApiProperties.getUrls().getImages().getSkills(),
-                imageName, Optional.ofNullable(opus));
+            getImageUrlFor(dir, imageName, Optional.ofNullable(opus));
         return loadImage(imageUrl);
     }
 
@@ -174,11 +192,23 @@ public class ImageController {
     }
 
     private String translateSkillToImageName(String name) {
-        return Skill.forCaseInsensitiveName(name).map(Skill::getImageName).orElse(null);
+        try {
+            return Skill.forCaseInsensitiveName(name).map(Skill::getImageName).orElse(name.replaceAll(" ", ""));
+        }
+        catch (NoSuchElementException ex) {
+            String imageName = name.replaceAll(" ", "");
+            log.warn("No skill found for skill name '{}'. Returning original name as image name.", imageName);
+            return imageName;
+        }
+        catch (IllegalArgumentException ex) {
+            String imageName = name.replaceAll(" ", "");
+            log.warn("Ambiguous skills found for skill name '{}'. Returning original name as image name.", imageName);
+            return imageName;
+        }    
     }
 
     private String translateRaceToRaceImageName(String name) {
-        Race race = Race.valueOf(name);
+        Race race = Race.valueOf(name.toLowerCase());
         return "TeamScreenshot_" + race.getImageName();
     }
 

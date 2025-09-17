@@ -9,6 +9,7 @@ import imageUrls from '../imageUrls';
 import HeaderCard from '../components/common/HeaderCard';
 import CircuitLegEntities from '../components/circuit/CircuitLegEntities';
 import LiveContests from '../components/contest/LiveContests';
+import CircuitLegMatches from '../components/circuit/CircuitLegMatches';
 
 import Standings from '../components/common/Standings';
 import LatestMatches from '../components/contest/LatestMatches';
@@ -29,15 +30,11 @@ const transformCountsToObject = (statusCounts) => {
 
 function CircuitLegPage() {
   const {circuitId, legId} = useParams();  
-  //const [competitions, setCompetitions] = useState([]);
   const [circuitLeg, setCircuitLeg] = useState();
   const [circuit, setCircuit] = useState();
-  const [competitionCountByStatus, setCompetitionCountByStatus] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(undefined);
   const pageType = "circuitLeg";
-
-
 
   const { fetchRanks, ranks, ranksLoading, error: ranksError } = useFetchRanks();
   const { fetchTeams, teams, teamsLoading, error: teamsError } = useFetchTeams();
@@ -64,7 +61,6 @@ function CircuitLegPage() {
         setCircuitLeg(leg); 
         console.log("Fetched circuit leg:", leg);
         console.log("Found leg:", leg);
-
         fetchRanks(data, legId);
         fetchTeams(circuitId, legId);
       })
@@ -72,41 +68,6 @@ function CircuitLegPage() {
       .catch((reason) => setError({ type: 'error', message: reason.toLocaleString()}) )
   }, []);
 
-/*useEffect(() => {
-    if (!league) return;
-    console.log("Fetching CC counts for league:", league.id);
-    WarpScoresApiService.competitionCountByStatus([league.id])
-      .then((counts) =>  {
-          if (counts.length > 0) {            
-            setCompetitionCountByStatus(transformCountsToObject(counts[0].statusCounts));
-            console.log("Competition counts by status:", counts); 
-          }
-        })
-      .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
-  }, [league]);
-*/
-/*
-  useEffect(() => {
-    const fetchCompetitions = async (leagueId) => {
-      setError(undefined);
-      setCompetitions([]);
-      setLoading(true);
-      if (leagueId === null || leagueId.length === 0) {
-        setLoading(false);
-        setError({ type: 'info', message: 'No League selected.' });
-        return;
-      }
-      WarpScoresApiService.leagueCompetitions(leagueId)
-        .then(setCompetitions)
-        .then(() => setLoading(false))
-        .catch((reason) => {
-          setError({ type: 'error', message: reason.toLocaleString() });
-        });
-    };
-    if (league)
-      fetchCompetitions(leagueId);
-  }, [league]);
-  */
   return (
     <Stack>
       <Box>
@@ -118,7 +79,7 @@ function CircuitLegPage() {
       {circuitLeg && (
         <HeaderCard heading={circuitLeg.name} detailsHeading="CircuitLeg details">
           {
-            <CircuitLegEntities circuitLeg={circuitLeg} />
+            <CircuitLegEntities circuitLeg={circuitLeg} expanded={true} circuitId={circuitId} />
           }
         </HeaderCard>
       )}
@@ -127,13 +88,15 @@ function CircuitLegPage() {
         <>
           <Standings ranks={ranks} loading={loading} teams={teams} error={error} /> 
           {
+            <CircuitLegMatches circuitId={circuitId} circuitLeg={circuitLeg} />
             //<LatestMatches type={pageType} id={`${circuitId}-${circuitLeg.circuitLegId}`} data={circuitLeg} /> 
           }
         </>
           : (error ? null : <Box>No Circuit Leg found with ID {legId}.</Box>)
         }
       </LoadingOrErrorWrapper>
-      {// activeCompetitionsIncludeRoundRobinOrWissenOrKnockoutTournaments && <LiveContests league={league} />
+      {
+      // activeCompetitionsIncludeRoundRobinOrWissenOrKnockoutTournaments && <LiveContests league={league} />
       }
     </Stack>
   );

@@ -62,7 +62,9 @@ public class CyanideApiProperties {
         private String logos;
         private String races;
         private String portraits;
-        private String skills;
+        private String skills1;
+        private String skills2;
+        private String skills3;
         private String stadiums;
     }
 }
