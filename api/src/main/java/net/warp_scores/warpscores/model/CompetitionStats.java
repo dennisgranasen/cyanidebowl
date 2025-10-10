@@ -7,14 +7,14 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.MongoId;
 
 import java.util.Date;
-import java.util.UUID;
+import net.warp_scores.warpscores.identity.Identity;
 
 @Document
 @Getter
 @Setter
 public class CompetitionStats {
     @Id
-    private UUID competitionUuid;
+    private Identity competitionUuid;
 
     private TeamAndRaceStats teamAndRaceStats;
     private Date lastUpdated;

@@ -19,7 +19,9 @@ public class StatsService {
     }
 
     private void collectStats(Match match, TeamAndRaceStats competitionStats) {
-        List<Team> teams = match.getTeams();
+        Team[] teamsArray = match.getTeams();
+        if (teamsArray == null) return;
+        List<Team> teams = java.util.Arrays.asList(teamsArray);
         teams.forEach(team -> collectTeamAndRaceStats(team, match, competitionStats));
     }
 
@@ -49,7 +51,11 @@ public class StatsService {
     }
 
     private static Optional<Team> getTeam(Match match, Team team) {
-        return match.getTeams().stream().filter(t -> !t.getId().equals(team.getId())).findFirst();
+        Team[] teams = match.getTeams();
+        if (teams == null) return Optional.empty();
+        return java.util.Arrays.stream(teams)
+            .filter(t -> !t.getId().equals(team.getId()))
+            .findFirst();
     }
 
     private boolean isLoss(Team team, Optional<Team> otherTeam) {

@@ -11,7 +11,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
+import net.warp_scores.warpscores.identity.Identity;
 
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toMap;
@@ -24,12 +24,11 @@ public class CompetitionStatsDomainService {
     private final CompetitionStatsRepository competitionStatsRepository;
 
     @Transactional
-    public Map<UUID, Optional<Date>> getLastUpdatedDatesForCompetitions(List<UUID> competitionUuids) {
+    public Map<Identity, Optional<Date>> getLastUpdatedDatesForCompetitions(List<Identity> competitionIds) {
         List<DateForUuid> lastUpdatedDateByCompetitionIds = competitionStatsRepository
-                .findLastUpdatedDateByCompetitionIds(competitionUuids);
-        return lastUpdatedDateByCompetitionIds
-                .stream()
-                .collect(toMap(DateForUuid::uuid,
-                        r -> ofNullable(r.date())));
+                .findLastUpdatedDateByCompetitionIds(competitionIds);
+        return lastUpdatedDateByCompetitionIds.stream()
+                .collect(java.util.stream.Collectors.toMap(DateForUuid::uuid,
+                        d -> Optional.ofNullable(d.date())));
     }
 }

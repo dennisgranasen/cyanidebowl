@@ -21,25 +21,27 @@ public class TeamAndRaceStats {
     @Id
     String _id;
 
-    private Map<UUID, Stats> teamStats = new HashMap<>();
-    private Map<Race, Stats> raceStats = new HashMap<>();
-    private Map<UUID, SimpleTeam> teams = new HashMap<>();
+    private Map<String, Stats> teamStats = new HashMap<>();
+    private Map<String, Stats> raceStats = new HashMap<>();
+    private Map<String, SimpleTeam> teams = new HashMap<>();
 
     public void collectInto(Team team, Stats stats) {
-        teamStats.computeIfAbsent(team.getId(), t -> new Stats());
-        teamStats.getOrDefault(team.getId(), new Stats()).accumulate(stats);
-        raceStats.computeIfAbsent(team.getRace(), r -> new Stats());
-        raceStats.getOrDefault(team.getRace(), new Stats()).accumulate(stats);
+        String teamId = team.getTeamId();
+        String race = team.getRace();
+        teamStats.computeIfAbsent(teamId, t -> new Stats());
+        teamStats.getOrDefault(teamId, new Stats()).accumulate(stats);
+        raceStats.computeIfAbsent(race, r -> new Stats());
+        raceStats.getOrDefault(race, new Stats()).accumulate(stats);
         SimpleTeam simpleTeam = toSimpleTeam(team);
-        teams.putIfAbsent(team.getId(), simpleTeam);
+        teams.putIfAbsent(teamId, simpleTeam);
     }
 
     private SimpleTeam toSimpleTeam(Team team) {
         return new SimpleTeam()
-                .withTeamUuid(team.getId())
+                .withTeamId(team.getTeamId())
                 .withTeamName(team.getName())
                 .withRace(team.getRace())
-                .withCoachId(team.getCoachId())
+                .withCoachId(team.getCoachId() != null ? team.getCoachId().getValue() : null)
                 .withCoachName(team.getCoachName())
                 .withLogo(team.getLogo());
     }
@@ -49,14 +51,14 @@ public class TeamAndRaceStats {
     @With
     @AllArgsConstructor
     @NoArgsConstructor
-    @EqualsAndHashCode(of = "teamUuid")
-    @ToString(of = {"teamUuid", "teamName", "coachId", "coachName", "race"})
+    @EqualsAndHashCode(of = "teamId")
+    @ToString(of = {"teamId", "teamName", "coachId", "coachName", "race"})
     public static class SimpleTeam {
-        private UUID teamUuid;
+        private String teamId;
         private String teamName;
         private String coachId;
         private String coachName;
-        private Race race;
+        private String race;
         private String logo;
     }
 }

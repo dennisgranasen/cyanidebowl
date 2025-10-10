@@ -1,8 +1,8 @@
 package net.warp_scores.warpscores.domain.persistence;
 
 import java.util.Date;
-import java.util.UUID;
+import net.warp_scores.warpscores.identity.Identity;
 
-public record DateForUuid(UUID uuid, Date date) {}
+public record DateForUuid(Identity uuid, Date date) {}
 
 

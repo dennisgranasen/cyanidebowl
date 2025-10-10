@@ -1,4 +1,6 @@
+
 package net.warp_scores.warpscores.service;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,15 +36,16 @@ import static net.warp_scores.warpscores.model.MatchStatus.Validated;
 
 @Service
 @Slf4j
+
 @RequiredArgsConstructor
 public class RankService {
+    @Autowired
+    private MatchRepository matchRepository;
     private final ContestRepository contestRepository;
     private final CompetitionService competitionService;
-
-
     private final List<RankComparisons> defaultRankComparisons = List.of(RankComparisons.SCORE_310,
-            RankComparisons.WINS,
-            RankComparisons.INFLICTED_TOUCHDOWNS, RankComparisons.TOUCHDOWN_DIFFERENCE);
+        RankComparisons.WINS,
+        RankComparisons.INFLICTED_TOUCHDOWNS, RankComparisons.TOUCHDOWN_DIFFERENCE);
     private final MatchService matchService;
 
     @DurationLogging

@@ -150,10 +150,12 @@ public class CompetitionController {
     }
 
     @GetMapping(value = "/competitions/{competitionId}/stats", produces = "application/json")
-    public ResponseEntity<CompetitionStats> getCompetitionStats(@PathVariable(name = "competitionId") UUID competitionId) {
-        try
-        {
-            Optional<CompetitionStats> competitionStats = competitionStatsRepository.findById(competitionId);
+    public ResponseEntity<CompetitionStats> getCompetitionStats(@PathVariable(name = "competitionId") String competitionId,
+                                                               @RequestParam(name = "opus", required = false) Integer opus) {
+        try {
+            String[] parts = competitionId.split(Identity.DELIMITER);
+            Identity compIdentity = new CompositeIdentity(ofNullable(opus).orElse(defaultOpus), parts);
+            Optional<CompetitionStats> competitionStats = competitionStatsRepository.findById(compIdentity);
             return competitionStats.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
         } catch (Exception ex) {
             log.error("Unable to get stats for competition {}", competitionId, ex);
