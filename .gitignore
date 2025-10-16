@@ -62,3 +62,4 @@ my-compose.yaml
 frontend/package-lock.json
 backend/test.data
 *playground*.js
+frontend/package-lock.json
