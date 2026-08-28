@@ -165,24 +165,32 @@ public class ImageController {
 
 
     private ResponseEntity<byte[]> loadImage(Optional<String> imageUrl) {
-        //log.info(imageUrl.orElse("null image URL"));
-        return loadImage(imageUrl, Optional.empty());
+        return loadImage(imageUrl, Optional.empty(), List.of());
     }
 
-    private ResponseEntity<byte[]> loadImage(Optional<String> imageUrl,
+    private ResponseEntity<byte[]> loadImage(
+            Optional<String> imageUrl,
             Optional<Integer> maxWidth,
             List<Optional<String>> fallbackImageUrls) {
-        Optional<byte[]> imageData = imageUrl.flatMap(url -> imageService.loadImage(url, maxWidth));
-        for (int i = 0; i < fallbackImageUrls.length && imageData.isEmpty(); i++) {
-            Optional<String> fallbackImageUrl = fallbackImageUrls[i];
+
+        Optional<byte[]> imageData =
+                imageUrl.flatMap(url -> imageService.loadImage(url, maxWidth));
+
+        for (int i = 0; i < fallbackImageUrls.size() && imageData.isEmpty(); i++) {
+            Optional<String> fallbackImageUrl = fallbackImageUrls.get(i);
+
             if (fallbackImageUrl.isPresent()) {
-                imageData = fallbackImageUrl.flatMap(url -> imageService.loadImage(url, maxWidth));
+                imageData =
+                        fallbackImageUrl.flatMap(
+                                url -> imageService.loadImage(url, maxWidth));
             }
         }
+
         return imageData
                 .map(ImageController::ok)
                 .orElse(noContent());
     }
+   
 
     private static ResponseEntity<byte[]> ok(byte[] data) {
         return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(data);

@@ -4,6 +4,10 @@ server:
   forward-headers-strategy: native
 
 spring:
+  config:
+    import: optional:file:../.env[.properties]
+  mongodb:
+    uri: ${SPRING_MONGODB_URI:mongodb+srv://${MONGO_USER:USER}:${MONGO_PASS:PASS}@nst-cluster.9a9lw.mongodb.net/cyanidebowl?retryWrites=true&w=majority&authSource=admin}
   web:
     resources:
       static-locations: classpath=/public
