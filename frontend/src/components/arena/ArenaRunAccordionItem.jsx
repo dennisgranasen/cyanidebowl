@@ -31,14 +31,14 @@ import prettyPrint from '../../util/prettyPrint';
 
 const { boxSize } = config;
 
-function RaceOrCoachColumn({ coachOrRace, arenaTeam, competitionUuid }) {
+function RaceOrCoachColumn({ coachOrRace, arenaTeam, competitionId }) {
   const navigate = useNavigate();
   const showRace = coachOrRace === 'Race';
   const goToCoach = () => {
-    navigate(`/competition/${competitionUuid}/arena/coach/${arenaTeam.coachUuid}`);
+    navigate(`/competition/${competitionId}/arena/coach/${arenaTeam.coachId}`);
   };
   const goToRace = () => {
-    navigate(`/competition/${competitionUuid}/arena/${arenaTeam.race}`);
+    navigate(`/competition/${competitionId}/arena/${arenaTeam.race}`);
   };
 
   return (
@@ -52,14 +52,14 @@ function RaceOrCoachColumn({ coachOrRace, arenaTeam, competitionUuid }) {
   );
 }
 
-function TeamRow({ competitionUuid, arenaTeam, coachOrRace }) {
+function TeamRow({ competitionId, arenaTeam, coachOrRace }) {
   const navigate = useNavigate();
   const goToTeam = () => {
-    navigate(`/competition/${competitionUuid}/team/${arenaTeam.teamUuid}`);
+    navigate(`/competition/${competitionId}/team/${arenaTeam.teamId}`);
   };
   const sortedMatches = [].concat(arenaTeam?.matches ?? []);
-  sortedMatches.sort(comparators.compareContestsByMatchOrContestUuidAsDatesAsc);
-  const clusteredSortedMatches = arenaHelpers.clusterMatches(arenaTeam.teamUuid, sortedMatches);
+  sortedMatches.sort(comparators.compareContestsByDateWithMatchAsFallbackAsc);
+  const clusteredSortedMatches = arenaHelpers.clusterMatches(arenaTeam.teamId, sortedMatches);
   return (
     <Tr>
       <Td
@@ -76,7 +76,7 @@ function TeamRow({ competitionUuid, arenaTeam, coachOrRace }) {
           <Box>{arenaTeam.teamName}</Box>
         </HStack>
       </Td>
-      <RaceOrCoachColumn coachOrRace={coachOrRace} arenaTeam={arenaTeam} competitionUuid={competitionUuid} />
+      <RaceOrCoachColumn coachOrRace={coachOrRace} arenaTeam={arenaTeam} competitionId={competitionId} />
       <Td>{formatter.formatAsDate(arenaHelpers.earliestFinished(arenaTeam.matches), '-')}</Td>
       <Td>{formatter.formatAsDate(arenaHelpers.latestFinished(arenaTeam.matches), '-')}</Td>
       <Td>{sortedMatches.length}</Td>
@@ -86,7 +86,7 @@ function TeamRow({ competitionUuid, arenaTeam, coachOrRace }) {
           {clusteredSortedMatches.map((clusteredMatches) => (
             <ArenaProgress
               key={`arenaProgress-${arenaHelpers.getLastMatch(clusteredMatches).matchId}`}
-              teamUuid={arenaTeam.teamUuid}
+              teamId={arenaTeam.teamId}
               matches={clusteredMatches}
             />
           ))}
@@ -96,7 +96,7 @@ function TeamRow({ competitionUuid, arenaTeam, coachOrRace }) {
   );
 }
 
-function ArenaRunAccordionItem({ competitionUuid, label, loading, error, arenaTeams, coachOrRace }) {
+function ArenaRunAccordionItem({ competitionId, label, loading, error, arenaTeams, coachOrRace }) {
   return (
     <AccordionItem>
       <AccordionButton>
@@ -131,8 +131,8 @@ function ArenaRunAccordionItem({ competitionUuid, label, loading, error, arenaTe
                 <Tbody>
                   {arenaTeams.map((arenaTeam) => (
                     <TeamRow
-                      key={arenaTeam.teamUuid}
-                      competitionUuid={competitionUuid}
+                      key={arenaTeam.teamId}
+                      competitionId={competitionId}
                       arenaTeam={arenaTeam}
                       coachOrRace={coachOrRace}
                     />

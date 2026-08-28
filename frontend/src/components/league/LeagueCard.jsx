@@ -14,7 +14,7 @@ function LeagueCard({ league, ...props }) {
 
   const goToLeague = () => {
     console.log("Navigating to league:", league);
-    navigate(`/league/${league.id.opus}/${league.id.value}`);
+    navigate(`/league/${league.id.key}`);
   };
 
   useEffect(() => {

@@ -30,15 +30,21 @@ const getTeamsFor = (competition) => {
 };
 
 function TypedCompetition({ competition, competitionLoading }) {
+  //console.log('TypedCompetition', competition, competitionLoading);
   switch (competition?.format) {
     case 'Knockout':
+    case 'single_elimination':
+    case 'double_elimination':
       return <KnockoutCompetition competition={competition} competitionLoading={competitionLoading} />;
     case 'Arena':
       return <ArenaCompetition competition={competition} competitionLoading={competitionLoading} />;
     case 'Ladder':
+    case 'ladder':
       return <LadderCompetition competition={competition} competitionLoading={competitionLoading} />;
     case 'RoundRobin':
+    case 'round_robin':
     case 'Wissen':
+    case'swiss':
       return <RoundRobinAndWissenCompetition competition={competition} competitionLoading={competitionLoading} />;
     default:
       return competitionLoading ? <Spinner /> : null;
@@ -54,7 +60,7 @@ function CompetitionPage() {
     getAccessTokenSilently,
     getAccessTokenWithPopup,
   } = useAuth0WithUserPermissions();
-  const { competitionId, opus } = useParams();
+  const { competitionId } = useParams();
   const [competition, setCompetition] = useState(null);
   const [competitionLoading, setCompetitionLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -62,7 +68,7 @@ function CompetitionPage() {
   useEffect(() => {
     const fetchCompetition = () => {
       setCompetitionLoading(true);
-      WarpScoresApiService.competition(competitionId, opus)
+      WarpScoresApiService.competition(competitionId)
         .then((data) => {
           setCompetition(data);
         })
@@ -78,8 +84,8 @@ function CompetitionPage() {
       <Box>
         <Navigation
           currentPage="competition"
-          league={competition ? [competition.leagueId, competition.leagueName] : []}
-          competition={[opus + "_" + competitionId, competition ? competition.name : '']}
+          league={competition ? [competition.leagueId.key, competition.leagueName] : []}
+          competition={competition ? [competition.id.key, competition.name]: [] }
         />
       </Box>
       <LoadingOrErrorWrapper loading={competitionLoading} error={error}>
@@ -129,14 +135,13 @@ function CompetitionPage() {
                       isAuthenticated={isAuthenticated}
                       getAccessTokenSilently={getAccessTokenSilently}
                       getAccessTokenWithPopup={getAccessTokenWithPopup}
-                      competitionId={competition?.id.value}
-                      opus={competition?.id.opus}
+                      competitionId={competition?.id}
                     />
                   }
                 />
               )}
           </InfoArea>
-          <RouteLink to={`/competition/${competition?.uuid}/stats`}>
+          <RouteLink to={`/competition/${competition?.id}/stats`}>
             <Button size="xs">Statistics</Button>
           </RouteLink>
         </HeaderCard>

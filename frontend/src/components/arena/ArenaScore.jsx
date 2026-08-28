@@ -4,9 +4,9 @@ import config from '../../config';
 
 const { boxSize } = config;
 
-function ArenaScore({ match, teamUuid }) {
-  const team = match.teams.find((t) => t.id === teamUuid);
-  const opponent = match.teams.find((t) => t.id !== teamUuid);
+function ArenaScore({ match, teamId }) {
+  const team = match.teams.find((t) => t.id === teamId);
+  const opponent = match.teams.find((t) => t.id !== teamId);
   const teamScore = team?.score ?? 0;
   const opponentScore = opponent?.score ?? 0;
   console.log("boxSize: " + boxSize);

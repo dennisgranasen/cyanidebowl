@@ -118,14 +118,14 @@ public class CyanideApiService {
                 "Loading matches for team {} starting from {}.",
                 team.getTeamId(), startDate);
         TeamMatchesResponse teamMatchesResponse = cyanideCachedRestApiClient.getFromCacheOrApi(teamMatchesRequest);
-        List<String> matchUuids = ofNullable(teamMatchesResponse)
+        List<String> matchIds = ofNullable(teamMatchesResponse)
                 .stream()
                 .flatMap(t -> Arrays.stream(
                         ofNullable(t.getMatchIds())
                                 .orElse(new TeamMatchesResponse.MatchId[0])))
                 .map(x -> x.getUuid().toString())
                 .toList();
-        List<Match> matches = matchUuids
+        List<Match> matches = matchIds
                 .stream()
                 .filter(Objects::nonNull)
                 .map(id -> loadMatch(id, team.getId().getOpus()))
@@ -216,9 +216,9 @@ public class CyanideApiService {
         if (opus == 2) {
             contestsRequest.setCompetition_name(competition.getName());
             contestsRequest.setLeague_name(competition.getLeagueName());
-            contestsRequest.setExact(0);            
+            contestsRequest.setExact(1);            
         } else if (opus > 2) {
-            String cid = competition.getCompetitionId().split(Identity.DELIMITER)[1];
+            String cid = competition.getCompetitionId().getValue();
             contestsRequest.setCompetition_id(cid);
             contestsRequest.setLeague_id(competition.getLeagueId().getValue());
         } else {
@@ -253,6 +253,7 @@ public class CyanideApiService {
     }
 
     public List<Contest> loadContests(ContestsRequest contestsRequest) {
+        
         ContestsResponse contestsResponse = cyanideCachedRestApiClient.getFromCacheOrApi(contestsRequest);
         return contestDomainService.createOrUpdateContests(contestsResponse, contestsRequest.getBb());
     }

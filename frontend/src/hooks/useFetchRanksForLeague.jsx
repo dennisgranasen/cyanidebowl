@@ -8,8 +8,8 @@ export default function useFetchRanks() {
 
   const fetchRanks = (league, limit) => {
     setRanksLoading(true);
-    console.log('Fetching ranks for league:', league.id.value, league.id.opus, limit);
-    WarpScoresApiService.leagueRanks(league.id.value, league.id.opus, limit)
+    console.log('Fetching ranks for league:', league.id, limit);
+    WarpScoresApiService.leagueRanks(league.id, limit)
       .then((data) => {
         data.sort((rankA, rankB) => rankA.rank - rankB.rank);
         setRanks(data);

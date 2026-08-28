@@ -8,8 +8,8 @@ import config from '../../config';
 
 const { boxSize } = config;
 
-function ArenaMatchLabel({ teamUuid, match }) {
-  const opponent = match.teams.find((team) => team.id !== teamUuid);
+function ArenaMatchLabel({ teamId, match }) {
+  const opponent = match.teams.find((team) => team.id !== teamId);
   return (
     <VStack align="left">
       <HStack>

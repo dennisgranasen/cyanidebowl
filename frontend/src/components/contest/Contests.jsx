@@ -50,7 +50,7 @@ function Contests({ contests, loading, error }) {
           </Thead>
           <Tbody>
             {contests?.map((contest) => {
-              return <Contest contest={contest} key={contest.contestUuid} />;
+              return <Contest contest={contest} key={contest.id.key} />;
             })}
           </Tbody>
           <Tfoot>

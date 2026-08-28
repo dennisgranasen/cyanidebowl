@@ -15,10 +15,10 @@ function Competition({ competition, league }) {
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
 
   const goToCompetition = () => {
-    navigate(`/competition/${competition.id.opus}/${competition.id.value}`);
+    navigate(`/competition/${competition.id.key}`);
   };
 
-  console.log('Competition', competition);
+  //console.log('Competition', competition);
   return competition !== null ? (
     <Tr onClick={goToCompetition}>
       <Td>
@@ -40,7 +40,7 @@ function Competition({ competition, league }) {
             status={competition.status}
             format={competition.format}
             teamsMax={competition.teamsMax}
-            currentRound={competition.currentRound}
+            currentRound={competition.currentRound} /* Fix this. */
             totalRounds={competition.totalRounds}
             totalMatches={competition.totalMatches}
             playedMatches={competition.playedMatches}

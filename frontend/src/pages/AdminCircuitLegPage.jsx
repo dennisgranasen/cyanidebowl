@@ -3,7 +3,7 @@ import { Box, Heading, VStack } from '@chakra-ui/react';
 import { Link as RouteLink, useNavigate, useParams } from 'react-router-dom';
 import WarpScoresApiService from '../WarpScoresApiService';
 import Navigation from '../components/misc/Navigation';
-import CircuitLeg from '../components/circuit/CircuitLeg';
+import AdminCircuitLeg from '../components/circuit/AdminCircuitLeg';
 import HeaderCard from '../components/common/HeaderCard';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';

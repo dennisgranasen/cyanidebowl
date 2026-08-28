@@ -7,7 +7,6 @@ import lombok.ToString;
 import net.warp_scores.warpscores.cyanide.api.responses.TeamMatchesResponse;
 
 import java.util.Date;
-import java.util.UUID;
 
 /*
     {

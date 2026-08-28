@@ -10,7 +10,7 @@ import Race from '../components/common/Race';
 import formatter from '../util/formatter';
 
 function CompetitionStatsPage() {
-  const { competitionUuid } = useParams();
+  const { competitionId } = useParams();
   const [competition, setCompetition] = useState(null);
   const [competitionStats, setCompetitionStats] = useState(null);
   const [competitionStatsLoading, setCompetitionStatsLoading] = useState(false);
@@ -20,7 +20,7 @@ function CompetitionStatsPage() {
     const fetchCompetitionStats = () => {
       if (!competition) return;
       setCompetitionStatsLoading(true);
-      WarpScoresApiService.competitionStats(competition.uuid)
+      WarpScoresApiService.competitionStats(competition.id)
         .then((data) => {
           setCompetitionStats(data);
         })
@@ -33,9 +33,9 @@ function CompetitionStatsPage() {
 
   useEffect(() => {
     const fetchCompetition = () => {
-      if (!competitionUuid) return;
+      if (!competitionId) return;
       setCompetitionStatsLoading(true);
-      WarpScoresApiService.competition(competitionUuid)
+      WarpScoresApiService.competition(competitionId)
         .then((data) => {
           setCompetition(data);
         })
@@ -44,7 +44,7 @@ function CompetitionStatsPage() {
     };
 
     fetchCompetition();
-  }, [competitionUuid]);
+  }, [competitionId]);
 
   const raceStats = Object.keys(competitionStats?.teamAndRaceStats.raceStats ?? []) ?? [];
 
@@ -53,8 +53,8 @@ function CompetitionStatsPage() {
       <Box>
         <Navigation
           currentPage="competition"
-          league={competition ? [competition.leagueId, competition.leagueName] : []}
-          competition={[competitionUuid, competition ? competition.name : '']}
+          league={competition ? [competition.leagueId.key, competition.leagueName] : []}
+          competition={[competitionId.key, competition ? competition.name : '']}
         />
       </Box>
       <LoadingOrErrorWrapper loading={competitionStatsLoading} error={error}>
@@ -62,8 +62,8 @@ function CompetitionStatsPage() {
           heading={competition?.name}
           subHeading={<RouteLink to={`/${competition?.leagueId}`}>League: {competition?.leagueName}</RouteLink>}
           detailsHeading="Competition statistics"
-          mainImageSrc={competition?.logo ? imageUrls.logo(competition?.logo) : imageUrls.logo(competition?.leagueLogo)}
-          additionalImageSrc={competition?.logo ? imageUrls.logo(competition?.leagueLogo) : null}
+          mainImageSrc={competition?.logo ? imageUrls.logo(competition?.logo, competition?.id?.opus) : imageUrls.logo(competition?.leagueLogo, competition?.id?.opus)}
+          additionalImageSrc={competition?.logo ? imageUrls.logo(competition?.leagueLogo, competition?.id?.opus) : null}
         >
           <Heading>Competition statistics</Heading>
           Last updated: {formatter.formatAsDate(competitionStats?.lastUpdated)}

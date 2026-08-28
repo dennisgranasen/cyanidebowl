@@ -1,14 +1,12 @@
 package net.warp_scores.warpscores.cyanide.api.requests;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import net.warp_scores.warpscores.cyanide.api.responses.LookupResponse;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.util.UUID;
 
 /*
     {

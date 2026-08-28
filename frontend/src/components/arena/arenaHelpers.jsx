@@ -1,30 +1,30 @@
 import comparators from '../../util/comparators';
 
 function getLastMatch(matches) {
-  const sortedMatches = [].concat(matches.sort(comparators.compareContestsByMatchOrContestUuidAsDatesAsc));
+  const sortedMatches = [].concat(matches.sort(comparators.compareContestsByDateWithMatchAsFallbackAsc));
   return sortedMatches.pop();
 }
 
 const teamsByLastMatchDate = (team1, team2) => {
   const match1 = getLastMatch(team1.matches);
   const match2 = getLastMatch(team2.matches);
-  return comparators.compareContestsByMatchOrContestUuidAsDatesDesc(match1, match2);
+  return comparators.compareContestsByDateWithMatchAsFallbackDesc(match1, match2);
 };
 
-function isWinner(teamUuid, match) {
+function isWinner(teamId, match) {
   const teams = [].concat(match.teams);
   teams.sort((team1, team2) => team2.score - team1.score);
-  return teamUuid === teams[0].id;
+  return teamId === teams[0].id;
 }
 
-const clusterMatches = (teamUuid, matches) => {
+const clusterMatches = (teamId, matches) => {
   let wins = 0;
   let losses = 0;
   const clusteredMatches = [];
   let currMatches = [];
   matches.forEach((match) => {
     currMatches.push(match);
-    if (isWinner(teamUuid, match)) {
+    if (isWinner(teamId, match)) {
       wins += 1;
     } else {
       losses += 1;
@@ -40,7 +40,7 @@ const clusterMatches = (teamUuid, matches) => {
     clusteredMatches.push(currMatches);
   }
   return clusteredMatches.sort((c1, c2) =>
-    comparators.compareContestsByMatchOrContestUuidAsDatesAsc(getLastMatch(c1), getLastMatch(c2))
+    comparators.compareContestsByDateWithMatchAsFallbackAsc(getLastMatch(c1), getLastMatch(c2))
   );
 };
 

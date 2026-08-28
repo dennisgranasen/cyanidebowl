@@ -12,22 +12,24 @@ function LiveContests({ league, competition, embeddable, limit }) {
   const [loading, setLoading] = useState();
   const [error, setError] = useState();
 
-  const fetchLiveLeagueContests = (leagueUuid, contestLimit) => {
+  const fetchLiveLeagueContests = (leagueId, contestLimit) => {
     setLoading(true);
-    WarpScoresApiService.liveLeagueContests(leagueUuid, contestLimit)
+    WarpScoresApiService.liveLeagueContests(leagueId, contestLimit)
       .then((data) => {
-        data.sort(comparators.compareContestsByMatchOrContestUuidAsDatesDesc);
+        console.log('LiveContests fetched contests:', data);
+        data.sort(comparators.compareContestsByDateDesc);
         setContests(data);
       })
       .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
       .finally(() => setLoading(false));
   };
 
-  const fetchLiveCompetitionContests = (competitionUuid, contestLimit) => {
+  const fetchLiveCompetitionContests = (competitionId, contestLimit) => {
     setLoading(true);
-    WarpScoresApiService.liveCompetitionContests(competitionUuid, contestLimit)
+    WarpScoresApiService.liveCompetitionContests(competitionId, contestLimit)
       .then((data) => {
-        data.sort(comparators.compareContestsByMatchOrContestUuidAsDatesDesc);
+        console.log('LiveContests fetched contests:', data);
+        data.sort(comparators.compareContestsByDateDesc);
         setContests(data);
       })
       .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
@@ -36,9 +38,9 @@ function LiveContests({ league, competition, embeddable, limit }) {
 
   useEffect(() => {
     if (league) {
-      fetchLiveLeagueContests(league.uuid, limit);
+      fetchLiveLeagueContests(league.id, limit);
     } else if (competition) {
-      fetchLiveCompetitionContests(competition.uuid, limit);
+      fetchLiveCompetitionContests(competition.id, limit);
     }
   }, [league, competition]);
 

@@ -1,6 +1,6 @@
 package net.warp_scores.warpscores.domain.persistence;
 
-import net.warp_scores.warpscores.domain.persistence.MatchRepository.TeamRankingRecord;
+import net.warp_scores.warpscores.utils.TeamRankingRecord;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.model.ArenaTeam;
 import net.warp_scores.warpscores.model.Match;
@@ -21,8 +21,8 @@ import java.util.Optional;
 @Repository
 
 public interface MatchRepository extends MongoRepository<Match, Identity> {
-                List<Match> findByCompetitionId(Identity competitionId);
-    //List<Match> findByOldCompetitionIdAndOpus(Integer oldId, Integer opus);
+    List<Match> findByCompetitionId(Identity competitionId);
+    List<Match> findByCompetitionId(Identity competitionId, Pageable pageable);
 
     List<Match> findAllById(List<Identity> matchIds);
     //List<Match> findAllByFinishedNullOrNotFinished();
@@ -35,11 +35,10 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
     List<Match> findByLeagueId(Identity leagueId);
 
     Integer countMatchesByCompetitionId(Identity competitionId);
-    //Integer countMatchesByOldCompetitionIdAndOpus(Integer oldId, Integer opus);
-
-        List<Match> findByCompetitionId(Identity competitionId, Pageable pageable);
 
     Optional<Match> findTopByTeamsContainsOrderByStartedDesc(Team team);
+
+    List<Match> findByLeagueIdAndFinishedNotNull(Identity leagueId);
 
     List<Match> findTopByLeagueIdAndFinishedNotNull(Identity leagueId,
             Pageable pageable);
@@ -80,31 +79,29 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
     })
     List<DateForId> findLastMatchDateByCompetitionIds(List<Identity> competitionIds);
 
-    record DateForId(Identity id, Date date) {}
-
     @Aggregation(pipeline = {
             "{ $match: { $and: [ { competitionId: ?0 }, { $or: [ { $expr: { $eq: [?1, null] } }, {'teams.race': ?1 } ] }, { $or: [ { $expr: { $eq: [?2, null] } }, { 'coaches._id': ?2 } ] } ] } }",
             "{ $project: { _id: 1, \"teams.players\": 0 }}",
             "{ $addFields: { match: \"$$ROOT\" } }",
-            "{ $addFields: { winnerTeamUuid: { $cond: { if: { $gt: [{ $arrayElemAt: [\"$teams.score\", 0] }, { $arrayElemAt: [\"$teams.score\", 1] }] }, then: { $arrayElemAt: [\"$teams._id\", 0] }, else: { $arrayElemAt: [\"$teams._id\", 1] } } } } }",
+            "{ $addFields: { winnerTeamId: { $cond: { if: { $gt: [{ $arrayElemAt: [\"$teams.score\", 0] }, { $arrayElemAt: [\"$teams.score\", 1] }] }, then: { $arrayElemAt: [\"$teams._id\", 0] }, else: { $arrayElemAt: [\"$teams._id\", 1] } } } } }",
             "{ $addFields: { winnerCoachName: { $cond: { if: { $gt: [{ $arrayElemAt: [\"$teams.score\", 0] }, { $arrayElemAt: [\"$teams.score\", 1] }] }, then: { $arrayElemAt: [\"$coaches.name\", 0] }, else: { $arrayElemAt: [\"$coaches.name\", 1] } } } } }",
-            "{ $addFields: { winnerCoachUuid: { $cond: { if: { $gt: [{ $arrayElemAt: [\"$teams.score\", 0] }, { $arrayElemAt: [\"$teams.score\", 1] }] }, then: { $arrayElemAt: [\"$coaches._id\", 0] }, else: { $arrayElemAt: [\"$coaches._id\", 1] } } } } }",
+            "{ $addFields: { winnerCoachId: { $cond: { if: { $gt: [{ $arrayElemAt: [\"$teams.score\", 0] }, { $arrayElemAt: [\"$teams.score\", 1] }] }, then: { $arrayElemAt: [\"$coaches._id\", 0] }, else: { $arrayElemAt: [\"$coaches._id\", 1] } } } } }",
             "{ $addFields: { winnerRace: { $cond: { if: { $gt: [{ $arrayElemAt: [\"$teams.score\", 0] }, { $arrayElemAt: [\"$teams.score\", 1] }] }, then: { $arrayElemAt: [\"$teams.race\", 0] }, else: { $arrayElemAt: [\"$teams.race\", 1] } } } } }",
-            "{ $addFields: { loserTeamUuid: { $cond: { if: { $gt: [{ $arrayElemAt: [\"$teams.score\", 0] }, { $arrayElemAt: [\"$teams.score\", 1] }] }, then: { $arrayElemAt: [\"$teams._id\", 1] }, else: { $arrayElemAt: [\"$teams._id\", 0] } } } } }",
+            "{ $addFields: { loserTeamId: { $cond: { if: { $gt: [{ $arrayElemAt: [\"$teams.score\", 0] }, { $arrayElemAt: [\"$teams.score\", 1] }] }, then: { $arrayElemAt: [\"$teams._id\", 1] }, else: { $arrayElemAt: [\"$teams._id\", 0] } } } } }",
             "{ $addFields: { loserCoachName: { $cond: { if: { $gt: [{ $arrayElemAt: [\"$teams.score\", 0] }, { $arrayElemAt: [\"$teams.score\", 1] }] }, then: { $arrayElemAt: [\"$coaches.name\", 1] }, else: { $arrayElemAt: [\"$coaches.name\", 0] } } } } }",
-            "{ $addFields: { loserCoachUuid: { $cond: { if: { $gt: [{ $arrayElemAt: [\"$teams.score\", 0] }, { $arrayElemAt: [\"$teams.score\", 1] }] }, then: { $arrayElemAt: [\"$coaches._id\", 1] }, else: { $arrayElemAt: [\"$coaches._id\", 0] } } } } }",
+            "{ $addFields: { loserCoachId: { $cond: { if: { $gt: [{ $arrayElemAt: [\"$teams.score\", 0] }, { $arrayElemAt: [\"$teams.score\", 1] }] }, then: { $arrayElemAt: [\"$coaches._id\", 1] }, else: { $arrayElemAt: [\"$coaches._id\", 0] } } } } }",
             "{ $addFields: { loserRace: { $cond: { if: { $gt: [{ $arrayElemAt: [\"$teams.score\", 0] }, { $arrayElemAt: [\"$teams.score\", 1] }] }, then: { $arrayElemAt: [\"$teams.race\", 1] }, else: { $arrayElemAt: [\"$teams.race\", 0] } } } } }",
             """
                     { $facet: {
-                          wins: [ { $project: { _id: "$winnerTeamUuid", match: "$match", result: "win", coachName: "$winnerCoachName", coachUuid: "$winnerCoachUuid", teamUuid: "$winnerTeamUuid", race: "$winnerRace" } }],
-                          losses: [ { $project: { _id: "$loserTeamUuid", match: "$match", result: "loss", coachName: "$loserCoachName", coachUuid: "$loserCoachUuid", teamUuid: "$loserTeamUuid", race: "$loserRace" } } ]
+                          wins: [ { $project: { _id: "$winnerTeamId", match: "$match", result: "win", coachName: "$winnerCoachName", coachId: "$winnerCoachId", teamId: "$winnerTeamId", race: "$winnerRace" } }],
+                          losses: [ { $project: { _id: "$loserTeamId", match: "$match", result: "loss", coachName: "$loserCoachName", coachId: "$loserCoachId", teamId: "$loserTeamId", race: "$loserRace" } } ]
                         }
                       }
                     """,
             "{ $project: { combined: { $concatArrays: [\"$wins\", \"$losses\"] } } }",
             "{ $unwind: \"$combined\" }",
-            "{ $group: { _id: \"$combined._id\",  matches: { $push: \"$combined.match\" }, results: { $push: { result: \"$combined.result\" } }, coachName: { $first: \"$combined.coachName\" }, coachUuid: { $first: \"$combined.coachUuid\" }, teamUuid: { $first: \"$combined.teamUuid\" }, race: { $first: \"$combined.race\" }, winCount: { $sum: { $cond: { if: { $eq: [\"$combined.result\", \"win\"] }, then: 1, else: 0 } } }, lossCount: { $sum: { $cond: { if: { $eq: [\"$combined.result\", \"loss\"] }, then: 1, else: 0 } } } } }",
-            "{ $project: { _id: 1, race: 1, teamUuid: 1, coachName: 1, coachUuid: 1, results: [  { result: \"win\", count: \"$winCount\" }, { result: \"loss\", count: \"$lossCount\" } ], matches: 1, totalGames: { $add: [\"$winCount\", \"$lossCount\"] } } }",
+            "{ $group: { _id: \"$combined._id\",  matches: { $push: \"$combined.match\" }, results: { $push: { result: \"$combined.result\" } }, coachName: { $first: \"$combined.coachName\" }, coachId: { $first: \"$combined.coachId\" }, teamId: { $first: \"$combined.teamId\" }, race: { $first: \"$combined.race\" }, winCount: { $sum: { $cond: { if: { $eq: [\"$combined.result\", \"win\"] }, then: 1, else: 0 } } }, lossCount: { $sum: { $cond: { if: { $eq: [\"$combined.result\", \"loss\"] }, then: 1, else: 0 } } } } }",
+            "{ $project: { _id: 1, race: 1, teamId: 1, coachName: 1, coachId: 1, results: [  { result: \"win\", count: \"$winCount\" }, { result: \"loss\", count: \"$lossCount\" } ], matches: 1, totalGames: { $add: [\"$winCount\", \"$lossCount\"] } } }",
             "{ $match:  { $or: [ { $expr: { $eq: [?3, null] } }, { $and: [ { totalGames: { $gte: ?3 } }, { results: { $elemMatch: { result: \"win\", count: { $gte: ?3 } } } } ] } ] } }"
     })
     List<ArenaTeam> queryArenaTeamsFor(Identity competitionId,
@@ -259,6 +256,140 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
     })
     List<TeamRankingRecord> findTeamRankingsByLeagueId(Identity leagueId);
 
+   @Aggregation(pipeline = {
+        "{ '$match': { 'competitionId': ?0 } }",
+        "{ '$addFields': { 'originalTeams': '$teams', 'originalCoaches': '$coaches', 'matchDate': '$finished' } }",
+        "{ '$unwind': { 'path': '$teams', 'includeArrayIndex': 'teamIndex' } }",
+        "{" +
+        "  '$project': {" +
+        "    'teamId': '$teams._id.value'," +
+        "    'teamName': '$teams.name'," +
+        "    'teamRaceId': '$teams.raceId'," +
+        "    'coachId': { '$arrayElemAt': ['$originalCoaches._id', '$teamIndex'] }," +
+        "    'coachName': { '$arrayElemAt': ['$originalCoaches.name', '$teamIndex'] }," +
+        "    'teamScore': '$teams.score'," +
+        "    'teamInflictedCasualties': '$teams.inflictedcasualties'," +
+        "    'teamValue': '$teams.value'," +
+        "    'matchDate': '$matchDate'," +
+        "    'opponent': {" +
+        "      '$arrayElemAt': [" +
+        "        {" +
+        "          '$filter': {" +
+        "            'input': '$originalTeams'," +
+        "            'as': 'opp'," +
+        "            'cond': { '$ne': ['$$opp._id.value', '$teams._id.value'] }" +
+        "          }" +
+        "        }," +
+        "        0" +
+        "      ]" +
+        "    }" +
+        "  }" +
+        "}",
+        "{" +
+        "  '$addFields': {" +
+        "    'points': {" +
+        "      '$switch': {" +
+        "        'branches': [" +
+        "          { 'case': { '$gt': ['$teamScore', '$opponent.score'] }, 'then': 3 }," +
+        "          { 'case': { '$eq': ['$teamScore', '$opponent.score'] }, 'then': 1 }" +
+        "        ]," +
+        "        'default': 0" +
+        "      }" +
+        "    }," +
+        "    'wins': { '$cond': { 'if': { '$gt': ['$teamScore', '$opponent.score'] }, 'then': 1, 'else': 0 } }," +
+        "    'draws': { '$cond': { 'if': { '$eq': ['$teamScore', '$opponent.score'] }, 'then': 1, 'else': 0 } }," +
+        "    'losses': { '$cond': { 'if': { '$lt': ['$teamScore', '$opponent.score'] }, 'then': 1, 'else': 0 } }," +
+        "    'netTouchdowns': { '$subtract': ['$teamScore', '$opponent.score'] }," +
+        "    'netCasualties': { '$subtract': ['$teamInflictedCasualties', '$opponent.inflictedcasualties'] }," +
+        "    'touchdownsFor': '$teamScore'," +
+        "    'touchdownsAgainst': '$opponent.score'," +
+        "    'casualtiesFor': '$teamInflictedCasualties'," +
+        "    'casualtiesAgainst': '$opponent.inflictedcasualties'" +
+        "  }" +
+        "}",
+        "{" +
+        "  '$group': {" +
+        "    '_id': '$teamId'," +
+        "    'teamName': { '$first': '$teamName' }," +
+        "    'raceId': { '$first': '$teamRaceId' }," +
+        "    'coachId': { '$first': '$coachId' }," +
+        "    'coachName': { '$first': '$coachName' }," +
+        "    'points': { '$sum': '$points' }," +
+        "    'wins': { '$sum': '$wins' }," +
+        "    'draws': { '$sum': '$draws' }," +
+        "    'losses': { '$sum': '$losses' }," +
+        "    'netTouchdowns': { '$sum': '$netTouchdowns' }," +
+        "    'netCasualties': { '$sum': '$netCasualties' }," +
+        "    'matchCount': { '$sum': 1 }," +
+        "    'latestMatchDate': { '$max': '$matchDate' }," +
+        "    'teamValues': { '$push': { 'value': '$teamValue', 'date': '$matchDate' } }," +
+        "    'totalTouchdownsFor': { '$sum': '$touchdownsFor' }," +
+        "    'totalTouchdownsAgainst': { '$sum': '$touchdownsAgainst' }," +
+        "    'totalCasualtiesFor': { '$sum': '$casualtiesFor' }," +
+        "    'totalCasualtiesAgainst': { '$sum': '$casualtiesAgainst' }" +
+        "  }" +
+        "}",
+        "{" +
+        "  '$lookup': {" +
+        "    'from': 'team'," +
+        "    'let': { 'teamIdValue': '$_id' }," +
+        "    'pipeline': [" +
+        "      { '$match': { '$expr': { '$eq': ['$_id.value', '$$teamIdValue'] } } }," +
+        "      { '$project': { 'logo': 1, '_id': 0 } }" +
+        "    ]," +
+        "    'as': 'teamInfo'" +
+        "  }" +
+        "}",
+        "{" +
+        "  '$addFields': {" +
+        "    'teamLogo': { '$arrayElemAt': ['$teamInfo.logo', 0] }," +
+        "    'latestTeamValue': {" +
+        "      '$arrayElemAt': [" +
+        "        {" +
+        "          '$map': {" +
+        "            'input': {" +
+        "              '$filter': {" +
+        "                'input': '$teamValues'," +
+        "                'as': 'tv'," +
+        "                'cond': { '$eq': ['$$tv.date', '$latestMatchDate'] }" +
+        "              }" +
+        "            }," +
+        "            'as': 'latest'," +
+        "            'in': '$$latest.value'" +
+        "          }" +
+        "        }," +
+        "        0" +
+        "      ]" +
+        "    }" +
+        "  }" +
+        "}",
+        "{" +
+        "  '$project': {" +
+        "    'teamId': { 'type': 'SimpleIdentity', 'value': '$_id' }," +
+        "    'teamName': 1," +
+        "    'teamLogo': 1," +
+        "    'raceId': 1," +
+        "    'coachId': 1," +
+        "    'coachName': 1," +
+        "    'points': 1," +
+        "    'wins': 1," +
+        "    'draws': 1," +
+        "    'losses': 1," +
+        "    'netTouchdowns': 1," +
+        "    'netCasualties': 1," +
+        "    'matchCount': 1," +
+        "    'latestTeamValue': 1," +
+        "    'totalTouchdownsFor': 1," +
+        "    'totalTouchdownsAgainst': 1," +
+        "    'totalCasualtiesFor': 1," +
+        "    'totalCasualtiesAgainst': 1" +
+        "  }" +
+        "}",
+        "{ '$sort': { 'points': -1, 'netTouchdowns': -1, 'netCasualties': -1 } }"
+    })
+    List<TeamRankingRecord> findTeamRankingsByCompetitionId(Identity leagueId);
+
+    /*
     record TeamRankingRecord(
         Identity teamId,
         String teamName,
@@ -279,6 +410,7 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
         int totalCasualtiesFor,
         int totalCasualtiesAgainst
     ) {}
+        */
 }
 
 

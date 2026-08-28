@@ -2,29 +2,20 @@ package net.warp_scores.warpscores.domain;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.warp_scores.warpscores.controller.CompetitionController;
 import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
 import net.warp_scores.warpscores.cyanide.api.responses.TeamResponse;
 import net.warp_scores.warpscores.cyanide.api.responses.TeamsResponse;
-import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
-import net.warp_scores.warpscores.domain.persistence.TeamCollectionRepository;
 import net.warp_scores.warpscores.domain.persistence.TeamRepository;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
-import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.Team;
 import net.warp_scores.warpscores.model.TeamCollection;
-import net.warp_scores.warpscores.service.OfficialLeagueAndCompetitions;
 import net.warp_scores.warpscores.service.PopulatorUtil;
 import net.warp_scores.warpscores.service.TeamPopulator;
-import net.warp_scores.warpscores.service.UUIDConverter;
-import net.warp_scores.warpscores.service.IdService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-
-import static java.util.Optional.ofNullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -41,10 +32,6 @@ public class TeamDomainService {
     private final TeamPopulator teamPopulator;
     @Autowired
     private final TeamCollectionDomainService competitionTeamsDomainService;
-
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
-
 
     @Transactional
     public List<Team> createOrUpdateTeams(TeamsResponse teamsResponse, int opus) {
@@ -93,6 +80,16 @@ public class TeamDomainService {
             return Optional.empty();
         }         
         return Optional.of(team);
+    }
+
+    @Transactional
+    public List<Team> findTeams(Collection<Identity> teamIds) {
+        List<Team> teams = teamRepository.findAllById(teamIds);
+        if (teams == null || teams.isEmpty()) {
+            log.warn("No teams with ids in {} not found.", teamIds);
+            return Collections.emptyList();
+        }         
+        return teams;
     }
 
     /*

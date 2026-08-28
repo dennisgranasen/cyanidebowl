@@ -16,6 +16,7 @@ const config = {
   auth0Domain,
   auth0Audience,
   showCircuitsFeature: false,
+  showRaceLogo: true,
   locale: 'en-UK',
   boxSize: '2rem',
   smallBoxSize: '1.5rem',

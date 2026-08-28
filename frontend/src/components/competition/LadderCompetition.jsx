@@ -18,7 +18,7 @@ function LadderCompetition({ competition, competitionLoading }) {
     <>
       <Heading size="md">Ranking</Heading>
       <Ranks
-        competitionUuid={competition?.uuid}
+        competitionId={competition?.id}
         loading={competitionLoading || ranksLoading}
         ranks={ranks}
         error={ranksError}

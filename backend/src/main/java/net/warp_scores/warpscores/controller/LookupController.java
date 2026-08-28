@@ -28,24 +28,56 @@ import org.springframework.web.bind.annotation.RestController;
 public class LookupController {
     private final CyanideApiService cyanideApiService;
 
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
-
+    @Value("${cyanide.default.opus:1}")
+    private int defaultOpus; // Default opus value, can be overridden in application properties
 
     @PostMapping("/lookup")
     @PreAuthorize(Authorities.AUTHORITY_WRITE_REGISTER_LEAGUE)
-    public ResponseEntity<LookupResponse> performLookup(
-        @RequestBody LookupRequest lookupRequest) {
+    public ResponseEntity<LookupResponse> performLookup(@RequestBody LookupRequest lookupRequest) {
 
         log.info("Lookup request: {}", lookupRequest);
         try {
+            // If search is a numeric league ID and opus is 1 or 2, do direct league lookup
+            String leagueName = lookupRequest.getLeague_name();
+            Integer opus = lookupRequest.getOpus();
+            if (opus == null) {
+                opus = defaultOpus; // Default opus if not provided
+            }
+            boolean isNumericLeagueId = leagueName != null && leagueName.matches("^\\d+$");
+            log.info("League name: {}, opus: {}, isNumericLeagueId: {}", leagueName, opus, isNumericLeagueId);            
+            if (isNumericLeagueId && (opus < 3)) {                
+                Identity leagueIdentity = new SimpleIdentity(leagueName, opus);
+                log.info("Performing direct league lookup for league ID: {}", leagueIdentity);
+                League league = cyanideApiService.loadLeague(leagueIdentity);
+                if (league == null) {
+                    log.warn("League {} not found for opus {}", leagueName, opus);
+                } else {
+                    log.info("League found: {}", league);
+                }
+                log.info("Loading competitions for id: {}", leagueIdentity);
+                List<Competition> competitions = cyanideApiService.loadCompetitions(leagueIdentity);
+                if (competitions == null || competitions.isEmpty()) {
+                    log.warn("No competitions found for league {}", leagueName);
+                } else {
+                    log.info("Competitions found: {}", competitions.size());
+                }
+
+                LookupResponse resp = new LookupResponse();
+                if (league != null)
+                    resp.setFullLeagues(new League[]{league});
+                if (competitions != null && !competitions.isEmpty())
+                    resp.setFullCompetitions(competitions.toArray(new Competition[0]));
+                return ResponseEntity.ok(resp);
+            }
+
+            // Default: normal lookup
             LookupResponse lookup = cyanideApiService.lookup(lookupRequest);
             log.info("Lookup response: {}", lookup);
             if (lookupRequest.getIncludeDetails() && lookup != null) {
                 return lookupDetails(lookup, lookupRequest);
-            }
-            else
+            } else {
                 return ResponseEntity.ok(lookup);
+            }
         } catch (Exception ex) {
             log.error("Unable to perform lookup {}.", lookupRequest, ex);
             return ResponseEntity.internalServerError().build();

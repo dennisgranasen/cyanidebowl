@@ -25,9 +25,6 @@ public class LeagueService {
     private final LeagueRepository leagueRepository;
     private final CyanideApiService cyanideApiService;
 
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
-
     @DurationLogging(warnThresholdMillis = 1500, errorThresholdMillis = 3000)
     public List<League> loadAll() {
         return leagueRepository.findAll();
@@ -36,7 +33,7 @@ public class LeagueService {
     @DurationLogging
     public Optional<League> loadById(Identity leagueId) {        
         Optional<League> league = leagueRepository.findById(leagueId);
-        log.info("Loading league by ID: {}, opus: {}", leagueId, leagueId.getOpus()); 
+        log.info("Loading league by ID: {}", leagueId); 
         if (league.isPresent()) {
             return league;
         } else {

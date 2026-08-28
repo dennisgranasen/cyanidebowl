@@ -15,7 +15,6 @@ function RoundRobinAndWissenCompetition({ competition, competitionLoading }) {
       fetchContests(competition);
     }
   }, [competition]);
-
   return (
     <>
       <Heading size="md">Ranking</Heading>
@@ -25,7 +24,7 @@ function RoundRobinAndWissenCompetition({ competition, competitionLoading }) {
         ranks={ranks}
         error={ranksError}
       />
-      <Heading size="md">Contests</Heading>
+      <Heading size="md">Rounds</Heading>
       <TabbedContests
         contests={contests}
         currentRound={competition?.currentRound}

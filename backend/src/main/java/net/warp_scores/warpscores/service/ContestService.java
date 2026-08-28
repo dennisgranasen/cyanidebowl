@@ -17,9 +17,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -36,25 +40,54 @@ public class ContestService {
     @DurationLogging
     public List<Contest> getCompetitionContests(
                 Identity competitionId,
-                Optional<Integer> limit) {  
-        Optional<Competition> competition = 
-                competitionService.loadCompetition(competitionId);
-        List<Team> teams = teamDomainService
+                Optional<Integer> limit) {
+        log.info("Retrieving contests for competition: {}", competitionId);                        
+        Competition competition = 
+                competitionService.loadCompetition(competitionId).orElseThrow();
+
+        Set<Team> teams = new HashSet<>(teamDomainService  // Create mutable ArrayList
                 .findByCompetitionId(competitionId)
                 .stream()
-                .toList();
+                .toList());
+        log.info("Teams found for competition {}: {}", competitionId, teams.size());
         Pageable pageable = limit.map(l -> (Pageable) PageRequest.of(0, l, Sort.by(Sort.Direction.DESC, "matchDate")))
                 .orElse(Pageable.unpaged());
         List<Contest> contests = contestRepository.findByCompetitionId(
-                competitionId, pageable);
-        teams.addAll(contests.stream()
-                .map(Contest::getOpponents)
-                .flatMap(Arrays::stream)
-                .toList());
-        contests.forEach(this::loadMatchIntoAndAdjustCompetitionName);
+                competition.getCompetitionId(), pageable);
+        if (contests.isEmpty()) {
+                log.info("No contests found for competition {}, initializing contests.", competition.getCompetitionId());
 
-        return contestInitializationService.initializeContestsScheduleForFormat(
-                competition, teams, contests);
+                return List.of();
+        } else {
+                log.info("Contests found for competition {}: {}", competition.getCompetitionId(), contests.size());
+                if (contests.size() > 0) {
+                        log.info("{}", contests.get(0));
+                }
+                teams.addAll(contests.stream()
+                        .map(Contest::getOpponents)
+                        .filter(x -> x != null && x.length > 0)
+                        .flatMap(Arrays::stream)
+                        .collect(Collectors.toSet()));
+                log.info("Total teams including opponents: {}", teams.size());
+                contests.forEach(this::loadMatchIntoAndAdjustCompetitionName);
+                log.info("Loaded matches into contests and adjusted competition names.");
+
+                contests.stream()
+                .filter(c -> c.getGameId() != null)
+                .peek(c -> log.info("Contest with gameId {} found: {}", c.getGameId()))
+                .forEach(c ->  {
+                        Optional<Match> m = matchRepository.findById(c.getGameId());
+                        if (m.isPresent()) {
+                                log.info("Match found for contest {}: {}", c.getId(), m.get());
+                                c.setMatch(m.get());
+                        } else {
+                                log.warn("No match found for contest {} with gameId {}", c.getId(), c.getGameId());
+                        }
+                 });
+
+                return contestInitializationService.initializeContestsScheduleForFormat(
+                        competition, teams, contests);
+        }
     }
 
     @DurationLogging
@@ -62,7 +95,7 @@ public class ContestService {
                 Identity leagueId,
                 int limit) {
         List<Contest> contests = 
-                contestRepository.findByLeagueIdAndStatusOrderByMatchDateDesc(leagueId,
+                contestRepository.findByLeagueIdAndStatusOrStatusNullOrderByMatchDateDesc(leagueId,
                         MatchStatus.Validated, 
                         PageRequest.of(0, limit, 
                                 Sort.by(Sort.Direction.DESC, "matchDate")));
@@ -87,7 +120,7 @@ public class ContestService {
     public List<Contest> getLatestCompetitionContests(
                 Identity competitionId, int limit) {
         List<Contest> contests = 
-                contestRepository.findByCompetitionIdAndStatusOrderByMatchDateDesc(
+                contestRepository.findByCompetitionIdAndStatusOrStatusNullOrderByMatchDateDesc(
                         competitionId, MatchStatus.Validated, 
                         PageRequest.of(0, limit, 
                                 Sort.by(Sort.Direction.DESC, "matchDate")));
@@ -108,7 +141,7 @@ public class ContestService {
     }
 
     private void loadMatchIntoAndAdjustCompetitionName(Contest contest) {
-        Optional<Identity> matchId = Optional.ofNullable(contest.getMatchIdentity());
+        Optional<Identity> matchId = Optional.ofNullable(contest.getMatchId());
         if (matchId.isEmpty()) {
             contest.setMatch(null);
             return;

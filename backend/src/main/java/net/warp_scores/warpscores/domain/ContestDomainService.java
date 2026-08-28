@@ -28,10 +28,6 @@ public class ContestDomainService {
 
     private final ContestRepository contestRepository;
 
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
-
-
     @Transactional
     public List<Contest> createOrUpdateContests(ContestsResponse contestsResponse, int opus) {
         if (contestsResponse == null || contestsResponse.isEmpty()) {
@@ -45,6 +41,7 @@ public class ContestDomainService {
                                 Comparator.nullsFirst(Comparator.naturalOrder())))))
                 .values()
                 .stream()
+                .filter(Objects::nonNull)
                 .map((x) -> internalCreateOrUpdateContest(x, opus))
                 .collect(Collectors.toList());
         return contestRepository.saveAll(contests);
@@ -60,10 +57,11 @@ public class ContestDomainService {
         return contest;
     }
 
-    public Contest addContest(Contest contest, int opus) {
+    public Contest addContest(Contest contest) {
         Identity contestIdentity = contest.getId();
         if (contestIdentity == null) {
-            contestIdentity = new SimpleIdentity(UUID.randomUUID(), opus);
+            log.warn("Contest has no identity, generating a new one.");
+            contestIdentity = new SimpleIdentity(UUID.randomUUID(), contest.getId().getOpus());
         }
         Optional<Contest> byId = contestRepository.findById(contestIdentity);
         if (!byId.isEmpty()) {

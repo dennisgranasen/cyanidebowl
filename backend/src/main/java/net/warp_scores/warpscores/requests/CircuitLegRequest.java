@@ -1,24 +1,23 @@
 package net.warp_scores.warpscores.requests;
 
 import lombok.ToString;
+import net.warp_scores.warpscores.model.Circuit;
+import net.warp_scores.warpscores.model.CircuitLegEntity;
+
+import java.util.Collection;
+
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter 
-@ToString(of = {"leagueId", "competitionId", "legType", "label", "game", "platform", "ruleset", "isCollected", "isArchived", "ladderOption"})
+@ToString(of = {"label", "entityId", "entityNames", "game", "platform", "ruleset", "isCollected", "isArchived", "ladderOption"})
 public class CircuitLegRequest {
     //private Long circuitLegId;
-    private String leagueId;
-    private String competitionId;
-    private String legType;
     private String label;
-    private String game;
-    private String platform;
-    private String ruleset;
+    private String entityId;
+    private CircuitLegEntity entity;
     private String isCollected;
-    private String isArchived;
-    private String ladderOption;
 
     // Getters and Setters
 }

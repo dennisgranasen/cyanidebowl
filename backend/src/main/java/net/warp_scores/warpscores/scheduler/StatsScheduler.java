@@ -1,20 +1,4 @@
-
 package net.warp_scores.warpscores.scheduler;
-import net.warp_scores.warpscores.identity.Identity;
-
-import lombok.extern.slf4j.Slf4j;
-import net.warp_scores.warpscores.annotations.DurationLogging;
-import net.warp_scores.warpscores.domain.CompetitionStatsDomainService;
-import net.warp_scores.warpscores.domain.MatchDomainService;
-import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
-import net.warp_scores.warpscores.domain.persistence.CompetitionStatsRepository;
-import net.warp_scores.warpscores.model.Competition;
-import net.warp_scores.warpscores.model.CompetitionStats;
-import net.warp_scores.warpscores.model.Match;
-import net.warp_scores.warpscores.model.TeamAndRaceStats;
-import net.warp_scores.warpscores.service.CompetitionService;
-import net.warp_scores.warpscores.service.MatchService;
-import net.warp_scores.warpscores.service.StatsService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -22,10 +6,23 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-// import java.util.UUID;
 
 import static net.warp_scores.warpscores.scheduler.Schedules.THIRTY_MINUTES;
 import static net.warp_scores.warpscores.scheduler.Schedules.TWENTY_SECONDS;
+
+import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.domain.CompetitionStatsDomainService;
+import net.warp_scores.warpscores.domain.MatchDomainService;
+import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
+import net.warp_scores.warpscores.domain.persistence.CompetitionStatsRepository;
+import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.model.Competition;
+import net.warp_scores.warpscores.model.CompetitionStats;
+import net.warp_scores.warpscores.model.Match;
+import net.warp_scores.warpscores.model.TeamAndRaceStats;
+import net.warp_scores.warpscores.service.CompetitionService;
+import net.warp_scores.warpscores.service.MatchService;
+import net.warp_scores.warpscores.service.StatsService;
 
 @Slf4j
 @Service
@@ -92,7 +89,7 @@ public class StatsScheduler {
             TeamAndRaceStats teamAndRaceStats = statsService.collectStats(matches);
 
             CompetitionStats competitionStats = new CompetitionStats();
-            competitionStats.setCompetitionUuid(competitionId);
+            competitionStats.setCompetitionId(competitionId);
             competitionStats.setTeamAndRaceStats(teamAndRaceStats);
             competitionStats.setLastUpdated(lastMatchDate.get());
 

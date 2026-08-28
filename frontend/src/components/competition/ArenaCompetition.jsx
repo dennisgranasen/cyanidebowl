@@ -25,6 +25,7 @@ import config from '../../config';
 import formatter from '../../util/formatter';
 import Race from '../common/Race';
 import WinRate from '../common/WinRate';
+import { identityUtils } from '../../util/identityUtil';
 
 const { boxSize } = config;
 
@@ -80,16 +81,16 @@ function RaceAvatars({ races }) {
   );
 }
 
-function ArenaInfoCard({ competitionUuid, race }) {
+function ArenaInfoCard({ competitionId, race }) {
   const navigate = useNavigate();
   const goToArenaRace = () => {
-    navigate(`/competition/${competitionUuid}/arena/${race}`);
+    navigate(`/competition/${competitionId}/arena/${race}`);
   };
   const { fetchArenaInfo, arenaInfo, arenaInfoLoading, error } = useFetchArenaInfo();
 
   useEffect(() => {
     if (race) {
-      fetchArenaInfo(competitionUuid, race);
+      fetchArenaInfo(competitionId, race);
     }
   }, [race]);
 
@@ -102,7 +103,7 @@ function ArenaInfoCard({ competitionUuid, race }) {
       overflow="hidden"
       align="center"
     >
-      <Image maxH="120px" src={imageUrls.race(race, race.opus)} />
+      <Image maxH="120px" src={imageUrls.race(race, identityUtils.opus(competitionId))} />
       <CardBody p={2} height="100%">
         <VStack align="left" height="100%">
           <Heading>
@@ -125,22 +126,22 @@ function ArenaInfoCard({ competitionUuid, race }) {
   );
 }
 
-function ArenaInfos({ races, competitionUuid }) {
+function ArenaInfos({ races, competitionId }) {
   return (
     <SimpleGrid columns={{ lg: 3, sm: 1, md: 2 }} spacing="1.25rem">
       {races
         ?.sort((raceA, raceB) => raceA.localeCompare(raceB))
         .map((race) => (
-          <ArenaInfoCard key={race} race={race} competitionUuid={competitionUuid} />
+          <ArenaInfoCard key={race} race={race} competitionId={competitionId} />
         ))}
     </SimpleGrid>
   );
 }
 
-function ArenaCoachCard({ competitionUuid, coach, placement }) {
+function ArenaCoachCard({ competitionId, coach, placement }) {
   const navigate = useNavigate();
   const goToArenaCoach = () => {
-    navigate(`/competition/${competitionUuid}/arena/coach/${coach.coachUuid}`);
+    navigate(`/competition/${competitionId}/arena/coach/${coach.coachId}`);
   };
 
   return (
@@ -180,11 +181,11 @@ function ArenaCoachCard({ competitionUuid, coach, placement }) {
   );
 }
 
-function ArenaCoaches({ coaches, competitionUuid }) {
+function ArenaCoaches({ coaches, competitionId }) {
   return (
     <SimpleGrid columns={{ lg: 3, sm: 1, md: 2 }} spacing="1.25rem">
       {coaches?.map((coach, index) => (
-        <ArenaCoachCard key={coach.id} placement={index + 1} coach={coach} competitionUuid={competitionUuid} />
+        <ArenaCoachCard key={coach.id} placement={index + 1} coach={coach} competitionId={competitionId} />
       ))}
     </SimpleGrid>
   );
@@ -200,7 +201,7 @@ function ArenaCompetition({ competition }) {
 
   const fetchArenaRaces = async () => {
     setArenaRacesLoading(true);
-    await WarpScoresApiService.arenaInfos(competition.uuid)
+    await WarpScoresApiService.arenaInfos(competition.id)
       .then(setArenaRaces)
       .catch((reason) => setArenaRacesError({ type: 'error', message: reason.toLocaleString() }))
       .finally(() => setArenaRacesLoading(false));
@@ -208,7 +209,7 @@ function ArenaCompetition({ competition }) {
 
   const fetchArenaTopCoaches = async () => {
     setArenaCoachesLoading(true);
-    await WarpScoresApiService.arenaTopCoaches(competition.uuid)
+    await WarpScoresApiService.arenaTopCoaches(competition.id)
       .then(setArenaCoaches)
       .catch((reason) => setArenaCoachesError({ type: 'error', message: reason.toLocaleString() }))
       .finally(() => setArenaCoachesLoading(false));
@@ -225,11 +226,11 @@ function ArenaCompetition({ competition }) {
     <>
       <Heading size="md">Top Arena Coaches</Heading>
       <LoadingOrErrorWrapper loading={arenaCoachesLoading} error={arenaCoachesError}>
-        <ArenaCoaches coaches={arenaCoaches} competitionUuid={competition.uuid} />
+        <ArenaCoaches coaches={arenaCoaches} competitionId={competition.id} />
       </LoadingOrErrorWrapper>
       <Heading size="md">Arena Teams</Heading>
       <LoadingOrErrorWrapper loading={arenaRacesLoading} error={arenaRacesError}>
-        <ArenaInfos races={arenaRaces} competitionUuid={competition.uuid} />
+        <ArenaInfos races={arenaRaces} competitionId={competition.id} />
       </LoadingOrErrorWrapper>
       <LatestMatches competition={competition} limit={9} />
     </>

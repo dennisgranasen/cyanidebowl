@@ -18,7 +18,6 @@ export default function useFetchCompetition() {
       setError({ type: 'error', message: 'Invalid entityId' });
       return;
     }
-    console.log('entityid type is: ', entityId.type);
     var leagueId, competitionId;
     if (entityId.type === 'composite') {
       leagueId = entityId.parts[0];
@@ -32,26 +31,25 @@ export default function useFetchCompetition() {
       setError({ type: 'error', message: 'Invalid entityId type' });
       return;
     }
-    const opus = entityId.opus ? parseInt(entityId.opus, 10) : undefined;
     setCompetitionLoading(true);
-    WarpScoresApiService.leagues(leagueId, opus).then((league) => {
+    WarpScoresApiService.leagues(entityId).then((league) => {
       if (!league) {
         setError({ type: 'error', message: `League ${leagueId} not found` });
         setCompetitionLoading(false);
         return;
       }
       setLeague(league);
-      logger.info(`Fetched league ${leagueId} with opus ${opus}:`, league);
+      logger.info(`Fetched league ${leagueId}`, league);
             //logger.info(`Loading competition ${leagueId} Comp ${competitionId}:`);
       if (competitionId) {
-        WarpScoresApiService.leagueCompetitions(leagueId, opus)
+        WarpScoresApiService.leagueCompetitions(entityId)
           .then((data) => {
             if (!data || !data.length) {
-              logger.warn(`No competitions found for league ${leagueId} with opus ${opus}`);
+              logger.warn(`No competitions found for league ${entityId}`);
               setCompetition([]);
               return;
             }
-            console.log(`Fetched competitions for league ${leagueId} with opus ${opus}:`, data);
+            console.log('Fetched competitions for league', leagueId, data);
             const competitionData = data.find((comp) => comp.competitionId === entityId.value || comp.competitionId === competitionId);
             if (!competitionData) {
               logger.warn(`Competition ${competitionId} not found in league ${leagueId}`);

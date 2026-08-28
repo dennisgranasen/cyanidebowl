@@ -1,6 +1,8 @@
 import React from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
+  Center,
   Table,
   TableContainer,
   Tag,
@@ -12,21 +14,35 @@ import {
   Thead,
   Tr,
   useBreakpointValue,
+  useDisclosure
 } from '@chakra-ui/react';
 import { Link as RouteLink } from 'react-router-dom';
 import formatter from '../../util/formatter';
 import config from '../../config';
+import MatchModal from './MatchModalWithRosters';
+import ScoreOrIcon from './ScoreOrIcon';
 import prettyPrint from '../../util/prettyPrint';
+import { identityUtils } from '../../util/identityUtil';
+import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 
-const { smallScreenBreakpointValues } = config;
+const { smallScreenBreakpointValues, smallBoxSize } = config;
+
 
 function Match({ match }) {
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const openMatch = () => {
+    if (/*identityUtils.opus(match.id) === 1 || ((contest.status === 'Validated' && !contest.adminResult))*/ true) // validate
+    {
+      onOpen();
+    }
+  };
 
   return (
     <>
       {isSmallScreen && (
-        <Tr>
+        <Tr onClick={openMatch} key={identityUtils.key(match.id)}>
           <Td textAlign="right">
             <Box>
               <Tag size="sm">{formatter.formatAsDate(match.started, '-')}</Tag>
@@ -48,18 +64,16 @@ function Match({ match }) {
           </Td>
         </Tr>
       )}
-      <Tr>
-        {!isSmallScreen && <Td>{formatter.formatAsDate(match.started, '-')}</Td>}
-        {!isSmallScreen && (
-          <Td>
-            <Text>
-              <RouteLink to={`/competition/${match.competitionId}`}>{match.competitionName}</RouteLink>
-            </Text>
-            <Text color="grey">
-              <RouteLink to={`/${match.leagueId}`}>{match.leagueName}</RouteLink>
-            </Text>
-          </Td>
-        )}
+      {!isSmallScreen && <Tr onClick={openMatch} key={identityUtils.key(match.id)}>
+        <Td>{formatter.formatAsDate(match.started, '-')}</Td>      
+        <Td>
+          <Text>
+            <RouteLink to={`/competition/${match.competitionId}`}>{match.competitionName}</RouteLink>
+          </Text>
+          <Text color="grey">
+            <RouteLink to={`/${match.leagueId}`}>{match.leagueName}</RouteLink>
+          </Text>
+        </Td>
         <Td textAlign="right">
           <Text>
             <RouteLink to={`/competition/${match.competitionId}/team/${match.teams[0].id}`}>
@@ -70,7 +84,17 @@ function Match({ match }) {
             {prettyPrint(match.teams[0].race)} ({match.coaches[0].name})
           </Text>
         </Td>
-        <Td fontSize="md" textAlign="center">{`${match.teams[0].score} - ${match.teams[1].score}`}</Td>
+
+        <Td>      
+          <Center>
+            <MatchModal isOpen={isOpen} onClose={onClose} match={match} />
+            <ScoreOrIcon contestOrMatch={match} boxSize={smallBoxSize} size="sm" />
+          </Center>
+        </Td>
+
+        {
+        /*<Td fontSize="md" textAlign="center">{`${match.teams[0].score} - ${match.teams[1].score}`}</Td>*/
+        }
         <Td>
           <Text>
             <RouteLink to={`/competition/${match.competitionId}/team/${match.teams[1].id}`}>
@@ -81,7 +105,7 @@ function Match({ match }) {
             ({match.coaches[1].name}) {prettyPrint(match.teams[1].race)}
           </Text>
         </Td>
-      </Tr>
+      </Tr>}
     </>
   );
 }
@@ -101,20 +125,38 @@ function TableColumns() {
 
 function Matches({ matches }) {
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+
+  useEffect(() => {
+    if (!matches) return;
+    /* sort players by number */
+    matches.forEach((match) => 
+    {
+      match.teams && match.teams.forEach((team) => {
+        if (!team.players) return;
+        team.players = team.players.sort((playerA, playerB) => playerA.number - playerB.number);
+      });
+    });
+    setLoading(false);
+  }, [matches]);
 
   return (
-    <TableContainer>
-      <Table variant={isSmallScreen ? 'unstyled' : 'simple'} size="sm">
-        <Thead>
-          <TableColumns />
-        </Thead>
-        <Tbody>{matches && matches.map((match) => <Match key={match.matchId} match={match} />)}</Tbody>
-        <Tfoot>
-          <TableColumns />
-        </Tfoot>
-      </Table>
-    </TableContainer>
-  );
+    <LoadingOrErrorWrapper loading={loading} error={error}>
+      <TableContainer>
+        <Table variant={isSmallScreen ? 'unstyled' : 'simpleClickable'} size="sm">
+          <Thead>
+            <TableColumns />
+          </Thead>
+          <Tbody>{matches && matches.map((match) => <Match key={match.matchId} match={match} />)}</Tbody>
+          <Tfoot>
+            <TableColumns />
+          </Tfoot>
+        </Table>
+      </TableContainer>    
+    </LoadingOrErrorWrapper>
+    );
 }
 
 export default Matches;

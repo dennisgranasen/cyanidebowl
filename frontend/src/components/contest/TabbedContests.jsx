@@ -9,7 +9,7 @@ const { smallScreenBreakpointValues } = config;
 
 function getRobinFrom(contests) {
   if (!contests || contests[0].format !== 'RoundRobin' || contests[0].format !== 'Ladder') return null;
-  contests.sort(comparators.compareContestsByContestUuidAsDatesAsc);
+  contests.sort(comparators.compareContestsByDateAsc);
   const { coachName } = contests[0].opponents[0];
   return coachName;
 }
@@ -27,7 +27,7 @@ function toTabData(contests, isSmallScreen) {
             ? -1
             : contestA.opponents[0].coachName.localeCompare(contestB.opponents[0].coachName);
       } else {
-        comparison = comparators.compareContestsByContestUuidAsDatesAsc(contestA, contestB);
+        comparison = comparators.compareContestsByDateAsc(contestA, contestB);
       }
       return comparison;
     });

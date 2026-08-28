@@ -12,11 +12,21 @@ import LatestMatches from '../components/contest/LatestMatches';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import LeagueInfo from '../components/league/LeagueInfo';
 
+const transformCountsToObject = (statusCounts) => {
+  if (!statusCounts || !Array.isArray(statusCounts)) return {};
+  
+  return statusCounts.reduce((acc, item) => {
+    acc[item.status] = item.count;
+    return acc;
+  }, {});
+};
+
+
 function LeaguePage() {
-  const {opus, leagueId} = useParams();
+  const {leagueId} = useParams();
   const [competitions, setCompetitions] = useState([]);
   const [league, setLeague] = useState();
-  const [componentCountByStatus, setCompetitionCountByStatus] = useState({});
+  const [competitionCountByStatus, setCompetitionCountByStatus] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(undefined);
   const [
@@ -32,7 +42,7 @@ function LeaguePage() {
   }, [competitions]);
 
   useEffect(() => {
-    WarpScoresApiService.leagues(leagueId, opus)
+    WarpScoresApiService.leagues(leagueId)
       .then((data) => {
         setLeague(data);
       })
@@ -42,13 +52,19 @@ function LeaguePage() {
 
   useEffect(() => {
     if (!league) return;
+    console.log("Fetching CC counts for league:", league.id);
     WarpScoresApiService.competitionCountByStatus([league.id])
-      .then((counts) => setCompetitionCountByStatus(counts))
+      .then((counts) =>  {
+          if (counts.length > 0) {            
+            setCompetitionCountByStatus(transformCountsToObject(counts[0].statusCounts));
+            console.log("Competition counts by status:", counts); 
+          }
+        })
       .catch((reason) => setError({ type: 'error', message: reason.toLocaleString() }))
   }, [league]);
 
   useEffect(() => {
-    const fetchCompetitions = async (leagueId, opus, initialized) => {
+    const fetchCompetitions = async (leagueId) => {
       setError(undefined);
       setCompetitions([]);
       setLoading(true);
@@ -57,28 +73,28 @@ function LeaguePage() {
         setError({ type: 'info', message: 'No League selected.' });
         return;
       }
-      WarpScoresApiService.leagueCompetitions(leagueId, opus, initialized)
+      WarpScoresApiService.leagueCompetitions(leagueId)
         .then(setCompetitions)
         .then(() => setLoading(false))
         .catch((reason) => {
           setError({ type: 'error', message: reason.toLocaleString() });
         });
     };
-    if (league) fetchCompetitions(leagueId, opus).then(fetchCompetitions(leagueId, opus, true));
+    if (league)
+      fetchCompetitions(leagueId);
   }, [league]);
-
   return (
     <Stack>
       <Box>
-        <Navigation currentPage="league" league={[league?.id.value, league?.name]} />
+        <Navigation currentPage="league" league={[league?.id.key, league?.name]} />
       </Box>
       {league && (
         <HeaderCard heading={league.name} detailsHeading="League details" mainImageSrc={imageUrls.logo(league.logo,league?.id?.opus)}>
-          <LeagueInfo league={league} componentCountByStatus={componentCountByStatus}/>
+          <LeagueInfo league={league} competitionCountByStatus={competitionCountByStatus}/>
         </HeaderCard>
       )}
       <LoadingOrErrorWrapper loading={loading} error={error}>        
-        {opus === "1" ? (
+        {league?.id?.opus === 1 || leagueId.startsWith("1_") ? (
           <RoundRobinAndWissenLeague 
             key={league?.id.value} 
             league={league} 

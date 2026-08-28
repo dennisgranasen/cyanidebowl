@@ -175,13 +175,13 @@ public class PopulatorUtil {
 
                     s = coach.getId();
                     if (s == null || s.isEmpty())
-                        log.error("No coach ID found for opponent team {} in contest {}",
+                        log.warn("No coach ID found for opponent team {} in contest {}",
                             opponentTeam.getName(), contest.getContestId());
                     else
                         opponentTeam.setCoachId(new SimpleIdentity(s, contest.getId().getOpus()));
                     s = coach.getName();
                     if (s == null || s.isEmpty())
-                        log.error("No coach name found for opponent team {} in contest {}",
+                        log.warn("No coach name found for opponent team {} in contest {}",
                             opponentTeam.getName(), contest.getContestId());
                     else
                         opponentTeam.setCoachName(s);

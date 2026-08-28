@@ -5,7 +5,6 @@ import com.mongodb.lang.Nullable;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.warp_scores.warpscores.UUIDUtil;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 
@@ -15,7 +14,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -28,11 +26,6 @@ public class Contest implements Comparable<Contest>, Identifiable {
     private Identity id;
    
     public String getPlayerId() { return id != null ? id.getValue() : null; }
-/*
-    public UUID getContestUuid() {
-        return UUIDUtil.getUUIDFromIdentity(id);
-    }
-*/
     //private Integer oldContestId; // This is the old ID used in the legacy system, if applicable.
     private CompetitionFormat format;
     private Identity leagueId;
@@ -49,11 +42,9 @@ public class Contest implements Comparable<Contest>, Identifiable {
     private Integer competitionRound; // is this not always the same as round?
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date matchDate;
-    private String gameId;
-    private String matchId;
-    public Identity getMatchIdentity() {
-        return new SimpleIdentity(matchId, id.getOpus());
-    }
+    private Identity gameId;
+    private Identity matchId;
+    private String matchUuid;
     private Integer live;
     private Team[] opponents;
     private Object winner;
