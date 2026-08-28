@@ -1,18 +1,22 @@
-
 package net.warp_scores.warpscores.service;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import net.warp_scores.warpscores.annotations.DurationLogging;
+import net.warp_scores.warpscores.domain.persistence.CircuitRepository;
 import net.warp_scores.warpscores.domain.persistence.ContestRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
-import net.warp_scores.warpscores.domain.persistence.MatchRepository.TeamRankingRecord;
+import net.warp_scores.warpscores.utils.TeamRankingRecord;
 import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.IdentityUtil;
+import net.warp_scores.warpscores.model.Circuit;
+import net.warp_scores.warpscores.model.CircuitLeg;
+import net.warp_scores.warpscores.model.CircuitLegEntity;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.CompetitionFormat;
 import net.warp_scores.warpscores.model.Contest;
+import net.warp_scores.warpscores.model.EntityType;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Rank;
 import net.warp_scores.warpscores.model.Team;
@@ -20,6 +24,7 @@ import net.warp_scores.warpscores.model.Team;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,18 +41,19 @@ import static net.warp_scores.warpscores.model.MatchStatus.Validated;
 
 @Service
 @Slf4j
-
 @RequiredArgsConstructor
 public class RankService {
-    @Autowired
-    private MatchRepository matchRepository;
     private final ContestRepository contestRepository;
     private final CompetitionService competitionService;
+    private final MatchRepository matchRepository;
+    private final CircuitRepository circuitRepository;
+
     private final List<RankComparisons> defaultRankComparisons = List.of(RankComparisons.SCORE_310,
-        RankComparisons.WINS,
-        RankComparisons.INFLICTED_TOUCHDOWNS, RankComparisons.TOUCHDOWN_DIFFERENCE);
+            RankComparisons.WINS,
+            RankComparisons.INFLICTED_TOUCHDOWNS, RankComparisons.TOUCHDOWN_DIFFERENCE);
     private final MatchService matchService;
 
+    /*
     @DurationLogging
     public List<Rank> getRanksForCompetition(Identity competitionId, 
             Optional<List<RankComparisons>> rankComparisons,
@@ -64,7 +70,7 @@ public class RankService {
                 .collect(Collectors.toSet());
                 
         List<Match> matches = Collections.emptyList();
-        if (!competition.getFormat().equals(CompetitionFormat.Ladder)) {
+        if (!competition.getFormat().getCanonical().equals(CompetitionFormat.Ladder)) {
             matches = matchRepository.findByCompetitionId(competitionId);
         }
         Map<Identity, Match> matchByMatchId =
@@ -100,16 +106,133 @@ public class RankService {
                 })
                 .collect(Collectors.toList());
     }
-
+    */
     @DurationLogging
     public List<TeamRankingRecord> getRanksForLeague(Identity leagueId, 
             Optional<List<RankComparisons>> rankComparisons,
             Optional<Integer> limit) {
-        List<TeamRankingRecord> ranks = matchRepository.findTeamRankingsByLeagueId(leagueId);
+        List<TeamRankingRecord> ranks = 
+            matchRepository.findTeamRankingsByLeagueId(leagueId);
         ranks.stream().forEach(record -> log.info("Team ranking record: {}", record));
         return ranks;
     }
 
+    @DurationLogging
+    public List<TeamRankingRecord> getRanksForCompetition(Identity competitionId, 
+            Optional<List<RankComparisons>> rankComparisons,
+            Optional<Integer> limit) {
+        Competition competition = competitionService.loadCompetition(competitionId)
+                .orElseThrow(NoSuchElementException::new);            
+        List<TeamRankingRecord> ranks = matchRepository.findTeamRankingsByCompetitionId(competition.getCompetitionId());
+        //ranks.stream().forEach(record -> log.info("Team ranking record: {}", record));
+        return ranks;
+    }
+
+    public List<TeamRankingRecord> getRanksForCircuitLegEntity(CircuitLegEntity entity, 
+            Optional<List<RankComparisons>> rankComparisons,
+            Optional<Integer> limit) {
+        Identity eid = entity.getEntityId();
+        log.info(eid.toString());
+        
+        if (entity.getLegType() == EntityType.League) {
+            return getRanksForLeague(eid, rankComparisons, limit);
+        } else if (entity.getLegType() == EntityType.Competition) {
+            return getRanksForCompetition(eid, rankComparisons, limit);
+        } else if (entity.getLegType() == EntityType.Circuit) {
+            return getRanksForCircuit(Long.parseLong(entity.getEntityId().toString()), rankComparisons, limit);
+        } else {
+            log.warn("Unsupported entity type for ranking: {}", entity.getLegType());
+            return List.of();
+        }
+    }
+
+    public List<TeamRankingRecord> getRanksForCircuitLeg(CircuitLeg leg, 
+            Optional<List<RankComparisons>> rankComparisons,
+            Optional<Integer> limit) {
+        Map<Identity, TeamRankingRecord> combinedRanks = new HashMap<>();
+        leg.getEntities().forEach(entity -> {
+            List<TeamRankingRecord> records = getRanksForCircuitLegEntity(entity, rankComparisons, Optional.empty());
+            for (TeamRankingRecord record : records) {
+            Identity teamId = record.getTeamId();
+            if (combinedRanks.containsKey(teamId)) {
+                combinedRanks.get(teamId).add(record);
+            } else {
+                combinedRanks.put(teamId, record);
+            }
+            }
+        });
+        List<TeamRankingRecord> allRanks = new java.util.ArrayList<>(combinedRanks.values());
+        allRanks.sort((r1, r2) -> {
+            int result = 0;
+            for (RankComparisons comparisons : rankComparisons.orElse(
+                    defaultRankComparisons)) {
+                result = comparisons.getComparator().compare(toRank(r1), toRank(r2));
+                if (result != 0) {
+                    return result;
+                }
+            }
+            return result;
+        });
+        
+        return allRanks;
+    }
+
+    /* Helper to convert TeamRankingRecord to Rank for sorting */
+    private Rank toRank(TeamRankingRecord record) {
+        Rank r = new Rank();
+        r.setCompetitionId(null);
+        Team t = new Team(record.getTeamId());
+        r.setTeam(t);
+        r.setGamesPlayed(record.getMatchCount());
+        r.setScore(record.getPoints());
+        r.setGamesWon(record.getWins());
+        r.setGamesDrawn(record.getDraws());
+        r.setGamesLost(record.getLosses());
+        r.setInflictedTouchdowns(record.getTotalTouchdownsFor());
+        r.setSustainedTouchdowns(record.getTotalTouchdownsAgainst());
+        r.setInflictedCasualties(record.getTotalCasualtiesFor());
+        r.setSustainedCasualties(record.getTotalCasualtiesAgainst());
+        return r;
+    }
+    
+    @DurationLogging
+    public List<TeamRankingRecord> getRanksForCircuit(long circuitId, 
+            Optional<List<RankComparisons>> rankComparisons,
+            Optional<Integer> limit) {
+        
+        Optional<Circuit> circuit = circuitRepository.findById(circuitId);
+        if (circuit.isEmpty()) {
+            log.warn("Circuit with ID {} not found.", circuitId);
+            return List.of();
+        }
+        Map<Identity, TeamRankingRecord> combinedRanks = new HashMap<>();
+        circuit.get().getCircuitLegs().forEach(leg -> {
+            List<TeamRankingRecord> records = getRanksForCircuitLeg(leg, rankComparisons, Optional.empty());
+            for (TeamRankingRecord record : records) {
+                Identity teamId = record.getTeamId();
+                if (combinedRanks.containsKey(teamId)) {
+                    combinedRanks.get(teamId).add(record);
+                } else {
+                    combinedRanks.put(teamId, record);
+                }
+            }
+        });
+        List<TeamRankingRecord> allRanks = new java.util.ArrayList<>(combinedRanks.values());
+        allRanks.sort((r1, r2) -> { 
+            int result = 0;
+            for (RankComparisons comparisons : rankComparisons.orElse(
+                    defaultRankComparisons)) {
+                result = comparisons.getComparator().compare(toRank(r1), toRank(r2));
+                if (result != 0) {
+                    return result;
+                }
+            }
+            return result;
+        });
+        return allRanks;
+    }
+    
+    /*
     private Rank toRank(Team team,
             List<Contest> contests,
             Map<Identity, Match> matchByMatchId,
@@ -125,7 +248,7 @@ public class RankService {
         int inflictedCasualties = 0;
         int sustainedCasualties = 0;
         for (Contest contest : contests) {
-            Optional<Match> match = ofNullable(contest.getMatchIdentity()).map(matchByMatchId::get);
+            Optional<Match> match = ofNullable(contest.getMatchId()).map(matchByMatchId::get);
             Team[] teamResults = match.map(Match::getTeams).orElse(contest.getOpponents());
 
             Optional<Team> ownTeam = getTeam(teamResults, team.getId());
@@ -209,4 +332,5 @@ public class RankService {
         }
         return Optional.of(teams.get(0));
     }
+        */
 }

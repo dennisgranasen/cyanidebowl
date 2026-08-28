@@ -1,9 +1,6 @@
 package net.warp_scores.warpscores.service;
 
-import com.fasterxml.uuid.Generators;
-
 import lombok.extern.slf4j.Slf4j;
-import net.warp_scores.warpscores.UUIDUtil;
 import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
@@ -17,7 +14,8 @@ import net.warp_scores.warpscores.model.Team;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
+import com.fasterxml.uuid.Generators;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -54,22 +52,22 @@ public class ContestInitializationService {
         }
     };
 
-    public List<Contest> initializeContestsScheduleForFormat(Optional<Competition> competition, List<Team> teams,
+    public List<Contest> initializeContestsScheduleForFormat(Competition competition, Collection<Team> teams,
             List<Contest> contests) {
         return initializeContestsScheduleForFormat(competition, teams, contests, true);
     }
 
     @DurationLogging
-    public List<Contest> initializeContestsScheduleForFormat(Optional<Competition> competition, List<Team> teams,
+    public List<Contest> initializeContestsScheduleForFormat(Competition competition, Collection<Team> teams,
             List<Contest> contests, boolean generateFutureRoundRobinRounds) {
 
-        Optional<CompetitionFormat> competitionFormat = competition.map(Competition::getFormat);
-        if (teams.isEmpty() || competitionFormat.isEmpty() || competitionNotStarted(competition)) {
+        CompetitionFormat competitionFormat = competition.getFormat();
+        if (teams.isEmpty() || competitionNotStarted(competition)) {
             return contests;
         }
 
         /* updated with BB2 competition formats */
-        return switch (competitionFormat.get()) {
+        return switch (competitionFormat) {
             case undefined -> emptyList();
             case RoundRobin, round_robin -> generateFutureRoundRobinRounds ?
                     initializeRoundRobinContests(unmodifiableList(contests), competition, teams) :
@@ -79,8 +77,8 @@ public class ContestInitializationService {
         };
     }
 
-    private boolean competitionNotStarted(Optional<Competition> competition) {
-        return competition.map(value -> CompetitionStatus.Registration.equals(value.getStatus())).orElse(true);
+    private boolean competitionNotStarted(Competition competition) {
+        return CompetitionStatus.Registration.equals(competition.getStatus());
     }
 
     @SuppressWarnings("rawtypes")
@@ -152,23 +150,25 @@ public class ContestInitializationService {
     private static Contest findNextContestByWinner(Contest currContest,
             int currRound,
             List<Contest> initializedContests) {
-        Optional<Identity> winnerTeamUuid = getWinnerTeamUuidFrom(currContest);
+        log.info(currContest.getId() + " -" + currContest.getWinner());
+        Optional<Identity> winnerTeamId = getWinnerTeamIdFrom(currContest);
         return initializedContests
                 .stream()
                 .filter(contest -> contest.getRound().equals(currRound + 2))
                 .filter(contest -> Arrays.stream(contest.getOpponents()).map(Team::getId)
-                        .anyMatch(id -> winnerTeamUuid.isPresent() && winnerTeamUuid.get().equals(id)))
+                        .anyMatch(id -> winnerTeamId.isPresent() && winnerTeamId.get().equals(id)))
                 .findFirst().orElse(null);
     }
 
-    private static Optional<Identity> getWinnerTeamUuidFrom(Contest contest) {
+    private static Optional<Identity> getWinnerTeamIdFrom(Contest contest) {
         if (contest == null || contest.getWinner() == null) {
             return Optional.empty();
         }
         @SuppressWarnings("rawtypes")
         Map team = (Map) ((Map) contest.getWinner()).get("team");
-        Identity winnerTeamId = (Identity) team.get("identity");
-        return Optional.of(winnerTeamId);
+
+        Object winnerTeamId = (Object) team.get("id");
+        return Optional.of(new SimpleIdentity(winnerTeamId, contest.getId().getOpus()));
     }
 
     @SuppressWarnings("rawtypes")
@@ -223,8 +223,8 @@ public class ContestInitializationService {
     }
 
     private List<Contest> initializeRoundRobinContests(List<Contest> contests,
-            Optional<Competition> competition,
-            List<Team> teams) {
+            Competition competition,
+            Collection<Team> teams) {
         log.info("DEBUG: Starting initializeRoundRobinContests");
         OptionalInt currentRound = contests
                 .stream()
@@ -233,27 +233,28 @@ public class ContestInitializationService {
 
         log.info("DEBUG: Current round: {}", currentRound.orElse(0));
 
-        List<Contest> scheduledContests = competition.map(comp ->
-                        generateScheduledContests(comp, teams)
-                                .stream()
-                                .filter(this::doesNotContainDummyTeam)
-                                .filter(contest -> contest.getRound() > currentRound.orElse(0))
-                                .toList())
-                .orElse(emptyList());
+        List<Contest> scheduledContests = 
+            generateScheduledContests(competition, teams)
+                    .stream()
+                    .filter(this::doesNotContainDummyTeam)
+                    .filter(contest -> contest.getRound() > currentRound.orElse(0))
+                    .toList();                
 
         log.info("DEBUG: Scheduled contests: {}", scheduledContests.size());
+        /*
         for (Contest c : scheduledContests) {
             log.info("DEBUG: Scheduled Contest round={}, home={}, away={}", c.getRound(), c.getOpponents()[0].getName(), c.getOpponents()[1].getName());
         }
-
+        */
         List<Contest> initializedContests = new ArrayList<>(contests);
         initializedContests.addAll(scheduledContests);
 
         log.info("DEBUG: Initialized contests: {}", initializedContests.size());
+/*
         for (Contest c : initializedContests) {
             log.info("DEBUG: Initialized Contest round={}, home={}, away={}", c.getRound(), c.getOpponents()[0].getName(), c.getOpponents()[1].getName());
         }
-
+*/
         return initializedContests;
     }
 
@@ -261,7 +262,7 @@ public class ContestInitializationService {
         return !Arrays.stream(contest.getOpponents()).anyMatch(x -> x.equals(DUMMY_TEAM));
     }
 
-    private Collection<Contest> generateScheduledContests(Competition competition, List<Team> teams) {
+    private Collection<Contest> generateScheduledContests(Competition competition, Collection<Team> teams) {
         int n = teams.size();
         boolean isOdd = n % 2 != 0;
         Team dummy = null;

@@ -7,9 +7,9 @@ export default function useFetchTeams() {
   const [teams, setTeams] = useState([]);
 
   const fetchTeams = (id, limit) => {
-    console.log('Fetching teams for id:', id.value, id.opus, limit);
+    console.log('Fetching teams for id:', id, limit);
 
-    WarpScoresApiService.leagueTeams(id.value, id.opus, limit)
+    WarpScoresApiService.leagueTeams(id, limit)
       .then((data) => {
         setTeams(data);
       })

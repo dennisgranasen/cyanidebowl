@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Optional;
-import java.util.UUID;
 
 /*
 {
@@ -457,7 +456,7 @@ public class TeamMatchesResponse extends ApiResponse {
     @Getter
     @Setter
     public class MatchId {
-        private UUID uuid;
+        private String uuid;
         private String id;
     }
 

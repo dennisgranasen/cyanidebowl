@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
     @JsonSubTypes.Type(value = SimpleIdentity.class, name = "simple"),
     @JsonSubTypes.Type(value = CompositeIdentity.class, name = "composite")
 })
-public interface Identity {
+public interface Identity extends Comparable<Identity> {
     String DELIMITER = "_";
     //String getId();
     int getOpus();

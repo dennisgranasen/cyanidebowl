@@ -138,7 +138,7 @@ function PlayerLevel({ level, starPlayer }) {
   );
 }
 
-function Player({ player }) {
+function Player({ player, opus }) {
   const defaultAttributes = player.extendedAttributes ? player.extendedAttributes.defaultAttributes : player.attributes;
   const bonus = player.extendedAttributes ? player.extendedAttributes.bonus : [];
   const malus = player.extendedAttributes ? player.extendedAttributes.malus : [];
@@ -154,7 +154,7 @@ function Player({ player }) {
         </Center>
       </Td>
       <Td>
-        <Skills skills={player.skills} />
+        <Skills skills={player.skills || player.skillStrings}  opus={opus} />
       </Td>
       <Td>
         <Injuries injuries={player.casualtiesStates} />

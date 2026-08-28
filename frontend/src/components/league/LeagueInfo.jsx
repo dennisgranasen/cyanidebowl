@@ -4,8 +4,6 @@ import InfoArea from '../common/InfoArea';
 import InfoItem from '../common/InfoItem';
 
 function LeagueInfo({ league, competitionCountByStatus }) {
-  console.log('Rendering LeagueInfo with league:', league);
-  console.log('Competition count by status:', competitionCountByStatus);
   return (
     league && (
       <InfoArea w="100%">
@@ -25,6 +23,11 @@ function LeagueInfo({ league, competitionCountByStatus }) {
           label="Finished competitions"
           info={competitionCountByStatus?.Finished || '-'}
         />
+        {competitionCountByStatus?.Unknown && <InfoItem
+          key="unknown"
+          label="Unknown competitions"
+          info={competitionCountByStatus?.Unknown || '-'}
+        />}
         <InfoItem key="lastMatch" label="Last match" info={formatter.formatAsDate(league.dateLastMatch, '-')} />
       </InfoArea>
     )

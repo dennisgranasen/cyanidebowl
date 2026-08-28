@@ -8,12 +8,14 @@ import DelayedIconTooltip from '../common/DelayedIconTooltip';
 
 const { smallBoxSize: boxSize } = config;
 
-function Skill({ skill }) {
+function Skill({ skill, opus }) {
+  const url = imageUrls.skill(skill, opus);
+  console.log('Skill', skill, opus, url);
   return (
     <DelayedIconTooltip label={prettyPrint(skill)}>
       <Box boxSize={boxSize}>
         <Image
-          src={`${imageUrls.skill(skill, skill?.opus)}`}
+          src={`${imageUrls.skill(skill, opus)}`}
           alt={prettyPrint(skill)}
           objectFit="cover"
           fallback={<QuestionOutlineIcon boxSize={boxSize} />}

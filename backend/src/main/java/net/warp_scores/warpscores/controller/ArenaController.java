@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.IdentityUtil;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.ArenaCoach;
 import net.warp_scores.warpscores.model.ArenaCoachWithArenaTeams;
@@ -24,7 +25,6 @@ import static java.util.Optional.ofNullable;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -35,17 +35,13 @@ public class ArenaController {
     
     @Value("${cyanide.defaults.topCoaches:6}")
     private int defaultTopCoaches;
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
 
     private static final int DEFAULT_LIMIT_FOR_ARENA_TEAMS = 100;
 
     @GetMapping("/arena/{competitionId}/info")
     public ResponseEntity<List<Race>> getArenaRaces(
-            @PathVariable(name = "competitionId") String competitionId,
-            @RequestParam(name = "opus", required = false) Integer opus) {
-        Identity competitionIdentity = 
-            new SimpleIdentity(competitionId, ofNullable(opus).orElse(defaultOpus));
+            @PathVariable(name = "competitionId") String competitionId) {
+        Identity competitionIdentity = IdentityUtil.fromId(competitionId);
         List<Race> arenaRaces = arenaService.loadArenaRacesFor(competitionIdentity);
         return ResponseEntity.ok(arenaRaces);
     }
@@ -53,11 +49,9 @@ public class ArenaController {
     @GetMapping("/arena/{competitionId}/info/{race}")
     public ResponseEntity<ArenaInfo> getArenaInfoFor(
             @PathVariable(name = "competitionId") String competitionId,
-            @RequestParam(name = "opus", required = false) Integer opus,
             @PathVariable(name = "race") String raceValue) {
         Race race = Race.valueOf(raceValue);
-        Identity competitionIdentity = 
-            new SimpleIdentity(competitionId, ofNullable(opus).orElse(defaultOpus));
+        Identity competitionIdentity = IdentityUtil.fromId(competitionId);
         Optional<ArenaInfo> arenaInfo = arenaService.loadArenaInfoFor(competitionIdentity, race);
         return arenaInfo
                 .map(ResponseEntity::ok)
@@ -68,9 +62,8 @@ public class ArenaController {
     public ResponseEntity<Map<ArenaTeam.RunType, List<ArenaTeam>>> getArenaTeamsFor(
             @PathVariable(name = "competitionId") String competitionId,
             @PathVariable(name = "race") Race race,
-            @PathVariable(name = "runType") ArenaTeam.RunType runType,
-            @RequestParam(name = "opus", required = false) Integer opus) {
-        return getArenaTeamsFor(competitionId, race, runType, DEFAULT_LIMIT_FOR_ARENA_TEAMS, opus);
+            @PathVariable(name = "runType") ArenaTeam.RunType runType) {
+        return getArenaTeamsFor(competitionId, race, runType, DEFAULT_LIMIT_FOR_ARENA_TEAMS);
     }
 
     @GetMapping("/arena/{competitionId}/race/{race}/{runType}/{limit}")
@@ -78,22 +71,19 @@ public class ArenaController {
             @PathVariable(name = "competitionId") String competitionId,
             @PathVariable(name = "race") Race race,
             @PathVariable(name = "runType") ArenaTeam.RunType runType,
-            @PathVariable(name = "limit") Integer limit,
-            @RequestParam(name = "opus", required = false) Integer opus) {
-        return getArenaTeamsFor(competitionId, race, runType, limit, 0, opus);
+            @RequestParam(name = "limit", required = false) Integer limit) {
+        return getArenaTeamsFor(competitionId, race, runType, limit, 0);
     }
 
     @GetMapping("/arena/{competitionId}/race/{race}/{runType}/{limit}/{offset}")
     public ResponseEntity<Map<ArenaTeam.RunType, List<ArenaTeam>>> getArenaTeamsFor(
-            @PathVariable(name = "competitionUuid") String competitionId,
+            @PathVariable(name = "competitionId") String competitionId,
             @PathVariable(name = "race") Race race,
             @PathVariable(name = "runType") ArenaTeam.RunType runType,
-            @PathVariable(name = "limit") Integer limit,
-            @PathVariable(name = "offset") Integer offset,
-            @RequestParam(name = "opus", required = false) Integer opus) {
+            @RequestParam(name = "limit", required = false) Integer limit,
+            @RequestParam(name = "offset", required = false) Integer offset) {
         
-        Identity competitionIdentity = 
-            new SimpleIdentity(competitionId, ofNullable(opus).orElse(defaultOpus));
+        Identity competitionIdentity = IdentityUtil.fromId(competitionId);
 
         Map<ArenaTeam.RunType, List<ArenaTeam>> arenaTeams = 
             arenaService.loadArenaTeamsFor(competitionIdentity, race,
@@ -104,11 +94,9 @@ public class ArenaController {
     @GetMapping("/arena/{competitionId}/topCoaches")
     public ResponseEntity<List<ArenaCoach>> getArenaTopCoaches(
             @PathVariable(name = "competitionId") String competitionId,
-            @RequestParam(name = "limit", required = false) Integer topLimit,
-            @RequestParam(name = "opus", required = false) Integer opus) {
+            @RequestParam(name = "limit", required = false) Integer topLimit) {
         
-        Identity competitionIdentity = 
-            new SimpleIdentity(competitionId, ofNullable(opus).orElse(defaultOpus));
+        Identity competitionIdentity = IdentityUtil.fromId(competitionId);
         List<ArenaCoach> topCoaches = 
             arenaService.loadArenaTopCoachesFor(competitionIdentity, Optional.ofNullable(topLimit));
         return ResponseEntity.ok(topCoaches);
@@ -117,12 +105,10 @@ public class ArenaController {
     @GetMapping("/arena/{competitionId}/coach/{coachId}")
     public ResponseEntity<ArenaCoachWithArenaTeams> getArenaTeamsFor(
             @PathVariable(name = "competitionId") String competitionId,
-            @PathVariable(name = "coachId") String coachId,
-            @RequestParam(name = "opus", required = false) Integer opus) {
-        Identity competitionIdentity = 
-            new SimpleIdentity(competitionId, ofNullable(opus).orElse(defaultOpus));
-        Identity coachIdentity = 
-            new SimpleIdentity(coachId, ofNullable(opus).orElse(defaultOpus));
+            @PathVariable(name = "coachId") String coachId) {
+    
+        Identity competitionIdentity = IdentityUtil.fromId(competitionId);
+        Identity coachIdentity = IdentityUtil.fromId(competitionId);
 
         ArenaCoachWithArenaTeams arenaCoachWithArenaTeams = 
             arenaService.loadArenaCoachWithArenaTeams(competitionIdentity, coachIdentity);

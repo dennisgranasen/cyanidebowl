@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import {
   Box, Button, Card, CardBody, CardFooter, CardHeader, Checkbox, FormControl, FormErrorMessage,
@@ -12,19 +11,19 @@ import config from '../../config';
 
 
 
-function EntitySearchForm({ handleLeagueClick, handleCompetitionClick }) {
+function EntitySearchForm({ handleLeagueClick, handleCompetitionClick, onSearchResultDragStart, searchResults, setSearchResults }) {
     const [bbVersion, setBbVersion] = useState(String(config.defaultOpus || 3));
     const { isAuthenticated, isLoading, getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0WithUserPermissions();
-    const [loading, setLoading] = useState(true);
     const [lines, setLines] = useState([]);
     const leagueRefs = useRef({});
     const competitionRefs = useRef({});
     const parentRef = useRef(null);
     const [leagueOffsets, setLeagueOffsets] = useState({});
-    const [searchResults, setSearchResults] = useState([]);
     
   useEffect(() => {
     if (!searchResults.leagueDetails || !searchResults.competitionDetails) return;
+    //if (onSearchResults)
+    //  onSearchResults(searchResults.leagueDetails, searchResults.competitionDetails);
     const newOffsets = {};
     let accumulatedOffset = 0;
     searchResults.leagueDetails.forEach(league => {
@@ -153,56 +152,6 @@ function EntitySearchForm({ handleLeagueClick, handleCompetitionClick }) {
         includeDetails: true
       });
 
-      /*
-      if (res.leagues && res.leagues.length > 0) {
-        if (res.leagueDetails && res.leagueDetails.length > 0) {
-
-        }
-      }
-        detailedLeagues = await Promise.all(
-          res.leagues.map(async (league) => {
-            try {
-              const details = await WarpScoresApiService.leagues(
-                league.id || league.leagueId || league.uuid,
-                values.bbVersion
-              );
-              // Fetch competitions for this league
-              let competitions = [];
-              try {
-                competitions = await WarpScoresApiService.leagueCompetitions(
-                  league.id || league.leagueId || league.uuid,
-                  values.bbVersion
-                )
-                console.log('Fetched competitions for league:', league.name, competitions);
-              } catch (e) {
-                competitions = [];
-              }
-              return { ...league, ...details, competitions };
-            } catch (e) {
-              return league;
-            }
-          })
-        );
-      }
-
-      // Expand competitions with detailed objects from leagues
-      let expandedCompetitions = res.competitions || [];
-      if (expandedCompetitions.length > 0 && detailedLeagues.length > 0) {
-        expandedCompetitions = expandedCompetitions.map((comp) => {
-          let detailedComp = null;
-          for (const league of detailedLeagues) {
-            if (league.competitions) {
-              detailedComp = league.competitions.find(                
-                c => (c.id || c.uuid || c.competitionId) === comp.id
-              );
-              if (detailedComp) break;
-            }
-          }
-          return detailedComp || comp;
-        });
-      }
-      */
-
       console.log("search: {}", {
         ...res,
         leagueDetails: res.leagueDetails || res.leagues || [],
@@ -330,7 +279,20 @@ function EntitySearchForm({ handleLeagueClick, handleCompetitionClick }) {
                         style={{
                             marginTop: leagueOffsets[leagueId] || 0,
                         }}
-                        onClick={() => handleLeagueClick && handleLeagueClick(item)}>
+                        onClick={() => handleLeagueClick && handleLeagueClick(item)}
+                        draggable
+                        onDragStart={e => {
+                          e.dataTransfer.setData('application/json', JSON.stringify({
+                            type: 'league',
+                            id: item.id,
+                            opus: item.opus,
+                            entityNames: [item.name],
+                          }));
+                          if (onSearchResultDragStart) {
+                            onSearchResultDragStart(item);
+                          }
+                        }}
+                      >
                       {item.name || item.leagueName}
                     </Box>
                   )})}
@@ -350,6 +312,20 @@ function EntitySearchForm({ handleLeagueClick, handleCompetitionClick }) {
                         _hover={isDetailed ? { bg: 'gray.100', opacity: 0.8, color: 'black', cursor: 'pointer' } : undefined}
                         style={isDetailed ? {} : { color: 'red', cursor: 'not-allowed' }}
                         onClick={isDetailed ? () => myHandleCompetitionClick(item) : undefined}
+                        draggable
+                        onDragStart={e => {
+                          e.dataTransfer.setData('application/json', JSON.stringify({
+                            type: 'competition',
+                            id: item.id,
+                            opus: item.opus,
+                            entityNames: [item.leagueName, item.name],
+                          }));
+                        if (onSearchResultDragStart) {
+                          onSearchResultDragStart(item);
+                        }
+
+                        }}
+                        
                       >
                         {item.name || item.leagueName}
                     </Box>

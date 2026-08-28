@@ -180,12 +180,12 @@ public class ArenaService {
         arenaCoach.setCoachName(coach.getName());
         arenaCoach.setId(coach.getId());
 
-        Map<ArenaTeam.RunType, Set<Identity>> teamUuidsByRunType = new HashMap<>();
+        Map<ArenaTeam.RunType, Set<Identity>> teamIdsByRunType = new HashMap<>();
         Map<ArenaTeam.RunType, Set<Race>> racesByRunType = new HashMap<>();
         Map<Race, WinRate> winRateByRace = new HashMap<>();
         arenaTeamsByRunType.forEach((runType, arenaTeams) -> {
             racesByRunType.put(runType, arenaTeams.stream().map(ArenaTeam::getRace).collect(Collectors.toSet()));
-            teamUuidsByRunType.put(runType,
+            teamIdsByRunType.put(runType,
                     arenaTeams.stream().map(ArenaTeam::getTeamId).collect(Collectors.toSet()));
 
             Map<Race, WinRate> currWinRateByRace = arenaTeams.stream()
@@ -200,9 +200,9 @@ public class ArenaService {
             mergeWinRate(currWinRateByRace, winRateByRace);
         });
         arenaCoach.setWinRateByRace(winRateByRace);
-        arenaCoach.setActiveTeamsCount(ofNullable(teamUuidsByRunType.get(active)).map(Collection::size).orElse(0));
-        arenaCoach.setCompletedTeamsCount(teamUuidsByRunType.getOrDefault(completed, emptySet()).size());
-        arenaCoach.setFailedTeamsCount(teamUuidsByRunType.getOrDefault(failed, emptySet()).size());
+        arenaCoach.setActiveTeamsCount(ofNullable(teamIdsByRunType.get(active)).map(Collection::size).orElse(0));
+        arenaCoach.setCompletedTeamsCount(teamIdsByRunType.getOrDefault(completed, emptySet()).size());
+        arenaCoach.setFailedTeamsCount(teamIdsByRunType.getOrDefault(failed, emptySet()).size());
         Set<Race> activeRaces = racesByRunType.getOrDefault(active, emptySet());
         activeRaces.removeAll(racesByRunType.getOrDefault(completed, emptySet()));
         arenaCoach.setCompletedRaces(racesByRunType.getOrDefault(completed, emptySet()));

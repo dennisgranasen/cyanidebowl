@@ -6,14 +6,14 @@ import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import LiveContests from '../components/contest/LiveContests';
 
 function LiveMatchesPage() {
-  const { leagueUuid } = useParams();
+  const { leagueId } = useParams();
   const [league, setLeague] = useState();
   const [loading, setLoading] = useState();
   const [error, setError] = useState(undefined);
 
   useEffect(() => {
     const fetchLeague = () => {
-      WarpScoresApiService.leagues(leagueUuid)
+      WarpScoresApiService.leagues(leagueId)
         .then((data) => {
           setLeague(data);
         })
@@ -23,7 +23,7 @@ function LiveMatchesPage() {
         });
     };
     fetchLeague();
-  }, [leagueUuid]);
+  }, [leagueId]);
 
   return (
     <Stack>

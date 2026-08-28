@@ -27,9 +27,6 @@ public class CompetitionDomainService {
     private final CompetitionRepository competitionRepository;
     private final OfficialLeagueAndCompetitions officialLeagueAndCompetitions;
 
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
-
     @Transactional
     public List<Competition> createOrUpdateCompetitions(CompetitionsResponse competitionsResponse, int opus) {
         if (competitionsResponse == null || competitionsResponse.isEmpty()) {

@@ -12,36 +12,38 @@ import useFetchArenaInfo from '../hooks/useFetchArenaInfo';
 import InfoItem from '../components/common/InfoItem';
 import WarpScoresApiService from '../WarpScoresApiService';
 import ArenaRunAccordionItem from '../components/arena/ArenaRunAccordionItem';
+import { use } from 'react';
 
 function ArenaPage() {
-  const { competitionUuid, race } = useParams();
+  const { competitionId, race } = useParams();
   const { fetchCompetition, competition, competitionLoading, error: competitionError } = useFetchCompetition();
   const [arenaTeams, setArenaTeams] = useState(null);
   const [arenaTeamsLoading, setArenaTeamsLoading] = useState(false);
   const [arenaTeamsError, setArenaTeamsError] = useState(null);
 
+  
   useEffect(() => {
-    if (competitionUuid) fetchCompetition(competitionUuid);
-  }, [competitionUuid]);
+    if (competitionId) fetchCompetition(competitionId);
+  }, [competitionId]);
 
   const { fetchArenaInfo, arenaInfo, arenaInfoLoading, error: arenaError } = useFetchArenaInfo();
 
   useEffect(() => {
     if (race) {
-      fetchArenaInfo(competitionUuid, race);
+      fetchArenaInfo(competitionId, race);
     }
   }, [race]);
 
   useEffect(() => {
-    const fetchArenaTeams = (uuid, raceToFetch, runType) => {
+    const fetchArenaTeams = (id, raceToFetch, runType) => {
       setArenaTeamsLoading(true);
-      WarpScoresApiService.arenaTeams(uuid, raceToFetch, runType)
+      WarpScoresApiService.arenaTeams(id, raceToFetch, runType)
         .then(setArenaTeams)
         .catch((reason) => setArenaTeamsError({ type: 'error', message: reason.toLocaleString() }))
         .finally(() => setArenaTeamsLoading(false));
     };
     if (race) {
-      fetchArenaTeams(competitionUuid, race, 'completed');
+      fetchArenaTeams(competitionId, race, 'completed');
     }
   }, [race]);
 
@@ -51,7 +53,7 @@ function ArenaPage() {
         <Navigation
           currentPage="race"
           league={competition ? [competition.leagueId, competition.leagueName] : []}
-          competition={[competitionUuid, competition ? competition.name : '']}
+          competition={[competitionId, competition ? competition.name : '']}
           race={race}
         />
       </Box>
@@ -61,7 +63,7 @@ function ArenaPage() {
           subHeading={<RouteLink to={`/${competition?.leagueId}`}>League: {competition?.leagueName}</RouteLink>}
           detailsHeading="Arena details"
           mainImageSrc={competition?.logo ? imageUrls.logo(competition?.logo, competition?.id?.opus) : imageUrls.logo(competition?.leagueLogo, competition?.id?.opus)}
-          additionalImageSrc={imageUrls.race(race, competition?.opus)}
+          additionalImageSrc={imageUrls.race(race, competition?.id?.opus)}
         >
           <LoadingOrErrorWrapper loading={arenaInfoLoading} error={arenaError}>
             <InfoArea>
@@ -81,7 +83,7 @@ function ArenaPage() {
           loading={arenaTeamsLoading}
           error={arenaTeamsError}
           arenaTeams={arenaTeams?.completed ?? null}
-          competitionUuid={competitionUuid}
+          competitionId={competitionId}
           coachOrRace="Coach"
         />
         <ArenaRunAccordionItem
@@ -89,7 +91,7 @@ function ArenaPage() {
           label={`Active runs (${arenaInfo?.activeRuns})`}
           loading={arenaInfoLoading}
           error={arenaError}
-          competitionUuid={competitionUuid}
+          competitionId={competitionId}
           arenaTeams={arenaTeams?.active ?? null}
           coachOrRace="Coach"
         />
@@ -98,7 +100,7 @@ function ArenaPage() {
           label={`Failed runs (${arenaInfo?.failedRuns})`}
           loading={arenaInfoLoading}
           error={arenaError}
-          competitionUuid={competitionUuid}
+          competitionId={competitionId}
           arenaTeams={arenaTeams?.failed ?? null}
           coachOrRace="Coach"
         />

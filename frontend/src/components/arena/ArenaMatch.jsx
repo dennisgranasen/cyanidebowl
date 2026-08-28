@@ -9,17 +9,17 @@ import config from '../../config';
 
 const { boxSize } = config;
 
-function ArenaMatch({ match, teamUuid }) {
+function ArenaMatch({ match, teamId }) {
   return (
-    <DelayedIconTooltip label={<ArenaMatchLabel teamUuid={teamUuid} match={match} />}>
+    <DelayedIconTooltip label={<ArenaMatchLabel teamId={teamId} match={match} />}>
       <Box
         borderRadius="0.5rem"
         boxSize={boxSize}
-        background={arenaHelpers.isWinner(teamUuid, match) ? 'green.500' : 'red.500'}
+        background={arenaHelpers.isWinner(teamId, match) ? 'green.500' : 'red.500'}
         fontFamily="EmbeddedBigStarRegular"
         height={boxSize}
       >
-        <ArenaScore teamUuid={teamUuid} match={match} />
+        <ArenaScore teamId={teamId} match={match} />
       </Box>
     </DelayedIconTooltip>
   );

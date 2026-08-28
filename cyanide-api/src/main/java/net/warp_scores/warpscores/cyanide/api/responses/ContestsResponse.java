@@ -11,6 +11,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+
 import static net.warp_scores.warpscores.cyanide.api.DateUtil.dateWithinLast;
 
 
@@ -304,6 +306,7 @@ import static net.warp_scores.warpscores.cyanide.api.DateUtil.dateWithinLast;
 @Getter
 @Setter
 public class ContestsResponse extends ApiResponse {
+    @JsonAlias("upcoming_matches")
     private ApiContest[] contests;
     private ApiResponse.Urls urls;
     private Context context;

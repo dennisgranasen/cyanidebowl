@@ -4,16 +4,16 @@ import Opponent from './Opponent';
 import prettyPrint from '../../util/prettyPrint';
 import formatter from '../../util/formatter';
 import config from '../../config';
-import MatchModal from './MatchModal';
+import MatchModal from './MatchModalWithRosters';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
 import ScoreOrIcon from './ScoreOrIcon';
+import { identityUtils } from '../../util/identityUtil';
 
 const { smallBoxSize } = config;
 
 function ScoreOrIconTooltip({ contest }) {
   let matchPlayed = false;
   let matchValidated = false;
-
   switch (contest.status) {
     case 'played':
     case 'Played':
@@ -43,30 +43,34 @@ function Contest({ contest }) {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const openIfValidatedAndNotAdminResult = () => {
-    if (contest.status === 'Validated' && !contest.adminResult) onOpen();
+    if (identityUtils.opus(contest.id) === 1 || ((contest.status === 'Validated' && !contest.adminResult))) 
+    {
+      console.log("Opening match modal for contest", contest);
+      onOpen();
+    }
   };
 
-  const winnerTeamUuid =
+  const winnerTeamId =
     contest.winner && contest.opponents[0].score !== contest.opponents[1].score ? contest.winner.team.id : null;
   return contest ? (
-    <Tr onClick={openIfValidatedAndNotAdminResult}>
-      <MatchModal isOpen={isOpen} onClose={onClose} contest={contest} />
+    <Tr onClick={openIfValidatedAndNotAdminResult} key={identityUtils.key(contest.id)}>
       <Opponent
         opponent={contest.opponents[0]}
-        key={contest.opponents[0].id}
-        winner={contest.opponents[0].id === winnerTeamUuid}
+        key={identityUtils.key(contest.opponents[0].id)}
+        winner={contest.opponents[0].id === winnerTeamId}
       />
       <Td>
         <DelayedIconTooltip label={<ScoreOrIconTooltip contest={contest} />}>
           <Center>
+            <MatchModal isOpen={isOpen} onClose={onClose} contest={contest} />
             <ScoreOrIcon contestOrMatch={contest} boxSize={smallBoxSize} size="sm" />
           </Center>
         </DelayedIconTooltip>
       </Td>
       <Opponent
         opponent={contest.opponents[1]}
-        key={contest.opponents[1].id}
-        winner={contest.opponents[1].id === winnerTeamUuid}
+        key={identityUtils.key(contest.opponents[1].id)}
+        winner={contest.opponents[1].id === winnerTeamId}
         reverse
       />
     </Tr>

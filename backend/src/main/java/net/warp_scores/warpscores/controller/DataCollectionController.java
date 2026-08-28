@@ -6,11 +6,11 @@ import net.warp_scores.warpscores.cyanide.api.requests.LookupRequest;
 import net.warp_scores.warpscores.cyanide.api.responses.LookupResponse;
 import net.warp_scores.warpscores.domain.persistence.DataCollectionRepository;
 import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.IdentityUtil;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.DataCollection;
 import net.warp_scores.warpscores.model.EntityType;
 import net.warp_scores.warpscores.model.League;
-import net.warp_scores.warpscores.service.UUIDConverter;
 import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -35,21 +35,14 @@ import static net.warp_scores.warpscores.controller.Authorities.AUTHORITY_WRITE_
 public class DataCollectionController {
 
     private final DataCollectionRepository dataCollectionRepository;
-
     private final CyanideApiService cyanideApiService;
-
-
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
-
 
     @PostMapping("/leagueCollection/{leagueId}")
     @PreAuthorize(AUTHORITY_WRITE_REGISTER_LEAGUE) // ✨
     public ResponseEntity<List<League>> createLeagueCollection(
-        @PathVariable(name = "leagueId") String leagueId,
-        @RequestParam(name = "opus", required = false) Integer opus
+        @PathVariable(name = "leagueId") String leagueId
     ) {
-        Identity identity = new SimpleIdentity(leagueId, ofNullable(opus).orElse(defaultOpus));
+        Identity identity = IdentityUtil.fromId(leagueId);
         List<League> leagues = doCreateLeagueCollection(identity);
         return ResponseEntity.ok(leagues);
     }

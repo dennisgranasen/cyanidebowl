@@ -54,6 +54,7 @@ public class ImageService {
 
     private Optional<byte[]> loadImageFromCyanide(String imageUrl) {
         try {
+            //log.info("Loading image from cyanide: {}", imageUrl);
             RestTemplate restTemplate = new RestTemplateBuilder().build();
             ResponseEntity<byte[]> response = restTemplate.getForEntity(imageUrl, byte[].class);
             if (response.getStatusCode().is2xxSuccessful()) {

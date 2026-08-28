@@ -18,7 +18,9 @@ cyanide:
       logos: https://images.cyanide-studio.com/bb{OPUS}/logos
       races: https://images.cyanide-studio.com/bb{OPUS}/races
       portraits: https://images.cyanide-studio.com/bb{OPUS}/portraits
-      skills: https://images.cyanide-studio.com/bb{OPUS}/skillicons/colorset2
+      skills1: https://images.cyanide-studio.com/bb{OPUS}/skillicons
+      skills2: https://images.cyanide-studio.com/bb{OPUS}/skillicons
+      skills3: https://images.cyanide-studio.com/bb{OPUS}/skillicons/colorset2
       stadiums: https://images.cyanide-studio.com/bb{OPUS}/stadiums
   api-config:
     base-url: https://web.cyanide-studio.com/ws

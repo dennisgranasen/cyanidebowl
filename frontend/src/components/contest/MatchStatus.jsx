@@ -10,12 +10,12 @@ import DelayedIconTooltip from '../common/DelayedIconTooltip';
 
 const { boxSize, smallBoxSize } = config;
 
-function StatusAsIcon({ status, stadium }) {
+function StatusAsIcon({ status, stadium, opus }) {
   switch (status) {
     case 'played':
       return (
         <Avatar
-          src={`${imageUrls.stadium(stadium, stadium?.opus)}`}
+          src={`${imageUrls.stadium(stadium, opus)}`}
           boxSize={boxSize}
           icon={<QuestionOutlineIcon boxSize={boxSize} />}
         />

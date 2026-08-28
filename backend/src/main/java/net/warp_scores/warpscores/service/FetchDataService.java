@@ -25,6 +25,7 @@ import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
 import net.warp_scores.warpscores.service.TeamService;
 
 import org.springframework.stereotype.Service;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -72,9 +73,6 @@ public class FetchDataService {
     private TeamDomainService teamDomainService;
     @Autowired
     private MatchRepository matchRepository;
-
-    @Value("${cyanide.defaults.opus:3}")
-    private int defaultOpus;
 
     @Value("${cyanide.defaults.fetchMatchMaxAgeLimit:5000}")
     private int defaultFetchMatchMaxAgeLimit;
@@ -201,7 +199,7 @@ public class FetchDataService {
         // Load competitions for the leagues that are being collected.
         List<Competition> competitions = leaguesToCollect.stream()
                 .map(DataCollection::getId)
-                .map(competitionService::loadForLeague)
+                .map(competitionService::loadForLeagueAndInitialize)
                 .flatMap(List::stream).toList();
         log.info("Loaded {} leagues' competitions for data collection.", competitions.size());
         for (Competition competition : competitions) {
@@ -255,10 +253,14 @@ public class FetchDataService {
                 forEach(dc -> {
                         log.info("Fetching team data for {}: {}", dc.getCollectionType(), dc.getId());
                         cyanideApiService.loadTeams(dc.getId(), dc.getCollectionType());;
+                        if (dc.getCollectionType() == EntityType.League) {
+                                for (Competition competition : competitionRepository.findByLeagueId(dc.getId())) {
+                                    log.info("Fetching teams for competition {} in league {}.", competition.getId(), dc.getId());
+                                    cyanideApiService.loadTeams(competition.getId(), EntityType.Competition);
+                                }
+                        }
                 }
-
-
-                );
+        );
 
         // Fetch teams for all collected competitions in repository.
         List<Competition> competitions = competitionRepository.findAllById(
@@ -384,7 +386,7 @@ public class FetchDataService {
     private void fetchTeamsForCompetitionIfTeamsMissing(Competition competition) {
         List<Team> byCompetitionId =
                 teamDomainService.findByCompetitionId(competition.getId());
-        if (!competition.getFormat()
+        if (!competition.getFormat().getCanonical()
                 .equals(CompetitionFormat.Ladder) && competition.getTeamsMax() != null && competition.getTeamsMax() > byCompetitionId.size()) {
             log.info("Loading teams for competition {} as maxTeams ({}) > availableTeams ({}).", competition.getId(),
                     competition.getTeamsMax(), byCompetitionId.size());
@@ -452,7 +454,7 @@ public class FetchDataService {
                 .stream()
                 .filter(Contest::notScheduledNorCalculated)
                 .filter(Contest::notInProgressOrOlderThan4Hours)
-                .filter(contest -> nonNull(contest.getMatchIdentity()))
+                .filter(contest -> nonNull(contest.getMatchId()))
                 .toList();
 
         log.info("Found {} contests ({} played) with missing matches.", contests.size(),
