@@ -101,9 +101,16 @@ public class CyanideRestApiClient {
         URI uri = createUri(apiRequest, cyanideApiProperties.getApiConfig().getKey());
         ResponseEntity<Object> response;
         try {
-            log.info("Requesting URI: [{}].", uri);
+            log.info("Requesting URI: [{}].", sanitizeUri(uri));
             response = restTemplate.getForEntity(uri, Object.class);
-            log.debug("Got response: [{}].", objectMapper.writeValueAsString(response));
+            log.debug(
+                "Got response with status {} and body type {}.",
+                response.getStatusCode(),
+                response.getBody() != null
+                    ? response.getBody().getClass().getSimpleName()
+                    : "null"
+            );
+
             Object body = response.getBody();
             if (!response.getStatusCode().
                     is2xxSuccessful() || (body instanceof Boolean && !(Boolean) body)) {
@@ -130,6 +137,13 @@ public class CyanideRestApiClient {
         UriComponents uriComponents = uriComponentsBuilder.build();
 
         return uriComponents.encode().toUri();
+    }
+
+    private URI sanitizeUri(URI uri) {
+        return UriComponentsBuilder.fromUri(uri)
+                .replaceQueryParam("key", "<redacted>")
+                .build()
+                .toUri();
     }
 
     private static void waitOneSecondIgnoringExceptions() {
