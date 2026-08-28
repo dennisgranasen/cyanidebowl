@@ -45,3 +45,8 @@ application:
 scheduler:
   enabled: true
 
+stage-match:
+  archive:
+    enabled: ${STAGE_MATCH_ARCHIVE_ENABLED:false}
+    database: ${STAGE_MATCH_ARCHIVE_DATABASE:}
+    collection: ${STAGE_MATCH_ARCHIVE_COLLECTION:match}
