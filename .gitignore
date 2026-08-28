@@ -46,6 +46,8 @@ backend/src/main/resources/img/bb3
 
 /data
 .env
+.env.*
+!.env.example
 sync.sh
 fetchMongoData.sh
 package-lock.json
