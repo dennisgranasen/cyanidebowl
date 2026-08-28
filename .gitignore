@@ -52,8 +52,6 @@ backend/src/main/resources/img/bb3
 !.env.example
 sync.sh
 fetchMongoData.sh
-package-lock.json
-frontend/package-lock.json
 warpscores-*.tar
 cyanide-api/maven-build.xml
 cyanide-api/maven-build.properties
@@ -63,6 +61,5 @@ cyanide-api/build.xml
 backend/build.xml
 docker-compose-production.yaml
 my-compose.yaml
-frontend/package-lock.json
 backend/test.data
 *playground*.js

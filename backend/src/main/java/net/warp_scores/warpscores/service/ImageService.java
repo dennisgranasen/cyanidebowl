@@ -6,7 +6,6 @@ import net.warp_scores.warpscores.annotations.DurationLogging;
 import net.warp_scores.warpscores.config.properties.CyanideApiProperties;
 import net.warp_scores.warpscores.domain.cache.ImageCache;
 import net.warp_scores.warpscores.domain.cache.ImageCacheRepository;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -54,7 +53,7 @@ public class ImageService {
 
     private Optional<byte[]> loadImageFromCyanide(String imageUrl) {
         try {
-            RestTemplate restTemplate = new RestTemplateBuilder().build();
+            RestTemplate restTemplate = new RestTemplate();
             ResponseEntity<byte[]> response = restTemplate.getForEntity(imageUrl, byte[].class);
             if (response.getStatusCode().is2xxSuccessful()) {
                 byte[] data = response.getBody();
@@ -124,4 +123,3 @@ public class ImageService {
     }
 
 }
-

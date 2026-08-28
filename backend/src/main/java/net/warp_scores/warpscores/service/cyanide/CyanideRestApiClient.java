@@ -14,8 +14,8 @@ import net.warp_scores.warpscores.cyanide.api.requests.ApiRequest;
 import net.warp_scores.warpscores.cyanide.api.requests.StatusRequest;
 import net.warp_scores.warpscores.domain.persistence.StatusRepository;
 import net.warp_scores.warpscores.model.Status;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
@@ -89,10 +89,10 @@ public class CyanideRestApiClient {
         }
 
         //log.info("Loading from real api (request: {}).", apiRequest);
-        RestTemplate restTemplate = new RestTemplateBuilder()
-                .connectTimeout(apiRequest.getConnectTimeout())
-                .readTimeout(apiRequest.getReadTimeout())
-                .build();
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(apiRequest.getConnectTimeout());
+        requestFactory.setReadTimeout(apiRequest.getReadTimeout());
+        RestTemplate restTemplate = new RestTemplate(requestFactory);
         URI uri = createUri(apiRequest, cyanideApiProperties.getApiConfig().getKey());
         ResponseEntity<Object> response;
         try {
