@@ -49,7 +49,7 @@ export default function useFetchCompetition() {
               setCompetition([]);
               return;
             }
-            console.log(`Fetched competitions for league ${leagueId}:`, data);
+            console.log('Fetched competitions for league', leagueId, data);
             const competitionData = data.find((comp) => comp.competitionId === entityId.value || comp.competitionId === competitionId);
             if (!competitionData) {
               logger.warn(`Competition ${competitionId} not found in league ${leagueId}`);
