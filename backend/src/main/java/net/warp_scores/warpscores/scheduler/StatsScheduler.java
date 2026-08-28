@@ -1,15 +1,14 @@
 package net.warp_scores.warpscores.scheduler;
-
-import static net.warp_scores.warpscores.scheduler.Schedules.THIRTY_MINUTES;
-import static net.warp_scores.warpscores.scheduler.Schedules.TWENTY_SECONDS;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import static net.warp_scores.warpscores.scheduler.Schedules.THIRTY_MINUTES;
+import static net.warp_scores.warpscores.scheduler.Schedules.TWENTY_SECONDS;
 
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.domain.CompetitionStatsDomainService;
@@ -52,32 +51,27 @@ public class StatsScheduler {
 
     @Scheduled(initialDelay = TWENTY_SECONDS, fixedDelay = THIRTY_MINUTES)
     public void updateCompetitionStats() {
-        List<Competition> allCompetitions = competitionRepository
+        List<Identity> allCompetitionIds = competitionRepository
                 .findAll()
                 .stream()
+                .map(Competition::getId)
                 .toList();
-        Map<Identity, Optional<Date>> lastMatchDatesForCompetitions = 
-            matchDomainService.getLastMatchDatesForCompetitions(
-                allCompetitions);
-        List<Identity> allCompetitionIds = 
-            allCompetitions.stream()
-                    .map(Competition::getId)
-                    .toList();
-        Map<Identity, Optional<Date>> lastUpdatedDatesForCompetitions = 
-            competitionStatsDomainService.getLastUpdatedDatesForCompetitions(
+        Map<Identity, Optional<Date>> lastMatchDatesForCompetitions = matchDomainService.getLastMatchDatesForCompetitions(
+                allCompetitionIds);
+        Map<Identity, Optional<Date>> lastUpdatedDatesForCompetitions = competitionStatsDomainService.getLastUpdatedDatesForCompetitions(
                 allCompetitionIds);
 
-        updateCompetitionStatsFor(allCompetitions, lastMatchDatesForCompetitions, lastUpdatedDatesForCompetitions);
+        updateCompetitionStatsFor(allCompetitionIds, lastMatchDatesForCompetitions, lastUpdatedDatesForCompetitions);
     }
 
-    private void updateCompetitionStatsFor(List<Competition> allCompetitions,
+    private void updateCompetitionStatsFor(List<Identity> allCompetitionIds,
             Map<Identity, Optional<Date>> lastMatchDatesForCompetitions,
             Map<Identity, Optional<Date>> lastUpdatedDatesForCompetitions) {
 
-        allCompetitions.forEach(competition -> {
-            updateCompetitionStatsFor(competition.getId(),
-                    lastMatchDatesForCompetitions.getOrDefault(competition, Optional.empty()),
-                    lastUpdatedDatesForCompetitions.getOrDefault(competition, Optional.empty()));
+        allCompetitionIds.forEach(competitionId -> {
+            updateCompetitionStatsFor(competitionId,
+                    lastMatchDatesForCompetitions.getOrDefault(competitionId, Optional.empty()),
+                    lastUpdatedDatesForCompetitions.getOrDefault(competitionId, Optional.empty()));
         });
 
     }

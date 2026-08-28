@@ -300,7 +300,7 @@ public class FetchDataService {
                 .toList();
 
         Map<Identity, Optional<Date>> lastMatchDateByCompetitionId =
-                matchDomainService.getLastMatchDatesForCompetitions(competitionsNeedingContests);
+                matchDomainService.getLastMatchDatesForCompetitions(competitionsNeedingContests.stream().map(Competition::getId).toList());
 
         Stream<Competition> competitionsToCollect = 
                 competitionsNeedingContests.stream()
@@ -410,7 +410,7 @@ public class FetchDataService {
                 .toList();
 
         Map<Identity, Optional<Date>> lastMatchDateByCompetitionId =
-                matchDomainService.getLastMatchDatesForCompetitions(competitionsNeedingContests);
+                matchDomainService.getLastMatchDatesForCompetitions(competitionsNeedingContests.stream().map(Competition::getId).toList());
 
         List<Competition> competitionsToCollect = new ArrayList<>();
         competitionsNeedingContests.stream()
@@ -612,8 +612,7 @@ public class FetchDataService {
     private void loadContestsForLeagues(List<League> leagues) {
         List<Contest> contests = leagues
                 .stream()
-                .map(cyanideApiService::loadContests)
-                .flatMap(List::stream)
+                .flatMap(league -> cyanideApiService.loadContests(league).stream())
                 .toList();
         log.info("Loaded {} contests.", contests.size());
     }
