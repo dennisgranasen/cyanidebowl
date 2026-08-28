@@ -45,8 +45,9 @@ public class PopulatorUtil {
         public CommaSeparatedStringArrayHandler(String targetFieldName) {
             this.targetFieldName = targetFieldName;
         }
-        @Override
-        public void handle(String sourceValue, Object target) throws Exception {
+    @Override
+    @SuppressWarnings("varargs")
+    public void handle(String sourceValue, Object target) throws Exception {
             if (sourceValue == null || !(sourceValue instanceof String)  || sourceValue.isEmpty()) {
                 return; // No league names to process
             }
@@ -63,8 +64,9 @@ public class PopulatorUtil {
         public CommaSeparatedIdArrayHandler(String targetFieldName) {
             this.targetFieldName = targetFieldName;
         }
-        @Override
-        public void handle(String sourceValue, Object target) throws Exception {
+    @Override
+    @SuppressWarnings("varargs")
+    public void handle(String sourceValue, Object target) throws Exception {
             if (sourceValue == null || !(sourceValue instanceof String)  || sourceValue.isEmpty()) {
                 return; // No league names to process
             }
@@ -94,7 +96,7 @@ public class PopulatorUtil {
         @Override
         public void handle(CompetitionStatus sourceValue, Object target) throws Exception {
             if (sourceValue == null || !(sourceValue instanceof CompetitionStatus)) {
-                log.error("Invalid source value for CompetitionStatusNameHandler: {}", sourceValue);
+                log.error("Invalid source value for CompetitionStatusNameHandler: {}", (Object) sourceValue);
                 return; // No status name to process
             }
             Competition competition = (Competition) target;
@@ -106,7 +108,7 @@ public class PopulatorUtil {
         @Override
         public void handle(Integer sourceValue, Object target) throws Exception {
             if (sourceValue == null || !(sourceValue instanceof Integer)) {
-                log.error("Invalid source value for CompetitionStatusHandler: {}", sourceValue);
+                log.error("Invalid source value for CompetitionStatusHandler: {}", (Object) sourceValue);
                 return; // No status to process
             }
             Competition competition = (Competition) target;
@@ -118,7 +120,7 @@ public class PopulatorUtil {
         @Override
         public void handle(ApiLeague sourceValue, Object target) throws Exception {
             if (sourceValue == null || !(sourceValue instanceof ApiLeague)) {
-                log.error("Invalid source value for CompetitionLeagueHandler: {}", sourceValue);
+                log.error("Invalid source value for CompetitionLeagueHandler: {}", (Object) sourceValue);
                 return; // No league to process
             }
             Competition competition = (Competition) target;
@@ -130,10 +132,11 @@ public class PopulatorUtil {
     }
 
     private static class ContestOpponentHandler implements FieldHandler<ApiContest.Opponent[]> {
-        @Override
-        public void handle(ApiContest.Opponent[] sourceValue, Object target) throws Exception {
+    @Override
+    @SuppressWarnings({"varargs", "unchecked"})
+    public void handle(ApiContest.Opponent[] sourceValue, Object target) throws Exception {
             if (sourceValue == null || !(sourceValue instanceof ApiContest.Opponent[])) {
-                log.error("Invalid source value for ContestOpponentHandler: {}", sourceValue);
+                log.error("Invalid source value for ContestOpponentHandler: {}", (Object) sourceValue);
                 return; // No opponents to process
             }
             Contest contest = (Contest) target;
@@ -211,7 +214,7 @@ public class PopulatorUtil {
         copyWithAliases(source, destination, ignoreNullProperties);
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({ "rawtypes", "unchecked", "varargs" })
     private static void copyWithAliases(Object source, Object target, boolean ignoreNullProperties) {
         Map<String, Field> targetFields = new HashMap<>();
         // Collect all fields from target class (including superclasses)
@@ -347,7 +350,9 @@ public class PopulatorUtil {
 
                         try {
                             Method setter = target.getClass().getMethod(setterName, tgtField.getType());
-                            setter.invoke(target, newValue);
+                            // Cast to Object to ensure the array (if any) is passed as a single argument
+                            // and to avoid varargs/heap-pollution compiler warnings.
+                            setter.invoke(target, (Object) newValue);
                             continue;
                         } catch (NoSuchMethodException e) {
                             tgtField.setAccessible(true);

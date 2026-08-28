@@ -109,7 +109,7 @@ public enum Skill {
 
     Skill(String imageName, String... possibleOtherNamingPatterns) {
         this.imageName = imageName;
-        this.possibleOtherNamingPatterns = new HashSet(List.of(possibleOtherNamingPatterns));
+        this.possibleOtherNamingPatterns = new HashSet<>(Arrays.asList(possibleOtherNamingPatterns));
     }
 
     @JsonCreator(mode = JsonCreator.Mode.DELEGATING)

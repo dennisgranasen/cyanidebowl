@@ -75,10 +75,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                  <configuration>
+                <configuration>
                     <compilerArgs>
                         <arg>-parameters</arg>
                     </compilerArgs>
+                    <release>21</release>
                 </configuration>
             </plugin>
             <plugin>

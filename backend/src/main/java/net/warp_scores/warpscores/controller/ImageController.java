@@ -120,7 +120,7 @@ public class ImageController {
         Optional<String> imageUrl = 
             getImageUrlFor(cyanideApiProperties.getUrls().getImages().getRaces(), 
                 imageName, Optional.ofNullable(opus));
-        return loadImage(imageUrl, Optional.of(300));
+    return loadImage(imageUrl, Optional.of(300), java.util.List.of());
     }
 
     @GetMapping("/stadium/{name}")
@@ -130,7 +130,7 @@ public class ImageController {
         Optional<String> imageUrl = 
             getImageUrlFor(cyanideApiProperties.getUrls().getImages().getStadiums(),
                 name, Optional.ofNullable(opus));
-        return loadImage(imageUrl, Optional.of(128));
+    return loadImage(imageUrl, Optional.of(128), java.util.List.of());
     }
 
     @GetMapping("/portrait/{name}")
@@ -146,12 +146,12 @@ public class ImageController {
 
     private ResponseEntity<byte[]> loadImage(Optional<String> imageUrl) {
         log.info(imageUrl.orElse("null image URL"));
-        return loadImage(imageUrl, Optional.empty());
+        return loadImage(imageUrl, Optional.empty(), java.util.List.of());
     }
 
     private ResponseEntity<byte[]> loadImage(Optional<String> imageUrl,
-            Optional<Integer> maxWidth,
-            Optional<String>... fallbackImageUrls) {
+        Optional<Integer> maxWidth,
+        java.util.List<Optional<String>> fallbackImageUrls) {
         Optional<byte[]> imageData = imageUrl.flatMap(url -> imageService.loadImage(url, maxWidth));
         for (Optional<String> fallbackImageUrl : fallbackImageUrls) {
             if (imageData.isEmpty() && fallbackImageUrl.isPresent()) {

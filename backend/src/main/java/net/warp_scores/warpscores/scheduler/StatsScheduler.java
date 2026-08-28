@@ -54,15 +54,15 @@ public class StatsScheduler {
 
     @Scheduled(initialDelay = TWENTY_SECONDS, fixedDelay = THIRTY_MINUTES)
     public void updateCompetitionStats() {
-    List<Identity> allCompetitionIds = competitionRepository
-        .findAll()
-        .stream()
-        .map(Competition::getId)
-        .toList();
-    Map<Identity, Optional<Date>> lastMatchDatesForCompetitions = matchDomainService.getLastMatchDatesForCompetitions(
-        allCompetitionIds);
-    Map<Identity, Optional<Date>> lastUpdatedDatesForCompetitions = competitionStatsDomainService.getLastUpdatedDatesForCompetitions(
-        allCompetitionIds);
+        List<Identity> allCompetitionIds = competitionRepository
+            .findAll()
+            .stream()
+            .map(Competition::getId)
+            .toList();
+        Map<Identity, Optional<Date>> lastMatchDatesForCompetitions = matchDomainService.getLastMatchDatesForCompetitions(
+            allCompetitionIds);
+        Map<Identity, Optional<Date>> lastUpdatedDatesForCompetitions = competitionStatsDomainService.getLastUpdatedDatesForCompetitions(
+            allCompetitionIds);
 
     updateCompetitionStatsFor(allCompetitionIds, lastMatchDatesForCompetitions, lastUpdatedDatesForCompetitions);
     }

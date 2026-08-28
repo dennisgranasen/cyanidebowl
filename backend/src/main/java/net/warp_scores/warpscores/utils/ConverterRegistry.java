@@ -45,7 +45,8 @@ public class ConverterRegistry {
                     boolean isDeleted = false;
                     try {
                         // Try to get "getId()" method
-                        id = source.getClass().getMethod("getId").invoke(source);
+                        // Pass an explicit empty Object[] to avoid varargs/heap-pollution warnings
+                        id = source.getClass().getMethod("getId").invoke(source, new Object[0]);
                     } catch (NoSuchMethodException e) {
                         try {
                             // Try to access "id" field directly

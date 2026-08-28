@@ -79,7 +79,8 @@ public class ApiRequest<RequestType, ResponseType> {
         charArray[0] = Character.toLowerCase(charArray[0]);
         String key = new String(charArray);
         try {
-            Object value = method.invoke(this);
+            // Pass explicit empty Object[] to avoid varargs/heap-pollution warnings
+            Object value = method.invoke(this, new Object[0]);
             if (value != null) {
                 String stringValue = stringValueFor(value);
                 if (!stringValue.trim().isEmpty()) {
