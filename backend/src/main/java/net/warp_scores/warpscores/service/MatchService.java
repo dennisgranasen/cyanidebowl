@@ -8,8 +8,6 @@ import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Player;
 
-import org.checkerframework.checker.units.qual.C;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;

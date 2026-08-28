@@ -45,9 +45,8 @@ public class PopulatorUtil {
         public CommaSeparatedStringArrayHandler(String targetFieldName) {
             this.targetFieldName = targetFieldName;
         }
-    @Override
-    @SuppressWarnings("varargs")
-    public void handle(String sourceValue, Object target) throws Exception {
+        @Override
+        public void handle(String sourceValue, Object target) throws Exception {
             if (sourceValue == null || !(sourceValue instanceof String)  || sourceValue.isEmpty()) {
                 return; // No league names to process
             }
@@ -64,9 +63,8 @@ public class PopulatorUtil {
         public CommaSeparatedIdArrayHandler(String targetFieldName) {
             this.targetFieldName = targetFieldName;
         }
-    @Override
-    @SuppressWarnings("varargs")
-    public void handle(String sourceValue, Object target) throws Exception {
+        @Override
+        public void handle(String sourceValue, Object target) throws Exception {
             if (sourceValue == null || !(sourceValue instanceof String)  || sourceValue.isEmpty()) {
                 return; // No league names to process
             }
@@ -132,9 +130,9 @@ public class PopulatorUtil {
     }
 
     private static class ContestOpponentHandler implements FieldHandler<ApiContest.Opponent[]> {
-    @Override
-    @SuppressWarnings({"varargs", "unchecked"})
-    public void handle(ApiContest.Opponent[] sourceValue, Object target) throws Exception {
+        @Override
+        @SuppressWarnings("unchecked")
+        public void handle(ApiContest.Opponent[] sourceValue, Object target) throws Exception {
             if (sourceValue == null || !(sourceValue instanceof ApiContest.Opponent[])) {
                 log.error("Invalid source value for ContestOpponentHandler: {}", (Object) sourceValue);
                 return; // No opponents to process
@@ -214,7 +212,7 @@ public class PopulatorUtil {
         copyWithAliases(source, destination, ignoreNullProperties);
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked", "varargs" })
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private static void copyWithAliases(Object source, Object target, boolean ignoreNullProperties) {
         Map<String, Field> targetFields = new HashMap<>();
         // Collect all fields from target class (including superclasses)
@@ -374,4 +372,3 @@ public class PopulatorUtil {
         }
     }
 }
-

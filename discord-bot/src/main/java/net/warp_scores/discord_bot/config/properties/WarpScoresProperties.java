@@ -3,7 +3,6 @@ package net.warp_scores.discord_bot.config.properties;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.checkerframework.checker.units.qual.N;
 
 @Getter
 @Setter

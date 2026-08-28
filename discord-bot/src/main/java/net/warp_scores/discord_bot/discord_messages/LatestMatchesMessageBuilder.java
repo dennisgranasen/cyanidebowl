@@ -37,7 +37,7 @@ public class LatestMatchesMessageBuilder {
                 .builder(league.getName(), "Showing latest matches.", Optional.of(league.getLogo()))
                 .color(Color.MEDIUM_SEA_GREEN)
                 .url(format("%s/#/%s", warpScoresProperties.getBaseUrls().getFrontend(),
-                        league.getUuid().toString()))
+                        league.getLeagueId()))
                 .footer(
                         Optional.of(league.getDateLastMatch())
                                 .map(dateLastMatch -> format("Last match reported: %s",
@@ -64,8 +64,8 @@ public class LatestMatchesMessageBuilder {
     }
 
     private String formatMatch(Match match, boolean spoiler) {
-        Team teamA = match.getTeams().get(0);
-        Team teamB = match.getTeams().get(1);
+        Team teamA = match.getTeams()[0];
+        Team teamB = match.getTeams()[1];
 
         return matchMessageBuilder.getFrontendMarkupLink(match.getCompetitionName(), "/#/competition/%s",
                 match.getCompetitionId()) +
@@ -81,5 +81,4 @@ public class LatestMatchesMessageBuilder {
                 "\n\n";
     }
 }
-
 

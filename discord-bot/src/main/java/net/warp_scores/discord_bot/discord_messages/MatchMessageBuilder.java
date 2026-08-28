@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -45,8 +46,8 @@ public class MatchMessageBuilder {
     public EmbedCreateSpec.Builder builder(League league,
             Match match,
             boolean spoiler) {
-        Team teamA = match.getTeams().get(0);
-        Team teamB = match.getTeams().get(1);
+        Team teamA = match.getTeams()[0];
+        Team teamB = match.getTeams()[1];
 
         EmbedCreateSpec.Builder builder = warpScoresDiscordMessageBuilder
                 .builder(match.getCompetitionName(), getVsDetails(teamA, teamB, true, false, team ->
@@ -86,10 +87,10 @@ public class MatchMessageBuilder {
     private EmbedCreateSpec.Builder addFields(EmbedCreateSpec.Builder builder,
             Match match,
             boolean spoiler) {
-        Team teamA = match.getTeams().get(0);
-        Team teamB = match.getTeams().get(1);
-        Match.Coach coachA = match.getCoaches().get(0);
-        Match.Coach coachB = match.getCoaches().get(1);
+        Team teamA = match.getTeams()[0];
+        Team teamB = match.getTeams()[1];
+        Match.Coach coachA = match.getCoaches()[0];
+        Match.Coach coachB = match.getCoaches()[1];
 
         Date matchDate = match.getStarted();
         if (!spoiler) {
@@ -106,7 +107,7 @@ public class MatchMessageBuilder {
 
         return builder
                 .addField("Races",
-                        getVsDetails(teamA, teamB, false, false, team -> team.getRace().getRaceName()),
+                        getVsDetails(teamA, teamB, false, false, Team::getRace),
                         false)
                 .addField("Coaches", getVsDetails(coachA, coachB, false, false, Match.Coach::getName), false)
                 .addField("Result",
@@ -120,12 +121,12 @@ public class MatchMessageBuilder {
     }
 
     private String getImpactPlayers(Match match) {
-        if (match == null || match.getTeams() == null || match.getTeams().isEmpty()) {
+        if (match == null || match.getTeams() == null || match.getTeams().length < 2) {
             return "n/a";
         }
         StringBuilder builder = new StringBuilder();
-        addTeamNameAndImpactPlayers(match.getTeams().get(0), builder);
-        addTeamNameAndImpactPlayers(match.getTeams().get(1), builder);
+        addTeamNameAndImpactPlayers(match.getTeams()[0], builder);
+        addTeamNameAndImpactPlayers(match.getTeams()[1], builder);
         return builder.toString();
     }
 
@@ -135,7 +136,7 @@ public class MatchMessageBuilder {
     }
 
     private void addImpactPlayers(@NonNull Team team, StringBuilder builder) {
-        Optional<List<Player>> players = Optional.ofNullable(team.getPlayers());
+        Optional<List<Player>> players = Optional.ofNullable(team.getPlayers()).map(Arrays::asList);
         List<Player> impactPlayers = players
                 .orElse(Collections.emptyList())
                 .stream()
@@ -175,8 +176,8 @@ public class MatchMessageBuilder {
     }
 
     private String getStatistics(Match match) {
-        Team teamA = match.getTeams().get(0);
-        Team teamB = match.getTeams().get(1);
+        Team teamA = match.getTeams()[0];
+        Team teamB = match.getTeams()[1];
 
         Integer scoreA = teamA.getScore();
         Integer scoreB = teamB.getScore();
@@ -204,20 +205,15 @@ public class MatchMessageBuilder {
     }
 
     private Integer sumXpGain(Team team) {
-        return team
-                .getPlayers()
-                .stream()
+        return Arrays.stream(Optional.ofNullable(team.getPlayers()).orElse(new Player[0]))
                 .map(Player::getXpGain)
                 .filter(Objects::nonNull)
                 .mapToInt(Integer::intValue)
-                .filter(Objects::nonNull)
                 .sum();
     }
 
     private Integer sum(Team team, Function<Player.Stats, Integer> function) {
-        return team
-                .getPlayers()
-                .stream()
+        return Arrays.stream(Optional.ofNullable(team.getPlayers()).orElse(new Player[0]))
                 .map(Player::getStats)
                 .filter(Objects::nonNull)
                 .map(function)

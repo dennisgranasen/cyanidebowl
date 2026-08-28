@@ -64,7 +64,7 @@ public class StatsScheduler {
         Map<Identity, Optional<Date>> lastUpdatedDatesForCompetitions = competitionStatsDomainService.getLastUpdatedDatesForCompetitions(
             allCompetitionIds);
 
-    updateCompetitionStatsFor(allCompetitionIds, lastMatchDatesForCompetitions, lastUpdatedDatesForCompetitions);
+        updateCompetitionStatsFor(allCompetitionIds, lastMatchDatesForCompetitions, lastUpdatedDatesForCompetitions);
     }
 
     private void updateCompetitionStatsFor(List<Identity> allCompetitionIds,

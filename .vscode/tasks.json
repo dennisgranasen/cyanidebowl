@@ -14,7 +14,10 @@
                 "-DskipTests"
             ],
             "options": {
-                "cwd": "${workspaceFolder}"
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "JAVA_HOME": "/usr/lib/jvm/java-25-openjdk-amd64"
+                }
             },
             "problemMatcher": "$msCompile",
             "presentation": {
@@ -37,7 +40,10 @@
                 "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
             ],
             "options": {
-                "cwd": "${workspaceFolder}"
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "JAVA_HOME": "/usr/lib/jvm/java-25-openjdk-amd64"
+                }
             },
             "dependsOn": "build: backend dependencies",
             "dependsOrder": "sequence",
@@ -74,7 +80,10 @@
                 "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
             ],
             "options": {
-                "cwd": "${workspaceFolder}"
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "JAVA_HOME": "/usr/lib/jvm/java-25-openjdk-amd64"
+                }
             },
             "dependsOn": "build: backend dependencies",
             "dependsOrder": "sequence",
@@ -135,7 +144,7 @@
             "options": {
                 "cwd": "${workspaceFolder}",
                 "env": {
-                    "MAVEN_OPTS": "-Djdk.attach.allowAttachSelf=true -XX:+EnableDynamicAgentLoading"
+                    "JAVA_HOME": "/usr/lib/jvm/java-25-openjdk-amd64"
                 }
             },
             "group": "test",

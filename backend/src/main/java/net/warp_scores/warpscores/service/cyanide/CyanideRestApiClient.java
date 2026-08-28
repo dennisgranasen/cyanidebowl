@@ -90,8 +90,8 @@ public class CyanideRestApiClient {
 
         //log.info("Loading from real api (request: {}).", apiRequest);
         RestTemplate restTemplate = new RestTemplateBuilder()
-                .setConnectTimeout(apiRequest.getConnectTimeout())
-                .setReadTimeout(apiRequest.getReadTimeout())
+                .connectTimeout(apiRequest.getConnectTimeout())
+                .readTimeout(apiRequest.getReadTimeout())
                 .build();
         URI uri = createUri(apiRequest, cyanideApiProperties.getApiConfig().getKey());
         ResponseEntity<Object> response;
