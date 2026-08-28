@@ -1,0 +1,48 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug: Backend (local safe)",
+            "type": "java",
+            "request": "attach",
+            "hostName": "localhost",
+            "port": 5005,
+            "preLaunchTask": "debug: backend server (local safe)"
+        },
+        {
+            "name": "Debug: Backend (.env integration)",
+            "type": "java",
+            "request": "attach",
+            "hostName": "localhost",
+            "port": 5005,
+            "preLaunchTask": "debug: backend server (.env integration)"
+        },
+        {
+            "name": "Debug: Frontend",
+            "type": "pwa-chrome",
+            "request": "launch",
+            "url": "http://localhost:8022",
+            "webRoot": "${workspaceFolder}/frontend",
+            "sourceMaps": true,
+            "preLaunchTask": "debug: frontend dev server"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Debug: Local Backend + Frontend",
+            "configurations": [
+                "Debug: Backend (local safe)",
+                "Debug: Frontend"
+            ],
+            "stopAll": true
+        },
+        {
+            "name": "Debug: Integration Backend + Frontend",
+            "configurations": [
+                "Debug: Backend (.env integration)",
+                "Debug: Frontend"
+            ],
+            "stopAll": true
+        }
+    ]
+}
