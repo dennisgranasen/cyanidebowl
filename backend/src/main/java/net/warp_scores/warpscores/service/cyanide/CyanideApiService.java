@@ -98,14 +98,14 @@ public class CyanideApiService {
         if (team == null || team.getId() == null) {
             return;
         }
-        log.info(
+        log.debug(
                 "Checking if matches to be loaded for team {} (earliestStart: {}, lastMatchDateKnown: {}, lastMatchDateReported: {}).",
                 team.getTeamId(), earliestStartDate, lastMatchDateKnown, lastMatchDateReported);
         Date startDate = lastMatchDateKnown.orElse(earliestStartDate.orElse(null));
 
         if (startDate == null || (lastMatchDateReported.isPresent() && !startDate.before(
                 lastMatchDateReported.get()))) {
-            log.info("No matches to load for team {}.", team.getTeamId());
+            log.debug("No matches to load for team {}.", team.getTeamId());
             return;
         }
 
@@ -114,7 +114,7 @@ public class CyanideApiService {
         teamMatchesRequest.setOpus(team.getId().getOpus());
         teamMatchesRequest.setStart(startDate);
         teamMatchesRequest.setEnd(new Date());
-        log.info(
+        log.debug(
                 "Loading matches for team {} starting from {}.",
                 team.getTeamId(), startDate);
         TeamMatchesResponse teamMatchesResponse = cyanideCachedRestApiClient.getFromCacheOrApi(teamMatchesRequest);
@@ -152,7 +152,7 @@ public class CyanideApiService {
         if (entityId == null || entityType == null)
             return Collections.emptyList();        
             
-        log.info(
+        log.debug(
             "Checking if matches to be loaded for entity {} (type: {}, earliestStart: {}, lastMatchDateKnown: {}, lastMatchDateReported: {}).",
             entityId, entityType, earliestStartDate, lastMatchDateKnown, lastMatchDateReported);
         Date startDate = lastMatchDateKnown.orElse(earliestStartDate.orElse(null));
@@ -176,7 +176,7 @@ public class CyanideApiService {
             MatchesResponse matchesResponse = cyanideCachedRestApiClient.getFromCacheOrApi(matchesRequest);
             return matchDomainService.createOrUpdateMatches(matchesResponse, entityId.getOpus());
         }
-        log.info("No matches to load for {} {}.", entityType, entityId);
+        log.debug("No matches to load for {} {}.", entityType, entityId);
         return Collections.emptyList();
     }
 

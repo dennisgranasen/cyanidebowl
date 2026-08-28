@@ -119,7 +119,7 @@ public class CyanideRestApiClient {
             } else {
                 return body;
             }
-        } catch (RestClientException | JsonProcessingException ex) {
+        } catch (Exception ex) {
             log.error("Unable to process response as json.", ex);
             return null;
         }
