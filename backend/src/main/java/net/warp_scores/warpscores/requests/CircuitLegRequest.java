@@ -11,7 +11,7 @@ import lombok.Setter;
 
 @Getter
 @Setter 
-@ToString(of = {"label", "entityId", "entityNames", "game", "platform", "ruleset", "isCollected", "isArchived", "ladderOption"})
+@ToString(of = {"label", "entityId", "entity", "isCollected"})
 public class CircuitLegRequest {
     //private Long circuitLegId;
     private String label;

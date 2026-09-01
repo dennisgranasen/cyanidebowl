@@ -63,4 +63,3 @@ docker-compose-production.yaml
 my-compose.yaml
 backend/test.data
 *playground*.js
-frontend/package-lock.json

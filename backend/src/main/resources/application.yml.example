@@ -2,9 +2,8 @@ server:
   port: 8080
 
 spring:
-  data:
-    mongodb:
-      uri: mongodb://[REDACTED]@localhost:32768/DB_NAME?authSource=admin
+  mongodb:
+    uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/cyanidebowl}
   web:
     resources:
       static-locations: classpath=/public
@@ -20,11 +19,6 @@ spring:
           jwk-set-uri: https://YOUR_DOMAIN/.well-known/jwks.json
           jws-algorithms: RS256
 
-okta:
-  oauth2:
-    issuer: https://YOUR_DOMAIN/
-    audience: YOUR_AUDIENCE
-
 cyanide:
   check-api-status-cron: '0 */15 * * * ?'
   scheduler-active: true
@@ -39,7 +33,7 @@ cyanide:
       stadiums: https://images.cyanide-studio.com/bb3/stadiums
   api-config:
     base-url: https://web.cyanide-studio.com/ws
-    key: API_KEY
+    key: ${CYANIDE_API_KEY:}
   images-cache:
     max-validity-in-minutes: 600
   request-limit:

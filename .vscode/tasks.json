@@ -36,7 +36,7 @@
                 "-pl",
                 "backend",
                 "-Dspring-boot.run.profiles=dev",
-                "-Dspring-boot.run.arguments=--cyanide.fetch-active=false --cyanide.job-creation-scheduler-active=false --cyanide.job-execution-scheduler-active=false --scheduler.enabled=false",
+                "-Dspring-boot.run.arguments=--spring.mongodb.uri=mongodb://localhost:27017/cyanidebowl --cyanide.api-config.key= --cyanide.fetch-active=false --cyanide.job-creation-scheduler-active=false --cyanide.job-execution-scheduler-active=false --scheduler.enabled=false",
                 "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
             ],
             "options": {

@@ -16,7 +16,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Getter
 @Setter
 @Document
-@ToString(of = {"circuitLegId", "entities", "label", "game", "platform", "ruleset", "isCollected", "isArchived", "ladderOption"})
+@ToString(of = {"circuitLegId", "entities", "label", "isCollected"})
 @EqualsAndHashCode(of = "circuitLegId")
 public class CircuitLeg implements Comparable<CircuitLeg> {
     @Id
@@ -51,4 +51,3 @@ public class CircuitLeg implements Comparable<CircuitLeg> {
         return result;
     }
 }
-

@@ -25,11 +25,6 @@ spring:
           jwk-set-uri: ${AUTH_URI:http://localhost:8022}/.well-known/jwks.json
           jws-algorithms: RS256
 
-#okta:
-#  oauth2:
-#    issuer: ${AUTH_URI:http://localhost:8022}
-#    audience: ${AUTH_AUDIENCE:api://default}
-
 management:
   endpoints:
     web:

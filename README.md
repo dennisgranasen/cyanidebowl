@@ -61,7 +61,7 @@ AUTH_AUDIENCE="nst-scores-backend"
 
 ## Secrets
 The following secrets should be set, in production mode they should be set according to your host platform. For local development they can reside in your .env file, but don't share them with anyone.
-SPRING_MONGODB_URI=<Your MongoDb Connection String>
+SPRING_DATA_MONGODB_URI=<Your MongoDb Connection String>
 CYANIDE_API_KEY=<Cyanide API Key>
 
 ### Building

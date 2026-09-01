@@ -1,6 +1,6 @@
 spring:
   mongodb:
-    uri: ${SPRING_MONGODB_URI:mongodb+srv://${MONGO_USER:USER}:${MONGO_PASS:PASS}@localhost:32768/${MONGO_DB:cyanidebowl}?retryWrites=true&w=majority}
+    uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/cyanidebowl}
 
 logging:
   level:
