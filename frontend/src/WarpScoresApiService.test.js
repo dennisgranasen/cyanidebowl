@@ -41,6 +41,7 @@ describe('WarpScoresApiService', () => {
       await WarpScoresApiService.createStageSource('nst:s1/stage', source, jest.fn(), jest.fn());
       await WarpScoresApiService.updateStageSource('source/1', source, jest.fn(), jest.fn());
       await WarpScoresApiService.leagueSystemDiscoveryCandidates('nst/system', jest.fn(), jest.fn());
+      await WarpScoresApiService.stageMatches('nst:s1/stage');
 
       expect(axios.post).toHaveBeenCalledWith(
         '/admin/stages/nst%3As1%2Fstage/sources',
@@ -56,5 +57,6 @@ describe('WarpScoresApiService', () => {
         '/admin/league-systems/nst%2Fsystem/discovery-candidates',
         { headers: { Authorization: 'Bearer dev-token' } },
       );
+      expect(axios).toHaveBeenCalledWith('/stages/nst%3As1%2Fstage/matches');
     });
 });

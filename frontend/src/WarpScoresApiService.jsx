@@ -166,6 +166,10 @@ export default {
     getDataWithAuthentication(`/admin/stages/${encodeURIComponent(stageId)}/sources`, getAccessTokenSilently, getAccessTokenWithPopup)
       .then(returnData)
       .catch(handleError),
+  stageMatches: async (stageId) =>
+    axios(`/stages/${encodeURIComponent(stageId)}/matches`)
+      .then(returnData)
+      .catch(handleError),
   createStageSource: async (stageId, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
     postDataWithAuthentication(`/admin/stages/${encodeURIComponent(stageId)}/sources`, data, getAccessTokenSilently, getAccessTokenWithPopup)
       .then(returnData)
