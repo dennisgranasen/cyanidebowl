@@ -90,7 +90,7 @@ function Menu() {
   return (
     <>
       <Link onClick={onOpen}>
-        <Avatar borderRadius={4} boxSize={12} icon={<HamburgerIcon />} src={imageUrls.warpscoresLogoPng('medium')}>
+        <Avatar borderRadius={4} boxSize={12} icon={<HamburgerIcon />} src={imageUrls.blaskscoreLogoPng('medium')}>
           <AvatarBadge boxSize={smallBoxSize} bg="black">
             <StatusIcon status={status} statusOutdated={statusOutdated} />
           </AvatarBadge>
@@ -103,7 +103,7 @@ function Menu() {
           <DrawerCloseButton />
           <DrawerBody
             p={0}
-            backgroundImage={imageUrls.warpscoresLogoPng()}
+            backgroundImage={imageUrls.blaskscoreLogoPng()}
             backgroundRepeat="no-repeat"
             backgroundSize="cover"
           >

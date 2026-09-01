@@ -51,7 +51,7 @@ function AboutPage() {
       <HeaderCard
         heading="About"
         subHeading={<RouteLink to="/">warp-scores.net</RouteLink>}
-        mainImageSrc={imageUrls.warpscoresLogoPng('medium')}
+        mainImageSrc={imageUrls.blaskscoreLogoPng('medium')}
       />
       <VStack align="left">
         {!readme && (

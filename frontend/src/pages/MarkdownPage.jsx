@@ -54,7 +54,7 @@ function MarkdownPage({ markdownDocument, title }) {
       <HeaderCard
         heading={title}
         subHeading={<RouteLink to="/">warp-scores.net</RouteLink>}
-        mainImageSrc={imageUrls.warpscoresLogoPng('medium')}
+        mainImageSrc={imageUrls.blaskscoreLogoPng('medium')}
       />
       <VStack align="left">
         <LoadingOrErrorWrapper loading={!markdownDocument || !content} error={error}>

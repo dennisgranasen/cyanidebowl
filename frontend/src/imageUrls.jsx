@@ -15,5 +15,7 @@ export default {
   skill: (name, opus) => addOpusParam(`${config.backendUrl}/img/skill/${name}`,opus),
   warpscoresLogoPng: (size = null) => `${config.backendUrl}/img/warpscores.png${size ? `/${size}` : ''}`,
   warpscoresLogoSvg: () => `${config.backendUrl}/img/warpscores.svg`,
+  blaskscoreLogoPng: () => '/img/blaskscore.png',
+  blaskscoreLogoSvg: () => '/img/blaskscore.svg',
   dbbcLogoPng: (size = null) => `${config.backendUrl}/img/dbbc.png${size ? `/${size}` : ''}`,
 };

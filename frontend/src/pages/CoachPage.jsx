@@ -36,7 +36,7 @@ function CoachPage() {
       <LoadingOrErrorWrapper loading={!authenticationReady}>
         <HeaderCard
           mainImageSrc={
-            isProduction ? authenticationReady && user && user.picture : imageUrls.warpscoresLogoPng('medium')
+            isProduction ? authenticationReady && user && user.picture : imageUrls.blaskscoreLogoPng('medium')
           }
           mainImageBorderRadius="full"
           heading="Coach-Page"

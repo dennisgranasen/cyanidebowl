@@ -81,7 +81,7 @@ function WarpScores() {
       </Box>
       <>
         <HeaderCard
-          mainImageSrc={imageUrls.warpscoresLogoPng('medium')}
+          mainImageSrc={imageUrls.blaskscoreLogoPng('medium')}
           heading="BlaskScore"
           subHeading="Blödareblaskans omutliga(?) resultatförmedlingstjänst"
         />
