@@ -40,6 +40,7 @@ describe('WarpScoresApiService', () => {
 
       await WarpScoresApiService.createStageSource('nst:s1/stage', source, jest.fn(), jest.fn());
       await WarpScoresApiService.updateStageSource('source/1', source, jest.fn(), jest.fn());
+      await WarpScoresApiService.leagueSystemDiscoveryCandidates('nst/system', jest.fn(), jest.fn());
 
       expect(axios.post).toHaveBeenCalledWith(
         '/admin/stages/nst%3As1%2Fstage/sources',
@@ -49,6 +50,10 @@ describe('WarpScoresApiService', () => {
       expect(axios.put).toHaveBeenCalledWith(
         '/admin/stage-sources/source%2F1',
         source,
+        { headers: { Authorization: 'Bearer dev-token' } },
+      );
+      expect(axios).toHaveBeenCalledWith(
+        '/admin/league-systems/nst%2Fsystem/discovery-candidates',
         { headers: { Authorization: 'Bearer dev-token' } },
       );
     });

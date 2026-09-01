@@ -21,4 +21,8 @@ public class LeagueSystem {
     private Long legacyCircuitId;
     private List<Long> legacySupersedesCircuitIds = new ArrayList<>();
     private String status;
+    private List<String> discoveryAliases = new ArrayList<>();
+    private Boolean discoveryNotificationEnabled = false;
+    private String discoveryNotificationEmail;
+    private List<String> notifiedDiscoveryCandidateIds = new ArrayList<>();
 }

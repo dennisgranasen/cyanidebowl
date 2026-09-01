@@ -1,8 +1,11 @@
 package net.warp_scores.warpscores.controller;
 
 import net.warp_scores.warpscores.domain.stage.StageMatchView;
+import net.warp_scores.warpscores.model.Team;
 
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 public record StageMatchResponse(
         String stageSourceId,
@@ -13,6 +16,7 @@ public record StageMatchResponse(
         Date startedAt,
         Date finishedAt,
         String status,
+            List<TeamResult> teams,
         Score sourceScore,
         Score officialScore,
         boolean adminResult,
@@ -32,6 +36,9 @@ public record StageMatchResponse(
                 match.startedAt(),
                 match.finishedAt(),
                 match.status(),
+                    Arrays.stream(match.teams() == null ? new Team[0] : match.teams())
+                        .map(team -> new TeamResult(team.getName(), team.getScore()))
+                        .toList(),
                 Score.from(match.sourceScore()),
                 Score.from(match.officialScore()),
                 match.adminResult(),
@@ -40,6 +47,9 @@ public record StageMatchResponse(
                 match.quality().name(),
                 Capabilities.from(match.capabilities()),
                 CountingRules.from(match.countsFor()));
+    }
+
+    public record TeamResult(String name, Integer score) {
     }
 
     public record Score(Integer home, Integer away) {

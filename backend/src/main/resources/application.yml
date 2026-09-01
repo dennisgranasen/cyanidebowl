@@ -51,3 +51,10 @@ stage-match:
     enabled: ${STAGE_MATCH_ARCHIVE_ENABLED:false}
     database: ${STAGE_MATCH_ARCHIVE_DATABASE:}
     collection: ${STAGE_MATCH_ARCHIVE_COLLECTION:match}
+
+league-system:
+  discovery:
+    notifications:
+      enabled: ${LEAGUE_SYSTEM_DISCOVERY_NOTIFICATIONS_ENABLED:false}
+      from: ${LEAGUE_SYSTEM_DISCOVERY_NOTIFICATIONS_FROM:}
+      cron: '${LEAGUE_SYSTEM_DISCOVERY_NOTIFICATIONS_CRON:0 0 8 * * *}'

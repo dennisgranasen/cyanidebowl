@@ -50,6 +50,8 @@ then make the stage work reachable, testable, and documented.
   dedicated hook tests for loading, token failure, backend failure, and logout.
 - The legacy circuit-admin routes are retained for compatibility but `/admin` now
   manages the LeagueSystem hierarchy.
+- The home page now groups content by LeagueSystem with seasons, stages, and
+  recent results. News, standings, playoff trees, and statistics remain follow-up work.
 - B-012 needs a product decision before changing `CyanideRestApiClient`:
   callers currently treat `null` as both upstream unavailability and an internal
   client failure. Decide whether scheduled collection should skip, retry, or fail

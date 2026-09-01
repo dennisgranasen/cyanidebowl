@@ -101,9 +101,21 @@ export default {
     axios(`/circuits${circuitId ? `/${circuitId}` : ''}`)
       .then(returnData)
       .catch(handleError),
+    publicLeagueSystems: async () =>
+      axios('/league-systems')
+        .then(returnData)
+        .catch(handleError),
+      leagueSystemOverview: async (leagueSystemId) =>
+        axios(`/league-systems/${encodeURIComponent(leagueSystemId)}/overview`)
+          .then(returnData)
+          .catch(handleError),
 
   leagueSystems: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
     getDataWithAuthentication('/admin/league-systems', getAccessTokenSilently, getAccessTokenWithPopup)
+      .then(returnData)
+      .catch(handleError),
+  leagueSystemDiscoveryCandidates: async (leagueSystemId, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    getDataWithAuthentication(`/admin/league-systems/${encodeURIComponent(leagueSystemId)}/discovery-candidates`, getAccessTokenSilently, getAccessTokenWithPopup)
       .then(returnData)
       .catch(handleError),
   createLeagueSystem: async (data, getAccessTokenSilently, getAccessTokenWithPopup) =>

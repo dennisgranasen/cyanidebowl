@@ -8,12 +8,14 @@ import net.warp_scores.warpscores.model.LeagueSystem;
 import net.warp_scores.warpscores.model.Season;
 import net.warp_scores.warpscores.model.Stage;
 import net.warp_scores.warpscores.model.StageSource;
+import net.warp_scores.warpscores.service.LeagueSystemDiscoveryService;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -24,8 +26,9 @@ class LeagueSystemControllerTest {
     private final SeasonRepository seasons = mock(SeasonRepository.class);
     private final StageRepository stages = mock(StageRepository.class);
     private final StageSourceRepository stageSources = mock(StageSourceRepository.class);
+    private final LeagueSystemDiscoveryService discoveryService = mock(LeagueSystemDiscoveryService.class);
     private final LeagueSystemController controller = new LeagueSystemController(
-            leagueSystems, seasons, stages, stageSources);
+            leagueSystems, seasons, stages, stageSources, discoveryService);
 
     @Test
     void createsChildrenUsingTheirResolvedParentIds() {
@@ -76,6 +79,20 @@ class LeagueSystemControllerTest {
             assertThat(created.getName()).isEqualTo("Season 12");
             assertThat(created.getSequence()).isEqualTo(12);
         }
+
+            @Test
+            void rejectsStageSourcesWithoutRequiredMatchMetadata() {
+                Stage stage = new Stage();
+                stage.setId("nst:s1:main");
+                when(stages.findById("nst:s1:main")).thenReturn(Optional.of(stage));
+                StageSourceRequest request = new StageSourceRequest(
+                        "source", "3_competition", net.warp_scores.warpscores.model.EntityType.Competition,
+                        null, net.warp_scores.warpscores.model.Platform.PC,
+                        null, null, null, null, null, false, null, null, null);
+
+                assertThatThrownBy(() -> controller.createStageSource("nst:s1:main", request))
+                        .isInstanceOf(IllegalArgumentException.class);
+            }
 
     @Test
     void deletesLeagueSystemDescendantsBeforeTheParent() {

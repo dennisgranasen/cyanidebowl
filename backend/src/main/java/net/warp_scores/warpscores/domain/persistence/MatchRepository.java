@@ -36,6 +36,24 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
 
     Integer countMatchesByCompetitionId(Identity competitionId);
 
+    @Aggregation(pipeline = {
+            "{ $match: { competitionId: { $ne: null }, leagueId: { $ne: null } } }",
+            "{ $sort: { finished: 1 } }",
+            "{ $group: { _id: '$competitionId', leagueId: { $last: '$leagueId' }, leagueName: { $last: '$leagueName' }, competitionName: { $last: '$competitionName' }, platform: { $last: '$platform' }, latestMatch: { $max: '$finished' }, matchCount: { $sum: 1 } } }",
+            "{ $project: { _id: 0, competitionId: '$_id', leagueId: 1, leagueName: 1, competitionName: 1, platform: 1, latestMatch: 1, matchCount: 1 } }"
+    })
+    List<SourceDiscoveryRecord> findSourceDiscoveryRecords();
+
+    record SourceDiscoveryRecord(
+            Identity competitionId,
+            Identity leagueId,
+            String competitionName,
+            String leagueName,
+            String platform,
+            Date latestMatch,
+            long matchCount) {
+    }
+
     Optional<Match> findTopByTeamsContainsOrderByStartedDesc(Team team);
 
     List<Match> findByLeagueIdAndFinishedNotNull(Identity leagueId);
@@ -412,4 +430,3 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
     ) {}
         */
 }
-

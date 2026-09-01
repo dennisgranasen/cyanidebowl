@@ -9,12 +9,14 @@ import CircuitCard from '../components/circuit/CircuitCard';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 import config from '../config';
 import Leagues from '../components/league/Leagues';
+import LeagueSystems from '../components/league/LeagueSystems';
 
 const { showCircuitsFeature } = config;
 
 function WarpScores() {
   const [circuits, setCircuits] = useState([]);
   const { authenticationReady, userPermissions } = useAuth0WithUserPermissions();
+  const [leagueSystems, setLeagueSystems] = useState([]);
   const [leagues, setLeagues] = useState([]);
   const [competitionCountsByStatus, setCompetitionCountsByStatus] = useState({});
   const [loading, setLoading] = useState(false);
@@ -33,37 +35,38 @@ function WarpScores() {
       });
   };
 
-  const fetchLeagues = () => {
-    setLoading(true);
-    WarpScoresApiService.leagues()
-      .then((data) => {
-        setLeagues(data);
-      })
-      .then(() => setLoading(false))
-      .catch((reason) => {
-        setError({ type: 'error', message: reason.toLocaleString() });
-      });
+  const fetchLeagues = async () => {
+    const data = await WarpScoresApiService.leagues();
+    setLeagues(data);
+    if (data.length > 0) {
+      const counts = await WarpScoresApiService.competitionCountByStatus(data);
+      setCompetitionCountsByStatus(counts);
+    }
   };
 
-  const fetchCountsByCompetitionStatus = (leagues) => {
+  const fetchHomeData = async () => {
     setLoading(true);
-    if (leagues && leagues.length > 0)
-      WarpScoresApiService.competitionCountByStatus(leagues)
-        .then((data) => {
-          setCompetitionCountsByStatus(data);
-        })
-        .then(() => setLoading(false))
-        .catch((reason) => {
-          setError({ type: 'error', message: reason.toLocaleString() });
-        });
-  }
+    try {
+      const systems = await WarpScoresApiService.publicLeagueSystems();
+        if (systems.length === 0) {
+          setLeagueSystems([]);
+        await fetchLeagues();
+        } else {
+          const overviews = await Promise.all(systems.map((system) => WarpScoresApiService.leagueSystemOverview(system.id)));
+          setLeagueSystems(overviews);
+      }
+    } catch (reason) {
+      setError({ type: 'error', message: reason.toLocaleString() });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (showCircuits) {
       fetchCircuits();
     } else {
-      fetchLeagues();
-      fetchCountsByCompetitionStatus(leagues);
+      fetchHomeData();
     }
   }, [showCircuits]);
 
@@ -79,13 +82,15 @@ function WarpScores() {
       <>
         <HeaderCard
           mainImageSrc={imageUrls.warpscoresLogoPng('medium')}
-          heading="BlaskScores"
-          subHeading="Välkommen till Blödareblaskans resultatservice."
+          heading="BlaskScore"
+          subHeading="Blödareblaskans omutliga(?) resultatförmedlingstjänst"
         />
         <Box>
           <LoadingOrErrorWrapper loading={loading} error={error}>
             {showCircuits ? (
               circuits.map((currCircuit) => <CircuitCard mb={2} circuit={currCircuit} key={currCircuit.id} />)
+            ) : leagueSystems.length > 0 ? (
+              <LeagueSystems leagueSystems={leagueSystems} />
             ) : (
               <Leagues leagues={leagues} competitionCountByStatusPerLeague={competitionCountsByStatus} />
             )}

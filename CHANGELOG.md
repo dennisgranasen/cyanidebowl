@@ -4,8 +4,12 @@
 
 ### Changed
 
+- Added admin-assisted LeagueSystem season/source discovery and optional email
+  notifications for new candidates.
 - Added the public, read-only stage-match API and stage seed documentation.
 - Replaced the legacy circuit-admin landing page with LeagueSystem hierarchy CRUD.
+- Made the home page LeagueSystem-first, with season/stage structure and recent results.
+- Defaulted LeagueSystem result cards to their latest played season with a season menu.
 - Hardened server HTTP/JWT security and stage-match aggregation.
 - Simplified frontend permission loading and normalized API request URLs.
 - Updated GitHub metadata and the `server` production-profile documentation.

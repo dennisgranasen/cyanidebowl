@@ -10,9 +10,11 @@ import net.warp_scores.warpscores.model.LeagueSystem;
 import net.warp_scores.warpscores.model.Season;
 import net.warp_scores.warpscores.model.Stage;
 import net.warp_scores.warpscores.model.StageSource;
+import net.warp_scores.warpscores.service.LeagueSystemDiscoveryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,6 +36,7 @@ public class LeagueSystemController {
     private final SeasonRepository seasons;
     private final StageRepository stages;
     private final StageSourceRepository stageSources;
+    private final LeagueSystemDiscoveryService discoveryService;
 
     @GetMapping("/admin/league-systems")
     public List<LeagueSystem> getLeagueSystems() {
@@ -49,6 +52,14 @@ public class LeagueSystemController {
     @GetMapping("/admin/league-systems/{leagueSystemId}")
     public ResponseEntity<LeagueSystem> getLeagueSystem(@PathVariable String leagueSystemId) {
         return leagueSystems.findById(leagueSystemId).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/admin/league-systems/{leagueSystemId}/discovery-candidates")
+    public ResponseEntity<List<LeagueSystemDiscoveryCandidate>> getDiscoveryCandidates(
+            @PathVariable String leagueSystemId) {
+        return leagueSystems.findById(leagueSystemId)
+                .map(system -> ResponseEntity.ok(discoveryService.discover(system)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PutMapping("/admin/league-systems/{leagueSystemId}")
@@ -239,7 +250,17 @@ public class LeagueSystemController {
             }
         }
 
+            @ExceptionHandler(IllegalArgumentException.class)
+            public ResponseEntity<Void> handleInvalidRequest(IllegalArgumentException exception) {
+                return ResponseEntity.badRequest().build();
+            }
+
     private StageSource stageSource(StageSourceRequest request) {
+                if (request.sourceEntityId() == null || request.sourceEntityId().isBlank()
+                        || request.sourceType() == null || request.sourceType() == net.warp_scores.warpscores.model.EntityType.Circuit
+                        || request.game() == null || request.platform() == null) {
+                    throw new IllegalArgumentException("StageSource requires source entity, type, game, and platform");
+                }
         StageSource source = new StageSource();
         source.setId(request.id());
         source.setSourceEntityId(IdentityUtil.fromId(request.sourceEntityId()));

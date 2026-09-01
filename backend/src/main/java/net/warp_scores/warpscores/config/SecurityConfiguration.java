@@ -78,6 +78,8 @@ public class SecurityConfiguration {
                         .requestMatchers(GET, "/img/**").permitAll()
                         .requestMatchers(GET, "/knockout/**").permitAll()
                         .requestMatchers(GET, "/league/**").permitAll()
+                            .requestMatchers(GET, "/league-systems").permitAll()
+                            .requestMatchers(GET, "/league-systems/*/overview").permitAll()
                         .requestMatchers(GET, "/leagues/**").permitAll()
                         .requestMatchers(GET, "/match/**").permitAll()
                         .requestMatchers(GET, "/matches/**").permitAll()

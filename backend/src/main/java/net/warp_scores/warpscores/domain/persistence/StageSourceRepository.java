@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface StageSourceRepository extends MongoRepository<StageSource, String> {
     List<StageSource> findByStageId(String stageId);
+    List<StageSource> findByLeagueSystemId(String leagueSystemId);
 }
