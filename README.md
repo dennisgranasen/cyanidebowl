@@ -71,6 +71,10 @@ untracked `.env` file in the repository root, while Cyanide-enabled modes read
 `CYANIDE_API_KEY` from the same file. `DEFAULT: Backend [DB=local, Cyanide=OFF]` is listed first as
 the safe initial choice.
 
+`SPRING_MONGODB_URI` is accepted as a deprecated local fallback for existing
+`.env` files. Prefer `SPRING_DATA_MONGODB_URI`; it takes precedence and is the
+name used for Fly secrets.
+
 | Database | Cyanide | VS Code launch configuration |
 | --- | --- | --- |
 | Local | OFF | `DEFAULT: Backend [DB=local, Cyanide=OFF]` |
