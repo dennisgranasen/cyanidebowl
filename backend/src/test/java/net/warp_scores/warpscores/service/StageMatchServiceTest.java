@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mock;
@@ -169,6 +170,50 @@ class StageMatchServiceTest {
 
                 assertThat(service.getMatchesForStage(stageId)).isEmpty();
         }
+
+            @Test
+            void rejectsMissingStageAndInvalidBoundaries() {
+                assertThatThrownBy(() -> service.getMatchesForStage("missing"))
+                        .isInstanceOf(StageNotFoundException.class);
+
+                String stageId = "nst:s1:boundaries";
+                StageSource source = leagueSource("source-boundaries", stageId, "league");
+                source.setFirstId("missing");
+                givenStage(stageId, List.of(source));
+                when(matchRepository.findByLeagueId(source.getSourceEntityId()))
+                        .thenReturn(List.of(match("first", "league", 1, 0, 0, 1)));
+                assertThatThrownBy(() -> service.getMatchesForStage(stageId))
+                        .isInstanceOf(IllegalStateException.class);
+
+                source.setFirstId("second");
+                source.setLastId("first");
+                when(matchRepository.findByLeagueId(source.getSourceEntityId())).thenReturn(List.of(
+                        match("first", "league", 1, 0, 0, 1),
+                        match("second", "league", 1, 0, 0, 2)));
+                assertThatThrownBy(() -> service.getMatchesForStage(stageId))
+                        .isInstanceOf(IllegalStateException.class);
+            }
+
+            @Test
+            void adaptsBb2Matches() {
+                String stageId = "nst:s1:bb2";
+                StageSource source = competitionSource("source-bb2", stageId, "competition", GameType.BB2);
+                givenStage(stageId, List.of(source));
+                when(matchRepository.findByCompetitionId(source.getSourceEntityId()))
+                        .thenReturn(List.of(match("bb2-match", "competition", 2, 1, 0, 1)));
+
+                assertThat(service.getMatchesForStage(stageId)).singleElement()
+                        .extracting(StageMatchView::capabilities)
+                        .isEqualTo(new StageMatchView.Capabilities(true, true, false));
+            }
+
+            @Test
+            void returnsNoMatchesWhenStageHasNoSources() {
+                String stageId = "nst:s1:no-sources";
+                givenStage(stageId, List.of());
+
+                assertThat(service.getMatchesForStage(stageId)).isEmpty();
+            }
 
     private void givenStage(String stageId, List<StageSource> sources) {
         Stage stage = new Stage();

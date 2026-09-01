@@ -41,7 +41,10 @@ const getToken = async (getAccessTokenSilently, getAccessTokenWithPopup) => {
   return token;
 };
 
-const getAuthHeaders = async (getAccessTokenSilently, getAccessTokenWithPopup) => {
+const getAuthHeaders = async (getAccessTokenSilently, getAccessTokenWithPopup, requestToken = true) => {
+  if (!requestToken) {
+    return undefined;
+  }
   if (!isProduction) {
     return {
       headers: {
@@ -57,21 +60,18 @@ const getAuthHeaders = async (getAccessTokenSilently, getAccessTokenWithPopup) =
   };
 };
 
-const postDataWithAuthentication = async (endpoint, data, getAccessTokenSilently, getAccessTokenWithPopup) => {
-  const authHeaders = await getAuthHeaders(getAccessTokenSilently, getAccessTokenWithPopup);
+const postDataWithAuthentication = async (endpoint, data, getAccessTokenSilently, getAccessTokenWithPopup, requestToken = true) => {
+  const authHeaders = await getAuthHeaders(getAccessTokenSilently, getAccessTokenWithPopup, requestToken);
   return axios.post(endpoint, data, authHeaders);
 };
 
-const getDataWithAuthentication = async (endpoint, getAccessTokenSilently, getAccessTokenWithPopup, requestToken) => {
-  let authHeaders;
-  if (requestToken) {
-    authHeaders = await getAuthHeaders(getAccessTokenSilently, getAccessTokenWithPopup);
-  }
+const getDataWithAuthentication = async (endpoint, getAccessTokenSilently, getAccessTokenWithPopup, requestToken = true) => {
+  const authHeaders = await getAuthHeaders(getAccessTokenSilently, getAccessTokenWithPopup, requestToken);
   return axios(endpoint, authHeaders);
 };
 
-const deleteDataWithAuthentication = async (endpoint, getAccessTokenSilently, getAccessTokenWithPopup) => {
-  const authHeaders = await getAuthHeaders(getAccessTokenSilently, getAccessTokenWithPopup);
+const deleteDataWithAuthentication = async (endpoint, getAccessTokenSilently, getAccessTokenWithPopup, requestToken = true) => {
+  const authHeaders = await getAuthHeaders(getAccessTokenSilently, getAccessTokenWithPopup, requestToken);
   return axios.delete(endpoint, authHeaders);
 };
 

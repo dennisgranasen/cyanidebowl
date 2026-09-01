@@ -29,28 +29,25 @@ then make the stage work reachable, testable, and documented.
 
 ## Priority overview
 
-| Priority | Item | Outcome |
-| --- | --- | --- |
-| P0 | B-001 | Contest fetching works again |
-| P0 | B-002 | Public header-reflection endpoint is removed |
-| P0 | B-003 | Mutation routes reach method security correctly |
-| P0 | B-004 | Authentication/authorization has regression tests |
-| P1 | B-005 | Frontend permission state is deterministic |
-| P1 | B-006 | Stage aggregation handles empty/scoped data correctly |
-| P1 | B-007 | The new stage model has an application/API entry point |
-| P1 | B-008 | Frontend API duplication and malformed URLs are removed |
-| P2 | B-009 | Profiles, auth configuration, and docs agree |
-| P2 | B-010 | GitHub CI validates backend and frontend |
-| P2 | B-011 | Stale repository metadata/docs are cleaned up |
-| P3 | B-012 | Broad exception/null handling is improved incrementally |
+| Priority | Item | Outcome | Status |
+| --- | --- | --- | --- |
+| P0 | B-001 | Contest fetching works again | Done |
+| P0 | B-002 | Public header-reflection endpoint is removed | Done |
+| P0 | B-003 | Mutation routes reach method security correctly | Done |
+| P0 | B-004 | Authentication/authorization has regression tests | Done |
+| P1 | B-005 | Frontend permission state is deterministic | Partial: targeted hook tests pending |
+| P1 | B-006 | Stage aggregation handles empty/scoped data correctly | Done |
+| P1 | B-007 | The new stage model has an application/API entry point | Done |
+| P1 | B-008 | Frontend API duplication and malformed URLs are removed | Done |
+| P2 | B-009 | Profiles, auth configuration, and docs agree | Done |
+| P2 | B-010 | GitHub CI validates backend and frontend | Deferred |
+| P2 | B-011 | Stale repository metadata/docs are cleaned up | Done |
+| P3 | B-012 | Broad exception/null handling is improved incrementally | Blocked: failure contract decision needed |
 
 ## Current status
 
-- B-007 is implemented and verified: the public stage-match API returns a DTO
-  with explicit 404/400 errors.
-- B-008 is implemented and verified: duplicate API methods, malformed URLs, and
-  obsolete commented code are removed.
-- B-009 and B-011 documentation and metadata are updated. B-010 remains deferred.
+- B-005 implementation is verified by the frontend build and existing suite; add
+  dedicated hook tests for loading, token failure, backend failure, and logout.
 - B-012 needs a product decision before changing `CyanideRestApiClient`:
   callers currently treat `null` as both upstream unavailability and an internal
   client failure. Decide whether scheduled collection should skip, retry, or fail
@@ -109,7 +106,7 @@ and other sensitive values.
 
 **Acceptance criteria**
 
-- Server profile returns 404 or 403 for `/debug-headers`.
+- Server profile returns 401, 403, or 404 for `/debug-headers`.
 - No endpoint reflects arbitrary headers.
 - Production behavior has a regression test.
 
