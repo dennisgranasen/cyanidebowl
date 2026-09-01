@@ -432,9 +432,9 @@ public class FetchDataService {
         Map<Identity, Optional<Date>> lastMatchDateByCompetitionId =
                 matchDomainService.getLastMatchDatesForCompetitions(competitionsNeedingContests.stream().map(Competition::getId).toList());
 
-        List<Competition> competitionsToCollect = new ArrayList<>();
-        competitionsNeedingContests.stream()
-                .filter(c -> this.shouldLoadContests(c, lastMatchDateByCompetitionId));
+        List<Competition> competitionsToCollect = competitionsNeedingContests.stream()
+                .filter(c -> this.shouldLoadContests(c, lastMatchDateByCompetitionId))
+                .toList();
 
         long distinctLeagueCount = competitionsToCollect.stream().map(Competition::getLeagueId).distinct().count();
         log.debug("Will load contests for {} active competitions needing contests of {} different leagues.",
