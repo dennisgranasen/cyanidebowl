@@ -67,8 +67,8 @@ CYANIDE_API_KEY=<Cyanide API Key>
 VS Code offers all four backend debug combinations: local database or Atlas,
 each with Cyanide either disabled or enabled. The matching full-stack entries
 also start the frontend. Atlas reads `SPRING_DATA_MONGODB_URI` from the
-untracked `.env` file, while Cyanide-enabled modes read `CYANIDE_API_KEY` from
-the same file. `DEFAULT: Backend [DB=local, Cyanide=OFF]` is listed first as
+untracked `.env` file in the repository root, while Cyanide-enabled modes read
+`CYANIDE_API_KEY` from the same file. `DEFAULT: Backend [DB=local, Cyanide=OFF]` is listed first as
 the safe initial choice.
 
 | Database | Cyanide | VS Code launch configuration |

@@ -76,7 +76,7 @@
                 "-pl",
                 "backend",
                 "-Dspring-boot.run.profiles=dev",
-                "-Dspring-boot.run.arguments=--spring.config.import=file:.env[.properties] --spring.mongodb.uri=mongodb://localhost:27017/cyanidebowl",
+                "-Dspring-boot.run.arguments=--spring.config.import=file:../.env[.properties] --spring.mongodb.uri=mongodb://localhost:27017/cyanidebowl",
                 "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
             ],
             "options": {
@@ -116,7 +116,7 @@
                 "-pl",
                 "backend",
                 "-Dspring-boot.run.profiles=dev",
-                "-Dspring-boot.run.arguments=--spring.config.import=file:.env[.properties] --cyanide.api-config.key= --cyanide.fetch-active=false --cyanide.job-creation-scheduler-active=false --cyanide.job-execution-scheduler-active=false --scheduler.enabled=false",
+                "-Dspring-boot.run.arguments=--spring.config.import=file:../.env[.properties] --cyanide.api-config.key= --cyanide.fetch-active=false --cyanide.job-creation-scheduler-active=false --cyanide.job-execution-scheduler-active=false --scheduler.enabled=false",
                 "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
             ],
             "options": {
@@ -156,7 +156,7 @@
                 "-pl",
                 "backend",
                 "-Dspring-boot.run.profiles=dev",
-                "-Dspring-boot.run.arguments=--spring.config.import=file:.env[.properties]",
+                "-Dspring-boot.run.arguments=--spring.config.import=file:../.env[.properties]",
                 "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
             ],
             "options": {
