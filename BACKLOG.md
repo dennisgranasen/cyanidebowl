@@ -37,7 +37,7 @@ then make the stage work reachable, testable, and documented.
 | P0 | B-004 | Authentication/authorization has regression tests | Done |
 | P1 | B-005 | Frontend permission state is deterministic | Partial: targeted hook tests pending |
 | P1 | B-006 | Stage aggregation handles empty/scoped data correctly | Done |
-| P1 | B-007 | The new stage model has an application/API entry point | Done |
+| P1 | B-007 | The new stage model has an application/API entry point | Done: read API and LeagueSystem admin CRUD |
 | P1 | B-008 | Frontend API duplication and malformed URLs are removed | Done |
 | P2 | B-009 | Profiles, auth configuration, and docs agree | Done |
 | P2 | B-010 | GitHub CI validates backend and frontend | Deferred |
@@ -48,6 +48,8 @@ then make the stage work reachable, testable, and documented.
 
 - B-005 implementation is verified by the frontend build and existing suite; add
   dedicated hook tests for loading, token failure, backend failure, and logout.
+- The legacy circuit-admin routes are retained for compatibility but `/admin` now
+  manages the LeagueSystem hierarchy.
 - B-012 needs a product decision before changing `CyanideRestApiClient`:
   callers currently treat `null` as both upstream unavailability and an internal
   client failure. Decide whether scheduled collection should skip, retry, or fail

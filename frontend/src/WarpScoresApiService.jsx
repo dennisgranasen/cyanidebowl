@@ -70,6 +70,11 @@ const getDataWithAuthentication = async (endpoint, getAccessTokenSilently, getAc
   return axios(endpoint, authHeaders);
 };
 
+const putDataWithAuthentication = async (endpoint, data, getAccessTokenSilently, getAccessTokenWithPopup, requestToken = true) => {
+  const authHeaders = await getAuthHeaders(getAccessTokenSilently, getAccessTokenWithPopup, requestToken);
+  return axios.put(endpoint, data, authHeaders);
+};
+
 const deleteDataWithAuthentication = async (endpoint, getAccessTokenSilently, getAccessTokenWithPopup, requestToken = true) => {
   const authHeaders = await getAuthHeaders(getAccessTokenSilently, getAccessTokenWithPopup, requestToken);
   return axios.delete(endpoint, authHeaders);
@@ -94,6 +99,71 @@ export default {
       .catch(handleError),
   circuits: async (circuitId) =>
     axios(`/circuits${circuitId ? `/${circuitId}` : ''}`)
+      .then(returnData)
+      .catch(handleError),
+
+  leagueSystems: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
+    getDataWithAuthentication('/admin/league-systems', getAccessTokenSilently, getAccessTokenWithPopup)
+      .then(returnData)
+      .catch(handleError),
+  createLeagueSystem: async (data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication('/admin/league-systems', data, getAccessTokenSilently, getAccessTokenWithPopup)
+      .then(returnData)
+      .catch(handleError),
+  updateLeagueSystem: async (id, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    putDataWithAuthentication(`/admin/league-systems/${encodeURIComponent(id)}`, data, getAccessTokenSilently, getAccessTokenWithPopup)
+      .then(returnData)
+      .catch(handleError),
+  deleteLeagueSystem: async (id, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    deleteDataWithAuthentication(`/admin/league-systems/${encodeURIComponent(id)}`, getAccessTokenSilently, getAccessTokenWithPopup)
+      .then(returnData)
+      .catch(handleError),
+  seasons: async (leagueSystemId, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    getDataWithAuthentication(`/admin/league-systems/${encodeURIComponent(leagueSystemId)}/seasons`, getAccessTokenSilently, getAccessTokenWithPopup)
+      .then(returnData)
+      .catch(handleError),
+  createSeason: async (leagueSystemId, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication(`/admin/league-systems/${encodeURIComponent(leagueSystemId)}/seasons`, data, getAccessTokenSilently, getAccessTokenWithPopup)
+      .then(returnData)
+      .catch(handleError),
+  updateSeason: async (id, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    putDataWithAuthentication(`/admin/seasons/${encodeURIComponent(id)}`, data, getAccessTokenSilently, getAccessTokenWithPopup)
+      .then(returnData)
+      .catch(handleError),
+  deleteSeason: async (id, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    deleteDataWithAuthentication(`/admin/seasons/${encodeURIComponent(id)}`, getAccessTokenSilently, getAccessTokenWithPopup)
+      .then(returnData)
+      .catch(handleError),
+  stages: async (seasonId, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    getDataWithAuthentication(`/admin/seasons/${encodeURIComponent(seasonId)}/stages`, getAccessTokenSilently, getAccessTokenWithPopup)
+      .then(returnData)
+      .catch(handleError),
+  createStage: async (seasonId, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication(`/admin/seasons/${encodeURIComponent(seasonId)}/stages`, data, getAccessTokenSilently, getAccessTokenWithPopup)
+      .then(returnData)
+      .catch(handleError),
+  updateStage: async (id, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    putDataWithAuthentication(`/admin/stages/${encodeURIComponent(id)}`, data, getAccessTokenSilently, getAccessTokenWithPopup)
+      .then(returnData)
+      .catch(handleError),
+  deleteStage: async (id, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    deleteDataWithAuthentication(`/admin/stages/${encodeURIComponent(id)}`, getAccessTokenSilently, getAccessTokenWithPopup)
+      .then(returnData)
+      .catch(handleError),
+  stageSources: async (stageId, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    getDataWithAuthentication(`/admin/stages/${encodeURIComponent(stageId)}/sources`, getAccessTokenSilently, getAccessTokenWithPopup)
+      .then(returnData)
+      .catch(handleError),
+  createStageSource: async (stageId, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication(`/admin/stages/${encodeURIComponent(stageId)}/sources`, data, getAccessTokenSilently, getAccessTokenWithPopup)
+      .then(returnData)
+      .catch(handleError),
+  updateStageSource: async (id, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    putDataWithAuthentication(`/admin/stage-sources/${encodeURIComponent(id)}`, data, getAccessTokenSilently, getAccessTokenWithPopup)
+      .then(returnData)
+      .catch(handleError),
+  deleteStageSource: async (id, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    deleteDataWithAuthentication(`/admin/stage-sources/${encodeURIComponent(id)}`, getAccessTokenSilently, getAccessTokenWithPopup)
       .then(returnData)
       .catch(handleError),
 

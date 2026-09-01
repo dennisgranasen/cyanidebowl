@@ -59,6 +59,7 @@ public class SecurityConfiguration {
                         // user endpoint
                         .requestMatchers(GET, "/userPermissions").permitAll()
                         // endpoints needing authentication
+                            .requestMatchers("/admin/**").authenticated()
                         .requestMatchers(POST, "/circuits/**").authenticated()
                         .requestMatchers(DELETE, "/circuits/**").authenticated()
                         .requestMatchers(POST, "/contests/**").authenticated()

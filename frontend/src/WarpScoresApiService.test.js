@@ -2,6 +2,7 @@ jest.mock('axios', () => {
   const mockAxios = jest.fn();
   mockAxios.defaults = {};
   mockAxios.post = jest.fn();
+    mockAxios.put = jest.fn();
   mockAxios.delete = jest.fn();
   return mockAxios;
 });
@@ -13,9 +14,11 @@ describe('WarpScoresApiService', () => {
   beforeEach(() => {
     axios.mockReset();
     axios.post.mockReset();
+      axios.put.mockReset();
     axios.delete.mockReset();
     axios.mockResolvedValue({ data: [] });
     axios.post.mockResolvedValue({ data: {} });
+      axios.put.mockResolvedValue({ data: {} });
   });
 
   test('uses canonical competition URLs and authenticated lookup requests', async () => {
@@ -31,4 +34,22 @@ describe('WarpScoresApiService', () => {
       { headers: { Authorization: 'Bearer dev-token' } },
     );
   });
+
+    test('uses URL-safe authenticated LeagueSystem CRUD routes', async () => {
+      const source = { id: 'source-1', sourceEntityId: '3_league_competition' };
+
+      await WarpScoresApiService.createStageSource('nst:s1/stage', source, jest.fn(), jest.fn());
+      await WarpScoresApiService.updateStageSource('source/1', source, jest.fn(), jest.fn());
+
+      expect(axios.post).toHaveBeenCalledWith(
+        '/admin/stages/nst%3As1%2Fstage/sources',
+        source,
+        { headers: { Authorization: 'Bearer dev-token' } },
+      );
+      expect(axios.put).toHaveBeenCalledWith(
+        '/admin/stage-sources/source%2F1',
+        source,
+        { headers: { Authorization: 'Bearer dev-token' } },
+      );
+    });
 });

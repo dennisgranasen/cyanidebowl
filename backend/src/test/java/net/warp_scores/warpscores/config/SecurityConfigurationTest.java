@@ -95,6 +95,7 @@ class SecurityConfigurationTest {
                     request("POST", "/circuits/1/legs/2/addEntity"),
                     request("POST", "/contests/competition/3_competition"),
                     request("POST", "/leagueCollection/3_league"),
+                        request("POST", "/admin/league-systems"),
                     request("POST", "/lookup"));
 
             for (HttpRequest request : mutationRequests) {
