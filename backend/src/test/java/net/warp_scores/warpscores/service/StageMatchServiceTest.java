@@ -26,9 +26,14 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class StageMatchServiceTest {
@@ -57,7 +62,8 @@ class StageMatchServiceTest {
                 interpretationRepository,
                 adapters,
                 List.of(archiveMatchProvider));
-        when(interpretationRepository.findAll()).thenReturn(List.of());
+                when(interpretationRepository.findRelevantToMatchIds(anyList(), any(Pattern.class)))
+                        .thenReturn(List.of());
     }
 
     @Test
@@ -78,6 +84,8 @@ class StageMatchServiceTest {
         assertThat(result).extracting(StageMatchView::stageSourceId)
                 .containsExactly("source-a", "source-b");
         assertThat(result).allMatch(match -> match.capabilities().playerMatchStats());
+                verify(interpretationRepository).findRelevantToMatchIds(anyList(), any(Pattern.class));
+                verify(interpretationRepository, never()).findAll();
     }
 
     @Test
@@ -103,7 +111,8 @@ class StageMatchServiceTest {
         interpretation.setClassification("disconnected");
         interpretation.setReplacementMatchId("1e002016a1");
         interpretation.setExcluded(true);
-        when(interpretationRepository.findAll()).thenReturn(List.of(interpretation));
+        when(interpretationRepository.findRelevantToMatchIds(anyList(), any(Pattern.class)))
+                .thenReturn(List.of(interpretation));
 
         assertThat(service.getAllMatchesForStage(stageId))
                 .extracting(StageMatchView::sourceMatchKey)
@@ -132,6 +141,34 @@ class StageMatchServiceTest {
                 .extracting(StageMatchView::sourceMatchKey)
                 .containsExactly("second", "third");
     }
+
+            @Test
+            void keepsTheFirstOrderedSourceWhenSourcesContainTheSameMatch() {
+                String stageId = "nst:s1:duplicates";
+                StageSource first = competitionSource("source-a", stageId, "competition-a", GameType.BB3);
+                StageSource second = competitionSource("source-b", stageId, "competition-b", GameType.BB3);
+                givenStage(stageId, List.of(second, first));
+                when(matchRepository.findByCompetitionId(first.getSourceEntityId()))
+                        .thenReturn(List.of(match("same-match", "competition-a", 3, 1, 0, 1)));
+                when(matchRepository.findByCompetitionId(second.getSourceEntityId()))
+                        .thenReturn(List.of(match("same-match", "competition-b", 3, 0, 1, 2)));
+
+                List<StageMatchView> result = service.getMatchesForStage(stageId);
+
+                assertThat(result).singleElement()
+                        .extracting(StageMatchView::stageSourceId)
+                        .isEqualTo("source-a");
+            }
+
+        @Test
+        void returnsNoMatchesForAnEmptyValidSource() {
+                String stageId = "nst:s1:empty";
+                StageSource source = leagueSource("source-empty", stageId, "empty-league");
+                givenStage(stageId, List.of(source));
+                when(matchRepository.findByLeagueId(source.getSourceEntityId())).thenReturn(List.of());
+
+                assertThat(service.getMatchesForStage(stageId)).isEmpty();
+        }
 
     private void givenStage(String stageId, List<StageSource> sources) {
         Stage stage = new Stage();

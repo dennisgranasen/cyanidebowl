@@ -44,6 +44,18 @@ then make the stage work reachable, testable, and documented.
 | P2 | B-011 | Stale repository metadata/docs are cleaned up |
 | P3 | B-012 | Broad exception/null handling is improved incrementally |
 
+## Current status
+
+- B-007 is implemented and verified: the public stage-match API returns a DTO
+  with explicit 404/400 errors.
+- B-008 is implemented and verified: duplicate API methods, malformed URLs, and
+  obsolete commented code are removed.
+- B-009 and B-011 documentation and metadata are updated. B-010 remains deferred.
+- B-012 needs a product decision before changing `CyanideRestApiClient`:
+  callers currently treat `null` as both upstream unavailability and an internal
+  client failure. Decide whether scheduled collection should skip, retry, or fail
+  the job for each outcome before replacing that contract.
+
 ---
 
 ## P0 â€” Must fix before feature work

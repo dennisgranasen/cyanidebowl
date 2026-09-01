@@ -22,7 +22,11 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -53,7 +57,7 @@ public class StageMatchService {
     @Transactional(readOnly = true)
     public List<StageMatchView> getAllMatchesForStage(String stageId) {
         Stage stage = stageRepository.findById(stageId)
-                .orElseThrow(() -> new IllegalArgumentException("Stage not found: " + stageId));
+                    .orElseThrow(() -> new StageNotFoundException(stageId));
 
         List<StageSource> sources = stageSourceRepository.findByStageId(stage.getId()).stream()
                 .sorted(SOURCE_ORDER)
@@ -65,11 +69,12 @@ public class StageMatchService {
         Map<String, SourceMatch> uniqueMatches = new LinkedHashMap<>();
         for (StageSource source : sources) {
             for (Match match : resolveSourceMatches(source)) {
+                    // Sorted source order makes cross-source duplicates deterministic: first source wins.
                 uniqueMatches.putIfAbsent(identityKey(match), new SourceMatch(source, match));
             }
         }
 
-        List<MatchInterpretation> interpretations = matchInterpretationRepository.findAll();
+        List<MatchInterpretation> interpretations = findInterpretationsFor(uniqueMatches);
         return uniqueMatches.values().stream()
                 .map(sourceMatch -> adapt(stageId, sourceMatch, interpretations))
                 .sorted(Comparator
@@ -77,6 +82,22 @@ public class StageMatchService {
                         .thenComparing(StageMatchView::sourceMatchKey, Comparator.nullsLast(Comparator.naturalOrder())))
                 .toList();
     }
+
+                private List<MatchInterpretation> findInterpretationsFor(Map<String, SourceMatch> uniqueMatches) {
+                List<String> matchIds = uniqueMatches.values().stream()
+                    .flatMap(sourceMatch -> Stream.of(
+                        identityKey(sourceMatch.match()),
+                        AbstractMatchAdapter.matchKey(sourceMatch.match())))
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .toList();
+                String legacyIdSuffix = matchIds.stream()
+                    .map(Pattern::quote)
+                    .collect(Collectors.joining("|", ":(?:", ")$"));
+                return matchInterpretationRepository.findRelevantToMatchIds(
+                    matchIds,
+                    Pattern.compile(legacyIdSuffix));
+                }
 
     private List<Match> resolveSourceMatches(StageSource source) {
         validate(source);
@@ -102,6 +123,9 @@ public class StageMatchService {
         List<Match> matches = sourceMatches.stream().sorted(MATCH_ORDER).toList();
         int from = markerIndex(matches, source.getFirstId(), 0, source, "firstId");
         int to = markerIndex(matches, source.getLastId(), matches.size() - 1, source, "lastId") + 1;
+            if (matches.isEmpty()) {
+                return List.of();
+            }
         if (from > to) {
             throw new IllegalStateException("Invalid ID boundaries for StageSource " + source.getId());
         }

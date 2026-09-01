@@ -6,21 +6,6 @@ const { isProduction } = config;
 
 axios.defaults.baseURL = config.backendUrl;
 
-/*
-axios.interceptors.response.use(
-  response => response,
-  error => {
-    if (error.response && error.response.status === 404) {
-      // Suppress 404 errors from being logged in the console
-      return Promise.reject(error);
-    }
-    // Log other errors as usual
-    logger.error('Backend call failed.', error);
-    return Promise.reject(error);
-  }
-);
-*/
-
 const authorizationParams = {
   authorizationParams: {
     audience: config.auth0Audience,
@@ -89,44 +74,6 @@ const deleteDataWithAuthentication = async (endpoint, getAccessTokenSilently, ge
   const authHeaders = await getAuthHeaders(getAccessTokenSilently, getAccessTokenWithPopup);
   return axios.delete(endpoint, authHeaders);
 };
-
-/*
-    public List<IdWithName> lookupLeague(Optional<String> leagueName) {
-        if (leagueName.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        LookupRequest lookupRequest = new LookupRequest();
-        lookupRequest.setLeague_name(leagueName.get());
-        AuthenticatedHttpEntity<LookupRequest> authenticatedHttpEntity = new AuthenticatedHttpEntity<>(
-                Optional.of(lookupRequest));
-
-        RestTemplate restTemplate = new RestTemplate();
-        ParameterizedTypeReference<LookupResponse> lookupResponseRef = new ParameterizedTypeReference<>() {};
-
-        IdWithName[] leagues = null;
-        try {
-            ResponseEntity<LookupResponse> lookupResponse = restTemplate.exchange(
-                    String.format("%s/lookup", warpScoresProperties.getBaseUrls().getApiBackend()),
-                    HttpMethod.POST,
-                    authenticatedHttpEntity.create(), lookupResponseRef);
-            leagues = Optional.ofNullable(lookupResponse.getBody())
-                    .map(LookupResponse::getLeagues)
-                    .orElse(null);
-        }  catch (HttpClientErrorException e) {
-            if (404 == e.getStatusCode().value()) {
-                log.warn("Lookup for {} did return {}.", leagueName, e.getStatusCode());
-            } else {
-                log.error("Error {} while lookup.", e.getStatusCode());
-            }
-        }
-        if (leagues == null || leagues.length == 0) {
-            return Collections.emptyList();
-        } else {
-            return List.of(leagues);
-        }
-    }
-*/
 
 export default {
   // misc
@@ -338,15 +285,10 @@ export default {
   competitionStats: async (competitionId) =>
     axios(`/competitions/${competitionId.key || competitionId}/stats`).then(returnData).catch(handleError),
   
-  competitionMatches: async (competitionId, limit) =>
-    axios(`/matches/competition/${competitionId.key || competitionId}${limit ? `?limit=${limit}` : ''}`)
-      .then(returnData)
-      .catch(handleError),
-
   competitionTeam: async (competitionId, teamId) =>
     axios(`/competitions/${competitionId.key || competitionId}/team/${teamId.key || teamId}`).then(returnData).catch(handleError),
   competitionTeams: async (competitionId) =>
-    axios(`/teams/competition/${competitionId.key || competitionId} `)
+    axios(`/teams/competition/${competitionId.key || competitionId}`)
       .then(returnData)
       .catch(handleError),
   competitionRanks: async (competitionId, limit) =>

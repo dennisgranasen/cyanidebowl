@@ -8,9 +8,10 @@ Welcome to [cyanidebowl](https://bloodbowl.granasen.com), a Spike-like facade fo
 
 This is a Spike-like web page to show match results and data from BB3 obtained through Cyanide's API.
 
-### Build Status
+### Project Status
 
-[![dev](https://gitlab.com/warp-scores/warp-scores/badges/dev/pipeline.svg?key_text=dev&key_width=50)](https://gitlab.com/warp-scores/warp-scores/-/pipelines?page=1&scope=branches&ref=dev) [![main](https://gitlab.com/warp-scores/warp-scores/badges/main/pipeline.svg?key_text=main&key_width=50)](https://gitlab.com/warp-scores/warp-scores/-/pipelines?page=1&scope=branches&ref=main)
+GitHub is the authoritative repository. The warp-scores GitLab links in the
+roadmap are retained as upstream historical references.
 
 ### Roadmap
 
@@ -44,7 +45,7 @@ Set these variables in your .env file:
 FRONTEND_URI=http://localhost:8022
 BACKEND_URI=http://localhost:8080
 REACT_APP_BACKEND_URI=http://localhost:8080
-AUTH_URI="http://localhost:8080/"
+AUTH_URI="https://nst-scores.eu.auth0.com/"
 SPRING_PROFILES_ACTIVE="dev"
 SERVER_PORT=8080
 AUTH_AUDIENCE="nst-scores-backend"
@@ -54,15 +55,18 @@ Set these variables in your deployment system, e.g. using fly.toml:
 FRONTEND_URI=<Your frontend URI>
 BACKEND_URI=<Your backend URI>
 REACT_APP_BACKEND_URI=<Same as BACKEND_URI>
-AUTH_URI=<Your Auth0 Prodiver URI>
-SPRING_PROFILES_ACTIVE="production"
+AUTH_URI=<Your Auth0 provider URI>
+SPRING_PROFILES_ACTIVE="server"
 SERVER_PORT=8080
 AUTH_AUDIENCE="nst-scores-backend"
 
 ## Secrets
-The following secrets should be set, in production mode they should be set according to your host platform. For local development they can reside in your .env file, but don't share them with anyone.
-SPRING_DATA_MONGODB_URI=<Your MongoDb Connection String>
-CYANIDE_API_KEY=<Cyanide API Key>
+`AUTH_URI`, `AUTH_AUDIENCE`, Auth0 domain, and Auth0 client ID are public
+identifiers. `SPRING_DATA_MONGODB_URI`, `CYANIDE_API_KEY`, Auth0 tokens, and
+Discord tokens are secrets. On Fly, configure secret values only through secret
+names `SPRING_DATA_MONGODB_URI` and `CYANIDE_API_KEY`; never commit their values.
+The server `JwtDecoder` owns issuer, audience, and RS256 validation, while YAML
+configures the resource-server integration.
 
 VS Code offers all four backend debug combinations: local database or Atlas,
 each with Cyanide either disabled or enabled. The matching full-stack entries
@@ -87,6 +91,27 @@ To switch temporarily, open Run and Debug (`Ctrl+Shift+D`), select another
 backend or full-stack configuration, and press F5. Alternatively, run
 `Debug: Select and Start Debugging` from the Command Palette. VS Code remembers
 the latest selection, so select the `DEFAULT` entry again when finished.
+
+### Modules
+
+- `api`: shared models and identifiers.
+- `cyanide-api`: Cyanide transport models.
+- `backend`: Spring Boot API, persistence, schedulers, and archive providers.
+- `frontend`: React web application.
+- `discord-bot`: Discord publishing integration.
+
+### Stage Matches
+
+`GET /stages/{stageId}/matches` is a public read-only API. URL-encode reserved
+characters in the canonical `stageId`. It returns an API DTO, not persistence
+models; missing stages return 404 and invalid source configuration/boundaries
+return 400. Stage writes remain migration-only.
+
+Seed `leagueSystem`, `season`, `stage`, and `stageSource` documents. A source
+needs `id`, `stageId`, `sourceEntityId`, `sourceType`, `game`, and `platform`.
+Archive lookup is disabled by default; enable it only with
+`STAGE_MATCH_ARCHIVE_ENABLED=true` plus `STAGE_MATCH_ARCHIVE_DATABASE` and
+`STAGE_MATCH_ARCHIVE_COLLECTION`.
 
 ### Building
 To build the server for running locally, run the command:

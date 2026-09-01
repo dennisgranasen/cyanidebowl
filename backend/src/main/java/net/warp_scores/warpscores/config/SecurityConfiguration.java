@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.config;
 
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.GlobalErrorHandler;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,8 +20,11 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import java.util.List;
+import java.net.URI;
 
+import static org.springframework.http.HttpMethod.DELETE;
 import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpMethod.POST;
 
@@ -32,11 +36,19 @@ public class SecurityConfiguration {
 
     private final GlobalErrorHandler errorHandler;
 
-    @Value("${AUTH_URI:https://nst-scores.eu.auth0.com/}")
+    @Value("${AUTH_URI}")
     private String authUri;
 
-    @Value("${AUTH_AUDIENCE:bloodbowl-scores}")
+    @Value("${AUTH_AUDIENCE}")
     private String authAudience;
+
+    @PostConstruct
+    void validateAuthConfiguration() {
+        URI issuer = URI.create(authUri);
+        if (!"https".equals(issuer.getScheme()) || issuer.getHost() == null || authAudience.isBlank()) {
+            throw new IllegalStateException("Server profile requires HTTPS AUTH_URI and a non-empty AUTH_AUDIENCE");
+        }
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -47,8 +59,9 @@ public class SecurityConfiguration {
                         // user endpoint
                         .requestMatchers(GET, "/userPermissions").permitAll()
                         // endpoints needing authentication
-                        //.requestMatchers(POST, "/circuits/**").authenticated()
-                        //.requestMatchers(POST, "/contests/**").authenticated()
+                        .requestMatchers(POST, "/circuits/**").authenticated()
+                        .requestMatchers(DELETE, "/circuits/**").authenticated()
+                        .requestMatchers(POST, "/contests/**").authenticated()
                         .requestMatchers(POST, "/leagueCollection/**").authenticated()
                         .requestMatchers(POST, "/lookup").authenticated()
                         .requestMatchers(GET, "/competition/*/exportNafData").authenticated()
@@ -68,12 +81,15 @@ public class SecurityConfiguration {
                         .requestMatchers(GET, "/match/**").permitAll()
                         .requestMatchers(GET, "/matches/**").permitAll()
                         .requestMatchers(GET, "/ranks/**").permitAll()
+                            .requestMatchers(GET, "/stages/**").permitAll()
                         .requestMatchers(GET, "/team/**").permitAll()
                         .requestMatchers(GET, "/teams/**").permitAll()
                         .requestMatchers(GET, "/actuator/health", "/actuator/info").permitAll()
                         // rest
                         .anyRequest().denyAll()
                 )
+                    .csrf(csrf -> csrf.disable())
+                    .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .oauth2ResourceServer(oauth2ResourceServer -> oauth2ResourceServer
                         .authenticationEntryPoint(errorHandler::handleAuthenticationError)
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(makePermissionsConverter())));

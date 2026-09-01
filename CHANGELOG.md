@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Changed
+
+- Added the public, read-only stage-match API and stage seed documentation.
+- Hardened server HTTP/JWT security and stage-match aggregation.
+- Simplified frontend permission loading and normalized API request URLs.
+- Updated GitHub metadata and the `server` production-profile documentation.
+
 ### Description
 
 Initial release after various SNAPSHOT releases in early phase of project

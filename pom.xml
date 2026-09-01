@@ -27,9 +27,9 @@
         <argLine></argLine>
     </properties>
     <scm>
-        <developerConnection>scm:git:git@gitlab.com:warpscores/warp-scores.git</developerConnection>
-        <connection>scm:git:git@gitlab.com:warpscores/warp-scores.git</connection>
-        <url>https://gitlab.com/warp-scores/warp-scores/</url>
+           <developerConnection>scm:git:git@github.com:dennisgranasen/cyanidebowl.git</developerConnection>
+           <connection>scm:git:https://github.com/dennisgranasen/cyanidebowl.git</connection>
+           <url>https://github.com/dennisgranasen/cyanidebowl</url>
         <tag>HEAD</tag>
     </scm>
     <profiles>
