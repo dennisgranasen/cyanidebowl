@@ -2,28 +2,36 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug: Backend (local safe)",
+            "name": "DEFAULT: Backend [DB=local, Cyanide=OFF]",
             "type": "java",
             "request": "attach",
             "hostName": "localhost",
             "port": 5005,
-            "preLaunchTask": "debug: backend server (local safe)"
+            "preLaunchTask": "debug: backend [DB=local, Cyanide=OFF]"
         },
         {
-            "name": "Debug: Backend (Atlas safe)",
+            "name": "Backend [DB=local, Cyanide=ON]",
             "type": "java",
             "request": "attach",
             "hostName": "localhost",
             "port": 5005,
-            "preLaunchTask": "debug: backend server (Atlas safe)"
+            "preLaunchTask": "debug: backend [DB=local, Cyanide=ON]"
         },
         {
-            "name": "Debug: Backend (.env integration)",
+            "name": "Backend [DB=Atlas, Cyanide=OFF]",
             "type": "java",
             "request": "attach",
             "hostName": "localhost",
             "port": 5005,
-            "preLaunchTask": "debug: backend server (.env integration)"
+            "preLaunchTask": "debug: backend [DB=Atlas, Cyanide=OFF]"
+        },
+        {
+            "name": "Backend [DB=Atlas, Cyanide=ON]",
+            "type": "java",
+            "request": "attach",
+            "hostName": "localhost",
+            "port": 5005,
+            "preLaunchTask": "debug: backend [DB=Atlas, Cyanide=ON]"
         },
         {
             "name": "Debug: Frontend",
@@ -37,25 +45,33 @@
     ],
     "compounds": [
         {
-            "name": "Debug: Local Backend + Frontend",
+            "name": "Full stack [DB=local, Cyanide=OFF]",
             "configurations": [
-                "Debug: Backend (local safe)",
+                "DEFAULT: Backend [DB=local, Cyanide=OFF]",
                 "Debug: Frontend"
             ],
             "stopAll": true
         },
         {
-            "name": "Debug: Atlas Backend + Frontend",
+            "name": "Full stack [DB=local, Cyanide=ON]",
             "configurations": [
-                "Debug: Backend (Atlas safe)",
+                "Backend [DB=local, Cyanide=ON]",
                 "Debug: Frontend"
             ],
             "stopAll": true
         },
         {
-            "name": "Debug: Integration Backend + Frontend",
+            "name": "Full stack [DB=Atlas, Cyanide=OFF]",
             "configurations": [
-                "Debug: Backend (.env integration)",
+                "Backend [DB=Atlas, Cyanide=OFF]",
+                "Debug: Frontend"
+            ],
+            "stopAll": true
+        },
+        {
+            "name": "Full stack [DB=Atlas, Cyanide=ON]",
+            "configurations": [
+                "Backend [DB=Atlas, Cyanide=ON]",
                 "Debug: Frontend"
             ],
             "stopAll": true

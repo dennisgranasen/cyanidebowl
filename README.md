@@ -64,9 +64,25 @@ The following secrets should be set, in production mode they should be set accor
 SPRING_DATA_MONGODB_URI=<Your MongoDb Connection String>
 CYANIDE_API_KEY=<Cyanide API Key>
 
-VS Code offers separate debug configurations for a local database, Atlas with
-Cyanide disabled, and full `.env` integration. The Atlas configuration reads
-`SPRING_DATA_MONGODB_URI` from the untracked `.env` file.
+VS Code offers all four backend debug combinations: local database or Atlas,
+each with Cyanide either disabled or enabled. The matching full-stack entries
+also start the frontend. Atlas reads `SPRING_DATA_MONGODB_URI` from the
+untracked `.env` file, while Cyanide-enabled modes read `CYANIDE_API_KEY` from
+the same file. `DEFAULT: Backend [DB=local, Cyanide=OFF]` is listed first as
+the safe initial choice.
+
+| Database | Cyanide | VS Code launch configuration |
+| --- | --- | --- |
+| Local | OFF | `DEFAULT: Backend [DB=local, Cyanide=OFF]` |
+| Local | ON | `Backend [DB=local, Cyanide=ON]` |
+| Atlas | OFF | `Backend [DB=Atlas, Cyanide=OFF]` |
+| Atlas | ON | `Backend [DB=Atlas, Cyanide=ON]` |
+
+F5 starts the configuration currently selected in the Run and Debug dropdown.
+To switch temporarily, open Run and Debug (`Ctrl+Shift+D`), select another
+backend or full-stack configuration, and press F5. Alternatively, run
+`Debug: Select and Start Debugging` from the Command Palette. VS Code remembers
+the latest selection, so select the `DEFAULT` entry again when finished.
 
 ### Building
 To build the server for running locally, run the command:

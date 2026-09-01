@@ -27,7 +27,7 @@
             }
         },
         {
-            "label": "debug: backend server (local safe)",
+            "label": "debug: backend [DB=local, Cyanide=OFF]",
             "type": "shell",
             "command": "mvn",
             "args": [
@@ -67,7 +67,47 @@
             }
         },
         {
-            "label": "debug: backend server (Atlas safe)",
+            "label": "debug: backend [DB=local, Cyanide=ON]",
+            "type": "shell",
+            "command": "mvn",
+            "args": [
+                "spring-boot:run",
+                "-Pserver",
+                "-pl",
+                "backend",
+                "-Dspring-boot.run.profiles=dev",
+                "-Dspring-boot.run.arguments=--spring.config.import=file:.env[.properties] --spring.mongodb.uri=mongodb://localhost:27017/cyanidebowl",
+                "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "JAVA_HOME": "/usr/lib/jvm/java-25-openjdk-amd64"
+                }
+            },
+            "dependsOn": "build: backend dependencies",
+            "dependsOrder": "sequence",
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "java",
+                "pattern": {
+                    "regexp": "^(.*)$",
+                    "message": 1
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": ".*",
+                    "endsPattern": "Listening for transport dt_socket at address: 5005"
+                }
+            },
+            "presentation": {
+                "group": "debug",
+                "panel": "dedicated",
+                "reveal": "always"
+            }
+        },
+        {
+            "label": "debug: backend [DB=Atlas, Cyanide=OFF]",
             "type": "shell",
             "command": "mvn",
             "args": [
@@ -107,7 +147,7 @@
             }
         },
         {
-            "label": "debug: backend server (.env integration)",
+            "label": "debug: backend [DB=Atlas, Cyanide=ON]",
             "type": "shell",
             "command": "mvn",
             "args": [
@@ -116,7 +156,7 @@
                 "-pl",
                 "backend",
                 "-Dspring-boot.run.profiles=dev",
-                "-Dspring-boot.run.arguments=--spring.config.import=optional:file:.env[.properties]",
+                "-Dspring-boot.run.arguments=--spring.config.import=file:.env[.properties]",
                 "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
             ],
             "options": {
