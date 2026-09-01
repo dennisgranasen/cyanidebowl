@@ -9,6 +9,8 @@ import net.warp_scores.warpscores.domain.stage.AbstractMatchAdapter;
 import net.warp_scores.warpscores.domain.stage.ArchiveMatchProvider;
 import net.warp_scores.warpscores.domain.stage.MatchAdapterRegistry;
 import net.warp_scores.warpscores.domain.stage.StageMatchView;
+import net.warp_scores.warpscores.identity.CompositeIdentity;
+import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.model.EntityType;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.MatchInterpretation;
@@ -113,10 +115,18 @@ public class StageMatchService {
     private List<Match> consolidatedMatches(StageSource source) {
         return switch (source.getSourceType()) {
             case League -> matchRepository.findByLeagueId(source.getSourceEntityId());
-            case Competition -> matchRepository.findByCompetitionId(source.getSourceEntityId());
+            case Competition -> matchRepository.findByCompetitionId(storedCompetitionId(source.getSourceEntityId()));
             default -> throw new IllegalArgumentException(
                     "Unsupported StageSource type " + source.getSourceType() + " for " + source.getId());
         };
+    }
+
+    private Identity storedCompetitionId(Identity sourceEntityId) {
+        if (sourceEntityId instanceof CompositeIdentity compositeIdentity) {
+            String[] parts = compositeIdentity.getParts();
+            return compositeIdentity.asSimpleIdentity(parts.length - 1);
+        }
+        return sourceEntityId;
     }
 
     private List<Match> applyBoundaries(StageSource source, List<Match> sourceMatches) {

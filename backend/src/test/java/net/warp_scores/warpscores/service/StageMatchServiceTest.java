@@ -10,6 +10,8 @@ import net.warp_scores.warpscores.domain.stage.Bb2MatchAdapter;
 import net.warp_scores.warpscores.domain.stage.Bb3MatchAdapter;
 import net.warp_scores.warpscores.domain.stage.MatchAdapterRegistry;
 import net.warp_scores.warpscores.domain.stage.StageMatchView;
+import net.warp_scores.warpscores.identity.CompositeIdentity;
+import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.EntityType;
 import net.warp_scores.warpscores.model.GameType;
@@ -208,6 +210,16 @@ class StageMatchServiceTest {
             }
 
             @Test
+            void findsBb2MatchesForCompositeCompetitionSource() {
+                findsMatchesForCompositeCompetitionSource(GameType.BB2, 2);
+            }
+
+            @Test
+            void findsBb3MatchesForCompositeCompetitionSource() {
+                findsMatchesForCompositeCompetitionSource(GameType.BB3, 3);
+            }
+
+            @Test
             void returnsNoMatchesWhenStageHasNoSources() {
                 String stageId = "nst:s1:no-sources";
                 givenStage(stageId, List.of());
@@ -231,6 +243,22 @@ class StageMatchServiceTest {
         source.setGame(game);
         source.setPlatform(Platform.PC);
         return source;
+    }
+
+    private void findsMatchesForCompositeCompetitionSource(GameType game, int opus) {
+        String stageId = "nst:s1:" + game.name().toLowerCase();
+        StageSource source = competitionSource("source-" + game.name().toLowerCase(), stageId, "unused", game);
+        source.setSourceEntityId(new CompositeIdentity(opus, "league", "competition"));
+        Identity storedCompetitionId = new SimpleIdentity("competition", opus);
+        givenStage(stageId, List.of(source));
+        when(matchRepository.findByCompetitionId(storedCompetitionId))
+                .thenReturn(List.of(match(game.name().toLowerCase() + "-match", "competition", opus, 1, 0, 1)));
+
+        assertThat(service.getMatchesForStage(stageId)).singleElement()
+                .extracting(StageMatchView::sourceMatchKey)
+                .isEqualTo(game.name().toLowerCase() + "-match");
+        verify(matchRepository).findByCompetitionId(storedCompetitionId);
+        verify(matchRepository, never()).findByCompetitionId(source.getSourceEntityId());
     }
 
     private StageSource leagueSource(String id, String stageId, String leagueId) {
