@@ -64,6 +64,10 @@ The following secrets should be set, in production mode they should be set accor
 SPRING_DATA_MONGODB_URI=<Your MongoDb Connection String>
 CYANIDE_API_KEY=<Cyanide API Key>
 
+VS Code offers separate debug configurations for a local database, Atlas with
+Cyanide disabled, and full `.env` integration. The Atlas configuration reads
+`SPRING_DATA_MONGODB_URI` from the untracked `.env` file.
+
 ### Building
 To build the server for running locally, run the command:
 mvn clean package -P server -DskipDocker -DskipTest -pl api,cyanide-api,backend -am

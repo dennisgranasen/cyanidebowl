@@ -10,6 +10,14 @@
             "preLaunchTask": "debug: backend server (local safe)"
         },
         {
+            "name": "Debug: Backend (Atlas safe)",
+            "type": "java",
+            "request": "attach",
+            "hostName": "localhost",
+            "port": 5005,
+            "preLaunchTask": "debug: backend server (Atlas safe)"
+        },
+        {
             "name": "Debug: Backend (.env integration)",
             "type": "java",
             "request": "attach",
@@ -32,6 +40,14 @@
             "name": "Debug: Local Backend + Frontend",
             "configurations": [
                 "Debug: Backend (local safe)",
+                "Debug: Frontend"
+            ],
+            "stopAll": true
+        },
+        {
+            "name": "Debug: Atlas Backend + Frontend",
+            "configurations": [
+                "Debug: Backend (Atlas safe)",
                 "Debug: Frontend"
             ],
             "stopAll": true

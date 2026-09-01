@@ -67,6 +67,46 @@
             }
         },
         {
+            "label": "debug: backend server (Atlas safe)",
+            "type": "shell",
+            "command": "mvn",
+            "args": [
+                "spring-boot:run",
+                "-Pserver",
+                "-pl",
+                "backend",
+                "-Dspring-boot.run.profiles=dev",
+                "-Dspring-boot.run.arguments=--spring.config.import=file:.env[.properties] --cyanide.api-config.key= --cyanide.fetch-active=false --cyanide.job-creation-scheduler-active=false --cyanide.job-execution-scheduler-active=false --scheduler.enabled=false",
+                "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "JAVA_HOME": "/usr/lib/jvm/java-25-openjdk-amd64"
+                }
+            },
+            "dependsOn": "build: backend dependencies",
+            "dependsOrder": "sequence",
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "java",
+                "pattern": {
+                    "regexp": "^(.*)$",
+                    "message": 1
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": ".*",
+                    "endsPattern": "Listening for transport dt_socket at address: 5005"
+                }
+            },
+            "presentation": {
+                "group": "debug",
+                "panel": "dedicated",
+                "reveal": "always"
+            }
+        },
+        {
             "label": "debug: backend server (.env integration)",
             "type": "shell",
             "command": "mvn",
