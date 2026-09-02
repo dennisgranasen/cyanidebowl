@@ -105,8 +105,8 @@ export default {
       axios('/league-systems')
         .then(returnData)
         .catch(handleError),
-      leagueSystemOverview: async (leagueSystemId) =>
-        axios(`/league-systems/${encodeURIComponent(leagueSystemId)}/overview`)
+      leagueSystemOverview: async (leagueSystemId, seasonId) =>
+        axios(`/league-systems/${encodeURIComponent(leagueSystemId)}/overview${seasonId ? `?seasonId=${encodeURIComponent(seasonId)}` : ''}`)
           .then(returnData)
           .catch(handleError),
 

@@ -17,6 +17,7 @@ function WarpScores() {
   const [circuits, setCircuits] = useState([]);
   const { authenticationReady, userPermissions } = useAuth0WithUserPermissions();
   const [leagueSystems, setLeagueSystems] = useState([]);
+  const [selectedLeagueSystem, setSelectedLeagueSystem] = useState(null);
   const [leagues, setLeagues] = useState([]);
   const [competitionCountsByStatus, setCompetitionCountsByStatus] = useState({});
   const [loading, setLoading] = useState(false);
@@ -48,13 +49,26 @@ function WarpScores() {
     setLoading(true);
     try {
       const systems = await WarpScoresApiService.publicLeagueSystems();
-        if (systems.length === 0) {
-          setLeagueSystems([]);
+      setLeagueSystems(systems);
+      if (systems.length === 0) {
+        setSelectedLeagueSystem(null);
         await fetchLeagues();
-        } else {
-          const overviews = await Promise.all(systems.map((system) => WarpScoresApiService.leagueSystemOverview(system.id)));
-          setLeagueSystems(overviews);
+      } else {
+        const initial = systems.find((system) => system.primary) || systems[0];
+        setSelectedLeagueSystem(await WarpScoresApiService.leagueSystemOverview(initial.id));
       }
+    } catch (reason) {
+      setError({ type: 'error', message: reason.toLocaleString() });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const selectLeagueSystem = async (leagueSystemId, seasonId) => {
+    setLoading(true);
+    setError(undefined);
+    try {
+      setSelectedLeagueSystem(await WarpScoresApiService.leagueSystemOverview(leagueSystemId, seasonId));
     } catch (reason) {
       setError({ type: 'error', message: reason.toLocaleString() });
     } finally {
@@ -90,7 +104,7 @@ function WarpScores() {
             {showCircuits ? (
               circuits.map((currCircuit) => <CircuitCard mb={2} circuit={currCircuit} key={currCircuit.id} />)
             ) : leagueSystems.length > 0 ? (
-              <LeagueSystems leagueSystems={leagueSystems} />
+              <LeagueSystems summaries={leagueSystems} leagueSystem={selectedLeagueSystem} onSelectSystem={selectLeagueSystem} onSelectSeason={(seasonId) => selectLeagueSystem(selectedLeagueSystem.id, seasonId)} />
             ) : (
               <Leagues leagues={leagues} competitionCountByStatusPerLeague={competitionCountsByStatus} />
             )}

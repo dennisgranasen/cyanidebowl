@@ -22,7 +22,7 @@ public record LeagueSystemOverview(
     }
 
     public record Stage(String id, String phaseId, String name, String type, String format,
-                        Integer step, Integer displayOrder) {
+                        Integer step, Integer displayOrder, List<StageMatchResponse> matches) {
     }
 
     public record RecentMatch(String seasonId, String phaseId, String phaseName,

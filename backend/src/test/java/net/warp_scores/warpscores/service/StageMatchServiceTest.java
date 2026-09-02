@@ -163,6 +163,24 @@ class StageMatchServiceTest {
                         .isEqualTo("source-a");
             }
 
+            @Test
+            void deduplicatesDifferentDatabaseDocumentsWithTheSameCyanideMatchId() {
+                String stageId = "nst:s27:playoff";
+                StageSource source = competitionSource("source", stageId, "competition", GameType.BB3);
+                Match first = match("database-a", "competition", 3, 1, 2, 1);
+                Match duplicate = match("database-b", "competition", 3, 1, 2, 1);
+                first.setMatchId("cyanide-match");
+                duplicate.setMatchId("cyanide-match");
+                givenStage(stageId, List.of(source));
+                when(matchRepository.findByCompetitionId(source.getSourceEntityId()))
+                        .thenReturn(List.of(first, duplicate));
+
+                assertThat(service.getMatchesForStage(stageId))
+                        .singleElement()
+                        .extracting(StageMatchView::sourceMatchKey)
+                        .isEqualTo("cyanide-match");
+            }
+
         @Test
         void returnsNoMatchesForAnEmptyValidSource() {
                 String stageId = "nst:s1:empty";

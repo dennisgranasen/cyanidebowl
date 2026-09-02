@@ -53,6 +53,7 @@ public class LeagueSystemController {
     @PostMapping("/admin/league-systems")
     public ResponseEntity<LeagueSystem> createLeagueSystem(@RequestBody LeagueSystem leagueSystem) {
         leagueSystem.setId(UUID.randomUUID().toString());
+        clearOtherPrimaryLeagueSystems(leagueSystem);
         return ResponseEntity.status(201).body(leagueSystems.save(leagueSystem));
     }
 
@@ -77,7 +78,17 @@ public class LeagueSystemController {
             return ResponseEntity.notFound().build();
         }
         leagueSystem.setId(leagueSystemId);
+        clearOtherPrimaryLeagueSystems(leagueSystem);
         return ResponseEntity.ok(leagueSystems.save(leagueSystem));
+    }
+
+    private void clearOtherPrimaryLeagueSystems(LeagueSystem selected) {
+        if (!Boolean.TRUE.equals(selected.getPrimary())) return;
+        List<LeagueSystem> changed = leagueSystems.findAll().stream()
+                .filter(system -> !system.getId().equals(selected.getId()) && Boolean.TRUE.equals(system.getPrimary()))
+                .peek(system -> system.setPrimary(false))
+                .toList();
+        if (!changed.isEmpty()) leagueSystems.saveAll(changed);
     }
 
     @DeleteMapping("/admin/league-systems/{leagueSystemId}")

@@ -216,14 +216,14 @@ public class StageMatchService {
     }
 
     private String identityKey(Match match) {
+        String matchKey = AbstractMatchAdapter.matchKey(match);
+        if (matchKey != null) {
+            return matchKey;
+        }
         if (match.getId() != null) {
             return match.getId().asMongoKey();
         }
-        String matchKey = AbstractMatchAdapter.matchKey(match);
-        if (matchKey == null) {
-            throw new IllegalArgumentException("Match has neither id nor matchId");
-        }
-        return matchKey;
+        throw new IllegalArgumentException("Match has neither id nor matchId");
     }
 
     private record SourceMatch(StageSource source, Match match) {
