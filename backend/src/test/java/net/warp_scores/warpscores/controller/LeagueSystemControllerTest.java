@@ -5,6 +5,8 @@ import net.warp_scores.warpscores.domain.persistence.DataCollectionRepository;
 import net.warp_scores.warpscores.domain.persistence.SeasonRepository;
 import net.warp_scores.warpscores.domain.persistence.StageRepository;
 import net.warp_scores.warpscores.domain.persistence.StageSourceRepository;
+import net.warp_scores.warpscores.domain.persistence.PhaseRepository;
+import net.warp_scores.warpscores.domain.persistence.RegisteredSourceRepository;
 import net.warp_scores.warpscores.model.LeagueSystem;
 import net.warp_scores.warpscores.model.Season;
 import net.warp_scores.warpscores.model.Stage;
@@ -29,9 +31,11 @@ class LeagueSystemControllerTest {
     private final StageRepository stages = mock(StageRepository.class);
     private final StageSourceRepository stageSources = mock(StageSourceRepository.class);
     private final DataCollectionRepository dataCollections = mock(DataCollectionRepository.class);
+    private final PhaseRepository phases = mock(PhaseRepository.class);
+    private final RegisteredSourceRepository registeredSources = mock(RegisteredSourceRepository.class);
     private final LeagueSystemDiscoveryService discoveryService = mock(LeagueSystemDiscoveryService.class);
     private final LeagueSystemController controller = new LeagueSystemController(
-            leagueSystems, seasons, stages, stageSources, dataCollections, discoveryService);
+            leagueSystems, seasons, stages, stageSources, dataCollections, phases, registeredSources, discoveryService);
 
     @Test
     void createsChildrenUsingTheirResolvedParentIds() {

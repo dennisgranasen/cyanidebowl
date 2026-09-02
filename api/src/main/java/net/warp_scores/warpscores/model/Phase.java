@@ -9,19 +9,12 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Getter
 @Setter
 @NoArgsConstructor
-@Document(collection = "stage")
-public class Stage {
-    @Id
-    private String id;
+@Document(collection = "phase")
+public class Phase {
+    @Id private String id;
     private String seasonId;
     private String leagueSystemId;
-    private String phaseId;
-    private StageType type = StageType.OTHER;
-    private Integer step;
-    private Integer displayOrder;
-    /** Legacy free-text phase, retained while existing documents are migrated. */
-    private String phase;
     private String name;
-    private String format;
+    private PhaseType type = PhaseType.OTHER;
     private Integer sequence;
 }

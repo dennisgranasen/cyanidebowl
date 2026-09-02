@@ -102,6 +102,18 @@ the latest selection, so select the `DEFAULT` entry again when finished.
 
 ### Stage Matches
 
+The competition structure is `LeagueSystem -> Season -> Phase -> Stage`.
+Phases describe broad parts of a season (off-season, preseason, friendlies,
+qualification, group stage, playoffs, or other). Stages describe groups or rounds
+inside a phase. Stages with the same `step` are parallel; `displayOrder` controls
+their presentation order.
+
+Cyanide entities are registered once per season as `RegisteredSource` documents.
+Registration enables normal data collection. A stage uses one or more match
+selections (`StageSource` documents with `registeredSourceId`) so the same watched
+competition can be split across several phases or stages without duplicate watches.
+Legacy inline `StageSource` documents remain readable during migration.
+
 `GET /stages/{stageId}/matches` is a public read-only API. URL-encode reserved
 characters in the canonical `stageId`. It returns an API DTO, not persistence
 models; missing stages return 404 and invalid source configuration/boundaries

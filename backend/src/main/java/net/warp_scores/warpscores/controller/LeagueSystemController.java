@@ -6,6 +6,8 @@ import net.warp_scores.warpscores.domain.persistence.DataCollectionRepository;
 import net.warp_scores.warpscores.domain.persistence.SeasonRepository;
 import net.warp_scores.warpscores.domain.persistence.StageRepository;
 import net.warp_scores.warpscores.domain.persistence.StageSourceRepository;
+import net.warp_scores.warpscores.domain.persistence.PhaseRepository;
+import net.warp_scores.warpscores.domain.persistence.RegisteredSourceRepository;
 import net.warp_scores.warpscores.identity.IdentityUtil;
 import net.warp_scores.warpscores.model.LeagueSystem;
 import net.warp_scores.warpscores.model.DataCollection;
@@ -39,6 +41,8 @@ public class LeagueSystemController {
     private final StageRepository stages;
     private final StageSourceRepository stageSources;
     private final DataCollectionRepository dataCollections;
+    private final PhaseRepository phases;
+    private final RegisteredSourceRepository registeredSources;
     private final LeagueSystemDiscoveryService discoveryService;
 
     @GetMapping("/admin/league-systems")
@@ -243,6 +247,8 @@ public class LeagueSystemController {
             deleteStageDescendants(stage.getId());
         }
         stages.deleteAll(seasonStages);
+        phases.deleteAll(phases.findBySeasonIdOrderBySequenceAsc(seasonId));
+        registeredSources.deleteAll(registeredSources.findBySeasonId(seasonId));
         seasons.deleteById(seasonId);
     }
 

@@ -13,13 +13,19 @@ public record LeagueSystemOverview(
             Integer number,
             String name,
             Integer sequence,
+            List<Phase> phases,
             List<Stage> stages,
             List<RecentMatch> recentMatches) {
     }
 
-    public record Stage(String id, String phase, String name, String format) {
+    public record Phase(String id, String name, String type, Integer sequence, List<Stage> stages) {
     }
 
-    public record RecentMatch(String seasonId, String stageId, String stageName, StageMatchResponse match) {
+    public record Stage(String id, String phaseId, String name, String type, String format,
+                        Integer step, Integer displayOrder) {
+    }
+
+    public record RecentMatch(String seasonId, String phaseId, String phaseName,
+                              String stageId, String stageName, StageMatchResponse match) {
     }
 }

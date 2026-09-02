@@ -42,6 +42,8 @@ describe('WarpScoresApiService', () => {
       await WarpScoresApiService.updateStageSource('source/1', source, jest.fn(), jest.fn());
       await WarpScoresApiService.leagueSystemDiscoveryCandidates('nst/system', jest.fn(), jest.fn());
       await WarpScoresApiService.stageMatches('nst:s1/stage');
+      await WarpScoresApiService.registerSource('season/31', source, jest.fn(), jest.fn());
+      await WarpScoresApiService.createMatchSelection('stage/east', { registeredSourceId: 'source-1' }, jest.fn(), jest.fn());
 
       expect(axios.post).toHaveBeenCalledWith(
         '/admin/stages/nst%3As1%2Fstage/sources',
@@ -58,5 +60,13 @@ describe('WarpScoresApiService', () => {
         { headers: { Authorization: 'Bearer dev-token' } },
       );
       expect(axios).toHaveBeenCalledWith('/stages/nst%3As1%2Fstage/matches');
+      expect(axios.post).toHaveBeenCalledWith(
+        '/admin/seasons/season%2F31/registered-sources', source,
+        { headers: { Authorization: 'Bearer dev-token' } },
+      );
+      expect(axios.post).toHaveBeenCalledWith(
+        '/admin/stages/stage%2Feast/match-selections', { registeredSourceId: 'source-1' },
+        { headers: { Authorization: 'Bearer dev-token' } },
+      );
     });
 });

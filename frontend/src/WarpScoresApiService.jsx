@@ -146,6 +146,26 @@ export default {
     deleteDataWithAuthentication(`/admin/seasons/${encodeURIComponent(id)}`, getAccessTokenSilently, getAccessTokenWithPopup)
       .then(returnData)
       .catch(handleError),
+  phases: async (seasonId, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    getDataWithAuthentication(`/admin/seasons/${encodeURIComponent(seasonId)}/phases`, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  createPhase: async (seasonId, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication(`/admin/seasons/${encodeURIComponent(seasonId)}/phases`, data, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  updatePhase: async (id, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    putDataWithAuthentication(`/admin/phases/${encodeURIComponent(id)}`, data, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  deletePhase: async (id, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    deleteDataWithAuthentication(`/admin/phases/${encodeURIComponent(id)}`, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  phaseStages: async (phaseId, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    getDataWithAuthentication(`/admin/phases/${encodeURIComponent(phaseId)}/stages`, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  createPhaseStage: async (phaseId, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication(`/admin/phases/${encodeURIComponent(phaseId)}/stages`, data, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  registeredSources: async (seasonId, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    getDataWithAuthentication(`/admin/seasons/${encodeURIComponent(seasonId)}/registered-sources`, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  registerSource: async (seasonId, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication(`/admin/seasons/${encodeURIComponent(seasonId)}/registered-sources`, data, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  createMatchSelection: async (stageId, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication(`/admin/stages/${encodeURIComponent(stageId)}/match-selections`, data, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  updateMatchSelection: async (id, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    putDataWithAuthentication(`/admin/match-selections/${encodeURIComponent(id)}`, data, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   stages: async (seasonId, getAccessTokenSilently, getAccessTokenWithPopup) =>
     getDataWithAuthentication(`/admin/seasons/${encodeURIComponent(seasonId)}/stages`, getAccessTokenSilently, getAccessTokenWithPopup)
       .then(returnData)

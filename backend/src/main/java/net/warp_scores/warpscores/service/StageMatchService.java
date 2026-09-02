@@ -109,7 +109,21 @@ public class StageMatchService {
                 .filter(provider -> provider.supports(source))
                 .flatMap(provider -> provider.findMatches(source).stream())
                 .forEach(match -> matches.putIfAbsent(identityKey(match), match));
-        return applyBoundaries(source, new ArrayList<>(matches.values()));
+        List<Match> allMatches = new ArrayList<>(matches.values());
+        return applyExplicitSelection(source, allMatches, applyBoundaries(source, allMatches));
+    }
+
+    private List<Match> applyExplicitSelection(StageSource source, List<Match> allMatches, List<Match> selected) {
+        Map<String, Match> result = new LinkedHashMap<>();
+        selected.forEach(match -> result.put(identityKey(match), match));
+        List<String> included = Optional.ofNullable(source.getIncludedMatchIds()).orElse(List.of());
+        allMatches.stream().filter(match -> included.contains(identityKey(match))
+                || included.contains(AbstractMatchAdapter.matchKey(match)))
+                .forEach(match -> result.put(identityKey(match), match));
+        List<String> excluded = Optional.ofNullable(source.getExcludedMatchIds()).orElse(List.of());
+        result.values().removeIf(match -> excluded.contains(identityKey(match))
+                || excluded.contains(AbstractMatchAdapter.matchKey(match)));
+        return result.values().stream().sorted(MATCH_ORDER).toList();
     }
 
     private List<Match> consolidatedMatches(StageSource source) {
