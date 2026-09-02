@@ -1,7 +1,7 @@
 import React from 'react';
 import { HamburgerIcon } from '@chakra-ui/icons';
 import { SingleEliminationBracket } from 'react-tournament-brackets/dist/cjs';
-import { Badge, Box, Heading, HStack, IconButton, Menu, MenuButton, MenuItem, MenuList, SimpleGrid, Tab, TabList, TabPanel, TabPanels, Tabs, Text, VStack } from '@chakra-ui/react';
+import { Badge, Box, Heading, HStack, IconButton, Menu, MenuButton, MenuItem, MenuList, SimpleGrid, Text, VStack } from '@chakra-ui/react';
 import { MatchComponent } from '../competition/KnockoutCompetition';
 import Standings from '../common/Standings';
 
@@ -187,39 +187,22 @@ function RichMatchCard({ match }) {
   return <Box borderWidth="1px" borderRadius="md" p={2}><MatchComponent match={{ id: match.sourceMatchKey, state: match.finishedAt ? 'DONE' : null, startTime: match.finishedAt || match.startedAt }} topParty={parties[0]} bottomParty={parties[1]} topWon={parties[0].teamName === winner} bottomWon={parties[1].teamName === winner} topHovered={false} bottomHovered={false} connectorColor="gray.500" topText={match.finishedAt || match.startedAt} onMouseEnter={() => {}} onMouseLeave={() => {}} onMatchClick={() => {}} /></Box>;
 }
 
-const roundOrder = (round) => {
-  const numeric = Number(round);
-  return Number.isFinite(numeric) ? numeric : Number.MAX_SAFE_INTEGER;
-};
-
-function StageRoundMatches({ stage }) {
-  const grouped = new Map();
-  (stage.matches || []).forEach((match) => {
-    const round = match.round == null || match.round === '' ? 'Unassigned' : String(match.round);
-    if (!grouped.has(round)) grouped.set(round, []);
-    grouped.get(round).push(match);
-  });
-  const rounds = [...grouped.entries()].sort(([first], [second]) => roundOrder(first) - roundOrder(second) || first.localeCompare(second));
-  let initialIndex = 0;
-  rounds.forEach(([, matches], index) => { if (matches.some((match) => match.finishedAt)) initialIndex = index; });
-  if (!rounds.length) return <Text color="gray.500">No matches yet</Text>;
-  return <Box mt={5}><Heading size="sm" mb={2}>Matches by round</Heading><Tabs defaultIndex={initialIndex} isLazy><TabList overflowX="auto">{rounds.map(([round]) => <Tab key={round} flexShrink={0}>{round === 'Unassigned' ? round : `Round ${round}`}</Tab>)}</TabList><TabPanels>{rounds.map(([round, matches]) => <TabPanel key={round} px={0}><SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing={3}>{[...matches].sort((a, b) => matchTime(a) - matchTime(b)).map((match) => <RichMatchCard key={match.sourceMatchKey} match={match} />)}</SimpleGrid></TabPanel>)}</TabPanels></Tabs></Box>;
+function LatestResults({ season }) {
+  return <><Heading size="sm" mb={2}>Latest results</Heading><SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing={3}>{(season?.recentMatches || []).map((recent) => <Box key={`${recent.stageId}-${recent.match.sourceMatchKey}`}><Text color="gray.500" fontSize="xs" mb={1}>{[recent.phaseName, recent.stageName].filter(Boolean).join(' · ')}</Text><RichMatchCard match={recent.match} /></Box>)}</SimpleGrid>{!season?.recentMatches?.length && <Text color="gray.500">No results yet</Text>}</>;
 }
 
 function LeagueSystems({ summaries, leagueSystem, onSelectSystem, onSelectSeason }) {
   const seasons = orderedSeasons(leagueSystem);
   const selectedSeason = seasons.find((season) => (season.phases || []).some((phase) => (phase.stages || []).some((stage) => stage.matches?.length))) || seasons[0];
   const phasesWithMatches = (selectedSeason?.phases || []).filter((phase) => (phase.stages || []).some((stage) => stage.matches?.length));
-  const playoffPhase = [...phasesWithMatches].filter((phase) => phase.type === 'PLAYOFFS').sort((a, b) => (b.sequence ?? 0) - (a.sequence ?? 0))[0];
-  const groupStages = (selectedSeason?.phases || []).filter((phase) => phase.type === 'GROUP_STAGE')
-    .flatMap((phase) => phase.stages || []).filter((stage) => stage.type === 'GROUP' || stage.matches?.length);
+  const activePhase = [...phasesWithMatches].sort((a, b) => (b.sequence ?? 0) - (a.sequence ?? 0))[0] || selectedSeason?.phases?.[0];
   const primary = summaries.find((item) => item.id === leagueSystem?.id)?.primary;
+  const isPlayoffs = activePhase?.type === 'PLAYOFFS';
   return <VStack align="stretch" spacing={4} w="full">
     <HStack justify="space-between"><HStack><Heading size="md">{leagueSystem?.name || 'League system'}</Heading>{primary && <Badge colorScheme="blue">Primary</Badge>}</HStack><Menu><MenuButton as={IconButton} icon={<HamburgerIcon />} aria-label="Select league system" variant="outline" /><MenuList>{summaries.map((item) => <MenuItem key={item.id} onClick={() => onSelectSystem(item.id)}>{item.primary ? '★ ' : ''}{item.name || item.id}</MenuItem>)}</MenuList></Menu></HStack>
     {selectedSeason && <HStack justify="space-between"><Heading size="sm">{selectedSeason.name || `Season ${selectedSeason.number}`}</Heading><Menu><MenuButton as={IconButton} icon={<HamburgerIcon />} aria-label="Select season" size="sm" variant="ghost" /><MenuList>{seasons.map((season) => <MenuItem key={season.id} onClick={() => onSelectSeason(season.id)}>{season.name || `Season ${season.number}`}</MenuItem>)}</MenuList></Menu></HStack>}
-    {playoffPhase && <Box borderWidth={0} p={1} w="calc(100vw - 1rem)" maxW="none" alignSelf="flex-start"><Heading size="md" mb={4}>{playoffPhase.name}</Heading><PlayoffBracket phase={playoffPhase} /></Box>}
-    {groupStages.map((stage) => <Box key={stage.id} borderWidth="1px" borderRadius="md" p={4}><GroupTable stage={stage} /><StageRoundMatches stage={stage} /></Box>)}
-    {!playoffPhase && groupStages.length === 0 && <Text color="gray.500">No group stage or playoff matches yet</Text>}
+    {activePhase && <Box borderWidth={isPlayoffs ? 0 : '1px'} borderRadius="md" p={isPlayoffs ? 1 : 4} w={isPlayoffs ? 'calc(100vw - 1rem)' : 'full'} maxW="none" alignSelf="flex-start"><Heading size="md" mb={4}>{activePhase.name}</Heading>{isPlayoffs ? <PlayoffBracket phase={activePhase} /> : <SimpleGrid columns={{ base: 1, xl: Math.min(2, activePhase.stages?.length || 1) }} spacing={6}>{(activePhase.stages || []).map((stage) => <GroupTable key={stage.id} stage={stage} />)}</SimpleGrid>}</Box>}
+    <LatestResults season={selectedSeason} />
   </VStack>;
 }
 

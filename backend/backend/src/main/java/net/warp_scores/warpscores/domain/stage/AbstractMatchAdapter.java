@@ -45,7 +45,6 @@ public abstract class AbstractMatchAdapter implements MatchAdapter {
                 match.getStarted(),
                 match.getFinished(),
                 status(match),
-                match.getRound(),
                 match.getTeams(),
                 match.getCoaches(),
                 sourceScore,

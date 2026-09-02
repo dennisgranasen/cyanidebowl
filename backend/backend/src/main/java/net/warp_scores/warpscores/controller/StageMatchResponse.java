@@ -17,7 +17,6 @@ public record StageMatchResponse(
         Date startedAt,
         Date finishedAt,
         String status,
-        String round,
             List<TeamResult> teams,
         Score sourceScore,
         Score officialScore,
@@ -38,7 +37,6 @@ public record StageMatchResponse(
                 match.startedAt(),
                 match.finishedAt(),
                 match.status(),
-                match.round(),
                     IntStream.range(0, match.teams() == null ? 0 : match.teams().length)
                         .mapToObj(index -> {
                             Team team = match.teams()[index];
