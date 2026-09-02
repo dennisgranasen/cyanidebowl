@@ -129,6 +129,11 @@ read-only: it suggests a season, game, platform, and source, but an administrato
 must explicitly save the season, stage, and source. Both Arabic and Roman season
 numbers are recognized.
 
+The same page can search Cyanide leagues by name or ID. Search only loads the
+league and competition metadata returned by the lookup flow; it does not fetch
+matches, contests, teams, or ranks. A returned competition can be prepared for the
+selected LeagueSystem, but collection starts only after its `StageSource` is saved.
+
 Optional discovery email is disabled by default. Enable it globally with
 `LEAGUE_SYSTEM_DISCOVERY_NOTIFICATIONS_ENABLED=true`, configure Spring Mail with
 the `SPRING_MAIL_*` environment variables, and enable email plus a recipient on

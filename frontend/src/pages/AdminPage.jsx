@@ -37,6 +37,9 @@ function AdminPage() {
   const [selectedStageId, setSelectedStageId] = useState(null);
   const [selectedSourceId, setSelectedSourceId] = useState(null);
   const [discoveryCandidates, setDiscoveryCandidates] = useState([]);
+  const [cyanideSearch, setCyanideSearch] = useState({ term: '', opus: '3', exact: true });
+  const [cyanideSearchResults, setCyanideSearchResults] = useState({ leagueDetails: [], competitionDetails: [] });
+  const [cyanideSearchLoading, setCyanideSearchLoading] = useState(false);
   const [preparedCandidate, setPreparedCandidate] = useState(null);
   const [sourceMatches, setSourceMatches] = useState([]);
   const [sourceMatchesLoading, setSourceMatchesLoading] = useState(false);
@@ -75,6 +78,52 @@ function AdminPage() {
   const saveStage = () => { if (!selectedSeasonId) return; const data = { ...stage, sequence: numberOrNull(stage.sequence) }; (selectedStageId ? WarpScoresApiService.updateStage(selectedStageId, data, ...auth) : WarpScoresApiService.createStage(selectedSeasonId, data, ...auth)).then((item) => { WarpScoresApiService.stages(selectedSeasonId, ...auth).then(setStages); selectStage(item); }).catch(fail); };
   const saveSource = () => { if (!selectedStageId) return; const data = { ...source, firstIndex: numberOrNull(source.firstIndex), lastIndex: numberOrNull(source.lastIndex) }; (selectedSourceId ? WarpScoresApiService.updateStageSource(selectedSourceId, data, ...auth) : WarpScoresApiService.createStageSource(selectedStageId, data, ...auth)).then((item) => { WarpScoresApiService.stageSources(selectedStageId, ...auth).then(setSources); selectSource(item); setPreparedCandidate(null); }).catch(fail); };
   const scanForCandidates = () => WarpScoresApiService.leagueSystemDiscoveryCandidates(selectedSystemId, ...auth).then(setDiscoveryCandidates).catch(fail);
+  const suggestedSeason = (...names) => {
+    for (const name of names) {
+      const matches = String(name || '').match(/(?:^|\D)(\d{1,3})(?!\d)/g);
+      if (matches?.length) {
+        const number = Number(matches[matches.length - 1].match(/\d+/)[0]);
+        if (Number.isInteger(number)) return number;
+      }
+    }
+    return null;
+  };
+  const candidateFromCompetition = (competition) => ({
+    candidateId: `Competition:${competition.id?.key}`,
+    sourceEntityId: competition.id?.key,
+    sourceType: 'Competition',
+    leagueName: competition.leagueName,
+    competitionName: competition.name,
+    suggestedSeasonNumber: suggestedSeason(competition.name, competition.leagueName),
+    game: `BB${competition.id?.opus || Number(cyanideSearch.opus)}`,
+    platform: emptySource.platform,
+  });
+  const searchCyanide = async () => {
+    if (!cyanideSearch.term.trim()) return;
+    setCyanideSearchLoading(true);
+    setError(null);
+    try {
+      const term = cyanideSearch.term.trim();
+      const isId = /^\d+$/.test(term) || /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(term);
+      const result = await WarpScoresApiService.lookup({
+        ...(isId ? { league_id: term } : { league_name: term }),
+        opus: Number(cyanideSearch.opus),
+        exact: cyanideSearch.exact ? 1 : 0,
+        instruction: 'HAS_CONTESTS',
+        fallback: 0,
+        includeDetails: true,
+      }, ...auth);
+      setCyanideSearchResults({
+        leagueDetails: result?.leagueDetails || result?.fullLeagues || [],
+        competitionDetails: result?.competitionDetails || result?.fullCompetitions || [],
+      });
+    } catch (reason) {
+      fail(reason);
+      setCyanideSearchResults({ leagueDetails: [], competitionDetails: [] });
+    } finally {
+      setCyanideSearchLoading(false);
+    }
+  };
   const prepareCandidate = (candidate) => {
     setPreparedCandidate(candidate);
     setSource(sourceFromCandidate(candidate));
@@ -97,6 +146,20 @@ function AdminPage() {
       <HeaderCard mainImageSrc={imageUrls.blaskscoreLogoPng('medium')} heading="League Systems" subHeading="Manage seasons, stages, and match sources" />
       {error && <Text color="red.400">{error}</Text>}
       <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}><ResourceList heading="League systems" items={systems} selectedId={selectedSystemId} onSelect={selectSystem} label={(item) => item.name || item.id} /><Box><Heading size="sm" mb={2}>{selectedSystemId ? 'Edit league system' : 'New league system'}</Heading><TextField label="Name" value={system.name} onChange={(name) => setSystem({ ...system, name })} /><TextField label="Discovery aliases (comma separated)" value={(system.discoveryAliases || []).join(', ')} onChange={(value) => setSystem({ ...system, discoveryAliases: value.split(',').map((alias) => alias.trim()).filter(Boolean) })} /><Checkbox mt={3} isChecked={Boolean(system.discoveryNotificationEnabled)} onChange={(event) => setSystem({ ...system, discoveryNotificationEnabled: event.target.checked })}>Email new candidate notifications</Checkbox>{system.discoveryNotificationEnabled && <TextField label="Notification email" type="email" value={system.discoveryNotificationEmail} onChange={(discoveryNotificationEmail) => setSystem({ ...system, discoveryNotificationEmail })} />}<HStack mt={3}><Button onClick={() => { setSelectedSystemId(null); setSystem(emptySystem); }}>New</Button><Button colorScheme="blue" onClick={saveSystem}>Save</Button>{selectedSystemId && <Button colorScheme="red" onClick={() => remove('league system', () => WarpScoresApiService.deleteLeagueSystem(selectedSystemId, ...auth), () => { setSelectedSystemId(null); setSystem(emptySystem); setSeasons([]); setStages([]); setSources([]); })}>Delete</Button>}</HStack></Box></SimpleGrid>
+      <Box borderWidth="1px" borderRadius="md" p={4}>
+        <Heading size="sm" mb={1}>Search Cyanide</Heading>
+        <Text color="gray.500" mb={3}>Search league names or IDs. Search results do not fetch matches.</Text>
+        <SimpleGrid columns={{ base: 1, md: 4 }} spacing={3} alignItems="end">
+          <TextField label="League name or ID" value={cyanideSearch.term} onChange={(term) => setCyanideSearch({ ...cyanideSearch, term })} />
+          <FormControl><FormLabel>Blood Bowl version</FormLabel><Select value={cyanideSearch.opus} onChange={(event) => setCyanideSearch({ ...cyanideSearch, opus: event.target.value })}><option value="1">Blood Bowl 1</option><option value="2">Blood Bowl 2</option><option value="3">Blood Bowl 3</option></Select></FormControl>
+          <Checkbox pb={2} isChecked={cyanideSearch.exact} onChange={(event) => setCyanideSearch({ ...cyanideSearch, exact: event.target.checked })}>Exact name</Checkbox>
+          <Button colorScheme="blue" isLoading={cyanideSearchLoading} onClick={searchCyanide}>Search</Button>
+        </SimpleGrid>
+        {(cyanideSearchResults.leagueDetails.length > 0 || cyanideSearchResults.competitionDetails.length > 0) && <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={5} mt={4}>
+          <Box><Heading size="xs" mb={2}>Leagues</Heading><VStack align="stretch">{cyanideSearchResults.leagueDetails.map((item) => <Box key={item.id?.key || item.name} borderWidth="1px" borderRadius="md" p={3}><Text fontWeight="bold">{item.name}</Text><Text color="gray.500" fontSize="sm">{item.id?.key || item.id?.value}</Text></Box>)}</VStack></Box>
+          <Box><Heading size="xs" mb={2}>Competitions</Heading><VStack align="stretch">{cyanideSearchResults.competitionDetails.map((item) => { const configured = sources.some((entry) => entry.sourceEntityId?.key === item.id?.key); return <Box key={item.id?.key || item.name} borderWidth="1px" borderRadius="md" p={3}><HStack justify="space-between" align="start"><Box><Text fontWeight="bold">{item.name}</Text><Text color="gray.500" fontSize="sm">{item.leagueName} · {item.status || 'Unknown status'} · {item.format || 'Unknown format'}</Text><Text color="gray.500" fontSize="xs">{item.id?.key}</Text></Box><Button size="sm" colorScheme="blue" isDisabled={!selectedSystemId || configured || !item.id?.key} onClick={() => prepareCandidate(candidateFromCompetition(item))}>{configured ? 'Configured' : selectedSystemId ? 'Prepare' : 'Select LeagueSystem'}</Button></HStack></Box>; })}</VStack></Box>
+        </SimpleGrid>}
+      </Box>
       {selectedSystemId && <Box><HStack mb={2}><Heading size="sm">Potential new seasons and sources</Heading><Button size="sm" onClick={scanForCandidates}>Scan database</Button></HStack><VStack align="stretch">{discoveryCandidates.map((candidate) => <Box key={candidate.candidateId} borderWidth="1px" borderRadius="md" p={3}><HStack justify="space-between"><Box><Text fontWeight="bold">{candidate.competitionName || candidate.sourceEntityId}</Text><Text color="gray.500">{candidate.leagueName} · Season {candidate.suggestedSeasonNumber ?? '?'} · {candidate.matchCount} matches</Text></Box><Button size="sm" colorScheme="blue" onClick={() => prepareCandidate(candidate)}>Prepare</Button></HStack></Box>)}{discoveryCandidates.length === 0 && <Text color="gray.500">Scan to find match sources that are not configured yet.</Text>}</VStack></Box>}
       {selectedSystemId && <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}><ResourceList heading="Seasons" items={seasons} selectedId={selectedSeasonId} onSelect={selectSeason} label={(item) => item.name || item.id} /><Box><Heading size="sm" mb={2}>{selectedSeasonId ? 'Edit season' : 'New season'}</Heading><SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}><TextField label="Number" type="number" value={season.number} onChange={(number) => setSeason({ ...season, number })} /><TextField label="Name" value={season.name} onChange={(name) => setSeason({ ...season, name })} /><Checkbox isChecked={Boolean(season.isCollected)} onChange={(event) => setSeason({ ...season, isCollected: event.target.checked })}>Collect data</Checkbox></SimpleGrid><HStack mt={3}><Button onClick={() => { setSelectedSeasonId(null); setSeason(emptySeason); }}>New</Button><Button colorScheme="blue" onClick={saveSeason}>Save</Button>{selectedSeasonId && <Button colorScheme="red" onClick={() => remove('season', () => WarpScoresApiService.deleteSeason(selectedSeasonId, ...auth), () => { setSelectedSeasonId(null); setSeason(emptySeason); setStages([]); setSources([]); })}>Delete</Button>}</HStack></Box></SimpleGrid>}
       {selectedSeasonId && <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}><ResourceList heading="Stages" items={stages} selectedId={selectedStageId} onSelect={selectStage} label={(item) => item.name || item.id} /><Box><Heading size="sm" mb={2}>{selectedStageId ? 'Edit stage' : 'New stage'}</Heading><SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}><TextField label="ID" value={stage.id} onChange={(id) => setStage({ ...stage, id })} /><TextField label="Name" value={stage.name} onChange={(name) => setStage({ ...stage, name })} /><TextField label="Phase" value={stage.phase} onChange={(phase) => setStage({ ...stage, phase })} /><TextField label="Format" value={stage.format} onChange={(format) => setStage({ ...stage, format })} /><TextField label="Sequence" type="number" value={stage.sequence} onChange={(sequence) => setStage({ ...stage, sequence })} /></SimpleGrid><HStack mt={3}><Button onClick={() => { setSelectedStageId(null); setStage(emptyStage); }}>New</Button><Button colorScheme="blue" onClick={saveStage}>Save</Button>{selectedStageId && <Button colorScheme="red" onClick={() => remove('stage', () => WarpScoresApiService.deleteStage(selectedStageId, ...auth), () => { setSelectedStageId(null); setStage(emptyStage); setSources([]); })}>Delete</Button>}</HStack></Box></SimpleGrid>}

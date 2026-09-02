@@ -43,6 +43,7 @@ then make the stage work reachable, testable, and documented.
 | P2 | B-010 | GitHub CI validates backend and frontend | Deferred |
 | P2 | B-011 | Stale repository metadata/docs are cleaned up | Done |
 | P3 | B-012 | Broad exception/null handling is improved incrementally | Blocked: failure contract decision needed |
+| P1 | B-013 | Admins can search Cyanide and prepare LeagueSystem sources | Done |
 
 ## Current status
 
@@ -166,6 +167,25 @@ Test the explicit `JwtDecoder`, not only YAML properties.
 ---
 
 ## P1 â€” Stabilize current development work
+
+### B-013 â€” Search Cyanide from LeagueSystem admin
+
+**Implementation**
+
+- Search Cyanide leagues by name or ID and Blood Bowl version from `/admin`.
+- Show the league and competition metadata returned by the lookup flow without
+  fetching matches, contests, teams, or ranks.
+- Let an administrator prepare a returned competition as a season/stage source for
+  the selected LeagueSystem; saving remains an explicit separate action.
+- Register a saved `StageSource` for normal data collection without resetting an
+  existing collection checkpoint.
+
+**Acceptance criteria**
+
+- Searching alone never enables collection and never requests matches.
+- A search result can prefill the existing season/stage/source workflow.
+- Collection starts only when the administrator saves the `StageSource`.
+- Frontend tests and production build pass.
 
 ### B-005 â€” Simplify and fix frontend permission loading
 

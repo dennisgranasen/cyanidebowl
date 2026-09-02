@@ -1,6 +1,7 @@
 package net.warp_scores.warpscores.controller;
 
 import net.warp_scores.warpscores.domain.persistence.LeagueSystemRepository;
+import net.warp_scores.warpscores.domain.persistence.DataCollectionRepository;
 import net.warp_scores.warpscores.domain.persistence.SeasonRepository;
 import net.warp_scores.warpscores.domain.persistence.StageRepository;
 import net.warp_scores.warpscores.domain.persistence.StageSourceRepository;
@@ -18,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.when;
 
 class LeagueSystemControllerTest {
@@ -26,9 +28,10 @@ class LeagueSystemControllerTest {
     private final SeasonRepository seasons = mock(SeasonRepository.class);
     private final StageRepository stages = mock(StageRepository.class);
     private final StageSourceRepository stageSources = mock(StageSourceRepository.class);
+    private final DataCollectionRepository dataCollections = mock(DataCollectionRepository.class);
     private final LeagueSystemDiscoveryService discoveryService = mock(LeagueSystemDiscoveryService.class);
     private final LeagueSystemController controller = new LeagueSystemController(
-            leagueSystems, seasons, stages, stageSources, discoveryService);
+            leagueSystems, seasons, stages, stageSources, dataCollections, discoveryService);
 
     @Test
     void createsChildrenUsingTheirResolvedParentIds() {
@@ -53,6 +56,9 @@ class LeagueSystemControllerTest {
         assertThat(controller.createStage("nst:s1", stage).getBody().getSeasonId()).isEqualTo("nst:s1");
         assertThat(controller.createStageSource("nst:s1:regular", sourceRequest()).getBody().getStageId())
                 .isEqualTo("nst:s1:regular");
+        verify(dataCollections).save(argThat(collection ->
+                collection.getId().asMongoKey().equals("3_competition")
+                        && collection.getCollectionType() == net.warp_scores.warpscores.model.EntityType.Competition));
     }
 
     @Test

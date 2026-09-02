@@ -2,11 +2,13 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.domain.persistence.LeagueSystemRepository;
+import net.warp_scores.warpscores.domain.persistence.DataCollectionRepository;
 import net.warp_scores.warpscores.domain.persistence.SeasonRepository;
 import net.warp_scores.warpscores.domain.persistence.StageRepository;
 import net.warp_scores.warpscores.domain.persistence.StageSourceRepository;
 import net.warp_scores.warpscores.identity.IdentityUtil;
 import net.warp_scores.warpscores.model.LeagueSystem;
+import net.warp_scores.warpscores.model.DataCollection;
 import net.warp_scores.warpscores.model.Season;
 import net.warp_scores.warpscores.model.Stage;
 import net.warp_scores.warpscores.model.StageSource;
@@ -36,6 +38,7 @@ public class LeagueSystemController {
     private final SeasonRepository seasons;
     private final StageRepository stages;
     private final StageSourceRepository stageSources;
+    private final DataCollectionRepository dataCollections;
     private final LeagueSystemDiscoveryService discoveryService;
 
     @GetMapping("/admin/league-systems")
@@ -195,7 +198,9 @@ public class LeagueSystemController {
                     source.setStageId(stageId);
                     source.setSeasonId(stage.getSeasonId());
                     source.setLeagueSystemId(stage.getLeagueSystemId());
-                    return ResponseEntity.status(201).body(stageSources.save(source));
+                    StageSource saved = stageSources.save(source);
+                    watch(saved);
+                    return ResponseEntity.status(201).body(saved);
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -216,7 +221,9 @@ public class LeagueSystemController {
                     source.setStageId(existing.getStageId());
                     source.setSeasonId(existing.getSeasonId());
                     source.setLeagueSystemId(existing.getLeagueSystemId());
-                    return ResponseEntity.ok(stageSources.save(source));
+                    StageSource saved = stageSources.save(source);
+                    watch(saved);
+                    return ResponseEntity.ok(saved);
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -277,5 +284,12 @@ public class LeagueSystemController {
         source.setLegacyCircuitLegId(request.legacyCircuitLegId());
         source.setLegacyEntityIndex(request.legacyEntityIndex());
         return source;
+    }
+
+    /** A configured source is an explicit request to keep collecting it. */
+    private void watch(StageSource source) {
+        if (!dataCollections.existsById(source.getSourceEntityId())) {
+            dataCollections.save(new DataCollection(source.getSourceEntityId(), source.getSourceType()));
+        }
     }
 }
