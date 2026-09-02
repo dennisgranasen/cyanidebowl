@@ -3,7 +3,7 @@
     "tasks": [
         {
             "label": "build: backend dependencies",
-            "type": "shell",
+            "type": "process",
             "command": "mvn",
             "args": [
                 "-Pserver",
@@ -15,9 +15,6 @@
             ],
             "options": {
                 "cwd": "${workspaceFolder}",
-                "env": {
-                    "JAVA_HOME": "/usr/lib/jvm/java-25-openjdk-amd64"
-                }
             },
             "problemMatcher": "$msCompile",
             "presentation": {
@@ -28,7 +25,7 @@
         },
         {
             "label": "debug: backend [DB=local, Cyanide=OFF]",
-            "type": "shell",
+            "type": "process",
             "command": "mvn",
             "args": [
                 "spring-boot:run",
@@ -37,13 +34,10 @@
                 "backend",
                 "-Dspring-boot.run.profiles=dev",
                 "-Dspring-boot.run.arguments=--spring.mongodb.uri=mongodb://localhost:27017/cyanidebowl --cyanide.api-config.key= --cyanide.fetch-active=false --cyanide.job-creation-scheduler-active=false --cyanide.job-execution-scheduler-active=false --scheduler.enabled=false",
-                "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
+                "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:5005"
             ],
             "options": {
                 "cwd": "${workspaceFolder}",
-                "env": {
-                    "JAVA_HOME": "/usr/lib/jvm/java-25-openjdk-amd64"
-                }
             },
             "dependsOn": "build: backend dependencies",
             "dependsOrder": "sequence",
@@ -68,7 +62,7 @@
         },
         {
             "label": "debug: backend [DB=local, Cyanide=ON]",
-            "type": "shell",
+            "type": "process",
             "command": "mvn",
             "args": [
                 "spring-boot:run",
@@ -77,13 +71,10 @@
                 "backend",
                 "-Dspring-boot.run.profiles=dev",
                 "-Dspring-boot.run.arguments=--spring.config.import=file:../.env[.properties] --spring.mongodb.uri=mongodb://localhost:27017/cyanidebowl",
-                "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
+                "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:5005"
             ],
             "options": {
                 "cwd": "${workspaceFolder}",
-                "env": {
-                    "JAVA_HOME": "/usr/lib/jvm/java-25-openjdk-amd64"
-                }
             },
             "dependsOn": "build: backend dependencies",
             "dependsOrder": "sequence",
@@ -108,7 +99,7 @@
         },
         {
             "label": "debug: backend [DB=Atlas, Cyanide=OFF]",
-            "type": "shell",
+            "type": "process",
             "command": "mvn",
             "args": [
                 "spring-boot:run",
@@ -117,13 +108,10 @@
                 "backend",
                 "-Dspring-boot.run.profiles=dev",
                 "-Dspring-boot.run.arguments=--spring.config.import=file:../.env[.properties] --cyanide.api-config.key= --cyanide.fetch-active=false --cyanide.job-creation-scheduler-active=false --cyanide.job-execution-scheduler-active=false --scheduler.enabled=false",
-                "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
+                "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:5005"
             ],
             "options": {
                 "cwd": "${workspaceFolder}",
-                "env": {
-                    "JAVA_HOME": "/usr/lib/jvm/java-25-openjdk-amd64"
-                }
             },
             "dependsOn": "build: backend dependencies",
             "dependsOrder": "sequence",
@@ -148,7 +136,7 @@
         },
         {
             "label": "debug: backend [DB=Atlas, Cyanide=ON]",
-            "type": "shell",
+            "type": "process",
             "command": "mvn",
             "args": [
                 "spring-boot:run",
@@ -157,13 +145,10 @@
                 "backend",
                 "-Dspring-boot.run.profiles=dev",
                 "-Dspring-boot.run.arguments=--spring.config.import=file:../.env[.properties]",
-                "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
+                "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:5005"
             ],
             "options": {
                 "cwd": "${workspaceFolder}",
-                "env": {
-                    "JAVA_HOME": "/usr/lib/jvm/java-25-openjdk-amd64"
-                }
             },
             "dependsOn": "build: backend dependencies",
             "dependsOrder": "sequence",
@@ -212,7 +197,7 @@
         },
         {
             "label": "test: backend",
-            "type": "shell",
+            "type": "process",
             "command": "mvn",
             "args": [
                 "-Pserver",
@@ -223,9 +208,6 @@
             ],
             "options": {
                 "cwd": "${workspaceFolder}",
-                "env": {
-                    "JAVA_HOME": "/usr/lib/jvm/java-25-openjdk-amd64"
-                }
             },
             "group": "test",
             "problemMatcher": "$msCompile"

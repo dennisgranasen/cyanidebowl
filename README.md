@@ -114,6 +114,26 @@ selections (`StageSource` documents with `registeredSourceId`) so the same watch
 competition can be split across several phases or stages without duplicate watches.
 Legacy inline `StageSource` documents remain readable during migration.
 
+Legacy data is upgraded explicitly with `scripts/migrate-league-structure.js`.
+The script is read-only unless `MIGRATION_APPLY=true`, reports every inferred
+phase/stage/source change, and backs up changed original documents before applying.
+Ambiguous stages are placed in `Main competition`/`OTHER` for correction in admin.
+
+```bash
+# Read-only preview
+mongosh "$SPRING_DATA_MONGODB_URI" --file scripts/migrate-league-structure.js
+
+# Apply exactly the printed plan and create rollback records
+MIGRATION_APPLY=true mongosh "$SPRING_DATA_MONGODB_URI" --file scripts/migrate-league-structure.js
+```
+
+The apply run prints its migration run ID. Preview and then apply a rollback with:
+
+```bash
+MIGRATION_RUN_ID="<run-id>" mongosh "$SPRING_DATA_MONGODB_URI" --file scripts/rollback-league-structure.js
+MIGRATION_RUN_ID="<run-id>" MIGRATION_APPLY=true mongosh "$SPRING_DATA_MONGODB_URI" --file scripts/rollback-league-structure.js
+```
+
 `GET /stages/{stageId}/matches` is a public read-only API. URL-encode reserved
 characters in the canonical `stageId`. It returns an API DTO, not persistence
 models; missing stages return 404 and invalid source configuration/boundaries
