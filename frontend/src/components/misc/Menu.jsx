@@ -160,6 +160,9 @@ function Menu() {
                     )}
                   </Box>
                 )}
+                {authenticationReady && isAuthenticated && (
+                  <Box><Link variant="menu" as={RouteLink} to="/account" onClick={onClose}>Account &amp; Steam</Link></Box>
+                )}
                 <Box>
                   <Link variant="menu" as={RouteLink} to="/about" onClick={() => onClose()}>
                     About

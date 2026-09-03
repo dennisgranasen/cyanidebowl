@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -19,6 +20,7 @@ public class LocalSecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            .cors(Customizer.withDefaults())
             .authorizeHttpRequests(authz -> authz.anyRequest().permitAll())
             //.oauth2ResourceServer(oauth2 -> oauth2.jwt(org.springframework.security.config.Customizer.withDefaults()))
             .oauth2ResourceServer(oauth2 -> oauth2
@@ -45,6 +47,9 @@ public class LocalSecurityConfiguration {
         return token -> {
             Map<String, Object> claims = new HashMap<>();
             claims.put("permissions", List.of("writeSiteAdmin", "writeLeagueAdmin", "writeRegisterLeague", "readCurrentUser"));
+            claims.put("sub", "dev|local-user");
+            claims.put("email", "dev@example.com");
+            claims.put("name", "Dev User");
             return Jwt.withTokenValue(token)
                 .header("alg", "none")
                 .claims(map -> map.putAll(claims))

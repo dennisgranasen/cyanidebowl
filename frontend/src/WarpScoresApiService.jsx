@@ -47,6 +47,7 @@ const getAuthHeaders = async (getAccessTokenSilently, getAccessTokenWithPopup, r
   }
   if (!isProduction) {
     return {
+      withCredentials: true,
       headers: {
         Authorization: 'Bearer dev-token',
       },
@@ -54,6 +55,8 @@ const getAuthHeaders = async (getAccessTokenSilently, getAccessTokenWithPopup, r
   }
   const token = await getToken(getAccessTokenSilently, getAccessTokenWithPopup);
   return {
+    // Required for the opaque HttpOnly BB3 session cookie when frontend/backend use different ports.
+    withCredentials: true,
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -442,6 +445,16 @@ export default {
     getDataWithAuthentication('/userPermissions', getAccessTokenSilently, getAccessTokenWithPopup, requestToken)
       .then(returnData)
       .catch(handleError),
+  steamConnection: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
+    getDataWithAuthentication('/user/steam', getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  startSteamAuthentication: async (data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication('/user/steam/auth', data, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  submitSteamGuardCode: async (challengeId, code, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication(`/user/steam/challenges/${encodeURIComponent(challengeId)}/code`, { code }, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  confirmSteamGuard: async (challengeId, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication(`/user/steam/challenges/${encodeURIComponent(challengeId)}/confirm`, {}, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  disconnectSteam: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
+    deleteDataWithAuthentication('/user/steam', getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   exportNafXml: async (competitionId, getAccessTokenSilently, getAccessTokenWithPopup, requestToken) =>
     getDataWithAuthentication(
       `/competitions/${competitionId.key || competitionId}/exportNafData`,

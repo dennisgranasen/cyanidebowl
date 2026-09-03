@@ -33,3 +33,7 @@ management:
   endpoint:
     health:
       show-details: always
+pybb3:
+  base-url: ${PYBB3_SERVICE_URL:http://pybb3-service:8000}
+  internal-api-key: ${PYBB3_INTERNAL_API_KEY:}
+  cookie-secure: ${PYBB3_COOKIE_SECURE:true}

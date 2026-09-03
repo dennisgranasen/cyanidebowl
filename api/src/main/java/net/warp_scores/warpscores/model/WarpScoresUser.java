@@ -23,6 +23,14 @@ public class WarpScoresUser {
 
     private String provider;
 
+    /** Stable external identity (normally the Auth0 subject), never an email address. */
+    private String authSubject;
+
+    /** Convenience login name only; Steam secrets are deliberately never persisted. */
+    private String steamUsername;
+
+    private String steamId;
+
     private List<Long> adminForCircuits = new ArrayList<>();
     private List<String> adminForLeagues = new ArrayList<>();
     private List<String> adminForCompetitions = new ArrayList<>();

@@ -21,6 +21,7 @@ import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.config.Customizer;
 import java.util.List;
 import java.net.URI;
 
@@ -53,11 +54,13 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(requests -> requests
                         // status/misc
                         .requestMatchers(GET, "/version.json", "/status").permitAll()
                         // user endpoint
                         .requestMatchers(GET, "/userPermissions").permitAll()
+                        .requestMatchers("/user/steam/**").authenticated()
                         // endpoints needing authentication
                             .requestMatchers("/admin/**").authenticated()
                         .requestMatchers(POST, "/circuits/**").authenticated()

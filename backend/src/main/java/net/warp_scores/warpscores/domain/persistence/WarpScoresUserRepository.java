@@ -9,4 +9,5 @@ import java.util.Optional;
 @Repository
 public interface WarpScoresUserRepository extends MongoRepository<WarpScoresUser, Long> {
     Optional<WarpScoresUser> findByEmail(String email);
+    Optional<WarpScoresUser> findByAuthSubject(String authSubject);
 }

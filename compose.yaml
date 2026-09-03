@@ -11,3 +11,14 @@ services:
       - '32769:27017'
     volumes:
       - ./data:/data/db
+  pybb3-service:
+    build:
+      context: ./pybb3-service
+      args:
+        PYBB3_REF: ${PYBB3_REF:-main}
+    environment:
+      PYBB3_INTERNAL_API_KEY: ${PYBB3_INTERNAL_API_KEY}
+    ports:
+      - '8000:8000'
+    profiles:
+      - pybb3

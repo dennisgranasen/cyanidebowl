@@ -6,6 +6,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import net.warp_scores.warpscores.service.PyBb3ServiceException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -20,6 +22,11 @@ import java.io.IOException;
 public class GlobalErrorHandler {
 
     private final ObjectMapper mapper = new ObjectMapper();
+
+    @ExceptionHandler(PyBb3ServiceException.class)
+    public ResponseEntity<ErrorMessage> handlePyBb3Error(PyBb3ServiceException error) {
+        return ResponseEntity.status(error.getStatusCode()).body(ErrorMessage.from(error.getMessage()));
+    }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler(NoHandlerFoundException.class)

@@ -23,8 +23,11 @@ services:
     image: 'warpscores/warpscores-backend:1.0.0-SNAPSHOT'
     depends_on:
       - warpscores-db
+      - pybb3-service
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      PYBB3_SERVICE_URL: http://pybb3-service:8000
+      PYBB3_INTERNAL_API_KEY: ${PYBB3_INTERNAL_API_KEY}
     restart: unless-stopped
     volumes:
       - /etc/timezone:/etc/timezone:ro
@@ -32,6 +35,19 @@ services:
     networks:
       - warpscores-backend
       - warpscores-frontend
+
+  pybb3-service:
+    build:
+      context: ./pybb3-service
+      args:
+        PYBB3_REF: ${PYBB3_REF:-main}
+    environment:
+      PYBB3_INTERNAL_API_KEY: ${PYBB3_INTERNAL_API_KEY}
+      SESSION_TTL_SECONDS: 1800
+      CHALLENGE_TTL_SECONDS: 300
+    restart: unless-stopped
+    networks:
+      - warpscores-backend
 
   warpscores-frontend:
     container_name: warpscores-frontend

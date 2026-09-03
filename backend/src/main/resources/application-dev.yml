@@ -26,3 +26,7 @@ spring:
           issuer-uri: http://localhost:8080/
           jwk-set-uri: http://localhost:8080/.well-known/jwks.json
           jws-algorithms: RS256
+pybb3:
+  base-url: ${PYBB3_SERVICE_URL:http://localhost:8000}
+  internal-api-key: ${PYBB3_INTERNAL_API_KEY:}
+  cookie-secure: false

@@ -24,6 +24,7 @@ import Fonts from './theme/Fonts';
 import ArenaPage from './pages/ArenaPage';
 import ArenaCoachPage from './pages/ArenaCoachPage';
 import CompetitionStatsPage from './pages/CompetitionStatsPage';
+import AccountPage from './pages/AccountPage';
 
 import { MockAuth0Provider } from './components/misc/MockAuthProvider';
 
@@ -89,6 +90,7 @@ function AppRoutes() {
       <Route path="/circuit/:circuitId" element={<CircuitPage />} />
       {/* Protected Routes/Needing authentication */}
       <Route path="/coachPage" element={<ProtectedRoute component={CoachPage} />} />
+      <Route path="/account" element={<ProtectedRoute component={AccountPage} />} />
       <Route path="/admin" element={<ProtectedRoute component={AdminPage} />} />
       <Route path="/admin/circuit/:circuitId" element={<ProtectedRoute component={AdminCircuitPage} />} />
       <Route
@@ -114,6 +116,7 @@ function App() {
                 clientId={config.auth0ClientId}
                 authorizationParams={{
                   redirect_uri: window.location.origin,
+                  audience: config.auth0Audience,
                 }}
               >
                 <AppRoutes />

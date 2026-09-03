@@ -1,62 +1,117 @@
-import uuid
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+import threading
 import time
-from typing import Dict, Tuple
-from fastapi import HTTPException, status
-from pybb3.client import BB3Client
+import uuid
+from bb3 import BB3Client, SteamAuthProcess, SteamAuthState, SteamGuardChallenge, SteamWebAuthFlow
 from app.config import settings
 
+class SessionNotFound(Exception): pass
+
+@dataclass
+class PendingAuth:
+    owner_id: str
+    flow: SteamWebAuthFlow
+    last_access: float = field(default_factory=time.time)
+
+@dataclass
+class ActiveSession:
+    owner_id: str
+    username: str
+    steam_id: str
+    client: BB3Client
+    lock: threading.RLock = field(default_factory=threading.RLock)
+    last_access: float = field(default_factory=time.time)
+
 class SessionManager:
-    def __init__(self):
-        # key: session_token, value: (BB3Client, last_accessed_timestamp)
-        self._sessions: Dict[str, Tuple[BB3Client, float]] = {}
+    def __init__(self, flow_factory=None, client_factory=None):
+        self._pending, self._sessions = {}, {}
+        self._lock = threading.RLock()
+        self._flow_factory = flow_factory or (lambda: SteamWebAuthFlow(helper=settings.STEAM_HELPER_PATH))
+        self._client_factory = client_factory or self._open_client
 
-    def create_session(self, username: str, password: str, two_factor: str | None) -> str:
-        try:
-            # Skapa klient med anpassad sökväg till .NET SteamKit-hjälparen
-            client = BB3Client.from_steam(executable_path=settings.STEAM_HELPER_PATH)
-            client._steam_auth.username = username
-            client._steam_auth.password = password
-            client._steam_auth.two_factor = two_factor
-            
-            # Startar process, ansluter TCP och loggar in mot Cyanide
-            client.__enter__()
-            client.login()
-
-            token = str(uuid.uuid4())
-            self._sessions[token] = (client, time.time())
-            return token
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"BB3 Authentication failed: {str(e)}"
-            )
-
-    def get_client(self, token: str) -> BB3Client:
+    def start_auth(self, owner_id, username, password):
         self.cleanup_expired()
-        if token not in self._sessions:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or expired BB3 session token"
-            )
-        client, _ = self._sessions[token]
-        self._sessions[token] = (client, time.time())
-        return client
+        flow = self._flow_factory()
+        try: result = flow.start(username, password)
+        except Exception:
+            flow.close(); raise
+        return self._handle(owner_id, flow, result)
 
-    def close_session(self, token: str):
-        if token in self._sessions:
-            client, _ = self._sessions.pop(token)
-            try:
-                client.close()
-            except Exception:
-                pass
+    def submit_code(self, owner_id, challenge_id, code):
+        pending = self._get_pending(owner_id, challenge_id)
+        return self._handle(owner_id, pending.flow, pending.flow.submit_code(code), challenge_id)
+
+    def confirm_device(self, owner_id, challenge_id):
+        pending = self._get_pending(owner_id, challenge_id)
+        return self._handle(owner_id, pending.flow, pending.flow.confirm_device(), challenge_id)
+
+    def session_info(self, owner_id, session_id):
+        session = self._get_session(owner_id, session_id)
+        return {"connected": True, "steamUsername": session.username, "steamId": session.steam_id}
+
+    def close_session(self, owner_id, session_id):
+        with self._lock:
+            session = self._sessions.get(session_id)
+            if session is None or session.owner_id != owner_id: raise SessionNotFound("Unknown or expired session")
+            self._sessions.pop(session_id)
+        session.client.close()
+
+    def call(self, owner_id, session_id, operation):
+        session = self._get_session(owner_id, session_id)
+        with session.lock:
+            session.last_access = time.time()
+            return operation(session.client)
 
     def cleanup_expired(self):
         now = time.time()
-        expired = [
-            token for token, (_, last_seen) in self._sessions.items()
-            if now - last_seen > settings.SESSION_TTL_SECONDS
-        ]
-        for token in expired:
-            self.close_session(token)
+        with self._lock:
+            pending = [self._pending.pop(k) for k, v in list(self._pending.items()) if now-v.last_access > settings.CHALLENGE_TTL_SECONDS]
+            sessions = [self._sessions.pop(k) for k, v in list(self._sessions.items()) if now-v.last_access > settings.SESSION_TTL_SECONDS]
+        for value in pending: value.flow.close()
+        for value in sessions: value.client.close()
+
+    def close_all(self):
+        with self._lock:
+            pending, sessions = list(self._pending.values()), list(self._sessions.values())
+            self._pending.clear(); self._sessions.clear()
+        for value in pending: value.flow.close()
+        for value in sessions: value.client.close()
+
+    def _handle(self, owner_id, flow, result, challenge_id=None):
+        if isinstance(result, SteamGuardChallenge):
+            challenge_id = challenge_id or str(uuid.uuid4())
+            with self._lock: self._pending[challenge_id] = PendingAuth(owner_id, flow)
+            return {"status":"GUARD_REQUIRED", "challengeId":challenge_id, "method":result.method,
+                    "emailHint":result.email, "previousCodeWasIncorrect":result.previous_code_was_incorrect}
+        if challenge_id:
+            with self._lock: self._pending.pop(challenge_id, None)
+        client, steam_id = self._client_factory(result)
+        session_id = str(uuid.uuid4())
+        with self._lock: self._sessions[session_id] = ActiveSession(owner_id, result.username, steam_id, client)
+        return {"status":"AUTHENTICATED", "sessionId":session_id, "steamUsername":result.username, "steamId":steam_id}
+
+    def _open_client(self, state: SteamAuthState):
+        client = BB3Client(steam_auth=SteamAuthProcess.from_state(state, helper=settings.STEAM_HELPER_PATH))
+        try:
+            client.__enter__(); client.login()
+            return client, client._steam_ticket.steam_id
+        except Exception:
+            client.close(); raise
+
+    def _get_pending(self, owner_id, challenge_id):
+        self.cleanup_expired()
+        with self._lock:
+            value = self._pending.get(challenge_id)
+            if value is None or value.owner_id != owner_id: raise SessionNotFound("Unknown or expired challenge")
+            value.last_access = time.time(); return value
+
+    def _get_session(self, owner_id, session_id):
+        self.cleanup_expired()
+        with self._lock:
+            value = self._sessions.get(session_id)
+            if value is None or value.owner_id != owner_id: raise SessionNotFound("Unknown or expired session")
+            value.last_access = time.time(); return value
 
 session_manager = SessionManager()
