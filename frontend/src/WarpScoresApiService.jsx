@@ -455,6 +455,8 @@ export default {
     postDataWithAuthentication(`/user/steam/challenges/${encodeURIComponent(challengeId)}/confirm`, {}, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   disconnectSteam: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
     deleteDataWithAuthentication('/user/steam', getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  myBb3Teams: async (getAccessTokenSilently, getAccessTokenWithPopup, size = 50, start = 0) =>
+    getDataWithAuthentication(`/user/steam/teams?size=${size}&start=${start}`, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   exportNafXml: async (competitionId, getAccessTokenSilently, getAccessTokenWithPopup, requestToken) =>
     getDataWithAuthentication(
       `/competitions/${competitionId.key || competitionId}/exportNafData`,

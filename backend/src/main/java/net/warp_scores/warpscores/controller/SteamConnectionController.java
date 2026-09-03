@@ -70,6 +70,19 @@ public class SteamConnectionController {
         response.addHeader("Set-Cookie", cookieHeader("", Duration.ZERO).toString());
     }
 
+    @GetMapping("/teams")
+    public Map<String,Object> teams(@RequestParam(defaultValue = "50") int size,
+                                    @RequestParam(defaultValue = "0") int start,
+                                    JwtAuthenticationToken auth, HttpServletRequest request) {
+        String session = cookie(request);
+        if (session == null || session.isBlank())
+            throw new net.warp_scores.warpscores.service.PyBb3ServiceException(401, "Connect Steam to view your teams");
+        int safeSize = Math.max(1, Math.min(size, 100));
+        int safeStart = Math.max(0, start);
+        return pybb3.get("/api/v1/sessions/" + session + "/teams?size=" + safeSize + "&start=" + safeStart,
+                auth.getName());
+    }
+
     private void complete(Map<String,Object> result, JwtAuthenticationToken auth, HttpServletResponse response) {
         if (!"AUTHENTICATED".equals(result.get("status"))) return;
         profiles.connectSteam(auth.getToken(), (String)result.get("steamUsername"), (String)result.get("steamId"));

@@ -10,12 +10,15 @@ import { resolveRace, getRaceLogo } from '../../util/raceUtil';
 import { identityUtils } from '../../util/identityUtil';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import MatchModal from './MatchModalWithRosters'; // Import the modal component
+import { useMyTeams } from '../../context/MyTeamsContext';
 const { boxSize } = config;
 
-function TeamAndCoach({ teamName, coachName, race, reverse }) {
+function TeamAndCoach({ teamId, teamName, coachName, race, reverse }) {
+  const { isMyTeam } = useMyTeams();
+  const mine = isMyTeam(teamId);
   return (
     <Box>
-      <Heading size="sm">{teamName}</Heading>
+      <Heading size="sm">{teamName}{mine ? ' ★' : ''}</Heading>
       <Text color="grey">
         {reverse ? `(${coachName}) ${prettyPrint(race)}` : `${prettyPrint(race)} (${coachName})`}
       </Text>
@@ -145,6 +148,7 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
                 </GridItem>
                 <GridItem colSpan={4}>
                   <TeamAndCoach
+                    teamId={teams[0]?.id}
                     teamName={teams[0]?.name}
                     coachName={coaches[0].coachName || coaches[0].name}
                     race={firstRace}
@@ -152,6 +156,7 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
                 </GridItem>
                 <GridItem colSpan={4} align="right">
                   <TeamAndCoach
+                    teamId={teams[1]?.id}
                     teamName={teams[1].name}
                     coachName={coaches[1].coachName || coaches[1].name}
                     race={secondRace}

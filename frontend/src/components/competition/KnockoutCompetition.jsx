@@ -28,6 +28,7 @@ import { FaRegFaceSadTear } from 'react-icons/fa6';
 import MatchModalWithRosters from '../contest/MatchModalWithRosters'; // Add this import
 import { useDisclosure } from '@chakra-ui/react';
 import { identityUtils } from '../../util/identityUtil';
+import { useMyTeams } from '../../context/MyTeamsContext';
 
 const { boxSize } = config;
 
@@ -74,7 +75,9 @@ function Participant({
   compact,
   //onPartyClick,
 }) {
-  const borderColor = hovered ? 'warpScoresHoverColor' : connectorColor;
+  const { isMyTeam } = useMyTeams();
+  const mine = isMyTeam(party?.id);
+  const borderColor = hovered ? 'warpScoresHoverColor' : mine ? 'green.400' : connectorColor;
   const backgroundColor = hovered ? 'warpScoresHoverColor' : null;
   const details = [party.coachName, party.race ? prettyPrint(party.race) : null].filter(Boolean).join(', ');
   return (
@@ -88,6 +91,7 @@ function Participant({
       borderBottomRadius={borderBottomRadius}
       overflow="hidden"
       backgroundColor={backgroundColor}
+      boxShadow={mine ? 'inset 3px 0 var(--chakra-colors-green-400)' : undefined}
       onMouseEnter={() => onMouseEnter(party.id)}
       onMouseLeave={() => onMouseLeave(party.id)}
       onClick={() => {
@@ -124,7 +128,7 @@ function Participant({
           textOverflow="ellipsis"
           whiteSpace="nowrap"
         >
-          <Box>{party.teamName || 'To be defined'}</Box>
+          <Box>{party.teamName || 'To be defined'}{mine ? ' ★' : ''}</Box>
         </GridItem>
         <GridItem pl="4px" area="coach" textAlign="left" fontSize={compact ? '2xs' : 'sm'} color="grey" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
           {details}

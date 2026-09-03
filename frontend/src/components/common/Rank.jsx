@@ -1,5 +1,5 @@
 import React from 'react';
-import { Center, Heading, Image, Spinner, Td, Text, Tr, useBreakpointValue } from '@chakra-ui/react';
+import { Badge, Center, Heading, HStack, Image, Spinner, Td, Text, Tr, useBreakpointValue } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import formatter from '../../util/formatter';
@@ -9,10 +9,13 @@ import prettyPrint from '../../util/prettyPrint';
 import Race from '../common/Race';
 import { getRaceLogo, toRace } from '../../util/raceUtil'
 import { identityUtils } from '../../util/identityUtil';
+import { useMyTeams } from '../../context/MyTeamsContext';
 
 const { boxSize, smallScreenBreakpointValues, showRaceLogo } = config;
 
 function Rank({ rank, position }) {
+  const { isMyTeam } = useMyTeams();
+  const mine = isMyTeam(rank?.teamId);
   const navigate = useNavigate();
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
   const goToTeam = () => {
@@ -23,7 +26,7 @@ function Rank({ rank, position }) {
   const raceLogo = rank?.raceId || rank?.race ? getRaceLogo(rank.raceId || rank.race, opus) : null;
   //console.log(rank.teamLogo || raceLogo,imageUrls.logo(rank.teamLogo || raceLogo, opus));
   return rank !== null ? (
-    <Tr onClick={goToTeam}>
+    <Tr onClick={goToTeam} boxShadow={mine ? 'inset 4px 0 var(--chakra-colors-green-400)' : undefined}>
       <Td>
         <Center>
           <Heading size="sm">{position}</Heading>
@@ -32,7 +35,7 @@ function Rank({ rank, position }) {
       {isSmallScreen ? (
         <>
           <Td>
-            <Text fontSize="sm">{rank.teamName}</Text>
+            <HStack><Text fontSize="sm">{rank.teamName}</Text>{mine && <Badge colorScheme="green">My team</Badge>}</HStack>
             <Text fontSize="sm" color="grey">
               {prettyPrint(race)} ({rank.coachName})
             </Text>
@@ -48,7 +51,7 @@ function Rank({ rank, position }) {
         </>
       ) : (
         <>
-          <Td>{rank.teamName}</Td>
+          <Td><HStack><Text>{rank.teamName}</Text>{mine && <Badge colorScheme="green">My team</Badge>}</HStack></Td>
           <Td>
             <Image
               src={`${imageUrls.logo(rank.teamLogo || raceLogo, opus)}`}

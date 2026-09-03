@@ -25,6 +25,7 @@ import ArenaPage from './pages/ArenaPage';
 import ArenaCoachPage from './pages/ArenaCoachPage';
 import CompetitionStatsPage from './pages/CompetitionStatsPage';
 import AccountPage from './pages/AccountPage';
+import { MyTeamsProvider } from './context/MyTeamsContext';
 
 import { MockAuth0Provider } from './components/misc/MockAuthProvider';
 
@@ -56,6 +57,7 @@ function Auth0ProviderWithRedirectCallback({ children, ...props }) {
 
 function AppRoutes() {
   return (
+    <MyTeamsProvider>
       <Routes>
       {/* Public Routes */}
       <Route path="/" element={<WarpScores />} />
@@ -97,7 +99,8 @@ function AppRoutes() {
         path="/admin/circuit/:circuitId/leg/:legId"
         element={<ProtectedRoute component={AdminCircuitLegPage} />}
       />
-    </Routes>
+      </Routes>
+    </MyTeamsProvider>
   );
 }
 
