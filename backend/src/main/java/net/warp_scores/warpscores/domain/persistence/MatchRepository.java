@@ -10,6 +10,7 @@ import net.warp_scores.warpscores.model.Team;
 import org.springframework.data.domain.Pageable;
 //import org.springframework.data.mongodb.core.aggregation.ArrayOperators.In;
 import org.springframework.data.mongodb.repository.Aggregation;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Repository;
@@ -21,6 +22,13 @@ import java.util.Optional;
 @Repository
 
 public interface MatchRepository extends MongoRepository<Match, Identity> {
+    @Query("{ '$and': ["
+            + " { 'finished': { $ne: null, $lte: ?0 } },"
+            + " { '$or': [ { 'detailsStatus': { $exists: false } }, { 'detailsStatus': null } ] },"
+            + " { '$or': [ { 'teams.0.players.0': { $exists: false } }, { 'teams.1.players.0': { $exists: false } } ] }"
+            + "] }")
+    List<Match> findMatchesWithUncheckedDetails(Date finishedBefore, Pageable pageable);
+
     List<Match> findByCompetitionId(Identity competitionId);
     List<Match> findByCompetitionId(Identity competitionId, Pageable pageable);
 

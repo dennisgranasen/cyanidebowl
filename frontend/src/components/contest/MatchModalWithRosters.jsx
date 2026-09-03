@@ -198,9 +198,17 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                     {/* Player roster tables with sub-tabs */}
                     {matchData && matchData.teams && matchData.teams.length > 1 && (
                       <Box>
+                        {!matchData.teams.some((team) => team.players?.length > 0) && (
+                          <Text color="gray.500">
+                            {matchData.detailsStatus === 'PLAYER_DATA_UNAVAILABLE'
+                              ? 'Matchen har kontrollerats, men Cyanide tillhandahåller ingen spelarstatistik.'
+                              : 'Spelarstatistik saknas ännu. Matchen väntar på bakgrundskontroll.'}
+                          </Text>
+                        )}
                         {matchData.teams.map((team, teamIndex) => (
                           <Box key={teamIndex} mb={6}>
                             <Heading size="md" mb={3}>{team.name}</Heading>
+                            {!team.players?.length ? <Text color="gray.500">Ingen spelartrupp finns lagrad.</Text> : (
                             
                             <Tabs variant="enclosed" size="sm">
                               <TabList>
@@ -388,6 +396,7 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                                 </TabPanel>
                               </TabPanels>
                             </Tabs>
+                            )}
                           </Box>
                         ))}
                       </Box>

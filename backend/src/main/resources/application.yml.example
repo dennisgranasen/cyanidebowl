@@ -40,6 +40,14 @@ cyanide:
     capacity: 30
     period-in-seconds: 30
 
+match-details:
+  backfill:
+    enabled: true
+    batch-size: 5
+    minimum-match-age-hours: 24
+    initial-delay-ms: 60000
+    fixed-delay-ms: 600000
+
 application:
   naf-coach-lookup-url-template: https://www.thenaf.net/coachcheck.php?naf_name=%s
   default-spring-cache-ttl: 21600000
