@@ -88,6 +88,20 @@ class LeagueSystemControllerTest {
 
             assertThat(created.getName()).isEqualTo("Season 12");
             assertThat(created.getSequence()).isEqualTo(12);
+            assertThat(created.getId()).isNotBlank();
+        }
+
+        @Test
+        void replacesBlankSeasonIdsSoChildUrlsCanBeBuilt() {
+            Season season = new Season();
+            season.setId("");
+            season.setNumber(31);
+            when(leagueSystems.existsById("nst")).thenReturn(true);
+            when(seasons.save(season)).thenReturn(season);
+
+            Season created = controller.createSeason("nst", season).getBody();
+
+            assertThat(created.getId()).isNotBlank();
         }
 
             @Test

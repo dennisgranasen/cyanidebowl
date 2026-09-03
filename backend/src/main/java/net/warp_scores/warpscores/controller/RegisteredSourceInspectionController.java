@@ -2,13 +2,18 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
+import net.warp_scores.warpscores.domain.persistence.CompetitionRepository;
 import net.warp_scores.warpscores.domain.persistence.RegisteredSourceRepository;
 import net.warp_scores.warpscores.identity.CompositeIdentity;
 import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.IdentityUtil;
+import net.warp_scores.warpscores.model.Competition;
+import net.warp_scores.warpscores.model.Contest;
 import net.warp_scores.warpscores.model.EntityType;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.RegisteredSource;
 import net.warp_scores.warpscores.model.Team;
+import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,6 +37,8 @@ import static net.warp_scores.warpscores.controller.Authorities.AUTHORITY_WRITE_
 public class RegisteredSourceInspectionController {
     private final RegisteredSourceRepository registeredSources;
     private final MatchRepository matches;
+    private final CompetitionRepository competitions;
+    private final CyanideApiService cyanideApiService;
 
     @GetMapping("/admin/seasons/{seasonId}/registered-source-inspections")
     public ResponseEntity<List<RegisteredSourceInspection>> summaries(@PathVariable String seasonId) {
@@ -50,6 +57,49 @@ public class RegisteredSourceInspectionController {
                         .limit(Math.max(1, Math.min(limit, 50)))
                         .toList()))
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/admin/cyanide-competitions/{competitionId}/inspection")
+    public ResponseEntity<CyanideCompetitionInspection> inspectCyanideCompetition(
+            @PathVariable String competitionId,
+            @RequestParam(defaultValue = "5") int limit) {
+        Identity identity;
+        try {
+            identity = IdentityUtil.fromId(competitionId);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().build();
+        }
+        return competitions.findById(identity)
+                .map(competition -> ResponseEntity.ok(cyanideCompetitionInspection(
+                        competition, Math.max(1, Math.min(limit, 20)))))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    private CyanideCompetitionInspection cyanideCompetitionInspection(Competition competition, int limit) {
+        List<Contest> contests = cyanideApiService.loadContests(competition).stream()
+                .filter(contest -> contest.getMatchDate() != null)
+                .sorted(Comparator.comparing(Contest::getMatchDate).reversed())
+                .limit(limit)
+                .toList();
+        Date latest = contests.stream().map(Contest::getMatchDate).findFirst().orElse(null);
+        return new CyanideCompetitionInspection(competition.getId().asMongoKey(), latest,
+                contests.stream().map(this::contestSummary).toList());
+    }
+
+    private CyanideCompetitionInspection.ContestSummary contestSummary(Contest contest) {
+        List<CyanideCompetitionInspection.TeamSummary> teams = Arrays.stream(
+                        contest.getOpponents() == null ? new Team[0] : contest.getOpponents())
+                .filter(Objects::nonNull)
+                .map(team -> new CyanideCompetitionInspection.TeamSummary(
+                        team.getId() == null ? null : team.getId().asMongoKey(),
+                        team.getName(), team.getCoachName(),
+                        team.getRace() == null ? null : team.getRace().toString(), team.getScore()))
+                .toList();
+        return new CyanideCompetitionInspection.ContestSummary(
+                contest.getContestId() == null ? null : contest.getContestId().asMongoKey(),
+                contest.getMatchId() == null ? null : contest.getMatchId().asMongoKey(),
+                contest.getRound(), contest.getStatus() == null ? null : contest.getStatus().toString(),
+                contest.getMatchDate(), teams);
     }
 
     private RegisteredSourceInspection summary(RegisteredSource source, List<Match> sourceMatches) {

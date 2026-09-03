@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Button, Checkbox, FormControl, FormLabel, Heading, HStack, Input, Select, SimpleGrid, Text, VStack } from '@chakra-ui/react';
+import { Box, Button, Checkbox, FormControl, FormLabel, Heading, HStack, IconButton, Input, Select, SimpleGrid, Text, Tooltip, VStack } from '@chakra-ui/react';
+import { SearchIcon } from '@chakra-ui/icons';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '../components/misc/Navigation';
 import HeaderCard from '../components/common/HeaderCard';
@@ -50,6 +51,9 @@ function AdminPage() {
   const [cyanideSearch, setCyanideSearch] = useState({ term: '', opus: '3', exact: true });
   const [cyanideSearchResults, setCyanideSearchResults] = useState({ leagueDetails: [], competitionDetails: [] });
   const [cyanideSearchLoading, setCyanideSearchLoading] = useState(false);
+  const [cyanideInspections, setCyanideInspections] = useState({});
+  const [openCyanideInspections, setOpenCyanideInspections] = useState({});
+  const [cyanideInspectionLoading, setCyanideInspectionLoading] = useState({});
   const [preparedCandidate, setPreparedCandidate] = useState(null);
   const [sourceMatches, setSourceMatches] = useState([]);
   const [sourceMatchesLoading, setSourceMatchesLoading] = useState(false);
@@ -62,7 +66,17 @@ function AdminPage() {
   const selectSystem = (item) => { setSelectedSystemId(item.id); setSystem({ ...emptySystem, ...item }); setSelectedSeasonId(null); setSelectedStageId(null); setSelectedSourceId(null); setSeason(emptySeason); setStage(emptyStage); setSource(emptySource); setStages([]); setSources([]); setDiscoveryCandidates([]); setPreparedCandidate(null); clearSourceMatches(); WarpScoresApiService.seasons(item.id, ...auth).then(setSeasons).catch(fail); };
   const loadSourceInspections = (seasonId) => WarpScoresApiService.registeredSourceInspections(seasonId, ...auth)
     .then((items) => setSourceInspections(Object.fromEntries(items.map((item) => [item.registeredSourceId, item])))).catch(fail);
-  const selectSeason = (item) => { setSelectedSeasonId(item.id); setSeason(item); setSelectedPhaseId(null); setSelectedStageId(null); setSelectedSourceId(null); setInspectedRegisteredSourceId(null); setRegisteredSourceMatches([]); setPhase(emptyPhase); setStage(emptyStage); setSource(emptySource); setStages([]); setSources([]); clearSourceMatches(); WarpScoresApiService.phases(item.id, ...auth).then(setPhases).catch(fail); WarpScoresApiService.registeredSources(item.id, ...auth).then(setRegisteredSources).catch(fail); loadSourceInspections(item.id); };
+  const loadRegisteredSources = (seasonId) => {
+    setRegisteredSources([]);
+    setSourceInspections({});
+    return WarpScoresApiService.registeredSources(seasonId, ...auth)
+      .then((items) => {
+        setRegisteredSources(items);
+        if (items.length > 0) loadSourceInspections(seasonId);
+      })
+      .catch(fail);
+  };
+  const selectSeason = (item) => { setSelectedSeasonId(item.id); setSeason(item); setSelectedPhaseId(null); setSelectedStageId(null); setSelectedSourceId(null); setInspectedRegisteredSourceId(null); setRegisteredSourceMatches([]); setPhase(emptyPhase); setStage(emptyStage); setSource(emptySource); setPhases([]); setStages([]); setSources([]); clearSourceMatches(); WarpScoresApiService.phases(item.id, ...auth).then(setPhases).catch(fail); loadRegisteredSources(item.id); };
   const selectPhase = (item) => { setSelectedPhaseId(item.id); setPhase(item); setSelectedStageId(null); setStage(emptyStage); setSources([]); WarpScoresApiService.phaseStages(item.id, ...auth).then(setStages).catch(fail); };
   const sourceFromCandidate = (candidate) => ({ ...emptySource, sourceEntityId: candidate.sourceEntityId, sourceType: candidate.sourceType, game: candidate.game || emptySource.game, platform: candidate.platform || emptySource.platform });
   const selectStage = (item) => { setSelectedStageId(item.id); setStage(item); setSelectedSourceId(null); setSource(preparedCandidate ? sourceFromCandidate(preparedCandidate) : emptySource); clearSourceMatches(); WarpScoresApiService.stageSources(item.id, ...auth).then(setSources).catch(fail); };
@@ -87,7 +101,7 @@ function AdminPage() {
   }, [authenticationReady, checkPermissions, navigate, userPermissions.writeSiteAdmin]);
 
   const saveSystem = () => (selectedSystemId ? WarpScoresApiService.updateLeagueSystem(selectedSystemId, system, ...auth) : WarpScoresApiService.createLeagueSystem(system, ...auth)).then((item) => { loadSystems(); selectSystem(item); }).catch(fail);
-  const saveSeason = () => { if (!selectedSystemId) return; const data = { ...season, number: numberOrNull(season.number) }; (selectedSeasonId ? WarpScoresApiService.updateSeason(selectedSeasonId, data, ...auth) : WarpScoresApiService.createSeason(selectedSystemId, data, ...auth)).then((item) => { WarpScoresApiService.seasons(selectedSystemId, ...auth).then(setSeasons); selectSeason(item); }).catch(fail); };
+  const saveSeason = () => { if (!selectedSystemId) return; const data = { ...season, number: numberOrNull(season.number) }; if (!selectedSeasonId) delete data.id; (selectedSeasonId ? WarpScoresApiService.updateSeason(selectedSeasonId, data, ...auth) : WarpScoresApiService.createSeason(selectedSystemId, data, ...auth)).then((item) => { WarpScoresApiService.seasons(selectedSystemId, ...auth).then(setSeasons); selectSeason(item); }).catch(fail); };
   const savePhase = () => { if (!selectedSeasonId) return; const data = { ...phase, sequence: numberOrNull(phase.sequence) }; (selectedPhaseId ? WarpScoresApiService.updatePhase(selectedPhaseId, data, ...auth) : WarpScoresApiService.createPhase(selectedSeasonId, data, ...auth)).then((item) => { WarpScoresApiService.phases(selectedSeasonId, ...auth).then(setPhases); selectPhase(item); }).catch(fail); };
   const saveStage = () => { if (!selectedPhaseId) return; const data = { ...stage, step: numberOrNull(stage.step), displayOrder: numberOrNull(stage.displayOrder) }; (selectedStageId ? WarpScoresApiService.updateStage(selectedStageId, data, ...auth) : WarpScoresApiService.createPhaseStage(selectedPhaseId, data, ...auth)).then((item) => { WarpScoresApiService.phaseStages(selectedPhaseId, ...auth).then(setStages); selectStage(item); }).catch(fail); };
   const saveSource = () => { if (!selectedStageId) return; const data = { ...source, firstIndex: numberOrNull(source.firstIndex), lastIndex: numberOrNull(source.lastIndex) }; const action = selectedSourceId && source.registeredSourceId ? WarpScoresApiService.updateMatchSelection(selectedSourceId, data, ...auth) : selectedSourceId ? WarpScoresApiService.updateStageSource(selectedSourceId, data, ...auth) : WarpScoresApiService.createStageSource(selectedStageId, data, ...auth); action.then((item) => { WarpScoresApiService.stageSources(selectedStageId, ...auth).then(setSources); selectSource(item); setPreparedCandidate(null); }).catch(fail); };
@@ -144,6 +158,8 @@ function AdminPage() {
   const searchCyanide = async () => {
     if (!cyanideSearch.term.trim()) return;
     setCyanideSearchLoading(true);
+    setCyanideInspections({});
+    setOpenCyanideInspections({});
     setError(null);
     try {
       const term = cyanideSearch.term.trim();
@@ -166,6 +182,16 @@ function AdminPage() {
     } finally {
       setCyanideSearchLoading(false);
     }
+  };
+  const inspectCyanideCompetition = (competition) => {
+    const competitionId = competition.id?.key;
+    if (!competitionId) return;
+    setOpenCyanideInspections((current) => ({ ...current, [competitionId]: !current[competitionId] }));
+    if (cyanideInspections[competitionId]) return;
+    setCyanideInspectionLoading((current) => ({ ...current, [competitionId]: true }));
+    WarpScoresApiService.inspectCyanideCompetition(competitionId, 5, ...auth)
+      .then((inspection) => setCyanideInspections((current) => ({ ...current, [competitionId]: inspection })))
+      .catch(fail).finally(() => setCyanideInspectionLoading((current) => ({ ...current, [competitionId]: false })));
   };
   const prepareCandidate = (candidate) => {
     setPreparedCandidate(candidate);
@@ -201,7 +227,7 @@ function AdminPage() {
         </SimpleGrid>
         {(cyanideSearchResults.leagueDetails.length > 0 || cyanideSearchResults.competitionDetails.length > 0) && <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={5} mt={4}>
           <Box><Heading size="xs" mb={2}>Leagues</Heading><VStack align="stretch">{cyanideSearchResults.leagueDetails.map((item) => <Box key={item.id?.key || item.name} borderWidth="1px" borderRadius="md" p={3}><Text fontWeight="bold">{item.name}</Text><Text color="gray.500" fontSize="sm">{item.id?.key || item.id?.value}</Text></Box>)}</VStack></Box>
-          <Box><Heading size="xs" mb={2}>Competitions</Heading><VStack align="stretch">{cyanideSearchResults.competitionDetails.map((item) => { const registered = registeredSources.some((entry) => entry.sourceEntityId?.key === item.id?.key); return <Box key={item.id?.key || item.name} borderWidth="1px" borderRadius="md" p={3}><HStack justify="space-between" align="start"><Box><Text fontWeight="bold">{item.name}</Text><Text color="gray.500" fontSize="sm">{item.leagueName} · {item.status || 'Unknown status'} · {item.format || 'Unknown format'}</Text><Text color="gray.500" fontSize="xs">{item.id?.key}</Text></Box><Button size="sm" colorScheme="blue" isDisabled={!selectedSeasonId || registered || !item.id?.key} onClick={() => registerCandidate(item)}>{registered ? 'Registered' : selectedSeasonId ? 'Add to season' : 'Choose working season'}</Button></HStack></Box>; })}</VStack></Box>
+          <Box><Heading size="xs" mb={2}>Competitions</Heading><VStack align="stretch">{cyanideSearchResults.competitionDetails.map((item) => { const competitionId = item.id?.key; const registered = registeredSources.some((entry) => entry.sourceEntityId?.key === competitionId); const isInspected = Boolean(openCyanideInspections[competitionId]); const inspection = cyanideInspections[competitionId]; const isLoadingInspection = Boolean(cyanideInspectionLoading[competitionId]); return <Box key={competitionId || item.name} borderWidth="1px" borderRadius="md" p={3}><HStack justify="space-between" align="start"><Box><Text fontWeight="bold">{item.name}</Text><Text color="gray.500" fontSize="sm">{item.leagueName} · {item.status || 'Unknown status'} · {item.format || 'Unknown format'}</Text><Text mt={1} fontSize="sm">{item.teamsCount ?? '?'}{item.teamsMax != null ? `/${item.teamsMax}` : ''} teams · {item.playedMatches ?? '?'}{item.totalMatches != null ? `/${item.totalMatches}` : ''} matches · round {item.currentRound ?? '?'}{item.totalRounds != null ? `/${item.totalRounds}` : ''}</Text>{item.liveMatches > 0 && <Text color="orange.400" fontSize="sm">{item.liveMatches} live</Text>}<Text color="gray.500" fontSize="xs">{competitionId}</Text></Box><VStack align="end"><Button size="sm" colorScheme="blue" isDisabled={!selectedSeasonId || registered || !competitionId} onClick={() => registerCandidate(item)}>{registered ? 'Registered' : selectedSeasonId ? 'Add to season' : 'Choose working season'}</Button><Tooltip label={isInspected ? 'Close inspection' : 'Inspect latest matches'}><IconButton size="sm" variant={isInspected ? 'solid' : 'outline'} colorScheme={isInspected ? 'blue' : undefined} aria-label={isInspected ? `Close inspection for ${item.name}` : `Inspect ${item.name}`} icon={<SearchIcon />} isDisabled={!competitionId} isLoading={isLoadingInspection} onClick={() => inspectCyanideCompetition(item)} /></Tooltip></VStack></HStack>{isInspected && <Box mt={3} pt={3} borderTopWidth="1px">{isLoadingInspection && !inspection ? <Text color="gray.500">Reading contest metadata from Cyanide…</Text> : !inspection?.contests?.length ? <Text color="gray.500">No played contests found.</Text> : <><Text fontSize="sm" mb={2}>Latest played: {formatter.formatAsDate(inspection.latestMatch, 'unknown')}</Text><VStack align="stretch">{inspection.contests.map((contest) => <Box key={contest.contestId || contest.matchId} borderWidth="1px" borderRadius="md" p={2}><Text fontWeight="bold">{(contest.teams || []).map((team) => `${team.name || '-'} ${team.score ?? '-'}`).join(' – ')}</Text><Text fontSize="sm" color="gray.500">{(contest.teams || []).map((team) => [team.coach, team.race].filter(Boolean).join(' · ')).join(' / ')}</Text><Text fontSize="xs" color="gray.500">Round {contest.round ?? '?'} · {contest.status || 'Unknown status'} · {formatter.formatAsDate(contest.matchDate, 'No date')}</Text></Box>)}</VStack></>}</Box>}</Box>; })}</VStack></Box>
         </SimpleGrid>}
       </Box>
       {selectedSystemId && <Box><HStack mb={2}><Heading size="sm">Potential new seasons and sources</Heading><Button size="sm" onClick={scanForCandidates}>Scan database</Button></HStack><VStack align="stretch">{discoveryCandidates.map((candidate) => { const registered = registeredSources.some((entry) => entry.sourceEntityId?.key === candidate.sourceEntityId); return <Box key={candidate.candidateId} borderWidth="1px" borderRadius="md" p={3}><HStack justify="space-between"><Box><Text fontWeight="bold">{candidate.competitionName || candidate.sourceEntityId}</Text><Text color="gray.500">{candidate.leagueName} · Suggested season {candidate.suggestedSeasonNumber ?? '?'} · {candidate.matchCount} known matches</Text></Box><Button size="sm" colorScheme="blue" isDisabled={!selectedSeasonId || registered} onClick={() => registerDiscoveryCandidate(candidate)}>{registered ? 'Registered' : selectedSeasonId ? 'Add to season' : 'Choose working season'}</Button></HStack></Box>; })}{discoveryCandidates.length === 0 && <Text color="gray.500">Scan to find match sources that are not configured yet. Scanning does not fetch matches.</Text>}</VStack></Box>}

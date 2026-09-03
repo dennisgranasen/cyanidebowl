@@ -13,6 +13,7 @@ public record StageMatchResponse(
         String game,
         String platform,
         String sourceMatchKey,
+        Identity sourceMatchId,
         String sourceCompetitionId,
         Date startedAt,
         Date finishedAt,
@@ -34,6 +35,7 @@ public record StageMatchResponse(
                 match.game() == null ? null : match.game().name(),
                 match.platform() == null ? null : match.platform().name(),
                 match.sourceMatchKey(),
+                match.sourceMatchId(),
                 match.sourceCompetitionId() == null ? null : match.sourceCompetitionId().asMongoKey(),
                 match.startedAt(),
                 match.finishedAt(),
@@ -47,7 +49,8 @@ public record StageMatchResponse(
                                     && index < match.coaches().length && match.coaches()[index] != null) {
                                 coachName = match.coaches()[index].getName();
                             }
-                            return new TeamResult(team.getId(), team.getName(), team.getScore(), coachName,
+                            return new TeamResult(team.getId(), team.getName(), team.getScore(),
+                                team.getInflictedtouchdowns(), coachName,
                                 team.getRace(), team.getRaceId(), team.getLogo(), team.getInflictedcasualties());
                         })
                         .toList(),
@@ -61,7 +64,7 @@ public record StageMatchResponse(
                 CountingRules.from(match.countsFor()));
     }
 
-    public record TeamResult(Identity id, String name, Integer score, String coachName, String race,
+    public record TeamResult(Identity id, String name, Integer score, Integer touchdowns, String coachName, String race,
                              Integer raceId, String logo, Integer casualties) {
     }
 

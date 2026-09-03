@@ -34,7 +34,10 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
 
   useEffect(() => {
       if (contestOrMatch) {
-        if (identityUtils.opus(contestOrMatch.id) > 1) {
+        if (contestOrMatch.matchId) {
+          setContest(contestOrMatch);
+          setTeams(contestOrMatch.teams || []);
+        } else if (identityUtils.opus(contestOrMatch.id) > 1) {
           setContest(contestOrMatch);
           setTeams(contestOrMatch.opponents);
         } else {

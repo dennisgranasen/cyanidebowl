@@ -164,6 +164,8 @@ export default {
     getDataWithAuthentication(`/admin/seasons/${encodeURIComponent(seasonId)}/registered-source-inspections`, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   inspectRegisteredSource: async (sourceId, limit, getAccessTokenSilently, getAccessTokenWithPopup) =>
     getDataWithAuthentication(`/admin/registered-sources/${encodeURIComponent(sourceId)}/matches?limit=${limit || 10}`, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  inspectCyanideCompetition: async (competitionId, limit, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    getDataWithAuthentication(`/admin/cyanide-competitions/${encodeURIComponent(competitionId)}/inspection?limit=${limit || 5}`, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   registerSource: async (seasonId, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
     postDataWithAuthentication(`/admin/seasons/${encodeURIComponent(seasonId)}/registered-sources`, data, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   createMatchSelection: async (stageId, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
@@ -377,7 +379,7 @@ export default {
       .catch(handleError),
 
   match: async (matchId) =>
-    axios(`/matches/${matchId.key || matchId}`)
+    axios(`/matches/${encodeURIComponent(matchId.key || matchId)}`)
       .then(returnData)
       .catch(handleError),
   // competitions

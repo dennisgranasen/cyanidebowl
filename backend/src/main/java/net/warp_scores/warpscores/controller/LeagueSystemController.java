@@ -116,6 +116,9 @@ public class LeagueSystemController {
         if (season.getNumber() == null) {
             return ResponseEntity.badRequest().build();
         }
+        if (season.getId() == null || season.getId().isBlank()) {
+            season.setId(UUID.randomUUID().toString());
+        }
         season.setLeagueSystemId(leagueSystemId);
         normalizeSeason(season);
         return ResponseEntity.status(201).body(seasons.save(season));

@@ -58,12 +58,10 @@ function MatchModal({ isOpen, onClose, match, contest }) {
   const [matchData, setMatch] = useState(null);
   
   useEffect(() => {
-    setMatch(match || contest.match);
-
-    if (matchData && matchData.teams && matchData.teams.length > 0) {
-      let sortedTeams = [];
-      matchData.teams.forEach((team) => {
-        let sortedPlayers = team.players.sort((a, b) => {
+    const value = match || contest?.match;
+    if (value && value.teams && value.teams.length > 0) {
+      const sortedTeams = value.teams.map((team) => {
+        const sortedPlayers = [...(team.players || [])].sort((a, b) => {
           if (a.number && b.number) {
             return a.number - b.number;
           } else if (a.number) {
@@ -74,15 +72,12 @@ function MatchModal({ isOpen, onClose, match, contest }) {
             return a.name.localeCompare(b.name);
           }
         });
-        team.players = sortedPlayers;
-        sortedTeams.push(team);
+        return { ...team, players: sortedPlayers };
       });
-      matchData.teams = sortedTeams;
+      setMatch({ ...value, teams: sortedTeams });
+    } else {
+      setMatch(value || null);
     }
-
-    if (matchData && matchData.teams) 
-      console.log(matchData.teams);
-
   }, [match, contest]);
 
   // Always render the Modal, but only show it when conditions are met
@@ -93,7 +88,7 @@ function MatchModal({ isOpen, onClose, match, contest }) {
       <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(5px)" />
       <ModalContent backgroundColor="warpScoresBackgroundColor">
         <ModalCloseButton />
-        <ModalHeader>{([matchData?.leagueName, matchData?.competitionName].join(".")) ||  contest?.competitionName}</ModalHeader>
+        <ModalHeader>{[matchData?.leagueName, matchData?.competitionName].filter(Boolean).join(' · ') || contest?.competitionName || 'Matchstatistik'}</ModalHeader>
         <ModalBody>
           {matchData && (!contest || contest.status === 'Validated') && (
             <>

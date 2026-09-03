@@ -43,6 +43,7 @@ class StageControllerIntegrationTest {
         HttpResponse<String> success = get("stage-1");
         assertThat(success.statusCode()).isEqualTo(200);
         assertThat(success.body()).contains("\"sourceMatchKey\":\"match-1\"");
+        assertThat(success.body()).contains("\"sourceMatchId\"");
         assertThat(success.body()).doesNotContain("interpretation");
 
         when(stageMatchService.getMatchesForStage("missing"))

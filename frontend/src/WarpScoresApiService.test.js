@@ -35,6 +35,12 @@ describe('WarpScoresApiService', () => {
     );
   });
 
+  test('URL-encodes a canonical match identity', async () => {
+    await WarpScoresApiService.match({ key: '3_match/with space' });
+
+    expect(axios).toHaveBeenCalledWith('/matches/3_match%2Fwith%20space');
+  });
+
     test('uses URL-safe authenticated LeagueSystem CRUD routes', async () => {
       const source = { id: 'source-1', sourceEntityId: '3_league_competition' };
 
