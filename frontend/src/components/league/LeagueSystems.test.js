@@ -1,4 +1,4 @@
-import { bracketCanvasHeight, inferPlayoffRounds, matchesByMatchDay, nextPlayoffMatch } from './LeagueSystems';
+import { bracketCanvasHeight, inferPlayoffRounds, matchesByMatchDay, matchResourceIdFor, nextPlayoffMatch } from './LeagueSystems';
 
 const playoffMatch = (key, finishedAt, home, away, homeScore, awayScore) => ({
   sourceMatchKey: key,
@@ -187,4 +187,11 @@ test('keeps a six-team round robin at five match days when an early match is pos
     const teams = dayMatches.flatMap((match) => match.teams.map((team) => team.name));
     expect(new Set(teams).size).toBe(6);
   });
+});
+
+test('uses only canonical BlaskScore match identities for match details', () => {
+  expect(matchResourceIdFor({ matchResourceId: '3-internal' })).toBe('3-internal');
+  expect(matchResourceIdFor({ sourceMatchId: { key: '2_internal' }, sourceMatchKey: 'external' })).toBe('2_internal');
+  expect(matchResourceIdFor({ sourceMatchId: '1_internal', sourceMatchKey: 'external' })).toBe('1_internal');
+  expect(matchResourceIdFor({ sourceMatchKey: 'external' })).toBeNull();
 });

@@ -410,14 +410,24 @@ function StageRoundMatches({ stage, onMatchClick }) {
   return <Box mt={5}><Heading size="sm" mb={2}>Matcher per omgång</Heading><Tabs defaultIndex={initialIndex} isLazy><TabList overflowX="auto">{rounds.map(([round]) => <Tab key={round} flexShrink={0}>Omgång {round}</Tab>)}</TabList><TabPanels>{rounds.map(([round, matches]) => <TabPanel key={round} px={0}><SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing={3}>{[...matches].sort((a, b) => matchTime(a) - matchTime(b)).map((match) => <RichMatchCard key={match.sourceMatchKey} match={match} onMatchClick={onMatchClick} />)}</SimpleGrid></TabPanel>)}</TabPanels></Tabs></Box>;
 }
 
+export const matchResourceIdFor = (summary) => summary?.matchResourceId
+  || summary?.sourceMatchId?.key
+  || (typeof summary?.sourceMatchId === 'string' && /^\d+_/.test(summary.sourceMatchId)
+    ? summary.sourceMatchId : null);
+
 function MatchDetails({ summary, isOpen, onClose }) {
   const [match, setMatch] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
   React.useEffect(() => {
     if (!isOpen || !summary) return;
+    const matchResourceId = matchResourceIdFor(summary);
+    if (!matchResourceId) {
+      setMatch(null); setLoading(false); setError('Matchen saknar ett internt BlaskScore-ID.');
+      return;
+    }
     setMatch(null); setError(null); setLoading(true);
-    WarpScoresApiService.match(summary.sourceMatchId || summary.sourceMatchKey)
+    WarpScoresApiService.match(matchResourceId)
       .then((result) => result ? setMatch(result) : setError('Matchstatistiken hittades inte.'))
       .catch(() => setError('Matchstatistiken kunde inte hämtas.'))
       .finally(() => setLoading(false));
