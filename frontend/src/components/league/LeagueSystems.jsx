@@ -6,10 +6,12 @@ import { MatchComponent } from '../competition/KnockoutCompetition';
 import Standings from '../common/Standings';
 import MatchModalWithRosters from '../contest/MatchModalWithRosters';
 import WarpScoresApiService from '../../WarpScoresApiService';
+import { resolveRace } from '../../util/raceUtil';
 
 const orderedSeasons = (system) => [...(system?.seasons || [])].sort((a, b) => (b.sequence ?? b.number ?? 0) - (a.sequence ?? a.number ?? 0));
 const matchScore = (match, index) => match.officialScore?.[index ? 'away' : 'home'] ?? match.sourceScore?.[index ? 'away' : 'home'] ?? match.teams?.[index]?.score;
 const playedScore = (match, index) => match.teams?.[index]?.touchdowns ?? match.sourceScore?.[index ? 'away' : 'home'] ?? match.teams?.[index]?.score;
+const matchOpus = (match) => Number(String(match.game || 'BB3').replace('BB', '')) || 3;
 
 function standingsFor(stage) {
   const teams = new Map();
@@ -261,7 +263,7 @@ function PlayoffBracket({ phase, onMatchClick }) {
         status: 'PLAYED',
         teamName: team.name,
         coachName: team.coachName,
-        race: team.race,
+        race: resolveRace(team, matchOpus(match)),
         picture: team.logo,
       })),
       startTime: match.finishedAt || match.startedAt,
@@ -313,7 +315,7 @@ function PlayoffBracket({ phase, onMatchClick }) {
   });
   const bronzeBracketMatch = bronze && bracketMatches.find((match) => match.id === bronze.sourceMatchKey);
   const bronzeWinner = bronze && winnerName(bronze);
-  const bronzeParties = bronze && bronze.teams.map((team, index) => ({ id: team.id || { value: team.name, opus: 3 }, resultText: `${playedScore(bronze, index) ?? '-'}`, teamName: team.name, coachName: team.coachName, race: team.race, picture: team.logo }));
+  const bronzeParties = bronze && bronze.teams.map((team, index) => ({ id: team.id || { value: team.name, opus: 3 }, resultText: `${playedScore(bronze, index) ?? '-'}`, teamName: team.name, coachName: team.coachName, race: resolveRace(team, matchOpus(bronze)), picture: team.logo }));
   const roundLabels = ['Play-in', 'Quarterfinals', 'Semifinals', 'Final'];
   const bracketStyle = { width: 240, boxHeight: 86, canvasPadding: 8, spaceBetweenColumns: 18, spaceBetweenRows: 8, roundSeparatorWidth: 8, horizontalOffset: 6, roundHeader: { isShown: true, height: 20, marginBottom: 6, fontSize: 10, roundTextGenerator: (roundNumber, totalRounds) => roundLabels[roundLabels.length - totalRounds + roundNumber - 1] || `Round ${roundNumber}` } };
   const requiredHeight = bracketCanvasHeight(rounds, bracketStyle);
@@ -340,7 +342,7 @@ function RichMatchCard({ match, onMatchClick }) {
     resultText: `${playedScore(match, index) ?? '-'}`,
     teamName: team.name,
     coachName: team.coachName,
-    race: team.race,
+    race: resolveRace(team, matchOpus(match)),
     picture: team.logo,
   }));
   if (parties.length < 2) return null;

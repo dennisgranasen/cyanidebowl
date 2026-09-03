@@ -33,12 +33,14 @@ const opusSpecificRaces = {
   "1_12": "Norse",    // Amazon for BB3
   "1_13": "Amazon",    // Amazon for BB2
   "2_13": "Amazon",    // Amazon for BB2
+  "3_13": "Vampire",
   "1_14": "Elf",       // Just Elf in BB1 and 2
   "2_14": "Elf",   
   "1_15": "High Elf",
   "2_15": "High Elf",
   "1_16": "Khemri",
   "2_16": "Khemri",
+  "3_16": "Chaos Dwarf",
   "2_24": "Bretonnia", // Bretonnia for BB3
 };
 
@@ -76,7 +78,18 @@ const toRace = (raceId, opus) => {
   return raceTable[raceId] || "Unknown Race";
 }
 
+// Cyanide responses and older stored matches can contain a stale textual race
+// alongside the numeric id. The id is the stable source of truth; the text is
+// only a fallback for records where no id was imported.
+const resolveRace = (team, opus) => {
+  if (team?.raceId !== null && team?.raceId !== undefined) {
+    return toRace(team.raceId, opus);
+  }
+  return team?.race || "Unknown Race";
+};
+
 export {
   getRaceLogo,
+  resolveRace,
   toRace
 };

@@ -6,7 +6,7 @@ import formatter from '../../util/formatter';
 import config from '../../config';
 import ScoreOrIcon from './ScoreOrIcon';
 import prettyPrint from '../../util/prettyPrint';
-import { toRace, getRaceLogo } from '../../util/raceUtil';
+import { resolveRace, getRaceLogo } from '../../util/raceUtil';
 import { identityUtils } from '../../util/identityUtil';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import MatchModal from './MatchModalWithRosters'; // Import the modal component
@@ -106,7 +106,13 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
     coaches = contestOrMatch.coaches;
   }
   
-  let opus = contestOrMatch?.id ? identityUtils.opus(contestOrMatch?.id) : 3;
+  const opusIdentity = contestOrMatch?.id
+    || contestOrMatch?.matchResourceId
+    || contestOrMatch?.matchId
+    || teams[0]?.id;
+  const opus = identityUtils.opus(opusIdentity);
+  const firstRace = resolveRace(teams[0], opus);
+  const secondRace = resolveRace(teams[1], opus);
   // Determine if the card should be clickable
   
   return (
@@ -141,14 +147,14 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
                   <TeamAndCoach
                     teamName={teams[0]?.name}
                     coachName={coaches[0].coachName || coaches[0].name}
-                    race={teams[0].race || toRace(teams[0].race || teams[0].raceId, opus)}
+                    race={firstRace}
                   />
                 </GridItem>
                 <GridItem colSpan={4} align="right">
                   <TeamAndCoach
                     teamName={teams[1].name}
                     coachName={coaches[1].coachName || coaches[1].name}
-                    race={teams[1].race || toRace(teams[1].race || teams[1].raceId, opus)}
+                    race={secondRace}
                     reverse
                   />
                 </GridItem>
@@ -157,7 +163,7 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
                     <Image
                       objectFit="contain"
                       maxW="64px"
-                      src={imageUrls.logo(teams[0].logo, opus)}
+                      src={imageUrls.logo(teams[0].logo || getRaceLogo(teams[0].raceId ?? firstRace, opus), opus)}
                       fallback={<QuestionOutlineIcon boxSize={boxSize} />}
                     />
                   </Center>
@@ -170,7 +176,7 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
                     <Image
                       objectFit="contain"
                       maxW="64px"
-                      src={imageUrls.logo(teams[1].logo || getRaceLogo(teams[1].race, opus), opus)}
+                      src={imageUrls.logo(teams[1].logo || getRaceLogo(teams[1].raceId ?? secondRace, opus), opus)}
                       fallback={<QuestionOutlineIcon boxSize={boxSize} />}
                     />
                   </Center>
