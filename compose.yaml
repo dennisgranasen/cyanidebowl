@@ -115,28 +115,13 @@ services:
         start_period: 15s
 
   # ========================================================
-  # 4. Nginx Proxy Manager (NPM)
-  # ========================================================
-  npm:
-    image: 'jc21/nginx-proxy-manager:latest'
-    container_name: npm
-    restart: unless-stopped
-    ports:
-      - '127.0.0.1:81:81'
-    volumes:
-      - npm_data:/data
-      - npm_letsencrypt:/etc/letsencrypt
-    networks:
-      - internal_net
-
-  # ========================================================
   # 5. Cloudflare Tunnel
   # ========================================================
   cloudflared:
     image: cloudflare/cloudflared:latest
-    container_name: cloudflared
+    container_name: cyanidebowl-cloudflared
     restart: unless-stopped
-    command: tunnel run
+    command: tunnel run --url http://cyanidebowl-frontend:80
     environment:
       - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
     networks:
