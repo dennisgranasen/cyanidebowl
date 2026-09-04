@@ -37,10 +37,13 @@ public class SteamConnectionController {
                 result.put("connected", true);
                 result.put("steamUsername", current.get("steamUsername"));
                 result.put("steamId", current.get("steamId"));
+                result.put("coachIds", coachIds(user));
                 return result;
             } catch (RuntimeException ignored) { /* expired cookie */ }
         }
-        return Map.of("connected", false, "steamUsername", user.getSteamUsername() == null ? "" : user.getSteamUsername());
+        return Map.of("connected", false,
+                "steamUsername", user.getSteamUsername() == null ? "" : user.getSteamUsername(),
+                "coachIds", coachIds(user));
     }
 
     @PostMapping("/auth")
@@ -108,6 +111,9 @@ public class SteamConnectionController {
         if (!(teams instanceof List<?> list)) return List.of();
         return list.stream().filter(Map.class::isInstance).map(Map.class::cast)
                 .map(team -> team.get("coachId")).filter(String.class::isInstance).map(String.class::cast).toList();
+    }
+    private List<String> coachIds(WarpScoresUser user) {
+        return user.getCoachIds() == null ? List.of() : java.util.Arrays.asList(user.getCoachIds());
     }
     public record SteamLogin(String username, String password) {}
     public record GuardCode(String code) {}
