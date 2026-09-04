@@ -29,7 +29,7 @@ class PublicLeagueSystemControllerTest {
         PhaseRepository phases = mock(PhaseRepository.class);
         StageMatchService stageMatches = mock(StageMatchService.class);
         PublicLeagueSystemController controller = new PublicLeagueSystemController(
-                leagueSystems, seasons, stages, phases, stageMatches);
+                leagueSystems, seasons, stages, phases, stageMatches, null);
         LeagueSystem system = new LeagueSystem();
         system.setId("nst");
         system.setName("Nordic Stadium");
@@ -75,7 +75,7 @@ class PublicLeagueSystemControllerTest {
             PhaseRepository phases = mock(PhaseRepository.class);
             StageMatchService stageMatches = mock(StageMatchService.class);
             PublicLeagueSystemController controller = new PublicLeagueSystemController(
-                    leagueSystems, seasons, stages, phases, stageMatches);
+                    leagueSystems, seasons, stages, phases, stageMatches, null);
             LeagueSystem system = new LeagueSystem();
             system.setId("nst");
             Season season = new Season();

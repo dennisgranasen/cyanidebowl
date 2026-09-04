@@ -61,6 +61,7 @@ public class SecurityConfiguration {
                         // user endpoint
                         .requestMatchers(GET, "/userPermissions").permitAll()
                         .requestMatchers("/user/steam/**").authenticated()
+                        .requestMatchers("/user/statistics/**").authenticated()
                         // endpoints needing authentication
                             .requestMatchers("/admin/**").authenticated()
                         .requestMatchers(POST, "/circuits/**").authenticated()
@@ -82,7 +83,7 @@ public class SecurityConfiguration {
                         .requestMatchers(GET, "/knockout/**").permitAll()
                         .requestMatchers(GET, "/league/**").permitAll()
                             .requestMatchers(GET, "/league-systems").permitAll()
-                            .requestMatchers(GET, "/league-systems/*/overview").permitAll()
+                            .requestMatchers(GET, "/league-systems/**").permitAll()
                         .requestMatchers(GET, "/leagues/**").permitAll()
                         .requestMatchers(GET, "/match/**").permitAll()
                         .requestMatchers(GET, "/matches/**").permitAll()

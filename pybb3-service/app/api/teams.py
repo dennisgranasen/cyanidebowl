@@ -7,7 +7,12 @@ router=APIRouter(prefix="/sessions",tags=["Teams"])
 def my_teams(session_id:str,owner:str=Depends(trusted_owner),size:int=Query(50,ge=1,le=100),start:int=Query(0,ge=0)):
     try:
         root=session_manager.call(owner,session_id,lambda client:client.get_teams_of_gamer(size=size,start=start))
-        return teams_response(root,start=start,size=size)
+        result=teams_response(root,start=start,size=size)
+        coach_id,coach_name=session_manager.coach_info(owner,session_id)
+        for team in result["items"]:
+            team["coachId"] = team.get("coachId") or coach_id
+            team["coachName"] = team.get("coachName") or coach_name
+        return result
     except SessionNotFound as error:raise HTTPException(404,str(error)) from error
     except (ValueError,RuntimeError,OSError) as error:raise HTTPException(502,"Unable to retrieve BB3 teams") from error
 @router.get("/{session_id}/teams/{team_id}/roster")

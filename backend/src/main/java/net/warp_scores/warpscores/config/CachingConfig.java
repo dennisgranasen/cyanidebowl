@@ -21,6 +21,8 @@ import static net.warp_scores.warpscores.CacheNames.ARENA_RACES;
 import static net.warp_scores.warpscores.CacheNames.ARENA_TEAMS;
 import static net.warp_scores.warpscores.CacheNames.DOMAIN_NAF_COACH;
 import static net.warp_scores.warpscores.CacheNames.REST_NAF_COACH;
+import static net.warp_scores.warpscores.CacheNames.SEASON_STATISTICS;
+import static net.warp_scores.warpscores.CacheNames.MARATHON_STATISTICS;
 
 @Configuration
 @EnableCaching
@@ -34,7 +36,9 @@ public class CachingConfig {
             @Qualifier(ARENA_TEAMS) final Cache<Object, Object> arenaTeamsCache,
             @Qualifier(ARENA_RACES) final Cache<Object, Object> arenaRacesCache,
             @Qualifier(REST_NAF_COACH) final Cache<Object, Object> restNafCoachCache,
-            @Qualifier(DOMAIN_NAF_COACH) final Cache<Object, Object> domainNafCoachCache
+            @Qualifier(DOMAIN_NAF_COACH) final Cache<Object, Object> domainNafCoachCache,
+            @Qualifier(SEASON_STATISTICS) final Cache<Object, Object> seasonStatisticsCache,
+            @Qualifier(MARATHON_STATISTICS) final Cache<Object, Object> marathonStatisticsCache
     ) {
         SimpleCacheManager cacheManager = new SimpleCacheManager();
         cacheManager.setCaches(List.of(
@@ -44,7 +48,9 @@ public class CachingConfig {
                 new CaffeineCache(ARENA_TEAMS, arenaTeamsCache),
                 new CaffeineCache(ARENA_RACES, arenaRacesCache),
                 new CaffeineCache(REST_NAF_COACH, restNafCoachCache),
-                new CaffeineCache(DOMAIN_NAF_COACH, domainNafCoachCache)));
+                new CaffeineCache(DOMAIN_NAF_COACH, domainNafCoachCache),
+                new CaffeineCache(SEASON_STATISTICS, seasonStatisticsCache),
+                new CaffeineCache(MARATHON_STATISTICS, marathonStatisticsCache)));
         return cacheManager;
     }
 
@@ -116,6 +122,18 @@ public class CachingConfig {
                 .expireAfterWrite(10, TimeUnit.MINUTES)
                 .recordStats()
                 .build();
+    }
+
+    @Bean
+    @Qualifier(SEASON_STATISTICS)
+    public Cache<Object, Object> seasonStatisticsCache() {
+        return Caffeine.newBuilder().maximumSize(500).expireAfterWrite(10, TimeUnit.MINUTES).recordStats().build();
+    }
+
+    @Bean
+    @Qualifier(MARATHON_STATISTICS)
+    public Cache<Object, Object> marathonStatisticsCache() {
+        return Caffeine.newBuilder().maximumSize(500).expireAfterWrite(10, TimeUnit.MINUTES).recordStats().build();
     }
 
 }

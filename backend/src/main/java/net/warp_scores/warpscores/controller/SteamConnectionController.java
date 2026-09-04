@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.List;
+import java.util.Collection;
 
 @RestController
 @RequestMapping("/user/steam")
@@ -79,8 +81,10 @@ public class SteamConnectionController {
             throw new net.warp_scores.warpscores.service.PyBb3ServiceException(401, "Connect Steam to view your teams");
         int safeSize = Math.max(1, Math.min(size, 100));
         int safeStart = Math.max(0, start);
-        return pybb3.get("/api/v1/sessions/" + session + "/teams?size=" + safeSize + "&start=" + safeStart,
+        Map<String,Object> result = pybb3.get("/api/v1/sessions/" + session + "/teams?size=" + safeSize + "&start=" + safeStart,
                 auth.getName());
+        profiles.rememberCoachIds(auth.getToken(), coachIds(result));
+        return result;
     }
 
     private void complete(Map<String,Object> result, JwtAuthenticationToken auth, HttpServletResponse response) {
@@ -98,6 +102,12 @@ public class SteamConnectionController {
     }
     private Map<String,Object> withoutSessionId(Map<String,Object> source) {
         var copy = new java.util.HashMap<>(source); copy.remove("sessionId"); return copy;
+    }
+    private Collection<String> coachIds(Map<String,Object> response) {
+        Object teams = response.get("items");
+        if (!(teams instanceof List<?> list)) return List.of();
+        return list.stream().filter(Map.class::isInstance).map(Map.class::cast)
+                .map(team -> team.get("coachId")).filter(String.class::isInstance).map(String.class::cast).toList();
     }
     public record SteamLogin(String username, String password) {}
     public record GuardCode(String code) {}

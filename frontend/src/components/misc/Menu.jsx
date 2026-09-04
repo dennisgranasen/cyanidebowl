@@ -139,13 +139,7 @@ function Menu() {
                     </Link>
                   </Box>
                 )}
-                {checkPermissions && userPermissions?.writeSiteAdmin && (
-                  <Box>
-                    <Link variant="menu" as={RouteLink} to="/statistics" onClick={() => onClose()}>
-                      Statistics
-                    </Link>
-                  </Box>
-                )}
+                <Box><Link variant="menu" as={RouteLink} to="/statistics" onClick={onClose}>Statistics</Link></Box>
                 {isProduction && authenticationReady && (
                   <Box>
                     {!isAuthenticated ? (
@@ -162,6 +156,9 @@ function Menu() {
                 )}
                 {authenticationReady && isAuthenticated && (
                   <Box><Link variant="menu" as={RouteLink} to="/account" onClick={onClose}>Account &amp; Steam</Link></Box>
+                )}
+                {authenticationReady && isAuthenticated && (
+                  <Box><Link variant="menu" as={RouteLink} to="/my-statistics" onClick={onClose}>My statistics</Link></Box>
                 )}
                 <Box>
                   <Link variant="menu" as={RouteLink} to="/about" onClick={() => onClose()}>

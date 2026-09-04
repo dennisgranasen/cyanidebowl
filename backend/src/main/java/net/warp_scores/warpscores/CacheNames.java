@@ -9,4 +9,6 @@ public interface CacheNames {
     String ARENA_COACHES = "ArenaCoaches";
     String ARENA_COACH_TEAMS = "ArenaCoachTeams";
     String ARENA_INFOS = "ArenaInfos";
+    String SEASON_STATISTICS = "seasonStatistics";
+    String MARATHON_STATISTICS = "marathonStatistics";
 }

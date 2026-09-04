@@ -8,7 +8,9 @@ import xml.etree.ElementTree as ET
 def teams_response(root: ET.Element, *, start: int, size: int) -> dict:
     """Map ResponseGetTeams to stable JSON without exposing protocol XML."""
     elements = root.findall("./Teams/Team") or root.findall(".//Team")
-    items = [_team(element) for element in elements]
+    owner_id = _decoded(root, "GamerId", "IdGamer") or _nested_decoded(root, ("Gamer",), ("Id", "GamerId"))
+    owner_name = _decoded(root, "GamerName") or _nested_decoded(root, ("Gamer",), ("Name",))
+    items = [_team(element, owner_id, owner_name) for element in elements]
     total = _first_int(root, "Total", "TotalCount", "NbTeams", "Count")
     return {
         "items": items, "start": start, "size": size, "count": len(items), "total": total,
@@ -16,7 +18,7 @@ def teams_response(root: ET.Element, *, start: int, size: int) -> dict:
     }
 
 
-def _team(team: ET.Element) -> dict:
+def _team(team: ET.Element, owner_id: str | None = None, owner_name: str | None = None) -> dict:
     return {
         "id": _decoded(team, "Id", "IdTeam", "TeamId"),
         "name": _decoded(team, "Name"),
@@ -25,6 +27,8 @@ def _team(team: ET.Element) -> dict:
         "logoId": _decoded(team, "LogoId", "IdLogo"),
         "isCustom": _first_bool(team, "IsCustom"),
         "isTemplate": _first_bool(team, "IsTemplate"),
+        "coachId": _decoded(team, "CoachId", "IdCoach", "GamerId", "IdGamer") or _nested_decoded(team, ("Coach", "Gamer"), ("Id", "IdCoach", "IdGamer")) or owner_id,
+        "coachName": _decoded(team, "CoachName", "GamerName") or _nested_decoded(team, ("Coach", "Gamer"), ("Name",)) or owner_name,
     }
 
 
@@ -40,6 +44,15 @@ def _decoded(element: ET.Element, *names: str) -> str | None:
     if value is None: return None
     try: return base64.b64decode(value, validate=True).decode("utf-8")
     except (binascii.Error, UnicodeDecodeError): return value
+
+
+def _nested_decoded(element: ET.Element, parents: tuple[str, ...], names: tuple[str, ...]) -> str | None:
+    for parent_name in parents:
+        parent = element.find(parent_name)
+        if parent is not None:
+            value = _decoded(parent, *names)
+            if value is not None: return value
+    return None
 
 
 def _first_int(element: ET.Element, *names: str) -> int | None:

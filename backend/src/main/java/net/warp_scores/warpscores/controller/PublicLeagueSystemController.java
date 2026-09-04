@@ -10,6 +10,7 @@ import net.warp_scores.warpscores.model.Phase;
 import net.warp_scores.warpscores.model.Season;
 import net.warp_scores.warpscores.model.Stage;
 import net.warp_scores.warpscores.service.StageMatchService;
+import net.warp_scores.warpscores.service.StatisticsService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,6 +32,23 @@ public class PublicLeagueSystemController {
         private final StageRepository stages;
         private final PhaseRepository phases;
         private final StageMatchService stageMatchService;
+        private final StatisticsService statisticsService;
+
+    @GetMapping("/league-systems/{leagueSystemId}/seasons/{seasonId}/statistics")
+    public StatisticsResponse.Dashboard seasonStatistics(@PathVariable String leagueSystemId,
+            @PathVariable String seasonId) {
+        return statisticsService.season(leagueSystemId, seasonId);
+    }
+
+    @GetMapping("/league-systems/{leagueSystemId}/statistics/marathon")
+    public StatisticsResponse.Marathon marathonStatistics(@PathVariable String leagueSystemId,
+            @RequestParam(defaultValue = "ALL") String edition,
+            @RequestParam(defaultValue = "false") boolean mergeTeamsByName,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "25") int size,
+            @RequestParam(defaultValue = "points") String sort) {
+        return statisticsService.marathon(leagueSystemId, edition, mergeTeamsByName, page, size, sort);
+    }
 
     @GetMapping("/league-systems")
     public List<LeagueSystemSummary> getLeagueSystems() {

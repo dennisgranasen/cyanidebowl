@@ -1,24 +1,10 @@
-import React from 'react';
-import { Box, Heading, HStack, Stack } from '@chakra-ui/react';
-import { FaRegFaceSadTear } from 'react-icons/fa6';
-import { Icon } from '@chakra-ui/icons';
+import React,{useEffect,useState} from 'react';
+import { Button,Checkbox,Heading,HStack,Select,Spinner,Stack,Tab,TabList,TabPanel,TabPanels,Tabs,Text } from '@chakra-ui/react';
 import Navigation from '../components/misc/Navigation';
-
-function StatisticsPage() {
-  return (
-    <Stack>
-      <Box>
-        <Navigation currentPage="home" />
-      </Box>
-      <Box>
-        <Heading size="md">Statistics</Heading>
-        <HStack spacing={2} mt="10" align="left">
-          <Icon as={FaRegFaceSadTear} size="lg" />
-          <Box>Not available yet...</Box>
-        </HStack>
-      </Box>
-    </Stack>
-  );
-}
-
-export default StatisticsPage;
+import WarpScoresApiService from '../WarpScoresApiService';
+import {CategoryTabs,TeamTable} from '../components/statistics/StatisticsTables';
+export default function StatisticsPage(){const[systems,setSystems]=useState([]),[systemId,setSystemId]=useState(''),[overview,setOverview]=useState(null),[seasonId,setSeasonId]=useState(''),[season,setSeason]=useState(null),[marathon,setMarathon]=useState(null),[edition,setEdition]=useState('ALL'),[merge,setMerge]=useState(false),[page,setPage]=useState(0),[loading,setLoading]=useState(true),[error,setError]=useState('');
+useEffect(()=>{WarpScoresApiService.publicLeagueSystems().then(s=>{setSystems(s);setSystemId((s.find(x=>x.primary)||s[0])?.id||'')}).catch(e=>setError(e.message))},[]);
+useEffect(()=>{if(!systemId)return;setLoading(true);Promise.all([WarpScoresApiService.leagueSystemOverview(systemId),WarpScoresApiService.marathonStatistics(systemId,{edition,mergeTeamsByName:merge,page})]).then(([o,m])=>{setOverview(o);setSeasonId(v=>v||[...(o.seasons||[])].sort((a,b)=>(b.sequence??0)-(a.sequence??0))[0]?.id||'');setMarathon(m)}).catch(e=>setError(e.message)).finally(()=>setLoading(false))},[systemId,edition,merge,page]);
+useEffect(()=>{if(systemId&&seasonId)WarpScoresApiService.seasonStatistics(systemId,seasonId).then(setSeason).catch(e=>setError(e.message))},[systemId,seasonId]);
+return <Stack><Navigation currentPage="statistics"/><Heading>Statistics</Heading><HStack wrap="wrap"><Select maxW="20rem" value={systemId} onChange={e=>{setSystemId(e.target.value);setSeasonId('');setPage(0)}}>{systems.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</Select>{loading&&<Spinner size="sm"/>}</HStack>{error&&<Text color="red.500">{error}</Text>}<Tabs variant="soft-rounded" isLazy><TabList><Tab>Season</Tab><Tab>Marathon</Tab></TabList><TabPanels><TabPanel px={0}><Select mb={4} maxW="20rem" value={seasonId} onChange={e=>setSeasonId(e.target.value)}>{overview?.seasons?.map(s=><option key={s.id} value={s.id}>{s.name||`Season ${s.number}`}</option>)}</Select><Tabs isFitted variant="enclosed"><TabList><Tab>Players</Tab><Tab>Teams</Tab></TabList><TabPanels><TabPanel px={0}><CategoryTabs type="player" categories={season?.players}/></TabPanel><TabPanel px={0}><CategoryTabs type="team" categories={season?.teams}/></TabPanel></TabPanels></Tabs></TabPanel><TabPanel px={0}><Stack direction={{base:'column',md:'row'}} mb={4}><Select maxW="14rem" value={edition} onChange={e=>{setEdition(e.target.value);setPage(0)}}><option value="ALL">All editions</option>{marathon?.availableEditions?.map(e=><option key={e}>{e}</option>)}</Select><Checkbox isChecked={merge} onChange={e=>{setMerge(e.target.checked);setPage(0)}}>Merge teams with the same name</Checkbox></Stack>{edition==='ALL'&&<Text fontSize="sm" color="gray.500" mb={3}>Only player statistics comparable across rulesets are shown.</Text>}<Tabs isFitted variant="enclosed"><TabList><Tab>Teams</Tab><Tab>Players</Tab></TabList><TabPanels><TabPanel px={0}><TeamTable entries={marathon?.teams?.content||[]}/><HStack justify="space-between" mt={3}><Button isDisabled={!page} onClick={()=>setPage(p=>p-1)}>Previous</Button><Text>Page {page+1} of {marathon?.teams?.totalPages||1}</Text><Button isDisabled={page+1>=(marathon?.teams?.totalPages||1)} onClick={()=>setPage(p=>p+1)}>Next</Button></HStack></TabPanel><TabPanel px={0}><CategoryTabs type="player" categories={marathon?.players}/></TabPanel></TabPanels></Tabs></TabPanel></TabPanels></Tabs></Stack>}

@@ -11,5 +11,6 @@ def test_maps_owned_team_list_without_raw_xml():
     </Team></Teams></ResponseGetTeams>""")
     result=teams_response(root,start=0,size=50)
     assert result["items"][0] == {"id":"team-1","name":"The Team","raceId":13,"teamValue":1230000,
-                                  "logoId":None,"isCustom":False,"isTemplate":False}
+                                  "logoId":None,"isCustom":False,"isTemplate":False,
+                                  "coachId":None,"coachName":None}
     assert result["total"] == 1 and result["hasMore"] is False

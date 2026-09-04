@@ -112,6 +112,19 @@ export default {
         axios(`/league-systems/${encodeURIComponent(leagueSystemId)}/overview${seasonId ? `?seasonId=${encodeURIComponent(seasonId)}` : ''}`)
           .then(returnData)
           .catch(handleError),
+      seasonStatistics: async (leagueSystemId, seasonId) =>
+        axios(`/league-systems/${encodeURIComponent(leagueSystemId)}/seasons/${encodeURIComponent(seasonId)}/statistics`)
+          .then(returnData).catch(handleError),
+      marathonStatistics: async (leagueSystemId, options = {}) => {
+        const query = new URLSearchParams({ edition: options.edition || 'ALL',
+          mergeTeamsByName: String(Boolean(options.mergeTeamsByName)), page: String(options.page || 0),
+          size: String(options.size || 25), sort: options.sort || 'points' });
+        return axios(`/league-systems/${encodeURIComponent(leagueSystemId)}/statistics/marathon?${query}`)
+          .then(returnData).catch(handleError);
+      },
+      personalStatistics: async (leagueSystemId, getAccessTokenSilently, getAccessTokenWithPopup) =>
+        getDataWithAuthentication(`/user/statistics?leagueSystemId=${encodeURIComponent(leagueSystemId)}`,
+          getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
 
   leagueSystems: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
     getDataWithAuthentication('/admin/league-systems', getAccessTokenSilently, getAccessTokenWithPopup)

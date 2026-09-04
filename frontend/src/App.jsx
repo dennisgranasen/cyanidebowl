@@ -25,6 +25,7 @@ import ArenaPage from './pages/ArenaPage';
 import ArenaCoachPage from './pages/ArenaCoachPage';
 import CompetitionStatsPage from './pages/CompetitionStatsPage';
 import AccountPage from './pages/AccountPage';
+import MyStatisticsPage from './pages/MyStatisticsPage';
 import { MyTeamsProvider } from './context/MyTeamsContext';
 
 import { MockAuth0Provider } from './components/misc/MockAuthProvider';
@@ -93,6 +94,7 @@ function AppRoutes() {
       {/* Protected Routes/Needing authentication */}
       <Route path="/coachPage" element={<ProtectedRoute component={CoachPage} />} />
       <Route path="/account" element={<ProtectedRoute component={AccountPage} />} />
+      <Route path="/my-statistics" element={<ProtectedRoute component={MyStatisticsPage} />} />
       <Route path="/admin" element={<ProtectedRoute component={AdminPage} />} />
       <Route path="/admin/circuit/:circuitId" element={<ProtectedRoute component={AdminCircuitPage} />} />
       <Route
