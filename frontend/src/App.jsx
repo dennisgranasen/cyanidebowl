@@ -39,15 +39,24 @@ const withoutAuthentication = (Component) => {
   };
 };
 
-function ProtectedRoute({ component, ...args }) {
-  const Component = isProduction ? withAuthenticationRequired(component, args) : withoutAuthentication(component);
-  return <Component />;
+function ProtectedRoute({ component: Component, ...args }) {
+  if (!isProduction) {
+    return <Component />;
+  }
+  const ProtectedComponent = withAuthenticationRequired(Component, args);
+  return <ProtectedComponent />;
 }
 
 function Auth0ProviderWithRedirectCallback({ children, ...props }) {
   const navigate = useNavigate();
+  /*
   const onRedirectCallback = (appState) => {
     navigate((appState && appState.returnTo) || window.location.pathname);
+  };  
+  */
+  const onRedirectCallback = (appState) => {
+    // Skicka användaren till sparad returnTo, eller fallback till startsidan
+    navigate(appState?.returnTo || '/');
   };
   return (
     <Auth0Provider onRedirectCallback={onRedirectCallback} {...props}>

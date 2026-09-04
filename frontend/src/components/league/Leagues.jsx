@@ -33,7 +33,7 @@ function LeaguesAccordionItem({ leagues, header }) {
 
 function Leagues({ leagues, competitionCountByStatusPerLeague }) {
   console.log('Rendering Leagues component with leagues:', leagues);
-  
+  console.log("Node Environment:", process.env.NODE_ENV);
   function getCompetitionCountByStatus(league) {
     return competitionCountByStatusPerLeague?.[league.id.key] || {};
   }

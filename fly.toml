@@ -9,8 +9,8 @@ app = "cyanidebowl"
   BACKEND_URI="https://cyanidebowl.fly.dev"
   FRONTEND_URI="https://bloodbowl.granasen.com"
   REACT_APP_BACKEND_URI="https://cyanidebowl.fly.dev"
-  AUTH_URI="https://nst-scores.eu.auth0.com/"
-  AUTH_AUDIENCE="nst-scores-backend"
+  AUTH0_URI="https://nst-scores.eu.auth0.com/"
+  AUTH0_AUDIENCE="nst-scores-backend"
   SPRING_PROFILES_ACTIVE="server"
 
 [[services]]

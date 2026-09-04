@@ -26,6 +26,8 @@ function WarpScores() {
 
   const fetchCircuits = () => {
     setLoading(true);
+    console.log("isProduction:", process.env.ENV_NODE === 'production');
+    console.log("MODE:", process.env.ENV_NODE);
     WarpScoresApiService.circuits()
       .then((data) => {
         setCircuits(data);

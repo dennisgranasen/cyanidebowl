@@ -3,7 +3,6 @@ import logger from './util/logger';
 import config from './config';
 
 const { isProduction } = config;
-
 axios.defaults.baseURL = config.backendUrl;
 
 const authorizationParams = {

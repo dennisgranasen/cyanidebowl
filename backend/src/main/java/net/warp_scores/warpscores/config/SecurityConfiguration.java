@@ -37,17 +37,17 @@ public class SecurityConfiguration {
 
     private final GlobalErrorHandler errorHandler;
 
-    @Value("${AUTH_URI}")
+    @Value("${AUTH0_URI}")
     private String authUri;
 
-    @Value("${AUTH_AUDIENCE}")
+    @Value("${AUTH0_AUDIENCE}")
     private String authAudience;
 
     @PostConstruct
     void validateAuthConfiguration() {
         URI issuer = URI.create(authUri);
         if (!"https".equals(issuer.getScheme()) || issuer.getHost() == null || authAudience.isBlank()) {
-            throw new IllegalStateException("Server profile requires HTTPS AUTH_URI and a non-empty AUTH_AUDIENCE");
+            throw new IllegalStateException("Server profile requires HTTPS AUTH0_URI and a non-empty AUTH0_AUDIENCE");
         }
     }
 

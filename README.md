@@ -45,7 +45,7 @@ Set these variables in your .env file:
 FRONTEND_URI=http://localhost:8022
 BACKEND_URI=http://localhost:8080
 REACT_APP_BACKEND_URI=http://localhost:8080
-AUTH_URI="https://nst-scores.eu.auth0.com/"
+AUTH0_URI="https://nst-scores.eu.auth0.com/"
 SPRING_PROFILES_ACTIVE="dev"
 SERVER_PORT=8080
 AUTH_AUDIENCE="nst-scores-backend"
@@ -55,13 +55,13 @@ Set these variables in your deployment system, e.g. using fly.toml:
 FRONTEND_URI=<Your frontend URI>
 BACKEND_URI=<Your backend URI>
 REACT_APP_BACKEND_URI=<Same as BACKEND_URI>
-AUTH_URI=<Your Auth0 provider URI>
+AUTH0_URI=<Your Auth0 provider URI>
 SPRING_PROFILES_ACTIVE="server"
 SERVER_PORT=8080
 AUTH_AUDIENCE="nst-scores-backend"
 
 ## Secrets
-`AUTH_URI`, `AUTH_AUDIENCE`, Auth0 domain, and Auth0 client ID are public
+`AUTH0_URI`, `AUTH0_AUDIENCE`, Auth0 domain, and Auth0 client ID are public
 identifiers. `SPRING_DATA_MONGODB_URI`, `CYANIDE_API_KEY`, Auth0 tokens, and
 Discord tokens are secrets. On Fly, configure secret values only through secret
 names `SPRING_DATA_MONGODB_URI` and `CYANIDE_API_KEY`; never commit their values.

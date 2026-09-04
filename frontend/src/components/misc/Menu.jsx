@@ -143,14 +143,26 @@ function Menu() {
                 {isProduction && authenticationReady && (
                   <Box>
                     {!isAuthenticated ? (
-                      <Link variant="menu" onClick={() => loginWithPopup()}>
-                        Login
+                      <Link 
+                        variant="menu" 
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          try {
+                            console.log(isProduction ? "prop" : "dev");
+                            await loginWithPopup();
+                            onClose(); // Stänger meny-drawern när inloggningen lyckats
+                          } catch (error) {
+                            console.error("Popup login failed:", error);
+                          }
+                        }}
+                      >
+                        Logina
                       </Link>
                     ) : (
                       <Link
                         variant="menu"
                         onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
-                      >{`Logout ${user.name}`}</Link>
+                      >{`Logout ${user.name}`}</Link>                      
                     )}
                   </Box>
                 )}

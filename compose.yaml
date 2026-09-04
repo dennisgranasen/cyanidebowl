@@ -62,8 +62,9 @@ services:
       - CYANIDE_API_KEY=${CYANIDE_API_KEY}
       
       # Auth & URLs
-      - AUTH_URI=${AUTH0_URI}
-      - AUTH_AUDIENCE=${AUTH0_AUDIENCE}
+      - AUTH0_URI=${AUTH0_URI}
+      - AUTH0_DOMAIN=${AUTH0_DOMAIN}
+      - AUTH0_AUDIENCE=${AUTH0_AUDIENCE}
       - FRONTEND_URI=${FRONTEND_URI}
       
       # Replay Sweeper Configuration
@@ -96,7 +97,9 @@ services:
         context: ./frontend
         dockerfile: Dockerfile
         args:
+          NODE_ENV: ${NODE_ENV}
           REACT_APP_BACKEND_URI: ${REACT_APP_BACKEND_URI}
+          REACT_APP_AUTH0_URI: ${AUTH0_URI}
           REACT_APP_AUTH0_DOMAIN: ${AUTH0_DOMAIN}
           REACT_APP_AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
           REACT_APP_AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
