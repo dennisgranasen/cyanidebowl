@@ -16,7 +16,9 @@ let useAuth0WithUserPermissions;
 
 if (isProduction)  {
   useAuth0WithUserPermissions = function useAuth0WithUserPermissions() {
-    const { user, isAuthenticated, isLoading, loginWithPopup, logout, getAccessTokenSilently, getAccessTokenWithPopup } =
+    const { user, isAuthenticated, isLoading,
+        loginWithPopup, loginWithRedirect, logout,
+        getAccessTokenSilently, getAccessTokenWithPopup } =
       useAuth0();
       const [userPermissions, setUserPermissions] = useState(noPermissions);
       const [permissionsLoading, setPermissionsLoading] = useState(isLoading);
@@ -80,6 +82,7 @@ if (isProduction)  {
       permissionsError,
       isAuthenticated,
       loginWithPopup,
+      loginWithRedirect,
       logout,
       getAccessTokenSilently,
       getAccessTokenWithPopup,

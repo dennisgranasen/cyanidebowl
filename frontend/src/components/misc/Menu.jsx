@@ -62,7 +62,7 @@ function LastCheck({ status, textSize, statusOutdated }) {
 }
 
 function Menu() {
-  const { user, authenticationReady, checkPermissions, userPermissions, isAuthenticated, loginWithPopup, logout } =
+  const { user, authenticationReady, checkPermissions, userPermissions, isAuthenticated, loginWithRedirect, logout } =
     useAuth0WithUserPermissions();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [status, setStatus] = useState(null);
@@ -149,14 +149,15 @@ function Menu() {
                           e.preventDefault();
                           try {
                             console.log(isProduction ? "prop" : "dev");
-                            await loginWithPopup();
+                            console.log("loginWithPopup funktion:", loginWithRedirect);
+                            await loginWithRedirect();
                             onClose(); // Stänger meny-drawern när inloggningen lyckats
                           } catch (error) {
-                            console.error("Popup login failed:", error);
+                            console.error("Redirect login failed:", error);
                           }
                         }}
                       >
-                        Logina
+                        Loginb
                       </Link>
                     ) : (
                       <Link
