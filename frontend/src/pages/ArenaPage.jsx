@@ -12,7 +12,6 @@ import useFetchArenaInfo from '../hooks/useFetchArenaInfo';
 import InfoItem from '../components/common/InfoItem';
 import WarpScoresApiService from '../WarpScoresApiService';
 import ArenaRunAccordionItem from '../components/arena/ArenaRunAccordionItem';
-import { use } from 'react';
 
 function ArenaPage() {
   const { competitionId, race } = useParams();

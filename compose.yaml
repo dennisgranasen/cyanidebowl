@@ -77,15 +77,11 @@ services:
       timeout: 5s
       retries: 5
       start_period: 60s
-
     depends_on:
       pybb3-service:
         condition: service_healthy
-
     volumes:
       - replay_data:/app/replays
-    depends_on:
-      - pybb3-service
     networks:
       - internal_net
 
