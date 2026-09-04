@@ -162,7 +162,7 @@ export function MatchComponent({
   computedStyles,
 }) {
   return (
-    <DelayedIconTooltip label={match.seriesLength > 1 ? `${match.seriesLength} matches (${match.replayCount} ${match.replayCount === 1 ? 'replay' : 'replays'})` : match.state === 'DONE' ? `Played ${topText}` : 'Scheduled'}>
+    <DelayedIconTooltip label={`${match.replayAvailable ? 'Replay saved · ' : ''}${match.seriesLength > 1 ? `${match.seriesLength} matches (${match.replayCount} ${match.replayCount === 1 ? 'replay' : 'replays'})` : match.state === 'DONE' ? `Played ${topText}` : 'Scheduled'}`}>
       <div
         style={{
           cursor: 'pointer',

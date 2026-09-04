@@ -271,6 +271,7 @@ function PlayoffBracket({ phase, onMatchClick }) {
       tournamentRoundText: currentRound?.name,
       seriesLength: match.seriesLength,
       replayCount: match.replayCount,
+      replayAvailable: match.replayAvailable,
       compact: true,
       seriesResults: match.seriesMatches?.map((seriesMatch, index) => ({
         id: seriesMatch.sourceMatchKey,
@@ -346,7 +347,7 @@ function RichMatchCard({ match, onMatchClick }) {
     picture: team.logo,
   }));
   if (parties.length < 2) return null;
-  return <Box borderWidth="1px" borderRadius="md" p={2} cursor="pointer" _hover={{ boxShadow: 'md' }} onClick={() => onMatchClick(match)}><MatchComponent match={{ id: match.sourceMatchKey, state: match.finishedAt ? 'DONE' : null, startTime: match.finishedAt || match.startedAt }} topParty={parties[0]} bottomParty={parties[1]} topWon={parties[0].teamName === winner} bottomWon={parties[1].teamName === winner} topHovered={false} bottomHovered={false} connectorColor="gray.500" topText={match.finishedAt || match.startedAt} onMouseEnter={() => {}} onMouseLeave={() => {}} onMatchClick={() => {}} /><Text mt={1} px={1} fontSize="xs" color="gray.500">{match.finishedAt || match.startedAt || 'No date'}{match.teams?.length === 2 ? ` · Casualties ${match.teams[0].casualties ?? '-'}–${match.teams[1].casualties ?? '-'}` : ''}{match.conceded ? ' · Conceded/WO' : ''}</Text></Box>;
+  return <Box borderWidth="1px" borderRadius="md" p={2} cursor="pointer" _hover={{ boxShadow: 'md' }} onClick={() => onMatchClick(match)}><MatchComponent match={{ id: match.sourceMatchKey, state: match.finishedAt ? 'DONE' : null, startTime: match.finishedAt || match.startedAt }} topParty={parties[0]} bottomParty={parties[1]} topWon={parties[0].teamName === winner} bottomWon={parties[1].teamName === winner} topHovered={false} bottomHovered={false} connectorColor="gray.500" topText={match.finishedAt || match.startedAt} onMouseEnter={() => {}} onMouseLeave={() => {}} onMatchClick={() => {}} /><Text mt={1} px={1} fontSize="xs" color="gray.500">{match.finishedAt || match.startedAt || 'No date'}{match.teams?.length === 2 ? ` · Casualties ${match.teams[0].casualties ?? '-'}–${match.teams[1].casualties ?? '-'}` : ''}{match.conceded ? ' · Conceded/WO' : ''}{match.replayAvailable ? ' · 🎞 Replay' : ''}</Text></Box>;
 }
 
 export function matchesByMatchDay(matches) {

@@ -6,6 +6,7 @@ import net.warp_scores.warpscores.domain.persistence.LeagueSystemRepository;
 import net.warp_scores.warpscores.domain.persistence.SeasonRepository;
 import net.warp_scores.warpscores.domain.persistence.StageRepository;
 import net.warp_scores.warpscores.domain.persistence.PhaseRepository;
+import net.warp_scores.warpscores.domain.persistence.ReplayDownloadRepository;
 import net.warp_scores.warpscores.model.Phase;
 import net.warp_scores.warpscores.model.Season;
 import net.warp_scores.warpscores.model.Stage;
@@ -33,6 +34,7 @@ public class PublicLeagueSystemController {
         private final PhaseRepository phases;
         private final StageMatchService stageMatchService;
         private final StatisticsService statisticsService;
+        private final ReplayDownloadRepository replayDownloads;
 
     @GetMapping("/league-systems/{leagueSystemId}/seasons/{seasonId}/statistics")
     public StatisticsResponse.Dashboard seasonStatistics(@PathVariable String leagueSystemId,
@@ -141,8 +143,15 @@ public class PublicLeagueSystemController {
                         Map<String, List<StageMatchResponse>> matchCache) {
                     if (matchCache.containsKey(stage.getId())) return matchCache.get(stage.getId());
                     try {
-                        List<StageMatchResponse> result = stageMatchService.getMatchesForStage(stage.getId()).stream()
-                            .map(StageMatchResponse::from).toList();
+                        var matches = stageMatchService.getMatchesForStage(stage.getId());
+                        var ids = matches.stream().filter(match -> match.sourceMatchId() != null)
+                                .map(match -> match.sourceMatchId().asMongoKey()).toList();
+                        var replayIds = replayDownloads.findAllById(ids).stream()
+                                .filter(replay -> "DOWNLOADED".equals(replay.getStatus()))
+                                .map(replay -> replay.getMatchId()).collect(java.util.stream.Collectors.toSet());
+                        List<StageMatchResponse> result = matches.stream()
+                            .map(match -> StageMatchResponse.from(match, match.sourceMatchId() != null
+                                    && replayIds.contains(match.sourceMatchId().asMongoKey()))).toList();
                         matchCache.put(stage.getId(), result);
                         return result;
                     } catch (IllegalArgumentException | IllegalStateException exception) {

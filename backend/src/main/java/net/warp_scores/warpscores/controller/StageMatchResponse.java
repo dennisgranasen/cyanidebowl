@@ -26,10 +26,15 @@ public record StageMatchResponse(
         boolean conceded,
         boolean overtime,
         String quality,
+        boolean replayAvailable,
         Capabilities capabilities,
         CountingRules countsFor) {
 
     public static StageMatchResponse from(StageMatchView match) {
+        return from(match, false);
+    }
+
+    public static StageMatchResponse from(StageMatchView match, boolean replayAvailable) {
         return new StageMatchResponse(
                 match.stageSourceId(),
                 match.game() == null ? null : match.game().name(),
@@ -60,6 +65,7 @@ public record StageMatchResponse(
                 match.conceded(),
                 match.overtime(),
                 match.quality().name(),
+                replayAvailable,
                 Capabilities.from(match.capabilities()),
                 CountingRules.from(match.countsFor()));
     }

@@ -26,7 +26,7 @@ public class MatchDetailsBackfillService {
     public BackfillResult improveNewestUnchecked(int batchSize, Duration minimumMatchAge) {
         Date cutoff = Date.from(Instant.now().minus(minimumMatchAge));
         List<Match> matches = matchRepository.findMatchesWithUncheckedDetails(
-                cutoff, PageRequest.of(0, Math.max(1, batchSize), Sort.by(Sort.Direction.DESC, "finished")));
+                new Date(), PageRequest.of(0, Math.max(1, batchSize), Sort.by(Sort.Direction.DESC, "finished")));
         int available = 0;
         int unavailable = 0;
         int failed = 0;
@@ -38,6 +38,9 @@ public class MatchDetailsBackfillService {
                     if (loaded != null) inspected = loaded;
                 }
                 boolean found = hasPlayerData(inspected);
+                // Ask for fresh details immediately, but do not permanently classify a newly finished match as
+                // unavailable while Cyanide may still be completing its detailed match record.
+                if (!found && match.getFinished() != null && match.getFinished().after(cutoff)) continue;
                 inspected.setDetailsStatus(found
                         ? Match.DetailsStatus.PLAYER_DATA_AVAILABLE
                         : Match.DetailsStatus.PLAYER_DATA_UNAVAILABLE);

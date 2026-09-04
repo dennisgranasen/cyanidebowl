@@ -5,14 +5,44 @@ The replay sweeper downloads missing BB3 replay XML in newest-first batches. Def
 batch size and Steam username in the admin page, run a batch manually, renew Steam Guard authentication and inspect
 the latest 50 log entries.
 
+The **Sync replays** button starts the same background sweep immediately. A run claims the single execution slot
+before it is dispatched to the background worker. Scheduled and manual requests are therefore rejected while a sweep
+is active instead of being queued. The button is disabled until that run finishes.
+
 ## Secrets and persistence
 
 Set a long stable `PYBB3_CREDENTIAL_ENCRYPTION_KEY` on pybb3. The Steam refresh ticket is Fernet-encrypted in the
 `pybb3-credentials` volume and never returned to the browser or stored in MongoDB. Replacing the key makes the old
 credential unreadable and intentionally requires a new admin login. Password and Guard code are never stored.
 
-Replay XML is written atomically to `REPLAY_SWEEPER_STORAGE_DIRECTORY`; production compose mounts `replay-data` there.
-MongoDB stores only the schedule, run state, replay file index and a 90-day administrative event log.
+The original replay is stored atomically as `.xml.gz` in `REPLAY_SWEEPER_STORAGE_DIRECTORY`; production compose mounts
+the `replay-data` Docker volume there. A compact `.json.gz` artifact is stored beside it. The compact stream retains
+every ordered event and a complete semantic board-state checkpoint whenever the phase, active team or either team's
+`GameTurn` changes. In other words, it stores a board state for every turn without duplicating it after every event.
+
+MongoDB stores the schedule, run state, replay file index, a 90-day administrative event log and searchable replay
+analysis. Replay blobs themselves are deliberately not stored in MongoDB. The analysis contains dice groups and
+faces, roll metadata and outcomes, reroll/apothecary/wizard events, regeneration/resurrection and other special event
+payloads, plus per-team/per-coach aggregate counters. Unknown Cyanide enum values remain intact rather than being
+guessed, so a newer parser can reinterpret them later.
+
+Existing replay files are analyzed newest-first in the background. A replay is checked once per parser version;
+failed or data-less replays are not retried until the parser version changes or an administrator clicks **Analyze
+again**. Public consumers can read one match at `GET /matches/{matchId}/replay-analysis` or aggregate counters through
+`GET /replay-statistics?coachId=...&teamId=...`.
+
+The match statistics modal has a Replay tab with artifact status, extracted dice/resource/special-event summaries and
+download of the untouched original replay through `GET /matches/{matchId}/replay/original`. LeagueSystem match cards
+are marked when a replay is present. Storage paths are never exposed to the browser.
+
+`replay-sweeper.availability-window-days` defaults to 30 days and is intentionally configurable because Steam's exact
+retention is not guaranteed. The sweeper does not waste requests outside that window, and the admin list only shows
+recent attempts. A failed recent download is labelled **AT RISK**; a saved replay remains available locally regardless
+of Steam retention.
+
+Detailed player data is requested from Cyanide immediately for newly finished matches. If Cyanide has not completed
+the detailed record yet, it remains unchecked and is retried; it is only classified as unavailable after the existing
+`match-details.backfill.minimum-match-age-hours` settling period.
 
 ## Failure behaviour
 

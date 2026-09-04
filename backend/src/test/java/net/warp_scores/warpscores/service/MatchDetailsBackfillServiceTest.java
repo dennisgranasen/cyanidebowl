@@ -82,6 +82,22 @@ class MatchDetailsBackfillServiceTest {
         verify(repository, never()).save(any(Match.class));
     }
 
+    @Test
+    void fetchesRecentDetailsButDoesNotPermanentlyMarkMissingData() {
+        Match skeleton = match("recent", false);
+        Match detailedResponse = match("recent", false);
+        when(repository.findMatchesWithUncheckedDetails(any(Date.class), any(Pageable.class)))
+                .thenReturn(List.of(skeleton));
+        when(cyanideApiService.loadMatch("external-recent", 3)).thenReturn(detailedResponse);
+
+        MatchDetailsBackfillService.BackfillResult result =
+                service.improveNewestUnchecked(20, Duration.ofHours(24));
+
+        assertThat(result.unavailable()).isZero();
+        assertThat(detailedResponse.getDetailsStatus()).isNull();
+        verify(repository, never()).save(any(Match.class));
+    }
+
     private Match match(String id, boolean withPlayers) {
         Match match = new Match(new SimpleIdentity(id, 3));
         match.setMatchId("external-" + id);

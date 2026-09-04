@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box,
+  Badge,
+  Button,
+  HStack,
   Heading,
   Modal,
   ModalBody,
@@ -21,6 +24,12 @@ import {
   Text,
   Thead,
   Th,
+  SimpleGrid,
+  Spinner,
+  Stat,
+  StatLabel,
+  StatNumber,
+  VStack,
 } from '@chakra-ui/react';
 import ContestMatchCard from './ContestMatchCard';
 import WarpScoresApiService from '../../WarpScoresApiService';
@@ -54,8 +63,49 @@ const PlayerNameCell = ({ player }) => {
   );
 };
 
+const formatBytes = (value) => value == null ? '—' : value < 1024 * 1024
+  ? `${Math.round(value / 1024)} KiB` : `${(value / 1024 / 1024).toFixed(1)} MiB`;
+
+const eventSummary = (events = []) => Object.entries(events.reduce((result, event) => {
+  const key = event.eventType || 'Unknown event';
+  result[key] = (result[key] || 0) + 1;
+  return result;
+}, {})).sort((a, b) => b[1] - a[1]);
+
+function ReplayPanel({ replay, loading, error, onDownload }) {
+  if (loading) return <HStack><Spinner size="sm"/><Text>Hämtar replayinformation…</Text></HStack>;
+  if (error) return <Text color="red.500">{error}</Text>;
+  if (!replay?.available) return <Text color="gray.500">Ingen replay har laddats ned för den här matchen ännu.</Text>;
+  const analysis = replay.analysis;
+  const specialEvents = eventSummary(analysis?.specialEvents);
+  const resourceEvents = eventSummary(analysis?.resourceEvents);
+  return <VStack align="stretch" spacing={4}>
+    <HStack justify="space-between" align="start" flexWrap="wrap">
+      <Box><HStack><Badge colorScheme="green">Replay available</Badge><Badge colorScheme={replay.analysisStatus === 'PROCESSED' ? 'blue' : replay.analysisStatus === 'FAILED' ? 'red' : 'orange'}>{replay.analysisStatus || 'PENDING'}</Badge></HStack><Text mt={1} fontSize="sm" color="gray.500">Original {formatBytes(replay.originalSize)} · compact {formatBytes(replay.compactSize)}</Text></Box>
+      <Button size="sm" colorScheme="blue" onClick={onDownload}>Download original replay</Button>
+    </HStack>
+    {!analysis && <Text color="gray.500">Replayen finns, men analysen är inte klar ännu.</Text>}
+    {analysis && <>
+      <SimpleGrid columns={{base:2,md:4}} spacing={3}>
+        <Stat borderWidth="1px" borderRadius="md" p={3}><StatLabel>Turns/checkpoints</StatLabel><StatNumber>{analysis.checkpointCount || 0}</StatNumber></Stat>
+        <Stat borderWidth="1px" borderRadius="md" p={3}><StatLabel>Events</StatLabel><StatNumber>{analysis.eventCount || 0}</StatNumber></Stat>
+        <Stat borderWidth="1px" borderRadius="md" p={3}><StatLabel>Dice rolls</StatLabel><StatNumber>{analysis.diceRolls?.length || 0}</StatNumber></Stat>
+        <Stat borderWidth="1px" borderRadius="md" p={3}><StatLabel>Replay steps</StatLabel><StatNumber>{analysis.stepCount || 0}</StatNumber></Stat>
+      </SimpleGrid>
+      <Box><Heading size="sm" mb={2}>Dice results</Heading><TableContainer><Table size="sm"><Thead><Tr><Th>Die / result</Th><Th isNumeric>Count</Th></Tr></Thead><Tbody>{Object.entries(analysis.dieValueCounts || {}).sort((a,b)=>b[1]-a[1]).map(([key,count])=><Tr key={key}><Td>{key}</Td><Td isNumeric>{count}</Td></Tr>)}</Tbody></Table></TableContainer></Box>
+      <SimpleGrid columns={{base:1,md:2}} spacing={4}>
+        <Box><Heading size="sm" mb={2}>Resources</Heading>{resourceEvents.length ? <Table size="sm"><Tbody>{resourceEvents.map(([name,count])=><Tr key={name}><Td>{name}</Td><Td isNumeric>{count}</Td></Tr>)}</Tbody></Table> : <Text color="gray.500">No reroll, apothecary or wizard events found.</Text>}</Box>
+        <Box><Heading size="sm" mb={2}>Special events</Heading>{specialEvents.length ? <Table size="sm"><Tbody>{specialEvents.map(([name,count])=><Tr key={name}><Td>{name}</Td><Td isNumeric>{count}</Td></Tr>)}</Tbody></Table> : <Text color="gray.500">No special events found.</Text>}</Box>
+      </SimpleGrid>
+    </>}
+  </VStack>;
+}
+
 function MatchModal({ isOpen, onClose, match, contest }) {
   const [matchData, setMatch] = useState(null);
+  const [replay, setReplay] = useState(null);
+  const [replayLoading, setReplayLoading] = useState(false);
+  const [replayError, setReplayError] = useState('');
   
   useEffect(() => {
     const value = match || contest?.match;
@@ -80,6 +130,15 @@ function MatchModal({ isOpen, onClose, match, contest }) {
     }
   }, [match, contest]);
 
+  const replayMatchId = matchData?.id?.key || matchData?.id;
+  useEffect(() => {
+    if (!isOpen || !replayMatchId) return;
+    setReplay(null); setReplayError(''); setReplayLoading(true);
+    WarpScoresApiService.replay(replayMatchId).then(setReplay)
+      .catch(() => setReplayError('Replayinformationen kunde inte hämtas.'))
+      .finally(() => setReplayLoading(false));
+  }, [isOpen, replayMatchId]);
+
   // Always render the Modal, but only show it when conditions are met
   const shouldShowModal = matchData && (!contest || contest.status === 'Validated') && isOpen;
 
@@ -100,6 +159,7 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                 <TabList>
                   <Tab>Team Stats</Tab>
                   <Tab>Player Rosters</Tab>
+                  <Tab>Replay {replay?.available && <Badge ml={1} colorScheme="green">✓</Badge>}</Tab>
                 </TabList>
                 <TabPanels>
                   <TabPanel>
@@ -401,6 +461,10 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                         ))}
                       </Box>
                     )}
+                  </TabPanel>
+                  <TabPanel>
+                    <ReplayPanel replay={replay} loading={replayLoading} error={replayError}
+                      onDownload={() => WarpScoresApiService.downloadOriginalReplay(replayMatchId).catch(() => setReplayError('Originalreplayen kunde inte laddas ned.'))}/>
                   </TabPanel>
                 </TabPanels>
               </Tabs>

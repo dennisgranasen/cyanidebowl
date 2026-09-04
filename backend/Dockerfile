@@ -6,8 +6,7 @@ COPY pom.xml .
 COPY backend ./backend
 COPY api ./api
 COPY cyanide-api ./cyanide-api
-RUN mvn clean package -DskipTests -DskipDocker -Pserver -pl api,cyanide-api,backend -am
-
+RUN mvn clean package -Dmaven.test.skip=true -DskipDocker -Pserver -pl api,cyanide-api,backend -am
 FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app
 COPY --from=build /app/backend/target/*.jar warpscores-backend.jar

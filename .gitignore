@@ -63,3 +63,4 @@ docker-compose-production.yaml
 my-compose.yaml
 backend/test.data
 *playground*.js
+backend/data

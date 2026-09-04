@@ -134,6 +134,10 @@ export default {
     getDataWithAuthentication('/admin/replay-sweeper', getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   replaySweeperLogs: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
     getDataWithAuthentication('/admin/replay-sweeper/logs', getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  replaySweeperReplays: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
+    getDataWithAuthentication('/admin/replay-sweeper/replays', getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  analyzeReplay: async (matchId, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication(`/admin/replay-sweeper/replays/${encodeURIComponent(matchId)}/analyze`, {}, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   updateReplaySweeper: async (data, getAccessTokenSilently, getAccessTokenWithPopup) =>
     putDataWithAuthentication('/admin/replay-sweeper', data, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   runReplaySweeper: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
@@ -412,6 +416,22 @@ export default {
     axios(`/matches/${encodeURIComponent(matchId.key || matchId)}`)
       .then(returnData)
       .catch(handleError),
+  replay: async (matchId) =>
+    axios(`/matches/${encodeURIComponent(matchId.key || matchId)}/replay`)
+      .then(returnData)
+      .catch(handleError),
+  downloadOriginalReplay: async (matchId) => {
+    const key = matchId.key || matchId;
+    const result = await axios(`/matches/${encodeURIComponent(key)}/replay/original`, { responseType: 'blob' });
+    const disposition = result.headers?.['content-disposition'] || '';
+    const encodedName = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+    const plainName = disposition.match(/filename="?([^";]+)"?/i)?.[1];
+    const filename = encodedName ? decodeURIComponent(encodedName) : (plainName || `${key}.xml.gz`);
+    const url = window.URL.createObjectURL(result.data);
+    const link = document.createElement('a');
+    link.href = url; link.download = filename; document.body.appendChild(link); link.click(); link.remove();
+    window.URL.revokeObjectURL(url);
+  },
   // competitions
   leagueCompetitions: async (leagueId, initialized) =>
     axios(

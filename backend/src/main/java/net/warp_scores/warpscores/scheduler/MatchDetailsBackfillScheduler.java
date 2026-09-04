@@ -21,7 +21,7 @@ public class MatchDetailsBackfillScheduler {
 
     @Value("${match-details.backfill.enabled:true}")
     private boolean enabled;
-    @Value("${match-details.backfill.batch-size:5}")
+    @Value("${match-details.backfill.batch-size:20}")
     private int batchSize;
     @Value("${match-details.backfill.minimum-match-age-hours:24}")
     private long minimumMatchAgeHours;

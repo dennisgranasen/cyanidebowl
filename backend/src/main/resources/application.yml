@@ -55,7 +55,7 @@ stage-match:
 match-details:
   backfill:
     enabled: ${MATCH_DETAILS_BACKFILL_ENABLED:true}
-    batch-size: ${MATCH_DETAILS_BACKFILL_BATCH_SIZE:5}
+    batch-size: ${MATCH_DETAILS_BACKFILL_BATCH_SIZE:20}
     minimum-match-age-hours: ${MATCH_DETAILS_BACKFILL_MINIMUM_MATCH_AGE_HOURS:24}
     initial-delay-ms: ${MATCH_DETAILS_BACKFILL_INITIAL_DELAY_MS:60000}
     fixed-delay-ms: ${MATCH_DETAILS_BACKFILL_FIXED_DELAY_MS:600000}
@@ -67,6 +67,12 @@ replay-sweeper:
   batch-size: ${REPLAY_SWEEPER_BATCH_SIZE:10}
   storage-directory: ${REPLAY_SWEEPER_STORAGE_DIRECTORY:./data/replays}
   poll-delay-ms: ${REPLAY_SWEEPER_POLL_DELAY_MS:60000}
+  availability-window-days: ${REPLAY_SWEEPER_AVAILABILITY_WINDOW_DAYS:30}
+
+replay-analysis:
+  enabled: ${REPLAY_ANALYSIS_ENABLED:true}
+  initial-delay-ms: ${REPLAY_ANALYSIS_INITIAL_DELAY_MS:120000}
+  fixed-delay-ms: ${REPLAY_ANALYSIS_FIXED_DELAY_MS:600000}
 
 league-system:
   discovery:

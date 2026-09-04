@@ -87,6 +87,7 @@ public class SecurityConfiguration {
                         .requestMatchers(GET, "/leagues/**").permitAll()
                         .requestMatchers(GET, "/match/**").permitAll()
                         .requestMatchers(GET, "/matches/**").permitAll()
+                        .requestMatchers(GET, "/replay-statistics").permitAll()
                         .requestMatchers(GET, "/ranks/**").permitAll()
                             .requestMatchers(GET, "/stages/**").permitAll()
                         .requestMatchers(GET, "/team/**").permitAll()

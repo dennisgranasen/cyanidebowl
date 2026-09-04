@@ -1,29 +1,106 @@
+networks:
+  internal_net:
+    driver: bridge
+
+volumes:
+  pybb3-credentials:
+  npm_data:
+  npm_letsencrypt:
+  replay_data:
+
 services:
-  warpscores-db:
-    container_name: warpscores-db
-    hostname: warpscores-db
-    image: 'mongo:7.0.5'
-    environment:
-      - 'MONGO_INITDB_DATABASE=warpscores'
-      - 'MONGO_INITDB_ROOT_PASSWORD=some password'
-      - 'MONGO_INITDB_ROOT_USERNAME=root'
-    ports:
-      - '32769:27017'
-    volumes:
-      - ./data:/data/db
+  # ========================================================
+  # 1. PyBB3 Service
+  # ========================================================
   pybb3-service:
+    container_name: pybb3-service
     build:
       context: ./pybb3-service
       args:
         PYBB3_REF: ${PYBB3_REF:-main}
+        GITHUB_TOKEN: ${GITHUB_TOKEN}
+    restart: unless-stopped
     environment:
-      PYBB3_INTERNAL_API_KEY: ${PYBB3_INTERNAL_API_KEY}
-      PYBB3_CREDENTIAL_ENCRYPTION_KEY: ${PYBB3_CREDENTIAL_ENCRYPTION_KEY}
+      - PYBB3_INTERNAL_API_KEY=${PYBB3_INTERNAL_API_KEY}
+      - PYBB3_CREDENTIAL_ENCRYPTION_KEY=${PYBB3_CREDENTIAL_ENCRYPTION_KEY}
     volumes:
       - pybb3-credentials:/var/lib/pybb3/credentials
+      - replay_data:/app/replays
+    networks:
+      - internal_net
+
+  # ========================================================
+  # 2. Spring Boot Backend
+  # ========================================================
+  backend:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    container_name: cyanidebowl-backend
+    restart: unless-stopped
+    environment:
+      # Database & Profiles
+      - SPRING_DATA_MONGODB_URI=${SPRING_MONGODB_URI}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
+      - SERVER_PORT=${SERVER_PORT:-8080}
+      
+      # Integrations & Keys
+      - PYBB3_SERVICE_URL=http://pybb3-service:8000
+      - PYBB3_INTERNAL_API_KEY=${PYBB3_INTERNAL_API_KEY}
+      - CYANIDE_API_KEY=${CYANIDE_API_KEY}
+      
+      # Auth & URLs
+      - AUTH_URI=${AUTH_URI}
+      - AUTH_AUDIENCE=${AUTH_AUDIENCE}
+      - FRONTEND_URI=${FRONTEND_URI}
+    volumes:
+      - replay_data:/app/replays
+    depends_on:
+      - pybb3-service
+    networks:
+      - internal_net
+
+  # ========================================================
+  # 3. Frontend (React)
+  # ========================================================
+  frontend:
+      build:
+        context: ./frontend
+        dockerfile: Dockerfile
+        args:
+          REACT_APP_BACKEND_URI: ${REACT_APP_BACKEND_URI}
+          REACT_APP_AUTH0_DOMAIN: ${AUTH0_URI}
+          REACT_APP_AUTH0_CLIENT_ID: $AUTH0_CLIENT_ID}
+          REACT_APP_AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
+      container_name: cyanidebowl-frontend
+      restart: unless-stopped
+      networks:
+        - internal_net
+
+  # ========================================================
+  # 4. Nginx Proxy Manager (NPM)
+  # ========================================================
+  npm:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: npm
+    restart: unless-stopped
     ports:
-      - '8000:8000'
-    profiles:
-      - pybb3
-volumes:
-  pybb3-credentials:
+      - '81:81'
+    volumes:
+      - npm_data:/data
+      - npm_letsencrypt:/etc/letsencrypt
+    networks:
+      - internal_net
+
+  # ========================================================
+  # 5. Cloudflare Tunnel
+  # ========================================================
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    networks:
+      - internal_net

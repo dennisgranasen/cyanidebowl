@@ -1,7 +1,7 @@
 {
-  "name": "warpscores-frontend",
+  "name": "blaskscore-frontend",
   "version": "1.0.0",
-  "homepage": "https://warp-scores.net",
+  "homepage": "https://blaskscore.granasen.com",
   "devDependencies": {
     "@babel/core": "^7.20.6",
     "@babel/eslint-parser": "^7.19.1",
@@ -52,7 +52,7 @@
     "react-tournament-brackets": "1.0.40",
     "react-transition-group": "^4.4.5",
     "uuid": "^9.0.1",
-    "warpscores-frontend": "file:"
+    "blaskscore-frontend": "file:"
   },
   "scripts": {
     "build": "webpack --mode production --config webpack.prod.js",
