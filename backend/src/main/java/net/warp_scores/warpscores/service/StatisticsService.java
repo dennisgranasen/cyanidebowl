@@ -2,11 +2,9 @@ package net.warp_scores.warpscores.service;
 
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.controller.StatisticsResponse;
-import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.domain.persistence.SeasonRepository;
 import net.warp_scores.warpscores.domain.persistence.StageRepository;
 import net.warp_scores.warpscores.domain.stage.StageMatchView;
-import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.model.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +21,6 @@ public class StatisticsService {
     private final SeasonRepository seasons;
     private final StageRepository stages;
     private final StageMatchService stageMatches;
-    private final MatchRepository matches;
 
     @Transactional(readOnly = true)
     @Cacheable(value = "seasonStatistics", key = "#leagueSystemId + ':' + #seasonId")
@@ -82,17 +79,23 @@ public class StatisticsService {
                     if (view.sourceMatchId() == null) continue;
                     String key = view.sourceMatchKey() == null ? view.sourceMatchId().asMongoKey() : view.sourceMatchKey();
                     Selected previous = unique.get(key);
-                    if (previous == null) unique.put(key, new Selected(view, null, seasonId));
+                    if (previous == null) unique.put(key, new Selected(view, materialize(view), seasonId));
                     else unique.put(key, previous.merge(view));
                 }
             } catch (IllegalArgumentException | IllegalStateException ignored) { }
         }
-        Map<String,Match> stored = new HashMap<>();
-        List<Identity> ids = unique.values().stream().map(s -> s.view.sourceMatchId()).distinct().toList();
-        for (Match match : matches.findAllById(ids)) stored.put(match.getId().asMongoKey(), match);
-        List<Selected> selected = unique.values().stream().map(s -> new Selected(s.view,
-                stored.get(s.view.sourceMatchId().asMongoKey()), s.seasonId)).filter(s -> s.match != null).toList();
-        return new Dataset(selected);
+        return new Dataset(List.copyOf(unique.values()));
+    }
+
+    /** StageMatchView already carries the canonical stored teams, coaches and player detail. */
+    private Match materialize(StageMatchView view) {
+        Match match = new Match(view.sourceMatchId());
+        match.setMatchId(view.sourceMatchKey());
+        match.setStarted(view.startedAt());
+        match.setFinished(view.finishedAt());
+        match.setTeams(view.teams());
+        match.setCoaches(view.coaches());
+        return match;
     }
 
     private static final List<String> COMPARABLE_PLAYER_KEYS = List.of("games","touchdowns","casualties","kills","interceptions","passes","catches","blocks","knockouts","injuries","pushouts","fouls");
