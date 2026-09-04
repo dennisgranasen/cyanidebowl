@@ -22,8 +22,8 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${AUTH_URI:http://localhost:8022}
-          jwk-set-uri: ${AUTH_URI:http://localhost:8022}/.well-known/jwks.json
-          jws-algorithms: RS256
+          #jwk-set-uri: ${AUTH_URI:http://localhost:8022}.well-known/jwks.json
+          #jws-algorithms: RS256
 
 management:
   endpoints:

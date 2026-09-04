@@ -15,7 +15,8 @@ const { showCircuitsFeature } = config;
 
 function WarpScores() {
   const [circuits, setCircuits] = useState([]);
-  const { authenticationReady, userPermissions } = useAuth0WithUserPermissions();
+  const { user, authenticationReady, userPermissions } = useAuth0WithUserPermissions();
+  console.log("User: ", user);
   const [leagueSystems, setLeagueSystems] = useState([]);
   const [selectedLeagueSystem, setSelectedLeagueSystem] = useState(null);
   const [leagues, setLeagues] = useState([]);

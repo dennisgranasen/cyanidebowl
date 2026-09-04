@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, ChakraProvider, CSSReset, DarkMode } from '@chakra-ui/react';
-import { HashRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
 import { Auth0Provider, withAuthenticationRequired } from '@auth0/auth0-react';
 import WarpScores from './pages/WarpScores';
 import TeamPage from './pages/TeamPage';
@@ -113,12 +113,13 @@ function App() {
         <CSSReset />
         <Fonts />
         <Box>
-          <Router>
-
+          <Router>            
             {isProduction ? (
               <Auth0ProviderWithRedirectCallback
                 domain={config.auth0Domain}
                 clientId={config.auth0ClientId}
+                cacheLocation="localstorage"
+                useRefreshTokens={true}
                 authorizationParams={{
                   redirect_uri: window.location.origin,
                   audience: config.auth0Audience,

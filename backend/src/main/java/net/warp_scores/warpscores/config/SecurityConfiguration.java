@@ -50,57 +50,63 @@ public class SecurityConfiguration {
             throw new IllegalStateException("Server profile requires HTTPS AUTH_URI and a non-empty AUTH_AUDIENCE");
         }
     }
-
+    
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(Customizer.withDefaults())
-                .authorizeHttpRequests(requests -> requests
-                        // status/misc
-                        .requestMatchers(GET, "/version.json", "/status").permitAll()
-                        // user endpoint
-                        .requestMatchers(GET, "/userPermissions").permitAll()
-                        .requestMatchers("/user/steam/**").authenticated()
-                        .requestMatchers("/user/statistics/**").authenticated()
-                        // endpoints needing authentication
-                            .requestMatchers("/admin/**").authenticated()
-                        .requestMatchers(POST, "/circuits/**").authenticated()
-                        .requestMatchers(DELETE, "/circuits/**").authenticated()
-                        .requestMatchers(POST, "/contests/**").authenticated()
-                        .requestMatchers(POST, "/leagueCollection/**").authenticated()
-                        .requestMatchers(POST, "/lookup").authenticated()
-                        .requestMatchers(GET, "/competition/*/exportNafData").authenticated()
-                        .requestMatchers(GET, "/competitions/*/exportNafData").authenticated()
-                        // public api read only endpoints
-                        .requestMatchers(GET, "/arena/**").permitAll()
-                        .requestMatchers(GET, "/circuit/**").permitAll()
-                        .requestMatchers(GET, "/circuits/**").permitAll()
-                        .requestMatchers(GET, "/competition/**").permitAll()
-                        .requestMatchers(GET, "/competitions/**").permitAll()
-                        .requestMatchers(GET, "/contest/**").permitAll()
-                        .requestMatchers(GET, "/contests/**").permitAll()
-                        .requestMatchers(GET, "/img/**").permitAll()
-                        .requestMatchers(GET, "/knockout/**").permitAll()
-                        .requestMatchers(GET, "/league/**").permitAll()
-                            .requestMatchers(GET, "/league-systems").permitAll()
-                            .requestMatchers(GET, "/league-systems/**").permitAll()
-                        .requestMatchers(GET, "/leagues/**").permitAll()
-                        .requestMatchers(GET, "/match/**").permitAll()
-                        .requestMatchers(GET, "/matches/**").permitAll()
-                        .requestMatchers(GET, "/replay-statistics").permitAll()
-                        .requestMatchers(GET, "/ranks/**").permitAll()
-                            .requestMatchers(GET, "/stages/**").permitAll()
-                        .requestMatchers(GET, "/team/**").permitAll()
-                        .requestMatchers(GET, "/teams/**").permitAll()
-                        .requestMatchers(GET, "/actuator/health", "/actuator/info").permitAll()
-                        // rest
-                        .anyRequest().denyAll()
-                )
-                    .csrf(csrf -> csrf.disable())
-                    .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .oauth2ResourceServer(oauth2ResourceServer -> oauth2ResourceServer
-                        .authenticationEntryPoint(errorHandler::handleAuthenticationError)
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(makePermissionsConverter())));
+            .cors(Customizer.withDefaults())
+            .authorizeHttpRequests(requests -> requests
+                    // status/misc - Både med och utan /api
+                    .requestMatchers(GET, "/version.json", "/api/version.json", "/status", "/api/status").permitAll()
+                    .requestMatchers(GET, "/status", "/api/status").permitAll()
+                    
+                    // user endpoint
+                    .requestMatchers(GET, "/userPermissions", "/api/userPermissions").permitAll()
+                    .requestMatchers("/user/steam/**", "/api/user/steam/**").authenticated()
+                    .requestMatchers("/user/statistics/**", "/api/user/statistics/**").authenticated()
+                    
+                    // endpoints needing authentication
+                    .requestMatchers("/admin/**", "/api/admin/**").authenticated()
+                    .requestMatchers(POST, "/circuits/**", "/api/circuits/**").authenticated()
+                    .requestMatchers(DELETE, "/circuits/**", "/api/circuits/**").authenticated()
+                    .requestMatchers(POST, "/contests/**", "/api/contests/**").authenticated()
+                    .requestMatchers(POST, "/leagueCollection/**", "/api/leagueCollection/**").authenticated()
+                    .requestMatchers(POST, "/lookup", "/api/lookup").authenticated()
+                    .requestMatchers(GET, "/competition/*/exportNafData", "/api/competition/*/exportNafData").authenticated()
+                    .requestMatchers(GET, "/competitions/*/exportNafData", "/api/competitions/*/exportNafData").authenticated()
+                    
+                    // public api read only endpoints
+                    .requestMatchers(GET, "/arena/**", "/api/arena/**").permitAll()
+                    .requestMatchers(GET, "/circuit/**", "/api/circuit/**").permitAll()
+                    .requestMatchers(GET, "/circuits/**", "/api/circuits/**").permitAll()
+                    .requestMatchers(GET, "/competition/**", "/api/competition/**").permitAll()
+                    .requestMatchers(GET, "/competitions/**", "/api/competitions/**").permitAll()
+                    .requestMatchers(GET, "/contest/**", "/api/contest/**").permitAll()
+                    .requestMatchers(GET, "/contests/**", "/api/contests/**").permitAll()
+                    .requestMatchers(GET, "/img/**", "/api/img/**").permitAll()
+                    .requestMatchers(GET, "/knockout/**", "/api/knockout/**").permitAll()
+                    .requestMatchers(GET, "/league/**", "/api/league/**").permitAll()
+                    .requestMatchers(GET, "/league-systems", "/api/league-systems").permitAll()
+                    .requestMatchers(GET, "/league-systems/**", "/api/league-systems/**").permitAll()
+                    .requestMatchers(GET, "/leagues/**", "/api/leagues/**").permitAll()
+                    .requestMatchers(GET, "/match/**", "/api/match/**").permitAll()
+                    .requestMatchers(GET, "/matches/**", "/api/matches/**").permitAll()
+                    .requestMatchers(GET, "/replay-statistics", "/api/replay-statistics").permitAll()
+                    .requestMatchers(GET, "/ranks/**", "/api/ranks/**").permitAll()
+                    .requestMatchers(GET, "/stages/**", "/api/stages/**").permitAll()
+                    .requestMatchers(GET, "/team/**", "/api/team/**").permitAll()
+                    .requestMatchers(GET, "/teams/**", "/api/teams/**").permitAll()
+                    .requestMatchers(GET, "/actuator/health", "/actuator/info").permitAll()
+                    .requestMatchers(GET, "/actuator/health", "/actuator/info").permitAll()
+                    
+                    // rest
+                    .anyRequest().denyAll()
+            )
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .oauth2ResourceServer(oauth2ResourceServer -> oauth2ResourceServer
+                    .authenticationEntryPoint(errorHandler::handleAuthenticationError)
+                    .jwt(jwt -> jwt.jwtAuthenticationConverter(makePermissionsConverter())));
         return http.build();
     }
 

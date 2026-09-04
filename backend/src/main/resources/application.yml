@@ -8,8 +8,10 @@ spring:
 
 logging:
   level:
-    org.springframework.boot.autoconfigure.mongo: DEBUG
-
+    org.springframework.boot.autoconfigure.mongo: INFO
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+    
 cyanide:
   check-api-status-cron: '0 */15 * * * ?'
   job-creation-scheduler-active: true

@@ -62,7 +62,7 @@ function LastCheck({ status, textSize, statusOutdated }) {
 }
 
 function Menu() {
-  const { user, authenticationReady, checkPermissions, userPermissions, isAuthenticated, loginWithPopup, logout } =
+  const { user, authenticationReady, checkPermissions, userPermissions, isAuthenticated, login, logout } =
     useAuth0WithUserPermissions();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [status, setStatus] = useState(null);
@@ -143,7 +143,7 @@ function Menu() {
                 {isProduction && authenticationReady && (
                   <Box>
                     {!isAuthenticated ? (
-                      <Link variant="menu" onClick={() => loginWithPopup()}>
+                      <Link variant="menu" onClick={() => login()}>
                         Login
                       </Link>
                     ) : (

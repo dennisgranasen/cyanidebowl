@@ -16,11 +16,11 @@ let useAuth0WithUserPermissions;
 
 if (isProduction)  {
   useAuth0WithUserPermissions = function useAuth0WithUserPermissions() {
-    const { user, isAuthenticated, isLoading, loginWithPopup, logout, getAccessTokenSilently, getAccessTokenWithPopup } =
+    const { user, isAuthenticated, isLoading, loginWithRedirect, logout, getAccessTokenSilently, getAccessTokenWithPopup } =
       useAuth0();
-      const [userPermissions, setUserPermissions] = useState(noPermissions);
-      const [permissionsLoading, setPermissionsLoading] = useState(isLoading);
-      const [permissionsError, setPermissionsError] = useState(null);
+    const [userPermissions, setUserPermissions] = useState(noPermissions);
+    const [permissionsLoading, setPermissionsLoading] = useState(isLoading);
+    const [permissionsError, setPermissionsError] = useState(null);
 
     useEffect(() => {
         let active = true;
@@ -79,7 +79,7 @@ if (isProduction)  {
       userPermissions,
       permissionsError,
       isAuthenticated,
-      loginWithPopup,
+      login: () => loginWithRedirect(),
       logout,
       getAccessTokenSilently,
       getAccessTokenWithPopup,
