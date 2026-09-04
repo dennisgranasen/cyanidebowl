@@ -1,9 +1,92 @@
 import React from 'react';
-import { Badge, Tab, TabList, TabPanel, TabPanels, Tabs, Table, TableContainer, Tbody, Td, Text, Th, Thead, Tr } from '@chakra-ui/react';
+import {
+  Badge, Box, Center, Heading, HStack, Image, Tab, TabList, TabPanel, TabPanels,
+  Tabs, Table, TableContainer, Tbody, Td, Text, Tfoot, Th, Thead, Tr,
+  useBreakpointValue,
+} from '@chakra-ui/react';
+import { QuestionOutlineIcon } from '@chakra-ui/icons';
+import config from '../../config';
+import imageUrls from '../../imageUrls';
 import prettyPrint from '../../util/prettyPrint';
-import { resolveRace } from '../../util/raceUtil';
-const desktop={display:{base:'none',lg:'table-cell'}},tablet={display:{base:'none',md:'table-cell'}};
-export function PlayerTable({category}){return <TableContainer><Table size="sm"><Thead><Tr><Th>#</Th><Th>Player</Th><Th>Team</Th><Th isNumeric>{category.label}</Th><Th {...tablet}>Coach</Th><Th {...desktop}>Race / position</Th><Th {...desktop} isNumeric>Games</Th><Th {...desktop} isNumeric>SPP</Th><Th {...desktop}>Skills</Th></Tr></Thead><Tbody>{category.entries.map((p,i)=><Tr key={`${p.playerId}-${i}`}><Td>{i+1}</Td><Td fontWeight="bold">{p.name||'Unknown player'}</Td><Td>{p.teamName||'Unknown team'}</Td><Td isNumeric fontWeight="bold">{p.value}</Td><Td {...tablet}>{p.coachName||'–'}</Td><Td {...desktop}>{prettyPrint(resolveRace(p,p.opus))} · {prettyPrint(p.position)||'–'}</Td><Td {...desktop} isNumeric>{p.games}</Td><Td {...desktop} isNumeric>{p.spp}</Td><Td {...desktop} maxW="24rem" whiteSpace="normal">{p.skills?.map(prettyPrint).join(', ')||'–'}</Td></Tr>)}</Tbody></Table></TableContainer>}
-export function TeamTable({category,entries}){const rows=entries||category.entries;return <TableContainer><Table size="sm"><Thead><Tr><Th>#</Th><Th>Team</Th><Th isNumeric>{category?.label||'Points'}</Th><Th {...tablet}>Coach</Th><Th {...desktop}>Edition</Th><Th {...desktop} isNumeric>G</Th><Th {...desktop} isNumeric>W-D-L</Th><Th {...desktop} isNumeric>TD +/-</Th><Th {...desktop} isNumeric>CAS +/-</Th></Tr></Thead><Tbody>{rows.map((t,i)=><Tr key={`${t.teamId}-${i}`}><Td>{i+1}</Td><Td fontWeight="bold">{t.name}</Td><Td isNumeric fontWeight="bold">{t.value??t.points}</Td><Td {...tablet}>{t.coachName||'–'}</Td><Td {...desktop}>{t.editions?.map(e=><Badge key={e} mr={1}>{e}</Badge>)}</Td><Td {...desktop} isNumeric>{t.games}</Td><Td {...desktop} isNumeric>{t.wins}-{t.draws}-{t.losses}</Td><Td {...desktop} isNumeric>{t.touchdownsFor}-{t.touchdownsAgainst}</Td><Td {...desktop} isNumeric>{t.casualtiesFor}-{t.casualtiesAgainst}</Td></Tr>)}</Tbody></Table></TableContainer>}
-export function CategoryTabs({categories,type}){if(!categories?.length)return <Text color="gray.500">No statistics are available for this selection.</Text>;return <Tabs variant="enclosed" isLazy><TabList overflowX="auto">{categories.map(c=><Tab flexShrink={0} key={c.key}>{c.label}</Tab>)}</TabList><TabPanels>{categories.map(c=><TabPanel px={0} key={c.key}>{type==='player'?<PlayerTable category={c}/>:<TeamTable category={c}/>}</TabPanel>)}</TabPanels></Tabs>}
-export function VersusTable({rows}){if(!rows?.length)return <Text color="gray.500">No opponents found for the mapped coach IDs.</Text>;return <TableContainer><Table size="sm"><Thead><Tr><Th>Coach</Th><Th isNumeric>G</Th><Th isNumeric>W-D-L</Th><Th isNumeric>TD</Th><Th isNumeric>CAS</Th></Tr></Thead><Tbody>{rows.map(v=><Tr key={v.coachId}><Td fontWeight="bold">{v.coachName||v.coachId}</Td><Td isNumeric>{v.games}</Td><Td isNumeric>{v.wins}-{v.draws}-{v.losses}</Td><Td isNumeric>{v.touchdownsFor}-{v.touchdownsAgainst}</Td><Td isNumeric>{v.casualtiesFor}-{v.casualtiesAgainst}</Td></Tr>)}</Tbody></Table></TableContainer>}
+import { getRaceLogo, resolveRace } from '../../util/raceUtil';
+
+const { boxSize, smallScreenBreakpointValues } = config;
+const editionOpus = (entry) => entry.opus || Number(String(entry.editions?.[0] || '').replace('BB', '')) || 3;
+
+function RaceLogo({ entry }) {
+  const opus = editionOpus(entry);
+  const race = resolveRace(entry, opus);
+  const logo = getRaceLogo(entry.raceId ?? race, opus);
+  return <Image src={imageUrls.logo(logo, opus)} boxSize={boxSize} title={prettyPrint(race)}
+    fallback={<QuestionOutlineIcon boxSize={boxSize} />} objectFit="scale-down" />;
+}
+
+function PlayerColumns({ label, compact }) {
+  return <Tr><Th><Center>{compact ? 'R' : 'Rank'}</Center></Th><Th>Player</Th><Th>Team</Th>
+    {!compact && <Th />}<Th><Center>{label}</Center></Th>
+    {!compact && <><Th>Coach</Th><Th>Position</Th><Th><Center>Games</Center></Th><Th><Center>SPP</Center></Th><Th>Skills</Th></>}</Tr>;
+}
+
+export function PlayerTable({ category }) {
+  const compact = useBreakpointValue(smallScreenBreakpointValues);
+  return <TableContainer><Table variant="stripedClickable" size="sm">
+    <Thead><PlayerColumns label={category.label} compact={compact} /></Thead>
+    <Tbody>{category.entries.map((player, index) => <Tr key={`${player.playerId}-${index}`}>
+      <Td><Center><Heading size="sm">{index + 1}</Heading></Center></Td>
+      <Td><Text fontWeight="semibold">{player.name || 'Unknown player'}</Text>
+        {compact && <Text color="gray.500" fontSize="xs">{prettyPrint(player.position) || '–'}</Text>}</Td>
+      <Td><Text>{player.teamName || 'Unknown team'}</Text>
+        {compact && <Text color="gray.500" fontSize="xs">{player.coachName || '–'}</Text>}</Td>
+      {!compact && <Td><RaceLogo entry={player} /></Td>}
+      <Td><Center><Heading size="sm">{player.value}</Heading></Center></Td>
+      {!compact && <><Td>{player.coachName || '–'}</Td><Td>{prettyPrint(player.position) || '–'}</Td>
+        <Td><Center>{player.games}</Center></Td><Td><Center>{player.spp}</Center></Td>
+        <Td maxW="24rem" whiteSpace="normal">{player.skills?.map(prettyPrint).join(', ') || '–'}</Td></>}
+    </Tr>)}</Tbody><Tfoot><PlayerColumns label={category.label} compact={compact} /></Tfoot>
+  </Table></TableContainer>;
+}
+
+function TeamColumns({ label, compact }) {
+  return <Tr><Th><Center>{compact ? 'R' : 'Rank'}</Center></Th><Th>{compact ? 'Team / coach' : 'Team-name'}</Th><Th />
+    {!compact && <Th>Coach-name</Th>}<Th><Center>{label}</Center></Th>
+    <Th><Center>W</Center></Th><Th><Center>D</Center></Th><Th><Center>L</Center></Th><Th><Center>{compact ? 'GP' : 'Games'}</Center></Th>
+    {!compact && <><Th><Center>TD+</Center></Th><Th><Center>TD-</Center></Th><Th><Center>TDD</Center></Th>
+      <Th><Center>CAS+</Center></Th><Th><Center>CAS-</Center></Th><Th><Center>CASD</Center></Th></>}</Tr>;
+}
+
+export function TeamTable({ category, entries }) {
+  const compact = useBreakpointValue(smallScreenBreakpointValues);
+  const rows = entries || category.entries;
+  const label = category?.label || 'Score';
+  return <TableContainer><Table variant="stripedClickable" size="sm">
+    <Thead><TeamColumns label={label} compact={compact} /></Thead><Tbody>{rows.map((team, index) => <Tr key={`${team.teamId}-${index}`}>
+      <Td><Center><Heading size="sm">{index + 1}</Heading></Center></Td>
+      <Td><HStack><Text fontWeight="semibold">{team.name}</Text>{team.editions?.length > 1 && <Badge>{team.editions.join(' + ')}</Badge>}</HStack>
+        {compact && <Text color="gray.500" fontSize="xs">{team.coachName || '–'}</Text>}</Td>
+      <Td><RaceLogo entry={team} /></Td>{!compact && <Td>{team.coachName || '–'}</Td>}
+      <Td><Center><Heading size="sm">{team.value ?? team.points}</Heading></Center></Td>
+      <Td><Center>{team.wins}</Center></Td><Td><Center>{team.draws}</Center></Td><Td><Center>{team.losses}</Center></Td><Td><Center>{team.games}</Center></Td>
+      {!compact && <><Td><Center>{team.touchdownsFor}</Center></Td><Td><Center>{team.touchdownsAgainst}</Center></Td><Td><Center>{team.touchdownsFor - team.touchdownsAgainst}</Center></Td>
+        <Td><Center>{team.casualtiesFor}</Center></Td><Td><Center>{team.casualtiesAgainst}</Center></Td><Td><Center>{team.casualtiesFor - team.casualtiesAgainst}</Center></Td></>}
+    </Tr>)}</Tbody><Tfoot><TeamColumns label={label} compact={compact} /></Tfoot>
+  </Table></TableContainer>;
+}
+
+export function CategoryTabs({ categories, type }) {
+  if (!categories?.length) return <Text color="gray.500">No statistics are available for this selection.</Text>;
+  return <Box borderWidth="1px" borderRadius="md" overflow="hidden"><Tabs variant="enclosed" isLazy>
+    <TabList overflowX="auto" px={2} pt={2}>{categories.map(category => <Tab flexShrink={0} key={category.key}>{category.label}</Tab>)}</TabList>
+    <TabPanels>{categories.map(category => <TabPanel p={0} key={category.key}>
+      {type === 'player' ? <PlayerTable category={category} /> : <TeamTable category={category} />}
+    </TabPanel>)}</TabPanels></Tabs></Box>;
+}
+
+export function VersusTable({ rows }) {
+  if (!rows?.length) return <Text color="gray.500">No opponents found for the mapped coach IDs.</Text>;
+  return <TableContainer borderWidth="1px" borderRadius="md"><Table variant="stripedClickable" size="sm">
+    <Thead><Tr><Th>Coach</Th><Th isNumeric>G</Th><Th isNumeric>W-D-L</Th><Th isNumeric>TD</Th><Th isNumeric>CAS</Th></Tr></Thead>
+    <Tbody>{rows.map(row => <Tr key={row.coachId}><Td fontWeight="semibold">{row.coachName || row.coachId}</Td><Td isNumeric>{row.games}</Td>
+      <Td isNumeric>{row.wins}-{row.draws}-{row.losses}</Td><Td isNumeric>{row.touchdownsFor}-{row.touchdownsAgainst}</Td>
+      <Td isNumeric>{row.casualtiesFor}-{row.casualtiesAgainst}</Td></Tr>)}</Tbody>
+  </Table></TableContainer>;
+}
