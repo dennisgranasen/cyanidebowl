@@ -54,7 +54,7 @@ public class PyBb3Client {
     }
 
     private int browserStatus(int upstreamStatus) {
-        if (upstreamStatus == 400 || upstreamStatus == 404 || upstreamStatus == 429) return upstreamStatus;
+        if (upstreamStatus == 400 || upstreamStatus == 401 || upstreamStatus == 404 || upstreamStatus == 409 || upstreamStatus == 429 || upstreamStatus == 503) return upstreamStatus;
         if (upstreamStatus == 422) return 400;
         return 502;
     }

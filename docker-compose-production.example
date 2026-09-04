@@ -28,10 +28,12 @@ services:
       SPRING_PROFILES_ACTIVE: prod
       PYBB3_SERVICE_URL: http://pybb3-service:8000
       PYBB3_INTERNAL_API_KEY: ${PYBB3_INTERNAL_API_KEY}
+      REPLAY_SWEEPER_STORAGE_DIRECTORY: /var/lib/warpscores/replays
     restart: unless-stopped
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
+      - replay-data:/var/lib/warpscores/replays
     networks:
       - warpscores-backend
       - warpscores-frontend
@@ -45,6 +47,9 @@ services:
       PYBB3_INTERNAL_API_KEY: ${PYBB3_INTERNAL_API_KEY}
       SESSION_TTL_SECONDS: 1800
       CHALLENGE_TTL_SECONDS: 300
+      PYBB3_CREDENTIAL_ENCRYPTION_KEY: ${PYBB3_CREDENTIAL_ENCRYPTION_KEY}
+    volumes:
+      - pybb3-credentials:/var/lib/pybb3/credentials
     restart: unless-stopped
     networks:
       - warpscores-backend
@@ -82,3 +87,7 @@ networks:
     external: false
   warpscores-frontend:
     driver: bridge
+
+volumes:
+  pybb3-credentials:
+  replay-data:

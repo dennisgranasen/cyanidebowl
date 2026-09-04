@@ -130,6 +130,20 @@ export default {
     getDataWithAuthentication('/admin/league-systems', getAccessTokenSilently, getAccessTokenWithPopup)
       .then(returnData)
       .catch(handleError),
+  replaySweeperStatus: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
+    getDataWithAuthentication('/admin/replay-sweeper', getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  replaySweeperLogs: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
+    getDataWithAuthentication('/admin/replay-sweeper/logs', getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  updateReplaySweeper: async (data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    putDataWithAuthentication('/admin/replay-sweeper', data, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  runReplaySweeper: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication('/admin/replay-sweeper/run', {}, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  authenticateReplaySweeper: async (data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication('/admin/replay-sweeper/auth', data, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  replaySweeperGuardCode: async (id, code, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication(`/admin/replay-sweeper/challenges/${encodeURIComponent(id)}/code`, { code }, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  confirmReplaySweeperGuard: async (id, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication(`/admin/replay-sweeper/challenges/${encodeURIComponent(id)}/confirm`, {}, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   leagueSystemDiscoveryCandidates: async (leagueSystemId, getAccessTokenSilently, getAccessTokenWithPopup) =>
     getDataWithAuthentication(`/admin/league-systems/${encodeURIComponent(leagueSystemId)}/discovery-candidates`, getAccessTokenSilently, getAccessTokenWithPopup)
       .then(returnData)

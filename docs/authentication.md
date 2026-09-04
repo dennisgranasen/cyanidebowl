@@ -27,3 +27,13 @@ Required service configuration:
 - `PYBB3_SERVICE_URL`: internal pybb3 service URL
 - `PYBB3_COOKIE_SECURE=true` in HTTPS production
 - `PYBB3_REF`: preferably an immutable pybb3 tag or commit for Docker builds
+# Replay service credential
+
+The scheduled replay account is separate from users' short-lived Steam sessions. Its refresh ticket is AES-encrypted
+by pybb3 and stored in the `pybb3-credentials` volume. Set a long, stable
+`PYBB3_CREDENTIAL_ENCRYPTION_KEY`; losing or changing it requires an administrator to authenticate the account again.
+Cyanidebowl stores only schedule/status metadata in MongoDB and never receives the refresh ticket.
+
+The replay client connects only for a scheduled batch and closes immediately afterwards. If Steam reports that the
+account is active elsewhere, the run is skipped and recorded as `STEAM_ACCOUNT_ACTIVE`; the credential remains valid.
+Invalid/expired credentials are treated separately and produce an administrator warning.

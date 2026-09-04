@@ -18,7 +18,12 @@ services:
         PYBB3_REF: ${PYBB3_REF:-main}
     environment:
       PYBB3_INTERNAL_API_KEY: ${PYBB3_INTERNAL_API_KEY}
+      PYBB3_CREDENTIAL_ENCRYPTION_KEY: ${PYBB3_CREDENTIAL_ENCRYPTION_KEY}
+    volumes:
+      - pybb3-credentials:/var/lib/pybb3/credentials
     ports:
       - '8000:8000'
     profiles:
       - pybb3
+volumes:
+  pybb3-credentials:

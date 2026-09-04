@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.config import settings
-from app.api import auth, teams
+from app.api import auth, teams, replays
 
 from app.services.session_manager import session_manager
 @asynccontextmanager
@@ -17,6 +17,7 @@ app = FastAPI(
 # Inkludera routrar
 app.include_router(auth.router, prefix=settings.API_V1_STR)
 app.include_router(teams.router, prefix=settings.API_V1_STR)
+app.include_router(replays.router, prefix=settings.API_V1_STR)
 
 @app.get("/health", tags=["Health"])
 def health_check():

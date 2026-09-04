@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from app.dependencies import trusted_owner
 from app.schemas.auth import GuardCodeRequest, SteamLoginRequest
 from app.services.session_manager import SessionNotFound, session_manager
+from app.services.credential_store import credential_store
 router=APIRouter(prefix="/auth",tags=["Auth"])
 log=logging.getLogger(__name__)
 def missing(error): raise HTTPException(404,str(error)) from error
@@ -21,16 +22,16 @@ def auth_failure(error):
     raise HTTPException(502,{"code":"STEAM_SERVICE_FAILED","message":"Steam authentication service failed"}) from error
 @router.post("/start")
 def start(req:SteamLoginRequest,owner:str=Depends(trusted_owner)):
-    try:return session_manager.start_auth(owner,req.username,req.password)
+    try:return persist(session_manager.start_auth(owner,req.username,req.password,req.persistCredential),req.persistCredential)
     except (ValueError,RuntimeError,OSError) as error:auth_failure(error)
 @router.post("/challenges/{challenge_id}/code")
 def code(challenge_id:str,req:GuardCodeRequest,owner:str=Depends(trusted_owner)):
-    try:return session_manager.submit_code(owner,challenge_id,req.code)
+    try:return persist(session_manager.submit_code(owner,challenge_id,req.code),True)
     except SessionNotFound as error:missing(error)
     except (ValueError,RuntimeError,OSError) as error:auth_failure(error)
 @router.post("/challenges/{challenge_id}/confirm")
 def confirm(challenge_id:str,owner:str=Depends(trusted_owner)):
-    try:return session_manager.confirm_device(owner,challenge_id)
+    try:return persist(session_manager.confirm_device(owner,challenge_id),True)
     except SessionNotFound as error:missing(error)
     except (ValueError,RuntimeError,OSError) as error:auth_failure(error)
 @router.get("/sessions/{session_id}")
@@ -42,3 +43,10 @@ def logout(session_id:str,owner:str=Depends(trusted_owner)):
     try:session_manager.close_session(owner,session_id)
     except SessionNotFound as error:missing(error)
     return Response(status_code=204)
+def persist(result,requested):
+    credential=result.pop('credential',None)
+    if requested and credential:
+        credential_store.save('replay-sweeper',credential)
+        session_id=result.pop('sessionId',None)
+        if session_id: session_manager.close_session('replay-sweeper',session_id)
+    return result

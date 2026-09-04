@@ -15,6 +15,7 @@ class SessionNotFound(Exception): pass
 class PendingAuth:
     owner_id: str
     flow: SteamWebAuthFlow
+    persist_credential: bool = False
     last_access: float = field(default_factory=time.time)
 
 @dataclass
@@ -35,21 +36,23 @@ class SessionManager:
         self._flow_factory = flow_factory or (lambda: SteamWebAuthFlow(helper=settings.STEAM_HELPER_PATH))
         self._client_factory = client_factory or self._open_client
 
-    def start_auth(self, owner_id, username, password):
+    def start_auth(self, owner_id, username, password, persist_credential=False):
         self.cleanup_expired()
         flow = self._flow_factory()
         try: result = flow.start(username, password)
         except Exception:
             flow.close(); raise
-        return self._handle(owner_id, flow, result)
+        return self._handle(owner_id, flow, result, persist_credential=persist_credential)
 
     def submit_code(self, owner_id, challenge_id, code):
         pending = self._get_pending(owner_id, challenge_id)
-        return self._handle(owner_id, pending.flow, pending.flow.submit_code(code), challenge_id)
+        return self._handle(owner_id, pending.flow, pending.flow.submit_code(code), challenge_id,
+                            persist_credential=pending.persist_credential)
 
     def confirm_device(self, owner_id, challenge_id):
         pending = self._get_pending(owner_id, challenge_id)
-        return self._handle(owner_id, pending.flow, pending.flow.confirm_device(), challenge_id)
+        return self._handle(owner_id, pending.flow, pending.flow.confirm_device(), challenge_id,
+                            persist_credential=pending.persist_credential)
 
     def session_info(self, owner_id, session_id):
         session = self._get_session(owner_id, session_id)
@@ -88,10 +91,10 @@ class SessionManager:
         for value in pending: value.flow.close()
         for value in sessions: value.client.close()
 
-    def _handle(self, owner_id, flow, result, challenge_id=None):
+    def _handle(self, owner_id, flow, result, challenge_id=None, persist_credential=False):
         if isinstance(result, SteamGuardChallenge):
             challenge_id = challenge_id or str(uuid.uuid4())
-            with self._lock: self._pending[challenge_id] = PendingAuth(owner_id, flow)
+            with self._lock: self._pending[challenge_id] = PendingAuth(owner_id, flow, persist_credential)
             return {"status":"GUARD_REQUIRED", "challengeId":challenge_id, "method":result.method,
                     "emailHint":result.email, "previousCodeWasIncorrect":result.previous_code_was_incorrect}
         if challenge_id:
@@ -101,7 +104,10 @@ class SessionManager:
         coach_id, coach_name = (opened[2], opened[3]) if len(opened) >= 4 else (None, None)
         session_id = str(uuid.uuid4())
         with self._lock: self._sessions[session_id] = ActiveSession(owner_id, result.username, steam_id, client, coach_id, coach_name)
-        return {"status":"AUTHENTICATED", "sessionId":session_id, "steamUsername":result.username, "steamId":steam_id}
+        response={"status":"AUTHENTICATED", "sessionId":session_id, "steamUsername":result.username, "steamId":steam_id}
+        if persist_credential:
+            response["credential"]={"username":result.username,"refreshToken":result.refresh_token,"guardData":result.guard_data}
+        return response
 
     def _open_client(self, state: SteamAuthState):
         client = BB3Client(steam_auth=SteamAuthProcess.from_state(state, helper=settings.STEAM_HELPER_PATH))

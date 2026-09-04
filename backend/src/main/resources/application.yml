@@ -60,6 +60,14 @@ match-details:
     initial-delay-ms: ${MATCH_DETAILS_BACKFILL_INITIAL_DELAY_MS:60000}
     fixed-delay-ms: ${MATCH_DETAILS_BACKFILL_FIXED_DELAY_MS:600000}
 
+replay-sweeper:
+  scheduler-enabled: ${REPLAY_SWEEPER_SCHEDULER_ENABLED:true}
+  cron: '${REPLAY_SWEEPER_CRON:0 0 5 * * *}'
+  zone-id: ${REPLAY_SWEEPER_ZONE_ID:Europe/Stockholm}
+  batch-size: ${REPLAY_SWEEPER_BATCH_SIZE:10}
+  storage-directory: ${REPLAY_SWEEPER_STORAGE_DIRECTORY:./data/replays}
+  poll-delay-ms: ${REPLAY_SWEEPER_POLL_DELAY_MS:60000}
+
 league-system:
   discovery:
     notifications:

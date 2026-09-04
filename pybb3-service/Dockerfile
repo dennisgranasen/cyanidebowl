@@ -15,6 +15,7 @@ COPY --from=source /src/pybb3 /src/pybb3
 RUN pip install --no-cache-dir /src/pybb3 && rm -rf /src/pybb3
 COPY --from=source /out/helper /app/steam-helper
 COPY app ./app
+RUN mkdir -p /var/lib/pybb3/credentials && chown -R 65532:65532 /var/lib/pybb3
 ENV PYTHONUNBUFFERED=1 PYTHONPATH=/app STEAM_HELPER_PATH=/app/steam-helper/BB3SteamAuth
 USER 65532:65532
 EXPOSE 8000
