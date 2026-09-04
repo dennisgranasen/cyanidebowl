@@ -1,9 +1,14 @@
 const MAX_AGE_FOR_STATUS_IN_MILLIS = 35 * 60 * 1_000;
 const isProduction = process.env.NODE_ENV === 'production';
-const backendUrl = isProduction ?  'https://cyanidebowl.fly.dev' : 'http://localhost:8080';
-const auth0ClientId = 'J1jl3ahLjVJc2uDAGbDKOoosG8AFGhbB';
-const auth0Domain = 'nst-scores.eu.auth0.com';
-const auth0Audience = 'nst-scores-backend';
+//const backendUrl = isProduction ?  'https://cyanidebowl.fly.dev' : 'http://localhost:8080';
+const backendUrl = process.env.REACT_APP_BACKEND_URI
+  || (isProduction
+    ? 'https://api.blaskscore.example'
+    : 'http://localhost:8080');
+
+const auth0ClientId = process.env.REACT_APP_AUTH0_CLIENT_ID;
+const auth0Domain = process.env.REACT_APP_AUTH0_DOMAIN;
+const auth0Audience = process.env.REACT_APP_AUTH0_AUDIENCE;
 const devDelay = isProduction ? 0 : 1000;
 
 const config = {

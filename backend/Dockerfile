@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
 
 FROM maven:3.9-eclipse-temurin-25 AS build
+RUN apk add --no-cache curl
 WORKDIR /app
 COPY pom.xml .
 COPY backend ./backend

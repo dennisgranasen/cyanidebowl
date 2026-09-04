@@ -14,11 +14,20 @@ services:
   # ========================================================
   pybb3-service:
     container_name: pybb3-service
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     build:
       context: ./pybb3-service
       args:
         PYBB3_REF: ${PYBB3_REF:-main}
-        GITHUB_TOKEN: ${GITHUB_TOKEN}
     restart: unless-stopped
     environment:
       - PYBB3_INTERNAL_API_KEY=${PYBB3_INTERNAL_API_KEY}
@@ -41,7 +50,7 @@ services:
     environment:
       # Database & Profiles
       - SPRING_DATA_MONGODB_URI=${SPRING_MONGODB_URI}
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-server}
       - SERVER_PORT=${SERVER_PORT:-8080}
       
       # Integrations & Keys
@@ -50,9 +59,29 @@ services:
       - CYANIDE_API_KEY=${CYANIDE_API_KEY}
       
       # Auth & URLs
-      - AUTH_URI=${AUTH_URI}
-      - AUTH_AUDIENCE=${AUTH_AUDIENCE}
+      - AUTH_URI=${AUTH0_URI}
+      - AUTH_AUDIENCE=${AUTH0_AUDIENCE}
       - FRONTEND_URI=${FRONTEND_URI}
+      
+      # Replay Sweeper Configuration
+      - REPLAY_SWEEPER_STORAGE_DIRECTORY=/app/replays
+
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - --fail
+        - --silent
+        - http://127.0.0.1:8080/actuator/health
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+    depends_on:
+      pybb3-service:
+        condition: service_healthy
+
     volumes:
       - replay_data:/app/replays
     depends_on:
@@ -69,13 +98,25 @@ services:
         dockerfile: Dockerfile
         args:
           REACT_APP_BACKEND_URI: ${REACT_APP_BACKEND_URI}
-          REACT_APP_AUTH0_DOMAIN: ${AUTH0_URI}
-          REACT_APP_AUTH0_CLIENT_ID: $AUTH0_CLIENT_ID}
+          REACT_APP_AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+          REACT_APP_AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
           REACT_APP_AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
       container_name: cyanidebowl-frontend
       restart: unless-stopped
       networks:
         - internal_net
+
+      healthcheck:
+        test:
+          - CMD
+          - curl
+          - --fail
+          - --silent
+          - http://127.0.0.1/
+        interval: 30s
+        timeout: 5s
+        retries: 3
+        start_period: 15s
 
   # ========================================================
   # 4. Nginx Proxy Manager (NPM)
@@ -85,7 +126,7 @@ services:
     container_name: npm
     restart: unless-stopped
     ports:
-      - '81:81'
+      - '127.0.0.1:81:81'
     volumes:
       - npm_data:/data
       - npm_letsencrypt:/etc/letsencrypt
