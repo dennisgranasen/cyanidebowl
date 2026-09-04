@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import gzip
+import base64
 import hashlib
 import json
 import re
@@ -52,6 +53,16 @@ def _add(target: dict[str, Any], tag: str, value: Any) -> None:
 def _text(element: ET.Element, path: str) -> Any:
     found = element.find(path)
     return _scalar(found.text) if found is not None else None
+
+
+def _decoded_text(element: ET.Element, path: str) -> str | None:
+    value = _text(element, path)
+    if not isinstance(value, str):
+        return None
+    try:
+        return base64.b64decode(value, validate=True).decode("utf-8")
+    except (ValueError, UnicodeDecodeError):
+        return value
 
 
 def _board_context(board: ET.Element | None) -> dict[str, Any]:
@@ -193,6 +204,8 @@ def parse_replay(xml: bytes) -> dict[str, Any]:
     checkpoint_count = sum("checkpoint" in step for step in compact["steps"])
     analysis = {
         "parserVersion": PARSER_VERSION, "replayVersion": compact["replayVersion"],
+        "analysisConfidence": "RAW_UNMAPPED",
+        "sourceMatchId": _decoded_text(root, ".//NotificationGameJoined/GameInfos/Competition/CompetitionInfos/MatchId"),
         "stepCount": len(compact["steps"]), "eventCount": sum(event_counts.values()),
         "sourceBoardStateCount": source_board_count, "checkpointCount": checkpoint_count,
         "diceRolls": dice_rolls, "resourceEvents": resources, "specialEvents": special,

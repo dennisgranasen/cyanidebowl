@@ -1,8 +1,12 @@
 import base64
 import gzip
+import hashlib
+import zlib
 from fastapi import APIRouter,Depends,HTTPException
 from pydantic import BaseModel,Field
 from bb3 import BB3Client,SteamAuthProcess,SteamAuthState
+from bb3.encoding import b64_encode_text
+from bb3.replay import decode_replay_data
 from app.config import settings
 from app.dependencies import trusted_owner
 from app.services.credential_store import credential_store
@@ -16,6 +20,16 @@ class ReplayBatchRequest(BaseModel):
 
 class ReplayAnalysisRequest(BaseModel):
     data:str
+
+def download_replay_artifact(client:BB3Client,game_id:str)->tuple[bytes,bytes]:
+    root=client.request('RequestDownloadReplay','ResponseDownloadReplay',f'<GameId>{b64_encode_text(game_id)}</GameId>')
+    replay_data=root.findtext('ReplayData')
+    if not replay_data: raise RuntimeError('Replay response contained no ReplayData')
+    bbr=replay_data.encode('ascii')
+    return bbr,decode_replay_data(replay_data)
+
+def encode_bbr(xml:bytes)->bytes:
+    return base64.b64encode(base64.b64encode(zlib.compress(xml)))
 
 def classify_login_error(message:str):
     if any(token in message for token in ('LoggedInElsewhere','AlreadyLogged','PlayingElsewhere','account is active','AccountInUse','LogonSessionReplaced')):
@@ -35,10 +49,12 @@ def download_batch(req:ReplayBatchRequest,_owner:str=Depends(trusted_owner)):
             client.login()
             for game_id in req.gameIds:
                 try:
-                    artifacts=parse_replay(client.download_replay(game_id))
-                    results.append({"gameId":game_id,"data":base64.b64encode(artifacts["originalGzip"]).decode("ascii"),
+                    bbr,xml=download_replay_artifact(client,game_id)
+                    artifacts=parse_replay(xml)
+                    results.append({"gameId":game_id,"data":base64.b64encode(bbr).decode("ascii"),
                                     "compactData":base64.b64encode(artifacts["compactGzip"]).decode("ascii"),
-                                    "originalSha256":artifacts["originalSha256"],"compactSha256":artifacts["compactSha256"],
+                                    "originalSha256":hashlib.sha256(bbr).hexdigest(),"compactSha256":artifacts["compactSha256"],
+                                    "originalFormat":"BBR",
                                     "analysis":artifacts["analysis"]})
                 except Exception: results.append({"gameId":game_id,"error":"Replay unavailable"})
     except Exception as error:
@@ -51,10 +67,17 @@ def analyze(req:ReplayAnalysisRequest,_owner:str=Depends(trusted_owner)):
     try:
         raw=base64.b64decode(req.data,validate=True)
         if raw[:2]==b'\x1f\x8b': raw=gzip.decompress(raw)
-        artifacts=parse_replay(raw)
+        if raw.lstrip().startswith(b'<Replay'):
+            xml=raw
+            bbr=encode_bbr(xml)
+        else:
+            bbr=raw
+            xml=decode_replay_data(raw.decode('ascii').strip())
+        artifacts=parse_replay(xml)
         return {"compactData":base64.b64encode(artifacts["compactGzip"]).decode("ascii"),
-                "originalData":base64.b64encode(artifacts["originalGzip"]).decode("ascii"),
-                "originalSha256":artifacts["originalSha256"],"compactSha256":artifacts["compactSha256"],
+                "originalData":base64.b64encode(bbr).decode("ascii"),
+                "originalSha256":hashlib.sha256(bbr).hexdigest(),"compactSha256":artifacts["compactSha256"],
+                "originalFormat":"BBR",
                 "analysis":artifacts["analysis"]}
     except Exception as error:
         raise HTTPException(400,{"code":"INVALID_REPLAY","message":"Replay could not be parsed"}) from error

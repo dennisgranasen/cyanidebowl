@@ -138,6 +138,12 @@ export default {
     getDataWithAuthentication('/admin/replay-sweeper/replays', getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   analyzeReplay: async (matchId, getAccessTokenSilently, getAccessTokenWithPopup) =>
     postDataWithAuthentication(`/admin/replay-sweeper/replays/${encodeURIComponent(matchId)}/analyze`, {}, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  importReplays: async (files, getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const data = new FormData(); files.forEach(file => data.append('files', file));
+    return postDataWithAuthentication('/admin/replay-sweeper/replays/import', data, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError);
+  },
+  inspectReplay: async (matchId, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    getDataWithAuthentication(`/admin/replay-sweeper/replays/${encodeURIComponent(matchId)}/inspect`, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   updateReplaySweeper: async (data, getAccessTokenSilently, getAccessTokenWithPopup) =>
     putDataWithAuthentication('/admin/replay-sweeper', data, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   runReplaySweeper: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
@@ -426,7 +432,7 @@ export default {
     const disposition = result.headers?.['content-disposition'] || '';
     const encodedName = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
     const plainName = disposition.match(/filename="?([^";]+)"?/i)?.[1];
-    const filename = encodedName ? decodeURIComponent(encodedName) : (plainName || `${key}.xml.gz`);
+    const filename = encodedName ? decodeURIComponent(encodedName) : (plainName || `${key}.bbr`);
     const url = window.URL.createObjectURL(result.data);
     const link = document.createElement('a');
     link.href = url; link.download = filename; document.body.appendChild(link); link.click(); link.remove();

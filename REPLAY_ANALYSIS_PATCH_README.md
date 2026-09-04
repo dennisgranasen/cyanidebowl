@@ -34,6 +34,8 @@ Admin endpoints:
 
 - `GET /admin/replay-sweeper/replays`
 - `POST /admin/replay-sweeper/replays/{matchId}/analyze`
+- `GET /admin/replay-sweeper/replays/{matchId}/inspect`
+- `POST /admin/replay-sweeper/replays/import` (multipart `.bbr` batch)
 
 Public read endpoints:
 

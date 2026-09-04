@@ -17,6 +17,8 @@ public class ReplayAnalysis {
     private String gameId;
     private Integer parserVersion;
     private String replayVersion;
+    private String analysisConfidence;
+    private String sourceMatchId;
     private Date processedAt;
     private Integer stepCount;
     private Integer eventCount;

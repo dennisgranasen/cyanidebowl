@@ -35,6 +35,7 @@ public class ReplayAnalysisController {
             result.put("originalSize", download.getOriginalSize());
             result.put("compactSize", download.getCompactSize());
             result.put("parserVersion", download.getParserVersion());
+            result.put("originalFormat", download.getOriginalFormat());
             result.put("analysisError", download.getAnalysisError());
             result.put("analysis", analyses.findById(matchId).orElse(null));
             return result;
@@ -47,7 +48,8 @@ public class ReplayAnalysisController {
             var replay = artifacts.readOriginal(matchId);
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + replay.fileName() + "\"")
-                    .contentType(MediaType.parseMediaType(replay.fileName().endsWith(".gz") ? "application/gzip" : "application/xml"))
+                    .contentType(MediaType.parseMediaType(replay.fileName().endsWith(".bbr") ? "application/octet-stream"
+                            : replay.fileName().endsWith(".gz") ? "application/gzip" : "application/xml"))
                     .body(replay.data());
         } catch (IllegalArgumentException error) {
             return ResponseEntity.notFound().build();

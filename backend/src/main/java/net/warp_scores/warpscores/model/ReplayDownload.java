@@ -18,6 +18,7 @@ public class ReplayDownload {
     private Long originalSize;
     private Long compactSize;
     private String originalSha256;
+    private String originalFormat;
     private String compactSha256;
     private String status;
     private String analysisStatus;

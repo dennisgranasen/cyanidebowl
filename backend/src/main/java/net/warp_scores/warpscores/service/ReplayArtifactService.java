@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.zip.GZIPInputStream;
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +42,7 @@ public class ReplayArtifactService {
     private String storageDirectory;
 
     public record OriginalReplay(String fileName, byte[] data) {}
+    public record ImportedReplay(String fileName, String sourceMatchId, String matchId, boolean imported, String error) {}
 
     public OriginalReplay readOriginal(String matchId) throws Exception {
         ReplayDownload record = downloads.findById(matchId)
@@ -51,8 +53,45 @@ public class ReplayArtifactService {
         Path root = Path.of(storageDirectory).toAbsolutePath().normalize();
         Path source = Path.of(name).toAbsolutePath().normalize();
         if (!source.startsWith(root)) throw new IllegalStateException("Replay path is outside configured storage");
-        String safeGameId = Objects.toString(record.getGameId(), matchId).replaceAll("[^A-Za-z0-9._-]", "_");
-        return new OriginalReplay(safeGameId + (source.toString().endsWith(".gz") ? ".xml.gz" : ".xml"), Files.readAllBytes(source));
+        return new OriginalReplay(source.getFileName().toString(), Files.readAllBytes(source));
+    }
+
+    public byte[] readCompactJson(String matchId) throws Exception {
+        ReplayDownload record = downloads.findById(matchId)
+                .orElseThrow(() -> new IllegalArgumentException("No replay exists for match " + matchId));
+        if (record.getCompactFileName() == null) throw new IllegalArgumentException("Compact replay is missing");
+        Path root = Path.of(storageDirectory).toAbsolutePath().normalize();
+        Path source = Path.of(record.getCompactFileName()).toAbsolutePath().normalize();
+        if (!source.startsWith(root)) throw new IllegalStateException("Replay path is outside configured storage");
+        try (var input = new GZIPInputStream(Files.newInputStream(source))) { return input.readAllBytes(); }
+    }
+
+    public ImportedReplay importBbr(String suppliedName, byte[] bbr) {
+        try {
+            Map<String, Object> response = pybb3.post("/api/v1/replays/analyze", "replay-importer",
+                    Map.of("data", Base64.getEncoder().encodeToString(bbr)));
+            ReplayAnalysis parsed = mapper.convertValue(response.get("analysis"), ReplayAnalysis.class);
+            String sourceMatchId = parsed.getSourceMatchId();
+            if (sourceMatchId == null || sourceMatchId.isBlank())
+                return new ImportedReplay(suppliedName, null, null, false, "Replay contains no match identifier");
+            Match match = matches.findFirstByMatchId(sourceMatchId).orElse(null);
+            if (match == null && suppliedName != null) {
+                String fileId = Path.of(suppliedName).getFileName().toString().replaceFirst("(?i)\\.bbr$", "");
+                match = matches.findFirstByMatchId(fileId).orElse(null);
+                if (match != null) sourceMatchId = fileId;
+            }
+            if (match == null || match.getId() == null)
+                return new ImportedReplay(suppliedName, sourceMatchId, null, false, "No BlaskScore match matches this replay");
+            Map<String, Object> normalized = new HashMap<>(response);
+            normalized.put("data", response.get("originalData"));
+            normalized.put("fileName", suppliedName);
+            boolean imported = storeDownloaded(match.getId().asMongoKey(), sourceMatchId, normalized);
+            return new ImportedReplay(suppliedName, sourceMatchId, match.getId().asMongoKey(), imported,
+                    imported ? null : "Replay could not be stored");
+        } catch (Exception error) {
+            return new ImportedReplay(suppliedName, null, null, false,
+                    Objects.toString(error.getMessage(), "Replay could not be imported"));
+        }
     }
 
     public boolean storeDownloaded(String matchId, String gameId, Map<?, ?> result) {
@@ -71,15 +110,18 @@ public class ReplayArtifactService {
             }
             Path directory = Path.of(storageDirectory);
             Files.createDirectories(directory);
-            String safe = gameId.replaceAll("[^A-Za-z0-9._-]", "_");
-            Path originalPath = atomicWrite(directory.resolve(safe + ".xml.gz"), Base64.getDecoder().decode(original));
-            Path compactPath = atomicWrite(directory.resolve(safe + ".json.gz"), Base64.getDecoder().decode(compact));
+            String requestedName = Objects.toString(result.get("fileName"), gameId + ".bbr");
+            String safe = Path.of(requestedName).getFileName().toString().replaceAll("[^A-Za-z0-9._-]", "_");
+            if (!safe.toLowerCase().endsWith(".bbr")) safe += ".bbr";
+            Path originalPath = atomicWrite(directory.resolve(safe), Base64.getDecoder().decode(original));
+            Path compactPath = atomicWrite(directory.resolve(gameId.replaceAll("[^A-Za-z0-9._-]", "_") + ".json.gz"), Base64.getDecoder().decode(compact));
             record.setFileName(originalPath.toString());
             record.setOriginalFileName(originalPath.toString());
             record.setCompactFileName(compactPath.toString());
             record.setOriginalSize(Files.size(originalPath));
             record.setCompactSize(Files.size(compactPath));
             record.setOriginalSha256(Objects.toString(result.get("originalSha256"), null));
+            record.setOriginalFormat(Objects.toString(result.get("originalFormat"), "BBR"));
             record.setCompactSha256(Objects.toString(result.get("compactSha256"), null));
             record.setStatus("DOWNLOADED");
             record.setDownloadedAt(new Date());

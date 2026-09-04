@@ -22,6 +22,7 @@ import java.util.Optional;
 @Repository
 
 public interface MatchRepository extends MongoRepository<Match, Identity> {
+    Optional<Match> findFirstByMatchId(String matchId);
     @Query("{ '$and': ["
             + " { 'finished': { $ne: null, $lte: ?0 } },"
             + " { '$or': [ { 'detailsStatus': { $exists: false } }, { 'detailsStatus': null } ] },"

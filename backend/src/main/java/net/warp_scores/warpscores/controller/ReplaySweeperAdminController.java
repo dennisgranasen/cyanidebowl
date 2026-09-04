@@ -4,11 +4,15 @@ import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.service.PyBb3Client;
 import net.warp_scores.warpscores.service.ReplaySweeperService;
 import net.warp_scores.warpscores.service.ReplayAnalysisBackfillService;
+import net.warp_scores.warpscores.service.ReplayArtifactService;
 import net.warp_scores.warpscores.domain.persistence.ReplayDownloadRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.identity.IdentityUtil;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +27,7 @@ public class ReplaySweeperAdminController {
     private final ReplayDownloadRepository downloads;
     private final ReplayAnalysisBackfillService analysis;
     private final MatchRepository matches;
+    private final ReplayArtifactService replayArtifacts;
     @Value("${replay-sweeper.availability-window-days:30}") private int availabilityWindowDays;
     @GetMapping public Map<String,Object> status(){return service.status();}
     @GetMapping("/logs") public Object logs(){return service.logs();}
@@ -35,6 +40,7 @@ public class ReplaySweeperAdminController {
         result.put("downloadedAt",replay.getDownloadedAt());result.put("originalSize",replay.getOriginalSize());
         result.put("compactSize",replay.getCompactSize());result.put("error",replay.getError());
         result.put("analysisError",replay.getAnalysisError());
+        result.put("originalFormat",replay.getOriginalFormat());
         result.put("availabilityWindowDays",availabilityWindowDays);
         try{matches.findById(IdentityUtil.fromId(replay.getMatchId())).ifPresent(match->{
             result.put("playedAt",match.getFinished());result.put("competitionName",match.getCompetitionName());
@@ -43,6 +49,13 @@ public class ReplaySweeperAdminController {
         return result;
     }).toList();}
     @PostMapping("/replays/{matchId}/analyze") public Map<String,Object> analyze(@PathVariable String matchId){analysis.analyze(matchId);return Map.of("matchId",matchId,"status","PROCESSED");}
+    @GetMapping(value="/replays/{matchId}/inspect",produces=MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<byte[]> inspect(@PathVariable String matchId){try{return ResponseEntity.ok(replayArtifacts.readCompactJson(matchId));}catch(IllegalArgumentException error){return ResponseEntity.notFound().build();}catch(Exception error){return ResponseEntity.internalServerError().build();}}
+    @PostMapping(value="/replays/import",consumes=MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Object importReplays(@RequestPart("files") java.util.List<MultipartFile> files){
+        if(files.size()>100)throw new IllegalArgumentException("At most 100 replay files can be imported at once");
+        return files.stream().map(file->{try{if(file.getSize()>20L*1024*1024)return new ReplayArtifactService.ImportedReplay(file.getOriginalFilename(),null,null,false,"File exceeds 20 MiB");return replayArtifacts.importBbr(file.getOriginalFilename(),file.getBytes());}catch(Exception error){return new ReplayArtifactService.ImportedReplay(file.getOriginalFilename(),null,null,false,error.getMessage());}}).toList();
+    }
     @PostMapping("/auth") public Map<String,Object> auth(@RequestBody Login value){return accept(pybb3.post("/api/v1/auth/start",OWNER,Map.of("username",value.username(),"password",value.password(),"persistCredential",true)));}
     @PostMapping("/challenges/{id}/code") public Map<String,Object> code(@PathVariable String id,@RequestBody Code value){return accept(pybb3.post("/api/v1/auth/challenges/"+id+"/code",OWNER,Map.of("code",value.code())));}
     @PostMapping("/challenges/{id}/confirm") public Map<String,Object> confirm(@PathVariable String id){return accept(pybb3.post("/api/v1/auth/challenges/"+id+"/confirm",OWNER,Map.of()));}

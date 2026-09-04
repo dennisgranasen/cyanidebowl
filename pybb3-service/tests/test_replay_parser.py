@@ -6,6 +6,7 @@ from app.services.replay_parser import parse_replay
 
 REPLAY = b"""<Replay>
 <ReplayVersion>1-4-0-0</ReplayVersion>
+<NotificationGameJoined><GameInfos><Competition><CompetitionInfos><MatchId>dGVzdC1tYXRjaC1pZA==</MatchId></CompetitionInfos></Competition></GameInfos></NotificationGameJoined>
 <ReplayStep><Clock>100</Clock>
  <EventWeatherRoll><Dice><Die><Value>6</Value></Die><Die><Value>4</Value></Die></Dice></EventWeatherRoll>
  <BoardState><CurrentPhase>4</CurrentPhase><ActiveTeam>0</ActiveTeam><ListTeams>
@@ -32,6 +33,8 @@ def test_extracts_dice_resources_special_events_and_semantic_checkpoints():
     compact = json.loads(gzip.decompress(result["compactGzip"]))
 
     assert analysis["replayVersion"] == "1-4-0-0"
+    assert analysis["sourceMatchId"] == "test-match-id"
+    assert analysis["analysisConfidence"] == "RAW_UNMAPPED"
     assert len(analysis["diceRolls"]) == 3
     assert analysis["dieValueCounts"]["UNKNOWN:6"] == 1
     assert analysis["dieValueCounts"]["3:1"] == 1

@@ -15,8 +15,9 @@ Set a long stable `PYBB3_CREDENTIAL_ENCRYPTION_KEY` on pybb3. The Steam refresh 
 `pybb3-credentials` volume and never returned to the browser or stored in MongoDB. Replacing the key makes the old
 credential unreadable and intentionally requires a new admin login. Password and Guard code are never stored.
 
-The original replay is stored atomically as `.xml.gz` in `REPLAY_SWEEPER_STORAGE_DIRECTORY`; production compose mounts
-the `replay-data` Docker volume there. A compact `.json.gz` artifact is stored beside it. The compact stream retains
+The original double-base64/zlib `ReplayData` payload is stored byte-for-byte as a client-compatible `.bbr` in
+`REPLAY_SWEEPER_STORAGE_DIRECTORY`; production compose mounts the `replay-data` Docker volume there. A compact
+`.json.gz` derivative is stored beside it. The compact stream retains
 every ordered event and a complete semantic board-state checkpoint whenever the phase, active team or either team's
 `GameTurn` changes. In other words, it stores a board state for every turn without duplicating it after every event.
 
@@ -43,6 +44,14 @@ of Steam retention.
 Detailed player data is requested from Cyanide immediately for newly finished matches. If Cyanide has not completed
 the detailed record yet, it remains unchecked and is retried; it is only classified as unavailable after the existing
 `match-details.backfill.minimum-match-age-hours` settling period.
+
+Administrators can batch-import up to 100 local `.bbr` files. Each replay is decoded and matched to MongoDB using the
+embedded `CompetitionInfos.MatchId`; the `.bbr` filename UUID is a fallback. Team names and dates are deliberately not
+used as identity. Imported bytes are retained unchanged.
+
+**Inspect** exposes the complete parsed compact JSON with copy and download controls. Parser v1 labels its statistical
+interpretation `RAW_UNMAPPED`: event order and semantic board-state checkpoints are retained, but numeric Cyanide enums
+must be mapped from inspected real replays before the UI may describe them as verified dice or resource statistics.
 
 ## Failure behaviour
 

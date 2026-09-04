@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box,
+  Alert,
+  AlertIcon,
   Badge,
   Button,
   HStack,
@@ -82,10 +84,11 @@ function ReplayPanel({ replay, loading, error, onDownload }) {
   return <VStack align="stretch" spacing={4}>
     <HStack justify="space-between" align="start" flexWrap="wrap">
       <Box><HStack><Badge colorScheme="green">Replay available</Badge><Badge colorScheme={replay.analysisStatus === 'PROCESSED' ? 'blue' : replay.analysisStatus === 'FAILED' ? 'red' : 'orange'}>{replay.analysisStatus || 'PENDING'}</Badge></HStack><Text mt={1} fontSize="sm" color="gray.500">Original {formatBytes(replay.originalSize)} · compact {formatBytes(replay.compactSize)}</Text></Box>
-      <Button size="sm" colorScheme="blue" onClick={onDownload}>Download original replay</Button>
+      <Button size="sm" colorScheme="blue" onClick={onDownload}>Download {replay.originalFormat === 'BBR' ? 'original .bbr' : 'stored replay'}</Button>
     </HStack>
     {!analysis && <Text color="gray.500">Replayen finns, men analysen är inte klar ännu.</Text>}
     {analysis && <>
+      {analysis.analysisConfidence === 'RAW_UNMAPPED' && <Alert status="warning"><AlertIcon/>Replaystrukturen är bevarad, men event- och enumtolkningen är ännu experimentell. Värdena nedan är råa parserresultat, inte verifierad Blood Bowl-statistik.</Alert>}
       <SimpleGrid columns={{base:2,md:4}} spacing={3}>
         <Stat borderWidth="1px" borderRadius="md" p={3}><StatLabel>Turns/checkpoints</StatLabel><StatNumber>{analysis.checkpointCount || 0}</StatNumber></Stat>
         <Stat borderWidth="1px" borderRadius="md" p={3}><StatLabel>Events</StatLabel><StatNumber>{analysis.eventCount || 0}</StatNumber></Stat>
