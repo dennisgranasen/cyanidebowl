@@ -37,12 +37,12 @@ function PlayerColumns({ label, compact }) {
     {!compact && <><Th>Coach</Th><Th>Position</Th><Th><Center>Games</Center></Th><Th><Center>SPP</Center></Th><Th>Skills</Th></>}</Tr>;
 }
 
-export function PlayerTable({ category }) {
+export function PlayerTable({ category, mineOnly = false }) {
   const compact = useBreakpointValue(smallScreenBreakpointValues);
   const { isMyTeam, isMyCoach } = useMyTeams();
   return <TableContainer><Table variant="stripedClickable" size="sm">
     <Thead><PlayerColumns label={category.label} compact={compact} /></Thead>
-    <Tbody>{category.entries.map((player, index) => {
+    <Tbody>{category.entries.filter(player => !mineOnly || isMyTeam(player.teamId) || isMyCoach(player.coachId, editionOpus(player))).map((player, index) => {
       const mine = isMyTeam(player.teamId) || isMyCoach(player.coachId);
       return <Tr key={`${player.playerId}-${index}`} boxShadow={mine ? 'inset 4px 0 var(--chakra-colors-green-400)' : undefined}>
       <Td><Center><Heading size="sm">{index + 1}</Heading></Center></Td>
@@ -67,10 +67,10 @@ function TeamColumns({ label, compact }) {
       <Th><Center>CAS+</Center></Th><Th><Center>CAS-</Center></Th><Th><Center>CASD</Center></Th></>}</Tr>;
 }
 
-export function TeamTable({ category, entries }) {
+export function TeamTable({ category, entries, mineOnly = false }) {
   const compact = useBreakpointValue(smallScreenBreakpointValues);
   const { isMyTeam, isMyCoach } = useMyTeams();
-  const rows = entries || category.entries;
+  const rows = (entries || category.entries).filter(team => !mineOnly || isMyTeam(team.teamId) || isMyCoach(team.coachId, editionOpus(team)));
   const label = category?.label || 'Score';
   return <TableContainer><Table variant="stripedClickable" size="sm">
     <Thead><TeamColumns label={label} compact={compact} /></Thead><Tbody>{rows.map((team, index) => {
@@ -88,12 +88,12 @@ export function TeamTable({ category, entries }) {
   </Table></TableContainer>;
 }
 
-export function CategoryTabs({ categories, type }) {
+export function CategoryTabs({ categories, type, mineOnly = false }) {
   if (!categories?.length) return <Text color="gray.500">No statistics are available for this selection.</Text>;
   return <Box borderWidth="1px" borderRadius="md" overflow="hidden"><Tabs variant="enclosed" isLazy>
     <TabList overflowX="auto" px={2} pt={2}>{categories.map(category => <Tab flexShrink={0} key={category.key}>{category.label}</Tab>)}</TabList>
     <TabPanels>{categories.map(category => <TabPanel p={0} key={category.key}>
-      {type === 'player' ? <PlayerTable category={category} /> : <TeamTable category={category} />}
+      {type === 'player' ? <PlayerTable category={category} mineOnly={mineOnly} /> : <TeamTable category={category} mineOnly={mineOnly} />}
     </TabPanel>)}</TabPanels></Tabs></Box>;
 }
 

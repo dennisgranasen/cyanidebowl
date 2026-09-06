@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.model.WarpScoresUser;
+import net.warp_scores.warpscores.service.CoachClaimService;
 import net.warp_scores.warpscores.service.PyBb3Client;
 import net.warp_scores.warpscores.service.UserProfileService;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,8 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
 import java.util.Map;
-import java.util.List;
-import java.util.Collection;
 
 @RestController
 @RequestMapping("/user/steam")
@@ -24,6 +23,7 @@ public class SteamConnectionController {
     private static final String COOKIE = "BLASKSCORE_BB3_SESSION";
     private final PyBb3Client pybb3;
     private final UserProfileService profiles;
+    private final CoachClaimService coachClaims;
     @Value("${pybb3.cookie-secure:true}") private boolean cookieSecure;
 
     @GetMapping
@@ -37,13 +37,13 @@ public class SteamConnectionController {
                 result.put("connected", true);
                 result.put("steamUsername", current.get("steamUsername"));
                 result.put("steamId", current.get("steamId"));
-                result.put("coachIds", coachIds(user));
+                result.put("coachIds", coachClaims.coachIds(auth.getToken()));
                 return result;
             } catch (RuntimeException ignored) { /* expired cookie */ }
         }
         return Map.of("connected", false,
                 "steamUsername", user.getSteamUsername() == null ? "" : user.getSteamUsername(),
-                "coachIds", coachIds(user));
+                "coachIds", coachClaims.coachIds(auth.getToken()));
     }
 
     @PostMapping("/auth")
@@ -86,14 +86,19 @@ public class SteamConnectionController {
         int safeStart = Math.max(0, start);
         Map<String,Object> result = pybb3.get("/api/v1/sessions/" + session + "/teams?size=" + safeSize + "&start=" + safeStart,
                 auth.getName());
-        profiles.rememberCoachIds(auth.getToken(), coachIds(result));
+        coachClaims.claimBb3Teams(auth.getToken(), result);
         return result;
     }
 
     private void complete(Map<String,Object> result, JwtAuthenticationToken auth, HttpServletResponse response) {
         if (!"AUTHENTICATED".equals(result.get("status"))) return;
         profiles.connectSteam(auth.getToken(), (String)result.get("steamUsername"), (String)result.get("steamId"));
-        response.addHeader("Set-Cookie", cookieHeader((String)result.get("sessionId"), Duration.ofMinutes(30)).toString());
+        String sessionId = (String) result.get("sessionId");
+        if (sessionId != null && !sessionId.isBlank()) {
+            Map<String,Object> teams = pybb3.get("/api/v1/sessions/" + sessionId + "/teams?size=100&start=0", auth.getName());
+            coachClaims.claimBb3Teams(auth.getToken(), teams);
+        }
+        response.addHeader("Set-Cookie", cookieHeader(sessionId, Duration.ofMinutes(30)).toString());
     }
     private ResponseCookie cookieHeader(String value, Duration age) {
         return ResponseCookie.from(COOKIE, value).httpOnly(true).secure(cookieSecure).sameSite("Strict").path("/").maxAge(age).build();
@@ -105,15 +110,6 @@ public class SteamConnectionController {
     }
     private Map<String,Object> withoutSessionId(Map<String,Object> source) {
         var copy = new java.util.HashMap<>(source); copy.remove("sessionId"); return copy;
-    }
-    private Collection<String> coachIds(Map<String,Object> response) {
-        Object teams = response.get("items");
-        if (!(teams instanceof List<?> list)) return List.of();
-        return list.stream().filter(Map.class::isInstance).map(Map.class::cast)
-                .map(team -> team.get("coachId")).filter(String.class::isInstance).map(String.class::cast).toList();
-    }
-    private List<String> coachIds(WarpScoresUser user) {
-        return user.getCoachIds() == null ? List.of() : java.util.Arrays.asList(user.getCoachIds());
     }
     public record SteamLogin(String username, String password) {}
     public record GuardCode(String code) {}

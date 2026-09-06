@@ -157,7 +157,7 @@ function Menu() {
                           }
                         }}
                       >
-                        Loginb
+                        Login
                       </Link>
                     ) : (
                       <Link
@@ -169,9 +169,6 @@ function Menu() {
                 )}
                 {authenticationReady && isAuthenticated && (
                   <Box><Link variant="menu" as={RouteLink} to="/account" onClick={onClose}>Account &amp; Steam</Link></Box>
-                )}
-                {authenticationReady && isAuthenticated && (
-                  <Box><Link variant="menu" as={RouteLink} to="/my-statistics" onClick={onClose}>My statistics</Link></Box>
                 )}
                 <Box>
                   <Link variant="menu" as={RouteLink} to="/about" onClick={() => onClose()}>

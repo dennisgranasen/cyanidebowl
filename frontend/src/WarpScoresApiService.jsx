@@ -124,6 +124,24 @@ export default {
       personalStatistics: async (leagueSystemId, getAccessTokenSilently, getAccessTokenWithPopup) =>
         getDataWithAuthentication(`/user/statistics?leagueSystemId=${encodeURIComponent(leagueSystemId)}`,
           getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+      coachClaims: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
+        getDataWithAuthentication('/user/coach-claims', getAccessTokenSilently, getAccessTokenWithPopup)
+          .then(returnData).catch(handleError),
+      coachClaimCandidates: async (game, getAccessTokenSilently, getAccessTokenWithPopup) =>
+        getDataWithAuthentication(`/user/coach-claims/candidates?game=${encodeURIComponent(game)}`,
+          getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+      claimCoaches: async (game, coachIds, getAccessTokenSilently, getAccessTokenWithPopup) =>
+        postDataWithAuthentication('/user/coach-claims', { game, coachIds },
+          getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+      releaseCoachClaim: async (id, getAccessTokenSilently, getAccessTokenWithPopup) =>
+        deleteDataWithAuthentication(`/user/coach-claims/${encodeURIComponent(id)}`,
+          getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+      adminCoachClaims: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
+        getDataWithAuthentication('/admin/coach-claims', getAccessTokenSilently, getAccessTokenWithPopup)
+          .then(returnData).catch(handleError),
+      adminRemoveCoachClaim: async (id, getAccessTokenSilently, getAccessTokenWithPopup) =>
+        deleteDataWithAuthentication(`/admin/coach-claims/${encodeURIComponent(id)}`,
+          getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
 
   leagueSystems: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
     getDataWithAuthentication('/admin/league-systems', getAccessTokenSilently, getAccessTokenWithPopup)
