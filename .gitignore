@@ -47,6 +47,8 @@ frontend/public/version.json
 backend/src/main/resources/img/bb3
 
 /data
+*.tar
+*.tar.gz
 .env
 .env.*
 !.env.example
