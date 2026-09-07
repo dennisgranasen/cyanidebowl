@@ -1,7 +1,9 @@
 package net.warp_scores.warpscores.config;
 
 import net.warp_scores.warpscores.WarpScoresApp;
+import net.warp_scores.warpscores.model.UserPermissions;
 import net.warp_scores.warpscores.service.CircuitService;
+import net.warp_scores.warpscores.service.UserPermissionService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -26,7 +28,7 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(
     classes = WarpScoresApp.class,
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-    properties = {"AUTH0_URI=https://auth.example.test/", "AUTH0_AUDIENCE=nst-scores-backend"})
+    properties = {"AUTH0_URI=https://auth.example.test/", "AUTH0_AUDIENCE=nst-scores-backend", "scheduler.enabled=false"})
 @ActiveProfiles("server")
 class SecurityConfigurationTest {
 
@@ -38,6 +40,9 @@ class SecurityConfigurationTest {
 
     @MockitoBean
     private CircuitService circuitService;
+
+    @MockitoBean
+    private UserPermissionService userPermissionService;
 
     @Test
     void debugHeadersAreNotReflected() throws Exception {
@@ -79,6 +84,8 @@ class SecurityConfigurationTest {
 
             when(jwtDecoder.decode("user-permission-token"))
                     .thenReturn(jwt(List.of("write:league_admin")));
+            when(userPermissionService.permissions(org.mockito.ArgumentMatchers.any()))
+                    .thenReturn(new UserPermissions(false, true, false, false));
 
             HttpResponse<String> authenticatedResponse = send(userPermissionsRequest("user-permission-token"));
             assertThat(authenticatedResponse.statusCode()).isEqualTo(200);

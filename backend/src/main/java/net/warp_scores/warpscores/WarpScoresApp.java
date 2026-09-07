@@ -8,10 +8,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.annotation.EnableScheduling;
 
 @EnableAsync
-@EnableScheduling
 @ConfigurationPropertiesScan(basePackageClasses = WarpScoresConfig.class)
 @EnableMongoRepositories(basePackageClasses = {StatusRepository.class, ImageCacheRepository.class})
 @SpringBootApplication
