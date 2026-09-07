@@ -214,18 +214,13 @@ See the [Changelog](CHANGELOG.md).
 
 ## Support & Donations
 
-If you appreciate my work, you can buy me a coffee in person or [online](https://buymeacoffee.com/naytsyrhc).
-
-## Additional Projects
-
-- **Scoreboard and Clock for Blood Bowl**: [bbclock](https://bbclock.warp-scores.net)
-- **Blood Bowl Reference Sheet**: [YaRSfBB2020](https://gitlab.com/naytsyrhc/YaRSfBB2020)
-- **3D Models**: [Cults](https://cults3d.com/en/users/naytsyrhc)
+If you appreciate my work, you can buy me a coffee in person or [online](https://buymeacoffee.com/d.rock).
 
 ## Similar / Related Projects
 
 ### Blood Bowl 3
 
+- [Warp-scores](https://www.warp-scores.net) by Naytsyrhc
 - [nuffle.xyz](https://nuffle.xyz) by galentio
 - [Nuffles Numbers](https://www.nufflesnumbers.net) by trev
 - [Bloodbowl 3 statistics](https://spike.bugeat.com/en/stats) by thierry
@@ -241,9 +236,11 @@ If you appreciate my work, you can buy me a coffee in person or [online](https:/
 
 ### Disclaimer
 
-This site is completely unofficial and not affiliated
-with [Cyanide](https://cyanide-studio.com), [Nacon](https://www.nacongaming.com)
+This site is very much based on the original work on Warp-scores by Naytsyrhc and completely unofficial and not affiliated
+with [Cyanide](https://cyanide-studio.com), [Nacon](https://www.nacongaming.com), [Slitherine](https://www.slitherine.com)
 or [Games Workshop](https://www.nacongaming.com).
+
+ChatGPT and Codex by OpenAI assisted in coding. Also Gemini by Google to some extent (but not very much to be honest).
 
 [Blood Bowl](https://start-warhammer.com/blood-bowl/), [BB3](https://www.bloodbowl-thegame.com/) and probably a lot more names are trademarks of their respective owners. Used without
 permission. No challenge to their status intended.
