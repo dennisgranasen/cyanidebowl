@@ -1,6 +1,7 @@
 package net.warp_scores.warpscores.controller;
 
 import net.warp_scores.warpscores.WarpScoresApp;
+import net.warp_scores.warpscores.domain.persistence.ReplayDownloadRepository;
 import net.warp_scores.warpscores.domain.stage.StageMatchView;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.GameType;
@@ -27,7 +28,7 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(
     classes = WarpScoresApp.class,
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-    properties = {"AUTH0_URI=https://auth.example.test/", "AUTH0_AUDIENCE=nst-scores-backend"})
+    properties = {"AUTH0_URI=https://auth.example.test/", "AUTH0_AUDIENCE=nst-scores-backend", "scheduler.enabled=false"})
 @ActiveProfiles("server")
 class StageControllerIntegrationTest {
 
@@ -37,9 +38,13 @@ class StageControllerIntegrationTest {
     @MockitoBean
     private StageMatchService stageMatchService;
 
+    @MockitoBean
+    private ReplayDownloadRepository replayDownloads;
+
     @Test
     void returnsPublicStageMatchDtosAndMapsStageErrors() throws Exception {
         when(stageMatchService.getMatchesForStage("stage-1")).thenReturn(List.of(stageMatch()));
+        when(replayDownloads.findAllById(List.of("3_match-1"))).thenReturn(List.of());
         HttpResponse<String> success = get("stage-1");
         assertThat(success.statusCode()).isEqualTo(200);
         assertThat(success.body()).contains("\"sourceMatchKey\":\"match-1\"");

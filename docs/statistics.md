@@ -15,7 +15,10 @@ results; the stored match detail is used for CAS and player events.
 ruleset-dependent player measures such as SPP, MVP and movement distances are omitted. Teams are separate by their
 edition-aware BlaskScore identity unless `mergeTeamsByName=true`; merged rows retain badges for all included editions.
 
-The personal page uses persisted Cyanide coach IDs. Opening **My teams** after a Steam login extracts the owner ID
-from the BB3 team response and adds it to the BlaskScore user. The Steam session may subsequently expire or be closed.
+The personal page uses persisted, game-aware `coachClaims`. Opening **My teams** after
+a Steam login can claim the BB3 owner identity returned by the team data and associate
+that BB3 coach identity with the BlaskScore user. Coach IDs from different Blood Bowl
+editions are kept distinct even if their raw IDs happen to match. The Steam session
+may subsequently expire or be closed without removing the persisted ownership claim.
 
 Results are cached for ten minutes to keep the 31-season marathon responsive.

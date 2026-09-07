@@ -2,11 +2,10 @@
 
 > Handoff target: Codex  
 > Working branch: `dev`  
-> Reviewed: 2026-09-01  
+> Reviewed: 2026-09-07  
 > Repository: `dennisgranasen/cyanidebowl`
 
 Work only on `dev` or a short-lived branch created from `dev`. Do not base work on
-`main`. At review time, `dev` is 15 commits ahead of and one merge commit behind
 `main`.
 
 ## Goal
@@ -27,7 +26,10 @@ then make the stage work reachable, testable, and documented.
 6. If product behavior is unclear, document the question and stop that item instead of
    inventing behavior.
 
-## Priority overview
+
+7. Preserve the canonical authorization model: Auth0 subject identifies the user,
+   `coachClaims` are game-aware coach identities, `siteAdmin` is the super-role, and
+   LeagueSystem administration may be global or scoped to specific LeagueSystems.## Priority overview
 
 | Priority | Item | Outcome | Status |
 | --- | --- | --- | --- |
@@ -40,14 +42,21 @@ then make the stage work reachable, testable, and documented.
 | P1 | B-007 | The new stage model has an application/API entry point | Done: read API and LeagueSystem admin CRUD |
 | P1 | B-008 | Frontend API duplication and malformed URLs are removed | Done |
 | P2 | B-009 | Profiles, auth configuration, and docs agree | Done |
-| P2 | B-010 | GitHub CI validates backend and frontend | Deferred |
+| P2 | B-010 | GitHub CI validates backend/frontend and builds ARM64 artifacts | Implemented; test isolation pending green verification |
 | P2 | B-011 | Stale repository metadata/docs are cleaned up | Done |
 | P3 | B-012 | Broad exception/null handling is improved incrementally | Blocked: failure contract decision needed |
 | P1 | B-013 | Admins can search Cyanide and prepare LeagueSystem sources | Done |
 
 ## Current status
 
-- B-005 implementation is verified by the frontend build and existing suite; add
+
+- User authorization now uses canonical, game-aware `coachClaims`. Legacy parallel
+  coach/admin representations must not be reintroduced. `siteAdmin` acts as the
+  super-role; LeagueSystem administration supports both global and scoped grants.
+- GitHub Actions now runs backend and frontend tests for `dev`/PRs and builds the
+  three ARM64 application images as an Actions artifact only after both suites pass.
+  The remaining B-010 work is to finish isolating server-profile tests from MongoDB,
+  schedulers and external Cyanide calls and verify the workflow green.- B-005 implementation is verified by the frontend build and existing suite; add
   dedicated hook tests for loading, token failure, backend failure, and logout.
 - The legacy circuit-admin routes are retained for compatibility but `/admin` now
   manages the LeagueSystem hierarchy.
@@ -302,19 +311,31 @@ and document which values are public identifiers versus secrets.
 
 ### B-010 â€” Add GitHub CI for `dev` and pull requests
 
-No active GitHub build workflow was found. Add a least-privilege, non-deployment
-workflow that:
+The repository now contains a GitHub Actions workflow for pushes and pull requests
+targeting `dev`.
 
-- runs for PRs and pushes to `dev`;
-- uses the required Java version;
-- tests/packages backend modules without Docker or external secrets;
-- runs `npm ci`, frontend tests, and production build;
-- caches Maven/npm dependencies;
-- never contacts Cyanide, Atlas, Auth0, Discord, or Fly.
+**Implemented**
 
-If existing tests require services, isolate them or label true integration tests; never
-add fake production secrets to CI.
+- Backend and frontend tests run before image creation.
+- Pull requests run tests only.
+- Successful pushes to `dev` build the ARM64 backend, frontend and pybb3 images.
+- The three images are exported as `cyanidebowl-arm64.tar.gz` with a SHA-256 checksum
+  and retained as a GitHub Actions artifact; no container registry is required.
+- Frontend build-time configuration comes from GitHub repository variables.
+- Production runtime secrets remain on the deployment host and are not copied into
+  GitHub merely to build images.
 
+**Remaining verification**
+
+- Server-profile tests must be hermetic: no live MongoDB dependency, scheduler work,
+  Cyanide API calls, Auth0 calls or pybb3 network calls.
+- Controller integration tests must mock all persistence/service collaborators they
+  exercise, not only the primary service under test.
+- The workflow is only considered complete when both test jobs and the ARM64 artifact
+  job pass from a clean GitHub runner.
+
+Do not solve CI failures by adding production MongoDB, Cyanide, Auth0 or other runtime
+credentials to GitHub.
 ### B-011 â€” Refresh repository metadata and docs
 
 - Update root `pom.xml` SCM URLs if GitHub is authoritative.
@@ -353,6 +374,10 @@ Initial candidates:
 - Cyanide-disabled local launch configurations remain the safe default.
 - Stage/season/league-system models and adapters are active work, not dead code.
 
+- Canonical user permissions are resolved through `UserPermissionService`; do not
+  restore parallel legacy admin lists.
+- Coach ownership is represented by game-aware `coachClaims`, not a bare global list
+  of coach IDs.
 Add a URI-sanitization regression test if absent, but do not restore the older `main`
 implementation.
 
@@ -361,8 +386,8 @@ implementation.
 ### Backend
 
 ```bash
-mvn clean test -P server -DskipDocker -pl api,cyanide-api,backend -am
-mvn clean package -P server -DskipDocker -pl api,cyanide-api,backend -am
+mvn clean test -Pserver -DskipDocker -pl api,cyanide-api,backend -am
+mvn clean package -Pserver -DskipDocker -pl api,cyanide-api,backend -am
 ```
 
 ### Frontend

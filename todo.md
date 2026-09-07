@@ -1,3 +1,15 @@
+# Todo
+
+The maintained development backlog is [`BACKLOG.md`](BACKLOG.md).
+
+Do not add new implementation tasks here. Add them to `BACKLOG.md` with scope,
+priority, acceptance criteria and status so that project handoffs and Codex work use
+one canonical backlog.
+
+## Legacy notes
+
+The entries below are retained only so existing local notes are not lost. Move any
+still-relevant work to `BACKLOG.md` and then delete it from this section.
 * Fix presentation of circuits
 * Fix fetching of matches while server is running
 * Fix hosting

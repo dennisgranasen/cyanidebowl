@@ -68,6 +68,11 @@ class SecurityConfigurationTest {
         when(jwtDecoder.decode("no-permission-token")).thenReturn(jwt(List.of()));
         assertThat(send(circuitLegRequest("no-permission-token")).statusCode()).isEqualTo(403);
 
+        when(userPermissionService.hasAnyLeagueAdmin(org.mockito.ArgumentMatchers.any()))
+                .thenAnswer(invocation -> invocation.<org.springframework.security.core.Authentication>getArgument(0)
+                        .getAuthorities().stream()
+                        .anyMatch(authority -> "write:league_admin".equals(authority.getAuthority())));
+
         when(jwtDecoder.decode("league-admin-token"))
                     .thenReturn(jwt(List.of("write:league_admin")));
         when(circuitService.load(1L)).thenReturn(Optional.empty());
