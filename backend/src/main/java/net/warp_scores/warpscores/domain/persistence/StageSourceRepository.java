@@ -10,4 +10,5 @@ import java.util.List;
 public interface StageSourceRepository extends MongoRepository<StageSource, String> {
     List<StageSource> findByStageId(String stageId);
     List<StageSource> findByLeagueSystemId(String leagueSystemId);
+    List<StageSource> findBySourceEntityId(net.warp_scores.warpscores.identity.Identity sourceEntityId);
 }

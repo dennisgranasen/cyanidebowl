@@ -28,6 +28,7 @@ import java.net.URI;
 import static org.springframework.http.HttpMethod.DELETE;
 import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpMethod.POST;
+import static org.springframework.http.HttpMethod.PUT;
 
 @Configuration(proxyBeanMethods = false)
 @Profile("server")
@@ -72,7 +73,16 @@ public class SecurityConfiguration {
                         .requestMatchers(POST, "/lookup").authenticated()
                         .requestMatchers(GET, "/competition/*/exportNafData").authenticated()
                         .requestMatchers(GET, "/competitions/*/exportNafData").authenticated()
+                        // editorial/community mutations
+                        .requestMatchers(POST, "/articles/**").authenticated()
+                        .requestMatchers(PUT, "/articles/**").authenticated()
+                        .requestMatchers(DELETE, "/articles/**").authenticated()
+                        .requestMatchers(POST, "/community/**").authenticated()
+                        .requestMatchers(PUT, "/community/**").authenticated()
+                        .requestMatchers(DELETE, "/community/**").authenticated()
                         // public api read only endpoints
+                        .requestMatchers(GET, "/articles/**").permitAll()
+                        .requestMatchers(GET, "/community/**").permitAll()
                         .requestMatchers(GET, "/arena/**").permitAll()
                         .requestMatchers(GET, "/circuit/**").permitAll()
                         .requestMatchers(GET, "/circuits/**").permitAll()

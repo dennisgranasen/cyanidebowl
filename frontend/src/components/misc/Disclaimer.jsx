@@ -34,6 +34,12 @@ function Disclaimer({ headerSize, textSize, ...props }) {
           </Link>
           .
         </Text>
+        <Text fontSize={textSize}>
+          <a href="https://www.buymeacoffee.com/d.rock"><img src="https://img.buymeacoffee.com/button-api/?text=Sponsra blaskan!&emoji=&slug=d.rock&button_colour=40DCA5&font_colour=ffffff&font_family=Bree&outline_colour=000000&coffee_colour=FFDD00" /></a>
+        </Text>
+        <Text>
+          <script data-name="BMC-Widget" data-cfasync="false" src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js" data-id="d.rock" data-description="Support me on Buy me a coffee!" data-message="Tack för kaffet!" data-color="#40DCA5" data-position="Right" data-x_margin="18" data-y_margin="18"></script>
+        </Text>
       </VStack>
     </Box>
   );

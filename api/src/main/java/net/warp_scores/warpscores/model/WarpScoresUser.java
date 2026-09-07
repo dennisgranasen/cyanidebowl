@@ -40,4 +40,10 @@ public class WarpScoresUser {
 
     /** LeagueSystems this user may administer when leagueAdmin/siteAdmin is false. */
     private List<String> adminForLeagueSystems = new ArrayList<>();
+
+    /** Site-wide editorial permission. Kept separate from league administration. */
+    private Boolean siteEditor = false;
+
+    /** LeagueSystems this user may edit/moderate without site-wide editorial permission. */
+    private List<String> editorForLeagueSystems = new ArrayList<>();
 }

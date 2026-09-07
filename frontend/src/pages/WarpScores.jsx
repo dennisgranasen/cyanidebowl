@@ -10,6 +10,7 @@ import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 import config from '../config';
 import Leagues from '../components/league/Leagues';
 import LeagueSystems from '../components/league/LeagueSystems';
+import ArticleFeed from '../components/community/ArticleFeed';
 
 const { showCircuitsFeature } = config;
 
@@ -101,6 +102,9 @@ function WarpScores() {
           heading="BlaskScore"
           subHeading="Blödareblaskans omutliga(?) resultatförmedlingstjänst"
         />
+        {!showCircuits && (
+          <ArticleFeed leagueSystemId={selectedLeagueSystem?.id} limit={6} />
+        )}
         <Box>
           <LoadingOrErrorWrapper loading={loading} error={error}>
             {showCircuits ? (

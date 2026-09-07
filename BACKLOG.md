@@ -414,3 +414,48 @@ npm run build
 - No secrets or generated artifacts are committed.
 - The commit is focused and references the backlog ID.
 - Status is updated only after verification.
+
+---
+
+## Editorial & Community
+
+### B-014 — Editorial/community layer
+
+**Implemented by the editorial/community patch**
+
+- Site-wide and LeagueSystem-scoped editor grants, separate from LeagueSystem administration.
+- Draft/published/archived articles with optional cover image, season, tags, channels,
+  featured flag, slug and legacy-source metadata.
+- TipTap WYSIWYG article editor and public article/news views.
+- Generic comments for articles and matches. Match comments derive HOME_COACH /
+  AWAY_COACH from canonical game-aware coach claims; all other authenticated users
+  comment as spectators.
+- Soft-delete moderation for comment owners, scoped editors and site administrators.
+- POW / double POW / triple POW and skull / double-skull / triple-skull reactions.
+  One active reaction per authenticated user and target.
+- 0–10 per-user player ratings for players who actually participated in the match,
+  with match/season/career aggregation and coach/spectator breakdown.
+- Frozen match-player participation records. A player carrying suspendedNextMatch from
+  the team's preceding match is represented as MNG and rejected by the rating endpoint.
+- Bulk legacy article import endpoint keyed by legacySource, suitable for migrating the
+  historical Google Sites material after extraction.
+
+### B-015 — Enable team comment streams
+
+**Status: Blocked**
+
+The generic community target model already contains TEAM, but TEAM comments are
+deliberately rejected by the API until the team endpoint/canonical team identity is
+stable. Do not implement a second team-comment model.
+
+**Unblock when**
+
+- one canonical historical/current team ID is defined for supported games;
+- the team endpoint reliably resolves that ID;
+- LeagueSystem ownership/scope can be resolved for a team.
+
+**Then**
+
+- enable TEAM in `EditorialCommunityService.comments/addComment`;
+- render `CommentThread targetType="TEAM"` on the team page;
+- apply the same scoped-editor/site-admin moderation rules.

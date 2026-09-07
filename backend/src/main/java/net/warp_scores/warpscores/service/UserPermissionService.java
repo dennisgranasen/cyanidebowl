@@ -38,10 +38,17 @@ public class UserPermissionService {
         boolean registerLeague = siteAdmin
                 || hasAuthority(authentication, WRITE_REGISTER_LEAGUE)
                 || user != null && Boolean.TRUE.equals(user.getRegisterLeague());
+        boolean globalEditor = siteAdmin
+                || hasAuthority(authentication, WRITE_EDITOR)
+                || user != null && Boolean.TRUE.equals(user.getSiteEditor());
 
         Set<String> scoped = new LinkedHashSet<>();
         if (user != null && user.getAdminForLeagueSystems() != null) {
             scoped.addAll(user.getAdminForLeagueSystems());
+        }
+        Set<String> scopedEditors = new LinkedHashSet<>();
+        if (user != null && user.getEditorForLeagueSystems() != null) {
+            scopedEditors.addAll(user.getEditorForLeagueSystems());
         }
 
         return new UserPermissions(
@@ -50,7 +57,10 @@ public class UserPermissionService {
                 siteAdmin,
                 registerLeague,
                 globalLeagueAdmin,
-                List.copyOf(scoped));
+                List.copyOf(scoped),
+                globalEditor || !scopedEditors.isEmpty(),
+                globalEditor,
+                List.copyOf(scopedEditors));
     }
 
     public boolean isSiteAdmin(Authentication authentication) {
@@ -73,6 +83,15 @@ public class UserPermissionService {
         UserPermissions permissions = permissions(authentication);
         return permissions.isGlobalLeagueAdmin()
                 || leagueSystemId != null && permissions.getAdminForLeagueSystems().contains(leagueSystemId);
+    }
+
+    public boolean canEditLeagueSystem(Authentication authentication, String leagueSystemId) {
+        UserPermissions permissions = permissions(authentication);
+        if (permissions.isWriteSiteAdmin() || permissions.isGlobalEditor()) {
+            return true;
+        }
+        // Site-wide articles require a site-wide editor; scoped editors may only edit their systems.
+        return leagueSystemId != null && permissions.getEditorForLeagueSystems().contains(leagueSystemId);
     }
 
     public boolean canAdminSeason(Authentication authentication, String seasonId) {
