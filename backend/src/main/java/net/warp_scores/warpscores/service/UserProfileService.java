@@ -8,8 +8,6 @@ import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
 
 @Service
 @RequiredArgsConstructor
@@ -38,13 +36,12 @@ public class UserProfileService {
         return repository.save(user);
     }
 
-    public WarpScoresUser rememberCoachIds(Jwt jwt, java.util.Collection<String> coachIds) {
-        WarpScoresUser user = getOrCreate(jwt);
-        LinkedHashSet<String> ids = new LinkedHashSet<>();
-        if (user.getCoachIds() != null) ids.addAll(Arrays.asList(user.getCoachIds()));
-        if (coachIds != null) coachIds.stream().filter(id -> id != null && !id.isBlank()).forEach(ids::add);
-        user.setCoachIds(ids.toArray(String[]::new));
-        return repository.save(user);
+    /**
+     * @deprecated coach ownership is stored exclusively in coachClaims.
+     */
+    @Deprecated
+    public WarpScoresUser rememberCoachIds(Jwt jwt, java.util.Collection<String> ignoredCoachIds) {
+        return getOrCreate(jwt);
     }
 
     private String first(String first, String second) { return first != null ? first : second; }

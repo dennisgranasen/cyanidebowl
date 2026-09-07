@@ -43,7 +43,7 @@ export function PlayerTable({ category, mineOnly = false }) {
   return <TableContainer><Table variant="stripedClickable" size="sm">
     <Thead><PlayerColumns label={category.label} compact={compact} /></Thead>
     <Tbody>{category.entries.filter(player => !mineOnly || isMyTeam(player.teamId) || isMyCoach(player.coachId, editionOpus(player))).map((player, index) => {
-      const mine = isMyTeam(player.teamId) || isMyCoach(player.coachId);
+      const mine = isMyTeam(player.teamId) || isMyCoach(player.coachId, editionOpus(player));
       return <Tr key={`${player.playerId}-${index}`} boxShadow={mine ? 'inset 4px 0 var(--chakra-colors-green-400)' : undefined}>
       <Td><Center><Heading size="sm">{index + 1}</Heading></Center></Td>
       <Td><PlayerDisplayName name={player.name} />
@@ -74,7 +74,7 @@ export function TeamTable({ category, entries, mineOnly = false }) {
   const label = category?.label || 'Score';
   return <TableContainer><Table variant="stripedClickable" size="sm">
     <Thead><TeamColumns label={label} compact={compact} /></Thead><Tbody>{rows.map((team, index) => {
-      const mine = isMyTeam(team.teamId) || isMyCoach(team.coachId);
+      const mine = isMyTeam(team.teamId) || isMyCoach(team.coachId, editionOpus(team));
       return <Tr key={`${team.teamId}-${index}`} boxShadow={mine ? 'inset 4px 0 var(--chakra-colors-green-400)' : undefined}>
       <Td><Center><Heading size="sm">{index + 1}</Heading></Center></Td>
       <Td><HStack><Text fontWeight="semibold">{team.name}</Text>{mine && <Badge colorScheme="green">My team</Badge>}{team.editions?.length > 1 && <Badge>{team.editions.join(' + ')}</Badge>}</HStack>

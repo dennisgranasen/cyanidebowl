@@ -132,7 +132,7 @@ function Menu() {
                     </Link>
                   </Box>
                 )}
-                {checkPermissions && userPermissions?.writeSiteAdmin && (
+                {checkPermissions && (userPermissions?.writeSiteAdmin || userPermissions?.writeLeagueAdmin) && (
                   <Box>
                     <Link variant="menu" as={RouteLink} to="/admin" onClick={() => onClose()}>
                       Admin

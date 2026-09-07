@@ -12,8 +12,10 @@ public final class StatisticsResponse {
             List<String> availableEditions, List<String> comparablePlayerCategories,
             Page<TeamEntry> teams, List<Category<PlayerEntry>> players) {}
 
-    public record Personal(String leagueSystemId, List<String> coachIds, int matches,
+    public record Personal(String leagueSystemId, List<CoachRef> coaches, int matches,
             List<Category<PlayerEntry>> players, List<Category<TeamEntry>> teams, List<CoachVersus> versus) {}
+
+    public record CoachRef(String game, String coachId, String coachName) {}
 
     public record Category<T>(String key, String label, List<T> entries) {}
     public record Page<T>(List<T> content, int page, int size, long totalElements, int totalPages) {}

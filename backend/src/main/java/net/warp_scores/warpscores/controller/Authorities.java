@@ -1,13 +1,10 @@
 package net.warp_scores.warpscores.controller;
 
 import static net.warp_scores.warpscores.model.Permissions.READ_CURRENT_USER;
-import static net.warp_scores.warpscores.model.Permissions.WRITE_LEAGUE_ADMIN;
-import static net.warp_scores.warpscores.model.Permissions.WRITE_REGISTER_LEAGUE;
-import static net.warp_scores.warpscores.model.Permissions.WRITE_SITE_ADMIN;
 
 public interface Authorities {
     String AUTHORITY_READ_CURRENT_USER = "hasAuthority('" + READ_CURRENT_USER + "')";
-    String AUTHORITY_WRITE_LEAGUE_ADMIN = "hasAuthority('" + WRITE_LEAGUE_ADMIN + "')";
-    String AUTHORITY_WRITE_REGISTER_LEAGUE = "hasAuthority('" + WRITE_REGISTER_LEAGUE + "')";
-    String AUTHORITY_WRITE_SITE_ADMIN = "hasAuthority('" + WRITE_SITE_ADMIN + "')";
+    String AUTHORITY_WRITE_LEAGUE_ADMIN = "@userPermissionService.hasAnyLeagueAdmin(authentication)";
+    String AUTHORITY_WRITE_REGISTER_LEAGUE = "@userPermissionService.canRegisterLeague(authentication)";
+    String AUTHORITY_WRITE_SITE_ADMIN = "@userPermissionService.isSiteAdmin(authentication)";
 }

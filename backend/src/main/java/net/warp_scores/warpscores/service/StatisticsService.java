@@ -55,11 +55,14 @@ public class StatisticsService {
     }
 
     @Transactional(readOnly = true)
-    public StatisticsResponse.Personal personal(String leagueSystemId, Collection<String> coachIds) {
-        Set<String> ids = new HashSet<>(coachIds == null ? List.of() : coachIds);
+    public StatisticsResponse.Personal personal(String leagueSystemId, Collection<CoachClaim> claims) {
+        List<CoachClaim> ownedClaims = claims == null ? List.of() : List.copyOf(claims);
+        Set<String> ids = ownedClaims.stream().map(CoachClaim::getCoachId)
+                .filter(Objects::nonNull).collect(java.util.stream.Collectors.toSet());
         Dataset data = dataset(seasons.findByLeagueSystemIdOrderBySequenceAsc(leagueSystemId).stream().map(Season::getId).toList());
         Dataset own = data.filterCoaches(ids);
-        return new StatisticsResponse.Personal(leagueSystemId, ids.stream().sorted().toList(), own.all.size(),
+        return new StatisticsResponse.Personal(leagueSystemId, ownedClaims.stream()
+                .map(claim -> new StatisticsResponse.CoachRef(claim.getGame().name(), claim.getCoachId(), claim.getCoachName())).toList(), own.all.size(),
                 playerCategories(own, own.editions().size() > 1, TOP, ids), teamCategories(own, TOP, false, ids),
                 versus(data, ids));
     }

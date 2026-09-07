@@ -31,7 +31,7 @@ describe('WarpScoresApiService', () => {
     expect(axios.post).toHaveBeenCalledWith(
       '/lookup',
       { league_name: 'League' },
-      { headers: { Authorization: 'Bearer dev-token' } },
+      { withCredentials: true, headers: { Authorization: 'Bearer dev-token' } },
     );
   });
 
@@ -54,25 +54,50 @@ describe('WarpScoresApiService', () => {
       expect(axios.post).toHaveBeenCalledWith(
         '/admin/stages/nst%3As1%2Fstage/sources',
         source,
-        { headers: { Authorization: 'Bearer dev-token' } },
+        { withCredentials: true, headers: { Authorization: 'Bearer dev-token' } },
       );
       expect(axios.put).toHaveBeenCalledWith(
         '/admin/stage-sources/source%2F1',
         source,
-        { headers: { Authorization: 'Bearer dev-token' } },
+        { withCredentials: true, headers: { Authorization: 'Bearer dev-token' } },
       );
       expect(axios).toHaveBeenCalledWith(
         '/admin/league-systems/nst%2Fsystem/discovery-candidates',
-        { headers: { Authorization: 'Bearer dev-token' } },
+        { withCredentials: true, headers: { Authorization: 'Bearer dev-token' } },
       );
       expect(axios).toHaveBeenCalledWith('/stages/nst%3As1%2Fstage/matches');
       expect(axios.post).toHaveBeenCalledWith(
         '/admin/seasons/season%2F31/registered-sources', source,
-        { headers: { Authorization: 'Bearer dev-token' } },
+        { withCredentials: true, headers: { Authorization: 'Bearer dev-token' } },
       );
       expect(axios.post).toHaveBeenCalledWith(
         '/admin/stages/stage%2Feast/match-selections', { registeredSourceId: 'source-1' },
-        { headers: { Authorization: 'Bearer dev-token' } },
+        { withCredentials: true, headers: { Authorization: 'Bearer dev-token' } },
+      );
+    });
+
+    test('uses authenticated site-admin user permission routes', async () => {
+      await WarpScoresApiService.adminUsers(jest.fn(), jest.fn());
+      await WarpScoresApiService.updateAdminUserPermissions(
+        42,
+        {
+          siteAdmin: true,
+          leagueAdmin: false,
+          registerLeague: true,
+          adminForLeagueSystems: ['nst'],
+        },
+        jest.fn(),
+        jest.fn(),
+      );
+
+      expect(axios).toHaveBeenCalledWith(
+        '/admin/users',
+        { withCredentials: true, headers: { Authorization: 'Bearer dev-token' } },
+      );
+      expect(axios.put).toHaveBeenCalledWith(
+        '/admin/users/42/permissions',
+        { siteAdmin: true, leagueAdmin: false, registerLeague: true, adminForLeagueSystems: ['nst'] },
+        { withCredentials: true, headers: { Authorization: 'Bearer dev-token' } },
       );
     });
 });

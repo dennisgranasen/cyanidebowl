@@ -11,11 +11,11 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-import static net.warp_scores.warpscores.controller.Authorities.AUTHORITY_WRITE_SITE_ADMIN;
+import static net.warp_scores.warpscores.controller.Authorities.AUTHORITY_WRITE_LEAGUE_ADMIN;
 
 @RestController
 @RequiredArgsConstructor
-@PreAuthorize(AUTHORITY_WRITE_SITE_ADMIN)
+@PreAuthorize(AUTHORITY_WRITE_LEAGUE_ADMIN)
 public class LeagueStructureController {
     private final SeasonRepository seasons;
     private final PhaseRepository phases;

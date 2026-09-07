@@ -15,8 +15,6 @@ public class WarpScoresUser {
     @Id
     private Long id;
 
-    private String[] coachIds;
-
     private String username;
 
     private String email;
@@ -31,7 +29,15 @@ public class WarpScoresUser {
 
     private String steamId;
 
-    private List<Long> adminForCircuits = new ArrayList<>();
-    private List<String> adminForLeagues = new ArrayList<>();
-    private List<String> adminForCompetitions = new ArrayList<>();
+    /** Full site administrator. This supersedes every narrower administrator permission. */
+    private Boolean siteAdmin = false;
+
+    /** Administrator for every LeagueSystem, but not site-global administration. */
+    private Boolean leagueAdmin = false;
+
+    /** May register/import new leagues where the relevant controller supports it. */
+    private Boolean registerLeague = false;
+
+    /** LeagueSystems this user may administer when leagueAdmin/siteAdmin is false. */
+    private List<String> adminForLeagueSystems = new ArrayList<>();
 }

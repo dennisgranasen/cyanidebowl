@@ -12,6 +12,7 @@ import net.warp_scores.warpscores.model.Season;
 import net.warp_scores.warpscores.model.Stage;
 import net.warp_scores.warpscores.model.StageSource;
 import net.warp_scores.warpscores.service.LeagueSystemDiscoveryService;
+import net.warp_scores.warpscores.service.UserPermissionService;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -34,8 +35,9 @@ class LeagueSystemControllerTest {
     private final PhaseRepository phases = mock(PhaseRepository.class);
     private final RegisteredSourceRepository registeredSources = mock(RegisteredSourceRepository.class);
     private final LeagueSystemDiscoveryService discoveryService = mock(LeagueSystemDiscoveryService.class);
+    private final UserPermissionService permissions = mock(UserPermissionService.class);
     private final LeagueSystemController controller = new LeagueSystemController(
-            leagueSystems, seasons, stages, stageSources, dataCollections, phases, registeredSources, discoveryService);
+            leagueSystems, seasons, stages, stageSources, dataCollections, phases, registeredSources, discoveryService, permissions);
 
     @Test
     void createsChildrenUsingTheirResolvedParentIds() {

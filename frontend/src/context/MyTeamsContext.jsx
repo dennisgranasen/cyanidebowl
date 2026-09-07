@@ -13,6 +13,13 @@ const canonicalId = (id) => {
   return String(value).toLowerCase();
 };
 
+export const coachClaimKey = (game, coachId) => `${game}:${canonicalId(coachId)}`;
+export const isCoachClaimed = (claims, coachId, opus) => {
+  if (!coachId || !opus) return false;
+  const wanted = coachClaimKey(`BB${opus}`, coachId);
+  return (claims || []).some(claim => coachClaimKey(claim.game, claim.coachId) === wanted);
+};
+
 export function MyTeamsProvider({ children }) {
   const { authenticationReady, isAuthenticated, getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0WithUserPermissions();
   const [teams, setTeams] = useState([]);
@@ -38,11 +45,10 @@ export function MyTeamsProvider({ children }) {
   useEffect(() => { refresh(); }, [refresh]);
   const coachIds = useMemo(() => claims.map(claim => claim.coachId), [claims]);
   const ids = useMemo(() => new Set(teams.map((team) => canonicalId(team.id)).filter(Boolean)), [teams]);
-  const coaches = useMemo(() => new Set(claims.map(claim => `${claim.game}:${canonicalId(claim.coachId)}`).filter(key => !key.endsWith(':null'))), [claims]);
   const value = useMemo(() => ({ teams, claims, coachIds, loading, refresh,
     isMyTeam: (id) => ids.has(canonicalId(id)),
-    isMyCoach: (id, opus) => coaches.has(`BB${opus}:${canonicalId(id)}`),
-  }), [teams, claims, coachIds, loading, refresh, ids, coaches]);
+    isMyCoach: (id, opus) => isCoachClaimed(claims, id, opus),
+  }), [teams, claims, coachIds, loading, refresh, ids]);
   return <MyTeamsContext.Provider value={value}>{children}</MyTeamsContext.Provider>;
 }
 

@@ -142,6 +142,12 @@ export default {
       adminRemoveCoachClaim: async (id, getAccessTokenSilently, getAccessTokenWithPopup) =>
         deleteDataWithAuthentication(`/admin/coach-claims/${encodeURIComponent(id)}`,
           getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+      adminUsers: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
+        getDataWithAuthentication('/admin/users', getAccessTokenSilently, getAccessTokenWithPopup)
+          .then(returnData).catch(handleError),
+      updateAdminUserPermissions: async (id, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+        putDataWithAuthentication(`/admin/users/${encodeURIComponent(id)}/permissions`, data,
+          getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
 
   leagueSystems: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
     getDataWithAuthentication('/admin/league-systems', getAccessTokenSilently, getAccessTokenWithPopup)

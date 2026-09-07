@@ -15,8 +15,10 @@ import net.warp_scores.warpscores.model.Season;
 import net.warp_scores.warpscores.model.Stage;
 import net.warp_scores.warpscores.model.StageSource;
 import net.warp_scores.warpscores.service.LeagueSystemDiscoveryService;
+import net.warp_scores.warpscores.service.UserPermissionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,11 +31,11 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
-import static net.warp_scores.warpscores.controller.Authorities.AUTHORITY_WRITE_SITE_ADMIN;
+import static net.warp_scores.warpscores.controller.Authorities.AUTHORITY_WRITE_LEAGUE_ADMIN;
 
 @RestController
 @RequiredArgsConstructor
-@PreAuthorize(AUTHORITY_WRITE_SITE_ADMIN)
+@PreAuthorize(AUTHORITY_WRITE_LEAGUE_ADMIN)
 public class LeagueSystemController {
 
     private final LeagueSystemRepository leagueSystems;
@@ -44,10 +46,15 @@ public class LeagueSystemController {
     private final PhaseRepository phases;
     private final RegisteredSourceRepository registeredSources;
     private final LeagueSystemDiscoveryService discoveryService;
+    private final UserPermissionService permissions;
 
     @GetMapping("/admin/league-systems")
-    public List<LeagueSystem> getLeagueSystems() {
-        return leagueSystems.findAll();
+    public List<LeagueSystem> getLeagueSystems(JwtAuthenticationToken authentication) {
+        List<LeagueSystem> all = leagueSystems.findAll();
+        if (permissions.isGlobalLeagueAdmin(authentication)) return all;
+        return all.stream()
+                .filter(system -> permissions.canAdminLeagueSystem(authentication, system.getId()))
+                .toList();
     }
 
     @PostMapping("/admin/league-systems")

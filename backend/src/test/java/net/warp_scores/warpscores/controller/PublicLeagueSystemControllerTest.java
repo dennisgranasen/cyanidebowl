@@ -4,6 +4,7 @@ import net.warp_scores.warpscores.domain.persistence.LeagueSystemRepository;
 import net.warp_scores.warpscores.domain.persistence.SeasonRepository;
 import net.warp_scores.warpscores.domain.persistence.StageRepository;
 import net.warp_scores.warpscores.domain.persistence.PhaseRepository;
+import net.warp_scores.warpscores.domain.persistence.ReplayDownloadRepository;
 import net.warp_scores.warpscores.model.LeagueSystem;
 import net.warp_scores.warpscores.model.Season;
 import net.warp_scores.warpscores.model.Stage;
@@ -28,8 +29,9 @@ class PublicLeagueSystemControllerTest {
         StageRepository stages = mock(StageRepository.class);
         PhaseRepository phases = mock(PhaseRepository.class);
         StageMatchService stageMatches = mock(StageMatchService.class);
+        ReplayDownloadRepository replayDownloads = mock(ReplayDownloadRepository.class);
         PublicLeagueSystemController controller = new PublicLeagueSystemController(
-                leagueSystems, seasons, stages, phases, stageMatches, null);
+                leagueSystems, seasons, stages, phases, stageMatches, null, replayDownloads);
         LeagueSystem system = new LeagueSystem();
         system.setId("nst");
         system.setName("Nordic Stadium");
@@ -50,6 +52,7 @@ class PublicLeagueSystemControllerTest {
         when(stages.findBySeasonIdOrderBySequenceAsc("nst:s1")).thenReturn(List.of(stage));
         when(phases.findBySeasonIdOrderBySequenceAsc("nst:s1")).thenReturn(List.of(phase));
         when(stageMatches.getMatchesForStage("nst:s1:regular")).thenReturn(List.of());
+        when(replayDownloads.findAllById(List.of())).thenReturn(List.of());
 
         LeagueSystemOverview overview = controller.getLeagueSystemOverview("nst");
 
@@ -74,8 +77,9 @@ class PublicLeagueSystemControllerTest {
             StageRepository stages = mock(StageRepository.class);
             PhaseRepository phases = mock(PhaseRepository.class);
             StageMatchService stageMatches = mock(StageMatchService.class);
+            ReplayDownloadRepository replayDownloads = mock(ReplayDownloadRepository.class);
             PublicLeagueSystemController controller = new PublicLeagueSystemController(
-                    leagueSystems, seasons, stages, phases, stageMatches, null);
+                    leagueSystems, seasons, stages, phases, stageMatches, null, replayDownloads);
             LeagueSystem system = new LeagueSystem();
             system.setId("nst");
             Season season = new Season();

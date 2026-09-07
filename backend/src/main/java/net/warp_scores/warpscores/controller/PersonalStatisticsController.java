@@ -18,6 +18,6 @@ public class PersonalStatisticsController {
 
     @GetMapping
     public StatisticsResponse.Personal get(@RequestParam String leagueSystemId, JwtAuthenticationToken auth) {
-        return statistics.personal(leagueSystemId, coachClaims.coachIds(auth.getToken()));
+        return statistics.personal(leagueSystemId, coachClaims.mine(auth.getToken()));
     }
 }
