@@ -44,6 +44,29 @@ const opusSpecificRaces = {
   "2_24": "Bretonnia", // Bretonnia for BB3
 };
 
+const localRaceLogo = (raceId, opus) => {
+  if (typeof raceId === 'number') {
+    if (raceId === 16 && opus < 3) return '/img/raceLogos/khemri.png';
+    if (raceId === 1001) return '/img/raceLogos/chaosRenegades.jpg';
+    if (raceId === 1002) return '/img/raceLogos/owa.png';
+    return null;
+  }
+
+  const normalized = String(raceId).trim().toLowerCase().replace(/[\s_-]+/g, '');
+  switch (normalized) {
+    case 'khemri':
+    case 'tombkings':
+      return '/img/raceLogos/khemri.png';
+    case 'chaosrenegade':
+    case 'chaosrenegades':
+      return '/img/raceLogos/chaosRenegades.jpg';
+    case 'oldworldalliance':
+      return '/img/raceLogos/owa.png';
+    default:
+      return null;
+  }
+};
+
 const _getRaceLogo = (raceId, opus) => {
   // TODO: Implement logic to return the race logo based on raceName or raceId
   switch (raceId) {
@@ -62,6 +85,9 @@ const _getRaceLogo = (raceId, opus) => {
 const getRaceLogo = (raceId, opus) => {
   if (!raceId)
     return null;
+  const localLogo = localRaceLogo(raceId, opus);
+  if (localLogo)
+    return localLogo;
   if (typeof raceId === 'string') {
     return raceId.replace(/\s+/g, '') + "_01"; // Assuming raceId is a string like "Human", "Dwarf", etc.
   }

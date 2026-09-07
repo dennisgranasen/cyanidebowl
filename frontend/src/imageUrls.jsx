@@ -8,9 +8,14 @@ function addOpusParam(url, opus) {
   return url;
 }
 
+function logoUrl(name, opus) {
+  if (name?.startsWith('/')) return name;
+  return addOpusParam(`${config.backendUrl}/img/logo/${name}`, opus);
+}
+
 export default {
   stadium: (name, opus) => addOpusParam(`${config.backendUrl}/img/stadium/${name}`,opus),
-  logo: (name, opus) => addOpusParam(`${config.backendUrl}/img/logo/${name}`,opus),
+  logo: logoUrl,
   race: (name, opus) => addOpusParam(`${config.backendUrl}/img/race/${name}`,opus),
   skill: (name, opus) => addOpusParam(`${config.backendUrl}/img/skill/${name}`,opus),
   warpscoresLogoPng: (size = null) => `${config.backendUrl}/img/warpscores.png${size ? `/${size}` : ''}`,
