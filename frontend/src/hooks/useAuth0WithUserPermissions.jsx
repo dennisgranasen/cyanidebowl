@@ -21,7 +21,7 @@ if (isProduction)  {
         getAccessTokenSilently, getAccessTokenWithPopup } =
       useAuth0();
       const [userPermissions, setUserPermissions] = useState(noPermissions);
-      const [permissionsLoading, setPermissionsLoading] = useState(isLoading);
+      const [permissionsLoading, setPermissionsLoading] = useState(true);
       const [permissionsError, setPermissionsError] = useState(null);
 
     useEffect(() => {
@@ -71,7 +71,9 @@ if (isProduction)  {
 
       const checkPermissions = !isLoading;
       const loadUserPermissions = checkPermissions && isAuthenticated;
-      const authenticationReady = checkPermissions && !permissionsLoading;
+      const authenticationReady =
+        !isLoading &&
+        (!isAuthenticated || !permissionsLoading);
 
     return {
       user,
