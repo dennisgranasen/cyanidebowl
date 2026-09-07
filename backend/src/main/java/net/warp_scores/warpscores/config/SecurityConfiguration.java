@@ -61,7 +61,8 @@ public class SecurityConfiguration {
                         // user endpoint
                         .requestMatchers(GET, "/userPermissions").permitAll()
                         .requestMatchers("/user/steam/**").authenticated()
-                        .requestMatchers("/user/statistics/**").authenticated()
+                        .requestMatchers("/user/statistics/**").authenticated()                        
+                        .requestMatchers("/user/coach-claims", "/user/coach-claims/**").authenticated()
                         // endpoints needing authentication
                             .requestMatchers("/admin/**").authenticated()
                         .requestMatchers(POST, "/circuits/**").authenticated()
@@ -82,14 +83,14 @@ public class SecurityConfiguration {
                         .requestMatchers(GET, "/img/**").permitAll()
                         .requestMatchers(GET, "/knockout/**").permitAll()
                         .requestMatchers(GET, "/league/**").permitAll()
-                            .requestMatchers(GET, "/league-systems").permitAll()
-                            .requestMatchers(GET, "/league-systems/**").permitAll()
+                        .requestMatchers(GET, "/league-systems").permitAll()
+                        .requestMatchers(GET, "/league-systems/**").permitAll()
                         .requestMatchers(GET, "/leagues/**").permitAll()
                         .requestMatchers(GET, "/match/**").permitAll()
                         .requestMatchers(GET, "/matches/**").permitAll()
                         .requestMatchers(GET, "/replay-statistics").permitAll()
                         .requestMatchers(GET, "/ranks/**").permitAll()
-                            .requestMatchers(GET, "/stages/**").permitAll()
+                        .requestMatchers(GET, "/stages/**").permitAll()
                         .requestMatchers(GET, "/team/**").permitAll()
                         .requestMatchers(GET, "/teams/**").permitAll()
                         .requestMatchers(GET, "/actuator/health", "/actuator/info").permitAll()
@@ -98,7 +99,7 @@ public class SecurityConfiguration {
                 )
                     .csrf(csrf -> csrf.disable())
                     .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .oauth2ResourceServer(oauth2ResourceServer -> oauth2ResourceServer
+                    .oauth2ResourceServer(oauth2ResourceServer -> oauth2ResourceServer
                         .authenticationEntryPoint(errorHandler::handleAuthenticationError)
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(makePermissionsConverter())));
         return http.build();
