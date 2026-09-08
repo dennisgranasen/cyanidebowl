@@ -1,228 +1,30 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "build: backend dependencies",
-            "type": "process",
-            "command": "mvn",
-            "args": [
-                "-Pserver",
-                "-pl",
-                "api,cyanide-api",
-                "-am",
-                "install",
-                "-DskipTests"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}",
-            },
-            "problemMatcher": "$msCompile",
-            "presentation": {
-                "group": "build",
-                "panel": "dedicated",
-                "reveal": "silent"
-            }
+  "version": "2.0.0",
+  "tasks": [
+    {
+        "label": "Build backend",
+        "type": "shell",
+        "command": "mvn",
+        "args": [
+            "-Pdev",
+            "-pl",
+            "backend",
+            "-am",
+            "package",
+            "-DskipTests",
+            "-DskipDocker=true"
+        ],
+        "options": {
+            "cwd": "${workspaceFolder}"
         },
-        {
-            "label": "debug: backend [DB=local, Cyanide=OFF]",
-            "type": "process",
-            "command": "mvn",
-            "args": [
-                "spring-boot:run",
-                "-Pserver",
-                "-pl",
-                "backend",
-                "-Dspring-boot.run.profiles=dev",
-                "-Dspring-boot.run.arguments=--spring.mongodb.uri=mongodb://localhost:27017/cyanidebowl --cyanide.api-config.key= --cyanide.fetch-active=false --cyanide.job-creation-scheduler-active=false --cyanide.job-execution-scheduler-active=false --scheduler.enabled=false",
-                "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:5005"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}",
-            },
-            "dependsOn": "build: backend dependencies",
-            "dependsOrder": "sequence",
-            "isBackground": true,
-            "problemMatcher": {
-                "owner": "java",
-                "pattern": {
-                    "regexp": "^(.*)$",
-                    "message": 1
-                },
-                "background": {
-                    "activeOnStart": true,
-                    "beginsPattern": ".*",
-                    "endsPattern": "Listening for transport dt_socket at address: 5005"
-                }
-            },
-            "presentation": {
-                "group": "debug",
-                "panel": "dedicated",
-                "reveal": "always"
-            }
-        },
-        {
-            "label": "debug: backend [DB=local, Cyanide=ON]",
-            "type": "process",
-            "command": "mvn",
-            "args": [
-                "spring-boot:run",
-                "-Pserver",
-                "-pl",
-                "backend",
-                "-Dspring-boot.run.profiles=dev",
-                "-Dspring-boot.run.arguments=--spring.config.import=file:../.env[.properties] --spring.mongodb.uri=mongodb://localhost:27017/cyanidebowl",
-                "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:5005"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}",
-            },
-            "dependsOn": "build: backend dependencies",
-            "dependsOrder": "sequence",
-            "isBackground": true,
-            "problemMatcher": {
-                "owner": "java",
-                "pattern": {
-                    "regexp": "^(.*)$",
-                    "message": 1
-                },
-                "background": {
-                    "activeOnStart": true,
-                    "beginsPattern": ".*",
-                    "endsPattern": "Listening for transport dt_socket at address: 5005"
-                }
-            },
-            "presentation": {
-                "group": "debug",
-                "panel": "dedicated",
-                "reveal": "always"
-            }
-        },
-        {
-            "label": "debug: backend [DB=Atlas, Cyanide=OFF]",
-            "type": "process",
-            "command": "mvn",
-            "args": [
-                "spring-boot:run",
-                "-Pserver",
-                "-pl",
-                "backend",
-                "-Dspring-boot.run.profiles=dev",
-                "-Dspring-boot.run.arguments=--spring.config.import=file:../.env[.properties] --cyanide.api-config.key= --cyanide.fetch-active=false --cyanide.job-creation-scheduler-active=false --cyanide.job-execution-scheduler-active=false --scheduler.enabled=false",
-                "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:5005"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}",
-            },
-            "dependsOn": "build: backend dependencies",
-            "dependsOrder": "sequence",
-            "isBackground": true,
-            "problemMatcher": {
-                "owner": "java",
-                "pattern": {
-                    "regexp": "^(.*)$",
-                    "message": 1
-                },
-                "background": {
-                    "activeOnStart": true,
-                    "beginsPattern": ".*",
-                    "endsPattern": "Listening for transport dt_socket at address: 5005"
-                }
-            },
-            "presentation": {
-                "group": "debug",
-                "panel": "dedicated",
-                "reveal": "always"
-            }
-        },
-        {
-            "label": "debug: backend [DB=Atlas, Cyanide=ON]",
-            "type": "process",
-            "command": "mvn",
-            "args": [
-                "spring-boot:run",
-                "-Pserver",
-                "-pl",
-                "backend",
-                "-Dspring-boot.run.profiles=dev",
-                "-Dspring-boot.run.arguments=--spring.config.import=file:../.env[.properties]",
-                "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:5005"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}",
-            },
-            "dependsOn": "build: backend dependencies",
-            "dependsOrder": "sequence",
-            "isBackground": true,
-            "problemMatcher": {
-                "owner": "java",
-                "pattern": {
-                    "regexp": "^(.*)$",
-                    "message": 1
-                },
-                "background": {
-                    "activeOnStart": true,
-                    "beginsPattern": ".*",
-                    "endsPattern": "Listening for transport dt_socket at address: 5005"
-                }
-            },
-            "presentation": {
-                "group": "debug",
-                "panel": "dedicated",
-                "reveal": "always"
-            }
-        },
-        {
-            "label": "debug: frontend dev server",
-            "type": "npm",
-            "script": "dev",
-            "path": "frontend",
-            "isBackground": true,
-            "problemMatcher": {
-                "owner": "webpack",
-                "pattern": {
-                    "regexp": "^(.*)$",
-                    "message": 1
-                },
-                "background": {
-                    "activeOnStart": true,
-                    "beginsPattern": ".*",
-                    "endsPattern": "compiled successfully"
-                }
-            },
-            "presentation": {
-                "group": "debug",
-                "panel": "dedicated",
-                "reveal": "always"
-            }
-        },
-        {
-            "label": "test: backend",
-            "type": "process",
-            "command": "mvn",
-            "args": [
-                "-Pserver",
-                "-pl",
-                "backend",
-                "-am",
-                "test"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}",
-            },
-            "group": "test",
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "test: frontend",
-            "type": "npm",
-            "script": "test",
-            "path": "frontend",
-            "args": [
-                "--",
-                "--runInBand"
-            ],
-            "group": "test",
-            "problemMatcher": []
+        "problemMatcher": [
+            "$msCompile"
+        ],
+        "presentation": {
+            "reveal": "always",
+            "panel": "dedicated",
+            "clear": true
         }
-    ]
+    }
+  ]
 }

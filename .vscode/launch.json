@@ -1,80 +1,36 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "DEFAULT: Backend [DB=local, Cyanide=OFF]",
-            "type": "java",
-            "request": "attach",
-            "hostName": "localhost",
-            "port": 5005,
-            "preLaunchTask": "debug: backend [DB=local, Cyanide=OFF]"
-        },
-        {
-            "name": "Backend [DB=local, Cyanide=ON]",
-            "type": "java",
-            "request": "attach",
-            "hostName": "localhost",
-            "port": 5005,
-            "preLaunchTask": "debug: backend [DB=local, Cyanide=ON]"
-        },
-        {
-            "name": "Backend [DB=Atlas, Cyanide=OFF]",
-            "type": "java",
-            "request": "attach",
-            "hostName": "localhost",
-            "port": 5005,
-            "preLaunchTask": "debug: backend [DB=Atlas, Cyanide=OFF]"
-        },
-        {
-            "name": "Backend [DB=Atlas, Cyanide=ON]",
-            "type": "java",
-            "request": "attach",
-            "hostName": "localhost",
-            "port": 5005,
-            "preLaunchTask": "debug: backend [DB=Atlas, Cyanide=ON]"
-        },
-        {
-            "name": "Debug: Frontend",
-            "type": "pwa-chrome",
-            "request": "launch",
-            "url": "http://localhost:8022",
-            "webRoot": "${workspaceFolder}/frontend",
-            "sourceMaps": true,
-            "preLaunchTask": "debug: frontend dev server"
-        }
-    ],
-    "compounds": [
-        {
-            "name": "Full stack [DB=local, Cyanide=OFF]",
-            "configurations": [
-                "DEFAULT: Backend [DB=local, Cyanide=OFF]",
-                "Debug: Frontend"
-            ],
-            "stopAll": true
-        },
-        {
-            "name": "Full stack [DB=local, Cyanide=ON]",
-            "configurations": [
-                "Backend [DB=local, Cyanide=ON]",
-                "Debug: Frontend"
-            ],
-            "stopAll": true
-        },
-        {
-            "name": "Full stack [DB=Atlas, Cyanide=OFF]",
-            "configurations": [
-                "Backend [DB=Atlas, Cyanide=OFF]",
-                "Debug: Frontend"
-            ],
-            "stopAll": true
-        },
-        {
-            "name": "Full stack [DB=Atlas, Cyanide=ON]",
-            "configurations": [
-                "Backend [DB=Atlas, Cyanide=ON]",
-                "Debug: Frontend"
-            ],
-            "stopAll": true
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Backend",
+      "request": "launch",
+      "mainClass": "net.warp_scores.warpscores.WarpScoresApp",
+      "projectName": "backend",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": "--spring.profiles.active=dev --spring.config.import=file:./.env[.properties]",
+      "env": {
+        "FRONTEND_URI": "http://localhost:8022"
+      }
+    },
+    {
+    "type": "node-terminal",
+    "name": "Frontend",
+    "request": "launch",
+    "command": "$env:REACT_APP_BACKEND_URI='http://localhost:8080'; npm run dev",
+    "cwd": "${workspaceFolder}/frontend"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "CyanideBowl local",
+      "configurations": [
+        "Backend",
+        "Frontend"
+      ],
+      "preLaunchTask": "Build backend",
+      "stopAll": true
+    }
+  ]
 }
