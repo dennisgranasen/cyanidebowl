@@ -27,7 +27,14 @@ function ResourceList({ heading, items, selectedId, onSelect, label }) {
 }
 
 function AdminPage() {
-  const { authenticationReady, checkPermissions, userPermissions, getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0WithUserPermissions();
+  const {
+    authenticationReady,
+    checkPermissions,
+    userPermissions,
+    isAuthenticated,
+    getAccessTokenSilently,
+    getAccessTokenWithPopup
+  } = useAuth0WithUserPermissions();
   const navigate = useNavigate();
   const [systems, setSystems] = useState([]);
   const [seasons, setSeasons] = useState([]);
@@ -97,10 +104,14 @@ function AdminPage() {
   }, [authenticationReady, userPermissions.writeSiteAdmin, userPermissions.writeLeagueAdmin]);
 
   useEffect(() => {
-    if (authenticationReady && checkPermissions && !userPermissions.writeSiteAdmin && !userPermissions.writeLeagueAdmin) {
+    if (authenticationReady && 
+      isAuthenticated &&
+      checkPermissions && 
+      !userPermissions.writeSiteAdmin &&
+      !userPermissions.writeLeagueAdmin) {
       navigate('/');
     }
-  }, [authenticationReady, checkPermissions, navigate, userPermissions.writeSiteAdmin, userPermissions.writeLeagueAdmin]);
+  }, [authenticationReady, isAuthenticated, checkPermissions, navigate, userPermissions.writeSiteAdmin, userPermissions.writeLeagueAdmin]);
 
   const saveSystem = () => (selectedSystemId ? WarpScoresApiService.updateLeagueSystem(selectedSystemId, system, ...auth) : WarpScoresApiService.createLeagueSystem(system, ...auth)).then((item) => { loadSystems(); selectSystem(item); }).catch(fail);
   const saveSeason = () => { if (!selectedSystemId) return; const data = { ...season, number: numberOrNull(season.number) }; if (!selectedSeasonId) delete data.id; (selectedSeasonId ? WarpScoresApiService.updateSeason(selectedSeasonId, data, ...auth) : WarpScoresApiService.createSeason(selectedSystemId, data, ...auth)).then((item) => { WarpScoresApiService.seasons(selectedSystemId, ...auth).then(setSeasons); selectSeason(item); }).catch(fail); };

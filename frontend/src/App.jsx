@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, ChakraProvider, CSSReset, DarkMode } from '@chakra-ui/react';
-import { HashRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
+import { HashRouter as Router, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { Auth0Provider, withAuthenticationRequired } from '@auth0/auth0-react';
 import WarpScores from './pages/WarpScores';
 import TeamPage from './pages/TeamPage';
@@ -42,10 +42,13 @@ const withoutAuthentication = (Component) => {
 };
 
 function ProtectedRoute({ component: Component, ...args }) {
+  const location = useLocation();
   if (!isProduction) {
     return <Component />;
   }
-  const ProtectedComponent = withAuthenticationRequired(Component, args);
+  const ProtectedComponent = withAuthenticationRequired(Component, {
+    returnTo: `${location.pathname}${location.search}`,
+  });
   return <ProtectedComponent />;
 }
 
