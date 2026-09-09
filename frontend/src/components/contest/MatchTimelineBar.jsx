@@ -1,0 +1,347 @@
+import React from 'react';
+import {
+  Badge,
+  Box,
+  Button,
+  Collapse,
+  HStack,
+  Text,
+  Tooltip,
+  VStack,
+} from '@chakra-ui/react';
+
+const EVENT_STYLE = {
+  TOUCHDOWN: { glyph: 'TD', label: 'Touchdown', size: 34 },
+  COMPLETION: { glyph: '↗', label: 'Completion', size: 30 },
+  INTERCEPTION: { glyph: 'INT', label: 'Interception', size: 34 },
+  CASUALTY: { glyph: '☠', label: 'Casualty', size: 34 },
+  INJURY: { glyph: '+', label: 'Injury', size: 30 },
+  DEATH: { glyph: '†', label: 'Death', size: 34 },
+  EJECTION: { glyph: '!', label: 'Ejection', size: 30 },
+  APOTHECARY: { glyph: '+', label: 'Apothecary', size: 30 },
+  MVP: { glyph: '★', label: 'MVP', size: 32 },
+  KICKOFF: { glyph: 'KO', label: 'Kick-off', size: 32 },
+  KICKOFF_DETAIL: { glyph: 'K', label: 'Kick-off event', size: 28 },
+  WEATHER: { glyph: '☁', label: 'Weather', size: 30 },
+};
+
+const eventStyle = (event) => EVENT_STYLE[event?.type] || {
+  glyph: '•',
+  label: event?.title || event?.type || 'Event',
+  size: 28,
+};
+
+const teamIndex = (event) => {
+  for (const value of [event?.teamIndex, event?.sourceTeamId, event?.teamId]) {
+    if (typeof value === 'number' && Number.isInteger(value)) return value;
+    if (typeof value === 'string' && /^\d+$/.test(value)) return Number(value);
+  }
+  return -1;
+};
+
+const teamName = (match, index) => match?.teams?.[index]?.name || `Team ${index + 1}`;
+
+const timelinePosition = (event) => [
+  event?.half ? `Half ${event.half}` : null,
+  event?.drive ? `Drive ${event.drive}` : null,
+  event?.turn != null ? `Turn ${event.turn}` : null,
+].filter(Boolean).join(' · ');
+
+const diceExpression = (details = {}) => {
+  const dice = details.dice || [];
+  if (!dice.length) return null;
+  const raw = dice.join(' + ');
+  const total = details.rawTotal ?? dice.reduce((sum, value) => sum + Number(value || 0), 0);
+  if (details.modifiedTotal != null && details.modifiedTotal !== total) {
+    return `${raw} = ${total} → ${details.modifiedTotal}`;
+  }
+  return dice.length > 1 ? `${raw} = ${total}` : raw;
+};
+
+const eventResult = (event) => {
+  const details = event?.details || {};
+  return details.resultName
+    || details.weather
+    || details.result
+    || (details.resultId != null ? `Result ${details.resultId}` : null);
+};
+
+const eventPeople = (event) => {
+  const details = event?.details || {};
+  const lines = [
+    event.playerName && `Player: ${event.playerName}`,
+    details.playerName && `Player: ${details.playerName}`,
+    details.throwerName && `Thrower: ${details.throwerName}`,
+    details.receiverName && `Receiver: ${details.receiverName}`,
+    details.scorerName && `Scorer: ${details.scorerName}`,
+    details.causingPlayerName && `Caused by: ${details.causingPlayerName}`,
+    details.targetPlayerName && `Target: ${details.targetPlayerName}`,
+    details.injuredPlayerName && `Injured: ${details.injuredPlayerName}`,
+  ].filter(Boolean);
+
+  if (!lines.length && event.playerId != null) lines.push(`Player ID: ${event.playerId}`);
+  return [...new Set(lines)];
+};
+
+const chronological = (left, right) =>
+  Number(left?.sequence || 0) - Number(right?.sequence || 0)
+  || Number(left?.eventIndex || 0) - Number(right?.eventIndex || 0);
+
+const logicalPosition = (event, minSequence, maxSequence) => {
+  const half = Number(event?.half);
+  const turn = Number(event?.turn);
+  if ((half === 1 || half === 2) && Number.isFinite(turn)) {
+    const boundedTurn = Math.max(0, Math.min(8, turn));
+    const logicalTurn = (half - 1) * 8 + boundedTurn;
+    return Math.max(1, Math.min(99, (logicalTurn / 16) * 100));
+  }
+
+  const sequence = Number(event?.sequence);
+  if (Number.isFinite(sequence) && maxSequence > minSequence) {
+    return 2 + ((sequence - minSequence) / (maxSequence - minSequence)) * 96;
+  }
+
+  return 50;
+};
+
+function EventTooltip({ event, match, children }) {
+  const index = teamIndex(event);
+  const details = event.details || {};
+  const roll = diceExpression(details);
+  const result = eventResult(event);
+  const people = eventPeople(event);
+
+  return <Tooltip
+    hasArrow
+    placement={index === 1 ? 'bottom' : 'top'}
+    label={<Box maxW="340px" p={1}>
+      <Text fontWeight="bold">{event.title || eventStyle(event).label}</Text>
+      <Text fontSize="xs">{timelinePosition(event) || `Replay step ${event.sequence}`}</Text>
+      {index >= 0 && <Text fontSize="sm" mt={1}>{teamName(match, index)}</Text>}
+      {people.map((line) => <Text key={line} fontSize="sm">{line}</Text>)}
+      {roll && <Text fontSize="sm" mt={1}>Roll: {roll}</Text>}
+      {result && <Text fontSize="sm">Result: {result}</Text>}
+      {event.score && <Text fontSize="sm">Score: {event.score.home}–{event.score.away}</Text>}
+      {event.sppAwarded != null && <Text fontSize="sm" fontWeight="bold">+{event.sppAwarded} SPP</Text>}
+      {details.tableName && <Text fontSize="xs" mt={1}>{details.tableName} table</Text>}
+    </Box>}
+  >
+    {children}
+  </Tooltip>;
+}
+
+function TimelineMarker({ event, match, left, laneOffset = 0 }) {
+  const index = teamIndex(event);
+  const neutral = index < 0 || ['KICKOFF', 'WEATHER'].includes(event.type);
+  const style = eventStyle(event);
+  const top = neutral ? 50 : index === 0 ? 24 : 76;
+  const direction = neutral ? 0 : index === 0 ? 1 : -1;
+  const connectorHeight = neutral ? 0 : 23;
+
+  return <Box
+    position="absolute"
+    left={`${left}%`}
+    top={`${top}%`}
+    transform={`translate(-50%, -50%) translateX(${laneOffset * 8}px)`}
+    zIndex={3}
+  >
+    {!neutral && <Box
+      position="absolute"
+      left="50%"
+      top={direction > 0 ? '50%' : 'auto'}
+      bottom={direction < 0 ? '50%' : 'auto'}
+      transform="translateX(-50%)"
+      h={`${connectorHeight}px`}
+      borderLeftWidth="1px"
+      borderColor="gray.400"
+      zIndex={-1}
+    />}
+    <EventTooltip event={event} match={match}>
+      <Box
+        as="button"
+        type="button"
+        aria-label={`${style.label}: ${timelinePosition(event) || `replay step ${event.sequence}`}`}
+        w={`${style.size}px`}
+        h={`${style.size}px`}
+        borderRadius="full"
+        borderWidth="2px"
+        borderColor={event.sppAwarded != null ? 'purple.400' : neutral ? 'gray.400' : 'gray.500'}
+        bg={event.sppAwarded != null ? 'purple.50' : 'white'}
+        color="gray.800"
+        fontWeight="bold"
+        fontSize={style.glyph.length > 1 ? '10px' : '18px'}
+        lineHeight="1"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        boxShadow="sm"
+        _dark={{
+          bg: event.sppAwarded != null ? 'purple.900' : 'gray.700',
+          color: 'white',
+          borderColor: event.sppAwarded != null ? 'purple.300' : 'gray.500',
+        }}
+        _hover={{ transform: 'scale(1.12)', boxShadow: 'md' }}
+        transition="transform 0.12s ease, box-shadow 0.12s ease"
+      >
+        {style.glyph}
+      </Box>
+    </EventTooltip>
+    {event.sppAwarded != null && <Badge
+      position="absolute"
+      top="-9px"
+      right="-12px"
+      borderRadius="full"
+      colorScheme="purple"
+      fontSize="9px"
+      px={1}
+    >
+      +{event.sppAwarded}
+    </Badge>}
+  </Box>;
+}
+
+function DetailedEvent({ event, match, children }) {
+  const index = teamIndex(event);
+  const details = event.details || {};
+  const roll = diceExpression(details);
+  const result = eventResult(event);
+  const people = eventPeople(event);
+
+  return <Box
+    borderLeftWidth="3px"
+    borderColor={index === 0 ? 'blue.300' : index === 1 ? 'orange.300' : 'gray.300'}
+    pl={3}
+    py={2}
+  >
+    <HStack flexWrap="wrap" spacing={2}>
+      <Text fontSize="xs" color="gray.500">{timelinePosition(event) || `Replay step ${event.sequence}`}</Text>
+      {index >= 0 && <Badge>{teamName(match, index)}</Badge>}
+      {event.sppAwarded != null && <Badge colorScheme="purple">+{event.sppAwarded} SPP</Badge>}
+    </HStack>
+    <Text fontWeight="semibold">{event.title || eventStyle(event).label}</Text>
+    {people.map((line) => <Text key={line} fontSize="sm">{line}</Text>)}
+    {roll && <Text fontSize="sm">Roll: {roll}</Text>}
+    {result && <Text fontSize="sm">Result: {result}</Text>}
+    {event.score && <Text fontSize="sm">Score: {event.score.home}–{event.score.away}</Text>}
+    {children}
+    <Text fontSize="10px" color="gray.400" mt={1}>{event.rawEventType}</Text>
+  </Box>;
+}
+
+export default function MatchTimelineBar({ events = [], match }) {
+  const [logOpen, setLogOpen] = React.useState(false);
+  if (!events.length) return null;
+
+  const ordered = [...events].sort(chronological);
+  const sequences = ordered
+    .map((event) => Number(event.sequence))
+    .filter((value) => Number.isFinite(value));
+  const minSequence = sequences.length ? Math.min(...sequences) : 0;
+  const maxSequence = sequences.length ? Math.max(...sequences) : 1;
+
+  const childrenByParent = ordered.reduce((map, event) => {
+    if (!event.parentEventId) return map;
+    map[event.parentEventId] = [...(map[event.parentEventId] || []), event];
+    return map;
+  }, {});
+
+  // One marker per important chain. Weather remains visible even when it was
+  // produced by a kick-off event.
+  const markers = ordered.filter((event) => !event.parentEventId || event.type === 'WEATHER');
+  const occupancy = new Map();
+
+  const markerData = markers.map((event) => {
+    const left = logicalPosition(event, minSequence, maxSequence);
+    const lane = ['KICKOFF', 'WEATHER'].includes(event.type) ? 'neutral' : teamIndex(event);
+    const key = `${lane}:${Math.round(left / 2)}`;
+    const offset = occupancy.get(key) || 0;
+    occupancy.set(key, offset + 1);
+    return { event, left, laneOffset: offset };
+  });
+
+  const rootEvents = ordered.filter((event) => !event.parentEventId);
+  const ticks = Array.from({ length: 17 }, (_, index) => index);
+
+  return <Box>
+    <HStack justify="space-between" mb={2}>
+      <Box>
+        <Text fontWeight="semibold">Match timeline</Text>
+        <Text fontSize="sm" color="gray.500">Home above, away below. Hover a marker for event details.</Text>
+      </Box>
+      <HStack fontSize="xs" color="gray.500">
+        <Text>{teamName(match, 0)} ↑</Text>
+        <Text>↓ {teamName(match, 1)}</Text>
+      </HStack>
+    </HStack>
+
+    <Box
+      position="relative"
+      h={{ base: '150px', md: '180px' }}
+      mx={{ base: 2, md: 5 }}
+      mb={2}
+      overflow="visible"
+    >
+      <Box
+        position="absolute"
+        left="0"
+        right="0"
+        top="50%"
+        borderTopWidth="2px"
+        borderColor="gray.400"
+      />
+      <Box
+        position="absolute"
+        left="50%"
+        top="42%"
+        bottom="42%"
+        borderLeftWidth="2px"
+        borderColor="gray.500"
+      />
+
+      {ticks.map((tick) => {
+        const left = (tick / 16) * 100;
+        const isHalf = tick === 0 || tick === 8 || tick === 16;
+        const label = tick === 0 ? '1H' : tick === 8 ? 'HT' : tick === 16 ? 'FT' : tick < 8 ? String(tick) : String(tick - 8);
+        return <Box key={tick} position="absolute" left={`${left}%`} top="50%" transform="translate(-50%, -50%)" zIndex={1}>
+          <Box h={isHalf ? '14px' : '8px'} borderLeftWidth={isHalf ? '2px' : '1px'} borderColor="gray.400"/>
+          <Text
+            position="absolute"
+            top="10px"
+            left="50%"
+            transform="translateX(-50%)"
+            fontSize="9px"
+            color="gray.500"
+            display={{ base: isHalf ? 'block' : 'none', md: 'block' }}
+          >
+            {label}
+          </Text>
+        </Box>;
+      })}
+
+      {markerData.map(({ event, left, laneOffset }) => <TimelineMarker
+        key={event.id || `${event.sequence}-${event.eventIndex}-${event.type}`}
+        event={event}
+        match={match}
+        left={left}
+        laneOffset={laneOffset}
+      />)}
+    </Box>
+
+    <Button size="sm" variant="ghost" onClick={() => setLogOpen((open) => !open)}>
+      {logOpen ? 'Hide detailed match log' : 'Show detailed match log'}
+    </Button>
+    <Collapse in={logOpen} animateOpacity>
+      <VStack align="stretch" spacing={1} mt={2}>
+        {rootEvents.map((event) => <DetailedEvent
+          key={event.id || `${event.sequence}-${event.eventIndex}-${event.type}`}
+          event={event}
+          match={match}
+        >
+          {(childrenByParent[event.id] || []).map((child) => <Box key={child.id} ml={4} mt={1}>
+            <DetailedEvent event={child} match={match}/>
+          </Box>)}
+        </DetailedEvent>)}
+      </VStack>
+    </Collapse>
+  </Box>;
+}

@@ -23,6 +23,8 @@ import {
   VStack,
 } from '@chakra-ui/react';
 
+import MatchTimelineBar from './MatchTimelineBar';
+
 const BLOCK_FACES = [
   ['skull', '☠', 'Skull'],
   ['bothDown', '⇅', 'Both down'],
@@ -391,7 +393,7 @@ export default function ReplayAnalysisPanel({ replay, match, loading, error, onD
 
       {!hasCanonical && analysis.analysisConfidence !== 'RAW_BB2' && <Alert status="info"><AlertIcon/>Ingen canonical action-statistik hittades i den lagrade analysen. Reanalysera replayen med parser version 4 eller senare.</Alert>}
       <WeatherPanel events={weatherEvents}/>
-      <MatchTimeline events={matchEvents} match={match}/>
+      <MatchTimelineBar events={matchEvents} match={match}/>
       <D6Table rows={actionD6} match={match} title="Actions"/>
       <D6Table rows={traitD6} match={match} title="Skill & trait checks"/>
       <D6Table rows={recoveryD6} match={match} title="Injury & recovery checks"/>
