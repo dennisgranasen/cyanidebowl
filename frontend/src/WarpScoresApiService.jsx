@@ -21,6 +21,13 @@ const returnData = async (result) => {
   return result?.data !== null ? result.data : [];
 };
 
+const returnList = (endpoint) => (result) => {
+  if (!Array.isArray(result?.data)) {
+    throw new Error(`Unexpected response from ${endpoint}: expected a list.`);
+  }
+  return result.data;
+};
+
 const offerDownloadData = (result, filename, contentType) => {
   if (!result) return;
   const link = document.createElement('a');
@@ -144,14 +151,14 @@ export default {
           getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
       adminUsers: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
         getDataWithAuthentication('/admin/users', getAccessTokenSilently, getAccessTokenWithPopup)
-          .then(returnData).catch(handleError),
+          .then(returnList('/admin/users')).catch(handleError),
       updateAdminUserPermissions: async (id, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
         putDataWithAuthentication(`/admin/users/${encodeURIComponent(id)}/permissions`, data,
           getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
 
   leagueSystems: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
     getDataWithAuthentication('/admin/league-systems', getAccessTokenSilently, getAccessTokenWithPopup)
-      .then(returnData)
+      .then(returnList('/admin/league-systems'))
       .catch(handleError),
   replaySweeperStatus: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
     getDataWithAuthentication('/admin/replay-sweeper', getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),

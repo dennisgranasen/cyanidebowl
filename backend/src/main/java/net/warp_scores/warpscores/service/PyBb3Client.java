@@ -8,6 +8,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
+import java.net.ConnectException;
+import java.net.http.HttpConnectTimeoutException;
+import java.time.Duration;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -18,6 +21,7 @@ public class PyBb3Client {
     // Uvicorn does not support Java HttpClient's clear-text HTTP/2 (h2c) upgrade.
     private final HttpClient http = HttpClient.newBuilder()
             .version(HttpClient.Version.HTTP_1_1)
+            .connectTimeout(Duration.ofSeconds(10))
             .build();
     private final ObjectMapper mapper;
     private final String baseUrl;
@@ -50,6 +54,8 @@ public class PyBb3Client {
             Thread.currentThread().interrupt(); throw new IllegalStateException("pybb3 request interrupted", e);
         } catch (PyBb3ServiceException e) {
             throw e;
+        } catch (ConnectException | HttpConnectTimeoutException e) {
+            throw new PyBb3ServiceException(503, "The BB3 service is unavailable. Start the pybb3 service and try again.");
         } catch (Exception e) { throw new IllegalStateException("Unable to contact pybb3 service", e); }
     }
 

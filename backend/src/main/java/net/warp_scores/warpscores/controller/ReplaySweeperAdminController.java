@@ -41,6 +41,8 @@ public class ReplaySweeperAdminController {
         result.put("compactSize",replay.getCompactSize());result.put("error",replay.getError());
         result.put("analysisError",replay.getAnalysisError());
         result.put("originalFormat",replay.getOriginalFormat());
+        result.put("originalAvailable",replayArtifacts.originalAvailable(replay));
+        result.put("compactAvailable",replayArtifacts.compactAvailable(replay));
         result.put("availabilityWindowDays",availabilityWindowDays);
         try{matches.findById(IdentityUtil.fromId(replay.getMatchId())).ifPresent(match->{
             result.put("playedAt",match.getFinished());result.put("competitionName",match.getCompetitionName());

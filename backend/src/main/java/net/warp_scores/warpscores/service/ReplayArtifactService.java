@@ -30,7 +30,7 @@ import java.util.zip.GZIPInputStream;
 @Service
 @RequiredArgsConstructor
 public class ReplayArtifactService {
-    public static final int PARSER_VERSION = 1;
+    public static final int PARSER_VERSION = 2;
 
     private final ReplayDownloadRepository downloads;
     private final ReplayAnalysisRepository analyses;
@@ -44,15 +44,45 @@ public class ReplayArtifactService {
     public record OriginalReplay(String fileName, byte[] data) {}
     public record ImportedReplay(String fileName, String sourceMatchId, String matchId, boolean imported, String error) {}
 
+    public boolean originalAvailable(ReplayDownload record) {
+        return locallyAvailable(record.getOriginalFileName() == null ? record.getFileName() : record.getOriginalFileName());
+    }
+
+    public boolean compactAvailable(ReplayDownload record) {
+        return locallyAvailable(record.getCompactFileName());
+    }
+
+    private boolean locallyAvailable(String name) {
+        if (name == null || name.isBlank()) return false;
+        try {
+            Path source = resolveArtifact(name);
+            return Files.isRegularFile(source) && Files.isReadable(source);
+        } catch (RuntimeException error) {
+            return false;
+        }
+    }
+
+    private Path resolveArtifact(String storedName) {
+        if (storedName == null || storedName.isBlank()) throw new IllegalArgumentException("Replay file is missing");
+        // Older records contain absolute Docker/Windows paths; artifacts are stored flat.
+        String portable = storedName.replace('\\', '/');
+        String name = portable.substring(portable.lastIndexOf('/') + 1);
+        if (name.isBlank() || name.equals(".") || name.equals("..") || name.contains(":"))
+            throw new IllegalArgumentException("Invalid replay file name");
+        Path root = Path.of(storageDirectory).toAbsolutePath().normalize();
+        Path source = root.resolve(name).normalize();
+        if (!source.startsWith(root) || Files.isSymbolicLink(source))
+            throw new IllegalArgumentException("Replay path is outside configured storage");
+        return source;
+    }
+
     public OriginalReplay readOriginal(String matchId) throws Exception {
         ReplayDownload record = downloads.findById(matchId)
                 .filter(value -> "DOWNLOADED".equals(value.getStatus()))
                 .orElseThrow(() -> new IllegalArgumentException("No replay exists for match " + matchId));
         String name = record.getOriginalFileName() == null ? record.getFileName() : record.getOriginalFileName();
         if (name == null) throw new IllegalArgumentException("Replay file is missing");
-        Path root = Path.of(storageDirectory).toAbsolutePath().normalize();
-        Path source = Path.of(name).toAbsolutePath().normalize();
-        if (!source.startsWith(root)) throw new IllegalStateException("Replay path is outside configured storage");
+        Path source = resolveArtifact(name);
         return new OriginalReplay(source.getFileName().toString(), Files.readAllBytes(source));
     }
 
@@ -60,9 +90,7 @@ public class ReplayArtifactService {
         ReplayDownload record = downloads.findById(matchId)
                 .orElseThrow(() -> new IllegalArgumentException("No replay exists for match " + matchId));
         if (record.getCompactFileName() == null) throw new IllegalArgumentException("Compact replay is missing");
-        Path root = Path.of(storageDirectory).toAbsolutePath().normalize();
-        Path source = Path.of(record.getCompactFileName()).toAbsolutePath().normalize();
-        if (!source.startsWith(root)) throw new IllegalStateException("Replay path is outside configured storage");
+        Path source = resolveArtifact(record.getCompactFileName());
         try (var input = new GZIPInputStream(Files.newInputStream(source))) { return input.readAllBytes(); }
     }
 
@@ -115,9 +143,9 @@ public class ReplayArtifactService {
             if (!safe.toLowerCase().endsWith(".bbr")) safe += ".bbr";
             Path originalPath = atomicWrite(directory.resolve(safe), Base64.getDecoder().decode(original));
             Path compactPath = atomicWrite(directory.resolve(gameId.replaceAll("[^A-Za-z0-9._-]", "_") + ".json.gz"), Base64.getDecoder().decode(compact));
-            record.setFileName(originalPath.toString());
-            record.setOriginalFileName(originalPath.toString());
-            record.setCompactFileName(compactPath.toString());
+            record.setFileName(originalPath.getFileName().toString());
+            record.setOriginalFileName(originalPath.getFileName().toString());
+            record.setCompactFileName(compactPath.getFileName().toString());
             record.setOriginalSize(Files.size(originalPath));
             record.setCompactSize(Files.size(compactPath));
             record.setOriginalSha256(Objects.toString(result.get("originalSha256"), null));
@@ -140,7 +168,7 @@ public class ReplayArtifactService {
     public void reanalyze(ReplayDownload record) throws Exception {
         String name = record.getOriginalFileName() == null ? record.getFileName() : record.getOriginalFileName();
         if (name == null) throw new IllegalStateException("Replay file path is missing");
-        Path source = Path.of(name);
+        Path source = resolveArtifact(name);
         byte[] raw = Files.readAllBytes(source);
         record.setAnalysisStatus("PROCESSING");
         record.setAnalysisError(null);

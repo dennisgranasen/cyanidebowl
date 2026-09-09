@@ -14,6 +14,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static net.warp_scores.warpscores.model.Permissions.*;
+
 @Configuration
 @Profile("dev")
 public class LocalSecurityConfiguration {
@@ -46,7 +48,7 @@ public class LocalSecurityConfiguration {
         System.out.println("Using dummy JwtDecoder for local development");
         return token -> {
             Map<String, Object> claims = new HashMap<>();
-            claims.put("permissions", List.of("writeSiteAdmin", "writeLeagueAdmin", "writeRegisterLeague", "readCurrentUser"));
+            claims.put("permissions", List.of(WRITE_SITE_ADMIN, WRITE_LEAGUE_ADMIN, WRITE_REGISTER_LEAGUE, READ_CURRENT_USER));
             claims.put("sub", "dev|local-user");
             claims.put("email", "dev@example.com");
             claims.put("name", "Dev User");

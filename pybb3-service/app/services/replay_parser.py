@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 from collections import Counter
 from typing import Any
 
-PARSER_VERSION = 1
+PARSER_VERSION = 2
 INTEGER = re.compile(r"^-?(?:0|[1-9][0-9]*)$")
 RESOURCE_MARKERS = ("reroll", "apothec", "wizard", "spell")
 SPECIAL_MARKERS = (
@@ -106,10 +106,15 @@ def _success(event: ET.Element) -> bool | None:
     return None
 
 
+def _event_team(event, context):
+    team = _first(event, ("TeamId", "GamerSlot", "GamerId"))
+    return context.get("activeTeam") if team is None else team
+
+
 def _fact(event: ET.Element, sequence: int, clock: Any, context: dict[str, Any], data: Any) -> dict[str, Any]:
     fact = {
         "sequence": sequence, "clock": clock, "eventType": event.tag,
-        "teamId": _first(event, ("TeamId", "GamerSlot", "GamerId")) or context.get("activeTeam"),
+        "teamId": _event_team(event, context),
         "playerId": _first(event, ("PlayerId", "ActivePlayer", "AttackerId", "ThrowerId")),
         "phase": context.get("phase"), "teamTurns": context.get("teamTurns", []),
         "outcome": _first(event, ("Outcome", "Result")), "data": data,
@@ -137,7 +142,7 @@ def _dice(event: ET.Element, sequence: int, clock: Any, context: dict[str, Any])
             "sequence": sequence, "clock": clock, "eventType": event.tag, "rollIndex": roll_index,
             "rollType": _text(event, ".//RollType"), "outcome": _text(event, ".//Outcome"),
             "playerId": _first(event, ("PlayerId", "ActivePlayer", "AttackerId", "ThrowerId")),
-            "teamId": _first(event, ("TeamId", "GamerSlot", "GamerId")) or context.get("activeTeam"),
+            "teamId": _event_team(event, context),
             "success": _success(event), "phase": context.get("phase"),
             "teamTurns": context.get("teamTurns", []), "dice": dice, "modifiers": modifiers,
         })
@@ -202,7 +207,9 @@ def parse_replay(xml: bytes) -> dict[str, Any]:
 
     compact["finalBoardState"] = final_board
     checkpoint_count = sum("checkpoint" in step for step in compact["steps"])
+    from app.services.replay_statistics import event_statistics
     analysis = {
+        "eventStatistics": event_statistics(root),
         "parserVersion": PARSER_VERSION, "replayVersion": compact["replayVersion"],
         "analysisConfidence": "RAW_UNMAPPED",
         "sourceMatchId": _decoded_text(root, ".//NotificationGameJoined/GameInfos/Competition/CompetitionInfos/MatchId"),

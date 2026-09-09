@@ -11,6 +11,18 @@ import axios from 'axios';
 import WarpScoresApiService from './WarpScoresApiService';
 
 describe('WarpScoresApiService', () => {
+  test.each(['leagueSystems', 'adminUsers'])('%s returns lists and rejects malformed responses', async (method) => {
+    const systems = [{ id: 'nst', name: 'NST' }];
+    axios.mockResolvedValueOnce({ data: systems });
+    await expect(WarpScoresApiService[method](jest.fn(), jest.fn())).resolves.toEqual(systems);
+    axios.mockResolvedValueOnce({ data: [] });
+    await expect(WarpScoresApiService[method](jest.fn(), jest.fn())).resolves.toEqual([]);
+    for (const data of ['', null, {}, '<html></html>']) {
+      axios.mockResolvedValueOnce({ data });
+      await expect(WarpScoresApiService[method](jest.fn(), jest.fn())).rejects.toThrow('expected a list');
+    }
+  });
+
   beforeEach(() => {
     axios.mockReset();
     axios.post.mockReset();

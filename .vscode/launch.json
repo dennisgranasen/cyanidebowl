@@ -29,7 +29,7 @@
         "Backend",
         "Frontend"
       ],
-      "preLaunchTask": "Build backend",
+      "preLaunchTask": "Prepare local services",
       "stopAll": true
     }
   ]

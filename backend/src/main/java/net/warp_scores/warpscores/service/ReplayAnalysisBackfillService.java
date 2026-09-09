@@ -23,7 +23,7 @@ public class ReplayAnalysisBackfillService {
             initialDelayString="${replay-analysis.initial-delay-ms:120000}")
     public void analyzeNewestPending() {
         if (!enabled) return;
-        downloads.findPendingAnalysis(ReplayArtifactService.PARSER_VERSION, PageRequest.of(0, 1)).stream().findFirst()
+        nextAvailable()
                 .ifPresent(record -> {
                     try {
                         artifacts.reanalyze(record);
@@ -38,9 +38,22 @@ public class ReplayAnalysisBackfillService {
                 });
     }
 
+    private java.util.Optional<net.warp_scores.warpscores.model.ReplayDownload> nextAvailable() {
+        for (int page = 0; ; page++) {
+            var records = downloads.findPendingAnalysis(ReplayArtifactService.PARSER_VERSION, PageRequest.of(page, 50));
+            var available = records.stream().filter(artifacts::originalAvailable).findFirst();
+            if (available.isPresent() || records.size() < 50) return available;
+        }
+    }
+
     public void analyze(String matchId) {
         var record = downloads.findById(matchId)
                 .orElseThrow(() -> new IllegalArgumentException("No downloaded replay exists for match " + matchId));
+        if (!artifacts.originalAvailable(record)) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.CONFLICT,
+                    "Replay file is missing from local storage. Restore the file before analyzing again.");
+        }
         try {
             artifacts.reanalyze(record);
         } catch (Exception error) {

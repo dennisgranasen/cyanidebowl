@@ -32,7 +32,7 @@ public class LeagueSystemAdminInterceptor implements HandlerInterceptor {
 
         String path = request.getRequestURI();
         if ("/admin/league-systems".equals(path)) {
-            if (HttpMethod.GET.matches(request.getMethod())) return permissions.hasAnyLeagueAdmin(authentication);
+            if (HttpMethod.GET.matches(request.getMethod())) return permissions.hasAnyLeagueAdmin(authentication) || forbidden(response);
             return forbidden(response);
         }
         if (path.startsWith("/admin/cyanide-competitions/")) {
