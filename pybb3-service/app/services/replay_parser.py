@@ -9,10 +9,12 @@ import xml.etree.ElementTree as ET
 from collections import Counter
 from typing import Any
 
-from app.services.replay_decoders import Bb2ReplayDecoder, Bb3ActionDecoder, action_dicts
+from app.services.bb3_die_types import bb3_dice_semantics, bb3_die_name, infer_bb3_die_type
+from app.services.bb3_roll_types import bb3_roll_name
+from app.services.replay_decoders import Bb2ReplayDecoder, Bb3ActionDecoder, action_dicts, decode_message
 from app.services.replay_statistics import aggregate_actions, event_statistics
 
-PARSER_VERSION = 5
+PARSER_VERSION = 6
 INTEGER = re.compile(r"^-?(?:0|[1-9][0-9]*)$")
 RESOURCE_MARKERS = ("reroll", "apothec", "wizard", "spell")
 SPECIAL_MARKERS = (
@@ -128,28 +130,104 @@ def _fact(event: ET.Element, sequence: int, clock: Any, context: dict[str, Any],
     return fact
 
 
-def _dice(event: ET.Element, sequence: int, clock: Any, context: dict[str, Any]) -> list[dict[str, Any]]:
+def _dice(
+    event: ET.Element,
+    sequence: int,
+    clock: Any,
+    context: dict[str, Any],
+    *,
+    source: str = "event",
+) -> list[dict[str, Any]]:
     result = []
-    for roll_index, group in enumerate(event.iter("Dice")):
+    groups = list(event.iter("Dice"))
+    roll_type = _text(event, ".//RollType")
+    roll_name = bb3_roll_name(roll_type) if isinstance(roll_type, int) else None
+    category, label = bb3_dice_semantics(event.tag, roll_type, roll_name)
+    for roll_index, group in enumerate(groups):
         dice = []
         for die in group.findall(".//Die"):
             value = _text(die, "./Value")
             if value is not None:
-                dice.append({"type": _text(die, "./DieType"), "value": value})
+                source_type = _text(die, "./DieType")
+                resolved_type, type_source = infer_bb3_die_type(event.tag, roll_type, source_type)
+                dice.append({
+                    "sourceType": source_type,
+                    "type": resolved_type,
+                    "typeName": bb3_die_name(resolved_type),
+                    "typeSource": type_source,
+                    "value": value,
+                })
         if not dice:
             continue
         modifiers = []
         for modifier in event.findall(".//Modifier"):
             modifiers.append({"type": _text(modifier, "./ModifierType"), "value": _text(modifier, "./Value")})
+        team_id = _event_team(event, context)
+        # EventFanFactor contains HomeRoll and AwayRoll as separate Dice groups.
+        if event.tag == "EventFanFactor" and len(groups) == 2:
+            team_id = roll_index
         result.append({
-            "sequence": sequence, "clock": clock, "eventType": event.tag, "rollIndex": roll_index,
-            "rollType": _text(event, ".//RollType"), "outcome": _text(event, ".//Outcome"),
+            "sequence": sequence, "clock": clock, "source": source,
+            "eventType": event.tag, "contextTag": event.tag, "rollIndex": roll_index,
+            "rollType": roll_type, "rollTypeName": roll_name,
+            "category": category, "label": label,
+            "outcome": _text(event, ".//Outcome"),
             "playerId": _first(event, ("PlayerId", "ActivePlayer", "AttackerId", "ThrowerId")),
-            "teamId": _event_team(event, context),
+            "teamId": team_id,
             "success": _success(event), "phase": context.get("phase"),
             "teamTurns": context.get("teamTurns", []), "dice": dice, "modifiers": modifiers,
         })
     return result
+
+
+def _decoded_sequence_dice(event: ET.Element, sequence: int, clock: Any, context: dict[str, Any]) -> list[dict[str, Any]]:
+    """Preserve dice hidden inside base64 encoded BB3 StepResult messages."""
+    result: list[dict[str, Any]] = []
+    for step_result in event.findall(".//Sequence/StepResult"):
+        step = decode_message(step_result.find("Step"))
+        if step is not None:
+            result.extend(_dice(step, sequence, clock, context, source="decoded-step"))
+        for wrapper in step_result.findall("Results/StringMessage"):
+            decoded = decode_message(wrapper)
+            if decoded is not None:
+                result.extend(_dice(decoded, sequence, clock, context, source="decoded-result"))
+    return result
+
+
+def _dice_statistics(rolls: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Aggregate semantic dice groups while retaining their individual rolls."""
+    grouped: dict[tuple[Any, ...], dict[str, Any]] = {}
+    for roll in rolls:
+        dice = roll.get("dice") or []
+        resolved_types = {die.get("type") for die in dice if die.get("type") is not None}
+        die_type = next(iter(resolved_types)) if len(resolved_types) == 1 else None
+        key = (roll.get("category"), roll.get("label"), die_type, roll.get("teamId"), roll.get("rollType"))
+        row = grouped.setdefault(key, {
+            "category": roll.get("category"), "label": roll.get("label"),
+            "dieType": die_type, "dieTypeName": bb3_die_name(die_type),
+            "teamId": roll.get("teamId"), "rollType": roll.get("rollType"),
+            "rollTypeName": roll.get("rollTypeName"), "rollCount": 0, "dieCount": 0,
+            "inferred": False, "faceCounts": {}, "rolls": [], "sources": [],
+        })
+        values = [die.get("value") for die in dice if die.get("value") is not None]
+        row["rollCount"] += 1
+        row["dieCount"] += len(values)
+        row["rolls"].append(values)
+        row["sources"].append({
+            "sequence": roll.get("sequence"), "clock": roll.get("clock"),
+            "source": roll.get("source"), "eventType": roll.get("eventType"),
+            "playerId": roll.get("playerId"),
+        })
+        for die in dice:
+            if die.get("typeSource") == "context":
+                row["inferred"] = True
+            value = die.get("value")
+            if value is not None:
+                face = str(value)
+                row["faceCounts"][face] = row["faceCounts"].get(face, 0) + 1
+    return sorted(grouped.values(), key=lambda row: (
+        str(row.get("category")), str(row.get("label")), str(row.get("teamId")), str(row.get("dieTypeName"))
+    ))
 
 
 def parse_replay(xml: bytes, source_format: str = "BB3") -> dict[str, Any]:
@@ -197,10 +275,14 @@ def parse_replay(xml: bytes, source_format: str = "BB3") -> dict[str, Any]:
             step["events"].append({"type": event.tag, "data": data})
             event_counts[event.tag] += 1
             rolls = _dice(event, sequence, clock, context)
+            if source_format == "BB3" and event.tag == "EventExecuteSequence":
+                rolls.extend(_decoded_sequence_dice(event, sequence, clock, context))
             dice_rolls.extend(rolls)
             for roll in rolls:
                 for die in roll["dice"]:
-                    die_counts[f"{die['type'] or 'UNKNOWN'}:{die['value']}"] += 1
+                    # D6 is protocol value 0, so never use truthiness here.
+                    die_type = die.get("type")
+                    die_counts[f"{die_type if die_type is not None else 'UNKNOWN'}:{die['value']}"] += 1
             lowered = event.tag.lower()
             fact = _fact(event, sequence, clock, context, data)
             if any(marker in lowered for marker in RESOURCE_MARKERS):
@@ -215,6 +297,7 @@ def parse_replay(xml: bytes, source_format: str = "BB3") -> dict[str, Any]:
     actions = decoder.decode(root)
     action_stats = aggregate_actions(actions)
     analysis = {
+        "diceStatistics": _dice_statistics(dice_rolls),
         "eventStatistics": event_statistics(root) if source_format == "BB3" else [],
         "actionStatistics": action_stats,
         "canonicalActions": action_dicts(actions),

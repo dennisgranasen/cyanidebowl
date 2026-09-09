@@ -26,6 +26,7 @@ public class ReplayAnalysis {
     private Integer sourceBoardStateCount;
     private Integer checkpointCount;
     private List<Map<String, Object>> diceRolls;
+    private List<Map<String, Object>> diceStatistics;
     private List<Map<String, Object>> eventStatistics;
     private List<Map<String, Object>> actionStatistics;
     private List<Map<String, Object>> canonicalActions;

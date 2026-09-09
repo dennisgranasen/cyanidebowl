@@ -74,13 +74,13 @@ const sumActionRows = (rows) => rows.reduce((totals, row) => ({
   total: totals.total + Number(row?.total || 0),
 }), { success: 0, total: 0 });
 
-function D6Table({ rows, match }) {
+function D6Table({ rows, match, title = 'D6 actions' }) {
   if (!rows.length) return null;
   const actionTypes = unique(rows.map((row) => row.eventType));
   const targets = orderedTargets(rows);
 
   return <Box>
-    <Heading size="sm" mb={2}>D6 actions</Heading>
+    <Heading size="sm" mb={2}>{title}</Heading>
     <Text fontSize="sm" color="gray.500" mb={2}>Successful actions / attempted actions. Rerolls belong to the same action.</Text>
     <TableContainer>
       <Table size="sm">
@@ -185,15 +185,42 @@ function SpecialActionTable({ rows, match }) {
   </Box>;
 }
 
-function RawDiceTable({ analysis }) {
-  const values = Object.entries(analysis?.dieValueCounts || {}).sort((a, b) => b[1] - a[1]);
-  if (!values.length) return null;
+const formatDiceRoll = (values) => {
+  if (!Array.isArray(values) || !values.length) return '—';
+  if (values.length === 1) return String(values[0]);
+  return `${values.join(' + ')} = ${values.reduce((sum, value) => sum + Number(value || 0), 0)}`;
+};
+
+const diceRowsForTeam = (rows, team) => rows.filter((row) => rowTeamIndex(row) === team);
+
+const diceDisplay = (rows) => rows.length
+  ? rows.flatMap((row) => row.rolls || []).map(formatDiceRoll).join(', ')
+  : '—';
+
+function DiceContextTable({ rows, match, title, description }) {
+  if (!rows.length) return null;
+  const labels = unique(rows.map((row) => `${row.label}\u0000${row.dieTypeName || 'Unknown'}`));
   return <Box>
-    <Heading size="sm" mb={2}>Raw dice distribution</Heading>
-    <Text fontSize="sm" color="gray.500" mb={2}>Raw rolls are diagnostic data and are intentionally separate from action success rates.</Text>
-    <TableContainer><Table size="sm"><Thead><Tr><Th>Die / result</Th><Th isNumeric>Count</Th></Tr></Thead><Tbody>
-      {values.map(([key, count]) => <Tr key={key}><Td>{key}</Td><Td isNumeric>{count}</Td></Tr>)}
-    </Tbody></Table></TableContainer>
+    <Heading size="sm" mb={2}>{title}</Heading>
+    {description && <Text fontSize="sm" color="gray.500" mb={2}>{description}</Text>}
+    <TableContainer>
+      <Table size="sm">
+        <Thead><Tr><Th>Roll</Th><Th>Die</Th><Th>{teamName(match, 0)}</Th><Th>{teamName(match, 1)}</Th><Th>Match</Th></Tr></Thead>
+        <Tbody>{labels.map((key) => {
+          const [label, dieTypeName] = key.split('\u0000');
+          const matching = rows.filter((row) => row.label === label && (row.dieTypeName || 'Unknown') === dieTypeName);
+          const neutral = matching.filter((row) => rowTeamIndex(row) < 0);
+          const inferred = matching.some((row) => row.inferred);
+          return <Tr key={key}>
+            <Td fontWeight="semibold">{label}</Td>
+            <Td title={inferred ? 'Die type inferred from replay context' : undefined}>{dieTypeName}{inferred ? '*' : ''}</Td>
+            <Td>{diceDisplay(diceRowsForTeam(matching, 0))}</Td>
+            <Td>{diceDisplay(diceRowsForTeam(matching, 1))}</Td>
+            <Td>{diceDisplay(neutral)}</Td>
+          </Tr>;
+        })}</Tbody>
+      </Table>
+    </TableContainer>
   </Box>;
 }
 
@@ -205,9 +232,14 @@ export default function ReplayAnalysisPanel({ replay, match, loading, error, onD
   const analysis = replay.analysis;
   const stats = analysis?.actionStatistics || [];
   const d6 = stats.filter((row) => row.kind === 'd6');
+  const actionD6 = d6.filter((row) => !row.rollCategory || row.rollCategory === 'action');
+  const traitD6 = d6.filter((row) => row.rollCategory === 'skillTrait');
+  const recoveryD6 = d6.filter((row) => row.rollCategory === 'injuryRecovery');
+  const systemD6 = d6.filter((row) => !['action', 'skillTrait', 'injuryRecovery'].includes(row.rollCategory) && row.rollCategory);
   const blockFaces = stats.filter((row) => row.kind === 'blockFaces');
   const blockActions = stats.filter((row) => row.kind === 'blockActions');
   const specials = stats.filter((row) => row.kind === 'special');
+  const diceStats = analysis?.diceStatistics || [];
   const hasCanonical = stats.length > 0 || (analysis?.canonicalActions?.length || 0) > 0;
 
   return <VStack align="stretch" spacing={5}>
@@ -228,19 +260,23 @@ export default function ReplayAnalysisPanel({ replay, match, loading, error, onD
     {analysis && <>
       {analysis.analysisConfidence === 'RAW_UNMAPPED' && <Alert status="warning"><AlertIcon/>Den här analysen kommer från den äldre råevent-parsern. Kör om replayanalysen för canonical action-statistik.</Alert>}
       {analysis.analysisConfidence === 'RAW_BB2' && <Alert status="warning"><AlertIcon/>BB2-replayen är importerad och rådata är bevarad, men canonical BB2-actionmappning är ännu inte implementerad.</Alert>}
-      <SimpleGrid columns={{ base: 2, md: 4 }} spacing={3}>
+      <SimpleGrid columns={{ base: 2, md: 2 }} spacing={3}>
         <Stat borderWidth="1px" borderRadius="md" p={3}><StatLabel>Actions</StatLabel><StatNumber>{actionTotal(analysis)}</StatNumber></Stat>
-        <Stat borderWidth="1px" borderRadius="md" p={3}><StatLabel>Raw rolls</StatLabel><StatNumber>{analysis.diceRolls?.length || 0}</StatNumber></Stat>
-        <Stat borderWidth="1px" borderRadius="md" p={3}><StatLabel>Checkpoints</StatLabel><StatNumber>{analysis.checkpointCount || 0}</StatNumber></Stat>
         <Stat borderWidth="1px" borderRadius="md" p={3}><StatLabel>Replay steps</StatLabel><StatNumber>{analysis.stepCount || 0}</StatNumber></Stat>
       </SimpleGrid>
 
       {!hasCanonical && analysis.analysisConfidence !== 'RAW_BB2' && <Alert status="info"><AlertIcon/>Ingen canonical action-statistik hittades i den lagrade analysen. Reanalysera replayen med parser version 4 eller senare.</Alert>}
-      <D6Table rows={d6} match={match}/>
+      <D6Table rows={actionD6} match={match} title="Actions"/>
+      <D6Table rows={traitD6} match={match} title="Skill & trait checks"/>
+      <D6Table rows={recoveryD6} match={match} title="Injury & recovery checks"/>
+      <D6Table rows={systemD6} match={match} title="Other D6 checks"/>
       <BlockFaceTable rows={blockFaces} match={match}/>
       <BlockOutcomeTable rows={blockActions} match={match}/>
       <SpecialActionTable rows={specials} match={match}/>
-      <RawDiceTable analysis={analysis}/>
+      <DiceContextTable rows={diceStats.filter((row) => row.category === 'pregame')} match={match} title="Pregame dice" description="Fan Factor, weather and other pre-match rolls. * = die type inferred from replay context."/>
+      <DiceContextTable rows={diceStats.filter((row) => row.category === 'injury')} match={match} title="Injury & recovery dice" description="Armour, injury, casualty and recovery rolls, grouped by replay team context."/>
+      <DiceContextTable rows={diceStats.filter((row) => row.category === 'scatter')} match={match} title="Scatter & direction dice"/>
+      <DiceContextTable rows={diceStats.filter((row) => !['pregame', 'injury', 'scatter', 'action'].includes(row.category))} match={match} title="Other replay dice"/>
     </>}
   </VStack>;
 }

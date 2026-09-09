@@ -30,7 +30,7 @@ import java.util.zip.GZIPInputStream;
 @Service
 @RequiredArgsConstructor
 public class ReplayArtifactService {
-    public static final int PARSER_VERSION = 5;
+    public static final int PARSER_VERSION = 6;
 
     private final ReplayDownloadRepository downloads;
     private final ReplayAnalysisRepository analyses;
@@ -205,6 +205,7 @@ public class ReplayArtifactService {
 
     private void enrich(ReplayAnalysis analysis, Match match) {
         enrichFacts(analysis.getDiceRolls(), match);
+        enrichFacts(analysis.getDiceStatistics(), match);
         enrichFacts(analysis.getResourceEvents(), match);
         enrichFacts(analysis.getSpecialEvents(), match);
         enrichFacts(analysis.getActionStatistics(), match);

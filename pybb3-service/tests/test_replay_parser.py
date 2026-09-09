@@ -41,8 +41,13 @@ def test_extracts_dice_resources_special_events_and_semantic_checkpoints():
     assert analysis["canonicalActions"] == []
     assert analysis["actionStatistics"] == []
     assert len(analysis["diceRolls"]) == 3
-    assert analysis["dieValueCounts"]["UNKNOWN:6"] == 1
+    # Weather omits DieType in BB3, but event context identifies it as D6.
+    assert analysis["dieValueCounts"]["0:6"] == 1
     assert analysis["dieValueCounts"]["3:1"] == 1
+    weather = next(row for row in analysis["diceStatistics"] if row["label"] == "Weather")
+    assert weather["dieTypeName"] == "D6"
+    assert weather["inferred"] is True
+    assert weather["rolls"] == [[6, 4]]
     assert analysis["resourceEvents"][0]["eventType"] == "EventUseTeamReroll"
     assert analysis["specialEvents"][0]["eventType"] == "EventRegeneration"
     assert analysis["specialEvents"][0]["success"] is True
@@ -52,6 +57,29 @@ def test_extracts_dice_resources_special_events_and_semantic_checkpoints():
     assert compact["steps"][2]["checkpoint"]["context"]["teamTurns"][1]["gameTurn"] == 1
     assert compact["sourceFormat"] == "BB3"
     assert compact["canonicalActions"] == []
+
+
+def test_fan_factor_d3_keeps_home_away_team_context():
+    replay = b"""<Replay><ReplayStep><Clock>1</Clock>
+    <EventFanFactor>
+      <HomeRoll><Dice><Die><DieType>3</DieType><Value>1</Value></Die></Dice><RollType>23</RollType></HomeRoll>
+      <AwayRoll><Dice><Die><DieType>3</DieType><Value>3</Value></Die></Dice><RollType>23</RollType></AwayRoll>
+    </EventFanFactor>
+    </ReplayStep></Replay>"""
+    analysis = parse_replay(replay)["analysis"]
+    fan = [row for row in analysis["diceStatistics"] if row["label"] == "Fan Factor"]
+    assert [row["teamId"] for row in fan] == [0, 1]
+    assert all(row["dieTypeName"] == "D3" for row in fan)
+    assert [row["rolls"] for row in fan] == [[[1]], [[3]]]
+
+
+def test_explicit_d6_zero_is_not_misreported_as_unknown():
+    replay = b"""<Replay><ReplayStep><Clock>1</Clock>
+    <EventFoo><Dice><Die><DieType>0</DieType><Value>4</Value></Die></Dice></EventFoo>
+    </ReplayStep></Replay>"""
+    analysis = parse_replay(replay)["analysis"]
+    assert analysis["dieValueCounts"]["0:4"] == 1
+    assert "UNKNOWN:4" not in analysis["dieValueCounts"]
 
 
 def test_parse_replay_artifact_accepts_bb2_bbrz():
