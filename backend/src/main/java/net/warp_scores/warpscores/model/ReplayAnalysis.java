@@ -30,6 +30,8 @@ public class ReplayAnalysis {
     private List<Map<String, Object>> eventStatistics;
     private List<Map<String, Object>> actionStatistics;
     private List<Map<String, Object>> canonicalActions;
+    private List<Map<String, Object>> matchEvents;
+    private List<Map<String, Object>> weatherEvents;
     private List<Map<String, Object>> resourceEvents;
     private List<Map<String, Object>> specialEvents;
     private List<Map<String, Object>> participantTotals;

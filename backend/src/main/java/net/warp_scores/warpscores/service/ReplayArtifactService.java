@@ -30,7 +30,7 @@ import java.util.zip.GZIPInputStream;
 @Service
 @RequiredArgsConstructor
 public class ReplayArtifactService {
-    public static final int PARSER_VERSION = 7;
+    public static final int PARSER_VERSION = 8;
 
     private final ReplayDownloadRepository downloads;
     private final ReplayAnalysisRepository analyses;
@@ -209,6 +209,8 @@ public class ReplayArtifactService {
         enrichFacts(analysis.getResourceEvents(), match);
         enrichFacts(analysis.getSpecialEvents(), match);
         enrichFacts(analysis.getActionStatistics(), match);
+        enrichFacts(analysis.getMatchEvents(), match);
+        enrichFacts(analysis.getWeatherEvents(), match);
         Map<String, Map<String, Object>> totals = new LinkedHashMap<>();
         if (analysis.getDiceRolls() != null) for (Map<String, Object> roll : analysis.getDiceRolls()) {
             Map<String, Object> participant = participant(totals, roll);

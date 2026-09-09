@@ -13,8 +13,9 @@ from app.services.bb3_die_types import bb3_dice_semantics, bb3_die_name, infer_b
 from app.services.bb3_roll_types import bb3_roll_name
 from app.services.replay_decoders import Bb2ReplayDecoder, Bb3ActionDecoder, action_dicts, decode_message
 from app.services.replay_statistics import aggregate_actions, event_statistics
+from app.services.replay_timeline import build_match_events
 
-PARSER_VERSION = 7
+PARSER_VERSION = 8
 INTEGER = re.compile(r"^-?(?:0|[1-9][0-9]*)$")
 RESOURCE_MARKERS = ("reroll", "apothec", "wizard", "spell")
 SPECIAL_MARKERS = (
@@ -316,11 +317,15 @@ def parse_replay(xml: bytes, source_format: str = "BB3") -> dict[str, Any]:
     decoder = Bb3ActionDecoder() if source_format == "BB3" else Bb2ReplayDecoder()
     actions = decoder.decode(root)
     action_stats = aggregate_actions(actions)
+    canonical_actions = action_dicts(actions)
+    match_events = build_match_events(root) if source_format == "BB3" else []
     analysis = {
         "diceStatistics": _dice_statistics(dice_rolls),
         "eventStatistics": event_statistics(root) if source_format == "BB3" else [],
         "actionStatistics": action_stats,
-        "canonicalActions": action_dicts(actions),
+        "canonicalActions": canonical_actions,
+        "matchEvents": match_events,
+        "weatherEvents": [event for event in match_events if event.get("type") == "WEATHER"],
         "parserVersion": PARSER_VERSION, "replayVersion": compact["replayVersion"],
         "sourceFormat": source_format,
         "analysisConfidence": "CANONICAL_ACTIONS" if source_format == "BB3" else "RAW_BB2",

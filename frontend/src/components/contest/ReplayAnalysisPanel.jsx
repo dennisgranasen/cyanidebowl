@@ -262,6 +262,87 @@ function DiceContextTable({ rows, match, title, description }) {
   </Box>;
 }
 
+const timelineTeam = (event, match) => {
+  const index = rowTeamIndex(event);
+  return index >= 0 ? teamName(match, index) : null;
+};
+
+const timelinePosition = (event) => [
+  event.half ? `Half ${event.half}` : null,
+  event.drive ? `Drive ${event.drive}` : null,
+  event.turn != null ? `Turn ${event.turn}` : null,
+].filter(Boolean).join(' · ');
+
+const diceExpression = (details = {}) => {
+  const dice = details.dice || [];
+  if (!dice.length) return null;
+  const raw = dice.join(' + ');
+  const total = details.rawTotal ?? dice.reduce((sum, value) => sum + Number(value || 0), 0);
+  if (details.modifiedTotal != null && details.modifiedTotal !== total) {
+    return `${raw} = ${total} → ${details.modifiedTotal}`;
+  }
+  return dice.length > 1 ? `${raw} = ${total}` : raw;
+};
+
+function WeatherPanel({ events }) {
+  if (!events.length) return null;
+  const current = [...events].reverse().find((event) => event.details?.weather);
+  return <Box>
+    <Heading size="sm" mb={2}>Weather</Heading>
+    {current && <Text fontSize="lg" fontWeight="semibold" mb={2}>{current.details.weather}</Text>}
+    <VStack align="stretch" spacing={2}>
+      {events.map((event, index) => <Box key={event.id} borderWidth="1px" borderRadius="md" p={3}>
+        <Text fontSize="xs" color="gray.500">{index === 0 ? 'Starting weather' : timelinePosition(event) || 'Weather change'}</Text>
+        <HStack flexWrap="wrap">
+          {diceExpression(event.details) && <Text>{diceExpression(event.details)}</Text>}
+          {event.details?.weather && <Badge>{event.details.weather}</Badge>}
+          {event.details?.tableName && <Text fontSize="sm" color="gray.500">{event.details.tableName} weather table</Text>}
+        </HStack>
+      </Box>)}
+    </VStack>
+  </Box>;
+}
+
+function MatchTimeline({ events, match }) {
+  if (!events.length) return null;
+  const children = events.reduce((map, event) => {
+    if (!event.parentEventId) return map;
+    map[event.parentEventId] = [...(map[event.parentEventId] || []), event];
+    return map;
+  }, {});
+  const roots = events.filter((event) => !event.parentEventId && event.type !== 'WEATHER');
+
+  const renderEvent = (event, nested = false) => {
+    const team = timelineTeam(event, match);
+    const details = event.details || {};
+    const roll = diceExpression(details);
+    return <Box key={event.id} ml={nested ? 5 : 0} pl={3} py={2} borderLeftWidth={nested ? '2px' : '3px'}>
+      <Box>
+        <Text fontSize="xs" color="gray.500">{timelinePosition(event) || `Replay step ${event.sequence}`}</Text>
+        <HStack flexWrap="wrap">
+          <Text fontWeight="semibold">{event.title}</Text>
+          {team && <Badge>{team}</Badge>}
+          {event.sppAwarded != null && <Badge colorScheme="purple">+{event.sppAwarded} SPP</Badge>}
+        </HStack>
+        {event.type === 'KICKOFF' && <Text fontSize="sm">
+          {roll || 'Kick-off'}
+          {details.resultName ? ` → ${details.resultName}` : details.resultId != null ? ` → result ${details.resultId}` : ''}
+        </Text>}
+        {event.type !== 'KICKOFF' && roll && <Text fontSize="sm">{roll}</Text>}
+        {event.score && <Text fontSize="sm">Score {event.score.home}–{event.score.away}</Text>}
+      </Box>
+      {(children[event.id] || []).map((child) => renderEvent(child, true))}
+    </Box>;
+  };
+
+  return <Box>
+    <Heading size="sm" mb={2}>Match timeline</Heading>
+    <Text fontSize="sm" color="gray.500" mb={2}>Chronological key events. Explicit SPP-awarding replay events are highlighted.</Text>
+    <VStack align="stretch" spacing={1}>{roots.map((event) => renderEvent(event))}</VStack>
+  </Box>;
+}
+
+
 export default function ReplayAnalysisPanel({ replay, match, loading, error, onDownload }) {
   if (loading) return <HStack><Spinner size="sm"/><Text>Hämtar replayinformation…</Text></HStack>;
   if (error) return <Text color="red.500">{error}</Text>;
@@ -281,6 +362,8 @@ export default function ReplayAnalysisPanel({ replay, match, loading, error, onD
   const armourDice = diceStats.filter((row) => row.category === 'injury' && row.label === 'Armour');
   const injuryDice = diceStats.filter((row) => row.category === 'injury' && row.label === 'Injury');
   const casualtyDice = diceStats.filter((row) => row.category === 'injury' && row.label === 'Casualty');
+  const matchEvents = analysis?.matchEvents || [];
+  const weatherEvents = analysis?.weatherEvents || matchEvents.filter((event) => event.type === 'WEATHER');
   const hasCanonical = stats.length > 0 || (analysis?.canonicalActions?.length || 0) > 0;
 
   return <VStack align="stretch" spacing={5}>
@@ -307,6 +390,8 @@ export default function ReplayAnalysisPanel({ replay, match, loading, error, onD
       </SimpleGrid>
 
       {!hasCanonical && analysis.analysisConfidence !== 'RAW_BB2' && <Alert status="info"><AlertIcon/>Ingen canonical action-statistik hittades i den lagrade analysen. Reanalysera replayen med parser version 4 eller senare.</Alert>}
+      <WeatherPanel events={weatherEvents}/>
+      <MatchTimeline events={matchEvents} match={match}/>
       <D6Table rows={actionD6} match={match} title="Actions"/>
       <D6Table rows={traitD6} match={match} title="Skill & trait checks"/>
       <D6Table rows={recoveryD6} match={match} title="Injury & recovery checks"/>
@@ -314,7 +399,7 @@ export default function ReplayAnalysisPanel({ replay, match, loading, error, onD
       <BlockFaceTable rows={blockFaces} match={match}/>
       <BlockOutcomeTable rows={blockActions} match={match}/>
       <SpecialActionTable rows={specials} match={match}/>
-      <DiceContextTable rows={diceStats.filter((row) => row.category === 'pregame')} match={match} title="Pregame dice" description="Fan Factor is per team; weather is match-wide. * = die type inferred from replay context."/>
+      <DiceContextTable rows={diceStats.filter((row) => row.category === 'pregame' && row.label !== 'Weather')} match={match} title="Pregame dice" description="Team-specific pre-match rolls such as Fan Factor. Weather has its own match-state presentation above."/>
       <DiceHistogramTable rows={armourDice} match={match} title="Armour rolls" outcomes={[2,3,4,5,6,7,8,9,10,11,12]} description="2D6 totals. Component dice remain preserved in replay analysis data."/>
       <DiceHistogramTable rows={injuryDice} match={match} title="Injury rolls" outcomes={[2,3,4,5,6,7,8,9,10,11,12]} description="2D6 totals. Component dice remain preserved in replay analysis data."/>
       <DiceHistogramTable rows={casualtyDice} match={match} title="Casualty rolls" outcomes={[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]} description="D16 outcomes. Multiple values in one replay group are counted separately rather than added."/>
