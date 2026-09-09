@@ -46,8 +46,10 @@ def test_extracts_dice_resources_special_events_and_semantic_checkpoints():
     assert analysis["dieValueCounts"]["3:1"] == 1
     weather = next(row for row in analysis["diceStatistics"] if row["label"] == "Weather")
     assert weather["dieTypeName"] == "D6"
+    assert weather["teamId"] is None
     assert weather["inferred"] is True
     assert weather["rolls"] == [[6, 4]]
+    assert weather["resultCounts"] == {"10": 1}
     assert analysis["resourceEvents"][0]["eventType"] == "EventUseTeamReroll"
     assert analysis["specialEvents"][0]["eventType"] == "EventRegeneration"
     assert analysis["specialEvents"][0]["success"] is True
@@ -80,6 +82,32 @@ def test_explicit_d6_zero_is_not_misreported_as_unknown():
     analysis = parse_replay(replay)["analysis"]
     assert analysis["dieValueCounts"]["0:4"] == 1
     assert "UNKNOWN:4" not in analysis["dieValueCounts"]
+
+
+def test_casualty_result_tag_infers_d16_without_adding_multiple_values():
+    replay = b"""<Replay><ReplayStep><Clock>1</Clock>
+    <ResultCasualtyRoll><Dice>
+      <Die><Value>13</Value></Die><Die><Value>3</Value></Die>
+    </Dice></ResultCasualtyRoll>
+    </ReplayStep></Replay>"""
+    analysis = parse_replay(replay)["analysis"]
+    casualty = next(row for row in analysis["diceStatistics"] if row["label"] == "Casualty")
+    assert casualty["dieTypeName"] == "D16"
+    assert casualty["inferred"] is True
+    assert casualty["rolls"] == [[13, 3]]
+    assert casualty["resultCounts"] == {"13": 1, "3": 1}
+    assert "16" not in casualty["resultCounts"]
+
+
+def test_block_dice_are_not_classified_as_other_replay_dice():
+    replay = b"""<Replay><ReplayStep><Clock>1</Clock>
+    <ResultBlockRoll><RollType>3</RollType><Dice>
+      <Die><DieType>2</DieType><Value>4</Value></Die>
+    </Dice></ResultBlockRoll>
+    </ReplayStep></Replay>"""
+    analysis = parse_replay(replay)["analysis"]
+    block = next(row for row in analysis["diceStatistics"] if row["label"] == "Block")
+    assert block["category"] == "block"
 
 
 def test_parse_replay_artifact_accepts_bb2_bbrz():

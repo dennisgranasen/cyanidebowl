@@ -30,7 +30,7 @@ import java.util.zip.GZIPInputStream;
 @Service
 @RequiredArgsConstructor
 public class ReplayArtifactService {
-    public static final int PARSER_VERSION = 6;
+    public static final int PARSER_VERSION = 7;
 
     private final ReplayDownloadRepository downloads;
     private final ReplayAnalysisRepository analyses;

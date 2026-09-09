@@ -185,16 +185,54 @@ function SpecialActionTable({ rows, match }) {
   </Box>;
 }
 
-const formatDiceRoll = (values) => {
-  if (!Array.isArray(values) || !values.length) return '—';
-  if (values.length === 1) return String(values[0]);
-  return `${values.join(' + ')} = ${values.reduce((sum, value) => sum + Number(value || 0), 0)}`;
-};
-
 const diceRowsForTeam = (rows, team) => rows.filter((row) => rowTeamIndex(row) === team);
 
+const resultCount = (rows, result) => rows.reduce(
+  (sum, row) => sum + Number(row?.resultCounts?.[String(result)] || 0), 0,
+);
+
+const resultTotal = (rows) => rows.reduce(
+  (sum, row) => sum + Object.values(row?.resultCounts || {}).reduce((subtotal, count) => subtotal + Number(count || 0), 0), 0,
+);
+
+function DiceHistogramTable({ rows, match, title, outcomes, description }) {
+  if (!rows.length) return null;
+  const labels = unique(rows.map((row) => row.label));
+  return <Box>
+    <Heading size="sm" mb={2}>{title}</Heading>
+    {description && <Text fontSize="sm" color="gray.500" mb={2}>{description}</Text>}
+    <TableContainer>
+      <Table size="sm">
+        <Thead>
+          <Tr>
+            <Th rowSpan={2}>Roll</Th>
+            {[0, 1].map((team) => <Th key={team} textAlign="center" colSpan={outcomes.length + 1}>{teamName(match, team)}</Th>)}
+          </Tr>
+          <Tr>
+            {[0, 1].flatMap((team) => [
+              ...outcomes.map((value) => <Th key={`${team}-${value}`} isNumeric>{value}</Th>),
+              <Th key={`${team}-total`} isNumeric>Total</Th>,
+            ])}
+          </Tr>
+        </Thead>
+        <Tbody>{labels.map((label) => {
+          const matching = rows.filter((row) => row.label === label);
+          const perTeam = [0, 1].map((team) => diceRowsForTeam(matching, team));
+          return <Tr key={label}>
+            <Td fontWeight="semibold">{label}</Td>
+            {perTeam.flatMap((teamRows, team) => [
+              ...outcomes.map((value) => <Td key={`${team}-${label}-${value}`} isNumeric>{resultCount(teamRows, value) || '—'}</Td>),
+              <Td key={`${team}-${label}-total`} isNumeric fontWeight="semibold">{resultTotal(teamRows) || '—'}</Td>,
+            ])}
+          </Tr>;
+        })}</Tbody>
+      </Table>
+    </TableContainer>
+  </Box>;
+}
+
 const diceDisplay = (rows) => rows.length
-  ? rows.flatMap((row) => row.rolls || []).map(formatDiceRoll).join(', ')
+  ? rows.flatMap((row) => Object.entries(row.resultCounts || {}).flatMap(([value, count]) => Array(Number(count)).fill(value))).join(', ')
   : '—';
 
 function DiceContextTable({ rows, match, title, description }) {
@@ -240,6 +278,9 @@ export default function ReplayAnalysisPanel({ replay, match, loading, error, onD
   const blockActions = stats.filter((row) => row.kind === 'blockActions');
   const specials = stats.filter((row) => row.kind === 'special');
   const diceStats = analysis?.diceStatistics || [];
+  const armourDice = diceStats.filter((row) => row.category === 'injury' && row.label === 'Armour');
+  const injuryDice = diceStats.filter((row) => row.category === 'injury' && row.label === 'Injury');
+  const casualtyDice = diceStats.filter((row) => row.category === 'injury' && row.label === 'Casualty');
   const hasCanonical = stats.length > 0 || (analysis?.canonicalActions?.length || 0) > 0;
 
   return <VStack align="stretch" spacing={5}>
@@ -273,10 +314,11 @@ export default function ReplayAnalysisPanel({ replay, match, loading, error, onD
       <BlockFaceTable rows={blockFaces} match={match}/>
       <BlockOutcomeTable rows={blockActions} match={match}/>
       <SpecialActionTable rows={specials} match={match}/>
-      <DiceContextTable rows={diceStats.filter((row) => row.category === 'pregame')} match={match} title="Pregame dice" description="Fan Factor, weather and other pre-match rolls. * = die type inferred from replay context."/>
-      <DiceContextTable rows={diceStats.filter((row) => row.category === 'injury')} match={match} title="Injury & recovery dice" description="Armour, injury, casualty and recovery rolls, grouped by replay team context."/>
-      <DiceContextTable rows={diceStats.filter((row) => row.category === 'scatter')} match={match} title="Scatter & direction dice"/>
-      <DiceContextTable rows={diceStats.filter((row) => !['pregame', 'injury', 'scatter', 'action'].includes(row.category))} match={match} title="Other replay dice"/>
+      <DiceContextTable rows={diceStats.filter((row) => row.category === 'pregame')} match={match} title="Pregame dice" description="Fan Factor is per team; weather is match-wide. * = die type inferred from replay context."/>
+      <DiceHistogramTable rows={armourDice} match={match} title="Armour rolls" outcomes={[2,3,4,5,6,7,8,9,10,11,12]} description="2D6 totals. Component dice remain preserved in replay analysis data."/>
+      <DiceHistogramTable rows={injuryDice} match={match} title="Injury rolls" outcomes={[2,3,4,5,6,7,8,9,10,11,12]} description="2D6 totals. Component dice remain preserved in replay analysis data."/>
+      <DiceHistogramTable rows={casualtyDice} match={match} title="Casualty rolls" outcomes={[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]} description="D16 outcomes. Multiple values in one replay group are counted separately rather than added."/>
+      <DiceContextTable rows={diceStats.filter((row) => !['pregame', 'injury', 'scatter', 'action', 'block'].includes(row.category))} match={match} title="Other replay dice"/>
     </>}
   </VStack>;
 }

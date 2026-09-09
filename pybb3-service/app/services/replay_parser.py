@@ -14,7 +14,7 @@ from app.services.bb3_roll_types import bb3_roll_name
 from app.services.replay_decoders import Bb2ReplayDecoder, Bb3ActionDecoder, action_dicts, decode_message
 from app.services.replay_statistics import aggregate_actions, event_statistics
 
-PARSER_VERSION = 6
+PARSER_VERSION = 7
 INTEGER = re.compile(r"^-?(?:0|[1-9][0-9]*)$")
 RESOURCE_MARKERS = ("reroll", "apothec", "wizard", "spell")
 SPECIAL_MARKERS = (
@@ -112,6 +112,10 @@ def _success(event: ET.Element) -> bool | None:
 
 
 def _event_team(event, context):
+    # Match-wide events must never inherit whichever team happened to be
+    # active in the surrounding board state.
+    if event.tag in {"EventWeatherRoll", "EventKickOffTable"}:
+        return None
     team = _first(event, ("TeamId", "GamerSlot", "GamerId"))
     return context.get("activeTeam") if team is None else team
 
@@ -194,6 +198,19 @@ def _decoded_sequence_dice(event: ET.Element, sequence: int, clock: Any, context
     return result
 
 
+def _semantic_results(label: str | None, die_type: int | None, values: list[Any]) -> list[int]:
+    """Derive display results while retaining the original component dice."""
+    numeric = [value for value in values if isinstance(value, int)]
+    if die_type == 0 and label in {"Armour", "Injury", "Weather"}:
+        if len(numeric) == 2:
+            return [sum(numeric)]
+        if len(numeric) > 2 and len(numeric) % 2 == 0:
+            return [sum(numeric[index:index + 2]) for index in range(0, len(numeric), 2)]
+    # D16 casualty values are individual outcomes. Never add multiple D16
+    # values together; a group may contain an original and replacement roll.
+    return numeric
+
+
 def _dice_statistics(rolls: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Aggregate semantic dice groups while retaining their individual rolls."""
     grouped: dict[tuple[Any, ...], dict[str, Any]] = {}
@@ -207,7 +224,7 @@ def _dice_statistics(rolls: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "dieType": die_type, "dieTypeName": bb3_die_name(die_type),
             "teamId": roll.get("teamId"), "rollType": roll.get("rollType"),
             "rollTypeName": roll.get("rollTypeName"), "rollCount": 0, "dieCount": 0,
-            "inferred": False, "faceCounts": {}, "rolls": [], "sources": [],
+            "inferred": False, "faceCounts": {}, "resultCounts": {}, "rolls": [], "sources": [],
         })
         values = [die.get("value") for die in dice if die.get("value") is not None]
         row["rollCount"] += 1
@@ -218,6 +235,9 @@ def _dice_statistics(rolls: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "source": roll.get("source"), "eventType": roll.get("eventType"),
             "playerId": roll.get("playerId"),
         })
+        for result in _semantic_results(roll.get("label"), die_type, values):
+            result_key = str(result)
+            row["resultCounts"][result_key] = row["resultCounts"].get(result_key, 0) + 1
         for die in dice:
             if die.get("typeSource") == "context":
                 row["inferred"] = True
