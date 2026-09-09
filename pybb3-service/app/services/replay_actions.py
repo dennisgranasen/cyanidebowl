@@ -45,6 +45,8 @@ class D6Action:
     successful: bool = False
     reroll_used: bool = False
     source: str = "BB3"
+    source_roll_type: int | None = None
+    roll_category: str | None = None
 
     @property
     def kind(self) -> str:

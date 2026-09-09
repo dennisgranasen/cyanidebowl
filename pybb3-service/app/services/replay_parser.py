@@ -12,7 +12,7 @@ from typing import Any
 from app.services.replay_decoders import Bb2ReplayDecoder, Bb3ActionDecoder, action_dicts
 from app.services.replay_statistics import aggregate_actions, event_statistics
 
-PARSER_VERSION = 4
+PARSER_VERSION = 5
 INTEGER = re.compile(r"^-?(?:0|[1-9][0-9]*)$")
 RESOURCE_MARKERS = ("reroll", "apothec", "wizard", "spell")
 SPECIAL_MARKERS = (

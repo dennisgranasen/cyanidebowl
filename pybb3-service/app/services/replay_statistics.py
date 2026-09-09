@@ -23,14 +23,20 @@ BLOCK_OUTCOME_ORDER = (
 
 def aggregate_actions(actions: Iterable[D6Action | BlockAction | SpecialAction]) -> list[dict[str, Any]]:
     """Return tidy, API-friendly per-team action statistics."""
-    d6: dict[tuple[str, int, Any], dict[str, Any]] = {}
+    d6: dict[tuple[str, int, Any, int | None, str | None], dict[str, Any]] = {}
     faces: dict[tuple[str, Any], dict[str, Any]] = {}
     outcomes: dict[tuple[str, Any], dict[str, Any]] = {}
     specials: dict[tuple[str, Any], dict[str, Any]] = {}
 
     for action in actions:
         if isinstance(action, D6Action):
-            key = (action.action_type, action.target, action.team_id)
+            key = (
+                action.action_type,
+                action.target,
+                action.team_id,
+                action.source_roll_type,
+                action.roll_category,
+            )
             row = d6.setdefault(
                 key,
                 {
@@ -40,6 +46,8 @@ def aggregate_actions(actions: Iterable[D6Action | BlockAction | SpecialAction])
                     "teamId": action.team_id,
                     "success": 0,
                     "total": 0,
+                    "sourceRollType": action.source_roll_type,
+                    "rollCategory": action.roll_category,
                 },
             )
             row["total"] += 1

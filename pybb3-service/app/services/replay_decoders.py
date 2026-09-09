@@ -7,6 +7,7 @@ import xml.etree.ElementTree as ET
 from collections import defaultdict
 from typing import Any
 
+from .bb3_roll_types import bb3_roll_category, bb3_roll_name
 from .replay_actions import (
     BLOCK_FACE_NAMES,
     BloodlustAction,
@@ -26,8 +27,6 @@ from .replay_actions import (
     ThrowTeamMateAction,
     WizardAction,
 )
-
-ROLL_NAMES = {1: "Rush", 2: "Dodge", 4: "Pickup", 5: "Pass", 6: "Leap", 7: "Catch"}
 
 
 SPECIAL_ACTION_TYPES: tuple[tuple[tuple[str, ...], type[SpecialAction]], ...] = (
@@ -333,7 +332,7 @@ class Bb3ActionDecoder:
                                 f"bb3:{replay_index}:{sequence_index}:d6:"
                                 f"{player_id}:{target_id}:{roll_type}:{difficulty}"
                             ),
-                            action_type=ROLL_NAMES.get(roll_type, f"Roll type {roll_type}"),
+                            action_type=bb3_roll_name(roll_type),
                             team_id=team_id,
                             player_id=player_id,
                             target_id=target_id,
@@ -341,6 +340,8 @@ class Bb3ActionDecoder:
                             rolls=dice_values,
                             successful=final_outcome,
                             reroll_used=len(dice_values) > 1,
+                            source_roll_type=roll_type,
+                            roll_category=bb3_roll_category(roll_type),
                         )
                     )
         return actions

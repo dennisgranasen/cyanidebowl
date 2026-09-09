@@ -24,11 +24,11 @@ import {
 } from '@chakra-ui/react';
 
 const BLOCK_FACES = [
-  ['skull', 'Skull'],
-  ['bothDown', 'Both down'],
-  ['push', 'Push'],
-  ['tackle', 'Tackle'],
-  ['defenderDown', 'Def. down'],
+  ['skull', '☠', 'Skull'],
+  ['bothDown', '⇅', 'Both down'],
+  ['push', '➜', 'Push'],
+  ['tackle', '✦', 'Defender stumbles'],
+  ['defenderDown', '★', 'Defender down'],
 ];
 
 const formatBytes = (value) => value == null ? '—' : value < 1024 * 1024
@@ -56,21 +56,61 @@ const actionTotal = (analysis) => Array.isArray(analysis?.canonicalActions)
   ? analysis.canonicalActions.length
   : (analysis?.actionStatistics || []).reduce((sum, row) => sum + Number(row.total || 0), 0);
 
+const difficultyOrder = (value) => {
+  if (typeof value === 'string') {
+    const match = value.match(/^(\d+)\+$/);
+    if (match) return Number(match[1]);
+  }
+  return Number.MAX_SAFE_INTEGER;
+};
+
+const orderedTargets = (rows) => unique(rows.map((row) => row.target))
+  .sort((left, right) => difficultyOrder(left) - difficultyOrder(right) || String(left).localeCompare(String(right)));
+
+const formatSuccessTotal = (row) => row ? `${row.success || 0}/${row.total || 0}` : '—';
+
+const sumActionRows = (rows) => rows.reduce((totals, row) => ({
+  success: totals.success + Number(row?.success || 0),
+  total: totals.total + Number(row?.total || 0),
+}), { success: 0, total: 0 });
+
 function D6Table({ rows, match }) {
   if (!rows.length) return null;
-  const keys = unique(rows.map((row) => `${row.eventType}\u0000${row.target}`));
+  const actionTypes = unique(rows.map((row) => row.eventType));
+  const targets = orderedTargets(rows);
+
   return <Box>
     <Heading size="sm" mb={2}>D6 actions</Heading>
     <Text fontSize="sm" color="gray.500" mb={2}>Successful actions / attempted actions. Rerolls belong to the same action.</Text>
     <TableContainer>
       <Table size="sm">
-        <Thead><Tr><Th>Action</Th><Th>Target</Th><Th isNumeric>{teamName(match, 0)}</Th><Th isNumeric>{teamName(match, 1)}</Th></Tr></Thead>
-        <Tbody>{keys.map((key) => {
-          const [eventType, target] = key.split('\u0000');
-          const left = findTeamRow(rows, 0, (row) => row.eventType === eventType && row.target === target);
-          const right = findTeamRow(rows, 1, (row) => row.eventType === eventType && row.target === target);
-          const value = (row) => row ? `${row.success || 0}/${row.total || 0}` : '—';
-          return <Tr key={key}><Td fontWeight="semibold">{eventType}</Td><Td>{target}</Td><Td isNumeric>{value(left)}</Td><Td isNumeric>{value(right)}</Td></Tr>;
+        <Thead>
+          <Tr>
+            <Th rowSpan={2}>Action</Th>
+            {[0, 1].map((team) => (
+              <Th key={`team-${team}`} textAlign="center" colSpan={targets.length + 1}>{teamName(match, team)}</Th>
+            ))}
+          </Tr>
+          <Tr>
+            {[0, 1].flatMap((team) => [
+              ...targets.map((target) => <Th key={`${team}-${target}`} isNumeric>{target}</Th>),
+              <Th key={`${team}-total`} isNumeric>Total</Th>,
+            ])}
+          </Tr>
+        </Thead>
+        <Tbody>{actionTypes.map((eventType) => {
+          const teamRows = [0, 1].map((team) => rowsForTeam(rows, team).filter((row) => row.eventType === eventType));
+          const totals = teamRows.map((entries) => sumActionRows(entries));
+          return <Tr key={eventType}>
+            <Td fontWeight="semibold">{eventType}</Td>
+            {teamRows.flatMap((entries, team) => [
+              ...targets.map((target) => {
+                const row = entries.find((entry) => entry.target === target);
+                return <Td key={`${team}-${eventType}-${target}`} isNumeric>{formatSuccessTotal(row)}</Td>;
+              }),
+              <Td key={`${team}-${eventType}-total`} isNumeric fontWeight="semibold">{formatSuccessTotal(totals[team])}</Td>,
+            ])}
+          </Tr>;
         })}</Tbody>
       </Table>
     </TableContainer>
@@ -87,7 +127,7 @@ function BlockFaceTable({ rows, match }) {
       <Table size="sm">
         <Thead>
           <Tr><Th rowSpan={2}>Dice</Th><Th textAlign="center" colSpan={5}>{teamName(match, 0)}</Th><Th textAlign="center" colSpan={5}>{teamName(match, 1)}</Th></Tr>
-          <Tr>{[0, 1].flatMap((team) => BLOCK_FACES.map(([key, label]) => <Th key={`${team}-${key}`} isNumeric>{label}</Th>))}</Tr>
+          <Tr>{[0, 1].flatMap((team) => BLOCK_FACES.map(([key, symbol, label]) => <Th key={`${team}-${key}`} isNumeric title={label} aria-label={label}>{symbol}</Th>))}</Tr>
         </Thead>
         <Tbody>{targets.map((target) => {
           const teamRows = [0, 1].map((team) => findTeamRow(rows, team, (row) => row.target === target));

@@ -3,6 +3,7 @@ import io
 import zipfile
 import xml.etree.ElementTree as ET
 
+from app.services.bb3_roll_types import Bb3RollType, bb3_roll_category, bb3_roll_name
 from app.services.replay_actions import BlockAction, BlockChooser, BlockOutcome, D6Action
 from app.services.replay_decoders import Bb2ReplayDecoder, Bb3ActionDecoder, resolve_block_outcome
 from app.services.replay_statistics import aggregate_actions
@@ -64,8 +65,50 @@ def test_d6_reroll_is_one_action_with_all_raw_rolls():
     stats = aggregate_actions(actions)
     assert stats == [{
         "eventType": "Dodge", "kind": "d6", "target": "3+", "teamId": 0,
-        "success": 1, "total": 1,
+        "success": 1, "total": 1, "sourceRollType": 2, "rollCategory": "action",
     }]
+
+
+def test_full_bb3_roll_type_reference_contains_known_problem_values():
+    assert Bb3RollType.AnimalSavagery.value == 36
+    assert Bb3RollType.FoulAppearance.value == 37
+    assert Bb3RollType.Regeneration.value == 46
+    assert Bb3RollType.HypnoticGaze.value == 66
+    assert bb3_roll_name(36) == "Animal Savagery"
+    assert bb3_roll_name(37) == "Foul Appearance"
+    assert bb3_roll_name(46) == "Regeneration"
+    assert bb3_roll_name(66) == "Hypnotic Gaze"
+    assert bb3_roll_category(36) == "skillTrait"
+    assert bb3_roll_category(46) == "injuryRecovery"
+
+
+def test_bb3_decoder_uses_protocol_enum_and_preserves_source_roll_type():
+    cases = [
+        (36, "Animal Savagery", "skillTrait"),
+        (37, "Foul Appearance", "skillTrait"),
+        (46, "Regeneration", "injuryRecovery"),
+    ]
+    for roll_type, expected_name, expected_category in cases:
+        result = step_result(
+            "<Step><PlayerId>10</PlayerId><TargetId>20</TargetId></Step>",
+            [
+                f"<ResultRoll><RollType>{roll_type}</RollType><Difficulty>2</Difficulty>"
+                "<Outcome>1</Outcome><Dice><Die><DieType>0</DieType><Value>4</Value>"
+                "</Die></Dice></ResultRoll>"
+            ],
+        )
+        actions = Bb3ActionDecoder().decode(replay_with_sequence(result))
+        assert len(actions) == 1
+        action = actions[0]
+        assert isinstance(action, D6Action)
+        assert action.action_type == expected_name
+        assert action.source_roll_type == roll_type
+        assert action.roll_category == expected_category
+
+
+def test_unknown_bb3_roll_type_is_not_guessed():
+    assert bb3_roll_name(999) == "BB3 RollType 999"
+    assert bb3_roll_category(999) == "unknown"
 
 
 def test_minus_two_d_block_keeps_all_offered_faces_and_selected_face():
