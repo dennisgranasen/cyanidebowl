@@ -1,19 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Heading, Image, LinkBox, LinkOverlay, SimpleGrid, Text } from '@chakra-ui/react';
+import { Box, Button, Heading, HStack, Image, LinkBox, LinkOverlay, SimpleGrid, Text } from '@chakra-ui/react';
 import { Link as RouterLink } from 'react-router-dom';
 import EditorialCommunityApi from '../../EditorialCommunityApi';
+import useAuth0WithUserPermissions from '../../hooks/useAuth0WithUserPermissions';
 
 function ArticleFeed({ leagueSystemId, limit = 6 }) {
   const [articles, setArticles] = useState([]);
+  const { checkPermissions, userPermissions } = useAuth0WithUserPermissions();
   useEffect(() => {
     EditorialCommunityApi.articles(leagueSystemId, limit).then(setArticles).catch(() => setArticles([]));
   }, [leagueSystemId, limit]);
 
-  if (!articles.length) return null;
+  const canWrite = checkPermissions && userPermissions?.writeEditor;
+  if (!articles.length && !canWrite) return null;
+
   const [featured, ...rest] = articles;
   return (
     <Box my={4}>
-      <Heading size="md" mb={3}>Nyheter</Heading>
+      <HStack justify="space-between" mb={3}>
+        <Heading size="md">Nyheter</Heading>
+        {canWrite && (
+          <Button size="sm" as={RouterLink} to="/editor/articles/new">Skriv artikel</Button>
+        )}
+      </HStack>
+      {!articles.length && <Text color="gray.500">Inga publicerade artiklar Ã¤nnu.</Text>}
       {featured && (
         <LinkBox borderWidth="1px" borderRadius="lg" overflow="hidden" mb={3}>
           {featured.coverImageUrl && <Image src={featured.coverImageUrl} w="full" maxH="320px" objectFit="cover" />}

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Badge, Box, HStack, Select, Text, VStack } from '@chakra-ui/react';
-import { useAuth0 } from '@auth0/auth0-react';
+import useAuth0WithUserPermissions from '../../hooks/useAuth0WithUserPermissions';
 import EditorialCommunityApi from '../../EditorialCommunityApi';
 
 function MatchPlayerRatings({ matchId }) {
-  const { isAuthenticated, getAccessTokenSilently } = useAuth0();
+  const { isAuthenticated, getAccessTokenSilently } = useAuth0WithUserPermissions();
   const [players, setPlayers] = useState([]);
   const [summary, setSummary] = useState([]);
 

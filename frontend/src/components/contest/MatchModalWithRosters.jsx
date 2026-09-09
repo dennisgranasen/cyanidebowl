@@ -37,6 +37,9 @@ import ContestMatchCard from './ContestMatchCard';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import ReplayAnalysisPanel from './ReplayAnalysisPanel';
 import { getStarPlayerDisplayName, isStarPlayer } from '../../util/starplayerUtil';
+import ReactionBar from '../community/ReactionBar';
+import CommentThread from '../community/CommentThread';
+import MatchPlayerRatings from '../community/MatchPlayerRatings';
 
 const PlayerNameCell = ({ player }) => {
   const playerIsStarPlayer = isStarPlayer(player.name);
@@ -166,11 +169,19 @@ function MatchModal({ isOpen, onClose, match, contest }) {
               <Box w="100%">
                 <ContestMatchCard contestOrMatch={contest || matchData} contestHeader={null} variant="filled" clickable={false}/>
               </Box>
+
+              {replayMatchId && (
+                <Box mt={3} mb={3}>
+                  <ReactionBar targetType="MATCH" targetId={replayMatchId} />
+                </Box>
+              )}
               
               <Tabs>
                 <TabList>
                   <Tab>Team Stats</Tab>
                   <Tab>Player Rosters</Tab>
+                  <Tab>Player Ratings</Tab>
+                  <Tab>Comments</Tab>
                   <Tab>Replay {replay?.available && <Badge ml={1} colorScheme="green">✓</Badge>}</Tab>
                 </TabList>
                 <TabPanels>
@@ -473,6 +484,16 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                         ))}
                       </Box>
                     )}
+                  </TabPanel>
+                  <TabPanel>
+                    {replayMatchId
+                      ? <MatchPlayerRatings matchId={replayMatchId} />
+                      : <Text color="gray.500">Match-ID saknas; spelarbetyg kan inte laddas.</Text>}
+                  </TabPanel>
+                  <TabPanel>
+                    {replayMatchId
+                      ? <CommentThread targetType="MATCH" targetId={replayMatchId} />
+                      : <Text color="gray.500">Match-ID saknas; kommentarer kan inte laddas.</Text>}
                   </TabPanel>
                   <TabPanel>
                     <ReplayAnalysisAwarePanel replay={replay} match={matchData} loading={replayLoading} error={replayError}

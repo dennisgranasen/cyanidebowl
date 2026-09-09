@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Badge, Box, Button, HStack, Text, Textarea, VStack } from '@chakra-ui/react';
-import { useAuth0 } from '@auth0/auth0-react';
+import useAuth0WithUserPermissions from '../../hooks/useAuth0WithUserPermissions';
 import EditorialCommunityApi from '../../EditorialCommunityApi';
 import ReactionBar from './ReactionBar';
 
@@ -21,7 +21,7 @@ function OneComment({ comment }) {
 }
 
 function CommentThread({ targetType, targetId }) {
-  const { isAuthenticated, getAccessTokenSilently } = useAuth0();
+  const { isAuthenticated, getAccessTokenSilently } = useAuth0WithUserPermissions();
   const [comments, setComments] = useState([]);
   const [body, setBody] = useState('');
 

@@ -132,6 +132,13 @@ function Menu() {
                     </Link>
                   </Box>
                 )}
+                {checkPermissions && userPermissions?.writeEditor && (
+                  <Box>
+                    <Link variant="menu" as={RouteLink} to="/editor/articles/new" onClick={() => onClose()}>
+                      Write article
+                    </Link>
+                  </Box>
+                )}
                 {checkPermissions && (userPermissions?.writeSiteAdmin || userPermissions?.writeLeagueAdmin) && (
                   <Box>
                     <Link variant="menu" as={RouteLink} to="/admin" onClick={() => onClose()}>

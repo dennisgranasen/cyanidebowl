@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Button, ButtonGroup, Text, HStack } from '@chakra-ui/react';
-import { useAuth0 } from '@auth0/auth0-react';
+import useAuth0WithUserPermissions from '../../hooks/useAuth0WithUserPermissions';
 import EditorialCommunityApi from '../../EditorialCommunityApi';
 
 const TYPES = [
@@ -13,7 +13,7 @@ const TYPES = [
 ];
 
 function ReactionBar({ targetType, targetId }) {
-  const { isAuthenticated, getAccessTokenSilently } = useAuth0();
+  const { isAuthenticated, getAccessTokenSilently } = useAuth0WithUserPermissions();
   const [summary, setSummary] = useState(null);
 
   const load = () => EditorialCommunityApi.reactions(targetType, targetId).then(setSummary);

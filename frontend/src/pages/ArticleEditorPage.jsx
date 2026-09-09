@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Button, Checkbox, FormControl, FormLabel, Input, Select, VStack } from '@chakra-ui/react';
-import { useAuth0 } from '@auth0/auth0-react';
+import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
@@ -10,7 +10,7 @@ import Navigation from '../components/misc/Navigation';
 import EditorialCommunityApi from '../EditorialCommunityApi';
 
 function ArticleEditorPage() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently } = useAuth0WithUserPermissions();
   const navigate = useNavigate();
   const [form, setForm] = useState({ title: '', slug: '', excerpt: '', coverImageUrl: '',
     leagueSystemId: '', seasonId: '', status: 'DRAFT', featured: false });
