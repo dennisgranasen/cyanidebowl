@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.ai.agents.AiReporterDefinition;
+import net.warp_scores.warpscores.ai.agents.AiReporterEffectiveProfileService;
 import net.warp_scores.warpscores.ai.agents.AiReporterRegistry;
 import net.warp_scores.warpscores.domain.persistence.GeneratedMatchReportRepository;
 import org.springframework.web.bind.annotation.*;
@@ -14,16 +15,23 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AiReporterController {
     private final AiReporterRegistry registry;
+    private final AiReporterEffectiveProfileService effectiveProfiles;
     private final GeneratedMatchReportRepository reports;
 
     @GetMapping
     public Collection<PublicReporter> list() {
-        return registry.enabled().stream().map(PublicReporter::from).toList();
+        return registry.all().stream()
+                .map(definition -> PublicReporter.from(
+                        definition, effectiveProfiles.effective(definition).enabled()))
+                .filter(PublicReporter::active)
+                .toList();
     }
 
     @GetMapping("/{id}")
     public PublicReporter get(@PathVariable String id) {
-        return PublicReporter.from(registry.require(id));
+        var definition = registry.require(id);
+        return PublicReporter.from(
+                definition, effectiveProfiles.effective(definition).enabled());
     }
 
     @GetMapping("/{id}/reports")
@@ -39,9 +47,10 @@ public class AiReporterController {
             String category,
             String role,
             String portraitImage,
-            String publicMarkdown) {
+            String publicMarkdown,
+            boolean active) {
 
-        static PublicReporter from(AiReporterDefinition d) {
+        static PublicReporter from(AiReporterDefinition d, boolean active) {
             return new PublicReporter(
                     d.getId(),
                     d.getAlias(),
@@ -49,7 +58,8 @@ public class AiReporterController {
                     d.getCategory(),
                     d.getRole(),
                     d.getPortrait().getImage(),
-                    d.getMarkdownBody());
+                    d.getMarkdownBody(),
+                    active);
         }
     }
 }

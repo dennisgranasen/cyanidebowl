@@ -146,7 +146,20 @@ function Menu() {
                     </Link>
                   </Box>
                 )}
+                {checkPermissions && userPermissions?.writeSiteAdmin && (
+                  <Box>
+                    <Link
+                      variant="menu"
+                      as={RouteLink}
+                      to="/admin/ai-reporters"
+                      onClick={() => onClose()}
+                    >
+                      AI reporters
+                    </Link>
+                  </Box>
+                )}
                 <Box><Link variant="menu" as={RouteLink} to="/statistics" onClick={onClose}>Statistics</Link></Box>
+                <Box><Link variant="menu" as={RouteLink} to="/staff" onClick={onClose}>Staff</Link></Box>
                 {isProduction && authenticationReady && (
                   <Box>
                     {!isAuthenticated ? (

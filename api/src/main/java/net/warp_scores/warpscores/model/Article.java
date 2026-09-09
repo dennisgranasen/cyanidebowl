@@ -18,11 +18,17 @@ import java.util.List;
 @CompoundIndex(name = "article_slug_unique", def = "{'slug': 1}", unique = true)
 public class Article {
     public enum Status { DRAFT, PUBLISHED, ARCHIVED }
+    public enum AuthorType { HUMAN, AI_REPORTER }
 
     @Id
     private String id;
     private String leagueSystemId;
     private String seasonId;
+
+    /** Existing documents with null are interpreted as HUMAN for backwards compatibility. */
+    private AuthorType authorType = AuthorType.HUMAN;
+    private String authorAgentId;
+
     private Long authorUserId;
     private String authorSubject;
     private String authorDisplayName;

@@ -1,262 +1,125 @@
-# cyanidebowl
+# AI foundation + staff/admin UI
 
-Welcome to cyanidebowl, a Spike-like facade for Cyanide's BB3 API based on [warp-scores](https://warp-scores.net)
+Target: CyanideBowl `dev`, after B/B2 files have been copied in.
 
-## Overview
+This package implements the next requested increment:
 
-### Description
+1. feature-flag-safe unfinished rating generation
+2. reporter profile loading + startup count logging
+3. concrete `MatchNarrativeFactsBuilder`
+4. concrete `PlayerRatingFactsBuilder`
+5. public `/staff`
+6. public `/staff/:reporterId`
+7. site-admin `/admin/ai-reporters`
+8. master/capability toggles in admin UI
 
-This is a Spike-like web page to show match results and data from BB3 obtained through Cyanide's API.
+## Install
 
-### Project Status
+Extract this ZIP into the repository root, preserving paths.
 
-GitHub is the authoritative repository. The warp-scores GitLab links in the
-roadmap are retained as upstream historical references.
+Then run:
 
-### Roadmap
-
-- 🟢 Show last matches
-- 🟢 Show live matches
-- 🟢 Generate Round Robin Schedules
-- 🟢 Support Swiss (Wissen) Tournaments
-- 🟢 [Support Knockout Tournaments](https://gitlab.com/warp-scores/warp-scores/-/issues/4)
-- 🟢 [Increase Mobile UI/UX](https://gitlab.com/warp-scores/warp-scores/-/issues/3)
-- 🟡 [Match-Details](https://gitlab.com/warp-scores/warp-scores/-/issues/5)
-- 🟡 [Coach page](https://gitlab.com/warp-scores/warp-scores/-/issues/6)
-- [League-Statistics](https://gitlab.com/warp-scores/warp-scores/-/issues/7)
-- [Competition-Statistics](https://gitlab.com/warp-scores/warp-scores/-/issues/8)
-- 🟢 [Discord publishing of match results](https://gitlab.com/warp-scores/warp-scores/-/issues/9)
-- 🟢 [Authentication (🟢 Discord-,🟢 NAF-OAuth)](https://gitlab.com/warp-scores/warp-scores/-/issues/10)
-- 🟢 [NAF Data export for tournaments](https://gitlab.com/warp-scores/warp-scores/-/issues/11)
-- [Admin/Edit results? Win/Tiebreaker editor?](https://gitlab.com/warp-scores/warp-scores/-/issues/12)
-- Others: -> See [Issues on GitLab](https://gitlab.com/warp-scores/warp-scores/-/issues/)
-
-### Legend
-
-- 🟢 Finished
-- 🟡 In Progress
-- 🔴 Obsolete/Canceled
-
-### Configuration
-The following variables need to be set.
-
-## For development
-Set these variables in your .env file:
-FRONTEND_URI=http://localhost:8022
-BACKEND_URI=http://localhost:8080
-REACT_APP_BACKEND_URI=http://localhost:8080
-AUTH0_URI="https://nst-scores.eu.auth0.com/"
-SPRING_PROFILES_ACTIVE="dev"
-SERVER_PORT=8080
-AUTH_AUDIENCE="nst-scores-backend"
-
-## For production
-Set these variables in your deployment system, e.g. using fly.toml:
-FRONTEND_URI=<Your frontend URI>
-BACKEND_URI=<Your backend URI>
-REACT_APP_BACKEND_URI=<Same as BACKEND_URI>
-AUTH0_URI=<Your Auth0 provider URI>
-SPRING_PROFILES_ACTIVE="server"
-SERVER_PORT=8080
-AUTH_AUDIENCE="nst-scores-backend"
-
-## Secrets
-`AUTH0_URI`, `AUTH0_AUDIENCE`, Auth0 domain, and Auth0 client ID are public
-identifiers. `SPRING_DATA_MONGODB_URI`, `CYANIDE_API_KEY`, Auth0 tokens, and
-Discord tokens are secrets. On Fly, configure secret values only through secret
-names `SPRING_DATA_MONGODB_URI` and `CYANIDE_API_KEY`; never commit their values.
-The server `JwtDecoder` owns issuer, audience, and RS256 validation, while YAML
-configures the resource-server integration.
-
-VS Code offers all four backend debug combinations: local database or Atlas,
-each with Cyanide either disabled or enabled. The matching full-stack entries
-also start the frontend. Atlas reads `SPRING_DATA_MONGODB_URI` from the
-untracked `.env` file in the repository root, while Cyanide-enabled modes read
-`CYANIDE_API_KEY` from the same file. `DEFAULT: Backend [DB=local, Cyanide=OFF]` is listed first as
-the safe initial choice.
-
-`SPRING_MONGODB_URI` is accepted as a deprecated local fallback for existing
-`.env` files. Prefer `SPRING_DATA_MONGODB_URI`; it takes precedence and is the
-name used for Fly secrets.
-
-| Database | Cyanide | VS Code launch configuration |
-| --- | --- | --- |
-| Local | OFF | `DEFAULT: Backend [DB=local, Cyanide=OFF]` |
-| Local | ON | `Backend [DB=local, Cyanide=ON]` |
-| Atlas | OFF | `Backend [DB=Atlas, Cyanide=OFF]` |
-| Atlas | ON | `Backend [DB=Atlas, Cyanide=ON]` |
-
-F5 starts the configuration currently selected in the Run and Debug dropdown.
-To switch temporarily, open Run and Debug (`Ctrl+Shift+D`), select another
-backend or full-stack configuration, and press F5. Alternatively, run
-`Debug: Select and Start Debugging` from the Command Palette. VS Code remembers
-the latest selection, so select the `DEFAULT` entry again when finished.
-
-### Modules
-
-- `api`: shared models and identifiers.
-- `cyanide-api`: Cyanide transport models.
-- `backend`: Spring Boot API, persistence, schedulers, and archive providers.
-- `frontend`: React web application.
-- `discord-bot`: Discord publishing integration.
-
-### Stage Matches
-
-The competition structure is `LeagueSystem -> Season -> Phase -> Stage`.
-Phases describe broad parts of a season (off-season, preseason, friendlies,
-qualification, group stage, playoffs, or other). Stages describe groups or rounds
-inside a phase. Stages with the same `step` are parallel; `displayOrder` controls
-their presentation order.
-
-Cyanide entities are registered once per season as `RegisteredSource` documents.
-Registration enables normal data collection. A stage uses one or more match
-selections (`StageSource` documents with `registeredSourceId`) so the same watched
-competition can be split across several phases or stages without duplicate watches.
-Legacy inline `StageSource` documents remain readable during migration.
-
-Legacy data is upgraded explicitly with `scripts/migrate-league-structure.js`.
-The script is read-only unless `MIGRATION_APPLY=true`, reports every inferred
-phase/stage/source change, and backs up changed original documents before applying.
-Ambiguous stages are placed in `Main competition`/`OTHER` for correction in admin.
-
-```bash
-# Read-only preview
-mongosh "$SPRING_DATA_MONGODB_URI" --file scripts/migrate-league-structure.js
-
-# Apply exactly the printed plan and create rollback records
-MIGRATION_APPLY=true mongosh "$SPRING_DATA_MONGODB_URI" --file scripts/migrate-league-structure.js
+```powershell
+.\install-ai-foundation.ps1
 ```
 
-The apply run prints its migration run ID. Preview and then apply a rollback with:
+The script is idempotent and edits only:
+- `backend/pom.xml`
+- `SecurityConfiguration.java`
+- `frontend/src/App.jsx`
+- `frontend/src/components/misc/Menu.jsx`
 
-```bash
-MIGRATION_RUN_ID="<run-id>" mongosh "$SPRING_DATA_MONGODB_URI" --file scripts/rollback-league-structure.js
-MIGRATION_RUN_ID="<run-id>" MIGRATION_APPLY=true mongosh "$SPRING_DATA_MONGODB_URI" --file scripts/rollback-league-structure.js
+It does not use `git apply`.
+
+## Build
+
+```powershell
+mvn -Pdev -pl backend -am package -DskipTests -DskipDocker=true
 ```
 
-`GET /stages/{stageId}/matches` is a public read-only API. URL-encode reserved
-characters in the canonical `stageId`. It returns an API DTO, not persistence
-models; missing stages return 404 and invalid source configuration/boundaries
-return 400.
+Frontend:
 
-Administrators with `write:site_admin` manage the hierarchy at `#/admin`.
-The authenticated `/admin/**` API supports create, read, update, and delete for
-league systems, seasons, stages, and stage sources. Deleting a parent removes
-its descendants. LeagueSystem IDs are generated by the server. Enter source entity IDs in canonical form, for example
-`3_leagueId_competitionId`; the server validates and converts them to its
-identity model. Season numbers are required; the server sets their sequence to
-the number and uses `Season {number}` as the name when no name is supplied.
+```powershell
+cd frontend
+npm test -- --watchAll=false
+```
 
-The home page shows LeagueSystem overviews when they have been seeded, with
-their seasons, stages, and latest completed results. It selects the latest
-season with played matches by default; use the LeagueSystem card's hamburger
-menu to switch seasons. It falls back to the legacy league list while no
-LeagueSystems exist. News articles, standings tables, playoff trees, and
-statistics tables are planned as separate views.
+## Expected startup log
 
-The LeagueSystem admin page can scan existing match metadata for competitions
-that are not configured as stage sources. Configure one or more comma-separated
-discovery aliases on the LeagueSystem, then use **Scan database**. The scan is
-read-only: it suggests a season, game, platform, and source, but an administrator
-must explicitly save the season, stage, and source. Both Arabic and Roman season
-numbers are recognized.
+You should see:
 
-The same page can search Cyanide leagues by name or ID. Search only loads the
-league and competition metadata returned by the lookup flow; it does not fetch
-matches, contests, teams, or ranks. A returned competition can be prepared for the
-selected LeagueSystem, but collection starts only after its `StageSource` is saved.
+```text
+Loaded 40 AI reporter profiles
+```
 
-Optional discovery email is disabled by default. Enable it globally with
-`LEAGUE_SYSTEM_DISCOVERY_NOTIFICATIONS_ENABLED=true`, configure Spring Mail with
-the `SPRING_MAIL_*` environment variables, and enable email plus a recipient on
-the individual LeagueSystem. The optional sender and schedule use
-`LEAGUE_SYSTEM_DISCOVERY_NOTIFICATIONS_FROM` and
-`LEAGUE_SYSTEM_DISCOVERY_NOTIFICATIONS_CRON`.
+If you see zero profiles, check that the Maven resource entry copied
+`docs/ai_agents` to `classpath:/ai_agents`.
 
-Seed `leagueSystem`, `season`, `stage`, and `stageSource` documents. A source
-needs `id`, `stageId`, `sourceEntityId`, `sourceType`, `game`, and `platform`.
-Archive lookup is disabled by default; enable it only with
-`STAGE_MATCH_ARCHIVE_ENABLED=true` plus `STAGE_MATCH_ARCHIVE_DATABASE` and
-`STAGE_MATCH_ARCHIVE_COLLECTION`.
+## Facts implementation
 
-### Building
-To build the server for running locally, run the command:
-mvn clean package -P server -DskipDocker -DskipTest -pl api,cyanide-api,backend -am
+`DefaultMatchNarrativeFactsBuilder`:
+- canonical Match from `MatchRepository.findFirstByMatchId`
+- teams/races/coaches/scores from `Match`
+- normalized event stream from replay `matchEvents`, falling back to `canonicalActions`
+- aggregate replay statistics
 
-If you have made changes to api or cyanide-api respectively, you may need to run mvn install in their respective folder.
+`DefaultPlayerRatingFactsBuilder`:
+- canonical players from `Match.teams[].players[]`
+- team/race/position
+- player stats
+- replay participant totals when identity/name can be matched
+- deterministic objective baseline score
 
-### Testing
-To test the system, I recommend running the server on your development machine with all settings loaded from your .env file.
+The objective score is an anchor, not the AI rating. Persona bias is allowed to disagree with it.
 
-First, if you haven't already, install dotenv-cli to be able to load .env file into your environment:
-npm install dotenv-cli
+## Objective rating baseline v1
 
-Then, to run the server:
-npx dotenv --  mvn spring-boot:run -P server -pl backend
+Starts at 5.0 and adds modest deterministic contributions for:
+- TD
+- CAS
+- KO
+- passes
+- interceptions
+- blocks
+- fouls
+- successful dodges/rushes
+- MVP
 
-Or, to run the data-fetcher:
-npx dotenv --  mvn spring-boot:run -P fetcher -pl backend
+and small penalties for removals/death.
 
-To run the frontend:
-cd frontend; npm run dev
+This formula should be treated as versioned application logic and may be tuned later.
 
-### Discord Bot
+## Public UI
 
-Please refer to the [Discord Bot documentation](discord-bot.md).
+- `/#/staff`
+- `/#/staff/{reporterId}`
 
-### Changelog
+Only runtime-active agents appear in the staff list.
+Direct profile URLs remain readable and show `Inactive` when disabled.
 
-See the [Changelog](CHANGELOG.md).
+## Admin UI
 
-## Contribute / Get Involved
+- `/#/admin/ai-reporters`
 
-- [Join Discord](https://discord.gg/hZDU6ymyrj)
+Requires `writeSiteAdmin`.
 
-## Support & Donations
+Controls:
+- Enabled
+- Can write reports
+- Can interact
+- Rates players
+- Writing weight
+- Reset to Markdown defaults
 
-If you appreciate my work, you can buy me a coffee in person or [online](https://buymeacoffee.com/d.rock).
+Disabling an agent affects future activity only. Historical content is retained.
 
-## Similar / Related Projects
+## Still intentionally not implemented
 
-### Blood Bowl 3
+- Groq/OpenRouter calls
+- actual `PlayerRatingGenerator`
+- automatic replay-complete trigger
+- article generation
+- interaction generation
+- user-facing rating table on match pages
 
-- [Warp-scores](https://www.warp-scores.net) by Naytsyrhc
-- [nuffle.xyz](https://nuffle.xyz) by galentio
-- [Nuffles Numbers](https://www.nufflesnumbers.net) by trev
-- [Bloodbowl 3 statistics](https://spike.bugeat.com/en/stats) by thierry
-- [rebbl.net](https://rebbl.net) by majorbyte
-- [bb3replay](https://bb3replay.com/) by TinTuna
-- [dicedornot](https://huggingface.co/spaces/mrMesmer/dicedornot) by mrMesmer (based on work by raspel and TinTuna)
-- [Ladder Result Predictor](https://huggingface.co/spaces/raspel/BB_predictions) by raspel
-
-### Blood Bowl (General)
-
-- [Dave's Action Calculator](https://www.bloodbowldave.com/) by dave
-- [Dadidimerda](https://www.dadidimerda.it/) by Gherardo/Steel
-
-### Disclaimer
-
-This site is very much based on the original work on Warp-scores by Naytsyrhc and completely unofficial and not affiliated
-with [Cyanide](https://cyanide-studio.com), [Nacon](https://www.nacongaming.com), [Slitherine](https://www.slitherine.com)
-or [Games Workshop](https://www.nacongaming.com).
-
-ChatGPT and Codex by OpenAI assisted in coding. Also Gemini by Google to some extent (but not very much to be honest).
-
-[Blood Bowl](https://start-warhammer.com/blood-bowl/), [BB3](https://www.bloodbowl-thegame.com/) and probably a lot more names are trademarks of their respective owners. Used without
-permission. No challenge to their status intended.
-
-#### Fonts used
-
-I used some free fonts on this web page and within the logo.
-
-##### Sports World
-- Designer: Sergiy S. Tkachenko
-- Designer URL: http://www.4thfebruary.com.ua
-
-##### Big Star
-- Designer: Henrik (HENRIavecunK)
-
-##### Nuffle
-- Designer: Neale Davidson, Pixel-Sagas
-- https://www.fontspace.com/pixel-sagas
-- https://www.pixelsagas.com/
+Those are the next vertical slice after these foundations are verified.

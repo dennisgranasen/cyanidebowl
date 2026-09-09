@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.ai.agents;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
@@ -11,6 +12,7 @@ import java.util.NoSuchElementException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AiReporterRegistry {
@@ -23,6 +25,12 @@ public class AiReporterRegistry {
                 .collect(Collectors.toUnmodifiableMap(
                         AiReporterDefinition::getId,
                         Function.identity()));
+
+        if (byId.isEmpty()) {
+            log.warn("No AI reporter profiles were loaded from classpath:ai_agents/reporters/*.md");
+        } else {
+            log.info("Loaded {} AI reporter profiles", byId.size());
+        }
     }
 
     public Collection<AiReporterDefinition> all() {

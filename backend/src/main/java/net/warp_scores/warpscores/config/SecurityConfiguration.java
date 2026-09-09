@@ -81,6 +81,7 @@ public class SecurityConfiguration {
                         .requestMatchers(PUT, "/community/**").authenticated()
                         .requestMatchers(DELETE, "/community/**").authenticated()
                         // public api read only endpoints
+                        .requestMatchers(GET, "/ai-reporters", "/ai-reporters/**").permitAll()
                         .requestMatchers(GET, "/articles/**").permitAll()
                         .requestMatchers(GET, "/community/**").permitAll()
                         .requestMatchers(GET, "/arena/**").permitAll()

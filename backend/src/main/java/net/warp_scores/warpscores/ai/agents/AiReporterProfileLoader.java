@@ -61,6 +61,11 @@ public class AiReporterProfileLoader {
         d.setEnabled(!Boolean.FALSE.equals(fm.get("enabled")));
         d.setMarkdownBody(matcher.group(2).trim());
 
+        Map<String,Object> capabilities = map(fm.get("capabilities"));
+        d.getCapabilities().setReports(boolValue(capabilities, "reports", true));
+        d.getCapabilities().setInteractions(boolValue(capabilities, "interactions", true));
+        d.getCapabilities().setPlayerRatings(boolValue(capabilities, "player_ratings", true));
+
         Map<String,Object> portrait = map(fm.get("portrait"));
         d.getPortrait().setImage(str(portrait.get("image")));
         d.getPortrait().setPromptKey(str(portrait.get("prompt_key")));
@@ -73,6 +78,23 @@ public class AiReporterProfileLoader {
         d.getVoice().setEmotionality(number(voice.get("emotionality")));
         d.getVoice().setTheatricality(number(voice.get("theatricality")));
         d.getVoice().setExtra(voice);
+
+        Map<String,Object> rating = map(fm.get("rating"));
+        d.getRating().setEnabled(boolValue(rating, "enabled", true));
+        d.getRating().setScaleMin(dbl(rating, "scale_min", 1.0));
+        d.getRating().setScaleMax(dbl(rating, "scale_max", 10.0));
+        d.getRating().setStep(dbl(rating, "step", 0.5));
+        d.getRating().setStrictness(dbl(rating, "strictness", 0.50));
+        d.getRating().setGenerosity(dbl(rating, "generosity", 0.30));
+        d.getRating().setVolatility(dbl(rating, "volatility", 0.20));
+        d.getRating().setVerdictProbability(dbl(rating, "verdict_probability", 0.35));
+        d.getRating().setGuidance(str(rating.get("guidance")));
+
+        Map<String,Object> bias = map(rating.get("bias"));
+        d.getRating().getBias().setOwnRaceAffinity(dbl(bias, "own_race_affinity", 0.40));
+        d.getRating().getBias().setOwnRaceExpectation(dbl(bias, "own_race_expectation", 0.15));
+        d.getRating().getBias().setRaceAffinity(doubleMap(bias.get("race_affinity")));
+        d.getRating().setPreferences(doubleMap(rating.get("preferences")));
 
         Map<String,Object> behavior = map(fm.get("behaviour"));
         var b = d.getBehaviour();
@@ -110,11 +132,24 @@ public class AiReporterProfileLoader {
     private static String str(Object o) { return o == null ? null : String.valueOf(o); }
     private static String defaultStr(Object o, String d) { return o == null ? d : String.valueOf(o); }
     private static Double number(Object o) { return o instanceof Number n ? n.doubleValue() : null; }
-    private static double dbl(Map<String,Object> m,String k,double d) {
-        Object o=m.get(k); return o instanceof Number n ? n.doubleValue() : d;
+    private static double dbl(Map<String,Object> m, String k, double d) {
+        Object o = m.get(k); return o instanceof Number n ? n.doubleValue() : d;
     }
-    private static int integer(Map<String,Object> m,String k,int d) {
-        Object o=m.get(k); return o instanceof Number n ? n.intValue() : d;
+    private static int integer(Map<String,Object> m, String k, int d) {
+        Object o = m.get(k); return o instanceof Number n ? n.intValue() : d;
+    }
+    private static boolean boolValue(Map<String,Object> m, String k, boolean d) {
+        Object o = m.get(k); return o instanceof Boolean b ? b : d;
+    }
+    private static Map<String,Double> doubleMap(Object o) {
+        if (!(o instanceof Map<?,?> map)) return Map.of();
+        Map<String,Double> result = new LinkedHashMap<>();
+        map.forEach((key, value) -> {
+            if (value instanceof Number n) {
+                result.put(String.valueOf(key), n.doubleValue());
+            }
+        });
+        return result;
     }
     private static List<String> stringList(Object o) {
         if (!(o instanceof Collection<?> c)) return List.of();

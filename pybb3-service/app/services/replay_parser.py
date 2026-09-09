@@ -15,7 +15,7 @@ from app.services.replay_decoders import Bb2ReplayDecoder, Bb3ActionDecoder, act
 from app.services.replay_statistics import aggregate_actions, event_statistics
 from app.services.replay_timeline import build_match_events
 
-PARSER_VERSION = 8
+PARSER_VERSION = 9
 INTEGER = re.compile(r"^-?(?:0|[1-9][0-9]*)$")
 RESOURCE_MARKERS = ("reroll", "apothec", "wizard", "spell")
 SPECIAL_MARKERS = (

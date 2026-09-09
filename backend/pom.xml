@@ -150,6 +150,10 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+        </dependency>
     </dependencies>
 
     <profiles>
@@ -201,6 +205,10 @@
                                                         -->
                         </resource>
                         <resource>
+                            <directory>${project.basedir}/../docs/ai_agents</directory>
+                            <targetPath>ai_agents</targetPath>
+                            <filtering>false</filtering>
+                        </resource>                        <resource>
                             <directory>${project.basedir}/docker</directory>
                             <filtering>false</filtering>
                         </resource>

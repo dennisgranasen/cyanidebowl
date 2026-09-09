@@ -28,6 +28,9 @@ import AccountPage from './pages/AccountPage';
 import MyStatisticsPage from './pages/MyStatisticsPage';
 import ArticlePage from './pages/ArticlePage';
 import ArticleEditorPage from './pages/ArticleEditorPage';
+import StaffPage from './pages/StaffPage';
+import ReporterProfilePage from './pages/ReporterProfilePage';
+import AdminAiReportersPage from './pages/AdminAiReportersPage';
 import { MyTeamsProvider } from './context/MyTeamsContext';
 
 import { MockAuth0Provider } from './components/misc/MockAuthProvider';
@@ -98,6 +101,8 @@ function AppRoutes() {
       <Route path="/liveMatches/:leagueId" element={<LiveMatchesPage />} />
       <Route path="/team/:teamId" element={<TeamPage />} />
       <Route path="/article/:slug" element={<ArticlePage />} />
+      <Route path="/staff" element={<StaffPage />} />
+      <Route path="/staff/:reporterId" element={<ReporterProfilePage />} />
       <Route path="/competition/:competitionId" element={<CompetitionPage />} />
       <Route path="/competition/:competitionId/stats" element={<CompetitionStatsPage />} />
       <Route path="/competition/:competitionId/arena/:race" element={<ArenaPage />} />
@@ -111,6 +116,7 @@ function AppRoutes() {
       <Route path="/account" element={<ProtectedRoute component={AccountPage} />} />
       <Route path="/my-statistics" element={<ProtectedRoute component={MyStatisticsPage} />} />
       <Route path="/admin" element={<ProtectedRoute component={AdminPage} />} />
+      <Route path="/admin/ai-reporters" element={<ProtectedRoute component={AdminAiReportersPage} />} />
       <Route path="/editor/articles/new" element={<ProtectedRoute component={ArticleEditorPage} />} />
       <Route path="/admin/circuit/:circuitId" element={<ProtectedRoute component={AdminCircuitPage} />} />
       <Route

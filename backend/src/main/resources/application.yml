@@ -84,3 +84,7 @@ league-system:
       enabled: ${LEAGUE_SYSTEM_DISCOVERY_NOTIFICATIONS_ENABLED:false}
       from: ${LEAGUE_SYSTEM_DISCOVERY_NOTIFICATIONS_FROM:}
       cron: '${LEAGUE_SYSTEM_DISCOVERY_NOTIFICATIONS_CRON:0 0 8 * * *}'
+
+warpscores:
+  ai-reporting:
+    enabled: false # Set to true to enable AI reporting, must fix implementation first.

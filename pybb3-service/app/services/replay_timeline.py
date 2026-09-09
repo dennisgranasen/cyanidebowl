@@ -16,6 +16,7 @@ import xml.etree.ElementTree as ET
 from typing import Any, Iterable
 
 from app.services.replay_decoders import decode_message
+from app.services.replay_player_identity import build_player_index, enrich_match_event
 
 INTEGER = re.compile(r"^-?(?:0|[1-9][0-9]*)$")
 
@@ -242,6 +243,7 @@ def build_match_events(root: ET.Element) -> list[dict[str, Any]]:
     drive = 0
     latest_kickoff: dict[str, Any] | None = None
     score = [0, 0]
+    player_index = build_player_index(root)
 
     for sequence, clock, context, event_index, event, source in _iter_events(root):
         event_type, title = _classify(event)
@@ -287,6 +289,8 @@ def build_match_events(root: ET.Element) -> list[dict[str, Any]]:
             "playerId": player_id,
             "details": details,
         }
+        enrich_match_event(item, event, event_type, player_index)
+        team_id = item.get("teamId")
 
         if event_type == "TOUCHDOWN" and isinstance(team_id, int) and team_id in (0, 1):
             score[team_id] += 1

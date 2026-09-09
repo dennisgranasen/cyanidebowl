@@ -5,10 +5,13 @@ import {
   Button,
   Collapse,
   HStack,
+  Image,
   Text,
   Tooltip,
   VStack,
 } from '@chakra-ui/react';
+
+import imageUrls from '../../imageUrls';
 
 const EVENT_STYLE = {
   TOUCHDOWN: { glyph: 'TD', label: 'Touchdown', size: 34 },
@@ -40,6 +43,28 @@ const teamIndex = (event) => {
 };
 
 const teamName = (match, index) => match?.teams?.[index]?.name || `Team ${index + 1}`;
+
+const teamLogoUrl = (match, index) => {
+  const team = match?.teams?.[index];
+  return team?.logo ? imageUrls.logo(team.logo, team?.id?.opus) : null;
+};
+
+const MATCH_WIDE_TYPES = new Set(['KICKOFF', 'WEATHER']);
+
+const laneTeamIndex = (event) => {
+  const explicit = teamIndex(event);
+  if (explicit >= 0) return explicit;
+  if (MATCH_WIDE_TYPES.has(event?.type)) return -1;
+
+  // Old analyses may predate player->team enrichment. activeTeam is a safe
+  // display fallback for actor-owned events, but deliberately not for
+  // injury/casualty chains where activeTeam can identify the wrong side.
+  if (['TOUCHDOWN', 'COMPLETION', 'INTERCEPTION', 'EJECTION', 'KICKOFF_DETAIL'].includes(event?.type)) {
+    const active = Number(event?.activeTeamId);
+    if (active === 0 || active === 1) return active;
+  }
+  return -1;
+};
 
 const timelinePosition = (event) => [
   event?.half ? `Half ${event.half}` : null,
@@ -87,25 +112,102 @@ const chronological = (left, right) =>
   Number(left?.sequence || 0) - Number(right?.sequence || 0)
   || Number(left?.eventIndex || 0) - Number(right?.eventIndex || 0);
 
-const logicalPosition = (event, minSequence, maxSequence) => {
+const turnKey = (event) => {
   const half = Number(event?.half);
   const turn = Number(event?.turn);
-  if ((half === 1 || half === 2) && Number.isFinite(turn)) {
-    const boundedTurn = Math.max(0, Math.min(8, turn));
-    const logicalTurn = (half - 1) * 8 + boundedTurn;
-    return Math.max(1, Math.min(99, (logicalTurn / 16) * 100));
+  return (half === 1 || half === 2) && Number.isInteger(turn) && turn >= 1 && turn <= 8
+    ? `${half}:${turn}`
+    : null;
+};
+
+const buildTurnRanges = (events) => events.reduce((ranges, event) => {
+  const key = turnKey(event);
+  const sequence = Number(event?.sequence);
+  if (!key || !Number.isFinite(sequence)) return ranges;
+  const current = ranges.get(key);
+  ranges.set(key, current
+    ? { min: Math.min(current.min, sequence), max: Math.max(current.max, sequence) }
+    : { min: sequence, max: sequence });
+  return ranges;
+}, new Map());
+
+const logicalPosition = (event, turnRanges, minSequence, maxSequence) => {
+  const half = Number(event?.half);
+  const turn = Number(event?.turn);
+  const sequence = Number(event?.sequence);
+  const key = turnKey(event);
+
+  if (key) {
+    // Turn N occupies the interval between ticks N-1 and N. Sequence is used
+    // only inside that interval, preserving both Blood Bowl turn structure and
+    // the actual replay order of multiple events in the same turn.
+    const segment = 100 / 16;
+    const segmentIndex = (half - 1) * 8 + (turn - 1);
+    const start = segmentIndex * segment;
+    const range = turnRanges.get(key);
+    const fraction = range && range.max > range.min && Number.isFinite(sequence)
+      ? (sequence - range.min) / (range.max - range.min)
+      : 0.5;
+    const insetFraction = 0.16 + Math.max(0, Math.min(1, fraction)) * 0.68;
+    return start + insetFraction * segment;
   }
 
-  const sequence = Number(event?.sequence);
+  // Kick-off before turn 1 sits just inside the relevant half rather than on
+  // top of 1H/HT. This also creates a small visual dead zone around halftime.
+  if ((half === 1 || half === 2) && turn === 0) {
+    return half === 1 ? 1.8 : 51.8;
+  }
+
   if (Number.isFinite(sequence) && maxSequence > minSequence) {
-    return 2 + ((sequence - minSequence) / (maxSequence - minSequence)) * 96;
+    let position = 2 + ((sequence - minSequence) / (maxSequence - minSequence)) * 96;
+    if (position > 48.3 && position < 51.7) {
+      position = position < 50 ? 48.3 : 51.7;
+    }
+    return position;
   }
 
   return 50;
 };
 
+function TeamWatermark({ match, index }) {
+  const logo = teamLogoUrl(match, index);
+  const upper = index === 0;
+
+  return <HStack
+    position="absolute"
+    left="50%"
+    top={upper ? '8%' : 'auto'}
+    bottom={upper ? 'auto' : '8%'}
+    transform="translateX(-50%)"
+    spacing={3}
+    opacity={0.09}
+    pointerEvents="none"
+    userSelect="none"
+    zIndex={0}
+    maxW="88%"
+    justify="center"
+  >
+    {logo && <Image
+      src={logo}
+      boxSize={{ base: '42px', md: '58px' }}
+      objectFit="contain"
+      filter="grayscale(1)"
+      alt=""
+    />}
+    <Text
+      fontSize={{ base: 'lg', md: '2xl' }}
+      fontWeight="black"
+      textTransform="uppercase"
+      letterSpacing="wide"
+      noOfLines={1}
+    >
+      {teamName(match, index)}
+    </Text>
+  </HStack>;
+}
+
 function EventTooltip({ event, match, children }) {
-  const index = teamIndex(event);
+  const index = laneTeamIndex(event);
   const details = event.details || {};
   const roll = diceExpression(details);
   const result = eventResult(event);
@@ -131,8 +233,8 @@ function EventTooltip({ event, match, children }) {
 }
 
 function TimelineMarker({ event, match, left, laneOffset = 0 }) {
-  const index = teamIndex(event);
-  const neutral = index < 0 || ['KICKOFF', 'WEATHER'].includes(event.type);
+  const index = laneTeamIndex(event);
+  const neutral = index < 0 || MATCH_WIDE_TYPES.has(event.type);
   const style = eventStyle(event);
   const top = neutral ? 50 : index === 0 ? 24 : 76;
   const direction = neutral ? 0 : index === 0 ? 1 : -1;
@@ -201,7 +303,7 @@ function TimelineMarker({ event, match, left, laneOffset = 0 }) {
 }
 
 function DetailedEvent({ event, match, children }) {
-  const index = teamIndex(event);
+  const index = laneTeamIndex(event);
   const details = event.details || {};
   const roll = diceExpression(details);
   const result = eventResult(event);
@@ -238,6 +340,7 @@ export default function MatchTimelineBar({ events = [], match }) {
     .filter((value) => Number.isFinite(value));
   const minSequence = sequences.length ? Math.min(...sequences) : 0;
   const maxSequence = sequences.length ? Math.max(...sequences) : 1;
+  const turnRanges = buildTurnRanges(ordered);
 
   const childrenByParent = ordered.reduce((map, event) => {
     if (!event.parentEventId) return map;
@@ -251,8 +354,8 @@ export default function MatchTimelineBar({ events = [], match }) {
   const occupancy = new Map();
 
   const markerData = markers.map((event) => {
-    const left = logicalPosition(event, minSequence, maxSequence);
-    const lane = ['KICKOFF', 'WEATHER'].includes(event.type) ? 'neutral' : teamIndex(event);
+    const left = logicalPosition(event, turnRanges, minSequence, maxSequence);
+    const lane = MATCH_WIDE_TYPES.has(event.type) ? 'neutral' : laneTeamIndex(event);
     const key = `${lane}:${Math.round(left / 2)}`;
     const offset = occupancy.get(key) || 0;
     occupancy.set(key, offset + 1);
@@ -269,8 +372,8 @@ export default function MatchTimelineBar({ events = [], match }) {
         <Text fontSize="sm" color="gray.500">Home above, away below. Hover a marker for event details.</Text>
       </Box>
       <HStack fontSize="xs" color="gray.500">
-        <Text>{teamName(match, 0)} ↑</Text>
-        <Text>↓ {teamName(match, 1)}</Text>
+        <Text>Home ↑</Text>
+        <Text>↓ Away</Text>
       </HStack>
     </HStack>
 
@@ -281,6 +384,9 @@ export default function MatchTimelineBar({ events = [], match }) {
       mb={2}
       overflow="visible"
     >
+      <TeamWatermark match={match} index={0}/>
+      <TeamWatermark match={match} index={1}/>
+
       <Box
         position="absolute"
         left="0"
