@@ -35,6 +35,7 @@ import {
 } from '@chakra-ui/react';
 import ContestMatchCard from './ContestMatchCard';
 import WarpScoresApiService from '../../WarpScoresApiService';
+import ReplayAnalysisPanel from './ReplayAnalysisPanel';
 import { getStarPlayerDisplayName, isStarPlayer } from '../../util/starplayerUtil';
 
 const PlayerNameCell = ({ player }) => {
@@ -102,6 +103,14 @@ function ReplayPanel({ replay, loading, error, onDownload }) {
       </SimpleGrid>
     </>}
   </VStack>;
+}
+
+function ReplayAnalysisAwarePanel({ replay, match, loading, error, onDownload }) {
+  if (replay?.analysis?.actionStatistics || replay?.analysis?.sourceFormat ||
+      ['CANONICAL_ACTIONS', 'RAW_BB2'].includes(replay?.analysis?.analysisConfidence)) {
+    return <ReplayAnalysisPanel replay={replay} match={match} loading={loading} error={error} onDownload={onDownload}/>;
+  }
+  return <ReplayPanel replay={replay} loading={loading} error={error} onDownload={onDownload}/>;
 }
 
 function MatchModal({ isOpen, onClose, match, contest }) {
@@ -466,7 +475,7 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                     )}
                   </TabPanel>
                   <TabPanel>
-                    <ReplayPanel replay={replay} loading={replayLoading} error={replayError}
+                    <ReplayAnalysisAwarePanel replay={replay} match={matchData} loading={replayLoading} error={replayError}
                       onDownload={() => WarpScoresApiService.downloadOriginalReplay(replayMatchId).catch(() => setReplayError('Originalreplayen kunde inte laddas ned.'))}/>
                   </TabPanel>
                 </TabPanels>

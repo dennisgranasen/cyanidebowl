@@ -9,7 +9,10 @@ import xml.etree.ElementTree as ET
 from collections import Counter
 from typing import Any
 
-PARSER_VERSION = 2
+from app.services.replay_decoders import Bb2ReplayDecoder, Bb3ActionDecoder, action_dicts
+from app.services.replay_statistics import aggregate_actions, event_statistics
+
+PARSER_VERSION = 4
 INTEGER = re.compile(r"^-?(?:0|[1-9][0-9]*)$")
 RESOURCE_MARKERS = ("reroll", "apothec", "wizard", "spell")
 SPECIAL_MARKERS = (
@@ -149,7 +152,7 @@ def _dice(event: ET.Element, sequence: int, clock: Any, context: dict[str, Any])
     return result
 
 
-def parse_replay(xml: bytes) -> dict[str, Any]:
+def parse_replay(xml: bytes, source_format: str = "BB3") -> dict[str, Any]:
     if b"<!DOCTYPE" in xml.upper():
         raise ValueError("Replay XML must not contain a document type declaration")
     root = ET.fromstring(xml)
@@ -157,7 +160,8 @@ def parse_replay(xml: bytes) -> dict[str, Any]:
         raise ValueError(f"Expected Replay root, found {root.tag}")
 
     compact: dict[str, Any] = {
-        "format": "BLASKSCORE_REPLAY", "formatVersion": 1,
+        "format": "BLASKSCORE_REPLAY", "formatVersion": 2,
+        "sourceFormat": source_format,
         "replayVersion": _text(root, "./ReplayVersion"), "header": {}, "steps": [],
     }
     dice_rolls: list[dict[str, Any]] = []
@@ -207,17 +211,23 @@ def parse_replay(xml: bytes) -> dict[str, Any]:
 
     compact["finalBoardState"] = final_board
     checkpoint_count = sum("checkpoint" in step for step in compact["steps"])
-    from app.services.replay_statistics import event_statistics
+    decoder = Bb3ActionDecoder() if source_format == "BB3" else Bb2ReplayDecoder()
+    actions = decoder.decode(root)
+    action_stats = aggregate_actions(actions)
     analysis = {
-        "eventStatistics": event_statistics(root),
+        "eventStatistics": event_statistics(root) if source_format == "BB3" else [],
+        "actionStatistics": action_stats,
+        "canonicalActions": action_dicts(actions),
         "parserVersion": PARSER_VERSION, "replayVersion": compact["replayVersion"],
-        "analysisConfidence": "RAW_UNMAPPED",
+        "sourceFormat": source_format,
+        "analysisConfidence": "CANONICAL_ACTIONS" if source_format == "BB3" else "RAW_BB2",
         "sourceMatchId": _decoded_text(root, ".//NotificationGameJoined/GameInfos/Competition/CompetitionInfos/MatchId"),
         "stepCount": len(compact["steps"]), "eventCount": sum(event_counts.values()),
         "sourceBoardStateCount": source_board_count, "checkpointCount": checkpoint_count,
         "diceRolls": dice_rolls, "resourceEvents": resources, "specialEvents": special,
         "eventTypeCounts": dict(sorted(event_counts.items())), "dieValueCounts": dict(sorted(die_counts.items())),
     }
+    compact["canonicalActions"] = analysis["canonicalActions"]
     compact_bytes = json.dumps(compact, ensure_ascii=False, separators=(",", ":")).encode()
     return {
         "analysis": analysis,
@@ -226,3 +236,11 @@ def parse_replay(xml: bytes) -> dict[str, Any]:
         "originalSha256": hashlib.sha256(xml).hexdigest(),
         "compactSha256": hashlib.sha256(compact_bytes).hexdigest(),
     }
+
+
+def parse_replay_artifact(data: bytes) -> tuple[str, bytes, dict[str, Any]]:
+    """Parse either BB3 XML/BBR-decoded XML or a BB2 .bbrz archive."""
+    if data.startswith(b"PK\x03\x04"):
+        xml = Bb2ReplayDecoder.extract_xml(data)
+        return "BBRZ", xml, parse_replay(xml, source_format="BB2")
+    return "BBR", data, parse_replay(data, source_format="BB3")

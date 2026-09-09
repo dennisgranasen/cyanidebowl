@@ -10,7 +10,7 @@ from bb3.replay import decode_replay_data
 from app.config import settings
 from app.dependencies import trusted_owner
 from app.services.credential_store import credential_store
-from app.services.replay_parser import parse_replay
+from app.services.replay_parser import parse_replay,parse_replay_artifact
 
 router=APIRouter(prefix="/replays",tags=["Replays"])
 
@@ -67,17 +67,23 @@ def analyze(req:ReplayAnalysisRequest,_owner:str=Depends(trusted_owner)):
     try:
         raw=base64.b64decode(req.data,validate=True)
         if raw[:2]==b'\x1f\x8b': raw=gzip.decompress(raw)
-        if raw.lstrip().startswith(b'<Replay'):
+        if raw.startswith(b'PK\x03\x04'):
+            original=raw
+            original_format,xml,artifacts=parse_replay_artifact(raw)
+        elif raw.lstrip().startswith(b'<Replay'):
             xml=raw
-            bbr=encode_bbr(xml)
+            original=encode_bbr(xml)
+            original_format='BBR'
+            artifacts=parse_replay(xml)
         else:
-            bbr=raw
+            original=raw
             xml=decode_replay_data(raw.decode('ascii').strip())
-        artifacts=parse_replay(xml)
+            original_format='BBR'
+            artifacts=parse_replay(xml)
         return {"compactData":base64.b64encode(artifacts["compactGzip"]).decode("ascii"),
-                "originalData":base64.b64encode(bbr).decode("ascii"),
-                "originalSha256":hashlib.sha256(bbr).hexdigest(),"compactSha256":artifacts["compactSha256"],
-                "originalFormat":"BBR",
+                "originalData":base64.b64encode(original).decode("ascii"),
+                "originalSha256":hashlib.sha256(original).hexdigest(),"compactSha256":artifacts["compactSha256"],
+                "originalFormat":original_format,
                 "analysis":artifacts["analysis"]}
     except Exception as error:
         raise HTTPException(400,{"code":"INVALID_REPLAY","message":"Replay could not be parsed"}) from error

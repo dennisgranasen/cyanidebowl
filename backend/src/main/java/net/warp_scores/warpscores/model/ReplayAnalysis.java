@@ -18,6 +18,7 @@ public class ReplayAnalysis {
     private Integer parserVersion;
     private String replayVersion;
     private String analysisConfidence;
+    private String sourceFormat;
     private String sourceMatchId;
     private Date processedAt;
     private Integer stepCount;
@@ -26,6 +27,8 @@ public class ReplayAnalysis {
     private Integer checkpointCount;
     private List<Map<String, Object>> diceRolls;
     private List<Map<String, Object>> eventStatistics;
+    private List<Map<String, Object>> actionStatistics;
+    private List<Map<String, Object>> canonicalActions;
     private List<Map<String, Object>> resourceEvents;
     private List<Map<String, Object>> specialEvents;
     private List<Map<String, Object>> participantTotals;

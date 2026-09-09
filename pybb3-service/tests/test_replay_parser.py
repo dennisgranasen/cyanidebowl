@@ -1,7 +1,9 @@
 import gzip
+import io
 import json
+import zipfile
 
-from app.services.replay_parser import parse_replay
+from app.services.replay_parser import parse_replay, parse_replay_artifact
 
 
 REPLAY = b"""<Replay>
@@ -34,7 +36,10 @@ def test_extracts_dice_resources_special_events_and_semantic_checkpoints():
 
     assert analysis["replayVersion"] == "1-4-0-0"
     assert analysis["sourceMatchId"] == "test-match-id"
-    assert analysis["analysisConfidence"] == "RAW_UNMAPPED"
+    assert analysis["analysisConfidence"] == "CANONICAL_ACTIONS"
+    assert analysis["sourceFormat"] == "BB3"
+    assert analysis["canonicalActions"] == []
+    assert analysis["actionStatistics"] == []
     assert len(analysis["diceRolls"]) == 3
     assert analysis["dieValueCounts"]["UNKNOWN:6"] == 1
     assert analysis["dieValueCounts"]["3:1"] == 1
@@ -45,3 +50,18 @@ def test_extracts_dice_resources_special_events_and_semantic_checkpoints():
     assert "checkpoint" in compact["steps"][0]
     assert "checkpoint" not in compact["steps"][1]
     assert compact["steps"][2]["checkpoint"]["context"]["teamTurns"][1]["gameTurn"] == 1
+    assert compact["sourceFormat"] == "BB3"
+    assert compact["canonicalActions"] == []
+
+
+def test_parse_replay_artifact_accepts_bb2_bbrz():
+    replay = b"<Replay><ReplayStep><GameInfos><Id>bb2-test</Id></GameInfos></ReplayStep></Replay>"
+    stream = io.BytesIO()
+    with zipfile.ZipFile(stream, "w") as archive:
+        archive.writestr("replay.xml", replay)
+
+    format_name, xml, result = parse_replay_artifact(stream.getvalue())
+    assert format_name == "BBRZ"
+    assert xml == replay
+    assert result["analysis"]["sourceFormat"] == "BB2"
+    assert result["analysis"]["analysisConfidence"] == "RAW_BB2"
