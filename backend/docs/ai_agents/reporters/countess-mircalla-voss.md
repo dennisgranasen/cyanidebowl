@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/countess-mircalla-voss.webp
-  prompt_key: countess-mircalla-voss
+  prompt_key: mircalla
 
 voice:
   primary_language: sv

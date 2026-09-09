@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/tchak-tak.webp
-  prompt_key: tchak-tak
+  prompt_key: tchak
 
 voice:
   primary_language: sv

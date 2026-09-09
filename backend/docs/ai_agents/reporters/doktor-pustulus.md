@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/doktor-pustulus.webp
-  prompt_key: doktor-pustulus
+  prompt_key: pustulus
 
 voice:
   primary_language: sv

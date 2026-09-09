@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/amenhotep-den-47e.webp
-  prompt_key: amenhotep-den-47e
+  prompt_key: amenhotep
 
 voice:
   primary_language: sv

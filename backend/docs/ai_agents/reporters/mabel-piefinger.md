@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/mabel-piefinger.webp
-  prompt_key: mabel-piefinger
+  prompt_key: mabel
 
 voice:
   primary_language: sv

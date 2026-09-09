@@ -8,8 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/gorbad-proper-football.webp
-  prompt_key: gorbad-proper-football
-
+  prompt_key: gorbad
 voice:
   primary_language: sv
   tone: [direct, traditional, dismissive]

@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/grubnak-tvatum.webp
-  prompt_key: grubnak-tvatum
+  prompt_key: grubnak
 
 voice:
   primary_language: sv

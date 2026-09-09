@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/elsa-nacht.webp
-  prompt_key: elsa-nacht
+  prompt_key: elsa
 
 voice:
   primary_language: sv

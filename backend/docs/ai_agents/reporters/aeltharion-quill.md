@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/aeltharion-quill.webp
-  prompt_key: aeltharion-quill
+  prompt_key: aeltharion
 
 voice:
   primary_language: sv

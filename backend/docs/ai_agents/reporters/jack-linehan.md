@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/jack-linehan.webp
-  prompt_key: jack-linehan
+  prompt_key: jack
 
 voice:
   primary_language: sv

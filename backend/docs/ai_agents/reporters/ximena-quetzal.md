@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/ximena-quetzal.webp
-  prompt_key: ximena-quetzal
+  prompt_key: ximena
 
 voice:
   primary_language: sv

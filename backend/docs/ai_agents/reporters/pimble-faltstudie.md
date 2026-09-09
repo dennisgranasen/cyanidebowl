@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/pimble-faltstudie.webp
-  prompt_key: pimble-faltstudie
+  prompt_key: pimble
 
 voice:
   primary_language: sv

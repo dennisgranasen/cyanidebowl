@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/celestine-quickquill.webp
-  prompt_key: celestine-quickquill
+  prompt_key: celestine
 
 voice:
   primary_language: sv

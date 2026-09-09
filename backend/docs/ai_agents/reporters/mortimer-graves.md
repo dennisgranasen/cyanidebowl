@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/mortimer-graves.webp
-  prompt_key: mortimer-graves
+  prompt_key: mortimer
 
 voice:
   primary_language: sv

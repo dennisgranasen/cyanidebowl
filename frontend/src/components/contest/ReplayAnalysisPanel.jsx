@@ -199,7 +199,6 @@ const resultTotal = (rows) => rows.reduce(
 
 function DiceHistogramTable({ rows, match, title, outcomes, description }) {
   if (!rows.length) return null;
-  const labels = unique(rows.map((row) => row.label));
   return <Box>
     <Heading size="sm" mb={2}>{title}</Heading>
     {description && <Text fontSize="sm" color="gray.500" mb={2}>{description}</Text>}
@@ -207,25 +206,17 @@ function DiceHistogramTable({ rows, match, title, outcomes, description }) {
       <Table size="sm">
         <Thead>
           <Tr>
-            <Th rowSpan={2}>Roll</Th>
-            {[0, 1].map((team) => <Th key={team} textAlign="center" colSpan={outcomes.length + 1}>{teamName(match, team)}</Th>)}
-          </Tr>
-          <Tr>
-            {[0, 1].flatMap((team) => [
-              ...outcomes.map((value) => <Th key={`${team}-${value}`} isNumeric>{value}</Th>),
-              <Th key={`${team}-total`} isNumeric>Total</Th>,
-            ])}
+            <Th>Team</Th>
+            {outcomes.map((value) => <Th key={value} isNumeric>{value}</Th>)}
+            <Th isNumeric>Total</Th>
           </Tr>
         </Thead>
-        <Tbody>{labels.map((label) => {
-          const matching = rows.filter((row) => row.label === label);
-          const perTeam = [0, 1].map((team) => diceRowsForTeam(matching, team));
-          return <Tr key={label}>
-            <Td fontWeight="semibold">{label}</Td>
-            {perTeam.flatMap((teamRows, team) => [
-              ...outcomes.map((value) => <Td key={`${team}-${label}-${value}`} isNumeric>{resultCount(teamRows, value) || '—'}</Td>),
-              <Td key={`${team}-${label}-total`} isNumeric fontWeight="semibold">{resultTotal(teamRows) || '—'}</Td>,
-            ])}
+        <Tbody>{[0, 1].map((team) => {
+          const teamRows = diceRowsForTeam(rows, team);
+          return <Tr key={team}>
+            <Td fontWeight="semibold" whiteSpace="nowrap">{teamName(match, team)}</Td>
+            {outcomes.map((value) => <Td key={`${team}-${value}`} isNumeric>{resultCount(teamRows, value) || '—'}</Td>)}
+            <Td isNumeric fontWeight="semibold">{resultTotal(teamRows) || '—'}</Td>
           </Tr>;
         })}</Tbody>
       </Table>

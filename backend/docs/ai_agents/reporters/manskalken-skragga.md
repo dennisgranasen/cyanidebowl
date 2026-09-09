@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/manskalken-skragga.webp
-  prompt_key: manskalken-skragga
+  prompt_key: skragga
 
 voice:
   primary_language: sv

@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/ravbert-smalnos.webp
-  prompt_key: ravbert-smalnos
+  prompt_key: ravbert
 
 voice:
   primary_language: sv

@@ -8,8 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/zharik-bokhallare.webp
-  prompt_key: zharik-bokhallare
-
+  prompt_key: zharik
 voice:
   primary_language: sv
   tone: [precise, economical, sardonic]

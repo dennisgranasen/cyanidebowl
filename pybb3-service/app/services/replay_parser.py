@@ -14,8 +14,9 @@ from app.services.bb3_roll_types import bb3_roll_name
 from app.services.replay_decoders import Bb2ReplayDecoder, Bb3ActionDecoder, action_dicts, decode_message
 from app.services.replay_statistics import aggregate_actions, event_statistics
 from app.services.replay_timeline import build_match_events
+from app.services.replay_player_identity import build_player_index
 
-PARSER_VERSION = 9
+PARSER_VERSION = 15
 INTEGER = re.compile(r"^-?(?:0|[1-9][0-9]*)$")
 RESOURCE_MARKERS = ("reroll", "apothec", "wizard", "spell")
 SPECIAL_MARKERS = (
@@ -121,6 +122,24 @@ def _event_team(event, context):
     return context.get("activeTeam") if team is None else team
 
 
+def _injury_player_id(
+    event: ET.Element,
+    label: str | None,
+    inherited_player_id: int | None,
+    inherited_target_player_id: int | None,
+) -> int | None:
+    """Resolve the player whose armour/injury/casualty state is being rolled."""
+    explicit = _first(
+        event,
+        ("InjuredPlayerId", "KnockedOutPlayerId", "VictimId", "TargetId", "DefenderId", "PlayerId"),
+    )
+    if isinstance(explicit, int):
+        return explicit
+    if label == "Regeneration" and isinstance(inherited_player_id, int):
+        return inherited_player_id
+    return inherited_target_player_id if isinstance(inherited_target_player_id, int) else None
+
+
 def _fact(event: ET.Element, sequence: int, clock: Any, context: dict[str, Any], data: Any) -> dict[str, Any]:
     fact = {
         "sequence": sequence, "clock": clock, "eventType": event.tag,
@@ -142,6 +161,8 @@ def _dice(
     context: dict[str, Any],
     *,
     source: str = "event",
+    inherited_player_id: int | None = None,
+    inherited_target_player_id: int | None = None,
 ) -> list[dict[str, Any]]:
     result = []
     groups = list(event.iter("Dice"))
@@ -167,7 +188,13 @@ def _dice(
         modifiers = []
         for modifier in event.findall(".//Modifier"):
             modifiers.append({"type": _text(modifier, "./ModifierType"), "value": _text(modifier, "./Value")})
+        player_id = _first(event, ("PlayerId", "ActivePlayer", "AttackerId", "ThrowerId"))
         team_id = _event_team(event, context)
+        if category == "injury":
+            player_id = _injury_player_id(
+                event, label, inherited_player_id, inherited_target_player_id
+            )
+            team_id = context.get("playerTeams", {}).get(player_id) if player_id is not None else None
         # EventFanFactor contains HomeRoll and AwayRoll as separate Dice groups.
         if event.tag == "EventFanFactor" and len(groups) == 2:
             team_id = roll_index
@@ -177,7 +204,7 @@ def _dice(
             "rollType": roll_type, "rollTypeName": roll_name,
             "category": category, "label": label,
             "outcome": _text(event, ".//Outcome"),
-            "playerId": _first(event, ("PlayerId", "ActivePlayer", "AttackerId", "ThrowerId")),
+            "playerId": player_id,
             "teamId": team_id,
             "success": _success(event), "phase": context.get("phase"),
             "teamTurns": context.get("teamTurns", []), "dice": dice, "modifiers": modifiers,
@@ -190,12 +217,26 @@ def _decoded_sequence_dice(event: ET.Element, sequence: int, clock: Any, context
     result: list[dict[str, Any]] = []
     for step_result in event.findall(".//Sequence/StepResult"):
         step = decode_message(step_result.find("Step"))
+        step_player_id = _first(
+            step, ("PlayerId", "ActivePlayer", "AttackerId", "ThrowerId")
+        ) if step is not None else None
+        step_target_id = _first(
+            step, ("TargetId", "DefenderId", "VictimId", "ReceiverId")
+        ) if step is not None else None
         if step is not None:
-            result.extend(_dice(step, sequence, clock, context, source="decoded-step"))
+            result.extend(_dice(
+                step, sequence, clock, context, source="decoded-step",
+                inherited_player_id=step_player_id if isinstance(step_player_id, int) else None,
+                inherited_target_player_id=step_target_id if isinstance(step_target_id, int) else None,
+            ))
         for wrapper in step_result.findall("Results/StringMessage"):
             decoded = decode_message(wrapper)
             if decoded is not None:
-                result.extend(_dice(decoded, sequence, clock, context, source="decoded-result"))
+                result.extend(_dice(
+                    decoded, sequence, clock, context, source="decoded-result",
+                    inherited_player_id=step_player_id if isinstance(step_player_id, int) else None,
+                    inherited_target_player_id=step_target_id if isinstance(step_target_id, int) else None,
+                ))
     return result
 
 
@@ -258,6 +299,13 @@ def parse_replay(xml: bytes, source_format: str = "BB3") -> dict[str, Any]:
     if root.tag != "Replay":
         raise ValueError(f"Expected Replay root, found {root.tag}")
 
+    player_index = build_player_index(root)
+    player_teams = {
+        player_id: identity.get("teamId")
+        for player_id, identity in player_index.items()
+        if identity.get("teamId") is not None
+    }
+
     compact: dict[str, Any] = {
         "format": "BLASKSCORE_REPLAY", "formatVersion": 2,
         "sourceFormat": source_format,
@@ -280,6 +328,7 @@ def parse_replay(xml: bytes, source_format: str = "BB3") -> dict[str, Any]:
         clock = _text(child, "./Clock")
         board = child.find("./BoardState")
         context = _board_context(board)
+        context["playerTeams"] = player_teams
         signature = _turn_signature(context)
         step: dict[str, Any] = {"sequence": sequence, "clock": clock, "events": []}
         if board is not None:

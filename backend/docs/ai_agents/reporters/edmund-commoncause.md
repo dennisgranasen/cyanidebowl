@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/edmund-commoncause.webp
-  prompt_key: edmund-commoncause
+  prompt_key: edmund
 
 voice:
   primary_language: sv

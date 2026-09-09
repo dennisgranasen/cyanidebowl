@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/yuri-trapeznikov.webp
-  prompt_key: yuri-trapeznikov
+  prompt_key: yuri
 
 voice:
   primary_language: sv

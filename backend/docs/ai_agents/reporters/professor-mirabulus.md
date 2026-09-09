@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/professor-mirabulus.webp
-  prompt_key: professor-mirabulus
+  prompt_key: mirabulus
 
 voice:
   primary_language: sv

@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/gromm-och-pip.webp
-  prompt_key: gromm-och-pip
+  prompt_key: gromm_pip
 
 voice:
   primary_language: sv

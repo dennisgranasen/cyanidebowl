@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/milo-ingenstans.webp
-  prompt_key: milo-ingenstans
+  prompt_key: milo
 
 voice:
   primary_language: sv

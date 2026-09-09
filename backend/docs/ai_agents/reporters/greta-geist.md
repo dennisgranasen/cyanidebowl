@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/greta-geist.webp
-  prompt_key: greta-geist
+  prompt_key: greta
 
 voice:
   primary_language: sv

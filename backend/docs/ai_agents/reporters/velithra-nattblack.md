@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/velithra-nattblack.webp
-  prompt_key: velithra-nattblack
+  prompt_key: velithra
 
 voice:
   primary_language: sv

@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/lady-ottilia-von-pressburg.webp
-  prompt_key: lady-ottilia-von-pressburg
+  prompt_key: ottilia
 
 voice:
   primary_language: sv

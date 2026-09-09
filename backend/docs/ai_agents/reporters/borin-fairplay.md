@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/borin-fairplay.webp
-  prompt_key: borin-fairplay
+  prompt_key: borin
 
 voice:
   primary_language: sv

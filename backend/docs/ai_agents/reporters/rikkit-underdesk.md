@@ -8,8 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/rikkit-underdesk.webp
-  prompt_key: rikkit-underdesk
-
+  prompt_key: rikkit
 voice:
   primary_language: sv
   tone: [insider, sly, conspiratorial]

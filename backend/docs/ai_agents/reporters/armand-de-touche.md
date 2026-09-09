@@ -8,8 +8,8 @@ enabled: true
 
 portrait:
   image: /images/staff/armand-de-touche.webp
-  prompt_key: armand-de-touche
-
+  prompt_key: armand
+  
 voice:
   primary_language: sv
   tone: [romantic, ceremonial, earnest]

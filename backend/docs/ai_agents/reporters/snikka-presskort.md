@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/snikka-presskort.webp
-  prompt_key: snikka-presskort
+  prompt_key: snikka
 
 voice:
   primary_language: sv

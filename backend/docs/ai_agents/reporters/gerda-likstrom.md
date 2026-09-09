@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/gerda-likstrom.webp
-  prompt_key: gerda-likstrom
+  prompt_key: gerda
 
 voice:
   primary_language: sv

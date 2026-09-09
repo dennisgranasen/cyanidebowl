@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/klik-fastcopy.webp
-  prompt_key: klik-fastcopy
+  prompt_key: klik
 
 voice:
   primary_language: sv

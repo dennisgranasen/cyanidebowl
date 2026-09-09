@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/mara-hornklang.webp
-  prompt_key: mara-hornklang
+  prompt_key: mara
 
 voice:
   primary_language: sv

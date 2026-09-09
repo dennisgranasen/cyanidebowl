@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/sven-skal-bjornsson.webp
-  prompt_key: sven-skal-bjornsson
+  prompt_key: sven
 
 voice:
   primary_language: sv

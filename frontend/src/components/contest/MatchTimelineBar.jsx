@@ -93,19 +93,63 @@ const eventResult = (event) => {
 
 const eventPeople = (event) => {
   const details = event?.details || {};
-  const lines = [
-    event.playerName && `Player: ${event.playerName}`,
-    details.playerName && `Player: ${details.playerName}`,
-    details.throwerName && `Thrower: ${details.throwerName}`,
-    details.receiverName && `Receiver: ${details.receiverName}`,
-    details.scorerName && `Scorer: ${details.scorerName}`,
-    details.causingPlayerName && `Caused by: ${details.causingPlayerName}`,
-    details.targetPlayerName && `Target: ${details.targetPlayerName}`,
-    details.injuredPlayerName && `Injured: ${details.injuredPlayerName}`,
-  ].filter(Boolean);
+  const actor = event.actorPlayerName || details.causingPlayerName || event.playerName;
+  const affected = event.affectedPlayerName || details.affectedPlayerName || details.injuredPlayerName || details.targetPlayerName;
 
-  if (!lines.length && event.playerId != null) lines.push(`Player ID: ${event.playerId}`);
-  return [...new Set(lines)];
+  let lines = [];
+  switch (event?.type) {
+    case 'TOUCHDOWN':
+      lines = [details.scorerName || actor ? `Scorer: ${details.scorerName || actor}` : null];
+      break;
+    case 'COMPLETION':
+      lines = [
+        details.throwerName || actor ? `Thrower: ${details.throwerName || actor}` : null,
+        details.receiverName || affected ? `Receiver: ${details.receiverName || affected}` : null,
+      ];
+      break;
+    case 'INTERCEPTION':
+      lines = [details.interceptorName || actor ? `Interceptor: ${details.interceptorName || actor}` : null];
+      break;
+    case 'CASUALTY':
+      lines = [
+        actor ? `Caused by: ${actor}` : null,
+        affected ? `Injured: ${affected}` : null,
+      ];
+      break;
+    case 'APOTHECARY':
+      lines = [
+        affected ? `Player: ${affected}` : null,
+        details.originalCasualtyResult != null ? `Original casualty: ${details.originalCasualtyResult}` : null,
+        details.apothecaryRerollResult != null ? `Apothecary reroll: ${details.apothecaryRerollResult}` : null,
+        details.chosenCasualtyResult != null ? `Chosen casualty: ${details.chosenCasualtyResult}` : null,
+      ];
+      break;
+    case 'INJURY':
+    case 'KO':
+    case 'DEATH':
+      lines = [
+        affected ? `Player: ${affected}` : null,
+        actor && actor !== affected ? `Caused by: ${actor}` : null,
+      ];
+      break;
+    case 'EJECTION':
+      lines = [actor ? `Ejected: ${actor}` : null];
+      break;
+    default:
+      lines = [
+        event.playerName && `Player: ${event.playerName}`,
+        details.playerName && `Player: ${details.playerName}`,
+        actor && `Actor: ${actor}`,
+        affected && `Target: ${affected}`,
+      ];
+  }
+
+  if (event?.type !== 'APOTHECARY' && details.sourceActionType) {
+    lines.push(`From: ${details.sourceActionType}${details.selfInflicted ? ' (self-inflicted)' : ''}`);
+  }
+  lines = [...new Set(lines.filter(Boolean))];
+  if (!lines.length && event.playerId != null) lines.push(`Replay player ID: ${event.playerId}`);
+  return lines;
 };
 
 const chronological = (left, right) =>

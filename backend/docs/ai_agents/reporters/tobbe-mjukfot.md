@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/tobbe-mjukfot.webp
-  prompt_key: tobbe-mjukfot
+  prompt_key: tobbe
 
 voice:
   primary_language: sv

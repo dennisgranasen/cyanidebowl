@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/vexgor-den-oundviklige.webp
-  prompt_key: vexgor-den-oundviklige
+  prompt_key: vexgor
 
 voice:
   primary_language: sv

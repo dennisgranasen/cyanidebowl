@@ -8,8 +8,8 @@ enabled: true
 
 portrait:
   image: /images/staff/lethiel-greenstep.webp
-  prompt_key: lethiel-greenstep
-
+  prompt_key: lethiel
+  
 voice:
   primary_language: sv
   tone: [poetic, passionate, airy]

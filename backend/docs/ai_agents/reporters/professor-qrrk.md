@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/professor-qrrk.webp
-  prompt_key: professor-qrrk
+  prompt_key: qrrk
 
 voice:
   primary_language: sv

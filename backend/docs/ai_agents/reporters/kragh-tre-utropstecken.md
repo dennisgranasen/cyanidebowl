@@ -8,7 +8,7 @@ enabled: true
 
 portrait:
   image: /images/staff/kragh-tre-utropstecken.webp
-  prompt_key: kragh-tre-utropstecken
+  prompt_key: kragh
 
 voice:
   primary_language: sv
