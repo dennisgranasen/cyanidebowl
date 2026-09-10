@@ -1,29 +1,70 @@
-# AI reporter UI fix v2
+# cyanidebowl / BlaskScore
 
-Fixes exactly these issues:
+BlaskScore is a Blood Bowl results, statistics and editorial site built on the original
+warp-scores/cyanidebowl codebase. Development happens on the `dev` branch.
 
-1. Admin table avatars
-   - The current backend AdminReporter DTO does not expose an image at all.
-   - This patch adds `portraitImage` and `avatarImage`.
-   - The table uses `avatarImage || portraitImage`.
+The application consists primarily of:
 
-2. `/staff` gallery
-   - Removes every admin Edit button.
-   - Cards only open the public reporter profile.
+- `backend` — Spring Boot application and persistence/API layer
+- `frontend` — React/Chakra UI
+- `api` and `cyanide-api` — shared/Cyanide API modules
+- `pybb3-service` — BB3 client/replay integration used by the Docker deployment
 
-3. `/staff/:reporterId`
-   - Remove the Edit button.
-   - Replace it with an admin-only gear.
-   - Gear opens inline runtime settings for exactly that reporter.
+## Development
 
-4. Shared runtime controls
-   - Inline profile settings use the same runtime fields as bulk admin.
+Safe local development uses the `dev` Spring profile and keeps external collection jobs
+disabled unless they are explicitly needed.
 
-Included complete replacements:
-- frontend/src/pages/StaffPage.jsx
-- frontend/src/pages/AdminAiReportersPage.jsx
-- frontend/src/components/ai-reporters/AiReporterRuntimeControls.jsx
-- backend/src/main/java/net/warp_scores/warpscores/controller/AiReporterAdminController.java
+Backend:
 
-ReporterProfilePage is a focused edit because it was just redesigned and may have local changes.
-See REPORTER_PROFILE_CHANGE.md.
+```bash
+mvn spring-boot:run -Pserver -pl backend -Dspring-boot.run.profiles=dev
+```
+
+Frontend:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+For the current local configuration variables, use `.env.example` as the reference.
+Do not commit `.env`, credentials, API keys, Auth0 tokens or database dumps.
+
+## Verification
+
+Backend:
+
+```bash
+mvn clean test -Pserver -DskipDocker -pl api,cyanide-api,backend -am
+mvn clean package -Pserver -DskipDocker -pl api,cyanide-api,backend -am
+```
+
+Frontend:
+
+```bash
+cd frontend
+npm ci
+npm test -- --runInBand
+npm run build
+```
+
+GitHub Actions validates `dev`/pull requests and builds the ARM64 deployment artifact
+after the test jobs pass.
+
+## AI reporters
+
+Canonical reporter profiles live in `backend/docs/ai_agents/reporters/`; their short
+technical documentation is in `backend/docs/ai_agents/README.md`. Portraits/avatars are
+served from `frontend/public/img/portraits/`.
+
+## Backlog
+
+`BACKLOG.md` is the development handoff/backlog. Temporary implementation notes should
+not be committed at repository root.
+
+## Disclaimer
+
+This project is unofficial and is not affiliated with Cyanide, Nacon or Games Workshop.
+Blood Bowl and related names are trademarks of their respective owners.

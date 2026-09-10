@@ -459,3 +459,25 @@ stable. Do not implement a second team-comment model.
 - enable TEAM in `EditorialCommunityService.comments/addComment`;
 - render `CommentThread targetType="TEAM"` on the team page;
 - apply the same scoped-editor/site-admin moderation rules.
+
+---
+
+## AI editorial operations
+
+### B-016 — AI reporter editorial scheduling and cost control
+
+**Status: Backlog — intentionally deferred**
+
+Implement after the canonical reporter profiles and first end-to-end AI editorial flow
+are stable.
+
+- editorial scheduling and queue/backpressure
+- per-reporter/global generation quotas
+- provider/token/cost budgets
+- cooldowns, retries and idempotency
+- admin visibility and kill switches
+- priority handling for direct tags
+
+**Product rule:** a directly tagged reporter is scheduled for a textual response when
+enabled and capable. Tagged work bypasses probabilistic selection; hard admin/global
+disables still win.

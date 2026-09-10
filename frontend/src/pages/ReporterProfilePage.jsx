@@ -2,25 +2,33 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   Badge,
   Box,
-  Button,
   Card,
   CardBody,
   Container,
   Divider,
   Heading,
   HStack,
+  IconButton,
   Image,
+  Popover,
+  PopoverArrow,
+  PopoverBody,
+  PopoverCloseButton,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTrigger,
   SimpleGrid,
   Spinner,
   Stack,
   Text,
   VStack,
 } from '@chakra-ui/react';
-import { EditIcon } from '@chakra-ui/icons';
-import { Link as RouteLink, useParams } from 'react-router-dom';
+import { SettingsIcon } from '@chakra-ui/icons';
+import { useParams } from 'react-router-dom';
 import ReactMarkdown from 'markdown-to-jsx';
 import Navigation from '../components/misc/Navigation';
 import AiReporterApi from '../AiReporterApi';
+import AiReporterRuntimeControls from '../components/ai-reporters/AiReporterRuntimeControls';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 
 const splitPublicProfile = (markdown = '') => {
@@ -39,12 +47,12 @@ const splitPublicProfile = (markdown = '') => {
       continue;
     }
 
-    // Defensive client-side filtering as well. The backend should already remove these.
+    // The backend filters these; keep the client guard so internal prompt material
+    // is not rendered if an older backend is used temporarily.
     if (heading === 'llm guidance' || heading === 'portrait brief') {
       continue;
     }
 
-    // The H1 repeats the hero title and is unnecessary in the article body.
     const cleaned = section.replace(/^#\s+.+\s*$/m, '').trim();
     if (cleaned) body.push(cleaned);
   }
@@ -66,9 +74,7 @@ const markdownOverrides = {
     component: (props) => <Heading as="h3" size="sm" mt={6} mb={2} {...props} />,
   },
   p: {
-    component: (props) => (
-      <Text fontSize="md" lineHeight="1.8" mb={4} {...props} />
-    ),
+    component: (props) => <Text fontSize="md" lineHeight="1.8" mb={4} {...props} />,
   },
   ul: {
     component: (props) => (
@@ -130,20 +136,31 @@ function ReporterProfilePage() {
   const [reporter, setReporter] = useState(null);
   const [reports, setReports] = useState([]);
   const [error, setError] = useState(null);
+  const [adminReporter, setAdminReporter] = useState(null);
+  const [adminSaving, setAdminSaving] = useState(false);
+  const [adminError, setAdminError] = useState(null);
 
-  const { authenticationReady, userPermissions } = useAuth0WithUserPermissions();
+  const {
+    authenticationReady,
+    userPermissions,
+    getAccessTokenSilently,
+    getAccessTokenWithPopup,
+  } = useAuth0WithUserPermissions();
+
   const canEdit = authenticationReady && Boolean(userPermissions?.writeSiteAdmin);
 
   useEffect(() => {
     setReporter(null);
+    setAdminReporter(null);
+    setAdminError(null);
     setError(null);
 
     Promise.all([
       AiReporterApi.reporter(reporterId),
       AiReporterApi.reports(reporterId).catch(() => []),
     ])
-      .then(([profile, articles]) => {
-        setReporter(profile);
+      .then(([profileData, articles]) => {
+        setReporter(profileData);
         setReports(articles || []);
       })
       .catch(setError);
@@ -153,6 +170,72 @@ function ReporterProfilePage() {
     () => splitPublicProfile(reporter?.publicMarkdown || ''),
     [reporter]
   );
+
+  const loadAdminReporter = async () => {
+    if (!canEdit || !reporter || adminReporter) return;
+
+    setAdminError(null);
+    try {
+      const current = await AiReporterApi.adminReporter(
+        reporter.id,
+        getAccessTokenSilently,
+        getAccessTokenWithPopup
+      );
+      setAdminReporter(current);
+    } catch (reason) {
+      setAdminError(reason);
+    }
+  };
+
+  const buildAdminPayload = (current, patch) => {
+    const runtime = current.runtime || {};
+    return {
+      enabledOverride: runtime.enabledOverride ?? current.enabled,
+      reportsEnabledOverride: runtime.reportsEnabledOverride ?? current.reportsEnabled,
+      interactionsEnabledOverride:
+        runtime.interactionsEnabledOverride ?? current.interactionsEnabled,
+      playerRatingsEnabledOverride:
+        runtime.playerRatingsEnabledOverride ?? current.playerRatingsEnabled,
+      writingWeightOverride:
+        runtime.writingWeightOverride ?? current.writingWeight,
+      commentProbabilityOverride: runtime.commentProbabilityOverride ?? null,
+      reactionProbabilityOverride: runtime.reactionProbabilityOverride ?? null,
+      replyProbabilityOverride: runtime.replyProbabilityOverride ?? null,
+      ...patch,
+    };
+  };
+
+  const saveAdminReporter = async (patch) => {
+    if (!adminReporter || !reporter) return;
+
+    setAdminSaving(true);
+    setAdminError(null);
+    try {
+      const updated = await AiReporterApi.updateRuntime(
+        reporter.id,
+        buildAdminPayload(adminReporter, patch),
+        getAccessTokenSilently,
+        getAccessTokenWithPopup
+      );
+      setAdminReporter(updated);
+      setReporter((current) => current ? { ...current, active: updated.enabled } : current);
+    } catch (reason) {
+      setAdminError(reason);
+    } finally {
+      setAdminSaving(false);
+    }
+  };
+
+  const resetAdminReporter = () => saveAdminReporter({
+    enabledOverride: null,
+    reportsEnabledOverride: null,
+    interactionsEnabledOverride: null,
+    playerRatingsEnabledOverride: null,
+    writingWeightOverride: null,
+    commentProbabilityOverride: null,
+    reactionProbabilityOverride: null,
+    replyProbabilityOverride: null,
+  });
 
   return (
     <Box>
@@ -227,16 +310,41 @@ function ReporterProfilePage() {
                     </Box>
 
                     {canEdit && (
-                      <Button
-                        as={RouteLink}
-                        to={`/admin/ai-reporters/${reporter.id}`}
-                        leftIcon={<EditIcon />}
-                        colorScheme="purple"
-                        size="sm"
-                        flexShrink={0}
-                      >
-                        Edit
-                      </Button>
+                      <Popover placement="bottom-end" onOpen={loadAdminReporter}>
+                        <PopoverTrigger>
+                          <IconButton
+                            aria-label={`Settings for ${reporter.alias}`}
+                            title="Reporter settings"
+                            icon={<SettingsIcon />}
+                            size="sm"
+                            variant="outline"
+                            flexShrink={0}
+                          />
+                        </PopoverTrigger>
+                        <PopoverContent w="340px">
+                          <PopoverArrow />
+                          <PopoverCloseButton />
+                          <PopoverHeader fontWeight="700">
+                            Reporter settings
+                          </PopoverHeader>
+                          <PopoverBody>
+                            {adminError && (
+                              <Text color="red.400" fontSize="sm" mb={3}>
+                                {adminError.message || String(adminError)}
+                              </Text>
+                            )}
+                            {!adminReporter && !adminError && <Spinner size="sm" />}
+                            {adminReporter && (
+                              <AiReporterRuntimeControls
+                                reporter={adminReporter}
+                                saving={adminSaving}
+                                onSave={saveAdminReporter}
+                                onReset={resetAdminReporter}
+                              />
+                            )}
+                          </PopoverBody>
+                        </PopoverContent>
+                      </Popover>
                     )}
                   </HStack>
 
@@ -284,7 +392,9 @@ function ReporterProfilePage() {
               columns={{ base: 1, lg: reports.length > 0 ? 2 : 1 }}
               templateColumns={{
                 base: '1fr',
-                lg: reports.length > 0 ? 'minmax(0, 2fr) minmax(280px, 0.8fr)' : 'minmax(0, 820px)',
+                lg: reports.length > 0
+                  ? 'minmax(0, 2fr) minmax(280px, 0.8fr)'
+                  : 'minmax(0, 820px)',
               }}
               spacing={{ base: 6, lg: 10 }}
               alignItems="start"
