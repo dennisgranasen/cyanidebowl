@@ -1,23 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Avatar,
-  Badge,
-  Box,
-  Card,
-  CardBody,
-  Heading,
-  SimpleGrid,
-  Spinner,
-  Stack,
-  Text,
+  Avatar, Badge, Box, Button, Card, CardBody, Heading, Text
 } from '@chakra-ui/react';
+import { EditIcon } from '@chakra-ui/icons';
 import { Link as RouteLink } from 'react-router-dom';
 import Navigation from '../components/misc/Navigation';
 import AiReporterApi from '../AiReporterApi';
+import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 
 function StaffPage() {
   const [reporters, setReporters] = useState(null);
   const [error, setError] = useState(null);
+  const { authenticationReady, userPermissions } = useAuth0WithUserPermissions();
+  const canEdit = authenticationReady && Boolean(userPermissions?.writeSiteAdmin);
 
   useEffect(() => {
     AiReporterApi.reporters().then(setReporters).catch(setError);
@@ -32,37 +27,72 @@ function StaffPage() {
       </Text>
 
       {error && <Text mt={6} color="red.300">{error.message || String(error)}</Text>}
-      {!reporters && !error && <Spinner mt={8} />}
+      {!reporters && !error && <Text mt={8}>Loading staff…</Text>}
 
-      <SimpleGrid mt={6} columns={{ base: 1, md: 2, xl: 3 }} spacing={4}>
+      <Box
+        mt={6}
+        display="grid"
+        gridTemplateColumns="repeat(auto-fill, minmax(min(100%, 180px), 1fr))"
+        gap={4}
+        alignItems="stretch"
+      >
         {(reporters || []).map((reporter) => (
-          <Card
-            key={reporter.id}
-            as={RouteLink}
-            to={`/staff/${reporter.id}`}
-            _hover={{ transform: 'translateY(-2px)', textDecoration: 'none' }}
-            transition="120ms ease"
-          >
-            <CardBody>
-              <Stack direction="row" spacing={4} align="center">
+          <Card key={reporter.id} position="relative" overflow="hidden" minW={0}>
+            {canEdit && (
+              <Button
+                as={RouteLink}
+                to={`/admin/ai-reporters/${reporter.id}`}
+                aria-label={`Edit ${reporter.alias}`}
+                title={`Edit ${reporter.alias}`}
+                size="xs"
+                leftIcon={<EditIcon />}
+                position="absolute"
+                zIndex={2}
+                top={2}
+                right={2}
+                colorScheme="purple"
+              >
+                Edit
+              </Button>
+            )}
+
+            <Box
+              as={RouteLink}
+              to={`/staff/${reporter.id}`}
+              display="block"
+              h="100%"
+              _hover={{ textDecoration: 'none' }}
+            >
+              <CardBody
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                textAlign="center"
+                h="100%"
+                px={3}
+                py={4}
+                transition="120ms ease"
+                _hover={{ transform: 'translateY(-2px)' }}
+              >
                 <Avatar
                   size="xl"
                   name={reporter.alias}
-                  src={reporter.portraitImage || undefined}
+                  src={reporter.avatarImage || reporter.portraitImage || undefined}
+                  mb={3}
                 />
-                <Box minW={0}>
-                  <Heading size="md">{reporter.alias}</Heading>
-                  <Stack direction="row" mt={2} wrap="wrap">
-                    <Badge colorScheme="purple">AI Reporter</Badge>
-                    {reporter.race && <Badge>{reporter.race}</Badge>}
-                  </Stack>
-                  <Text mt={2} color="gray.400">{reporter.role || reporter.category}</Text>
+                <Heading size="sm" noOfLines={2}>{reporter.alias}</Heading>
+                <Box mt={2}>
+                  <Badge colorScheme="purple" mr={1}>AI</Badge>
+                  {reporter.race && <Badge>{reporter.race}</Badge>}
                 </Box>
-              </Stack>
-            </CardBody>
+                <Text mt={2} color="gray.400" fontSize="sm" noOfLines={2}>
+                  {reporter.role || reporter.category}
+                </Text>
+              </CardBody>
+            </Box>
           </Card>
         ))}
-      </SimpleGrid>
+      </Box>
     </Box>
   );
 }

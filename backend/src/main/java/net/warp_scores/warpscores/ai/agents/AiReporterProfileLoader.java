@@ -21,21 +21,9 @@ public class AiReporterProfileLoader {
 
     public List<AiReporterDefinition> loadAll() {
         try {
-            Resource[] resources =
-                    new PathMatchingResourcePatternResolver().getResources(RESOURCE_PATTERN);
-
+            Resource[] resources = new PathMatchingResourcePatternResolver().getResources(RESOURCE_PATTERN);
             List<AiReporterDefinition> definitions = new ArrayList<>();
-            Set<String> ids = new HashSet<>();
-
-            for (Resource resource : resources) {
-                AiReporterDefinition definition = parse(resource);
-                if (!ids.add(definition.getId())) {
-                    throw new IllegalStateException(
-                            "Duplicate AI reporter id '" + definition.getId() + "'");
-                }
-                definitions.add(definition);
-            }
-
+            for (Resource resource : resources) definitions.add(parse(resource));
             definitions.sort(Comparator.comparing(AiReporterDefinition::getAlias));
             return List.copyOf(definitions);
         } catch (IOException e) {
@@ -46,13 +34,13 @@ public class AiReporterProfileLoader {
     private AiReporterDefinition parse(Resource resource) throws IOException {
         String raw = resource.getContentAsString(StandardCharsets.UTF_8);
         Matcher matcher = FRONTMATTER.matcher(raw);
-        if (!matcher.matches()) {
-            throw new IllegalStateException("Missing YAML frontmatter in " + resource.getFilename());
-        }
+        if (!matcher.matches()) throw new IllegalStateException("Missing YAML frontmatter in " + resource.getFilename());
 
         Map<String, Object> fm = yaml.load(matcher.group(1));
+        if (fm == null) fm = Map.of();
         AiReporterDefinition d = new AiReporterDefinition();
 
+        d.setSchemaVersion(integer(fm, "schema_version", AiReporterDefinition.CURRENT_SCHEMA_VERSION));
         d.setId(required(fm, "id", resource));
         d.setAlias(required(fm, "alias", resource));
         d.setRace(str(fm.get("race")));
@@ -65,6 +53,10 @@ public class AiReporterProfileLoader {
         d.getCapabilities().setReports(boolValue(capabilities, "reports", true));
         d.getCapabilities().setInteractions(boolValue(capabilities, "interactions", true));
         d.getCapabilities().setPlayerRatings(boolValue(capabilities, "player_ratings", true));
+        d.getCapabilities().setArticleReactions(boolValue(capabilities, "article_reactions", true));
+        d.getCapabilities().setArticleComments(boolValue(capabilities, "article_comments", true));
+        d.getCapabilities().setCommentReactions(boolValue(capabilities, "comment_reactions", true));
+        d.getCapabilities().setCommentReplies(boolValue(capabilities, "comment_replies", true));
 
         Map<String,Object> portrait = map(fm.get("portrait"));
         d.getPortrait().setImage(str(portrait.get("image")));
@@ -81,9 +73,10 @@ public class AiReporterProfileLoader {
 
         Map<String,Object> rating = map(fm.get("rating"));
         d.getRating().setEnabled(boolValue(rating, "enabled", true));
-        d.getRating().setScaleMin(dbl(rating, "scale_min", 1.0));
-        d.getRating().setScaleMax(dbl(rating, "scale_max", 10.0));
-        d.getRating().setStep(dbl(rating, "step", 0.5));
+        // Legacy per-profile scale fields are intentionally ignored. Scale is globally -3..+3.
+        d.getRating().setScaleMin(AiReporterDefinition.PLAYER_RATING_MIN);
+        d.getRating().setScaleMax(AiReporterDefinition.PLAYER_RATING_MAX);
+        d.getRating().setStep(AiReporterDefinition.PLAYER_RATING_STEP);
         d.getRating().setStrictness(dbl(rating, "strictness", 0.50));
         d.getRating().setGenerosity(dbl(rating, "generosity", 0.30));
         d.getRating().setVolatility(dbl(rating, "volatility", 0.20));
@@ -103,6 +96,10 @@ public class AiReporterProfileLoader {
         b.setArticleCommentProbability(dbl(behavior, "article_comment_probability", 0.08));
         b.setArticleReactionProbability(dbl(behavior, "article_reaction_probability", 0.20));
         b.setCommentReplyProbability(dbl(behavior, "comment_reply_probability", 0.05));
+        b.setUserArticleReactionProbability(dbl(behavior, "user_article_reaction_probability", 0.04));
+        b.setUserArticleCommentProbability(dbl(behavior, "user_article_comment_probability", 0.025));
+        b.setUserCommentReactionProbability(dbl(behavior, "user_comment_reaction_probability", 0.03));
+        b.setUserCommentReplyProbability(dbl(behavior, "user_comment_reply_probability", 0.015));
         b.setRebuttalReplyBonus(dbl(behavior, "rebuttal_reply_bonus", 0.20));
         b.setSelfDefenseReplyBonus(dbl(behavior, "self_defense_reply_bonus", 0.20));
         b.setNamedMentionReplyBonus(dbl(behavior, "named_mention_reply_bonus", 0.15));
@@ -112,43 +109,26 @@ public class AiReporterProfileLoader {
         b.setMaxArticlesPerDay(integer(behavior, "max_articles_per_day", 2));
         b.setMaxCommentsPerDay(integer(behavior, "max_comments_per_day", 4));
         b.setMaxReactionsPerDay(integer(behavior, "max_reactions_per_day", 8));
-
         return d;
     }
 
     private static String required(Map<String,Object> map, String key, Resource resource) {
         String value = str(map.get(key));
-        if (value == null || value.isBlank()) {
-            throw new IllegalStateException("Missing '" + key + "' in " + resource.getFilename());
-        }
+        if (value == null || value.isBlank()) throw new IllegalStateException("Missing '" + key + "' in " + resource.getFilename());
         return value;
     }
-
     @SuppressWarnings("unchecked")
-    private static Map<String,Object> map(Object o) {
-        return o instanceof Map<?,?> ? (Map<String,Object>) o : Map.of();
-    }
-
+    private static Map<String,Object> map(Object o) { return o instanceof Map<?,?> ? (Map<String,Object>) o : Map.of(); }
     private static String str(Object o) { return o == null ? null : String.valueOf(o); }
     private static String defaultStr(Object o, String d) { return o == null ? d : String.valueOf(o); }
     private static Double number(Object o) { return o instanceof Number n ? n.doubleValue() : null; }
-    private static double dbl(Map<String,Object> m, String k, double d) {
-        Object o = m.get(k); return o instanceof Number n ? n.doubleValue() : d;
-    }
-    private static int integer(Map<String,Object> m, String k, int d) {
-        Object o = m.get(k); return o instanceof Number n ? n.intValue() : d;
-    }
-    private static boolean boolValue(Map<String,Object> m, String k, boolean d) {
-        Object o = m.get(k); return o instanceof Boolean b ? b : d;
-    }
+    private static double dbl(Map<String,Object> m, String k, double d) { Object o=m.get(k); return o instanceof Number n ? n.doubleValue() : d; }
+    private static int integer(Map<String,Object> m, String k, int d) { Object o=m.get(k); return o instanceof Number n ? n.intValue() : d; }
+    private static boolean boolValue(Map<String,Object> m, String k, boolean d) { Object o=m.get(k); return o instanceof Boolean b ? b : d; }
     private static Map<String,Double> doubleMap(Object o) {
         if (!(o instanceof Map<?,?> map)) return Map.of();
         Map<String,Double> result = new LinkedHashMap<>();
-        map.forEach((key, value) -> {
-            if (value instanceof Number n) {
-                result.put(String.valueOf(key), n.doubleValue());
-            }
-        });
+        map.forEach((key,value) -> { if (value instanceof Number n) result.put(String.valueOf(key), n.doubleValue()); });
         return result;
     }
     private static List<String> stringList(Object o) {
