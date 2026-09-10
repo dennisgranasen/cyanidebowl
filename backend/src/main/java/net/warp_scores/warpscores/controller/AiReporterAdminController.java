@@ -1,6 +1,7 @@
 package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
+import net.warp_scores.warpscores.ai.agents.AiReporterDefinition;
 import net.warp_scores.warpscores.ai.agents.AiReporterEffectiveProfileService;
 import net.warp_scores.warpscores.ai.agents.AiReporterRegistry;
 import net.warp_scores.warpscores.domain.persistence.AiReporterRuntimeStateRepository;
@@ -30,6 +31,11 @@ public class AiReporterAdminController {
                 .toList();
     }
 
+    @GetMapping("/{id}")
+    public AdminReporter get(@PathVariable String id) {
+        return toAdminReporter(registry.require(id));
+    }
+
     @PutMapping("/{id}/runtime")
     public AdminReporter update(
             @PathVariable String id,
@@ -56,8 +62,7 @@ public class AiReporterAdminController {
         return toAdminReporter(definition);
     }
 
-    private AdminReporter toAdminReporter(
-            net.warp_scores.warpscores.ai.agents.AiReporterDefinition definition) {
+    private AdminReporter toAdminReporter(AiReporterDefinition definition) {
         var effective = effectiveProfiles.effective(definition);
         var runtime = runtimeRepository.findById(definition.getId()).orElse(null);
 
@@ -66,6 +71,8 @@ public class AiReporterAdminController {
                 definition.getAlias(),
                 definition.getRace(),
                 definition.getRole(),
+                definition.getPortrait().getImage(),
+                definition.getPortrait().getAvatar(),
                 effective.enabled(),
                 effective.reportsEnabled(),
                 effective.interactionsEnabled(),
@@ -89,6 +96,8 @@ public class AiReporterAdminController {
             String alias,
             String race,
             String role,
+            String portraitImage,
+            String avatarImage,
             boolean enabled,
             boolean reportsEnabled,
             boolean interactionsEnabled,

@@ -1,29 +1,29 @@
-# Responsive AI reporter gallery patch
+# AI reporter UI fix v2
 
-The `/staff` gallery deliberately has **no maximum column count**.
+Fixes exactly these issues:
 
-It uses:
+1. Admin table avatars
+   - The current backend AdminReporter DTO does not expose an image at all.
+   - This patch adds `portraitImage` and `avatarImage`.
+   - The table uses `avatarImage || portraitImage`.
 
-```jsx
-gridTemplateColumns="repeat(auto-fill, minmax(min(100%, 180px), 1fr))"
-```
+2. `/staff` gallery
+   - Removes every admin Edit button.
+   - Cards only open the public reporter profile.
 
-The viewport therefore determines how many cards fit per row from the card's preferred
-minimum width, rather than from explicit breakpoints such as 3, 4 or 6 columns.
+3. `/staff/:reporterId`
+   - Remove the Edit button.
+   - Replace it with an admin-only gear.
+   - Gear opens inline runtime settings for exactly that reporter.
 
-Included complete replacement files:
+4. Shared runtime controls
+   - Inline profile settings use the same runtime fields as bulk admin.
 
-- `frontend/src/pages/StaffPage.jsx`
-- `frontend/src/pages/ReporterProfilePage.jsx`
+Included complete replacements:
+- frontend/src/pages/StaffPage.jsx
+- frontend/src/pages/AdminAiReportersPage.jsx
+- frontend/src/components/ai-reporters/AiReporterRuntimeControls.jsx
+- backend/src/main/java/net/warp_scores/warpscores/controller/AiReporterAdminController.java
 
-`IMPLEMENTATION.md` contains the small backend/API/router/admin-page edits that should
-be merged into current `dev` rather than replacing those larger files blindly.
-
-After applying, run:
-
-```bash
-mvn test -Pserver -DskipDocker -pl api,cyanide-api,backend -am
-cd frontend
-npm test -- --runInBand
-npm run build
-```
+ReporterProfilePage is a focused edit because it was just redesigned and may have local changes.
+See REPORTER_PROFILE_CHANGE.md.

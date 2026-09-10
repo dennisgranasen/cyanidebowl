@@ -1,18 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Avatar, Badge, Box, Button, Card, CardBody, Heading, Text
+  Avatar, Badge, Box, Card, CardBody, Heading, Text
 } from '@chakra-ui/react';
-import { EditIcon } from '@chakra-ui/icons';
 import { Link as RouteLink } from 'react-router-dom';
 import Navigation from '../components/misc/Navigation';
 import AiReporterApi from '../AiReporterApi';
-import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 
 function StaffPage() {
   const [reporters, setReporters] = useState(null);
   const [error, setError] = useState(null);
-  const { authenticationReady, userPermissions } = useAuth0WithUserPermissions();
-  const canEdit = authenticationReady && Boolean(userPermissions?.writeSiteAdmin);
 
   useEffect(() => {
     AiReporterApi.reporters().then(setReporters).catch(setError);
@@ -37,25 +33,7 @@ function StaffPage() {
         alignItems="stretch"
       >
         {(reporters || []).map((reporter) => (
-          <Card key={reporter.id} position="relative" overflow="hidden" minW={0}>
-            {canEdit && (
-              <Button
-                as={RouteLink}
-                to={`/admin/ai-reporters/${reporter.id}`}
-                aria-label={`Edit ${reporter.alias}`}
-                title={`Edit ${reporter.alias}`}
-                size="xs"
-                leftIcon={<EditIcon />}
-                position="absolute"
-                zIndex={2}
-                top={2}
-                right={2}
-                colorScheme="purple"
-              >
-                Edit
-              </Button>
-            )}
-
+          <Card key={reporter.id} overflow="hidden" minW={0}>
             <Box
               as={RouteLink}
               to={`/staff/${reporter.id}`}
