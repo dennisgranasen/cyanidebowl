@@ -12,7 +12,8 @@ capabilities:
   player_ratings: true
 
 portrait:
-  image: /images/staff/freja.webp
+  image: /img/portraits/freja_full.jpg
+  avatar: /img/portraits/freja_small.jpg
   prompt_key: freja
 
 voice:

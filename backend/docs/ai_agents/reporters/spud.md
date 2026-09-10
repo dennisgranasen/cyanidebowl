@@ -7,7 +7,8 @@ role: "Junior contributor"
 enabled: true
 
 portrait:
-  image: /images/staff/spud.webp
+  image: /img/portraits/spud_full.png
+  avatar: /img/portraits/spud_small.png
   prompt_key: spud
 
 voice:

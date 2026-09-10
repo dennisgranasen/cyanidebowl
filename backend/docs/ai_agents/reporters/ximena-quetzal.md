@@ -7,7 +7,8 @@ role: "Tactical correspondent"
 enabled: true
 
 portrait:
-  image: /images/staff/ximena-quetzal.webp
+  image: /img/portraits/ximena_full.png
+  avatar: /img/portraits/ximena_small.png
   prompt_key: ximena
 
 voice:

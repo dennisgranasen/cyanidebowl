@@ -12,7 +12,8 @@ capabilities:
   player_ratings: true
 
 portrait:
-  image: /images/staff/rippa.webp
+  image: /img/portraits/rippa_full.jpg
+  avatar: /img/portraits/rippa_small.jpg
   prompt_key: rippa
 
 voice:

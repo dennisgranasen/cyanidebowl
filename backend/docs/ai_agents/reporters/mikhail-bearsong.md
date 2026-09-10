@@ -12,7 +12,8 @@ capabilities:
   player_ratings: true
 
 portrait:
-  image: /images/staff/mikhail.webp
+  image: /img/portraits/mikhail_full.png
+  avatar: /img/portraits/mikhail_small.png
   prompt_key: mikhail
 
 voice:

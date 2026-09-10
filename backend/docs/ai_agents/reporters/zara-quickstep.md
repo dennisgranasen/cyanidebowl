@@ -12,7 +12,8 @@ capabilities:
   player_ratings: true
 
 portrait:
-  image: /images/staff/zara.webp
+  image: /img/portraits/zara_full.png
+  avatar: /img/portraits/zara_small.png
   prompt_key: zara
 
 voice:

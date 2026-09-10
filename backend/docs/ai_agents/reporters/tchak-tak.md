@@ -7,7 +7,8 @@ role: "Game-state analyst"
 enabled: true
 
 portrait:
-  image: /images/staff/tchak-tak.webp
+  image: /img/portraits/tchak_full.png
+  avatar: /img/portraits/tchak_small.png
   prompt_key: tchak
 
 voice:

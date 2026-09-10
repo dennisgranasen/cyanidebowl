@@ -7,7 +7,8 @@ role: "Breaking news"
 enabled: true
 
 portrait:
-  image: /images/staff/snikka-presskort.webp
+  image: /img/portraits/snikka_full.png
+  avatar: /img/portraits/snikka_small.png
   prompt_key: snikka
 
 voice:

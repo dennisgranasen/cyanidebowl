@@ -12,7 +12,8 @@ capabilities:
   player_ratings: true
 
 portrait:
-  image: /images/staff/zanna.webp
+  image: /img/portraits/zanna_full.png
+  avatar: /img/portraits/zanna_small.png
   prompt_key: zanna
 
 voice:

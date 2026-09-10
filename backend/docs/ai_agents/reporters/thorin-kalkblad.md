@@ -12,7 +12,8 @@ capabilities:
   player_ratings: true
 
 portrait:
-  image: /images/staff/thorin.webp
+  image: /img/portraits/thorin_full.jpg
+  avatar: /img/portraits/thorin_small.jpg
   prompt_key: thorin
 
 voice:

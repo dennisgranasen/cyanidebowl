@@ -7,7 +7,8 @@ role: "Senior match reporter"
 enabled: true
 
 portrait:
-  image: /images/staff/jack-linehan.webp
+  image: /img/portraits/jack_full.png
+  avatar: /img/portraits/jack_small.png
   prompt_key: jack
 
 voice:

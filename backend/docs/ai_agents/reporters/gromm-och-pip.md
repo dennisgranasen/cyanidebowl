@@ -7,7 +7,8 @@ role: "Joint correspondents"
 enabled: true
 
 portrait:
-  image: /images/staff/gromm-och-pip.webp
+  image: /img/portraits/gromm_pip_full.png
+  avatar: /img/portraits/gromm_pip_small.png
   prompt_key: gromm_pip
 
 voice:

@@ -7,7 +7,8 @@ role: "Heroics correspondent"
 enabled: true
 
 portrait:
-  image: /images/staff/sven-skal-bjornsson.webp
+  image: /img/portraits/sven_full.png
+  avatar: /img/portraits/sven_small.png
   prompt_key: sven
 
 voice:

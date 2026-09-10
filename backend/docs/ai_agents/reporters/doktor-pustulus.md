@@ -7,7 +7,8 @@ role: "Attrition correspondent"
 enabled: true
 
 portrait:
-  image: /images/staff/doktor-pustulus.webp
+  image: /img/portraits/pustulus_full.png
+  avatar: /img/portraits/pustulus_small.png
   prompt_key: pustulus
 
 voice:

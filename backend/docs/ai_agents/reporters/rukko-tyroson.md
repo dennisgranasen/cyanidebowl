@@ -12,7 +12,8 @@ capabilities:
   player_ratings: true
 
 portrait:
-  image: /images/staff/rukko.webp
+  image: /img/portraits/rukko_full.png
+  avatar: /img/portraits/rukko_small.png
   prompt_key: rukko
 
 voice:

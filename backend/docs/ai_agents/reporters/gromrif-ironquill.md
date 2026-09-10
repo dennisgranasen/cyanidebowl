@@ -12,7 +12,8 @@ capabilities:
   player_ratings: true
 
 portrait:
-  image: /images/staff/gromrif.webp
+  image: /img/portraits/gromrif_full.png
+  avatar: /img/portraits/gromrif_small.png
   prompt_key: gromrif
 
 voice:

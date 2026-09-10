@@ -7,7 +7,8 @@ role: "Senior critic"
 enabled: true
 
 portrait:
-  image: /images/staff/velithra-nattblack.webp
+  image: /img/portraits/velithra_full.png
+  avatar: /img/portraits/velithra_small.png
   prompt_key: velithra
 
 voice:

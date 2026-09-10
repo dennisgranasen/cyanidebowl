@@ -7,7 +7,8 @@ role: "Underdog correspondent"
 enabled: true
 
 portrait:
-  image: /images/staff/tobbe-mjukfot.webp
+  image: /img/portraits/tobbe_full.png
+  avatar: /img/portraits/tobbe_small.png
   prompt_key: tobbe
 
 voice:

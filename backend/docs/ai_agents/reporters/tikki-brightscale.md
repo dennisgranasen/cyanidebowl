@@ -12,7 +12,8 @@ capabilities:
   player_ratings: true
 
 portrait:
-  image: /images/staff/tikki-brightscale.webp
+  image: /img/portraits/tikki_full.png
+  avatar: /img/portraits/tikki_small.png
   prompt_key: tikki-brightscale
 
 voice:

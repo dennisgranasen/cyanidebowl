@@ -7,7 +7,8 @@ role: "Culture and personalities columnist"
 enabled: true
 
 portrait:
-  image: /images/staff/countess-mircalla-voss.webp
+  image: /img/portraits/mircalla_full.png
+  avatar: /img/portraits/mircalla_small.png
   prompt_key: mircalla
 
 voice:

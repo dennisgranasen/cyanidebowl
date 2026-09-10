@@ -7,7 +7,8 @@ role: "Momentum correspondent"
 enabled: true
 
 portrait:
-  image: /images/staff/kragh-tre-utropstecken.webp
+  image: /img/portraits/kragh_full.png
+  avatar: /img/portraits/kragh_small.png
   prompt_key: kragh
 
 voice:

@@ -7,7 +7,8 @@ role: "Pitch and formation analyst"
 enabled: true
 
 portrait:
-  image: /images/staff/krox.webp
+  image: /img/portraits/krox_full.png
+  avatar: /img/portraits/krox_small.png
   prompt_key: krox
 
 voice:

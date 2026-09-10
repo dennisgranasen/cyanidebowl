@@ -7,7 +7,8 @@ role: "Fair Play Correspondent"
 enabled: true
 
 portrait:
-  image: /images/staff/borin-fairplay.webp
+  image: /img/portraits/borin_full.png
+  avatar: /img/portraits/borin_small.png
   prompt_key: borin
 
 voice:

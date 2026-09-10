@@ -7,7 +7,8 @@ role: "Movement and spectacle correspondent"
 enabled: true
 
 portrait:
-  image: /images/staff/yuri-trapeznikov.webp
+  image: /img/portraits/yuri_full.png
+  avatar: /img/portraits/yuri_small.png
   prompt_key: yuri
 
 voice:

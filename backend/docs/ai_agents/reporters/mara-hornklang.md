@@ -7,7 +7,8 @@ role: "Human-interest and Player of the Match correspondent"
 enabled: true
 
 portrait:
-  image: /images/staff/mara-hornklang.webp
+  image: /img/portraits/mara_full.png
+  avatar: /img/portraits/mara_small.png
   prompt_key: mara
 
 voice:

@@ -12,7 +12,8 @@ capabilities:
   player_ratings: true
 
 portrait:
-  image: /images/staff/gautier.webp
+  image: /img/portraits/gautier_full.png
+  avatar: /img/portraits/gautier_small.png
   prompt_key: gautier
 
 voice:

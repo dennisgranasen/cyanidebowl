@@ -7,7 +7,8 @@ role: "Ratings and performance correspondent"
 enabled: true
 
 portrait:
-  image: /images/staff/greta-geist.webp
+  image: /img/portraits/greta_full.png
+  avatar: /img/portraits/greta_small.png
   prompt_key: greta
 
 voice:

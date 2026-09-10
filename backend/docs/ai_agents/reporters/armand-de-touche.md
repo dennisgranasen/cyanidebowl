@@ -7,7 +7,8 @@ role: "Features writer"
 enabled: true
 
 portrait:
-  image: /images/staff/armand-de-touche.webp
+  image: /img/portraits/armand_full.png
+  avatar: /img/portraits/armand_small.png
   prompt_key: armand
   
 voice:

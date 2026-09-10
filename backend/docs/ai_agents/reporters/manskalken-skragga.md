@@ -7,7 +7,8 @@ role: "Night columnist"
 enabled: true
 
 portrait:
-  image: /images/staff/manskalken-skragga.webp
+  image: /img/portraits/skragga_full.png
+  avatar: /img/portraits/skragga_small.png
   prompt_key: skragga
 
 voice:

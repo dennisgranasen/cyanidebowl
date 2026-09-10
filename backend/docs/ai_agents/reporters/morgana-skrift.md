@@ -12,7 +12,8 @@ capabilities:
   player_ratings: true
 
 portrait:
-  image: /images/staff/morgana.webp
+  image: /img/portraits/morgana_full.jpg
+  avatar: /img/portraits/morgana_small.jpg
   prompt_key: morgana
 
 voice:

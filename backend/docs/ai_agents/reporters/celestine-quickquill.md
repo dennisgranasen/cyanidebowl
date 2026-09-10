@@ -7,7 +7,8 @@ role: "Style correspondent"
 enabled: true
 
 portrait:
-  image: /images/staff/celestine-quickquill.webp
+  image: /img/portraits/celestine_full.png
+  avatar: /img/portraits/celestine_small.png
   prompt_key: celestine
 
 voice:

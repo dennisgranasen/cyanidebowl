@@ -12,7 +12,8 @@ capabilities:
   player_ratings: true
 
 portrait:
-  image: /images/staff/grimnir.webp
+  image: /img/portraits/grimnir_full.png
+  avatar: /img/portraits/grimnir_small.png
   prompt_key: grimnir
 
 voice:

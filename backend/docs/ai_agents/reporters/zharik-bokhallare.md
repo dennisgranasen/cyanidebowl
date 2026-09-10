@@ -7,7 +7,8 @@ role: "Efficiency analyst"
 enabled: true
 
 portrait:
-  image: /images/staff/zharik-bokhallare.webp
+  image: /img/portraits/zharik_full.png
+  avatar: /img/portraits/zharik_small.png
   prompt_key: zharik
 voice:
   primary_language: sv

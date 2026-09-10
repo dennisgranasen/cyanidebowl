@@ -12,7 +12,8 @@ capabilities:
   player_ratings: true
 
 portrait:
-  image: /images/staff/vale.webp
+  image: /img/portraits/vale_full.png
+  avatar: /img/portraits/vale_small.png
   prompt_key: vale
 
 voice:

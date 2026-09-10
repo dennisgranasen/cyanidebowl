@@ -12,7 +12,8 @@ capabilities:
   player_ratings: true
 
 portrait:
-  image: /images/staff/skritch.webp
+  image: /img/portraits/skritch_full.png
+  avatar: /img/portraits/skritch_small.png
   prompt_key: skritch
 
 voice:

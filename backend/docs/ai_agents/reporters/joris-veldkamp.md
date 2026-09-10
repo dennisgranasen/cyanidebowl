@@ -12,7 +12,8 @@ capabilities:
   player_ratings: true
 
 portrait:
-  image: /images/staff/joris.webp
+  image: /img/portraits/joris_full.png
+  avatar: /img/portraits/joris_small.png
   prompt_key: joris
 
 voice:

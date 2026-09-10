@@ -7,7 +7,8 @@ role: "Geometry and probability correspondent"
 enabled: true
 
 portrait:
-  image: /images/staff/professor-qrrk.webp
+  image: /img/portraits/qrrk_full.png
+  avatar: /img/portraits/qrrk_small.png
   prompt_key: qrrk
 
 voice:

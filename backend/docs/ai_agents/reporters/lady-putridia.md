@@ -12,7 +12,8 @@ capabilities:
   player_ratings: true
 
 portrait:
-  image: /images/staff/lady-putridia.webp
+  image: /img/portraits/putridia_full.png
+  avatar: /img/portraits/putridia_small.png
   prompt_key: lady-putridia
 
 voice:

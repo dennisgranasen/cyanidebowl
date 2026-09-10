@@ -7,7 +7,8 @@ role: "Historical correspondent"
 enabled: true
 
 portrait:
-  image: /images/staff/amenhotep-den-47e.webp
+  image: /img/portraits/amenhotep_full.png
+  avatar: /img/portraits/amenhotep_small.png
   prompt_key: amenhotep
 
 voice:

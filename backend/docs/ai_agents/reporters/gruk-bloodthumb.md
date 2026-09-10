@@ -12,7 +12,8 @@ capabilities:
   player_ratings: true
 
 portrait:
-  image: /images/staff/gruk.webp
+  image: /img/portraits/gruk_full.png
+  avatar: /img/portraits/gruk_small.png
   prompt_key: gruk
 
 voice:

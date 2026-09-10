@@ -7,7 +7,8 @@ role: "Formation analyst"
 enabled: true
 
 portrait:
-  image: /images/staff/grubnak-tvatum.webp
+  image: /img/portraits/grubnak_full.png
+  avatar: /img/portraits/grubnak_small.png
   prompt_key: grubnak
 
 voice:

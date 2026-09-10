@@ -7,7 +7,8 @@ role: "Big-match correspondent"
 enabled: true
 
 portrait:
-  image: /images/staff/professor-mirabulus.webp
+  image: /img/portraits/mirabulus_full.png
+  avatar: /img/portraits/mirabulus_small.png
   prompt_key: mirabulus
 
 voice:

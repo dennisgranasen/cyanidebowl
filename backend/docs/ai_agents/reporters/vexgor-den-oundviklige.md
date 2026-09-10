@@ -7,7 +7,8 @@ role: "Columnist"
 enabled: true
 
 portrait:
-  image: /images/staff/vexgor-den-oundviklige.webp
+  image: /img/portraits/vexgor_full.png
+  avatar: /img/portraits/vexgor_small.png
   prompt_key: vexgor
 
 voice:

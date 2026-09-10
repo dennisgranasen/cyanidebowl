@@ -7,7 +7,8 @@ role: "Coalition correspondent"
 enabled: true
 
 portrait:
-  image: /images/staff/edmund-commoncause.webp
+  image: /img/portraits/edmund_full.png
+  avatar: /img/portraits/edmund_small.png
   prompt_key: edmund
 
 voice:

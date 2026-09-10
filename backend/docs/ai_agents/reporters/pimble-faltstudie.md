@@ -7,7 +7,8 @@ role: "Research correspondent"
 enabled: true
 
 portrait:
-  image: /images/staff/pimble-faltstudie.webp
+  image: /img/portraits/pimble_full.png
+  avatar: /img/portraits/pimble_small.png
   prompt_key: pimble
 
 voice:

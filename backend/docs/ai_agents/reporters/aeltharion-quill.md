@@ -7,7 +7,8 @@ role: "Technical columnist"
 enabled: true
 
 portrait:
-  image: /images/staff/aeltharion-quill.webp
+  image: /img/portraits/aeltharion_full.png
+  avatar: /img/portraits/aeltharion_small.png
   prompt_key: aeltharion
 
 voice:

@@ -7,7 +7,8 @@ role: "Rumours and insider desk"
 enabled: true
 
 portrait:
-  image: /images/staff/ravbert-smalnos.webp
+  image: /img/portraits/ravbert_full.png
+  avatar: /img/portraits/ravbert_small.png
   prompt_key: ravbert
 
 voice:

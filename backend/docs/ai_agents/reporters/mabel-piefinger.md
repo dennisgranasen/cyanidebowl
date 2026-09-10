@@ -7,7 +7,8 @@ role: "Community correspondent"
 enabled: true
 
 portrait:
-  image: /images/staff/mabel-piefinger.webp
+  image: /img/portraits/mabel_full.png
+  avatar: /img/portraits/mabel_small.png
   prompt_key: mabel
 
 voice:

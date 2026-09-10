@@ -7,7 +7,8 @@ role: "Investigative match reporter"
 enabled: true
 
 portrait:
-  image: /images/staff/elsa-nacht.webp
+  image: /img/portraits/elsa_full.png
+  avatar: /img/portraits/elsa_small.png
   prompt_key: elsa
 
 voice:

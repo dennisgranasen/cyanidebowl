@@ -7,7 +7,8 @@ role: "Traditional football columnist"
 enabled: true
 
 portrait:
-  image: /images/staff/gorbad-proper-football.webp
+  image: /img/portraits/gorbad_full.png
+  avatar: /img/portraits/gorbad_small.png
   prompt_key: gorbad
 voice:
   primary_language: sv

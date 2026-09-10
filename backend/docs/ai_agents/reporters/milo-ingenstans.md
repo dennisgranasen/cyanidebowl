@@ -7,7 +7,8 @@ role: "Outsider correspondent"
 enabled: true
 
 portrait:
-  image: /images/staff/milo-ingenstans.webp
+  image: /img/portraits/milo_full.png
+  avatar: /img/portraits/milo_small.png
   prompt_key: milo
 
 voice:

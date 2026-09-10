@@ -12,7 +12,8 @@ capabilities:
   player_ratings: true
 
 portrait:
-  image: /images/staff/alaric.webp
+  image: /img/portraits/alaric_full.jpg
+  avatar: /img/portraits/alaric_small.jpg
   prompt_key: alaric
 
 voice:

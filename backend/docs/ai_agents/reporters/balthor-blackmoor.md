@@ -12,7 +12,8 @@ capabilities:
   player_ratings: true
 
 portrait:
-  image: /images/staff/balthor.webp
+  image: /img/portraits/balthor_full.png
+  avatar: /img/portraits/balthor_small.png
   prompt_key: balthor
 
 voice:

@@ -7,7 +7,8 @@ role: "Movement correspondent"
 enabled: true
 
 portrait:
-  image: /images/staff/lethiel-greenstep.webp
+  image: /img/portraits/lethiel_full.png
+  avatar: /img/portraits/lethiel_small.png
   prompt_key: lethiel
   
 voice:

@@ -7,7 +7,8 @@ role: "Archive and veteran correspondent"
 enabled: true
 
 portrait:
-  image: /images/staff/gerda-likstrom.webp
+  image: /img/portraits/gerda_full.png
+  avatar: /img/portraits/gerda_small.png
   prompt_key: gerda
 
 voice:

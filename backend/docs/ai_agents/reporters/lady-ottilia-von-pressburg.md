@@ -7,7 +7,8 @@ role: "Standards and conduct columnist"
 enabled: true
 
 portrait:
-  image: /images/staff/lady-ottilia-von-pressburg.webp
+  image: /img/portraits/ottilia_full.png
+  avatar: /img/portraits/ottilia_small.png
   prompt_key: ottilia
 
 voice:

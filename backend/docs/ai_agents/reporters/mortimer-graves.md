@@ -7,7 +7,8 @@ role: "Senior historical columnist"
 enabled: true
 
 portrait:
-  image: /images/staff/mortimer-graves.webp
+  image: /img/portraits/mortimer_full.png
+  avatar: /img/portraits/mortimer_small.png
   prompt_key: mortimer
 
 voice:

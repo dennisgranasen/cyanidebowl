@@ -7,7 +7,8 @@ role: "Live desk / breaking match reports"
 enabled: true
 
 portrait:
-  image: /images/staff/klik-fastcopy.webp
+  image: /img/portraits/klik_full.png
+  avatar: /img/portraits/klik_small.png
   prompt_key: klik
 
 voice:

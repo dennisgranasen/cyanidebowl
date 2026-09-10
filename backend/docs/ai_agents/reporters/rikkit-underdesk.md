@@ -7,7 +7,8 @@ role: "Insider correspondent"
 enabled: true
 
 portrait:
-  image: /images/staff/rikkit-underdesk.webp
+  image: /img/portraits/rikkit_full.png
+  avatar: /img/portraits/rikkit_small.png
   prompt_key: rikkit
 voice:
   primary_language: sv
