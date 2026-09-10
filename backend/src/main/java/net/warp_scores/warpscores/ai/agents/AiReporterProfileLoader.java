@@ -59,7 +59,10 @@ public class AiReporterProfileLoader {
         d.getCapabilities().setCommentReplies(boolValue(capabilities, "comment_replies", true));
 
         Map<String,Object> portrait = map(fm.get("portrait"));
-        d.getPortrait().setImage(str(portrait.get("image")));
+        String portraitImage = str(portrait.get("image"));
+
+        d.getPortrait().setImage(portraitImage);
+        d.getPortrait().setAvatar(defaultStr(portrait.get("avatar"), portraitImage));
         d.getPortrait().setPromptKey(str(portrait.get("prompt_key")));
 
         Map<String,Object> voice = map(fm.get("voice"));

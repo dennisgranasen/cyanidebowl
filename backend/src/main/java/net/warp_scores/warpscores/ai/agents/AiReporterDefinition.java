@@ -41,9 +41,11 @@ public class AiReporterDefinition {
         private boolean commentReplies = true;
     }
 
-    @Getter @Setter
+    @Getter
+    @Setter
     public static class Portrait {
         private String image;
+        private String avatar;
         private String promptKey;
     }
 
