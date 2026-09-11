@@ -12,6 +12,7 @@ import {
 } from '@chakra-ui/react';
 
 import imageUrls from '../../imageUrls';
+import TimelineIcon from './TimelineIcon';
 
 const EVENT_STYLE = {
   TOUCHDOWN: { glyph: 'TD', label: 'Touchdown', size: 34 },
@@ -26,10 +27,14 @@ const EVENT_STYLE = {
   KICKOFF: { glyph: 'KO', label: 'Kick-off', size: 32 },
   KICKOFF_DETAIL: { glyph: 'K', label: 'Kick-off event', size: 28 },
   WEATHER: { glyph: '☁', label: 'Weather', size: 30 },
+  MATCH_START: { glyph: 'S', label: 'Match start', size: 30 },
   BLOCK: { glyph: 'B', label: 'Block', size: 30 },
   FOUL: { glyph: 'F', label: 'Foul', size: 30 },
   PASS: { glyph: '↗', label: 'Pass', size: 30 },
+  COMPLETION: { glyph: '↗', label: 'Completion', size: 30 },
+  CATCH: { glyph: 'C', label: 'Catch', size: 30 },
   HANDOFF: { glyph: 'H', label: 'Handoff', size: 30 },
+  ANIMAL_SAVAGERY: { glyph: 'A', label: 'Animal Savagery', size: 30 },
   CHECK: { glyph: '×', label: 'Failed check', size: 30 },
   REROLL: { glyph: '⚄', label: 'Reroll', size: 30 },
   TURNOVER: { glyph: '!', label: 'Turnover', size: 30 },
@@ -45,16 +50,26 @@ const eventStyle = (event) => EVENT_STYLE[event?.type] || {
 };
 
 const NARRATIVE_TYPE = {
+  match_start: 'MATCH_START',
   touchdown: 'TOUCHDOWN',
   pass: 'PASS',
+  completion: 'COMPLETION',
+  catch: 'CATCH',
   interception: 'INTERCEPTION',
   handoff: 'HANDOFF',
   block: 'BLOCK',
   foul: 'FOUL',
   chainsaw_foul: 'FOUL',
+  ejection: 'EJECTION',
+  sent_off: 'EJECTION',
+  casualty: 'CASUALTY',
+  injury: 'INJURY',
+  death: 'DEATH',
+  animal_savagery: 'ANIMAL_SAVAGERY',
   kick_off_table: 'KICKOFF',
   weather_roll: 'WEATHER',
   turn_end: 'TURNOVER',
+  possession_gained: 'POSSESSION',
   possession_changed: 'POSSESSION',
   ball_loose: 'BALL_LOOSE',
 };
@@ -213,6 +228,109 @@ const checkSummary = (check) => {
     : `${label}${required}${check?.outcome != null ? `: ${humanizeType(String(check.outcome))}` : ''}`;
 };
 
+const KICKOFF_DETAIL_TYPES = new Set([
+  'blitz',
+  'brilliant_coaching',
+  'changing_weather',
+  'cheering_fans',
+  'get_the_ref',
+  'high_kick',
+  'officious_ref',
+  'perfect_defence',
+  'perfect_defense',
+  'pitch_invasion',
+  'quick_snap',
+  'riot',
+  'throw_a_rock',
+]);
+
+const overviewResultLabel = (event) => {
+  const details = event?.details || {};
+  return details.resultName
+    || details.weather
+    || details.weatherName
+    || details.result
+    || event?.outcome
+    || null;
+};
+
+const groupOverviewEvents = (events) => {
+  const skipped = new Set();
+  const grouped = [];
+  let initialWeatherGrouped = false;
+
+  for (let index = 0; index < events.length; index += 1) {
+    if (skipped.has(index)) continue;
+    const event = events[index];
+    const rawType = normalizedNarrativeType({ type: event.rawEventType });
+
+    if (rawType === 'match_start' && !initialWeatherGrouped) {
+      const weatherIndex = events.findIndex((candidate, candidateIndex) =>
+        candidateIndex > index
+        && !skipped.has(candidateIndex)
+        && normalizedNarrativeType({ type: candidate.rawEventType }) === 'weather_roll'
+        && Number(candidate.turn ?? 0) === 0);
+
+      if (weatherIndex > index) {
+        const weather = events[weatherIndex];
+        const weatherLabel = overviewResultLabel(weather) || 'Weather';
+        skipped.add(weatherIndex);
+        initialWeatherGrouped = true;
+        grouped.push({
+          ...event,
+          type: 'WEATHER',
+          rawEventType: 'match_start_weather',
+          title: `Match start · ${humanizeType(String(weatherLabel))}`,
+          details: {
+            ...(event.details || {}),
+            weather: weatherLabel,
+            groupedEvents: [event.rawEventType, weather.rawEventType],
+          },
+        });
+        continue;
+      }
+    }
+
+    if (rawType === 'kick_off_table') {
+      let detailIndex = -1;
+      for (let candidateIndex = index + 1;
+        candidateIndex < Math.min(events.length, index + 4);
+        candidateIndex += 1) {
+        if (skipped.has(candidateIndex)) continue;
+        const candidateType = normalizedNarrativeType({
+          type: events[candidateIndex].rawEventType,
+        });
+        if (KICKOFF_DETAIL_TYPES.has(candidateType)) {
+          detailIndex = candidateIndex;
+          break;
+        }
+        if (events[candidateIndex].type !== 'REROLL') break;
+      }
+
+      if (detailIndex > index) {
+        const detail = events[detailIndex];
+        const detailType = normalizedNarrativeType({ type: detail.rawEventType });
+        skipped.add(detailIndex);
+        grouped.push({
+          ...event,
+          title: `Kick-off · ${humanizeType(detailType)}`,
+          details: {
+            ...(event.details || {}),
+            kickoffEventType: detailType,
+            kickoffEventResult: overviewResultLabel(detail),
+            groupedEvents: [event.rawEventType, detail.rawEventType],
+          },
+        });
+        continue;
+      }
+    }
+
+    grouped.push(event);
+  }
+
+  return grouped;
+};
+
 const narrativeDisplayEvents = (timeline) => {
   
   if (timeline?.format !== 'pybb3-narrative-timeline') return [];
@@ -232,7 +350,7 @@ const narrativeDisplayEvents = (timeline) => {
     };
   };
 
-  return (timeline.events || []).flatMap((event, index, events) => {
+  const projected = (timeline.events || []).flatMap((event, index, events) => {
     const rerolls = rerollDisplayEvents(event, index, resolveParticipant);
     if (!keepInOverviewTimeline(event, index, events)) return rerolls;
 
@@ -278,6 +396,8 @@ const narrativeDisplayEvents = (timeline) => {
 
     return [projectedEvent, ...rerolls];
   });
+
+  return groupOverviewEvents(projected);
 };
 
 const teamIndex = (event) => {
@@ -571,7 +691,7 @@ function TimelineMarker({ event, match, left, laneOffset = 0 }) {
         bg={event.sppAwarded != null ? 'purple.50' : 'white'}
         color="gray.800"
         fontWeight="bold"
-        fontSize={style.glyph.length > 1 ? '10px' : '18px'}
+        fontSize="18px"
         lineHeight="1"
         display="flex"
         alignItems="center"
@@ -585,7 +705,7 @@ function TimelineMarker({ event, match, left, laneOffset = 0 }) {
         _hover={{ transform: 'scale(1.12)', boxShadow: 'md' }}
         transition="transform 0.12s ease, box-shadow 0.12s ease"
       >
-        {style.glyph}
+        <TimelineIcon event={event} size={Math.max(18, style.size - 10)}/>
       </Box>
     </EventTooltip>
     {event.sppAwarded != null && <Badge
