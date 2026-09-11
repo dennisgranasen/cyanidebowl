@@ -49,6 +49,13 @@ public class ReplaySweeperAdminController {
             if(match.getTeams()!=null)result.put("teams",java.util.Arrays.stream(match.getTeams()).filter(java.util.Objects::nonNull).map(team->team.getName()).toList());
         });}catch(RuntimeException ignored){}
         return result;
+    }).sorted((left,right)->{
+        var leftPlayed=(java.util.Date)left.get("playedAt");
+        var rightPlayed=(java.util.Date)right.get("playedAt");
+        if(leftPlayed==null&&rightPlayed==null)return 0;
+        if(leftPlayed==null)return 1;
+        if(rightPlayed==null)return -1;
+        return rightPlayed.compareTo(leftPlayed);
     }).toList();}
     @PostMapping("/replays/{matchId}/analyze") public Map<String,Object> analyze(@PathVariable String matchId){analysis.analyze(matchId);return Map.of("matchId",matchId,"status","PROCESSED");}
     @GetMapping(value="/replays/{matchId}/inspect",produces=MediaType.APPLICATION_JSON_VALUE)
