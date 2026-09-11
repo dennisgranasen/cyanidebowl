@@ -481,3 +481,85 @@ are stable.
 **Product rule:** a directly tagged reporter is scheduled for a textual response when
 enabled and capable. Tagged work bypasses probabilistic selection; hard admin/global
 disables still win.
+
+
+## AI foundation prerequisites for B-016
+
+The following foundation items intentionally come after B-016 numerically because
+B-014–B-016 already have established meanings. Execution order is defined by
+`AI_ROADMAP.md`: complete B-017 through B-020 before implementing B-016.
+
+### B-017 — Canonical User and AI identity foundation
+
+**Status: Backlog — prerequisite for B-016**
+
+- Use one canonical `User` with `accountType = HUMAN | AI`.
+- Treat older `USER | AI_AGENT` terminology as obsolete.
+- Keep roles/capabilities separate from coach claims, team affinity and community
+  relationships.
+- Keep generation provenance separate from user identity.
+- Preserve existing Auth0 subject, permission and game-aware `coachClaims` behavior.
+
+**Acceptance criteria**
+
+- Human and AI authors use the same editorial/community primitives.
+- Coach remains a contextual relationship, not an account type.
+- Generated content can identify both canonical author and provenance.
+- Tests cover the separation between identity, capability, relationship and provenance.
+
+### B-018 — Canonical AI context and world-model contract
+
+**Status: Backlog — prerequisite for B-016**
+
+- Implement the canonical context envelope: `thread`, `social`, `self`, `discourse`,
+  `memory`, `domain`.
+- Resolve contextual relationships at generation time.
+- Include human and AI statements in the same discourse model.
+- Enforce the shared in-universe rule that Blood Bowl is a real sport.
+- Translate internal mechanics before they reach AI-facing narrative context.
+
+**Acceptance criteria**
+
+- Context assembly is deterministic/testable without a provider call.
+- The same context contract supports comments, replies, tags and articles.
+- Tests prevent dice/RNG/game/replay/simulation meta-language from leaking into the
+  AI-facing world model.
+
+### B-019 — Dedicated Fans community population reconciliation
+
+**Status: Backlog — prerequisite for B-016**
+
+- Desired active AI-backed `COMMUNITY_MEMBER` population equals team Dedicated Fans
+  value (currently 1–6).
+- First discovery creates clear team-affine personas.
+- Population increases reactivate inactive matching users before creating new users.
+- Population decreases deactivate surplus users without deletion.
+- Preserve authored history, reactions, memory, relationships and provenance.
+
+**Acceptance criteria**
+
+- Reconciler supports create/reactivate/deactivate/unchanged.
+- Unchanged input is idempotent.
+- Reactivation preserves canonical user identity.
+- No provider, scheduler or network access is required by reconciliation tests.
+
+### B-020 — First end-to-end AI editorial flow
+
+**Status: Backlog — prerequisite for B-016**
+
+Build one narrow deterministic flow before autonomous scheduling:
+
+- enabled AI user;
+- supported target/thread;
+- explicit direct tag or equivalent deterministic trigger;
+- canonical context assembly;
+- provider abstraction;
+- persisted generation provenance;
+- persisted response through existing editorial/community primitives.
+
+**Acceptance criteria**
+
+- The flow uses B-017/B-018 contracts rather than feature-local AI models.
+- Shared world-model policy is applied centrally.
+- Retries do not create duplicate persisted responses.
+- B-016 remains deferred until this flow is stable.

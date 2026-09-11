@@ -529,7 +529,12 @@ const displayHalf = (event) => {
 
 const globalTurn = (event) => {
   const turn = Number(event?.turn);
-  return Number.isInteger(turn) && turn >= 1 && turn <= 16 ? turn : null;
+  if (!Number.isInteger(turn) || turn < 1 || turn > 16) return null;
+
+  // pybb3 team_turn is local to the half (1-8). The half is authoritative.
+  const half = displayHalf(event);
+  if ((half === 1 || half === 2) && turn <= 8) return turn + ((half - 1) * 8);
+  return turn;
 };
 
 const timelinePosition = (event) => [
