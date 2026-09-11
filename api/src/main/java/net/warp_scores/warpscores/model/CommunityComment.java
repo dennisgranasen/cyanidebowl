@@ -24,6 +24,7 @@ public class CommunityComment {
     private String targetId;
     private String leagueSystemId;
     private Long authorUserId;
+    private GenerationProvenance generation = GenerationProvenance.human();
     private String authorSubject;
     private String authorDisplayName;
     private AuthorContext authorContext;

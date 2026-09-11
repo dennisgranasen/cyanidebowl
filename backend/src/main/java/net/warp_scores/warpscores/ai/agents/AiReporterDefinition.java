@@ -19,6 +19,13 @@ public class AiReporterDefinition {
     private int schemaVersion = CURRENT_SCHEMA_VERSION;
     private String id;
     private String alias;
+    /**
+     * Stable application principal for the AI-backed user. If omitted from the
+     * profile, ai:<reporter-id> is used.
+     */
+    private String userSubject;
+    /** Resolved database user id; populated at runtime by AiReporterUserService. */
+    private Long userId;
     private String race;
     private String category;
     private String role;
@@ -29,6 +36,10 @@ public class AiReporterDefinition {
     private Rating rating = new Rating();
     private Behaviour behaviour = new Behaviour();
     private String markdownBody;
+
+    public String resolvedUserSubject() {
+        return userSubject == null || userSubject.isBlank() ? "ai:" + id : userSubject;
+    }
 
     @Getter @Setter
     public static class Capabilities {

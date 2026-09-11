@@ -25,11 +25,17 @@ public class Article {
     private String leagueSystemId;
     private String seasonId;
 
-    /** Existing documents with null are interpreted as HUMAN for backwards compatibility. */
+    /**
+     * Legacy author classification kept temporarily for stored documents and old readers.
+     * New code must use authorUserId for identity and generation for provenance.
+     */
+    @Deprecated
     private AuthorType authorType = AuthorType.HUMAN;
+    @Deprecated
     private String authorAgentId;
 
     private Long authorUserId;
+    private GenerationProvenance generation = GenerationProvenance.human();
     private String authorSubject;
     private String authorDisplayName;
     private String title;

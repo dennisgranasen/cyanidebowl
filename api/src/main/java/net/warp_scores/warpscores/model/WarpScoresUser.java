@@ -17,6 +17,8 @@ public class WarpScoresUser {
     private String username;
     private String email;
     private String provider;
+    /** Missing in legacy documents means HUMAN. */
+    private AccountType accountType = AccountType.HUMAN;
     /** Stable external identity (normally the Auth0 subject), never an email address. */
     private String authSubject;
     /** Convenience login name only; Steam secrets are deliberately never persisted. */
@@ -31,4 +33,8 @@ public class WarpScoresUser {
 
     /** Presentation preference only. Ratings are generated independently of this setting. */
     private Boolean showAiPlayerRatings = true;
+
+    public AccountType effectiveAccountType() {
+        return accountType == null ? AccountType.HUMAN : accountType;
+    }
 }
