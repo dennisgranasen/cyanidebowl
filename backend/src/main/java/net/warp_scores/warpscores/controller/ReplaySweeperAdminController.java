@@ -5,6 +5,7 @@ import net.warp_scores.warpscores.service.PyBb3Client;
 import net.warp_scores.warpscores.service.ReplaySweeperService;
 import net.warp_scores.warpscores.service.ReplayAnalysisBackfillService;
 import net.warp_scores.warpscores.service.ReplayArtifactService;
+import net.warp_scores.warpscores.service.FetchDataService;
 import net.warp_scores.warpscores.domain.persistence.ReplayDownloadRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.identity.IdentityUtil;
@@ -24,6 +25,7 @@ public class ReplaySweeperAdminController {
     private static final String OWNER="replay-sweeper";
     private final ReplaySweeperService service;
     private final PyBb3Client pybb3;
+    private final FetchDataService fetchDataService;
     private final ReplayDownloadRepository downloads;
     private final ReplayAnalysisBackfillService analysis;
     private final MatchRepository matches;
@@ -33,6 +35,7 @@ public class ReplaySweeperAdminController {
     @GetMapping("/logs") public Object logs(){return service.logs();}
     @PutMapping public Map<String,Object> update(@RequestBody Settings value){service.update(value.enabled(),value.cron(),value.zoneId(),value.batchSize(),value.steamUsername());return service.status();}
     @PostMapping("/run") public Map<String,Object> run(){boolean accepted=service.run();var status=new HashMap<>(service.status());status.put("accepted",accepted);return status;}
+    @PostMapping("/scan-matches") public Map<String,Object> scanMatches(){fetchDataService.fetchNewMatches();return Map.of("status","COMPLETED");}
     @GetMapping("/replays") public Object replays(){var cutoff=java.util.Date.from(java.time.Instant.now().minus(java.time.Duration.ofDays(Math.max(1,availabilityWindowDays))));return downloads.findTop50ByAttemptedAtAfterOrderByAttemptedAtDesc(cutoff).stream().map(replay->{
         var result=new java.util.LinkedHashMap<String,Object>();
         result.put("matchId",replay.getMatchId());result.put("gameId",replay.getGameId());

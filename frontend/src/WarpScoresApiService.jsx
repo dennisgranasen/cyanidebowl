@@ -178,6 +178,8 @@ export default {
     putDataWithAuthentication('/admin/replay-sweeper', data, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   runReplaySweeper: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
     postDataWithAuthentication('/admin/replay-sweeper/run', {}, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  scanCyanideMatches: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication('/admin/replay-sweeper/scan-matches', {}, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   authenticateReplaySweeper: async (data, getAccessTokenSilently, getAccessTokenWithPopup) =>
     postDataWithAuthentication('/admin/replay-sweeper/auth', data, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   replaySweeperGuardCode: async (id, code, getAccessTokenSilently, getAccessTokenWithPopup) =>
