@@ -548,9 +548,68 @@ const diceExpression = (details = {}) => {
   return dice.length > 1 ? `${raw} = ${total}` : raw;
 };
 
+const INJURY_OUTCOMES = {
+  0: 'Stunned',
+  1: 'Reserve',
+  2: 'KO',
+  3: 'Badly Hurt',
+  4: 'Casualty',
+};
+
+const CASUALTY_OUTCOMES = {
+  0: 'No Casualty',
+  1: 'Badly Hurt',
+  2: 'Seriously Hurt',
+  3: 'Serious Injury',
+  4: 'Lasting Injury',
+  5: 'Smashed Knee',
+  6: 'Head Injury',
+  7: 'Broken Arm',
+  8: 'Neck Injury',
+  9: 'Dislocated Shoulder',
+  10: 'Dead',
+};
+
+const damageOutcomeLabel = (event) => {
+  const details = event?.details || {};
+  const rawType = String(event?.rawEventType || event?.type || '').trim().toLowerCase();
+  const value = details.result ?? details.resultId;
+  const numeric = Number(value);
+
+  if (rawType === 'injury' || event?.type === 'INJURY') {
+    const injury = Number.isInteger(numeric) && INJURY_OUTCOMES[numeric] != null
+      ? INJURY_OUTCOMES[numeric]
+      : typeof value === 'string' && value
+        ? humanizeType(value)
+        : null;
+    const casualty = (details.effects || []).find((effect) =>
+      String(effect?.type || '').trim().toLowerCase() === 'casualty');
+    if (injury === 'Casualty' && casualty?.outcome != null) {
+      const casualtyNumeric = Number(casualty.outcome);
+      const casualtyLabel = Number.isInteger(casualtyNumeric)
+        && CASUALTY_OUTCOMES[casualtyNumeric] != null
+        ? CASUALTY_OUTCOMES[casualtyNumeric]
+        : humanizeType(String(casualty.outcome));
+      return `Casualty · ${casualtyLabel}`;
+    }
+    return injury;
+  }
+
+  if (rawType === 'casualty' || event?.type === 'CASUALTY') {
+    if (Number.isInteger(numeric) && CASUALTY_OUTCOMES[numeric] != null) {
+      return CASUALTY_OUTCOMES[numeric];
+    }
+    return typeof value === 'string' && value ? humanizeType(value) : null;
+  }
+
+  if (rawType === 'death' || event?.type === 'DEATH') return 'Dead';
+  return null;
+};
+
 const eventResult = (event) => {
   const details = event?.details || {};
-  return details.resultName
+  return damageOutcomeLabel(event)
+    || details.resultName
     || details.weather
     || details.result
     || (details.resultId != null ? `Result ${details.resultId}` : null);

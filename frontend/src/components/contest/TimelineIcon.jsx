@@ -103,6 +103,114 @@ function RedCardIcon({ size }) {
   />;
 }
 
+function RedCrossIcon({ size }) {
+  const thickness = Math.max(4, Math.round(size * 0.22));
+  return <Box position="relative" w={`${size}px`} h={`${size}px`} color="red.500">
+    <Box
+      position="absolute"
+      left="50%"
+      top="8%"
+      bottom="8%"
+      w={`${thickness}px`}
+      bg="currentColor"
+      transform="translateX(-50%)"
+      borderRadius="1px"
+    />
+    <Box
+      position="absolute"
+      top="50%"
+      left="8%"
+      right="8%"
+      h={`${thickness}px`}
+      bg="currentColor"
+      transform="translateY(-50%)"
+      borderRadius="1px"
+    />
+  </Box>;
+}
+
+function KoIcon({ size }) {
+  return <Box
+    as="span"
+    fontSize={`${Math.max(10, Math.round(size * 0.52))}px`}
+    fontWeight="black"
+    letterSpacing="-0.05em"
+    lineHeight="1"
+  >
+    KO
+  </Box>;
+}
+
+const injuryOutcome = (event) => {
+  const details = event?.details || {};
+  const value = details.result ?? details.resultId;
+  const numeric = Number(value);
+  if (Number.isInteger(numeric)) {
+    return {
+      0: 'stunned',
+      1: 'reserve',
+      2: 'ko',
+      3: 'badly_hurt',
+      4: 'casualty',
+    }[numeric] || null;
+  }
+  return normalized(value);
+};
+
+const casualtyOutcome = (event) => {
+  const details = event?.details || {};
+  const casualty = (details.effects || []).find((effect) =>
+    normalized(effect?.type) === 'casualty');
+  const value = casualty?.outcome
+    ?? (normalized(event?.rawEventType) === 'casualty' ? details.result : null);
+  const numeric = Number(value);
+  if (Number.isInteger(numeric)) {
+    return {
+      0: 'no_casualty',
+      1: 'badly_hurt',
+      2: 'seriously_hurt',
+      3: 'serious_injury',
+      4: 'lasting_injury',
+      5: 'smashed_knee',
+      6: 'head_injury',
+      7: 'broken_arm',
+      8: 'neck_injury',
+      9: 'dislocated_shoulder',
+      10: 'dead',
+    }[numeric] || null;
+  }
+  return normalized(value);
+};
+
+function DamageIcon({ event, size }) {
+  const type = normalized(event?.type);
+  const injury = injuryOutcome(event);
+  const casualty = casualtyOutcome(event);
+
+  if (type === 'death' || casualty === 'dead') {
+    return <Box as={FaSkull} boxSize={`${size}px`} color="gray.900" _dark={{ color: 'red.300' }}/>;
+  }
+
+  if (type === 'casualty' || injury === 'casualty') {
+    if (casualty === 'badly_hurt') {
+      return <MdHealing size={size} color="var(--chakra-colors-red-500)"/>;
+    }
+    if (casualty === 'lasting_injury' || casualty === 'smashed_knee') {
+      return <MdWarning size={size} color="var(--chakra-colors-red-500)"/>;
+    }
+    if (casualty === 'head_injury') {
+      return <MdPsychology size={size} color="var(--chakra-colors-red-500)"/>;
+    }
+    return <RedCrossIcon size={size}/>;
+  }
+
+  if (injury === 'stunned') return <MdStars size={size}/>;
+  if (injury === 'ko') return <KoIcon size={size}/>;
+  if (injury === 'badly_hurt') return <MdHealing size={size}/>;
+  if (injury === 'reserve') return <MdDirectionsRun size={size}/>;
+  return <MdHealing size={size}/>;
+}
+
 export default function TimelineIcon({ event, size = 20 }) {
   const type = normalized(event?.type);
   const rawType = normalized(event?.rawEventType);
@@ -132,8 +240,9 @@ export default function TimelineIcon({ event, size = 20 }) {
     return <Icon size={size}/>;
   }
   if (type === 'interception') return <MdFrontHand size={size}/>;
-  if (type === 'casualty' || type === 'death') return <FaSkull size={size}/>;
-  if (type === 'injury') return <MdHealing size={size}/>;
+  if (type === 'casualty' || type === 'injury' || type === 'death') {
+    return <DamageIcon event={event} size={size}/>;
+  }
   if (type === 'check') return <MdWarning size={size}/>;
   if (type === 'ball_loose') return <MdSportsFootball size={size}/>;
   if (type === 'match_start') return <MdStar size={size}/>;
