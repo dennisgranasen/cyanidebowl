@@ -30,6 +30,8 @@ const EVENT_STYLE = {
   FOUL: { glyph: 'F', label: 'Foul', size: 30 },
   PASS: { glyph: '↗', label: 'Pass', size: 30 },
   HANDOFF: { glyph: 'H', label: 'Handoff', size: 30 },
+  CHECK: { glyph: '×', label: 'Failed check', size: 30 },
+  REROLL: { glyph: '⚄', label: 'Reroll', size: 30 },
   TURNOVER: { glyph: '!', label: 'Turnover', size: 30 },
   POSSESSION: { glyph: '●', label: 'Possession change', size: 30 },
   BALL_LOOSE: { glyph: '○', label: 'Loose ball', size: 30 },
@@ -63,6 +65,154 @@ const humanizeType = (type = '') => type
   .map((part) => part[0]?.toUpperCase() + part.slice(1))
   .join(' ');
 
+const normalizedNarrativeType = (event) =>
+  String(event?.type || '').trim().toLowerCase();
+
+const checkOutcome = (check) => {
+  if (check?.outcome != null) return String(check.outcome).trim().toLowerCase();
+  const attempts = Array.isArray(check?.attempts) ? check.attempts : [];
+  const last = attempts.length ? attempts[attempts.length - 1] : null;
+  return last?.outcome == null ? '' : String(last.outcome).trim().toLowerCase();
+};
+
+const isFailedCheck = (check) => checkOutcome(check) === 'failed';
+
+const blockHasMajorConsequence = (event) => {
+  const effects = Array.isArray(event?.effects) ? event.effects : [];
+  const checks = Array.isArray(event?.checks) ? event.checks : [];
+
+  if (effects.some((effect) => {
+    const type = String(effect?.type || '').trim().toLowerCase();
+    const outcome = String(effect?.outcome || '').trim().toLowerCase();
+    if (type === 'casualty' || type === 'player_removed') return true;
+    return type === 'injury' && ['ko', 'casualty', 'dead', 'death', 'badly_hurt'].includes(outcome);
+  })) {
+    return true;
+  }
+
+  return checks.some((check) => {
+    const type = String(check?.type || '').trim().toLowerCase();
+    const outcome = checkOutcome(check);
+    return type === 'injury' && ['ko', 'casualty', 'dead', 'death', 'badly_hurt'].includes(outcome);
+  });
+};
+
+const sameNarrativeTurn = (left, right) =>
+  left?.half === right?.half
+  && left?.drive === right?.drive
+  && (left?.team_turn ?? left?.turn) === (right?.team_turn ?? right?.turn);
+
+const eventCausesTurnover = (event, index, events) => {
+  const eventId = String(event?.id ?? '');
+
+  if (events.some((candidate) =>
+    normalizedNarrativeType(candidate) === 'turn_end'
+    && String(candidate?.outcome || '').trim().toLowerCase() === 'turnover'
+    && String(candidate?.caused_by ?? candidate?.details?.caused_by ?? '') === eventId)) {
+    return true;
+  }
+
+  for (let offset = index + 1; offset < Math.min(events.length, index + 6); offset += 1) {
+    const candidate = events[offset];
+    if (!sameNarrativeTurn(event, candidate)) break;
+
+    const type = normalizedNarrativeType(candidate);
+    if (type === 'turn_end') {
+      return String(candidate?.outcome || '').trim().toLowerCase() === 'turnover';
+    }
+
+    if (!['ball_loose', 'bounce', 'scatter', 'possession_changed', 'possession_gained'].includes(type)) {
+      break;
+    }
+  }
+  return false;
+};
+
+const keepInOverviewTimeline = (event, index, events) => {
+  const type = normalizedNarrativeType(event);
+  const checks = Array.isArray(event?.checks) ? event.checks : [];
+
+  if (type === 'move') return checks.some(isFailedCheck);
+  if ([
+    'bounce',
+    'scatter',
+    'kickoff_deviation',
+    'stand_up',
+    'face_up_stunned_players',
+    'turn_end',
+  ].includes(type)) {
+    return false;
+  }
+  if (type === 'block') {
+    return blockHasMajorConsequence(event) || eventCausesTurnover(event, index, events);
+  }
+  return true;
+};
+
+const rerollDisplayEvents = (event, index, resolveParticipant) => {
+  const actor = resolveParticipant(event.actor);
+  const checks = Array.isArray(event?.checks) ? event.checks : [];
+  const result = [];
+
+  checks.forEach((check, checkIndex) => {
+    const attempts = Array.isArray(check?.attempts) ? check.attempts : [];
+    const rerolledAttempts = attempts
+      .map((attempt, attemptIndex) => ({ attempt, attemptIndex }))
+      .filter(({ attempt }) => attempt?.reroll);
+
+    const markers = rerolledAttempts.length
+      ? rerolledAttempts
+      : check?.reroll_used
+        ? [{ attempt: null, attemptIndex: attempts.length > 1 ? attempts.length - 1 : 1 }]
+        : [];
+
+    markers.forEach(({ attempt, attemptIndex }, markerIndex) => {
+      const source = attempt?.reroll ? humanizeType(String(attempt.reroll)) : 'Team';
+      const checkName = humanizeType(check?.type || 'check');
+
+      result.push({
+        id: `pybb3-${event.id ?? index}-reroll-${checkIndex}-${markerIndex}`,
+        type: 'REROLL',
+        title: `${source} reroll · ${checkName}`,
+        sequence: Number(event.id ?? index),
+        eventIndex: index + ((checkIndex + 1) / 100) + ((attemptIndex + 1) / 10000),
+        clock: event.clock,
+        half: event.half,
+        drive: event.drive,
+        turn: event.team_turn ?? event.turn,
+        activeTeamId: event.team_id,
+        teamId: actor?.teamId ?? event.team_id,
+        playerId: actor?.id,
+        playerName: actor?.name,
+        actorPlayerName: actor?.name,
+        rawEventType: 'reroll',
+        checks: [check],
+        details: {
+          rerollSource: source.toLowerCase(),
+          result: attempt?.outcome ?? check?.outcome,
+        },
+      });
+    });
+  });
+
+  return result;
+};
+
+const checkSummary = (check) => {
+  const label = humanizeType(check?.type || 'check');
+  const required = check?.required != null ? ` ${check.required}+` : '';
+  const attempts = Array.isArray(check?.attempts) ? check.attempts : [];
+  const renderedAttempts = attempts.map((attempt) => {
+    const dice = Array.isArray(attempt?.dice) ? attempt.dice.join('+') : '?';
+    const outcome = attempt?.outcome != null ? ` ${humanizeType(String(attempt.outcome))}` : '';
+    const reroll = attempt?.reroll ? ` (${humanizeType(String(attempt.reroll))} reroll)` : '';
+    return `${dice}${outcome}${reroll}`;
+  });
+  return renderedAttempts.length
+    ? `${label}${required}: ${renderedAttempts.join(' → ')}`
+    : `${label}${required}${check?.outcome != null ? `: ${humanizeType(String(check.outcome))}` : ''}`;
+};
+
 const narrativeDisplayEvents = (timeline) => {
   
   if (timeline?.format !== 'pybb3-narrative-timeline') return [];
@@ -82,27 +232,28 @@ const narrativeDisplayEvents = (timeline) => {
     };
   };
 
-  return (timeline.events || [])
-    // The match-card timeline is an overview, not a replay action log.
-    // Routine movement is far too frequent and does not add useful overview
-    // information. The canonical pybb3 timeline remains unmodified and is
-    // still available for AI/narrative use and detailed inspection.
-    .filter((event) => event?.type?.toLowerCase() !== 'move')
-    .map((event, index) => {
+  return (timeline.events || []).flatMap((event, index, events) => {
+    const rerolls = rerollDisplayEvents(event, index, resolveParticipant);
+    if (!keepInOverviewTimeline(event, index, events)) return rerolls;
 
     const actor = resolveParticipant(event.actor);
     const target = resolveParticipant(event.target);
     const effects = Array.isArray(event.effects) ? event.effects : [];
-    const firstRoll = event?.details?.roll
-      || effects.map((effect) => effect?.details).find((details) => details?.dice);
-    const displayType = event.type === 'turn_end' && event.outcome !== 'turnover'
-      ? 'SPECIAL'
-      : NARRATIVE_TYPE[event.type] || 'SPECIAL';
+    const checks = Array.isArray(event.checks) ? event.checks : [];
+    const failedCheck = checks.find(isFailedCheck);
+    const rawType = normalizedNarrativeType(event);
+    const turnoverCaused = (rawType === 'move' && Boolean(failedCheck))
+      || eventCausesTurnover(event, index, events);
+    const displayType = rawType === 'move' && failedCheck
+      ? 'CHECK'
+      : NARRATIVE_TYPE[rawType] || 'SPECIAL';
 
-    return {
+    const projectedEvent = {
       id: `pybb3-${event.id ?? index}`,
       type: displayType,
-      title: humanizeType(event.type),
+      title: rawType === 'move' && failedCheck
+        ? `Failed ${humanizeType(failedCheck.type)}`
+        : humanizeType(event.type),
       sequence: Number(event.id ?? index),
       eventIndex: index,
       clock: event.clock,
@@ -116,13 +267,16 @@ const narrativeDisplayEvents = (timeline) => {
       actorPlayerName: actor?.name,
       affectedPlayerName: target?.name,
       rawEventType: event.type,
+      turnoverCaused,
+      checks,
       details: {
         ...(event.details || {}),
         result: event.outcome,
-        dice: firstRoll?.dice,
         effects,
       },
     };
+
+    return [projectedEvent, ...rerolls];
   });
 };
 
@@ -345,7 +499,8 @@ function TeamWatermark({ match, index }) {
 function EventTooltip({ event, match, children }) {
   const index = laneTeamIndex(event);
   const details = event.details || {};
-  const roll = diceExpression(details);
+  const checks = Array.isArray(event.checks) ? event.checks : [];
+  const roll = checks.length ? null : diceExpression(details);
   const result = eventResult(event);
   const people = eventPeople(event);
 
@@ -357,6 +512,11 @@ function EventTooltip({ event, match, children }) {
       <Text fontSize="xs">{timelinePosition(event) || `Replay step ${event.sequence}`}</Text>
       {index >= 0 && <Text fontSize="sm" mt={1}>{teamName(match, index)}</Text>}
       {people.map((line) => <Text key={line} fontSize="sm">{line}</Text>)}
+      {checks.map((check, checkIndex) => (
+        <Text key={`${check.type || 'check'}-${checkIndex}`} fontSize="sm" mt={checkIndex === 0 ? 1 : 0}>
+          {checkSummary(check)}
+        </Text>
+      ))}
       {roll && <Text fontSize="sm" mt={1}>Roll: {roll}</Text>}
       {result && <Text fontSize="sm">Result: {result}</Text>}
       {event.score && <Text fontSize="sm">Score: {event.score.home}–{event.score.away}</Text>}
@@ -403,7 +563,11 @@ function TimelineMarker({ event, match, left, laneOffset = 0 }) {
         h={`${style.size}px`}
         borderRadius="full"
         borderWidth="2px"
-        borderColor={event.sppAwarded != null ? 'purple.400' : neutral ? 'gray.400' : 'gray.500'}
+        borderColor={event.turnoverCaused
+          ? 'red.500'
+          : event.sppAwarded != null
+            ? 'purple.400'
+            : neutral ? 'gray.400' : 'gray.500'}
         bg={event.sppAwarded != null ? 'purple.50' : 'white'}
         color="gray.800"
         fontWeight="bold"
@@ -441,7 +605,8 @@ function TimelineMarker({ event, match, left, laneOffset = 0 }) {
 function DetailedEvent({ event, match, children }) {
   const index = laneTeamIndex(event);
   const details = event.details || {};
-  const roll = diceExpression(details);
+  const checks = Array.isArray(event.checks) ? event.checks : [];
+  const roll = checks.length ? null : diceExpression(details);
   const result = eventResult(event);
   const people = eventPeople(event);
 
@@ -458,6 +623,11 @@ function DetailedEvent({ event, match, children }) {
     </HStack>
     <Text fontWeight="semibold">{event.title || eventStyle(event).label}</Text>
     {people.map((line) => <Text key={line} fontSize="sm">{line}</Text>)}
+    {checks.map((check, checkIndex) => (
+      <Text key={`${check.type || 'check'}-${checkIndex}`} fontSize="sm">
+        {checkSummary(check)}
+      </Text>
+    ))}
     {roll && <Text fontSize="sm">Roll: {roll}</Text>}
     {result && <Text fontSize="sm">Result: {result}</Text>}
     {event.score && <Text fontSize="sm">Score: {event.score.home}–{event.score.away}</Text>}

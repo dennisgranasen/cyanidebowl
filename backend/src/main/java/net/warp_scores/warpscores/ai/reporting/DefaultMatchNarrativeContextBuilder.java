@@ -45,7 +45,7 @@ public class DefaultMatchNarrativeContextBuilder implements MatchNarrativeContex
         if (Set.of("match_start", "match_end").contains(type)) return true;
         if ("turn_end".equals(type)) return "turnover".equals(event.get("outcome"));
         if ("move".equals(type)) {
-            return "failed".equals(event.get("outcome")) || !maps(event.get("effects")).isEmpty();
+            return hasFailedCheck(event) || !maps(event.get("effects")).isEmpty();
         }
         return !Set.of("face_up_stunned_players", "new_game_phase", "stand_up").contains(type);
     }
@@ -57,6 +57,7 @@ public class DefaultMatchNarrativeContextBuilder implements MatchNarrativeContex
         if (Set.of("foul", "chainsaw_foul", "possession_changed").contains(type)) return 0.86;
         if (Set.of("ball_loose", "interception", "special_card", "fireball", "zap").contains(type)) return 0.82;
         if ("prevented".equals(event.get("outcome"))) return 0.78;
+        if (hasFailedCheck(event)) return 0.76;
         if (Set.of("pass", "handoff", "throw_team_mate", "block").contains(type)) return 0.72;
         return 0.55;
     }
@@ -90,9 +91,21 @@ public class DefaultMatchNarrativeContextBuilder implements MatchNarrativeContex
         if (hasEffect(event, "casualty")) increment(signals, "casualties");
         if (hasEffectOutcome(event, "injury", "ko")) increment(signals, "kos");
         if (hasEffect(event, "player_removed")) increment(signals, "removals");
-        if (hasEffectOutcome(event, "foul_appearance", "failed")) {
+        if (hasEffectOutcome(event, "foul_appearance", "failed")
+                || hasCheckOutcome(event, "foul_appearance", "failed")) {
             increment(signals, "foulAppearanceFailures");
             if (!"prevented".equals(event.get("outcome"))) increment(signals, "preventedActions");
+        }
+
+        for (Map<String,Object> check : maps(event.get("checks"))) {
+            String checkType = Objects.toString(check.get("type"), "");
+            String outcome = checkOutcome(check);
+            if ("failed".equals(outcome)) {
+                increment(signals, "failedChecks");
+                if ("dodge".equals(checkType)) increment(signals, "failedDodges");
+                if ("rush".equals(checkType)) increment(signals, "failedRushes");
+            }
+            if (Boolean.TRUE.equals(check.get("reroll_used"))) increment(signals, "rerollsUsed");
         }
     }
 
@@ -103,6 +116,24 @@ public class DefaultMatchNarrativeContextBuilder implements MatchNarrativeContex
     private static boolean hasEffectOutcome(Map<String,Object> event, String type, String outcome) {
         return maps(event.get("effects")).stream().anyMatch(effect ->
                 type.equals(effect.get("type")) && outcome.equals(effect.get("outcome")));
+    }
+
+    private static boolean hasCheckOutcome(Map<String,Object> event, String type, String outcome) {
+        return maps(event.get("checks")).stream().anyMatch(check ->
+                type.equals(check.get("type")) && outcome.equals(checkOutcome(check)));
+    }
+
+    private static boolean hasFailedCheck(Map<String,Object> event) {
+        return maps(event.get("checks")).stream()
+                .anyMatch(check -> "failed".equals(checkOutcome(check)));
+    }
+
+    private static String checkOutcome(Map<String,Object> check) {
+        Object explicit = check.get("outcome");
+        if (explicit != null) return Objects.toString(explicit, "");
+        List<Map<String,Object>> attempts = maps(check.get("attempts"));
+        if (attempts.isEmpty()) return "";
+        return Objects.toString(attempts.get(attempts.size() - 1).get("outcome"), "");
     }
 
     private static void increment(Map<String,Integer> signals, String key) {
