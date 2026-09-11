@@ -27,6 +27,27 @@ import { FaCow, FaShoePrints, FaSkull } from 'react-icons/fa6';
 
 const normalized = (value) => String(value || '').trim().toLowerCase();
 
+function KickIcon({ size }) {
+  return <Box position="relative" w={`${size}px`} h={`${size}px`}>
+    <Box
+      as={FaShoePrints}
+      position="absolute"
+      left="0"
+      bottom="0"
+      boxSize={`${Math.round(size * 0.72)}px`}
+      transform="rotate(-28deg)"
+    />
+    <Box
+      as={MdSportsFootball}
+      position="absolute"
+      right="-1px"
+      top="-1px"
+      boxSize={`${Math.round(size * 0.48)}px`}
+      transform="rotate(-18deg)"
+    />
+  </Box>;
+}
+
 const weatherIcon = (event) => {
   const details = event?.details || {};
   const text = [
@@ -53,7 +74,7 @@ const kickoffIcon = (event) => {
   if (detail === 'quick_snap') return MdDirectionsRun;
   if (detail === 'riot' || detail === 'throw_a_rock' || detail === 'officious_ref') return MdWarning;
   if (detail === 'changing_weather') return weatherIcon(event);
-  return MdSportsFootball;
+  return KickIcon;
 };
 
 function PowIcon({ size }) {

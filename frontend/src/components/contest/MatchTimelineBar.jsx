@@ -189,7 +189,8 @@ const rerollDisplayEvents = (event, index, resolveParticipant) => {
         id: `pybb3-${event.id ?? index}-reroll-${checkIndex}-${markerIndex}`,
         type: 'REROLL',
         title: `${source} reroll · ${checkName}`,
-        sequence: Number(event.id ?? index),
+        sequence: index,
+        replayEventId: event.id,
         eventIndex: index + ((checkIndex + 1) / 100) + ((attemptIndex + 1) / 10000),
         clock: event.clock,
         half: event.half,
@@ -252,6 +253,71 @@ const overviewResultLabel = (event) => {
     || details.result
     || event?.outcome
     || null;
+};
+
+const DAMAGE_TYPES = new Set(['INJURY', 'CASUALTY', 'DEATH']);
+
+const damageConsequence = (event) => ({
+  type: event.type,
+  playerName: event.affectedPlayerName || event.playerName || null,
+  result: eventResult(event),
+  rawEventType: event.rawEventType,
+});
+
+const collapseDamageChains = (events) => {
+  const byReplayId = new Map(
+    events
+      .filter((event) => event.replayEventId != null)
+      .map((event) => [String(event.replayEventId), event]),
+  );
+  const suppressed = new Set();
+  const consequencesByRoot = new Map();
+
+  const rootCause = (event) => {
+    let current = event;
+    const seen = new Set();
+    while (current?.causedByReplayEventId != null) {
+      const key = String(current.causedByReplayEventId);
+      if (seen.has(key)) break;
+      seen.add(key);
+      const parent = byReplayId.get(key);
+      if (!parent) break;
+      current = parent;
+    }
+    return current;
+  };
+
+  events.forEach((event) => {
+    if (!DAMAGE_TYPES.has(event.type) || event.causedByReplayEventId == null) return;
+    const root = rootCause(event);
+    if (!root || root === event || DAMAGE_TYPES.has(root.type)) return;
+
+    suppressed.add(event.id);
+    const previous = consequencesByRoot.get(root.id) || [];
+    const consequence = damageConsequence(event);
+    const duplicate = previous.some((item) =>
+      item.type === consequence.type
+      && item.playerName === consequence.playerName
+      && item.result === consequence.result);
+    if (!duplicate) consequencesByRoot.set(root.id, [...previous, consequence]);
+  });
+
+  return events
+    .filter((event) => !suppressed.has(event.id))
+    .map((event) => {
+      const consequences = consequencesByRoot.get(event.id);
+      if (!consequences?.length) return event;
+      return {
+        ...event,
+        details: {
+          ...(event.details || {}),
+          consequences: [
+            ...((event.details || {}).consequences || []),
+            ...consequences,
+          ],
+        },
+      };
+    });
 };
 
 const groupOverviewEvents = (events) => {
@@ -356,10 +422,25 @@ const narrativeDisplayEvents = (timeline) => {
 
     const actor = resolveParticipant(event.actor);
     const target = resolveParticipant(event.target);
-    const effects = Array.isArray(event.effects) ? event.effects : [];
+    const effects = (Array.isArray(event.effects) ? event.effects : []).map((effect) => ({
+      ...effect,
+      subject: resolveParticipant(effect?.subject),
+    }));
     const checks = Array.isArray(event.checks) ? event.checks : [];
     const failedCheck = checks.find(isFailedCheck);
     const rawType = normalizedNarrativeType(event);
+    const damageSubject = effects
+      .filter((effect) => ['injury', 'casualty', 'player_removed'].includes(
+        String(effect?.type || '').trim().toLowerCase(),
+      ))
+      .map((effect) => effect.subject)
+      .find((subject) => subject?.kind === 'player');
+    const affected = target
+      || damageSubject
+      || (['injury', 'casualty', 'death'].includes(rawType) && actor?.kind === 'player'
+        ? actor
+        : null);
+    const actorPlayer = actor?.kind === 'player' ? actor : null;
     const turnoverCaused = (rawType === 'move' && Boolean(failedCheck))
       || eventCausesTurnover(event, index, events);
     const displayType = rawType === 'move' && failedCheck
@@ -372,18 +453,20 @@ const narrativeDisplayEvents = (timeline) => {
       title: rawType === 'move' && failedCheck
         ? `Failed ${humanizeType(failedCheck.type)}`
         : humanizeType(event.type),
-      sequence: Number(event.id ?? index),
+      sequence: index,
+      replayEventId: event.id,
+      causedByReplayEventId: event.caused_by ?? event.details?.caused_by ?? null,
       eventIndex: index,
       clock: event.clock,
       half: event.half,
       drive: event.drive,
       turn: event.team_turn ?? event.turn,
       activeTeamId: event.team_id,
-      teamId: actor?.teamId ?? event.team_id,
-      playerId: actor?.id,
-      playerName: actor?.name,
-      actorPlayerName: actor?.name,
-      affectedPlayerName: target?.name,
+      teamId: affected?.teamId ?? actorPlayer?.teamId ?? event.team_id,
+      playerId: actorPlayer?.id ?? affected?.id,
+      playerName: actorPlayer?.name ?? affected?.name,
+      actorPlayerName: actorPlayer?.name,
+      affectedPlayerName: affected?.name,
       rawEventType: event.type,
       turnoverCaused,
       checks,
@@ -391,13 +474,17 @@ const narrativeDisplayEvents = (timeline) => {
         ...(event.details || {}),
         result: event.outcome,
         effects,
+        causeUnknown: ['injury', 'casualty', 'death'].includes(rawType)
+          && event.caused_by == null
+          && event.details?.caused_by == null
+          && !event.details?.sourceActionType,
       },
     };
 
     return [projectedEvent, ...rerolls];
   });
 
-  return groupOverviewEvents(projected);
+  return groupOverviewEvents(collapseDamageChains(projected));
 };
 
 const teamIndex = (event) => {
@@ -432,9 +519,21 @@ const laneTeamIndex = (event) => {
   return -1;
 };
 
+const displayHalf = (event) => {
+  const explicit = Number(event?.half);
+  if (explicit === 1 || explicit === 2) return explicit;
+  const turn = Number(event?.turn);
+  if (Number.isInteger(turn) && turn >= 1 && turn <= 16) return turn <= 8 ? 1 : 2;
+  return null;
+};
+
+const globalTurn = (event) => {
+  const turn = Number(event?.turn);
+  return Number.isInteger(turn) && turn >= 1 && turn <= 16 ? turn : null;
+};
+
 const timelinePosition = (event) => [
-  event?.half ? `Half ${event.half}` : null,
-  event?.drive ? `Drive ${event.drive}` : null,
+  displayHalf(event) ? `${displayHalf(event)}H` : null,
   event?.turn != null ? `Turn ${event.turn}` : null,
 ].filter(Boolean).join(' · ');
 
@@ -513,6 +612,15 @@ const eventPeople = (event) => {
   if (event?.type !== 'APOTHECARY' && details.sourceActionType) {
     lines.push(`From: ${details.sourceActionType}${details.selfInflicted ? ' (self-inflicted)' : ''}`);
   }
+  (details.consequences || []).forEach((consequence) => {
+    const result = consequence.result ? ` · ${humanizeType(String(consequence.result))}` : '';
+    if (consequence.playerName) {
+      lines.push(`${humanizeType(consequence.type)}: ${consequence.playerName}${result}`);
+    }
+  });
+  if (details.causeUnknown && ['INJURY', 'CASUALTY', 'DEATH'].includes(event?.type)) {
+    lines.push('Cause: Unknown');
+  }
   lines = [...new Set(lines.filter(Boolean))];
   if (!lines.length && event.playerId != null) lines.push(`Replay player ID: ${event.playerId}`);
   return lines;
@@ -523,11 +631,8 @@ const chronological = (left, right) =>
   || Number(left?.eventIndex || 0) - Number(right?.eventIndex || 0);
 
 const turnKey = (event) => {
-  const half = Number(event?.half);
-  const turn = Number(event?.turn);
-  return (half === 1 || half === 2) && Number.isInteger(turn) && turn >= 1 && turn <= 8
-    ? `${half}:${turn}`
-    : null;
+  const turn = globalTurn(event);
+  return turn != null ? `turn:${turn}` : null;
 };
 
 const buildTurnRanges = (events) => events.reduce((ranges, event) => {
@@ -542,17 +647,16 @@ const buildTurnRanges = (events) => events.reduce((ranges, event) => {
 }, new Map());
 
 const logicalPosition = (event, turnRanges, minSequence, maxSequence) => {
-  const half = Number(event?.half);
-  const turn = Number(event?.turn);
+  const half = displayHalf(event);
+  const turn = globalTurn(event);
   const sequence = Number(event?.sequence);
   const key = turnKey(event);
 
   if (key) {
-    // Turn N occupies the interval between ticks N-1 and N. Sequence is used
-    // only inside that interval, preserving both Blood Bowl turn structure and
-    // the actual replay order of multiple events in the same turn.
+    // Turns 1–16 occupy the sixteen timeline segments. pybb3 exposes the
+    // second half as global turns 9–16.
     const segment = 100 / 16;
-    const segmentIndex = (half - 1) * 8 + (turn - 1);
+    const segmentIndex = turn - 1;
     const start = segmentIndex * segment;
     const range = turnRanges.get(key);
     const fraction = range && range.max > range.min && Number.isFinite(sequence)
