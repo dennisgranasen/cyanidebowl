@@ -13,6 +13,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class DefaultMatchNarrativeFactsBuilder implements MatchNarrativeFactsBuilder {
     private final MatchRepository matchRepository;
+    private final MatchNarrativeContextBuilder narrativeContextBuilder;
 
     @Override
     public MatchNarrativeFacts build(ReplayAnalysis analysis) {
@@ -26,15 +27,25 @@ public class DefaultMatchNarrativeFactsBuilder implements MatchNarrativeFactsBui
         score.put("home", teams.length > 0 ? teams[0].getScore() : null);
         score.put("away", teams.length > 1 ? teams[1].getScore() : null);
 
-        List<Map<String,Object>> sourceEvents =
-                nonEmpty(analysis.getMatchEvents())
-                        ? analysis.getMatchEvents()
-                        : safeList(analysis.getCanonicalActions());
-
-        List<Map<String,Object>> events = sourceEvents.stream()
-                .map(DefaultMatchNarrativeFactsBuilder::normaliseEvent)
-                .filter(event -> !event.isEmpty())
-                .toList();
+        Map<String,Object> narrativeContext = narrativeContextBuilder.build(analysis.getTimeline());
+        List<Map<String,Object>> events;
+        Object keyEvents = narrativeContext.get("keyEvents");
+        if (keyEvents instanceof List<?> list && !list.isEmpty()) {
+            events = list.stream()
+                    .filter(Map.class::isInstance)
+                    .map(Map.class::cast)
+                    .map(DefaultMatchNarrativeFactsBuilder::stringKeyMap)
+                    .toList();
+        } else {
+            List<Map<String,Object>> sourceEvents =
+                    nonEmpty(analysis.getMatchEvents())
+                            ? analysis.getMatchEvents()
+                            : safeList(analysis.getCanonicalActions());
+            events = sourceEvents.stream()
+                    .map(DefaultMatchNarrativeFactsBuilder::normaliseEvent)
+                    .filter(event -> !event.isEmpty())
+                    .toList();
+        }
 
         Map<String,Object> statistics = new LinkedHashMap<>();
         statistics.put("eventTypeCounts", safeMap(analysis.getEventTypeCounts()));
@@ -51,6 +62,7 @@ public class DefaultMatchNarrativeFactsBuilder implements MatchNarrativeFactsBui
                 .score(score)
                 .events(events)
                 .statistics(statistics)
+                .narrativeContext(narrativeContext)
                 .historicalContext(List.of())
                 .build();
     }
@@ -110,6 +122,12 @@ public class DefaultMatchNarrativeFactsBuilder implements MatchNarrativeFactsBui
                 return;
             }
         }
+    }
+
+    private static Map<String,Object> stringKeyMap(Map<?,?> source) {
+        Map<String,Object> result = new LinkedHashMap<>();
+        source.forEach((key, value) -> result.put(String.valueOf(key), value));
+        return result;
     }
 
     private static boolean nonEmpty(List<?> list) {

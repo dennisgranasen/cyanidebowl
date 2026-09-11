@@ -357,6 +357,9 @@ export default function ReplayAnalysisPanel({ replay, match, loading, error, onD
   const casualtyDice = diceStats.filter((row) => row.category === 'injury' && row.label === 'Casualty');
   const matchEvents = analysis?.matchEvents || [];
   const weatherEvents = analysis?.weatherEvents || matchEvents.filter((event) => event.type === 'WEATHER');
+  const narrativeTimeline = analysis?.timeline?.format === 'pybb3-narrative-timeline'
+    ? analysis.timeline
+    : null;
   const hasCanonical = stats.length > 0 || (analysis?.canonicalActions?.length || 0) > 0;
 
   return <VStack align="stretch" spacing={5}>
@@ -384,7 +387,10 @@ export default function ReplayAnalysisPanel({ replay, match, loading, error, onD
 
       {!hasCanonical && analysis.analysisConfidence !== 'RAW_BB2' && <Alert status="info"><AlertIcon/>Ingen canonical action-statistik hittades i den lagrade analysen. Reanalysera replayen med parser version 4 eller senare.</Alert>}
       <WeatherPanel events={weatherEvents}/>
-      <MatchTimelineBar events={matchEvents} match={match}/>
+      {analysis.sourceFormat === 'BB3' && !narrativeTimeline && <Alert status="info"><AlertIcon/>
+        Den lagrade replayanalysen saknar pybb3 narrative timeline. Reanalysera replayen för att bygga tidslinjen.
+      </Alert>}
+      <MatchTimelineBar timeline={narrativeTimeline} events={narrativeTimeline ? [] : matchEvents} match={match}/>
       <D6Table rows={actionD6} match={match} title="Actions"/>
       <D6Table rows={traitD6} match={match} title="Skill & trait checks"/>
       <D6Table rows={recoveryD6} match={match} title="Injury & recovery checks"/>

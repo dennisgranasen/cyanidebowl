@@ -26,12 +26,104 @@ const EVENT_STYLE = {
   KICKOFF: { glyph: 'KO', label: 'Kick-off', size: 32 },
   KICKOFF_DETAIL: { glyph: 'K', label: 'Kick-off event', size: 28 },
   WEATHER: { glyph: '☁', label: 'Weather', size: 30 },
+  BLOCK: { glyph: 'B', label: 'Block', size: 30 },
+  FOUL: { glyph: 'F', label: 'Foul', size: 30 },
+  PASS: { glyph: '↗', label: 'Pass', size: 30 },
+  HANDOFF: { glyph: 'H', label: 'Handoff', size: 30 },
+  TURNOVER: { glyph: '!', label: 'Turnover', size: 30 },
+  POSSESSION: { glyph: '●', label: 'Possession change', size: 30 },
+  BALL_LOOSE: { glyph: '○', label: 'Loose ball', size: 30 },
+  SPECIAL: { glyph: '★', label: 'Special event', size: 30 },
 };
 
 const eventStyle = (event) => EVENT_STYLE[event?.type] || {
   glyph: '•',
   label: event?.title || event?.type || 'Event',
   size: 28,
+};
+
+const NARRATIVE_TYPE = {
+  touchdown: 'TOUCHDOWN',
+  pass: 'PASS',
+  interception: 'INTERCEPTION',
+  handoff: 'HANDOFF',
+  block: 'BLOCK',
+  foul: 'FOUL',
+  chainsaw_foul: 'FOUL',
+  kick_off_table: 'KICKOFF',
+  weather_roll: 'WEATHER',
+  turn_end: 'TURNOVER',
+  possession_changed: 'POSSESSION',
+  ball_loose: 'BALL_LOOSE',
+};
+
+const humanizeType = (type = '') => type
+  .split('_')
+  .filter(Boolean)
+  .map((part) => part[0]?.toUpperCase() + part.slice(1))
+  .join(' ');
+
+const narrativeDisplayEvents = (timeline) => {
+  
+  if (timeline?.format !== 'pybb3-narrative-timeline') return [];
+
+  const players = new Map(
+    (timeline?.match?.players || []).map((player) => [String(player.id), player]),
+  );
+  const resolveParticipant = (participant) => {
+    if (!participant) return null;
+    const player = participant.kind === 'player'
+      ? players.get(String(participant.id))
+      : null;
+    return {
+      ...participant,
+      name: participant.name || player?.name,
+      teamId: participant.team_id ?? player?.team_id,
+    };
+  };
+
+  return (timeline.events || [])
+    // The match-card timeline is an overview, not a replay action log.
+    // Routine movement is far too frequent and does not add useful overview
+    // information. The canonical pybb3 timeline remains unmodified and is
+    // still available for AI/narrative use and detailed inspection.
+    .filter((event) => event?.type?.toLowerCase() !== 'move')
+    .map((event, index) => {
+
+    const actor = resolveParticipant(event.actor);
+    const target = resolveParticipant(event.target);
+    const effects = Array.isArray(event.effects) ? event.effects : [];
+    const firstRoll = event?.details?.roll
+      || effects.map((effect) => effect?.details).find((details) => details?.dice);
+    const displayType = event.type === 'turn_end' && event.outcome !== 'turnover'
+      ? 'SPECIAL'
+      : NARRATIVE_TYPE[event.type] || 'SPECIAL';
+
+    return {
+      id: `pybb3-${event.id ?? index}`,
+      type: displayType,
+      title: humanizeType(event.type),
+      sequence: Number(event.id ?? index),
+      eventIndex: index,
+      clock: event.clock,
+      half: event.half,
+      drive: event.drive,
+      turn: event.team_turn ?? event.turn,
+      activeTeamId: event.team_id,
+      teamId: actor?.teamId ?? event.team_id,
+      playerId: actor?.id,
+      playerName: actor?.name,
+      actorPlayerName: actor?.name,
+      affectedPlayerName: target?.name,
+      rawEventType: event.type,
+      details: {
+        ...(event.details || {}),
+        result: event.outcome,
+        dice: firstRoll?.dice,
+        effects,
+      },
+    };
+  });
 };
 
 const teamIndex = (event) => {
@@ -374,11 +466,14 @@ function DetailedEvent({ event, match, children }) {
   </Box>;
 }
 
-export default function MatchTimelineBar({ events = [], match }) {
+export default function MatchTimelineBar({ timeline, events = [], match }) {
   const [logOpen, setLogOpen] = React.useState(false);
-  if (!events.length) return null;
+  const sourceEvents = timeline?.format === 'pybb3-narrative-timeline'
+    ? narrativeDisplayEvents(timeline)
+    : events;
+  if (!sourceEvents.length) return null;
 
-  const ordered = [...events].sort(chronological);
+  const ordered = [...sourceEvents].sort(chronological);
   const sequences = ordered
     .map((event) => Number(event.sequence))
     .filter((value) => Number.isFinite(value));

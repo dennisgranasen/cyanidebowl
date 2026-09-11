@@ -15,5 +15,6 @@ public class MatchNarrativeFacts {
     Map<String,Object> score;
     List<Map<String,Object>> events;
     Map<String,Object> statistics;
+    Map<String,Object> narrativeContext;
     List<Map<String,Object>> historicalContext;
 }

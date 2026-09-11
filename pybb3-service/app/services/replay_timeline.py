@@ -15,6 +15,7 @@ import re
 import xml.etree.ElementTree as ET
 from typing import Any, Iterable
 
+from bb3.replay import Replay
 from app.services.replay_decoders import Bb3ActionDecoder, action_dicts, decode_message
 from app.services.replay_player_identity import build_player_index, enrich_match_event
 
@@ -347,6 +348,30 @@ def _kickoff_details(event: ET.Element) -> dict[str, Any]:
         "resultId": _first(event, ("KickOffResult", "KickoffResult", "Result", "Outcome", "EventId")),
         "resultName": _first(event, ("KickOffEventName", "KickoffEventName", "ResultName", "EventName", "Name")),
     }
+
+
+class ReplayTimelineError(ValueError):
+    """Raised when pybb3 cannot produce its canonical narrative timeline."""
+
+
+def build_replay_timeline(xml_content: bytes) -> dict[str, Any]:
+    """Return pybb3's canonical compact narrative timeline.
+
+    This deliberately mirrors tools/replay_timeline.py --narrative in pybb3.
+    BlaskScore must not maintain a second protocol-level timeline parser.
+    """
+    try:
+        timeline = Replay.from_xml(xml_content).timeline().to_narrative_dict()
+    except Exception as exc:
+        raise ReplayTimelineError("pybb3 could not build the replay narrative timeline") from exc
+
+    if not isinstance(timeline, dict):
+        raise ReplayTimelineError("pybb3 returned a non-object narrative timeline")
+    if timeline.get("format") != "pybb3-narrative-timeline":
+        raise ReplayTimelineError(
+            f"Unexpected pybb3 narrative timeline format: {timeline.get('format')!r}"
+        )
+    return timeline
 
 
 def build_match_events(root: ET.Element, canonical_actions: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
