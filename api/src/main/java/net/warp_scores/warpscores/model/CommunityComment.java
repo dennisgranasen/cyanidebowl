@@ -15,7 +15,7 @@ import java.time.Instant;
 @Document("communityComments")
 @CompoundIndex(name = "comment_target_created", def = "{'targetType': 1, 'targetId': 1, 'createdAt': 1}")
 public class CommunityComment {
-    public enum TargetType { ARTICLE, MATCH, TEAM }
+    public enum TargetType { ARTICLE, MATCH_ARTICLE, MATCH, TEAM }
     public enum AuthorContext { EDITOR, HOME_COACH, AWAY_COACH, SPECTATOR, USER }
 
     @Id

@@ -16,7 +16,7 @@ import java.time.Instant;
 @CompoundIndex(name = "reaction_user_target_unique",
         def = "{'targetType': 1, 'targetId': 1, 'userSubject': 1}", unique = true)
 public class CommunityReaction {
-    public enum TargetType { ARTICLE, COMMENT, MATCH, TEAM }
+    public enum TargetType { ARTICLE, MATCH_ARTICLE, COMMENT, MATCH, TEAM }
     public enum Type {
         POW(1), DOUBLE_POW(2), TRIPLE_POW(3),
         SKULL(-1), DOUBLE_SKULL(-2), TRIPLE_SKULL(-3);

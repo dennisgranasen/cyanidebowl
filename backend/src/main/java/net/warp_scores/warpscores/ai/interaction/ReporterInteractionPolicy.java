@@ -1,6 +1,8 @@
 package net.warp_scores.warpscores.ai.interaction;
 
 import net.warp_scores.warpscores.ai.agents.AiReporterDefinition;
+import org.springframework.stereotype.Component;
+
 import java.util.random.RandomGenerator;
 
 /**
@@ -8,6 +10,7 @@ import java.util.random.RandomGenerator;
  * an enabled reporter with the relevant interaction capability always gives a textual response.
  * Runtime/global disabling is still expected to be enforced by the caller/effective profile.
  */
+@Component
 public class ReporterInteractionPolicy {
     public boolean shouldReact(AiReporterDefinition reporter, double modifier, RandomGenerator rng) {
         return interactionEnabled(reporter) && reporter.getCapabilities().isArticleReactions()

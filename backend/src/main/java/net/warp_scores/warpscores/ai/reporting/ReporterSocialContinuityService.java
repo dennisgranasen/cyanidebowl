@@ -18,6 +18,7 @@ import net.warp_scores.warpscores.ai.context.persistence.AiSocialRelationshipSto
 import net.warp_scores.warpscores.ai.provider.CanonicalLlmResponse;
 import net.warp_scores.warpscores.ai.provider.LlmExecutionService;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
+import net.warp_scores.warpscores.model.CommunityComment;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.MatchArticle;
 import net.warp_scores.warpscores.model.Team;
@@ -30,13 +31,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
+/** Turns public AI social writing into the same durable memory/attitude model as articles. */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ReporterMemoryConsolidationService {
-    private static final String MEMORY_ID_PREFIX = "match-article:";
-
+public class ReporterSocialContinuityService {
     private final AiReporterRegistry reporterRegistry;
     private final MatchRepository matches;
     private final ContextPlanner contextPlanner;
@@ -49,108 +50,102 @@ public class ReporterMemoryConsolidationService {
     private final Set<String> inFlight = ConcurrentHashMap.newKeySet();
 
     @Async
-    public void considerPublished(MatchArticle article) {
-        if (!eligible(article)) return;
-        if (!inFlight.add(article.getId())) return;
-
+    public void considerComment(CommunityComment comment, String matchId) {
+        if (!eligible(comment) || !StringUtils.hasText(matchId)) return;
+        String sourceId = sourceContentId(comment);
+        if (!inFlight.add(sourceId)) return;
         try {
-            consolidate(article);
+            consolidate(comment, matchId, sourceId);
         } catch (Exception e) {
-            log.warn(
-                    "Could not consolidate reporter memory for match article {} reporter {}: {}",
-                    article.getId(),
-                    article.getReporterId(),
-                    e.getMessage(),
-                    e);
+            log.warn("Could not consolidate AI community comment {}: {}",
+                    comment.getId(), e.getMessage(), e);
         } finally {
-            inFlight.remove(article.getId());
+            inFlight.remove(sourceId);
         }
     }
 
-    public void deactivateForArticle(MatchArticle article) {
-        if (article == null || !StringUtils.hasText(article.getId())) return;
-        memoryStore.deactivate(memoryId(article));
-        if (article.getAuthorUserId() != null) {
-            relationshipStore.removeEvidence(
-                    article.getAuthorUserId(),
-                    sourceContentId(article));
+    public void deactivateForComment(CommunityComment comment) {
+        if (comment == null || !StringUtils.hasText(comment.getId())) return;
+        String sourceId = sourceContentId(comment);
+        memoryStore.deactivate(sourceId);
+        if (comment.getAuthorUserId() != null) {
+            relationshipStore.removeEvidence(comment.getAuthorUserId(), sourceId);
         }
     }
 
-    private void consolidate(MatchArticle article) {
-        AiReporterDefinition reporter = reporterRegistry.require(article.getReporterId());
-        SubjectRef root = new SubjectRef(SubjectType.MATCH, article.getMatchId());
+    private void consolidate(CommunityComment comment, String matchId, String sourceId) {
+        String reporterId = comment.getGeneration().getAgentId();
+        AiReporterDefinition reporter = reporterRegistry.require(reporterId);
+        if (reporter.getUserId() == null) return;
 
+        SubjectRef root = new SubjectRef(SubjectType.MATCH, matchId);
         ContextPlan plan = contextPlanner.plan(
                 ContextTaskType.MEMORY_CONSOLIDATION,
-                article.getAuthorUserId(),
+                reporter.getUserId(),
                 root,
                 null,
                 List.of());
         AssembledContext context = contextAssembly.assemble(plan);
+        Map<SubjectRef, String> allowedSubjects = allowedSubjects(matchId, root);
 
-        Map<SubjectRef, String> allowedSubjects = allowedSubjects(article, root);
-        var request = requestFactory.create(reporter, context, article, allowedSubjects);
-        CanonicalLlmResponse response = llm.generate(reporter.getId(), request);
-        ReporterMemoryConsolidationLlmRequestFactory.MemoryCandidate candidate =
-                requestFactory.parse(response.content(), allowedSubjects.keySet());
+        MatchArticle syntheticArticle = new MatchArticle();
+        syntheticArticle.setTitle("Public community comment");
+        syntheticArticle.setBody(comment.getBody());
 
-        // Re-running consolidation for the same article must be idempotent.
-        relationshipStore.removeEvidence(
-                article.getAuthorUserId(),
-                sourceContentId(article));
+        var request = requestFactory.create(
+                reporter, context, syntheticArticle, allowedSubjects);
+        CanonicalLlmResponse response = llm.generate(reporterId, request);
+        var candidate = requestFactory.parse(
+                response.content(), allowedSubjects.keySet());
 
-        for (ReporterMemoryConsolidationLlmRequestFactory.RelationshipObservation observation
-                : candidate.relationships()) {
+        relationshipStore.removeEvidence(reporter.getUserId(), sourceId);
+        for (var observation : candidate.relationships()) {
             SubjectRef subject = observation.subject();
-            AiSocialRelationship.Type type =
-                    subject.type() == SubjectType.TEAM
-                            ? AiSocialRelationship.Type.TEAM_ATTITUDE
-                            : AiSocialRelationship.Type.COACH_ATTITUDE;
-
+            AiSocialRelationship.Type type = subject.type() == SubjectType.TEAM
+                    ? AiSocialRelationship.Type.TEAM_ATTITUDE
+                    : AiSocialRelationship.Type.COACH_ATTITUDE;
             relationshipStore.observeAttitude(
-                    article.getAuthorUserId(),
+                    reporter.getUserId(),
                     reporter.getAlias(),
                     type,
                     subject,
                     allowedSubjects.get(subject),
-                    sourceContentId(article),
+                    sourceId,
                     observation.sentiment(),
                     observation.confidence(),
                     observation.rationale());
         }
 
         if (!candidate.remember()) {
-            memoryStore.deactivate(memoryId(article));
-        } else {
-            String replacementId = memoryId(article);
-            memoryStore.put(
-                    replacementId,
-                    article.getAuthorUserId(),
-                    candidate.body(),
-                    candidate.subjects(),
-                    List.of(sourceContentId(article)));
-
-            Set<String> visibleMemoryIds = context.section(ContextSection.MEMORY).stream()
-                    .map(item -> item.id().startsWith("memory:")
-                            ? item.id().substring("memory:".length())
-                            : item.id())
-                    .collect(java.util.stream.Collectors.toSet());
-            List<String> supersede = candidate.supersedeMemoryIds().stream()
-                    .filter(visibleMemoryIds::contains)
-                    .toList();
-            memoryStore.supersede(
-                    supersede,
-                    article.getAuthorUserId(),
-                    replacementId);
+            memoryStore.deactivate(sourceId);
+            return;
         }
+
+        memoryStore.put(
+                sourceId,
+                reporter.getUserId(),
+                candidate.body(),
+                candidate.subjects(),
+                List.of(sourceId));
+
+        Set<String> visibleMemoryIds = context.section(ContextSection.MEMORY).stream()
+                .map(item -> item.id().startsWith("memory:")
+                        ? item.id().substring("memory:".length())
+                        : item.id())
+                .collect(Collectors.toSet());
+        memoryStore.supersede(
+                candidate.supersedeMemoryIds().stream()
+                        .filter(visibleMemoryIds::contains)
+                        .toList(),
+                reporter.getUserId(),
+                sourceId);
     }
 
-    private Map<SubjectRef, String> allowedSubjects(MatchArticle article, SubjectRef root) {
+    private Map<SubjectRef, String> allowedSubjects(String matchId, SubjectRef root) {
         Map<SubjectRef, String> result = new LinkedHashMap<>();
         result.put(root, "this match");
 
-        matches.findFirstByMatchId(article.getMatchId()).ifPresent(match -> {
+        matches.findFirstByMatchId(matchId).ifPresent(match -> {
             if (match.getCompetitionId() != null) {
                 result.put(
                         new SubjectRef(
@@ -192,31 +187,21 @@ public class ReporterMemoryConsolidationService {
             }
         });
 
-        if (StringUtils.hasText(article.getLeagueSystemId())) {
-            result.put(
-                    new SubjectRef(
-                            SubjectType.LEAGUE_SYSTEM,
-                            article.getLeagueSystemId()),
-                    "LeagueSystem " + article.getLeagueSystemId());
-        }
         return result;
     }
 
-    private static boolean eligible(MatchArticle article) {
-        return article != null
-                && article.getStatus() == MatchArticle.Status.PUBLISHED
-                && article.getAuthorType() == MatchArticle.AuthorType.AI
-                && StringUtils.hasText(article.getId())
-                && StringUtils.hasText(article.getMatchId())
-                && StringUtils.hasText(article.getReporterId())
-                && article.getAuthorUserId() != null;
+    private static boolean eligible(CommunityComment comment) {
+        return comment != null
+                && StringUtils.hasText(comment.getId())
+                && comment.getDeletedAt() == null
+                && comment.getAuthorUserId() != null
+                && comment.getGeneration() != null
+                && comment.getGeneration().hasAiGeneration()
+                && StringUtils.hasText(comment.getGeneration().getAgentId())
+                && StringUtils.hasText(comment.getBody());
     }
 
-    private static String memoryId(MatchArticle article) {
-        return MEMORY_ID_PREFIX + article.getId();
-    }
-
-    private static String sourceContentId(MatchArticle article) {
-        return "match-article:" + article.getId();
+    private static String sourceContentId(CommunityComment comment) {
+        return "community-comment:" + comment.getId();
     }
 }

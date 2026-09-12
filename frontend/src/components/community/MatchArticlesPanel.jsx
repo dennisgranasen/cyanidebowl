@@ -7,6 +7,8 @@ import { DeleteIcon } from '@chakra-ui/icons';
 import useAuth0WithUserPermissions from '../../hooks/useAuth0WithUserPermissions';
 import EditorialCommunityApi from '../../EditorialCommunityApi';
 import AiReporterApi from '../../AiReporterApi';
+import CommentThread from './CommentThread';
+import ReactionBar from './ReactionBar';
 
 const statusScheme = {
   DRAFT: 'gray',
@@ -81,6 +83,15 @@ function ArticleCard({
         </HStack>
         <Text mt={3} whiteSpace="pre-wrap">{article.body}</Text>
       </>}
+      {article.status === 'PUBLISHED' && !editing && (
+        <Box mt={4}>
+          <Divider mb={3}/>
+          <ReactionBar targetType="MATCH_ARTICLE" targetId={article.id}/>
+          <Box mt={3}>
+            <CommentThread targetType="MATCH_ARTICLE" targetId={article.id}/>
+          </Box>
+        </Box>
+      )}
       {(canEdit || canDelete || canReview) && !editing && (
         <HStack mt={3}>
           {(canEdit || canDelete) && (

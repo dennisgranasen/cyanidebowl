@@ -1,6 +1,8 @@
 package net.warp_scores.warpscores.service;
 
 import lombok.RequiredArgsConstructor;
+import net.warp_scores.warpscores.ai.interaction.MatchArticleAiInteractionService;
+import net.warp_scores.warpscores.ai.reporting.ReporterSocialContinuityService;
 import net.warp_scores.warpscores.domain.persistence.*;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
@@ -31,6 +33,7 @@ public class EditorialCommunityService {
     );
 
     private final ArticleRepository articles;
+    private final MatchArticleRepository matchArticles;
     private final CommunityCommentRepository comments;
     private final CommunityReactionRepository reactions;
     private final MatchPlayerParticipationRepository participation;
@@ -40,6 +43,8 @@ public class EditorialCommunityService {
     private final WarpScoresUserRepository users;
     private final CoachClaimRepository coachClaims;
     private final UserPermissionService permissions;
+    private final MatchArticleAiInteractionService articleAiInteractions;
+    private final ReporterSocialContinuityService reporterSocialContinuity;
 
     public record ReactionSummary(long pow, long doublePow, long triplePow,
                                   long skull, long doubleSkull, long tripleSkull,
@@ -165,12 +170,24 @@ public class EditorialCommunityService {
             comment.setLeagueSystemId(article.getLeagueSystemId());
             comment.setAuthorContext(canEdit(auth, article.getLeagueSystemId())
                     ? CommunityComment.AuthorContext.EDITOR : CommunityComment.AuthorContext.USER);
+        } else if (type == CommunityComment.TargetType.MATCH_ARTICLE) {
+            MatchArticle article = matchArticles.findById(targetId)
+                    .filter(a -> a.getStatus() == MatchArticle.Status.PUBLISHED)
+                    .orElseThrow(() -> new NoSuchElementException("Match article not found"));
+            MatchContext ctx = matchContext(auth, article.getMatchId());
+            comment.setLeagueSystemId(article.getLeagueSystemId());
+            comment.setAuthorContext(ctx.commentContext());
         } else if (type == CommunityComment.TargetType.MATCH) {
             MatchContext ctx = matchContext(auth, targetId);
             comment.setLeagueSystemId(ctx.leagueSystemId());
             comment.setAuthorContext(ctx.commentContext());
         }
-        return comments.save(comment);
+
+        CommunityComment saved = comments.save(comment);
+        if (saved.getTargetType() == CommunityComment.TargetType.MATCH_ARTICLE) {
+            articleAiInteractions.onHumanComment(saved);
+        }
+        return saved;
     }
 
     public void deleteComment(Authentication auth, String commentId) {
@@ -185,6 +202,10 @@ public class EditorialCommunityService {
         comment.setDeletedBySubject(user.subject());
         comment.setBody("");
         comments.save(comment);
+        if (comment.getGeneration() != null
+                && comment.getGeneration().hasAiGeneration()) {
+            reporterSocialContinuity.deactivateForComment(comment);
+        }
     }
 
     public CommunityReaction react(Authentication auth, CommunityReaction.TargetType targetType,
@@ -232,7 +253,7 @@ public class EditorialCommunityService {
 
     public MatchPlayerRating ratePlayer(Authentication auth, String matchId, String playerId, int score) {
         requireAuthenticated(auth);
-        if (score < 0 || score > 10) throw new IllegalArgumentException("score must be 0..10");
+        if (score < -3 || score > 3) throw new IllegalArgumentException("score must be -3..3");
         ensureParticipation(matchId);
         MatchPlayerParticipation p = participation.findByMatchIdAndPlayerId(matchId, playerId)
                 .orElseThrow(() -> new IllegalArgumentException("player is not part of this match"));

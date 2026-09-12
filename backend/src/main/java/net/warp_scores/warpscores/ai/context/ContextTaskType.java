@@ -6,5 +6,6 @@ public enum ContextTaskType {
     EDITORIAL_ARTICLE,
     ARTICLE_COMMENT,
     SOCIAL_REPLY,
+    PLAYER_RATING,
     MEMORY_CONSOLIDATION
 }

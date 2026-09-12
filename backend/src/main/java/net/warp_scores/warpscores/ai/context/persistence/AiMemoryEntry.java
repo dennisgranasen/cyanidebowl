@@ -27,6 +27,9 @@ public class AiMemoryEntry {
     private String body;
     private List<String> sourceContentIds = new ArrayList<>();
     private Boolean active = true;
+    /** Set when a newer durable memory explicitly replaces this one. */
+    private String supersededByMemoryId;
+    private Instant supersededAt;
     private Instant createdAt;
     private Instant updatedAt;
 }

@@ -44,6 +44,10 @@ const EditorialCommunityApi = {
   ratePlayer: async (matchId, playerId, score, getToken) =>
     (await axios.put(`${base}/community/matches/${encodeURIComponent(matchId)}/players/${encodeURIComponent(playerId)}/rating`,
       { score }, { headers: await authHeaders(getToken) })).data,
+  aiPlayerRatings: (matchId) =>
+    get(`/matches/${encodeURIComponent(matchId)}/ai-player-ratings`),
+  generateAiPlayerRatings: (matchId, payload, getToken) =>
+    authPost(`/matches/${encodeURIComponent(matchId)}/ai-player-ratings/generate`, payload, getToken),
   matchArticles: (matchId, getToken) =>
     authGet(`/matches/${encodeURIComponent(matchId)}/articles`, getToken),
   matchArticleCapabilities: (matchId, getToken) =>

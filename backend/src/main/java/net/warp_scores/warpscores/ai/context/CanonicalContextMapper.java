@@ -209,6 +209,7 @@ public class CanonicalContextMapper {
     public SubjectRef targetSubject(CommunityComment.TargetType type, String id) {
         SubjectType subjectType = switch (type) {
             case ARTICLE -> SubjectType.ARTICLE;
+            case MATCH_ARTICLE -> SubjectType.ARTICLE;
             case MATCH -> SubjectType.MATCH;
             case TEAM -> SubjectType.TEAM;
         };

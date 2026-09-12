@@ -80,6 +80,16 @@ public record ContextProfile(
                 7, 10);
     }
 
+    public static ContextProfile playerRating() {
+        return profile("player-rating-v1", 6_000,
+                1, 4,
+                7, 8,
+                7, 10,
+                3, 6,
+                8, 8,
+                10, 10);
+    }
+
     public static ContextProfile memoryConsolidation() {
         return profile("memory-consolidation-v1", 5_000,
                 0, 0,

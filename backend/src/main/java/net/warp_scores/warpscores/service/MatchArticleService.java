@@ -5,6 +5,7 @@ import net.warp_scores.warpscores.ai.agents.AiReporterDefinition;
 import net.warp_scores.warpscores.ai.agents.AiReporterEffectiveProfileService;
 import net.warp_scores.warpscores.ai.agents.AiReporterRegistry;
 import net.warp_scores.warpscores.ai.context.*;
+import net.warp_scores.warpscores.ai.interaction.MatchArticleAiInteractionService;
 import net.warp_scores.warpscores.ai.provider.CanonicalLlmResponse;
 import net.warp_scores.warpscores.ai.provider.LlmExecutionService;
 import net.warp_scores.warpscores.ai.provider.LlmProvider;
@@ -47,6 +48,7 @@ public class MatchArticleService {
     private final MatchReportHistoricalContextService matchReportHistoricalContext;
     private final MatchReportGenerationLlmRequestFactory matchReportFactory;
     private final ReporterMemoryConsolidationService reporterMemory;
+    private final MatchArticleAiInteractionService articleInteractions;
     private final LlmExecutionService llm;
     private final LlmProviderRouter providerRouter;
     private final LlmProviderRegistry providerRegistry;
@@ -165,6 +167,7 @@ public class MatchArticleService {
         article.setUpdatedAt(Instant.now());
         MatchArticle saved = articles.save(article);
         reporterMemory.considerPublished(saved);
+        articleInteractions.onPublished(saved);
         return saved;
     }
 
@@ -192,7 +195,11 @@ public class MatchArticleService {
             article.setStatus(MatchArticle.Status.PENDING_REVIEW);
             article.setUpdatedAt(Instant.now());
         }
-        return articles.save(article);
+        MatchArticle saved = articles.save(article);
+        if (saved.getStatus() == MatchArticle.Status.PUBLISHED) {
+            articleInteractions.onPublished(saved);
+        }
+        return saved;
     }
 
     public MatchArticle publish(Authentication auth, String matchId, String articleId) {

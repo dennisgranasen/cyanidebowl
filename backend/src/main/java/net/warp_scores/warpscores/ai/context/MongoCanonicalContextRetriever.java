@@ -239,6 +239,7 @@ public class MongoCanonicalContextRetriever implements CanonicalContextRetriever
     private static SubjectType subjectType(CommunityComment.TargetType type) {
         return switch (type) {
             case ARTICLE -> SubjectType.ARTICLE;
+            case MATCH_ARTICLE -> SubjectType.ARTICLE;
             case MATCH -> SubjectType.MATCH;
             case TEAM -> SubjectType.TEAM;
         };
