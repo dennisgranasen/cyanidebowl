@@ -64,6 +64,8 @@ public class AiGenerationTrace {
 
     private Long durationMs;
     private Instant createdAt;
+    /** Mongo TTL expiration timestamp. */
+    private Instant expiresAt;
 
     private String failureKind;
     private Integer failureStatusCode;

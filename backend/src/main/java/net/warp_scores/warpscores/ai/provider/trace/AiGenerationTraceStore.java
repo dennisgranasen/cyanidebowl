@@ -7,11 +7,13 @@ import net.warp_scores.warpscores.ai.context.ContextSection;
 import net.warp_scores.warpscores.ai.provider.CanonicalLlmRequest;
 import net.warp_scores.warpscores.ai.provider.CanonicalLlmResponse;
 import net.warp_scores.warpscores.ai.provider.LlmProviderException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
@@ -32,6 +34,10 @@ public class AiGenerationTraceStore {
     private static final int MAX_FAILURE_MESSAGE_CHARS = 2_000;
 
     private final AiGenerationTraceRepository repository;
+
+    /** Retention for generation traces; clamped to at least one day. */
+    @Value("${warpscores.ai-reporting.trace-retention-days:30}")
+    private int retentionDays = 30;
 
     public void recordSuccess(
             String reporterId,
@@ -100,7 +106,9 @@ public class AiGenerationTraceStore {
         trace.setProviderId(providerId);
         trace.setModel(request.model());
         trace.setDurationMs(durationMs);
-        trace.setCreatedAt(Instant.now());
+        Instant createdAt = Instant.now();
+        trace.setCreatedAt(createdAt);
+        trace.setExpiresAt(createdAt.plus(Math.max(1, retentionDays), ChronoUnit.DAYS));
 
         var context = request.context();
         trace.setWorldModelVersion(context.worldModelVersion());
