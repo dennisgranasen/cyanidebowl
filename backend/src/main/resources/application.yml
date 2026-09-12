@@ -93,23 +93,42 @@ warpscores:
         base-url: https://generativelanguage.googleapis.com/v1beta        
         timeout: 60s
       openai-compatible:
-        grok:
-          base-url: https://api.x.ai/v1
-          api-key: ${AI_API_KEY_GROK:}
+        groq:
+          base-url: https://api.groq.com/openai/v1
+          api-key: ${AI_API_KEY_GROQ:}
           timeout: 60s
           structured-output: true
-          default-targets:
-        #openrouter:
-        #  base-url: https://...
-        #  api-key: ${AI_API_KEY_OPENROUTER:}
+        openrouter:
+          base-url: https://openrouter.ai/api/v1
+          api-key: ${AI_API_KEY_OPENROUTER:}
+          timeout: 60s
+          structured-output: true
         #local-llm:
         #  base-url: http://localhost:8000/v1
         #  api-key: ${AI_API_KEY_LOCAL:}
         #  structured-output: false
+    # Default editorial/report generation stays on Gemini's free tier.
+    # Add reporter-targets when specific agents should use another model/provider.
     default-targets:
       - provider-id: gemini
-        model: <gemini-model>
-      - provider-id: grok
-        model: grok-4.6
+        model: gemini-3.6-flash
+      - provider-id: groq
+        model: openai/gpt-oss-120b # qwen/qwen3.6-27b
+      - provider-id: openrouter
+        model: openrouter/free
+    reporter-targets:
+      aeltharion-quill:
+        - provider-id: gemini
+          model: gemini-3.6-flash
+      alaric-penworth:
+        - provider-id: groq
+          model: openai/gpt-oss-120b
+      amenhotep-den-47e:
+        - provider-id: groq
+          model: qwen/qwen3.6-27b
+      lady-putridia:
+        - provider-id: openrouter
+          model: openrouter/free
+        
   ai-reporting:
     enabled: false # Set to true to enable AI reporting, must fix implementation first.

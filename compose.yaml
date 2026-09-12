@@ -72,8 +72,8 @@ services:
 
       # AI agents
       - AI_API_KEY_GEMINI=${AI_API_KEY_GEMINI}
-      - AI_API_KEY_GROK=${AI_API_KEY_GROK}
-      #- AI_API_KEY_OPENROUTER=${AI_API_KEY_OPENROUTER}
+      - AI_API_KEY_GROQ=${AI_API_KEY_GROQ}
+      - AI_API_KEY_OPENROUTER=${AI_API_KEY_OPENROUTER}
       #- AI_API_KEY_LOCAL=${AI_API_KEY_LOCAL}
 
     healthcheck:

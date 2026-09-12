@@ -62,6 +62,16 @@ public class GeminiLlmProvider implements LlmProvider {
     }
 
     @Override
+    public boolean isConfigured() {
+        return properties.getApiKey() != null && !properties.getApiKey().isBlank();
+    }
+
+    @Override
+    public String configurationIssue() {
+        return isConfigured() ? null : "Gemini API key is not configured";
+    }
+
+    @Override
     public CanonicalLlmResponse generate(CanonicalLlmRequest request) {
         if (properties.getApiKey() == null || properties.getApiKey().isBlank()) {
             throw new LlmProviderException(

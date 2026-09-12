@@ -199,19 +199,28 @@ export default function MatchArticlesPanel({ matchId }) {
           {!caps.replayAnalyzed ? <Alert status="warning"><AlertIcon/>
             AI-reporters kan endast tillfrågas när matchen har en analyserad replay.
           </Alert> : <>
-            <FormControl mb={2}><FormLabel>Reporter</FormLabel>
-              <Select value={reporterId} onChange={e => setReporterId(e.target.value)}>
-                {(caps.reporters || []).map(r => <option key={r.id} value={r.id}>{r.alias}</option>)}
-              </Select>
-            </FormControl>
-            <FormControl><FormLabel>Redaktionell brief (valfritt)</FormLabel>
-              <Textarea value={brief} onChange={e => setBrief(e.target.value)}
-                placeholder="Vinkel, ton eller sådant reportern särskilt ska uppmärksamma…"/></FormControl>
-            <Button mt={3} onClick={requestAi} isLoading={busy}
-              isDisabled={!caps.canRequestAi || !reporterId}>Beställ artikel</Button>
-            <Text mt={2} fontSize="sm" color="gray.500">
-              AI-artiklar publiceras aldrig automatiskt. De hamnar i redaktionell granskning.
-            </Text>
+            {(caps.reporters || []).length === 0 ? (
+              <Alert status="warning"><AlertIcon/>
+                Ingen AI-reporter har en körbar provider/modell-route. Kontrollera modellkonfiguration och API-nyckel.
+              </Alert>
+            ) : <>
+              <FormControl mb={2}><FormLabel>Reporter</FormLabel>
+                <Select value={reporterId} onChange={e => setReporterId(e.target.value)}>
+                  {(caps.reporters || []).map(r =>
+                    <option key={r.id} value={r.id}>
+                      {r.alias} · {r.providerId}/{r.model}
+                    </option>)}
+                </Select>
+              </FormControl>
+              <FormControl><FormLabel>Redaktionell brief (valfritt)</FormLabel>
+                <Textarea value={brief} onChange={e => setBrief(e.target.value)}
+                  placeholder="Vinkel, ton eller sådant reportern särskilt ska uppmärksamma…"/></FormControl>
+              <Button mt={3} onClick={requestAi} isLoading={busy}
+                isDisabled={!caps.canRequestAi || !reporterId}>Beställ artikel</Button>
+              <Text mt={2} fontSize="sm" color="gray.500">
+                AI-artiklar publiceras aldrig automatiskt. De hamnar i redaktionell granskning.
+              </Text>
+            </>}
           </>}
         </Box>
       </>}

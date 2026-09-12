@@ -22,9 +22,13 @@ public class LlmExecutionService {
 
         LlmProviderException lastRetryable = null;
         for (LlmProviderRouter.ModelTarget target : targets) {
+            LlmProvider provider = registry.require(target.providerId());
+            if (!provider.isConfigured()) {
+                continue;
+            }
             CanonicalLlmRequest targeted = withModel(request, target.model());
             try {
-                return registry.require(target.providerId()).generate(targeted);
+                return provider.generate(targeted);
             } catch (LlmProviderException e) {
                 if (!e.retryable()) throw e;
                 lastRetryable = e;
@@ -32,7 +36,8 @@ public class LlmExecutionService {
         }
 
         if (lastRetryable != null) throw lastRetryable;
-        throw new IllegalStateException("No LLM target could execute for reporter " + reporterId);
+        throw new IllegalStateException(
+                "No configured LLM target could execute for reporter " + reporterId);
     }
 
     private static CanonicalLlmRequest withModel(

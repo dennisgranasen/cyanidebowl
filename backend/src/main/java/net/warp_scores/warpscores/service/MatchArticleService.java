@@ -7,6 +7,9 @@ import net.warp_scores.warpscores.ai.agents.AiReporterRegistry;
 import net.warp_scores.warpscores.ai.context.*;
 import net.warp_scores.warpscores.ai.provider.CanonicalLlmResponse;
 import net.warp_scores.warpscores.ai.provider.LlmExecutionService;
+import net.warp_scores.warpscores.ai.provider.LlmProvider;
+import net.warp_scores.warpscores.ai.provider.LlmProviderRegistry;
+import net.warp_scores.warpscores.ai.provider.LlmProviderRouter;
 import net.warp_scores.warpscores.ai.reporting.ArticleGenerationLlmRequestFactory;
 import net.warp_scores.warpscores.domain.persistence.*;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
@@ -38,10 +41,12 @@ public class MatchArticleService {
     private final ContextAssemblyService contextAssembly;
     private final ArticleGenerationLlmRequestFactory requestFactory;
     private final LlmExecutionService llm;
+    private final LlmProviderRouter providerRouter;
+    private final LlmProviderRegistry providerRegistry;
 
     public record ArticleInput(String title, String body) {}
     public record AiRequest(String reporterId, String editorialBrief) {}
-    public record ReporterOption(String id, String alias) {}
+    public record ReporterOption(String id, String alias, String providerId, String model) {}
     public record Capabilities(
             boolean authenticated,
             boolean canWrite,
@@ -71,8 +76,8 @@ public class MatchArticleService {
         boolean analyzed = replayAnalyses.existsById(matchId);
         List<ReporterOption> reporters = ctx.editor() && analyzed
                 ? reporterProfiles.enabledForReports().stream()
-                    .map(r -> new ReporterOption(
-                            r.definition().getId(), r.definition().getAlias()))
+                    .map(r -> runnableReporterOption(r.definition()))
+                    .flatMap(Optional::stream)
                     .toList()
                 : List.of();
         return new Capabilities(
@@ -207,6 +212,7 @@ public class MatchArticleService {
         if (reporter.getUserId() == null) {
             throw new IllegalStateException("Reporter user has not been reconciled");
         }
+        requireRunnableReporter(reporter);
 
         MatchContext ctx = matchContext(auth, matchId);
         ContextPlan plan = contextPlanner.plan(
@@ -249,6 +255,59 @@ public class MatchArticleService {
         article.setCreatedAt(now);
         article.setUpdatedAt(now);
         return articles.save(article);
+    }
+
+    private Optional<ReporterOption> runnableReporterOption(AiReporterDefinition reporter) {
+        try {
+            for (LlmProviderRouter.ModelTarget target : providerRouter.targetsForReporter(reporter.getId())) {
+                LlmProvider provider = providerRegistry.require(target.providerId());
+                if (provider.isConfigured()) {
+                    return Optional.of(new ReporterOption(
+                            reporter.getId(),
+                            reporter.getAlias(),
+                            target.providerId(),
+                            target.model()));
+                }
+            }
+            return Optional.empty();
+        } catch (IllegalArgumentException e) {
+            return Optional.empty();
+        }
+    }
+
+    private void requireRunnableReporter(AiReporterDefinition reporter) {
+        if (runnableReporterOption(reporter).isPresent()) {
+            return;
+        }
+
+        List<LlmProviderRouter.ModelTarget> targets;
+        try {
+            targets = providerRouter.targetsForReporter(reporter.getId());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException(
+                    "AI reporter has an invalid provider/model route: " + e.getMessage(), e);
+        }
+        if (targets.isEmpty()) {
+            throw new IllegalStateException(
+                    "No LLM provider/model route is configured for reporter " + reporter.getId());
+        }
+
+        String issues = targets.stream()
+                .map(target -> {
+                    try {
+                        LlmProvider provider = providerRegistry.require(target.providerId());
+                        String issue = provider.configurationIssue();
+                        return target.providerId() + "/" + target.model()
+                                + ": " + (issue == null ? "not runnable" : issue);
+                    } catch (IllegalArgumentException e) {
+                        return target.providerId() + "/" + target.model()
+                                + ": unknown provider";
+                    }
+                })
+                .collect(Collectors.joining("; "));
+        throw new IllegalStateException(
+                "No configured LLM target is available for reporter "
+                        + reporter.getId() + " (" + issues + ")");
     }
 
     private void publish(MatchArticle article, String reviewer) {

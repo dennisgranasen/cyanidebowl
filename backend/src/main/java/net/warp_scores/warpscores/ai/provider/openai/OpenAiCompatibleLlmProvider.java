@@ -67,6 +67,16 @@ public class OpenAiCompatibleLlmProvider implements LlmProvider {
     }
 
     @Override
+    public boolean isConfigured() {
+        return endpoint.getApiKey() != null && !endpoint.getApiKey().isBlank();
+    }
+
+    @Override
+    public String configurationIssue() {
+        return isConfigured() ? null : providerId + " API key is not configured";
+    }
+
+    @Override
     public CanonicalLlmResponse generate(CanonicalLlmRequest request) {
         if (endpoint.getApiKey() == null || endpoint.getApiKey().isBlank()) {
             throw new LlmProviderException(

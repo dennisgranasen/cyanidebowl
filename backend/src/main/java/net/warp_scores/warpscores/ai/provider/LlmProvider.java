@@ -10,5 +10,18 @@ public interface LlmProvider {
 
     ProviderCapabilities capabilities();
 
+    /**
+     * Local readiness only: verifies that the provider has the configuration
+     * required to execute. It must not make a remote API call.
+     */
+    default boolean isConfigured() {
+        return true;
+    }
+
+    /** Human-readable reason when {@link #isConfigured()} is false. */
+    default String configurationIssue() {
+        return isConfigured() ? null : "Provider is not configured";
+    }
+
     CanonicalLlmResponse generate(CanonicalLlmRequest request);
 }
