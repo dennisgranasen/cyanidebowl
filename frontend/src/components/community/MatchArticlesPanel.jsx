@@ -1,0 +1,220 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Alert, AlertIcon, Badge, Box, Button, Divider, FormControl, FormLabel,
+  Heading, HStack, Input, Select, Spinner, Text, Textarea, VStack,
+} from '@chakra-ui/react';
+import useAuth0WithUserPermissions from '../../hooks/useAuth0WithUserPermissions';
+import EditorialCommunityApi from '../../EditorialCommunityApi';
+
+const statusScheme = {
+  DRAFT: 'gray',
+  PENDING_REVIEW: 'orange',
+  PUBLISHED: 'green',
+  REJECTED: 'red',
+};
+
+function ArticleCard({ article, canReview, onSave, onPublish, onReject }) {
+  const [editing, setEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(article.title);
+  const [editBody, setEditBody] = useState(article.body);
+  const teamReport = article.kind === 'TEAM_REPORT';
+  const coachContribution = article.kind === 'COACH_CONTRIBUTION';
+  const save = async () => {
+    await onSave(article.id, { title: editTitle, body: editBody });
+    setEditing(false);
+  };
+  return (
+    <Box borderWidth="1px" borderRadius="md" p={4}>
+      <HStack mb={2} flexWrap="wrap">
+        {teamReport && <Badge colorScheme="blue">Lagrapport · {article.teamName}</Badge>}
+        {coachContribution && <Badge colorScheme="purple">Coachbidrag</Badge>}
+        {article.authorType === 'AI' && <Badge colorScheme="cyan">AI · {article.reporterAlias}</Badge>}
+        {!teamReport && !coachContribution && <Badge>Blödareblaskan</Badge>}
+        {article.status !== 'PUBLISHED' && (
+          <Badge colorScheme={statusScheme[article.status]}>{article.status}</Badge>
+        )}
+      </HStack>
+      {editing ? <>
+        <Input value={editTitle} onChange={e => setEditTitle(e.target.value)} maxLength={250}/>
+        <Textarea mt={2} minH="220px" value={editBody} onChange={e => setEditBody(e.target.value)}
+          maxLength={100000}/>
+        <HStack mt={2}>
+          <Button size="sm" onClick={save} isDisabled={!editTitle.trim() || !editBody.trim()}>Spara</Button>
+          <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Avbryt</Button>
+        </HStack>
+      </> : <>
+        <Heading size="sm">{article.title}</Heading>
+        <Text fontSize="sm" color="gray.500" mt={1}>Av {article.authorDisplayName}</Text>
+        <Text mt={3} whiteSpace="pre-wrap">{article.body}</Text>
+      </>}
+      {canReview && !editing && (
+        <HStack mt={3}>
+          <Button size="sm" variant="outline" onClick={() => setEditing(true)}>Redigera</Button>
+          {article.status === 'PENDING_REVIEW' && <>
+            <Button size="sm" colorScheme="green" onClick={() => onPublish(article.id)}>Publicera</Button>
+            <Button size="sm" colorScheme="red" variant="outline" onClick={() => onReject(article.id)}>Refusera</Button>
+          </>}
+        </HStack>
+      )}
+    </Box>
+  );
+}
+
+export default function MatchArticlesPanel({ matchId }) {
+  const { isAuthenticated, getAccessTokenSilently } = useAuth0WithUserPermissions();
+  const [articles, setArticles] = useState([]);
+  const [caps, setCaps] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [title, setTitle] = useState('');
+  const [body, setBody] = useState('');
+  const [reporterId, setReporterId] = useState('');
+  const [brief, setBrief] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const token = isAuthenticated ? getAccessTokenSilently : undefined;
+
+  const load = async () => {
+    if (!matchId) return;
+    setLoading(true);
+    setError('');
+    try {
+      const [articleData, capabilityData] = await Promise.all([
+        EditorialCommunityApi.matchArticles(matchId, token),
+        EditorialCommunityApi.matchArticleCapabilities(matchId, token),
+      ]);
+      setArticles(articleData || []);
+      setCaps(capabilityData);
+      if (!reporterId && capabilityData?.reporters?.length) {
+        setReporterId(capabilityData.reporters[0].id);
+      }
+    } catch (e) {
+      setError('Artiklarna kunde inte hämtas.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, [matchId, isAuthenticated]);
+
+  const sections = useMemo(() => ({
+    editorial: articles.filter(a => a.kind === 'EDITORIAL'),
+    team: articles.filter(a => a.kind === 'TEAM_REPORT'),
+    coach: articles.filter(a => a.kind === 'COACH_CONTRIBUTION'),
+  }), [articles]);
+
+  const mutate = async (fn) => {
+    setBusy(true);
+    setError('');
+    try {
+      await fn();
+      await load();
+    } catch (e) {
+      setError(e?.response?.data?.message || e?.message || 'Åtgärden misslyckades.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const create = () => mutate(async () => {
+    const created = await EditorialCommunityApi.createMatchArticle(
+      matchId, { title, body }, getAccessTokenSilently);
+    await EditorialCommunityApi.submitMatchArticle(matchId, created.id, getAccessTokenSilently);
+    setTitle('');
+    setBody('');
+  });
+
+  const requestAi = () => mutate(async () => {
+    await EditorialCommunityApi.requestAiMatchArticle(
+      matchId, { reporterId, editorialBrief: brief }, getAccessTokenSilently);
+    setBrief('');
+  });
+
+  if (loading) return <HStack><Spinner size="sm"/><Text>Hämtar artiklar…</Text></HStack>;
+
+  return (
+    <VStack align="stretch" spacing={5}>
+      {error && <Alert status="error"><AlertIcon/>{error}</Alert>}
+
+      <Box>
+        <Heading size="md" mb={3}>Blödareblaskan</Heading>
+        {sections.editorial.length
+          ? <VStack align="stretch" spacing={3}>{sections.editorial.map(a =>
+              <ArticleCard key={a.id} article={a} canReview={caps?.canReview}
+                onSave={(id, payload) => mutate(() => EditorialCommunityApi.updateMatchArticle(matchId, id, payload, getAccessTokenSilently))}
+                onPublish={id => mutate(() => EditorialCommunityApi.publishMatchArticle(matchId, id, getAccessTokenSilently))}
+                onReject={id => mutate(() => EditorialCommunityApi.rejectMatchArticle(matchId, id, getAccessTokenSilently))}/>)}</VStack>
+          : <Text color="gray.500">Ingen redaktionell artikel har publicerats om matchen ännu.</Text>}
+      </Box>
+
+      {sections.team.length > 0 && <Box>
+        <Heading size="md" mb={1}>Lagens matchrapporter</Heading>
+        <Text fontSize="sm" color="gray.500" mb={3}>
+          Dessa texter är skrivna av lagens coacher och är lagens egna rapporter, inte Blödareblaskans redaktionella material.
+        </Text>
+        <VStack align="stretch" spacing={3}>{sections.team.map(a =>
+          <ArticleCard key={a.id} article={a} canReview={caps?.canReview}
+            onSave={(id, payload) => mutate(() => EditorialCommunityApi.updateMatchArticle(matchId, id, payload, getAccessTokenSilently))}
+            onPublish={id => mutate(() => EditorialCommunityApi.publishMatchArticle(matchId, id, getAccessTokenSilently))}
+            onReject={id => mutate(() => EditorialCommunityApi.rejectMatchArticle(matchId, id, getAccessTokenSilently))}/>)}</VStack>
+      </Box>}
+
+      {sections.coach.length > 0 && <Box>
+        <Heading size="md" mb={3}>Övriga coachbidrag</Heading>
+        <VStack align="stretch" spacing={3}>{sections.coach.map(a =>
+          <ArticleCard key={a.id} article={a} canReview={caps?.canReview}
+            onSave={(id, payload) => mutate(() => EditorialCommunityApi.updateMatchArticle(matchId, id, payload, getAccessTokenSilently))}
+            onPublish={id => mutate(() => EditorialCommunityApi.publishMatchArticle(matchId, id, getAccessTokenSilently))}
+            onReject={id => mutate(() => EditorialCommunityApi.rejectMatchArticle(matchId, id, getAccessTokenSilently))}/>)}</VStack>
+      </Box>}
+
+      {caps?.canWrite && <>
+        <Divider/>
+        <Box>
+          <Heading size="sm" mb={3}>
+            {caps.participatingCoach && caps.teamName
+              ? `Skriv ${caps.teamName}s matchrapport`
+              : 'Skriv artikel om matchen'}
+          </Heading>
+          {caps.participatingCoach && <Alert status="info" mb={3}><AlertIcon/>
+            Rapporten märks som lagets egen matchrapport och publiceras utan redaktörsgodkännande.
+          </Alert>}
+          {!caps.participatingCoach && !caps.canReview && <Alert status="info" mb={3}><AlertIcon/>
+            Som coach utanför matchen skickas artikeln till redaktionen för godkännande.
+          </Alert>}
+          <FormControl mb={2}><FormLabel>Rubrik</FormLabel>
+            <Input value={title} onChange={e => setTitle(e.target.value)} maxLength={250}/></FormControl>
+          <FormControl><FormLabel>Text</FormLabel>
+            <Textarea minH="220px" value={body} onChange={e => setBody(e.target.value)} maxLength={100000}/></FormControl>
+          <Button mt={3} onClick={create} isLoading={busy} isDisabled={!title.trim() || !body.trim()}>
+            {caps.canReview || caps.participatingCoach ? 'Publicera' : 'Skicka för granskning'}
+          </Button>
+        </Box>
+      </>}
+
+      {caps?.canReview && <>
+        <Divider/>
+        <Box>
+          <Heading size="sm" mb={3}>Be en AI-reporter skriva</Heading>
+          {!caps.replayAnalyzed ? <Alert status="warning"><AlertIcon/>
+            AI-reporters kan endast tillfrågas när matchen har en analyserad replay.
+          </Alert> : <>
+            <FormControl mb={2}><FormLabel>Reporter</FormLabel>
+              <Select value={reporterId} onChange={e => setReporterId(e.target.value)}>
+                {(caps.reporters || []).map(r => <option key={r.id} value={r.id}>{r.alias}</option>)}
+              </Select>
+            </FormControl>
+            <FormControl><FormLabel>Redaktionell brief (valfritt)</FormLabel>
+              <Textarea value={brief} onChange={e => setBrief(e.target.value)}
+                placeholder="Vinkel, ton eller sådant reportern särskilt ska uppmärksamma…"/></FormControl>
+            <Button mt={3} onClick={requestAi} isLoading={busy}
+              isDisabled={!caps.canRequestAi || !reporterId}>Beställ artikel</Button>
+            <Text mt={2} fontSize="sm" color="gray.500">
+              AI-artiklar publiceras aldrig automatiskt. De hamnar i redaktionell granskning.
+            </Text>
+          </>}
+        </Box>
+      </>}
+    </VStack>
+  );
+}

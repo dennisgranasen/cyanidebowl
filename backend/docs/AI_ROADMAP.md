@@ -12,10 +12,11 @@
 - **AI-005 / provider core:** implemented.
 - **AI-006 / Gemini adapter:** implemented against the Gemini Interactions API.
 - **AI-007 / OpenAI-compatible Responses + fallback:** implemented; xAI/Grok is the first configured compatible endpoint.
-- **Reporting integration:** canonical request migration in progress.
+- **AI-008 / editorial article generation context:** implemented and checked in.
+- **Match article review/publication integration:** implemented; see `MATCH_ARTICLES.md`.
 - **B-018:** in progress; social/memory persistence and broader domain semantic projection remain.
 - **B-019:** not started.
-- **B-020:** not started.
+- **B-020:** provider-independent article invocation path is implemented; remaining work is scheduling/automation policy.
 
 ## Purpose
 

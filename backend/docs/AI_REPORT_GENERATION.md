@@ -1,5 +1,14 @@
 # AI Match Report Generation
 
+## Editorial publication
+
+Generated prose and editorial publication are separate concerns. An editor/site-admin
+may explicitly ask an enabled AI reporter for an article only when a `ReplayAnalysis`
+exists for the match. The generated text becomes a `MatchArticle` with
+`PENDING_REVIEW`; it is never published directly by the generation pipeline.
+
+See `MATCH_ARTICLES.md` for authorization, review states and UI/API behavior.
+
 Every completed match with a successfully analyzed replay receives at least one AI-generated match report. A second independent report is generated with a default probability of 10%.
 
 ```yaml

@@ -40,6 +40,7 @@ import { getStarPlayerDisplayName, isStarPlayer } from '../../util/starplayerUti
 import ReactionBar from '../community/ReactionBar';
 import CommentThread from '../community/CommentThread';
 import MatchPlayerRatings from '../community/MatchPlayerRatings';
+import MatchArticlesPanel from '../community/MatchArticlesPanel';
 
 const PlayerNameCell = ({ player }) => {
   const playerIsStarPlayer = isStarPlayer(player.name);
@@ -181,6 +182,7 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                   <Tab>Team Stats</Tab>
                   <Tab>Player Rosters</Tab>
                   <Tab>Player Ratings</Tab>
+                  <Tab>Artiklar</Tab>
                   <Tab>Comments</Tab>
                   <Tab>Replay {replay?.available && <Badge ml={1} colorScheme="green">✓</Badge>}</Tab>
                 </TabList>
@@ -489,6 +491,11 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                     {replayMatchId
                       ? <MatchPlayerRatings matchId={replayMatchId} />
                       : <Text color="gray.500">Match-ID saknas; spelarbetyg kan inte laddas.</Text>}
+                  </TabPanel>
+                  <TabPanel>
+                    {replayMatchId
+                      ? <MatchArticlesPanel matchId={replayMatchId} />
+                      : <Text color="gray.500">Match-ID saknas; artiklar kan inte laddas.</Text>}
                   </TabPanel>
                   <TabPanel>
                     {replayMatchId

@@ -10,6 +10,12 @@ const authHeaders = async (getAccessTokenSilently) => {
 };
 
 const get = async (url) => (await axios.get(`${base}${url}`)).data;
+const authGet = async (url, getToken) =>
+  (await axios.get(`${base}${url}`, { headers: await authHeaders(getToken) })).data;
+const authPost = async (url, payload, getToken) =>
+  (await axios.post(`${base}${url}`, payload, { headers: await authHeaders(getToken) })).data;
+const authPut = async (url, payload, getToken) =>
+  (await axios.put(`${base}${url}`, payload, { headers: await authHeaders(getToken) })).data;
 
 const EditorialCommunityApi = {
   articles: (leagueSystemId, limit = 20) =>
@@ -36,6 +42,22 @@ const EditorialCommunityApi = {
   ratePlayer: async (matchId, playerId, score, getToken) =>
     (await axios.put(`${base}/community/matches/${encodeURIComponent(matchId)}/players/${encodeURIComponent(playerId)}/rating`,
       { score }, { headers: await authHeaders(getToken) })).data,
+  matchArticles: (matchId, getToken) =>
+    authGet(`/matches/${encodeURIComponent(matchId)}/articles`, getToken),
+  matchArticleCapabilities: (matchId, getToken) =>
+    authGet(`/matches/${encodeURIComponent(matchId)}/articles/capabilities`, getToken),
+  createMatchArticle: (matchId, payload, getToken) =>
+    authPost(`/matches/${encodeURIComponent(matchId)}/articles`, payload, getToken),
+  updateMatchArticle: (matchId, articleId, payload, getToken) =>
+    authPut(`/matches/${encodeURIComponent(matchId)}/articles/${encodeURIComponent(articleId)}`, payload, getToken),
+  submitMatchArticle: (matchId, articleId, getToken) =>
+    authPost(`/matches/${encodeURIComponent(matchId)}/articles/${encodeURIComponent(articleId)}/submit`, {}, getToken),
+  publishMatchArticle: (matchId, articleId, getToken) =>
+    authPost(`/matches/${encodeURIComponent(matchId)}/articles/${encodeURIComponent(articleId)}/publish`, {}, getToken),
+  rejectMatchArticle: (matchId, articleId, getToken) =>
+    authPost(`/matches/${encodeURIComponent(matchId)}/articles/${encodeURIComponent(articleId)}/reject`, {}, getToken),
+  requestAiMatchArticle: (matchId, payload, getToken) =>
+    authPost(`/matches/${encodeURIComponent(matchId)}/articles/ai`, payload, getToken),
 };
 
 export default EditorialCommunityApi;
