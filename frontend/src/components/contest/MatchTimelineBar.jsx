@@ -495,11 +495,18 @@ const narrativeDisplayEvents = (timeline) => {
   const projected = (timeline.events || []).flatMap((event, index, events) => {
     if (!keepInOverviewTimeline(event, index, events)) return [];
 
-    const actor = resolveParticipant(event.actor);
-    const target = resolveParticipant(event.target);
+    const actor = resolveParticipant(event.actor || event?.details?.passer);
+    const target = resolveParticipant(event.target || event?.details?.receiver);
     const effects = (Array.isArray(event.effects) ? event.effects : []).map((effect) => ({
       ...effect,
       subject: resolveParticipant(effect?.subject),
+    }));
+    const resolution = (Array.isArray(event?.details?.resolution)
+      ? event.details.resolution
+      : []).map((step) => ({
+      ...step,
+      actor: resolveParticipant(step?.actor),
+      target: resolveParticipant(step?.target),
     }));
     const checks = Array.isArray(event.checks) ? event.checks : [];
     const failedCheck = checks.find(isFailedCheck);
@@ -562,6 +569,9 @@ const narrativeDisplayEvents = (timeline) => {
       checks,
       details: {
         ...(event.details || {}),
+        passer: resolveParticipant(event?.details?.passer) || actor,
+        receiver: resolveParticipant(event?.details?.receiver) || target,
+        resolution,
         result: event.outcome,
         effects,
         causeUnknown: ['injury', 'casualty', 'death'].includes(rawType)
@@ -717,6 +727,7 @@ const eventPeople = (event) => {
   const details = event?.details || {};
   const actor = event.actorPlayerName || details.causingPlayerName || event.playerName;
   const affected = event.affectedPlayerName || details.affectedPlayerName || details.injuredPlayerName || details.targetPlayerName;
+  const resolution = Array.isArray(details.resolution) ? details.resolution : [];
 
   let lines = [];
   switch (event?.type) {
@@ -734,6 +745,14 @@ const eventPeople = (event) => {
         actor ? `Passer: ${actor}` : null,
         affected ? `Receiver: ${affected}` : null,
       ];
+      resolution.forEach((step) => {
+        const type = String(step?.type || '').trim().toLowerCase();
+        if (type === 'interception' && step?.actor?.name) {
+          lines.push(`Interceptor: ${step.actor.name}`);
+        } else if (type === 'catch' && step?.actor?.name && step.actor.name !== affected) {
+          lines.push(`Catch: ${step.actor.name}`);
+        }
+      });
       break;
     case 'INTERCEPTION':
       lines = [details.interceptorName || actor ? `Interceptor: ${details.interceptorName || actor}` : null];
