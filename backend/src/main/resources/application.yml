@@ -116,19 +116,20 @@ warpscores:
         model: openai/gpt-oss-120b # qwen/qwen3.6-27b
       - provider-id: openrouter
         model: openrouter/free
-    reporter-targets:
-      aeltharion-quill:
-        - provider-id: gemini
-          model: gemini-3.6-flash
-      alaric-penworth:
-        - provider-id: groq
-          model: openai/gpt-oss-120b
-      amenhotep-den-47e:
-        - provider-id: groq
-          model: qwen/qwen3.6-27b
-      lady-putridia:
-        - provider-id: openrouter
-          model: openrouter/free
+
+    # reporter-targets: # non-gemini currently works ... so-so.
+    #   aeltharion-quill:
+    #     - provider-id: gemini
+    #       model: gemini-3.6-flash
+    #   alaric-penworth:
+    #     - provider-id: groq
+    #       model: openai/gpt-oss-120b
+    #   amenhotep-den-47e:
+    #     - provider-id: groq
+    #       model: qwen/qwen3.6-27b
+    #   lady-putridia:
+    #     - provider-id: openrouter
+    #       model: openrouter/free
         
   ai-reporting:
     enabled: false # Set to true to enable AI reporting, must fix implementation first.

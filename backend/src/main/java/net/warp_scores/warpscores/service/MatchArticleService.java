@@ -36,6 +36,7 @@ public class MatchArticleService {
     private final WarpScoresUserRepository users;
     private final ReplayAnalysisRepository replayAnalyses;
     private final UserPermissionService permissions;
+    private final MatchArticleGenerationGuard generationGuard;
 
     private final AiReporterRegistry reporterRegistry;
     private final AiReporterEffectiveProfileService reporterProfiles;
@@ -223,6 +224,9 @@ public class MatchArticleService {
         }
         requireRunnableReporter(reporter);
 
+        MatchArticleGenerationGuard.Lease generationLease =
+                generationGuard.acquire(matchId, reporter.getId());
+        try {
         MatchContext ctx = matchContext(auth, matchId);
         ReplayAnalysis replayAnalysis = replayAnalyses.findById(matchId)
                 .orElseThrow(() -> new IllegalStateException("Analyzed replay disappeared before generation"));
@@ -274,7 +278,10 @@ public class MatchArticleService {
         article.setOutputTokens(response.usage().outputTokens());
         article.setCreatedAt(now);
         article.setUpdatedAt(now);
-        return articles.save(article);
+            return articles.save(article);
+        } finally {
+            generationLease.close();
+        }
     }
 
     private Optional<ReporterOption> runnableReporterOption(AiReporterDefinition reporter) {

@@ -3,11 +3,13 @@ package net.warp_scores.warpscores.ai.context;
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.domain.persistence.ArticleRepository;
 import net.warp_scores.warpscores.domain.persistence.CommunityCommentRepository;
+import net.warp_scores.warpscores.domain.persistence.MatchArticleRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.domain.persistence.StageSourceRepository;
 import net.warp_scores.warpscores.model.Article;
 import net.warp_scores.warpscores.model.CommunityComment;
 import net.warp_scores.warpscores.model.Match;
+import net.warp_scores.warpscores.model.MatchArticle;
 import net.warp_scores.warpscores.model.StageSource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -32,6 +34,7 @@ public class MongoCanonicalContextRetriever implements CanonicalContextRetriever
 
     private final ArticleRepository articles;
     private final CommunityCommentRepository comments;
+    private final MatchArticleRepository matchArticles;
     private final MatchRepository matches;
     private final StageSourceRepository stageSources;
     private final CanonicalContextMapper mapper;
@@ -73,6 +76,10 @@ public class MongoCanonicalContextRetriever implements CanonicalContextRetriever
                         authorUserId, PageRequest.of(0, candidates))
                 .stream().map(c -> mapper.comment(c, ContextSource.SELF, inheritedSubjects(c)))
                 .forEach(result::add);
+        matchArticles.findByStatusAndAuthorUserIdOrderByPublishedAtDesc(
+                        MatchArticle.Status.PUBLISHED, authorUserId, PageRequest.of(0, candidates))
+                .stream().map(a -> matchArticleContext(a, ContextSource.SELF))
+                .forEach(result::add);
 
         return mostRecent(filterBySubjects(result, subjects), size);
     }
@@ -83,6 +90,15 @@ public class MongoCanonicalContextRetriever implements CanonicalContextRetriever
         int candidates = candidateLimit(size);
         Map<String, ContextItem> result = new LinkedHashMap<>();
         Set<SubjectRef> wanted = subjects == null ? Set.of() : new LinkedHashSet<>(subjects);
+
+        matchArticles.findByStatusOrderByPublishedAtDesc(
+                        MatchArticle.Status.PUBLISHED, PageRequest.of(0, candidates))
+                .stream()
+                .map(a -> matchArticleContext(a, ContextSource.OTHER_USERS))
+                .filter(item -> !Objects.equals(item.authorUserId(), excludingUserId))
+                .filter(item -> wanted.isEmpty()
+                        || item.subjects().stream().anyMatch(wanted::contains))
+                .forEach(item -> result.put(item.id(), item));
 
         for (SubjectRef subject : wanted) {
             switch (subject.type()) {
@@ -161,6 +177,26 @@ public class MongoCanonicalContextRetriever implements CanonicalContextRetriever
     private List<SubjectRef> inheritedSubjects(SubjectRef thread) {
         if (thread.type() != SubjectType.ARTICLE) return List.of();
         return articles.findById(thread.id()).map(mapper::articleSubjects).orElse(List.of());
+    }
+
+    private ContextItem matchArticleContext(MatchArticle article, ContextSource source) {
+        return mapper.matchArticle(article, source, matchArticleSubjects(article));
+    }
+
+    private List<SubjectRef> matchArticleSubjects(MatchArticle article) {
+        if (article.getMatchId() == null || article.getMatchId().isBlank()) return List.of();
+
+        List<SubjectRef> extra = new ArrayList<>();
+        if (article.getLeagueSystemId() != null && !article.getLeagueSystemId().isBlank()) {
+            extra.add(new SubjectRef(SubjectType.LEAGUE_SYSTEM, article.getLeagueSystemId()));
+        }
+        return matches.findFirstByMatchId(article.getMatchId())
+                .map(match -> mapper.match(match, ContextSource.DOMAIN, extra).subjects())
+                .orElseGet(() -> {
+                    List<SubjectRef> fallback = new ArrayList<>(extra);
+                    fallback.add(new SubjectRef(SubjectType.MATCH, article.getMatchId()));
+                    return List.copyOf(fallback);
+                });
     }
 
     private static List<ContextItem> filterBySubjects(Collection<ContextItem> items, Collection<SubjectRef> subjects) {

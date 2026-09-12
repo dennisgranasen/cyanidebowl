@@ -54,9 +54,9 @@ public record ContextProfile(
         return profile("match-report-v1", 8_000,
                 3, 8,
                 2, 4,
-                5, 10,
+                8, 10,
                 4, 10,
-                6, 8,
+                9, 8,
                 10, 12);
     }
 

@@ -65,6 +65,15 @@ public class MatchReportGenerationLlmRequestFactory {
             Statements from coaches, players, reporters or supporters remain attributed
             discourse unless independently supported by authoritative match data.
 
+            Continuity matters. SELF is this reporter's own published history and MEMORY
+            contains durable remembered attitudes or facts. When relevant, carry forward
+            established favourites, grudges, recurring jokes, predictions, pet theories
+            and previous judgements instead of resetting the character for every article.
+            If new evidence undermines an earlier take, react in character: double down,
+            gloat, backpedal, rationalise or admit the mistake as the persona suggests.
+            Never claim to remember, have predicted or have previously said something
+            unless SELF or MEMORY actually supports it.
+
             Do not invent match events, quotations, motives, statistics, injuries or
             outcomes. If the supplied evidence does not support a detail, omit it.
 

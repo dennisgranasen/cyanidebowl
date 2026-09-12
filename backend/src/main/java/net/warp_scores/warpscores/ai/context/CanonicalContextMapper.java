@@ -4,6 +4,7 @@ import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.model.Article;
 import net.warp_scores.warpscores.model.CommunityComment;
 import net.warp_scores.warpscores.model.Match;
+import net.warp_scores.warpscores.model.MatchArticle;
 import net.warp_scores.warpscores.model.Team;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.HtmlUtils;
@@ -68,6 +69,41 @@ public class CanonicalContextMapper {
                 null,
                 comment.getBody(),
                 comment.getGeneration());
+    }
+
+    public ContextItem matchArticle(
+            MatchArticle article,
+            ContextSource source,
+            List<SubjectRef> inheritedSubjects) {
+        Set<SubjectRef> subjects = new LinkedHashSet<>();
+        if (article.getMatchId() != null && !article.getMatchId().isBlank()) {
+            subjects.add(new SubjectRef(SubjectType.MATCH, article.getMatchId()));
+        }
+        if (article.getLeagueSystemId() != null && !article.getLeagueSystemId().isBlank()) {
+            subjects.add(new SubjectRef(SubjectType.LEAGUE_SYSTEM, article.getLeagueSystemId()));
+        }
+        if (inheritedSubjects != null) subjects.addAll(inheritedSubjects);
+
+        SubjectRef thread = article.getMatchId() == null || article.getMatchId().isBlank()
+                ? null
+                : new SubjectRef(SubjectType.MATCH, article.getMatchId());
+        return new ContextItem(
+                "match-article:" + article.getId(),
+                ContextContentType.ARTICLE,
+                source,
+                ContextAuthority.ATTRIBUTED_DISCOURSE,
+                article.getAuthorUserId(),
+                article.getAuthorSubject(),
+                article.getAuthorDisplayName(),
+                firstNonNull(article.getPublishedAt(), article.getUpdatedAt(), article.getCreatedAt()),
+                thread,
+                null,
+                List.copyOf(subjects),
+                List.of(),
+                List.of(),
+                article.getTitle(),
+                article.getBody(),
+                null);
     }
 
     public ContextItem match(Match match, ContextSource source, List<SubjectRef> extraSubjects) {
