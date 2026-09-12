@@ -491,7 +491,7 @@ B-014–B-016 already have established meanings. Execution order is defined by
 
 ### B-017 — Canonical User and AI identity foundation
 
-**Status: Backlog — prerequisite for B-016**
+**Status: Implemented foundation — prerequisite for B-016**
 
 - Use one canonical `User` with `accountType = HUMAN | AI`.
 - Treat older `USER | AI_AGENT` terminology as obsolete.
@@ -509,7 +509,14 @@ B-014–B-016 already have established meanings. Execution order is defined by
 
 ### B-018 — Canonical AI context and world-model contract
 
-**Status: Backlog — prerequisite for B-016**
+**Status: In progress — prerequisite for B-016**
+
+**Implemented slices**
+
+- AI-003: canonical `SubjectRef` / `ContextItem` retrieval with explicit source and authority separation.
+- AI-004: deterministic `ContextProfile`, `ContextPlanner`, `ContextAssembler`, bounded selection and shared world-model policy.
+- AI-005: canonical provider request/response contract, provider registry and configurable provider/model routing.
+- Reporting migration to `CanonicalLlmRequest` is in progress.
 
 - Implement the canonical context envelope: `thread`, `social`, `self`, `discourse`,
   `memory`, `domain`.
@@ -524,6 +531,12 @@ B-014–B-016 already have established meanings. Execution order is defined by
 - The same context contract supports comments, replies, tags and articles.
 - Tests prevent dice/RNG/game/replay/simulation meta-language from leaking into the
   AI-facing world model.
+
+**Remaining**
+
+- persisted/retrievable `social` and `memory` context;
+- broader semantic projection of mechanical source data into in-world domain facts;
+- integration of canonical context into the first persisted generation flow.
 
 ### B-019 — Dedicated Fans community population reconciliation
 

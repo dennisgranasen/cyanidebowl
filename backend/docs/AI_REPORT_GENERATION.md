@@ -10,8 +10,30 @@ match_reporting:
   selection_mode: WEIGHTED_RANDOM
 ```
 
-Flow: replay -> deterministic analysis -> canonical facts -> reporter assignment -> LLM generation -> validation -> persistence/publication -> optional interactions.
+Canonical flow:
 
-The LLM must never invent touchdowns, casualties, blocks, fouls, passes, dice results, skills, score changes, injuries, player participation, turnovers or statistics. Atmosphere, metaphors, humor and crowd reactions may be invented.
+```text
+replay/data
+  -> deterministic analysis and in-world domain projection
+  -> canonical context retrieval
+  -> ContextPlanner / ContextAssembler
+  -> reporter assignment
+  -> CanonicalLlmRequest
+  -> configured LlmProvider
+  -> CanonicalLlmResponse
+  -> semantic/output validation
+  -> persistence/publication + generation provenance
+  -> optional interactions
+```
 
-Reporter identity must remain independent of provider/model. Persist reporter id, provider, model, prompt version, replay-analysis version and generation timestamp.
+The LLM must never invent touchdowns, casualties, blocks, fouls, passes, score changes,
+injuries, player participation, turnovers or statistics. Atmosphere, metaphors, humor
+and crowd reactions may be invented when they do not contradict domain facts.
+
+Internal mechanical/replay terminology is not part of the reporter's ontology. It must
+be projected into observable in-world sporting events before narrative generation.
+
+Reporter identity remains independent of provider/model. Persist canonical author user
+id plus generation mode, agent id/version, provider, model, prompt/context-profile
+version, provider request id, token usage, source revision and generation timestamp when
+available.

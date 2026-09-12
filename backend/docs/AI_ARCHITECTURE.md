@@ -362,6 +362,33 @@ trigger
 Scheduling, quotas and cost control are later operational layers around this pipeline,
 not substitutes for it.
 
+### Implemented canonical seams
+
+The implementation now separates the pipeline into these provider-neutral layers:
+
+```text
+CanonicalContextRetriever
+  -> ContextPlanner / ContextPlan
+  -> ContextAssembler
+  -> AssembledContext
+  -> CanonicalLlmRequest
+  -> LlmProvider
+  -> CanonicalLlmResponse
+```
+
+`ContextItem.source` describes where an item was retrieved from. Authority is separate:
+authored material remains attributed discourse, while deterministic domain projection
+may be marked as domain fact.
+
+Provider adapters must not retrieve application data, rerank context, redefine the
+world model, infer authorization, or reinterpret discourse as domain fact.
+
+Provider/model routing is configuration outside reporter identity. Reporter/persona
+identity therefore remains stable when providers or models change.
+
+Feature-local prompt factories that serialize competing context documents are legacy
+and should be migrated to `CanonicalLlmRequest`.
+
 ---
 
 ## 8. Context selection principles

@@ -2,8 +2,18 @@
 
 > Working branch: `dev`  
 > Scope: AI identity, context, community population and editorial generation  
-> Status: canonical design roadmap  
-> This change is documentation-only. Implementation follows in a later step.
+> Status: active implementation roadmap
+
+## Implementation status — 2026-09-12
+
+- **B-017 / identity + provenance:** implemented foundation.
+- **AI-003 / canonical retrieval:** implemented.
+- **AI-004 / planning + assembly:** implemented.
+- **AI-005 / provider core:** implemented.
+- **Reporting integration:** canonical request migration in progress.
+- **B-018:** in progress; social/memory persistence and broader domain semantic projection remain.
+- **B-019:** not started.
+- **B-020:** not started.
 
 ## Purpose
 
@@ -173,18 +183,21 @@ model, ad-hoc context assembly, missing provenance or an undefined community lif
 
 ---
 
-## Next coding session
+## Current implementation sequence
 
-Implement in this order:
+Continue in this order:
 
-1. Audit current `User`, permissions, `coachClaims`, comments/articles and author fields.
-2. Implement the smallest migration-safe `HUMAN | AI` identity extension.
-3. Add generation provenance without provider-specific coupling.
-4. Add context DTOs/contracts and deterministic context assembly.
-5. Add shared world-model policy and leakage tests.
-6. Implement and unit-test Dedicated Fans reconciliation.
-7. Build the first deterministic direct-tag generation flow.
+1. Finish migration of the old reporting prompt path to `CanonicalLlmRequest`.
+2. Add the first real provider adapter (Gemini) behind `LlmProvider`.
+3. Add an OpenAI-compatible adapter and provider fallback execution.
+4. Complete remaining B-018 social/memory/domain semantic projection.
+5. Implement and unit-test B-019 Dedicated Fans reconciliation.
+6. Build B-020 as a deterministic explicit/direct-tag end-to-end flow.
+7. Persist full provider/model/token provenance from canonical responses.
 8. Reassess B-016 only after B-017 through B-020 are green.
+
+Do not reintroduce feature-local `LlmRequest`/prompt contracts while completing these
+steps. Provider adapters consume the canonical request only.
 
 ## Explicitly out of scope for the foundation
 
