@@ -195,7 +195,7 @@ public class MatchArticleAiInteractionService {
 
         CanonicalLlmResponse response = generate(
                 reporter, ContextTaskType.ARTICLE_COMMENT, context, task, 900);
-        saveGeneratedComment(article, reporter, response, sourceRevision);
+        saveGeneratedComment(article, reporter, response, sourceRevision, null);
     }
 
     private void replyToCommentOnce(
@@ -229,7 +229,7 @@ public class MatchArticleAiInteractionService {
 
         CanonicalLlmResponse response = generate(
                 reporter, ContextTaskType.SOCIAL_REPLY, context, task, 800);
-        saveGeneratedComment(article, reporter, response, sourceRevision);
+        saveGeneratedComment(article, reporter, response, sourceRevision, source.getId());
     }
 
     private CanonicalLlmResponse generate(
@@ -255,7 +255,8 @@ public class MatchArticleAiInteractionService {
             MatchArticle article,
             AiReporterDefinition reporter,
             CanonicalLlmResponse response,
-            String sourceRevision) {
+            String sourceRevision,
+            String replyToCommentId) {
         String body = response.content() == null ? "" : response.content().trim();
         if (body.isBlank()) return;
         if (body.length() > 10_000) body = body.substring(0, 10_000);
@@ -267,6 +268,7 @@ public class MatchArticleAiInteractionService {
         comment.setTargetId(article.getId());
         comment.setLeagueSystemId(article.getLeagueSystemId());
         comment.setAuthorUserId(reporter.getUserId());
+        comment.setReplyToCommentId(replyToCommentId);
         comment.setAuthorSubject(reporter.resolvedUserSubject());
         comment.setAuthorDisplayName(reporter.getAlias());
         comment.setAuthorContext(CommunityComment.AuthorContext.USER);

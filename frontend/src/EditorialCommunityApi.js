@@ -31,9 +31,9 @@ const EditorialCommunityApi = {
     (await axios.post(`${base}/articles`, payload, { headers: await authHeaders(getToken) })).data,
   updateArticle: async (id, payload, getToken) =>
     (await axios.put(`${base}/articles/${id}`, payload, { headers: await authHeaders(getToken) })).data,
-  comment: async (targetType, targetId, body, getToken) =>
+  comment: async (targetType, targetId, body, getToken, replyToCommentId = null) =>
     (await axios.post(`${base}/community/comments/${targetType}/${encodeURIComponent(targetId)}`,
-      { body }, { headers: await authHeaders(getToken) })).data,
+      { body, replyToCommentId }, { headers: await authHeaders(getToken) })).data,
   deleteComment: async (id, getToken) =>
     axios.delete(`${base}/community/comments/${id}`, { headers: await authHeaders(getToken) }),
   react: async (targetType, targetId, type, getToken) =>
