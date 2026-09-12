@@ -5,407 +5,343 @@
 > Reviewed: 2026-09-13  
 > Repository: `dennisgranasen/cyanidebowl`
 
-Work only on `dev` or a short-lived branch created from `dev`. Do not base work on
-`main`.
+`ROADMAP.md` defines execution order. This document contains the detailed work cards
+that are still actionable, followed by a compact record of implemented foundations.
 
-## Goal
-
-`ROADMAP.md` defines the current product execution order. This file holds detailed,
-independently testable work items and their acceptance criteria.
-
-The stabilization/security foundation and the first LeagueSystem/editorial/AI slices are
-already implemented on `dev`. New work should now prioritize LeagueSystem competition
-UX, discovery lifecycle, match/replay enrichment and the remaining AI runtime
-prerequisites without reopening completed foundation work.
+Do not use old `main` behavior as the basis for implementation work.
 
 ## Rules for Codex
 
 1. Read every affected file completely before editing it.
-2. Preserve the new `LeagueSystem`, `Season`, `Stage`, `StageSource`,
-   `MatchInterpretation`, archive-provider, and match-adapter work already on `dev`.
-3. Never commit `.env`, database credentials, Auth0 tokens, Cyanide API keys, Discord
-   tokens, database dumps, or generated data.
-4. Keep Cyanide-disabled local development as the safe default.
-5. Make one focused commit per backlog item and add tests for behavior changes.
-6. If product behavior is unclear, document the question and stop that item instead of
-   inventing behavior.
+2. Preserve the existing `LeagueSystem`, `Season`, `Stage`, `StageSource`,
+   `MatchInterpretation`, archive-provider and match-adapter architecture.
+3. Preserve the canonical authorization model: Auth0 subject identifies the user,
+   `coachClaims` are game-aware coach identities, `siteAdmin` is the super-role and
+   LeagueSystem administration/editorial permissions may be scoped.
+4. Never commit `.env`, database credentials, Auth0 tokens, Cyanide API keys, Steam
+   credentials, database dumps, replay IP addresses or generated secrets.
+5. Keep Cyanide-disabled local development as the safe default.
+6. Add regression coverage for behavior changes.
+7. If product behavior is genuinely ambiguous, document the decision point instead of
+   inventing a second competing model.
 
-
-7. Preserve the canonical authorization model: Auth0 subject identifies the user,
-   `coachClaims` are game-aware coach identities, `siteAdmin` is the super-role, and
-   LeagueSystem administration may be global or scoped to specific LeagueSystems.## Priority overview
+## Priority overview
 
 | Priority | Item | Outcome | Status |
 | --- | --- | --- | --- |
-| P0 | B-001 | Contest fetching works again | Done |
-| P0 | B-002 | Public header-reflection endpoint is removed | Done |
-| P0 | B-003 | Mutation routes reach method security correctly | Done |
-| P0 | B-004 | Authentication/authorization has regression tests | Done |
-| P1 | B-005 | Frontend permission state is deterministic | Partial: targeted hook tests pending |
-| P1 | B-006 | Stage aggregation handles empty/scoped data correctly | Done |
-| P1 | B-007 | The new stage model has an application/API entry point | Done: read API and LeagueSystem admin CRUD |
-| P1 | B-008 | Frontend API duplication and malformed URLs are removed | Done |
-| P2 | B-009 | Profiles, auth configuration, and docs agree | Done |
-| P2 | B-010 | GitHub CI validates backend/frontend and builds ARM64 artifacts | Implemented; test isolation pending green verification |
-| P2 | B-011 | Stale repository metadata/docs are cleaned up | Done |
-| P3 | B-012 | Broad exception/null handling is improved incrementally | Blocked: failure contract decision needed |
-| P1 | B-013 | Admins can search Cyanide and prepare LeagueSystem sources | Done |
-| P1 | B-021 | Season phases/stages and round-by-round UX are complete | Next |
-| P1 | B-022 | Group standings and metadata-driven playoff brackets are complete | Next |
-| P1 | B-023 | Discovery candidates/watchers have a normalized lifecycle | Planned |
-| P1 | B-024 | Match detail and historical enrichment use one normalized contract | Planned |
-| P1 | B-025 | pybb3 timeline/skill-reroll contract is versioned and consumed safely | In progress upstream |
-| P2 | B-026 | Primary LeagueSystem/default public navigation is explicit | Planned |
-| P2 | B-027 | ARM64/Raspberry Pi deployment operations are documented and repeatable | Partial |
+| P1 | B-021 | Remaining round/competition presentation defects are closed | Partial |
+| P1 | B-022 | Remaining standings/playoff series defects are closed | Partial |
+| P1 | B-023 | Interactive discovery gains proactive watches/suggestions | Partial |
+| P1 | B-024 | Historical match detail/enrichment gaps are closed | Partial |
+| P1 | B-025 | Versioned pybb3 timeline/skill-reroll contract is consumed safely | Integration pending upstream |
+| P1 | B-019 | Dedicated Fans population reconciliation | Backlog |
+| P1 | B-020 | Deterministic direct AI textual interaction | Partial |
+| P2 | B-016 | AI scheduling, quotas and cost controls | Deferred until B-019/B-020 |
+| P2 | B-027 | Raspberry Pi operational runbook is complete | Partial |
+| P3 | B-012 | Broad null/exception fallbacks become typed outcomes | Blocked on policy decision |
+| P3 | B-015 | Team comment streams | Blocked on canonical team identity |
 
-## Current status
+## Current baseline
 
+Already implemented:
 
-- User authorization now uses canonical, game-aware `coachClaims`. Legacy parallel
-  coach/admin representations must not be reintroduced. `siteAdmin` acts as the
-  super-role; LeagueSystem administration supports both global and scoped grants.
-- GitHub Actions now runs backend and frontend tests for `dev`/PRs and builds the
-  three ARM64 application images as an Actions artifact only after both suites pass.
-  The remaining B-010 work is to finish isolating server-profile tests from MongoDB,
-  schedulers and external Cyanide calls and verify the workflow green.- B-005 implementation is verified by the frontend build and existing suite; add
-  dedicated hook tests for loading, token failure, backend failure, and logout.
-- The legacy circuit-admin routes are retained for compatibility but `/admin` now
-  manages the LeagueSystem hierarchy.
-- The home page now groups content by LeagueSystem with seasons, stages, and
-  recent results. News, standings, playoff trees, and statistics remain follow-up work.
-- B-012 needs a product decision before changing `CyanideRestApiClient`:
-  callers currently treat `null` as both upstream unavailability and an internal
-  client failure. Decide whether scheduled collection should skip, retry, or fail
-  the job for each outcome before replacing that contract.
+- canonical LeagueSystem/Season/Stage/StageSource model and admin CRUD;
+- LeagueSystem-first public navigation;
+- interactive Cyanide discovery and explicit StageSource registration;
+- stage match APIs and current group/playoff presentation infrastructure;
+- canonical game-aware authorization and scoped administration/editorial permissions;
+- editorial/community articles, comments, reactions and player ratings;
+- canonical AI identity, context assembly, provider abstraction and provenance;
+- Gemini plus OpenAI-compatible execution/fallback;
+- persisted AI social relationships and memory entries;
+- AI article generation/review, interaction decisions, semantic reactions and
+  generation traces;
+- ARM64 CI image builds and Raspberry Pi compose deployment baseline.
 
-- `ROADMAP.md` is the short authoritative execution sequence; this backlog is the
-  detailed work-card catalogue.
-- The immediate product focus is now LeagueSystem competition UX: phase/stage
-  navigation, round-by-round match presentation, standings and metadata-driven playoff
-  brackets.
-- Admin-assisted Cyanide discovery exists, but candidate normalization, monitoring and
-  proactive suggestions remain separate follow-up work.
-- Match/replay work must converge on a normalized detail/timeline contract. The detailed
-  BB3 parser remains in the separate `pybb3` repository and is consumed through the
-  pinned `pybb3-service` dependency.
-- AI provider integration, social/memory persistence, article generation, interaction
-  decisions and generation traces exist. Remaining AI foundation work is domain
-  semantic projection, memory-write policy, Dedicated Fans reconciliation and a
-  deterministic direct interaction flow before B-016 autonomous scheduling.
+Do not reopen those capabilities as broad feature cards. New defects should be tracked
+as focused deltas.
 
 ---
 
-## P0 â€” Must fix before feature work
+## Active core product work
 
-### B-001 â€” Restore contest-fetch candidate collection
+### B-021 — Competition round/presentation correctness
 
-**Confirmed problem**
+**Status: Partial**
 
-In `backend/src/main/java/net/warp_scores/warpscores/service/FetchDataService.java`,
-`fetchCompetitionContests()` creates `competitionsToCollect`, but its stream has no
-terminal operation and never adds anything to the list. Consequently,
-`loadContestsForCompetitions(...)` always receives an empty list.
+The LeagueSystem/Season/Stage UI already exists. This card is only for remaining
+correctness issues.
 
-```java
-List<Competition> competitionsToCollect = new ArrayList<>();
-competitionsNeedingContests.stream()
-        .filter(c -> this.shouldLoadContests(c, lastMatchDateByCompetitionId));
-```
+Remaining work:
 
-**Implementation**
+- make round assignment deterministic when source scheduling/order is misleading;
+- default round views to the latest round with played results;
+- allow groups to have independent current rounds;
+- regression-test known schedules that previously produced an extra/misnumbered round;
+- keep navigation efficient without loading an entire season unnecessarily.
 
-- Replace the dead stream with a collected list or equivalent clear implementation.
-- Preserve the existing `shouldLoadContests` rules.
-- Test in-progress, live-contest, recently played, stale inactive, and
-  scheduler-disabled cases.
+A separate Phase model is **not** required by this card. Add one only if a concrete
+competition cannot be represented cleanly with the existing Season/Stage structure.
 
 **Acceptance criteria**
 
-- Eligible competitions reach `loadContestsForCompetitions`.
-- Ineligible competitions do not trigger Cyanide API calls.
-- Tests fail against the old implementation and pass after the fix.
+- known multi-group seasons produce the expected round count and grouping;
+- existing LeagueSystem/Season/Stage data needs no migration solely for this card;
+- any Phase addition has a concrete unsupported use case and compatibility plan.
 
-### B-002 â€” Remove the public `/debug-headers` endpoint
+### B-022 — Remaining standings/playoff series correctness
 
-**Confirmed problem**
+**Status: Partial**
 
-`DebugController` reflects every incoming header, and `SecurityConfiguration` exposes
-`GET /debug-headers` publicly. This can expose `Authorization`, cookies, proxy headers,
-and other sensitive values.
+Standings/bracket infrastructure already exists. Work from failing historical examples
+instead of rebuilding the bracket feature.
 
-**Files**
+Remaining work:
 
-- `backend/src/main/java/net/warp_scores/warpscores/controller/DebugController.java`
-- `backend/src/main/java/net/warp_scores/warpscores/config/SecurityConfiguration.java`
-
-**Implementation**
-
-- Delete the controller and public matcher if no longer needed.
-- If diagnostics are required, make them `dev`-only and return a fixed allowlist of
-  non-sensitive fields. Never return arbitrary headers.
+- preserve every replay/rematch as an individually inspectable match;
+- keep series result separate from individual on-field results;
+- keep final/bronze and predecessor links deterministic where configured;
+- do not infer rematch identity solely from payload similarity/hash;
+- keep malformed/incomplete topology explicit rather than guessing;
+- preserve raw/pre-penalty score separately from administrative/adjudicated outcome
+  where available.
 
 **Acceptance criteria**
 
-- Server profile returns 401, 403, or 404 for `/debug-headers`.
-- No endpoint reflects arbitrary headers.
-- Production behavior has a regression test.
+- known QF/SF replay/rematch series render every played match exactly once;
+- no match appears in multiple slots unintentionally;
+- regression fixtures cover the historical cases that motivated the fixes.
 
-### B-003 â€” Align HTTP security with mutation controllers
+### B-023 — Proactive discovery watches/suggestions
 
-**Confirmed problem**
+**Status: Partial — interactive search and source registration are implemented**
 
-Controllers use `@PreAuthorize` for circuit and contest mutations, but their HTTP
-matchers are commented out in `SecurityConfiguration`. Since the chain ends with
-`.anyRequest().denyAll()`, valid requests can be rejected before method security runs.
+Do not replace the existing admin search. Remaining work is automation:
 
-Known affected families include:
-
-- `POST/DELETE /circuits/**`
-- `POST /contests/**`
-
-Inspect every non-GET controller mapping; do not rely only on this list.
-
-**Implementation**
-
-- Create an endpoint/method matrix for all controller mappings.
-- Keep read-only public routes public.
-- Let protected mutations through the filter chain only when authenticated.
-- Keep specific permission checks at method level using `@PreAuthorize`.
-- Confirm and document stateless Bearer-token and CSRF behavior.
-- Keep `.anyRequest().denyAll()` as the fallback.
+- normalize provider-specific candidate/watch data at the discovery boundary;
+- periodically suggest new competitions related to registered leagues/coaches;
+- allow incomplete candidates to mature idempotently;
+- deduplicate repeated suggestions;
+- keep inspection lightweight;
+- never enable collection until an administrator explicitly saves a `StageSource`.
 
 **Acceptance criteria**
 
-- Anonymous mutation: 401.
-- Valid token without permission: 403.
-- Valid token with permission: reaches the controller.
-- Unknown route remains denied.
-- Every mutation endpoint appears in an automated security test.
+- application code does not depend on provider filesystem layout;
+- repeated watch runs are idempotent;
+- discovery cannot reset collection checkpoints or implicitly start collection.
 
-### B-004 â€” Add authentication/authorization regression tests
+### B-024 — Historical match-detail/enrichment gaps
 
-Cover:
+**Status: Partial — normalized match-detail UI/pipeline exists**
 
-- public GET without token;
-- protected endpoint without token;
-- malformed/expired token;
-- wrong issuer and wrong audience;
-- correct issuer/audience;
-- `permissions` mapping without `SCOPE_` prefix;
-- missing permission;
-- anonymous and authenticated `/userPermissions`;
-- intended RS256 restriction.
+Remaining work:
 
-Use mocked JWT/security tests. Do not call Auth0 or require credentials/network access.
-Test the explicit `JwtDecoder`, not only YAML properties.
+- backfill missing historical roster/SPP/skill/team-value data when a supported source
+  contains it;
+- resolve BB3 race/team kind through canonical mappings rather than unreliable legacy
+  race IDs;
+- keep enrichment asynchronous/outside overview rendering;
+- make unavailable enrichment explicit/retryable rather than presenting misleading
+  empty data;
+- keep on-field score separate from administrative outcome where both are known.
+
+**Acceptance criteria**
+
+- regression fixtures cover known historical blank-roster/race-mapping failures;
+- opening one match does not trigger unrelated bulk enrichment;
+- current and historical views use the same normalized presentation contract.
+
+### B-025 — Consume the versioned pybb3 timeline contract
+
+**Status: Integration pending upstream contract**
+
+Detailed replay parsing belongs to the separate `pybb3` repository. Cyanidebowl work
+starts at the service/consumer boundary.
+
+Required upstream semantics include:
+
+- ordered half/drive/turn events;
+- actor/target plus semantic reason for an actual test/roll;
+- no fabricated roll for ordinary movement;
+- explicit dodge, rush/GFI, Tentacles and negative-trait checks;
+- explicit kickoff deviation, wizard, Bone-head, Really Stupid, Bloodlust,
+  Foul Appearance and Animal Savagery events where applicable;
+- `skill_rerolls` distinct from generic/team rerolls with compatibility for older
+  payloads;
+- explicit unknown-event provenance instead of misleading generic mappings.
+
+Cyanidebowl tasks:
+
+- pin an agreed upstream pybb3 ref;
+- version/validate the timeline contract in `pybb3-service`;
+- add representative consumer fixtures/tests;
+- render reason/roll/result only when semantically applicable;
+- preserve replay IP redaction in diagnostic/export paths.
 
 ---
 
-## P1 â€” Stabilize current development work
+## Editorial/community follow-up
 
-### B-013 â€” Search Cyanide from LeagueSystem admin
+### B-015 — Enable team comment streams
 
-**Implementation**
+**Status: Blocked**
 
-- Search Cyanide leagues by name or ID and Blood Bowl version from `/admin`.
-- Show the league and competition metadata returned by the lookup flow without
-  fetching matches, contests, teams, or ranks.
-- Let an administrator prepare a returned competition as a season/stage source for
-  the selected LeagueSystem; saving remains an explicit separate action.
-- Register a saved `StageSource` for normal data collection without resetting an
-  existing collection checkpoint.
+The generic community target model already contains TEAM. Do not implement a second
+team-comment model.
 
-**Acceptance criteria**
+Unblock when:
 
-- Searching alone never enables collection and never requests matches.
-- A search result can prefill the existing season/stage/source workflow.
-- Collection starts only when the administrator saves the `StageSource`.
-- Frontend tests and production build pass.
+- one canonical historical/current team identity is stable;
+- the team endpoint reliably resolves that identity;
+- LeagueSystem ownership/scope can be resolved for the team.
 
-### B-005 â€” Simplify and fix frontend permission loading
+Then:
 
-**Confirmed problems** in
-`frontend/src/hooks/useAuth0WithUserPermissions.jsx`:
-
-- `authenticationReady` depends on `isLoading` and `permissionsLoading`, but its effect
-  only listens to `userPermissions`;
-- after `.catch(...)`, the chain continues to `.then(setUserPermissions)` and can set
-  permissions to `undefined`;
-- four state variables/effects coordinate one fetch and have incomplete dependencies.
-
-**Implementation**
-
-- Refactor to one clear effect driven by Auth0 loading/authentication state.
-- Always retain a complete deny-by-default permission object.
-- Anonymous users must not request a token.
-- On failure, remain deny-by-default and expose deterministic ready/error state.
-- Avoid state updates after unmount.
-- Test anonymous, authenticated, loading, token failure, backend failure, and logout.
-
-**Acceptance criteria**
-
-- `userPermissions` is never `undefined`.
-- `authenticationReady` follows the loading flags.
-- Failure never reveals protected UI or creates repeated popup/token loops.
-
-### B-006 â€” Harden stage match aggregation
-
-**Files**
-
-- `backend/src/main/java/net/warp_scores/warpscores/service/StageMatchService.java`
-- `backend/src/test/java/net/warp_scores/warpscores/service/StageMatchServiceTest.java`
-- related repositories/archive providers
-
-**Confirmed/likely issues**
-
-- Empty sources can calculate `lastIndex = -1` and fail validation instead of returning
-  an empty result.
-- Every request calls `MatchInterpretationRepository.findAll()` and scans the full list
-  for every match.
-- First-source-wins duplicate behavior is implicit and undocumented.
-
-**Implementation**
-
-- Return an empty result for an empty valid source.
-- Query only interpretations relevant to the requested stage/matches.
-- Document and test duplicate precedence.
-- Add tests for missing stage, no sources, no matches, missing/reversed boundaries,
-  consolidated/archive duplicates, cross-source duplicates, BB1/BB2/BB3 adapters, and
-  excluded/replacement interpretations.
-
-**Acceptance criteria**
-
-- Empty valid data returns an empty list.
-- Work is bounded to the requested stage and its matches.
-- Boundary and duplicate behavior is deterministic and tested.
-
-### B-007 â€” Connect the stage model to an application boundary
-
-`dev` contains models, repositories, adapters, archive providers, and
-`StageMatchService`, but no clearly discoverable controller or documented command for
-consuming stage matches.
-
-Before implementation, document decisions for:
-
-- read-only endpoint or internal consumer;
-- canonical IDs and URL encoding;
-- response DTO;
-- error mapping;
-- whether writes are migration-only or an admin API.
-
-Do not invent write APIs before these decisions are made.
-
-**Suggested first slice**
-
-- Add a read-only endpoint for one stage's matches.
-- Return 404 for missing stage and 400 for invalid configuration/boundaries.
-- Prefer an API DTO over exposing persistence models.
-- Add controller/service integration tests.
-- Document minimal seed/migration documents for league system, season, stage, and
-  source.
-
-### B-008 â€” Clean up `WarpScoresApiService.jsx`
-
-**Confirmed problems**
-
-- `competitionMatches` is declared twice; the latter overwrites the former.
-- `competitionTeams` generates a URL with a trailing space.
-- A large obsolete Java example remains commented inside JSX.
-- Authenticated helper signatures are inconsistent.
-
-Remove the duplicate, whitespace, and dead code; normalize helper signatures; and add
-request tests asserting method, URL, body, and authentication header. Do not alter API
-semantics during this cleanup.
+- enable TEAM in the existing editorial/community service;
+- render the existing comment thread component on the team page;
+- reuse scoped-editor/site-admin moderation rules.
 
 ---
 
-## P2 â€” Build and documentation hygiene
+## AI work
 
-### B-009 â€” Make profile and auth configuration consistent
+### B-018 residual — Domain semantic projection and memory-write policy
 
-**Confirmed mismatch**
+**Status: Partial foundation**
 
-- Fly uses `SPRING_PROFILES_ACTIVE=server`.
-- production security uses `@Profile("server")`.
-- README tells production users to set `SPRING_PROFILES_ACTIVE="production"`.
+Already implemented:
 
-Preserve `server` unless there is a reason to rename it. Ensure production security
-cannot disappear due to a profile typo. Clarify whether the explicit `JwtDecoder` or
-YAML owns issuer/JWKS/algorithm configuration. Fail server startup clearly for absent or
-unsafe required configuration. Keep the Auth0 audience identical in frontend/backend,
-and document which values are public identifiers versus secrets.
+- canonical context envelope;
+- deterministic retrieval/planning/assembly;
+- social relationship persistence;
+- memory persistence/retrieval;
+- canonical provider requests and provenance.
 
-### B-010 â€” Add GitHub CI for `dev` and pull requests
+Remaining:
 
-The repository now contains a GitHub Actions workflow for pushes and pull requests
-targeting `dev`.
+- translate mechanical replay/game data into in-universe sporting facts before provider
+  invocation;
+- define when memories are written, summarized, superseded or retained;
+- prevent attributed discourse/memory from being promoted to authoritative domain facts;
+- keep direct social flows on the canonical context/provenance path.
 
-**Implemented**
+### B-019 — Dedicated Fans community population reconciliation
 
-- Backend and frontend tests run before image creation.
-- Pull requests run tests only.
-- Successful pushes to `dev` build the ARM64 backend, frontend and pybb3 images.
-- The three images are exported as `cyanidebowl-arm64.tar.gz` with a SHA-256 checksum
-  and retained as a GitHub Actions artifact; no container registry is required.
-- Frontend build-time configuration comes from GitHub repository variables.
-- Production runtime secrets remain on the deployment host and are not copied into
-  GitHub merely to build images.
+**Status: Backlog — prerequisite for B-016**
 
-**Remaining verification**
+- desired active AI-backed `COMMUNITY_MEMBER` population equals team Dedicated Fans
+  value;
+- first reconciliation creates clear team-affine personas;
+- increases reactivate inactive matching identities before creating new identities;
+- decreases deactivate surplus identities without deletion;
+- preserve authored history, reactions, memory, relationships and provenance.
 
-- Server-profile tests must be hermetic: no live MongoDB dependency, scheduler work,
-  Cyanide API calls, Auth0 calls or pybb3 network calls.
-- Controller integration tests must mock all persistence/service collaborators they
-  exercise, not only the primary service under test.
-- The workflow is only considered complete when both test jobs and the ARM64 artifact
-  job pass from a clean GitHub runner.
+**Acceptance criteria**
 
-Do not solve CI failures by adding production MongoDB, Cyanide, Auth0 or other runtime
-credentials to GitHub.
-### B-011 â€” Refresh repository metadata and docs
+- supports create/reactivate/deactivate/unchanged;
+- unchanged input is idempotent;
+- reactivation preserves canonical user identity;
+- reconciliation tests require no provider, scheduler or network access.
 
-- Update root `pom.xml` SCM URLs if GitHub is authoritative.
-- Replace stale GitLab badges/issues or label them as upstream references.
-- Fix â€œAuth0 Prodiverâ€.
-- Document modules, safe VS Code launch configurations, Fly secret names without
-  values, and archive settings/default-disabled behavior.
-- Keep `.env.example` value-free.
+### B-020 — Deterministic direct AI textual interaction
+
+**Status: Partial — article generation and reaction/interaction paths exist**
+
+Close one narrow deterministic textual flow before autonomous scheduling:
+
+- enabled AI user;
+- supported target/thread;
+- explicit direct tag or equivalent deterministic trigger;
+- canonical context assembly;
+- canonical provider execution;
+- persisted generation provenance;
+- persisted textual response through existing community primitives;
+- retry/idempotency protection against duplicate responses.
+
+Do not add a parallel AI comment model or another provider abstraction.
+
+### B-016 — AI scheduling, quotas and cost control
+
+**Status: Deferred until B-019/B-020 are stable**
+
+Owns operational policy:
+
+- scheduling and queue/backpressure;
+- per-AI-user/global generation quotas;
+- provider/token/cost budgets;
+- cooldowns, retries and idempotency;
+- admin visibility and kill switches;
+- priority handling for direct tags.
+
+Editor-triggered article generation remains distinct from autonomous generation until
+this layer is implemented and explicitly enabled.
 
 ---
 
-## P3 â€” Incremental maintainability
+## Operational/maintainability work
 
-### B-012 â€” Replace broad exception/null fallbacks with explicit outcomes
+### B-027 — Finish ARM64/Raspberry Pi operational runbook
 
-Do this one service/controller at a time, with a regression test before each behavior
-change. Distinguish not-found, invalid input, upstream unavailable, rate limiting, and
-internal failure. Centralize HTTP error mapping where practical. Never expose stack
-traces, secrets, sensitive URLs, or full upstream payloads. Remove production
-`System.out.println` calls.
+**Status: Partial — build/deploy baseline exists**
 
-Initial candidates:
+Document remaining operational knowledge:
 
-- `CyanideRestApiClient`
-- `LookupController`
-- `CompetitionController`
-- `ContestController`
-- `CircuitController`
-- `CyanideApiService`
+- loading/versioning the application images;
+- `.env`/secret ownership and required variables;
+- `PYBB3_REF`, internal API key and credential-encryption key responsibilities;
+- persistent replay/credential volumes;
+- health/startup ordering;
+- Cloudflare Tunnel failure diagnosis;
+- upgrade/rollback and cleanup of local tar artifacts.
 
-## Already fixed on `dev` â€” do not reintroduce
+Do not describe ARM64 build support or the Raspberry Pi compose topology as future
+implementation work.
 
-- Cyanide request logging sanitizes the URI instead of logging the API key.
-- Full upstream response bodies are no longer logged.
-- Deployment secrets are excluded from Git; `.env.example` contains names only.
-- Cyanide-disabled local launch configurations remain the safe default.
-- Stage/season/league-system models and adapters are active work, not dead code.
+### B-012 — Replace broad exception/null fallbacks with typed outcomes
 
-- Canonical user permissions are resolved through `UserPermissionService`; do not
-  restore parallel legacy admin lists.
-- Coach ownership is represented by game-aware `coachClaims`, not a bare global list
-  of coach IDs.
-Add a URI-sanitization regression test if absent, but do not restore the older `main`
-implementation.
+**Status: Blocked on failure-policy decision**
+
+Do this one service/controller at a time.
+
+First decide how scheduled collection distinguishes:
+
+- not found;
+- invalid input;
+- upstream unavailable;
+- rate limited;
+- internal client failure.
+
+In particular, decide whether each `CyanideRestApiClient` outcome causes skip, retry or
+job failure before replacing the existing ambiguous null/error contract.
+
+Never expose stack traces, secrets, sensitive URLs or full upstream payloads.
+
+---
+
+## Completed foundations — compact history
+
+The following backlog areas are considered implemented and should not dominate future
+handoff documents:
+
+- B-001 contest-fetch candidate collection fix;
+- B-002 public debug-header removal;
+- B-003/B-004 HTTP security alignment and auth regression coverage;
+- B-005 frontend permission-state refactor foundation;
+- B-006 stage aggregation hardening;
+- B-007 stage read/admin application boundary;
+- B-008 frontend API cleanup;
+- B-009 profile/auth documentation alignment;
+- B-010 CI and ARM64 artifact build foundation;
+- B-011 repository metadata/docs cleanup;
+- B-013 interactive Cyanide discovery and StageSource registration;
+- B-014 editorial/community foundation;
+- B-017 canonical Human/AI user identity and provenance;
+- canonical AI retrieval/planning/provider foundations AI-003 through AI-008;
+- primary LeagueSystem-first public navigation.
+
+If a regression is found in one of these areas, create a focused defect/fix rather than
+restoring the old broad implementation card.
 
 ## Verification
 
@@ -427,334 +363,16 @@ npm run build
 
 ### Safety
 
-- `git status --short` contains no `.env`, dumps, tokens, or generated artifacts.
-- Changed logs contain no API keys, Authorization headers, cookies, MongoDB URIs, or
+- `git status --short` contains no `.env`, dumps, tokens or generated artifacts.
+- Changed logs contain no API keys, Authorization headers, cookies, MongoDB URIs or
   full upstream response bodies.
 - Server tests require no live network access.
 
-## Definition of done per item
-
-- Automated tests cover the behavior.
-- Relevant commands pass.
-- Configuration/public behavior changes are documented.
-- No secrets or generated artifacts are committed.
-- The commit is focused and references the backlog ID.
-- Status is updated only after verification.
-
----
-
-## Next core product work
-
-The detailed cards below implement the product order summarized in `ROADMAP.md`.
-
-### B-021 — Complete phase/stage and round-by-round competition UX
-
-**Status: Next**
-
-Introduce explicit Phase semantics where a season needs a layer above Stage, without
-breaking seasons that only need stages.
-
-Required behavior:
-
-- examples of phases include preseason, qualifier, group stage and playoffs;
-- Stage remains the concrete subdivision, such as Group A/Group B, play-in, QF, SF,
-  final or bronze;
-- a source may contribute to a configured stage/phase without hardcoding tournament
-  names;
-- public match lists render round by round and default to the latest round with played
-  results;
-- groups may independently be on different current rounds;
-- moving between phases/stages must be fast and must not require loading every match in
-  the season.
-
-**Acceptance criteria**
-
-- existing LeagueSystem/Season/Stage data remains readable or has an explicit migration;
-- phase-less seasons still work;
-- round assignment is deterministic for known schedules/results;
-- tests cover multi-group seasons whose groups have different current rounds;
-- public navigation no longer presents all season matches as one undifferentiated list.
-
-### B-022 — Group standings and metadata-driven playoff brackets
-
-**Status: Next after B-021**
-
-- Render standings per group/stage from normalized stage data.
-- Drive bracket shape from tournament metadata/configuration, not tournament names.
-- Support optional play-in, QF, SF, final and bronze rounds.
-- Keep final above bronze in the visual hierarchy.
-- Preserve deterministic winner/loser progression links.
-- Represent replay/rematch series without collapsing distinct matches.
-- Treat replay similarity/hash evidence as a signal; do not automatically rewrite match
-  history solely because two payloads are identical/near-identical.
-
-**Acceptance criteria**
-
-- known historical seasons with replays/rematches render every played match;
-- brackets do not duplicate a match in multiple slots;
-- series outcome and individual on-field results remain separately inspectable;
-- malformed/incomplete bracket metadata fails explicitly instead of guessing topology.
-
-### B-023 — Normalize discovery candidates and watcher lifecycle
-
-**Status: Planned**
-
-The existing Cyanide admin search remains the interactive lookup entry point. Add a
-provider-neutral discovery layer for proactive monitoring.
-
-- Parse provider/directory/folder/timestamp/metadata details at the discovery boundary.
-- Expose normalized candidates to application code.
-- Classify candidates as `complete` (importable) or `incomplete` (requires watcher).
-- Create watchers only for incomplete candidates.
-- Periodically suggest new competitions related to already registered leagues/coaches.
-- Discovery/inspection never enables collection; saving `StageSource` remains explicit.
-- A lightweight inspect action may fetch a small recent-match/team preview without
-  turning discovery into full collection.
-
-**Acceptance criteria**
-
-- application/cache code does not know provider filesystem layout;
-- complete candidates can be imported without a watcher;
-- incomplete candidates can mature into complete candidates idempotently;
-- duplicate suggestions are stable/deduplicated;
-- monitoring does not reset an existing collection checkpoint.
-
-### B-024 — Normalize match detail and historical enrichment
-
-**Status: Planned**
-
-- Use one match-detail DTO/contract for current and historical data.
-- Include teams, coaches, race/team kind, roster, SPP/skills and team value when source
-  data provides them.
-- Resolve BB3 race display through canonical TeamKind/race mappings; do not revive
-  unreliable legacy RaceId assumptions.
-- Trigger enrichment/backfill through the data pipeline, not from overview rendering.
-- Keep raw/on-field score and administrative/penalty outcome separable where available.
-- Avoid blank roster panels when data exists in replay/archive/upstream sources.
-
-**Acceptance criteria**
-
-- known BB2/BB3 historical fixtures resolve the correct race/team kind;
-- missing enrichment is explicit and retryable;
-- opening one match detail does not force expensive enrichment for unrelated matches;
-- tests cover older matches, missing roster source and enrichment success/failure.
-
-### B-025 — Version and consume the pybb3 replay timeline contract
-
-**Status: In progress in the separate `pybb3` repository**
-
-Cyanidebowl owns the service boundary and presentation contract; detailed replay parsing
-stays upstream in `pybb3`.
-
-Required timeline semantics:
-
-- ordered event sequence per half/drive/turn;
-- actor/target plus action and **reason for any test/roll**;
-- a plain move with no test has no fabricated roll;
-- explicit dodge, rush/GFI, Tentacles and negative-trait checks;
-- supported special events include kickoff deviation, wizard effects, Bone-head,
-  Really Stupid, Bloodlust, Foul Appearance and Animal Savagery;
-- `skill_rerolls` are distinct from generic/team rerolls with backwards-compatible
-  handling of older payloads;
-- unknown/new event kinds are preserved as explicit unknowns with provenance rather
-  than silently mapped to a misleading generic action.
-
-Cyanidebowl tasks:
-
-- pin an upstream pybb3 ref containing the agreed schema;
-- version/validate the response contract in `pybb3-service`;
-- add consumer tests using representative timeline fixtures;
-- render reason/roll/result only when semantically applicable;
-- preserve replay IP redaction in diagnostic/export paths.
-
-### B-026 — Primary LeagueSystem and public navigation policy
-
-**Status: Planned**
-
-- Add/confirm an admin setting for one primary LeagueSystem.
-- Default front page/recent content to the primary system.
-- Load other LeagueSystems when selected rather than mixing every system into the
-  default view.
-- Define deterministic fallback when no primary system is configured.
-
-### B-027 — Deployment runbook for ARM64/Raspberry Pi
-
-**Status: Partial**
-
-CI builds ARM64 artifacts and compose definitions exist. Add a concise operational
-runbook covering:
-
-- loading/versioning the three application images;
-- `.env`/secret ownership and required variables;
-- `PYBB3_REF`, internal API key and credential-encryption key responsibilities;
-- persistent replay/credential volumes;
-- health checks and startup order;
-- Cloudflare Tunnel connectivity/failure diagnosis;
-- upgrade/rollback and cleanup of loaded tar artifacts.
-
-No production secret values belong in documentation or GitHub Actions.
-
-
----
-
-## Editorial & Community
-
-### B-014 — Editorial/community layer
-
-**Implemented by the editorial/community patch**
-
-- Site-wide and LeagueSystem-scoped editor grants, separate from LeagueSystem administration.
-- Draft/published/archived articles with optional cover image, season, tags, channels,
-  featured flag, slug and legacy-source metadata.
-- TipTap WYSIWYG article editor and public article/news views.
-- Generic comments for articles and matches. Match comments derive HOME_COACH /
-  AWAY_COACH from canonical game-aware coach claims; all other authenticated users
-  comment as spectators.
-- Soft-delete moderation for comment owners, scoped editors and site administrators.
-- POW / double POW / triple POW and skull / double-skull / triple-skull reactions.
-  One active reaction per authenticated user and target.
-- 0–10 per-user player ratings for players who actually participated in the match,
-  with match/season/career aggregation and coach/spectator breakdown.
-- Frozen match-player participation records. A player carrying suspendedNextMatch from
-  the team's preceding match is represented as MNG and rejected by the rating endpoint.
-- Bulk legacy article import endpoint keyed by legacySource, suitable for migrating the
-  historical Google Sites material after extraction.
-
-### B-015 — Enable team comment streams
-
-**Status: Blocked**
-
-The generic community target model already contains TEAM, but TEAM comments are
-deliberately rejected by the API until the team endpoint/canonical team identity is
-stable. Do not implement a second team-comment model.
-
-**Unblock when**
-
-- one canonical historical/current team ID is defined for supported games;
-- the team endpoint reliably resolves that ID;
-- LeagueSystem ownership/scope can be resolved for a team.
-
-**Then**
-
-- enable TEAM in `EditorialCommunityService.comments/addComment`;
-- render `CommentThread targetType="TEAM"` on the team page;
-- apply the same scoped-editor/site-admin moderation rules.
-
----
-
-## AI editorial operations
-
-### B-016 — AI reporter editorial scheduling and cost control
-
-**Status: Backlog — intentionally deferred**
-
-Implement after the canonical reporter profiles and first end-to-end AI editorial flow
-are stable.
-
-- editorial scheduling and queue/backpressure
-- per-reporter/global generation quotas
-- provider/token/cost budgets
-- cooldowns, retries and idempotency
-- admin visibility and kill switches
-- priority handling for direct tags
-
-**Product rule:** a directly tagged reporter is scheduled for a textual response when
-enabled and capable. Tagged work bypasses probabilistic selection; hard admin/global
-disables still win.
-
-
-## AI foundation prerequisites for B-016
-
-The following foundation items intentionally come after B-016 numerically because
-B-014–B-016 already have established meanings. Execution order is defined by
-`AI_ROADMAP.md`: complete B-017 through B-020 before implementing B-016.
-
-### B-017 — Canonical User and AI identity foundation
-
-**Status: Implemented foundation — prerequisite for B-016**
-
-- Use one canonical `User` with `accountType = HUMAN | AI`.
-- Treat older `USER | AI_AGENT` terminology as obsolete.
-- Keep roles/capabilities separate from coach claims, team affinity and community
-  relationships.
-- Keep generation provenance separate from user identity.
-- Preserve existing Auth0 subject, permission and game-aware `coachClaims` behavior.
-
-**Acceptance criteria**
-
-- Human and AI authors use the same editorial/community primitives.
-- Coach remains a contextual relationship, not an account type.
-- Generated content can identify both canonical author and provenance.
-- Tests cover the separation between identity, capability, relationship and provenance.
-
-### B-018 — Canonical AI context and world-model contract
-
-**Status: Foundation largely implemented — remaining semantic/runtime policy work**
-
-**Implemented slices**
-
-- AI-003: canonical `SubjectRef` / `ContextItem` retrieval with explicit source and authority separation.
-- AI-004: deterministic `ContextProfile`, `ContextPlanner`, `ContextAssembler`, bounded selection and shared world-model policy.
-- AI-005: canonical provider request/response contract, provider registry and configurable provider/model routing.
-- AI-006: Gemini `LlmProvider` adapter using the current Interactions API with structured output, usage metadata and normalized provider failures.
-- AI-007: reusable OpenAI Responses-compatible provider instances plus ordered retryable fallback; xAI/Grok is the first configured endpoint.
-- Reporting migration to `CanonicalLlmRequest` is in progress.
-
-- Implement the canonical context envelope: `thread`, `social`, `self`, `discourse`,
-  `memory`, `domain`.
-- Resolve contextual relationships at generation time.
-- Include human and AI statements in the same discourse model.
-- Enforce the shared in-universe rule that Blood Bowl is a real sport.
-- Translate internal mechanics before they reach AI-facing narrative context.
-
-**Acceptance criteria**
-
-- Context assembly is deterministic/testable without a provider call.
-- The same context contract supports comments, replies, tags and articles.
-- Tests prevent dice/RNG/game/replay/simulation meta-language from leaking into the
-  AI-facing world model.
-
-**Remaining**
-
-- automatic memory-write/summarization policy on top of persisted/retrievable `memory`;
-- broader semantic projection of mechanical source data into in-world domain facts;
-- continued use of canonical context/provenance across direct social interaction flows.
-
-### B-019 — Dedicated Fans community population reconciliation
-
-**Status: Backlog — prerequisite for B-016**
-
-- Desired active AI-backed `COMMUNITY_MEMBER` population equals team Dedicated Fans
-  value (currently 1–6).
-- First discovery creates clear team-affine personas.
-- Population increases reactivate inactive matching users before creating new users.
-- Population decreases deactivate surplus users without deletion.
-- Preserve authored history, reactions, memory, relationships and provenance.
-
-**Acceptance criteria**
-
-- Reconciler supports create/reactivate/deactivate/unchanged.
-- Unchanged input is idempotent.
-- Reactivation preserves canonical user identity.
-- No provider, scheduler or network access is required by reconciliation tests.
-
-### B-020 — First end-to-end AI editorial flow
-
-**Status: Partial — article generation exists; deterministic direct social flow remains**
-
-Build one narrow deterministic flow before autonomous scheduling:
-
-- enabled AI user;
-- supported target/thread;
-- explicit direct tag or equivalent deterministic trigger;
-- canonical context assembly;
-- provider abstraction;
-- persisted generation provenance;
-- persisted response through existing editorial/community primitives.
-
-**Acceptance criteria**
-
-- The flow uses B-017/B-018 contracts rather than feature-local AI models.
-- Shared world-model policy is applied centrally.
-- Retries do not create duplicate persisted responses.
-- B-016 remains deferred until this flow is stable.
+## Definition of done
+
+- automated tests cover changed behavior;
+- relevant commands pass;
+- configuration/public behavior changes are documented;
+- no secrets or generated artifacts are committed;
+- the commit is focused and references the backlog item;
+- roadmap/backlog status is updated in the same change.
