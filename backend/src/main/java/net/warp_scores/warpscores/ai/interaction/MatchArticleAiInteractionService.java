@@ -41,6 +41,7 @@ import java.util.random.RandomGenerator;
 public class MatchArticleAiInteractionService {
     private final AiReporterEffectiveProfileService profiles;
     private final ReporterInteractionPolicy policy;
+    private final AiReactionDecisionService reactionDecisions;
     private final ContextPlanner contextPlanner;
     private final ContextAssemblyService contextAssembly;
     private final LlmExecutionService llm;
@@ -74,7 +75,7 @@ public class MatchArticleAiInteractionService {
                 boolean comment = userAuthored
                         ? policy.shouldCommentOnUserArticle(reporter, false, 0.0, rng)
                         : policy.shouldComment(reporter, 0.0, rng);
-                if (react) reactToArticleOnce(article, reporter, rng);
+                if (react) reactToArticleOnce(article, reporter);
                 if (comment) commentOnArticleOnce(article, reporter);
             } catch (Exception e) {
                 log.warn("AI reporter {} could not interact with match article {}: {}",
@@ -108,7 +109,7 @@ public class MatchArticleAiInteractionService {
                     .contains(reporter.getAlias().toLowerCase(Locale.ROOT));
             try {
                 if (policy.shouldReactToUserComment(reporter, 0.0, rng)) {
-                    reactToCommentOnce(source, reporter, rng);
+                    reactToCommentOnce(article, source, reporter);
                 }
                 if (policy.shouldReplyToUserComment(
                         reporter, namedMention, false, false, 0.0, rng)) {
@@ -123,12 +124,20 @@ public class MatchArticleAiInteractionService {
 
     private void reactToArticleOnce(
             MatchArticle article,
-            AiReporterDefinition reporter,
-            RandomGenerator rng) {
+            AiReporterDefinition reporter) {
         if (reactions.findByTargetTypeAndTargetIdAndUserSubject(
                 CommunityReaction.TargetType.MATCH_ARTICLE,
                 article.getId(),
                 reporter.resolvedUserSubject()).isPresent()) {
+            return;
+        }
+
+        CommunityReaction.Type type;
+        try {
+            type = reactionDecisions.chooseForArticle(reporter, article);
+        } catch (RuntimeException e) {
+            log.warn("AI reporter {} could not choose reaction for match article {}: {}",
+                    reporter.getId(), article.getId(), e.getMessage());
             return;
         }
 
@@ -138,21 +147,28 @@ public class MatchArticleAiInteractionService {
         reaction.setTargetId(article.getId());
         reaction.setUserSubject(reporter.resolvedUserSubject());
         reaction.setUserId(reporter.getUserId());
-        reaction.setType(rng.nextBoolean()
-                ? CommunityReaction.Type.POW
-                : CommunityReaction.Type.SKULL);
+        reaction.setType(type);
         reaction.setUpdatedAt(Instant.now());
         reactions.save(reaction);
     }
 
     private void reactToCommentOnce(
+            MatchArticle article,
             CommunityComment source,
-            AiReporterDefinition reporter,
-            RandomGenerator rng) {
+            AiReporterDefinition reporter) {
         if (reactions.findByTargetTypeAndTargetIdAndUserSubject(
                 CommunityReaction.TargetType.COMMENT,
                 source.getId(),
                 reporter.resolvedUserSubject()).isPresent()) {
+            return;
+        }
+
+        CommunityReaction.Type type;
+        try {
+            type = reactionDecisions.chooseForComment(reporter, article, source);
+        } catch (RuntimeException e) {
+            log.warn("AI reporter {} could not choose reaction for comment {}: {}",
+                    reporter.getId(), source.getId(), e.getMessage());
             return;
         }
 
@@ -162,9 +178,7 @@ public class MatchArticleAiInteractionService {
         reaction.setTargetId(source.getId());
         reaction.setUserSubject(reporter.resolvedUserSubject());
         reaction.setUserId(reporter.getUserId());
-        reaction.setType(rng.nextBoolean()
-                ? CommunityReaction.Type.POW
-                : CommunityReaction.Type.SKULL);
+        reaction.setType(type);
         reaction.setUpdatedAt(Instant.now());
         reactions.save(reaction);
     }
