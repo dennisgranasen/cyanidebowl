@@ -10,7 +10,7 @@ import net.warp_scores.warpscores.ai.provider.LlmExecutionService;
 import net.warp_scores.warpscores.ai.provider.LlmProvider;
 import net.warp_scores.warpscores.ai.provider.LlmProviderRegistry;
 import net.warp_scores.warpscores.ai.provider.LlmProviderRouter;
-import net.warp_scores.warpscores.ai.reporting.ArticleGenerationLlmRequestFactory;
+import net.warp_scores.warpscores.ai.reporting.MatchReportGenerationLlmRequestFactory;
 import net.warp_scores.warpscores.domain.persistence.*;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.*;
@@ -39,7 +39,7 @@ public class MatchArticleService {
     private final AiReporterEffectiveProfileService reporterProfiles;
     private final ContextPlanner contextPlanner;
     private final ContextAssemblyService contextAssembly;
-    private final ArticleGenerationLlmRequestFactory requestFactory;
+    private final MatchReportGenerationLlmRequestFactory matchReportFactory;
     private final LlmExecutionService llm;
     private final LlmProviderRouter providerRouter;
     private final LlmProviderRegistry providerRegistry;
@@ -61,7 +61,11 @@ public class MatchArticleService {
     public List<MatchArticle> visibleArticles(Authentication auth, String matchId) {
         MatchContext ctx = matchContext(auth, matchId);
         List<MatchArticle> all = articles.findByMatchIdOrderByCreatedAtAsc(matchId);
-        if (ctx.editor()) return all;
+        if (ctx.editor()) {
+            return all.stream()
+                    .filter(a -> a.getStatus() != MatchArticle.Status.REJECTED)
+                    .toList();
+        }
         String subject = subject(auth);
         return all.stream()
                 .filter(a -> a.getStatus() == MatchArticle.Status.PUBLISHED
@@ -216,20 +220,21 @@ public class MatchArticleService {
 
         MatchContext ctx = matchContext(auth, matchId);
         ContextPlan plan = contextPlanner.plan(
-                ContextTaskType.EDITORIAL_ARTICLE,
+                ContextTaskType.MATCH_REPORT,
                 reporter.getUserId(),
                 new SubjectRef(SubjectType.MATCH, matchId),
                 null,
                 List.of());
         AssembledContext assembled = contextAssembly.assemble(plan);
-        var request = requestFactory.create(
+        var request = matchReportFactory.create(
                 reporter.getId(),
                 Integer.toString(reporter.getSchemaVersion()),
                 "router-selected",
                 assembled,
-                trimToNull(input.editorialBrief()),
-                null);
+                trimToNull(input.editorialBrief()));
         CanonicalLlmResponse response = llm.generate(reporter.getId(), request);
+        MatchReportGenerationLlmRequestFactory.GeneratedArticle generated =
+                matchReportFactory.parse(response.content());
 
         Instant now = Instant.now();
         MatchArticle article = new MatchArticle();
@@ -237,8 +242,8 @@ public class MatchArticleService {
         article.setMatchId(matchId);
         article.setLeagueSystemId(ctx.leagueSystemId());
         article.setSeasonId(ctx.seasonId());
-        article.setTitle(defaultAiTitle(ctx.match(), reporter.getAlias()));
-        article.setBody(response.content().trim());
+        article.setTitle(generated.title());
+        article.setBody(generated.body());
         article.setStatus(MatchArticle.Status.PENDING_REVIEW);
         article.setKind(MatchArticle.Kind.EDITORIAL);
         article.setAuthorType(MatchArticle.AuthorType.AI);
@@ -406,13 +411,6 @@ public class MatchArticleService {
         if (!StringUtils.hasText(input.body())) throw new IllegalArgumentException("body is required");
         if (input.title().length() > 250) throw new IllegalArgumentException("title exceeds 250 characters");
         if (input.body().length() > 100_000) throw new IllegalArgumentException("body exceeds 100000 characters");
-    }
-
-    private static String defaultAiTitle(Match match, String alias) {
-        String teams = match.getTeams() != null && match.getTeams().length >= 2
-                ? match.getTeams()[0].getName() + " – " + match.getTeams()[1].getName()
-                : "matchen";
-        return alias + ": " + teams;
     }
 
     private static String trimToNull(String value) {

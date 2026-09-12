@@ -9,4 +9,5 @@ public interface MatchArticleRepository extends MongoRepository<MatchArticle, St
     List<MatchArticle> findByMatchIdOrderByCreatedAtAsc(String matchId);
     List<MatchArticle> findByMatchIdAndStatusOrderByPublishedAtAsc(
             String matchId, MatchArticle.Status status);
+    List<MatchArticle> findByStatusOrderByUpdatedAtDesc(MatchArticle.Status status);
 }

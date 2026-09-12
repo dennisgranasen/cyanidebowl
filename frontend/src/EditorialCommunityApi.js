@@ -16,6 +16,8 @@ const authPost = async (url, payload, getToken) =>
   (await axios.post(`${base}${url}`, payload, { headers: await authHeaders(getToken) })).data;
 const authPut = async (url, payload, getToken) =>
   (await axios.put(`${base}${url}`, payload, { headers: await authHeaders(getToken) })).data;
+const authDelete = async (url, getToken) =>
+  axios.delete(`${base}${url}`, { headers: await authHeaders(getToken) });
 
 const EditorialCommunityApi = {
   articles: (leagueSystemId, limit = 20) =>
@@ -58,6 +60,10 @@ const EditorialCommunityApi = {
     authPost(`/matches/${encodeURIComponent(matchId)}/articles/${encodeURIComponent(articleId)}/reject`, {}, getToken),
   requestAiMatchArticle: (matchId, payload, getToken) =>
     authPost(`/matches/${encodeURIComponent(matchId)}/articles/ai`, payload, getToken),
+  rejectedMatchArticles: (getToken) =>
+    authGet('/admin/match-articles/rejected', getToken),
+  deleteRejectedMatchArticle: (articleId, getToken) =>
+    authDelete(`/admin/match-articles/${encodeURIComponent(articleId)}`, getToken),
 };
 
 export default EditorialCommunityApi;
