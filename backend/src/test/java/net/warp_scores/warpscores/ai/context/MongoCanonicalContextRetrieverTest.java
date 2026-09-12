@@ -2,10 +2,13 @@ package net.warp_scores.warpscores.ai.context;
 
 import net.warp_scores.warpscores.domain.persistence.ArticleRepository;
 import net.warp_scores.warpscores.domain.persistence.CommunityCommentRepository;
+import net.warp_scores.warpscores.domain.persistence.MatchArticleRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.domain.persistence.StageSourceRepository;
 import net.warp_scores.warpscores.model.Article;
 import net.warp_scores.warpscores.model.CommunityComment;
+import net.warp_scores.warpscores.model.MatchArticle;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Pageable;
 
@@ -20,11 +23,18 @@ import static org.mockito.Mockito.*;
 class MongoCanonicalContextRetrieverTest {
     private final ArticleRepository articles = mock(ArticleRepository.class);
     private final CommunityCommentRepository comments = mock(CommunityCommentRepository.class);
+    private final MatchArticleRepository matchArticles = mock(MatchArticleRepository.class);
     private final MatchRepository matches = mock(MatchRepository.class);
     private final StageSourceRepository stageSources = mock(StageSourceRepository.class);
-    private final MongoCanonicalContextRetriever retriever = new MongoCanonicalContextRetriever(
-            articles, comments, matches, stageSources, new CanonicalContextMapper());
 
+    private final MongoCanonicalContextRetriever retriever =
+            new MongoCanonicalContextRetriever(
+                    articles,
+                    comments,
+                    matchArticles,
+                    matches,
+                    stageSources,
+                    new CanonicalContextMapper());
     @Test
     void currentArticleThreadReturnsArticleAndRecentCommentsChronologically() {
         Article article = article("a-1", 1L, Instant.parse("2026-09-12T06:00:00Z"));
@@ -54,6 +64,9 @@ class MongoCanonicalContextRetrieverTest {
                 .thenReturn(List.of(relevant, irrelevant));
         when(comments.findByAuthorUserIdAndDeletedAtIsNullOrderByCreatedAtDesc(eq(42L), any(Pageable.class)))
                 .thenReturn(List.of());
+        when(matchArticles.findByStatusAndAuthorUserIdOrderByPublishedAtDesc(
+                eq(MatchArticle.Status.PUBLISHED), eq(42L), any(Pageable.class)))
+                .thenReturn(List.of());
 
         List<ContextItem> result = retriever.selfHistory(42L, List.of(SubjectRef.topic("playoffs")), 10);
 
@@ -70,6 +83,10 @@ class MongoCanonicalContextRetrieverTest {
         when(comments.findByTargetTypeAndTargetIdAndDeletedAtIsNullOrderByCreatedAtDesc(
                 eq(CommunityComment.TargetType.ARTICLE), eq("a-1"), any(Pageable.class)))
                 .thenReturn(List.of(theirs, mine));
+
+        when(matchArticles.findByStatusOrderByPublishedAtDesc(
+                eq(MatchArticle.Status.PUBLISHED), any(Pageable.class)))
+                .thenReturn(List.of());
 
         List<ContextItem> result = retriever.discourse(42L,
                 List.of(new SubjectRef(SubjectType.ARTICLE, "a-1")), 10);
