@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert, AlertIcon, Avatar, Badge, Box, Button, Divider, FormControl, FormLabel,
-  Heading, HStack, Input, Select, Spinner, Text, Textarea, VStack,
+  Heading, HStack, IconButton, Input, Select, Spinner, Text, Textarea, VStack,
 } from '@chakra-ui/react';
+import { DeleteIcon } from '@chakra-ui/icons';
 import useAuth0WithUserPermissions from '../../hooks/useAuth0WithUserPermissions';
 import EditorialCommunityApi from '../../EditorialCommunityApi';
 import AiReporterApi from '../../AiReporterApi';
@@ -14,7 +15,10 @@ const statusScheme = {
   REJECTED: 'red',
 };
 
-function ArticleCard({ article, reporter, canReview, onSave, onPublish, onReject }) {
+function ArticleCard({
+  article, reporter, canReview, canEdit, canDelete,
+  onSave, onPublish, onReject, onDelete,
+}) {
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(article.title);
   const [editBody, setEditBody] = useState(article.body);
@@ -23,6 +27,10 @@ function ArticleCard({ article, reporter, canReview, onSave, onPublish, onReject
   const save = async () => {
     await onSave(article.id, { title: editTitle, body: editBody });
     setEditing(false);
+  };
+  const remove = async () => {
+    if (!window.confirm('Är du säker på att du vill ta bort artikeln?')) return;
+    await onDelete(article.id);
   };
   return (
     <Box borderWidth="1px" borderRadius="md" p={4}>
@@ -36,12 +44,28 @@ function ArticleCard({ article, reporter, canReview, onSave, onPublish, onReject
         )}
       </HStack>
       {editing ? <>
-        <Input value={editTitle} onChange={e => setEditTitle(e.target.value)} maxLength={250}/>
+        <Input value={editTitle} onChange={e => setEditTitle(e.target.value)}
+          maxLength={250} isReadOnly={!canEdit}/>
         <Textarea mt={2} minH="220px" value={editBody} onChange={e => setEditBody(e.target.value)}
-          maxLength={100000}/>
+          maxLength={100000} isReadOnly={!canEdit}/>
         <HStack mt={2}>
-          <Button size="sm" onClick={save} isDisabled={!editTitle.trim() || !editBody.trim()}>Spara</Button>
+          {canEdit && (
+            <Button size="sm" onClick={save}
+              isDisabled={!editTitle.trim() || !editBody.trim()}>Spara</Button>
+          )}
           <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Avbryt</Button>
+          {canDelete && (
+            <IconButton
+              size="sm"
+              ml="auto"
+              colorScheme="red"
+              variant="ghost"
+              icon={<DeleteIcon/>}
+              aria-label="Ta bort artikel"
+              title="Ta bort artikel"
+              onClick={remove}
+            />
+          )}
         </HStack>
       </> : <>
         <Heading size="sm">{article.title}</Heading>
@@ -57,10 +81,12 @@ function ArticleCard({ article, reporter, canReview, onSave, onPublish, onReject
         </HStack>
         <Text mt={3} whiteSpace="pre-wrap">{article.body}</Text>
       </>}
-      {canReview && !editing && (
+      {(canEdit || canDelete || canReview) && !editing && (
         <HStack mt={3}>
-          <Button size="sm" variant="outline" onClick={() => setEditing(true)}>Redigera</Button>
-          {article.status === 'PENDING_REVIEW' && <>
+          {(canEdit || canDelete) && (
+            <Button size="sm" variant="outline" onClick={() => setEditing(true)}>Redigera</Button>
+          )}
+          {canReview && article.status === 'PENDING_REVIEW' && <>
             <Button size="sm" colorScheme="green" onClick={() => onPublish(article.id)}>Publicera</Button>
             <Button size="sm" colorScheme="red" variant="outline" onClick={() => onReject(article.id)}>Refusera</Button>
           </>}
@@ -71,7 +97,7 @@ function ArticleCard({ article, reporter, canReview, onSave, onPublish, onReject
 }
 
 export default function MatchArticlesPanel({ matchId }) {
-  const { isAuthenticated, getAccessTokenSilently } = useAuth0WithUserPermissions();
+  const { user, isAuthenticated, getAccessTokenSilently } = useAuth0WithUserPermissions();
   const [articles, setArticles] = useState([]);
   const [caps, setCaps] = useState(null);
   const [reportersById, setReportersById] = useState({});
@@ -143,6 +169,16 @@ export default function MatchArticlesPanel({ matchId }) {
     setBrief('');
   });
 
+  const articlePermissions = (article) => {
+    const ownHumanArticle = article.authorType === 'HUMAN'
+      && Boolean(user?.sub)
+      && user.sub === article.authorSubject;
+    return {
+      canEdit: Boolean(caps?.canReview || ownHumanArticle),
+      canDelete: Boolean(caps?.canDeleteAny || ownHumanArticle),
+    };
+  };
+
   if (loading) return <HStack><Spinner size="sm"/><Text>Hämtar artiklar…</Text></HStack>;
 
   return (
@@ -155,9 +191,12 @@ export default function MatchArticlesPanel({ matchId }) {
           ? <VStack align="stretch" spacing={3}>{sections.editorial.map(a =>
               <ArticleCard key={a.id} article={a} reporter={reportersById[a.reporterId]}
                 canReview={caps?.canReview}
+                canEdit={articlePermissions(a).canEdit}
+                canDelete={articlePermissions(a).canDelete}
                 onSave={(id, payload) => mutate(() => EditorialCommunityApi.updateMatchArticle(matchId, id, payload, getAccessTokenSilently))}
                 onPublish={id => mutate(() => EditorialCommunityApi.publishMatchArticle(matchId, id, getAccessTokenSilently))}
-                onReject={id => mutate(() => EditorialCommunityApi.rejectMatchArticle(matchId, id, getAccessTokenSilently))}/>)}</VStack>
+                onReject={id => mutate(() => EditorialCommunityApi.rejectMatchArticle(matchId, id, getAccessTokenSilently))}
+                onDelete={id => mutate(() => EditorialCommunityApi.deleteMatchArticle(matchId, id, getAccessTokenSilently))}/>)}</VStack>
           : <Text color="gray.500">Ingen redaktionell artikel har publicerats om matchen ännu.</Text>}
       </Box>
 
@@ -169,9 +208,12 @@ export default function MatchArticlesPanel({ matchId }) {
         <VStack align="stretch" spacing={3}>{sections.team.map(a =>
           <ArticleCard key={a.id} article={a} reporter={reportersById[a.reporterId]}
             canReview={caps?.canReview}
+            canEdit={articlePermissions(a).canEdit}
+            canDelete={articlePermissions(a).canDelete}
             onSave={(id, payload) => mutate(() => EditorialCommunityApi.updateMatchArticle(matchId, id, payload, getAccessTokenSilently))}
             onPublish={id => mutate(() => EditorialCommunityApi.publishMatchArticle(matchId, id, getAccessTokenSilently))}
-            onReject={id => mutate(() => EditorialCommunityApi.rejectMatchArticle(matchId, id, getAccessTokenSilently))}/>)}</VStack>
+            onReject={id => mutate(() => EditorialCommunityApi.rejectMatchArticle(matchId, id, getAccessTokenSilently))}
+            onDelete={id => mutate(() => EditorialCommunityApi.deleteMatchArticle(matchId, id, getAccessTokenSilently))}/>)}</VStack>
       </Box>}
 
       {sections.coach.length > 0 && <Box>
@@ -179,9 +221,12 @@ export default function MatchArticlesPanel({ matchId }) {
         <VStack align="stretch" spacing={3}>{sections.coach.map(a =>
           <ArticleCard key={a.id} article={a} reporter={reportersById[a.reporterId]}
             canReview={caps?.canReview}
+            canEdit={articlePermissions(a).canEdit}
+            canDelete={articlePermissions(a).canDelete}
             onSave={(id, payload) => mutate(() => EditorialCommunityApi.updateMatchArticle(matchId, id, payload, getAccessTokenSilently))}
             onPublish={id => mutate(() => EditorialCommunityApi.publishMatchArticle(matchId, id, getAccessTokenSilently))}
-            onReject={id => mutate(() => EditorialCommunityApi.rejectMatchArticle(matchId, id, getAccessTokenSilently))}/>)}</VStack>
+            onReject={id => mutate(() => EditorialCommunityApi.rejectMatchArticle(matchId, id, getAccessTokenSilently))}
+            onDelete={id => mutate(() => EditorialCommunityApi.deleteMatchArticle(matchId, id, getAccessTokenSilently))}/>)}</VStack>
       </Box>}
 
       {caps?.canWrite && <>

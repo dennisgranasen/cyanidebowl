@@ -13,6 +13,7 @@ import net.warp_scores.warpscores.ai.provider.LlmProviderRouter;
 import net.warp_scores.warpscores.ai.reporting.MatchReportEvidenceBuilder;
 import net.warp_scores.warpscores.ai.reporting.MatchReportHistoricalContextService;
 import net.warp_scores.warpscores.ai.reporting.MatchReportGenerationLlmRequestFactory;
+import net.warp_scores.warpscores.ai.reporting.ReporterMemoryConsolidationService;
 import net.warp_scores.warpscores.domain.persistence.*;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.*;
@@ -45,6 +46,7 @@ public class MatchArticleService {
     private final MatchReportEvidenceBuilder matchReportEvidenceBuilder;
     private final MatchReportHistoricalContextService matchReportHistoricalContext;
     private final MatchReportGenerationLlmRequestFactory matchReportFactory;
+    private final ReporterMemoryConsolidationService reporterMemory;
     private final LlmExecutionService llm;
     private final LlmProviderRouter providerRouter;
     private final LlmProviderRegistry providerRegistry;
@@ -57,6 +59,7 @@ public class MatchArticleService {
             boolean canWrite,
             boolean participatingCoach,
             boolean canReview,
+            boolean canDeleteAny,
             boolean replayAnalyzed,
             boolean canRequestAi,
             String teamId,
@@ -82,6 +85,8 @@ public class MatchArticleService {
         MatchContext ctx = matchContext(auth, matchId);
         boolean authenticated = subject(auth) != null;
         boolean coach = authenticated && !claimedCoachIds(auth).isEmpty();
+        boolean canDeleteAny = ctx.editor()
+                || permissions.canAdminLeagueSystem(auth, ctx.leagueSystemId());
         boolean analyzed = replayAnalyses.existsById(matchId);
         List<ReporterOption> reporters = ctx.editor() && analyzed
                 ? reporterProfiles.enabledForReports().stream()
@@ -94,6 +99,7 @@ public class MatchArticleService {
                 ctx.editor() || coach,
                 ctx.participatingCoach(),
                 ctx.editor(),
+                canDeleteAny,
                 analyzed,
                 ctx.editor() && analyzed && !reporters.isEmpty(),
                 ctx.teamId(),
@@ -157,7 +163,9 @@ public class MatchArticleService {
         article.setTitle(input.title().trim());
         article.setBody(input.body().trim());
         article.setUpdatedAt(Instant.now());
-        return articles.save(article);
+        MatchArticle saved = articles.save(article);
+        reporterMemory.considerPublished(saved);
+        return saved;
     }
 
     /**
@@ -191,7 +199,9 @@ public class MatchArticleService {
         MatchArticle article = requireMatchArticle(matchId, articleId);
         requireEditor(auth, matchId);
         publish(article, subject(auth));
-        return articles.save(article);
+        MatchArticle saved = articles.save(article);
+        reporterMemory.considerPublished(saved);
+        return saved;
     }
 
     public MatchArticle reject(Authentication auth, String matchId, String articleId) {
@@ -202,7 +212,28 @@ public class MatchArticleService {
         article.setReviewedAt(now);
         article.setReviewedBySubject(subject(auth));
         article.setUpdatedAt(now);
-        return articles.save(article);
+        MatchArticle saved = articles.save(article);
+        reporterMemory.deactivateForArticle(saved);
+        return saved;
+    }
+
+    public void delete(Authentication auth, String matchId, String articleId) {
+        requireAuthenticated(auth);
+        MatchArticle article = requireMatchArticle(matchId, articleId);
+        MatchContext ctx = matchContext(auth, matchId);
+
+        boolean privileged = ctx.editor()
+                || permissions.canAdminLeagueSystem(auth, ctx.leagueSystemId());
+        boolean ownHumanArticle = article.getAuthorType() == MatchArticle.AuthorType.HUMAN
+                && Objects.equals(subject(auth), article.getAuthorSubject());
+
+        if (!privileged && !ownHumanArticle) {
+            throw new AccessDeniedException(
+                    "Only an editor, technician or the human author may delete this article");
+        }
+
+        reporterMemory.deactivateForArticle(article);
+        articles.delete(article);
     }
 
     public MatchArticle requestAi(Authentication auth, String matchId, AiRequest input) {

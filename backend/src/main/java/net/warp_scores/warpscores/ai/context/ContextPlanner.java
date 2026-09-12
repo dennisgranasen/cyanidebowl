@@ -34,6 +34,7 @@ public class ContextPlanner {
             case MATCH_REPORT -> ContextProfile.matchReport();
             case EDITORIAL_ARTICLE -> ContextProfile.editorialArticle();
             case ARTICLE_COMMENT, SOCIAL_REPLY -> ContextProfile.socialComment();
+            case MEMORY_CONSOLIDATION -> ContextProfile.memoryConsolidation();
         };
     }
 }

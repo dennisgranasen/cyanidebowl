@@ -66,6 +66,14 @@ public class MatchArticleController {
         return service.reject(auth, matchId, articleId);
     }
 
+    @DeleteMapping("/{articleId}")
+    public void delete(
+            Authentication auth,
+            @PathVariable String matchId,
+            @PathVariable String articleId) {
+        service.delete(auth, matchId, articleId);
+    }
+
     @PostMapping("/ai")
     public MatchArticle requestAi(
             Authentication auth,

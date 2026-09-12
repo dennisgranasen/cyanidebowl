@@ -80,6 +80,16 @@ public record ContextProfile(
                 7, 10);
     }
 
+    public static ContextProfile memoryConsolidation() {
+        return profile("memory-consolidation-v1", 5_000,
+                0, 0,
+                0, 0,
+                10, 12,
+                0, 0,
+                10, 16,
+                4, 6);
+    }
+
     private static ContextProfile profile(
             String id,
             int maxTokens,

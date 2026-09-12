@@ -58,6 +58,8 @@ const EditorialCommunityApi = {
     authPost(`/matches/${encodeURIComponent(matchId)}/articles/${encodeURIComponent(articleId)}/publish`, {}, getToken),
   rejectMatchArticle: (matchId, articleId, getToken) =>
     authPost(`/matches/${encodeURIComponent(matchId)}/articles/${encodeURIComponent(articleId)}/reject`, {}, getToken),
+  deleteMatchArticle: (matchId, articleId, getToken) =>
+    authDelete(`/matches/${encodeURIComponent(matchId)}/articles/${encodeURIComponent(articleId)}`, getToken),
   requestAiMatchArticle: (matchId, payload, getToken) =>
     authPost(`/matches/${encodeURIComponent(matchId)}/articles/ai`, payload, getToken),
   rejectedMatchArticles: (getToken) =>
