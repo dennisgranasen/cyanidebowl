@@ -55,9 +55,15 @@ public class MatchReportEvidenceProjector {
                 Stats actor = actorId == null ? null : stat(stats, actorId, index);
                 Stats target = targetId == null ? null : stat(stats, targetId, index);
 
-                Drive drive = state.driveKey() == null ? null
-                        : drives.computeIfAbsent(state.driveKey(),
-                        ignored -> new Drive(state.half, state.drive));
+                Drive drive = null;
+                String driveKey = state.driveKey();
+                if (driveKey != null) {
+                    drive = drives.get(driveKey);
+                    if (drive == null) {
+                        drive = new Drive(state.half, state.drive);
+                        drives.put(driveKey, drive);
+                    }
+                }
                 if (drive != null) drive.events++;
                 if (actor != null) actor.inc("events");
 
