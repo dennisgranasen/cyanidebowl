@@ -1,17 +1,14 @@
 package net.warp_scores.warpscores.ai.provider;
 
+/**
+ * Provider adapter boundary. Implementations translate canonical requests to one external API.
+ *
+ * <p>Providers must not perform retrieval, context ranking or authorization.</p>
+ */
 public interface LlmProvider {
     String id();
-    LlmResponse generate(LlmRequest request);
 
-    record LlmRequest(
-            String model,
-            String systemPrompt,
-            String userPrompt,
-            String responseSchemaJson) {}
+    ProviderCapabilities capabilities();
 
-    record LlmResponse(
-            String providerId,
-            String model,
-            String rawContent) {}
+    CanonicalLlmResponse generate(CanonicalLlmRequest request);
 }
