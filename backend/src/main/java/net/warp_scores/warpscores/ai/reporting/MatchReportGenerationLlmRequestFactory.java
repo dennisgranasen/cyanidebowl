@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import net.warp_scores.warpscores.ai.agents.AiReporterDefinition;
 import net.warp_scores.warpscores.ai.context.AssembledContext;
 import net.warp_scores.warpscores.ai.context.ContextTaskType;
 import net.warp_scores.warpscores.ai.provider.CanonicalLlmRequest;
@@ -44,8 +45,17 @@ public class MatchReportGenerationLlmRequestFactory {
             notable player performances, touchdowns, casualties, tactical patterns and
             other events that are supported by the supplied evidence.
 
-            Write as the assigned reporter. Preserve that reporter's established voice,
-            personality, opinions and style, but never let persona override match facts.
+            The reporter personality is not decorative seasoning. The article should be
+            unmistakably written by this particular character. Amplify the reporter's
+            quirks, biases, obsessions, humour, theatricality, emotionality, vocabulary
+            and recurring attitudes. Prefer colourful, opinionated and eccentric prose
+            over safe generic sports journalism. The reporter may be unfair, melodramatic,
+            sarcastic, pompous, partisan, petty or absurd when that fits the persona.
+
+            Be adventurous in interpretation and style, but conservative about objective
+            facts. Persona may distort emphasis and judgement; it may not fabricate a
+            score, event, statistic, injury, quotation or historical fact. When forced to
+            choose, be weird about opinions and exact about factual claims.
 
             DOMAIN context describes how the Blood Bowl world works. It is background
             knowledge only. Do not make domain documentation, the rules of Blood Bowl,
@@ -62,6 +72,12 @@ public class MatchReportGenerationLlmRequestFactory {
             data. Its team identities and final score are authoritative and must never
             be contradicted, softened into a draw, or replaced by an inferred result.
 
+            HISTORICAL COMPETITION CONTEXT is authoritative for claims about this
+            competition before the match: prior matches, table position, recent form and
+            head-to-head history. Never call the match a season opener, competition
+            opener, premiere, debut round or first match unless that context explicitly
+            supports the claim. Do not infer chronology from the absence of other context.
+
             Return JSON matching the supplied schema:
             - language: the requested language code
             - homeTeam/awayTeam/homeScore/awayScore: copy the authoritative result exactly
@@ -77,12 +93,16 @@ public class MatchReportGenerationLlmRequestFactory {
             String agentVersion,
             String model,
             AssembledContext context,
+            AiReporterDefinition reporter,
             String language,
             MatchReportEvidenceBuilder.Evidence evidence,
+            MatchReportHistoricalContextService.HistoricalContext historicalContext,
             String editorialBrief) {
         if (context == null) throw new IllegalArgumentException("context must not be null");
+        if (reporter == null) throw new IllegalArgumentException("reporter must not be null");
         if (!StringUtils.hasText(language)) throw new IllegalArgumentException("language must not be blank");
         if (evidence == null) throw new IllegalArgumentException("evidence must not be null");
+        if (historicalContext == null) throw new IllegalArgumentException("historicalContext must not be null");
 
         String normalizedLanguage = language.trim().toLowerCase();
         StringBuilder instruction = new StringBuilder(TASK_INSTRUCTION)
@@ -90,8 +110,12 @@ public class MatchReportGenerationLlmRequestFactory {
                 .append("Write the headline and complete article in language code ")
                 .append(normalizedLanguage)
                 .append(". Do not switch to English unless the requested language is English.")
+                .append("\n\nREPORTER PERSONA -- APPLY STRONGLY:\n")
+                .append(reporterPersona(reporter))
                 .append("\n\nAUTHORITATIVE MATCH EVIDENCE:\n")
-                .append(evidence.json());
+                .append(evidence.json())
+                .append("\n\nHISTORICAL COMPETITION CONTEXT:\n")
+                .append(historicalContext.json());
         if (StringUtils.hasText(editorialBrief)) {
             instruction.append("\n\nEditorial brief:\n").append(editorialBrief.trim());
         }
@@ -100,6 +124,9 @@ public class MatchReportGenerationLlmRequestFactory {
         hardConstraints.add("Output language is " + normalizedLanguage + ".");
         hardConstraints.add("Authoritative final result: " + evidence.resultText() + ".");
         hardConstraints.add("Never state or imply a different final result.");
+        hardConstraints.add(
+                "Do not describe this match as an opener/premiere/first match unless "
+                        + "HISTORICAL COMPETITION CONTEXT explicitly establishes that.");
         AssembledContext groundedContext = new AssembledContext(
                 context.worldModelVersion(),
                 List.copyOf(hardConstraints),
@@ -115,7 +142,39 @@ public class MatchReportGenerationLlmRequestFactory {
                 groundedContext,
                 instruction.toString(),
                 new OutputContract(OutputContract.Format.JSON, RESPONSE_SCHEMA),
-                GenerationOptions.defaults());
+                new GenerationOptions(0.95, null));
+    }
+
+    private String reporterPersona(AiReporterDefinition reporter) {
+        var root = objectMapper.createObjectNode();
+        root.put("id", reporter.getId());
+        root.put("alias", reporter.getAlias());
+        if (StringUtils.hasText(reporter.getRace())) root.put("race", reporter.getRace());
+        if (StringUtils.hasText(reporter.getCategory())) root.put("category", reporter.getCategory());
+        if (StringUtils.hasText(reporter.getRole())) root.put("role", reporter.getRole());
+
+        AiReporterDefinition.Voice voice = reporter.getVoice();
+        if (voice != null) {
+            root.set("tone", objectMapper.valueToTree(voice.getTone()));
+            if (voice.getHumour() != null) root.put("humour", voice.getHumour());
+            if (voice.getTacticalAnalysis() != null) root.put("tacticalAnalysis", voice.getTacticalAnalysis());
+            if (voice.getEmotionality() != null) root.put("emotionality", voice.getEmotionality());
+            if (voice.getTheatricality() != null) root.put("theatricality", voice.getTheatricality());
+            if (voice.getExtra() != null && !voice.getExtra().isEmpty()) {
+                root.set("extra", objectMapper.valueToTree(voice.getExtra()));
+            }
+        }
+
+        if (StringUtils.hasText(reporter.getMarkdownBody())) {
+            String profile = reporter.getMarkdownBody().trim();
+            root.put("profile", profile.length() <= 8000 ? profile : profile.substring(0, 8000));
+        }
+
+        try {
+            return objectMapper.writeValueAsString(root);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Could not serialize reporter persona", e);
+        }
     }
 
     public GeneratedArticle parse(String content) {

@@ -11,6 +11,7 @@ import net.warp_scores.warpscores.ai.provider.LlmProvider;
 import net.warp_scores.warpscores.ai.provider.LlmProviderRegistry;
 import net.warp_scores.warpscores.ai.provider.LlmProviderRouter;
 import net.warp_scores.warpscores.ai.reporting.MatchReportEvidenceBuilder;
+import net.warp_scores.warpscores.ai.reporting.MatchReportHistoricalContextService;
 import net.warp_scores.warpscores.ai.reporting.MatchReportGenerationLlmRequestFactory;
 import net.warp_scores.warpscores.domain.persistence.*;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
@@ -41,6 +42,7 @@ public class MatchArticleService {
     private final ContextPlanner contextPlanner;
     private final ContextAssemblyService contextAssembly;
     private final MatchReportEvidenceBuilder matchReportEvidenceBuilder;
+    private final MatchReportHistoricalContextService matchReportHistoricalContext;
     private final MatchReportGenerationLlmRequestFactory matchReportFactory;
     private final LlmExecutionService llm;
     private final LlmProviderRouter providerRouter;
@@ -225,6 +227,8 @@ public class MatchArticleService {
         ReplayAnalysis replayAnalysis = replayAnalyses.findById(matchId)
                 .orElseThrow(() -> new IllegalStateException("Analyzed replay disappeared before generation"));
         MatchReportEvidenceBuilder.Evidence evidence = matchReportEvidenceBuilder.build(ctx.match(), replayAnalysis);
+        MatchReportHistoricalContextService.HistoricalContext historicalContext =
+                matchReportHistoricalContext.build(ctx.match());
         ContextPlan plan = contextPlanner.plan(
                 ContextTaskType.MATCH_REPORT,
                 reporter.getUserId(),
@@ -237,8 +241,10 @@ public class MatchArticleService {
                 Integer.toString(reporter.getSchemaVersion()),
                 "router-selected",
                 assembled,
+                reporter,
                 effectiveReporter.primaryLanguage(),
                 evidence,
+                historicalContext,
                 trimToNull(input.editorialBrief()));
         CanonicalLlmResponse response = llm.generate(reporter.getId(), request);
         MatchReportGenerationLlmRequestFactory.GeneratedArticle generated =

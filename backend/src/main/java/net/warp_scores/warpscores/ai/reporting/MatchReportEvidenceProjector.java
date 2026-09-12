@@ -349,7 +349,8 @@ public class MatchReportEvidenceProjector {
         if (source.size() <= limit) return source;
         Set<Integer> selected = new LinkedHashSet<>();
         for (int p = 4; p >= 3 && selected.size() < limit; p--) {
-            addEvenly(selected, source.stream().filter(e -> e.priority == p).toList(),
+            int priority = p;
+            addEvenly(selected, source.stream().filter(e -> e.priority == priority).toList(),
                     limit - selected.size());
         }
         addEvenly(selected,
