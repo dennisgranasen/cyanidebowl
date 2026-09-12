@@ -2,7 +2,7 @@
 
 > Handoff target: Codex  
 > Working branch: `dev`  
-> Reviewed: 2026-09-07  
+> Reviewed: 2026-09-13  
 > Repository: `dennisgranasen/cyanidebowl`
 
 Work only on `dev` or a short-lived branch created from `dev`. Do not base work on
@@ -10,9 +10,13 @@ Work only on `dev` or a short-lived branch created from `dev`. Do not base work 
 
 ## Goal
 
-Stabilize the current `dev` implementation before expanding the new
-league-system/season/stage model. Fix confirmed functional and security problems first,
-then make the stage work reachable, testable, and documented.
+`ROADMAP.md` defines the current product execution order. This file holds detailed,
+independently testable work items and their acceptance criteria.
+
+The stabilization/security foundation and the first LeagueSystem/editorial/AI slices are
+already implemented on `dev`. New work should now prioritize LeagueSystem competition
+UX, discovery lifecycle, match/replay enrichment and the remaining AI runtime
+prerequisites without reopening completed foundation work.
 
 ## Rules for Codex
 
@@ -46,6 +50,13 @@ then make the stage work reachable, testable, and documented.
 | P2 | B-011 | Stale repository metadata/docs are cleaned up | Done |
 | P3 | B-012 | Broad exception/null handling is improved incrementally | Blocked: failure contract decision needed |
 | P1 | B-013 | Admins can search Cyanide and prepare LeagueSystem sources | Done |
+| P1 | B-021 | Season phases/stages and round-by-round UX are complete | Next |
+| P1 | B-022 | Group standings and metadata-driven playoff brackets are complete | Next |
+| P1 | B-023 | Discovery candidates/watchers have a normalized lifecycle | Planned |
+| P1 | B-024 | Match detail and historical enrichment use one normalized contract | Planned |
+| P1 | B-025 | pybb3 timeline/skill-reroll contract is versioned and consumed safely | In progress upstream |
+| P2 | B-026 | Primary LeagueSystem/default public navigation is explicit | Planned |
+| P2 | B-027 | ARM64/Raspberry Pi deployment operations are documented and repeatable | Partial |
 
 ## Current status
 
@@ -66,6 +77,21 @@ then make the stage work reachable, testable, and documented.
   callers currently treat `null` as both upstream unavailability and an internal
   client failure. Decide whether scheduled collection should skip, retry, or fail
   the job for each outcome before replacing that contract.
+
+- `ROADMAP.md` is the short authoritative execution sequence; this backlog is the
+  detailed work-card catalogue.
+- The immediate product focus is now LeagueSystem competition UX: phase/stage
+  navigation, round-by-round match presentation, standings and metadata-driven playoff
+  brackets.
+- Admin-assisted Cyanide discovery exists, but candidate normalization, monitoring and
+  proactive suggestions remain separate follow-up work.
+- Match/replay work must converge on a normalized detail/timeline contract. The detailed
+  BB3 parser remains in the separate `pybb3` repository and is consumed through the
+  pinned `pybb3-service` dependency.
+- AI provider integration, social/memory persistence, article generation, interaction
+  decisions and generation traces exist. Remaining AI foundation work is domain
+  semantic projection, memory-write policy, Dedicated Fans reconciliation and a
+  deterministic direct interaction flow before B-016 autonomous scheduling.
 
 ---
 
@@ -417,6 +443,160 @@ npm run build
 
 ---
 
+## Next core product work
+
+The detailed cards below implement the product order summarized in `ROADMAP.md`.
+
+### B-021 — Complete phase/stage and round-by-round competition UX
+
+**Status: Next**
+
+Introduce explicit Phase semantics where a season needs a layer above Stage, without
+breaking seasons that only need stages.
+
+Required behavior:
+
+- examples of phases include preseason, qualifier, group stage and playoffs;
+- Stage remains the concrete subdivision, such as Group A/Group B, play-in, QF, SF,
+  final or bronze;
+- a source may contribute to a configured stage/phase without hardcoding tournament
+  names;
+- public match lists render round by round and default to the latest round with played
+  results;
+- groups may independently be on different current rounds;
+- moving between phases/stages must be fast and must not require loading every match in
+  the season.
+
+**Acceptance criteria**
+
+- existing LeagueSystem/Season/Stage data remains readable or has an explicit migration;
+- phase-less seasons still work;
+- round assignment is deterministic for known schedules/results;
+- tests cover multi-group seasons whose groups have different current rounds;
+- public navigation no longer presents all season matches as one undifferentiated list.
+
+### B-022 — Group standings and metadata-driven playoff brackets
+
+**Status: Next after B-021**
+
+- Render standings per group/stage from normalized stage data.
+- Drive bracket shape from tournament metadata/configuration, not tournament names.
+- Support optional play-in, QF, SF, final and bronze rounds.
+- Keep final above bronze in the visual hierarchy.
+- Preserve deterministic winner/loser progression links.
+- Represent replay/rematch series without collapsing distinct matches.
+- Treat replay similarity/hash evidence as a signal; do not automatically rewrite match
+  history solely because two payloads are identical/near-identical.
+
+**Acceptance criteria**
+
+- known historical seasons with replays/rematches render every played match;
+- brackets do not duplicate a match in multiple slots;
+- series outcome and individual on-field results remain separately inspectable;
+- malformed/incomplete bracket metadata fails explicitly instead of guessing topology.
+
+### B-023 — Normalize discovery candidates and watcher lifecycle
+
+**Status: Planned**
+
+The existing Cyanide admin search remains the interactive lookup entry point. Add a
+provider-neutral discovery layer for proactive monitoring.
+
+- Parse provider/directory/folder/timestamp/metadata details at the discovery boundary.
+- Expose normalized candidates to application code.
+- Classify candidates as `complete` (importable) or `incomplete` (requires watcher).
+- Create watchers only for incomplete candidates.
+- Periodically suggest new competitions related to already registered leagues/coaches.
+- Discovery/inspection never enables collection; saving `StageSource` remains explicit.
+- A lightweight inspect action may fetch a small recent-match/team preview without
+  turning discovery into full collection.
+
+**Acceptance criteria**
+
+- application/cache code does not know provider filesystem layout;
+- complete candidates can be imported without a watcher;
+- incomplete candidates can mature into complete candidates idempotently;
+- duplicate suggestions are stable/deduplicated;
+- monitoring does not reset an existing collection checkpoint.
+
+### B-024 — Normalize match detail and historical enrichment
+
+**Status: Planned**
+
+- Use one match-detail DTO/contract for current and historical data.
+- Include teams, coaches, race/team kind, roster, SPP/skills and team value when source
+  data provides them.
+- Resolve BB3 race display through canonical TeamKind/race mappings; do not revive
+  unreliable legacy RaceId assumptions.
+- Trigger enrichment/backfill through the data pipeline, not from overview rendering.
+- Keep raw/on-field score and administrative/penalty outcome separable where available.
+- Avoid blank roster panels when data exists in replay/archive/upstream sources.
+
+**Acceptance criteria**
+
+- known BB2/BB3 historical fixtures resolve the correct race/team kind;
+- missing enrichment is explicit and retryable;
+- opening one match detail does not force expensive enrichment for unrelated matches;
+- tests cover older matches, missing roster source and enrichment success/failure.
+
+### B-025 — Version and consume the pybb3 replay timeline contract
+
+**Status: In progress in the separate `pybb3` repository**
+
+Cyanidebowl owns the service boundary and presentation contract; detailed replay parsing
+stays upstream in `pybb3`.
+
+Required timeline semantics:
+
+- ordered event sequence per half/drive/turn;
+- actor/target plus action and **reason for any test/roll**;
+- a plain move with no test has no fabricated roll;
+- explicit dodge, rush/GFI, Tentacles and negative-trait checks;
+- supported special events include kickoff deviation, wizard effects, Bone-head,
+  Really Stupid, Bloodlust, Foul Appearance and Animal Savagery;
+- `skill_rerolls` are distinct from generic/team rerolls with backwards-compatible
+  handling of older payloads;
+- unknown/new event kinds are preserved as explicit unknowns with provenance rather
+  than silently mapped to a misleading generic action.
+
+Cyanidebowl tasks:
+
+- pin an upstream pybb3 ref containing the agreed schema;
+- version/validate the response contract in `pybb3-service`;
+- add consumer tests using representative timeline fixtures;
+- render reason/roll/result only when semantically applicable;
+- preserve replay IP redaction in diagnostic/export paths.
+
+### B-026 — Primary LeagueSystem and public navigation policy
+
+**Status: Planned**
+
+- Add/confirm an admin setting for one primary LeagueSystem.
+- Default front page/recent content to the primary system.
+- Load other LeagueSystems when selected rather than mixing every system into the
+  default view.
+- Define deterministic fallback when no primary system is configured.
+
+### B-027 — Deployment runbook for ARM64/Raspberry Pi
+
+**Status: Partial**
+
+CI builds ARM64 artifacts and compose definitions exist. Add a concise operational
+runbook covering:
+
+- loading/versioning the three application images;
+- `.env`/secret ownership and required variables;
+- `PYBB3_REF`, internal API key and credential-encryption key responsibilities;
+- persistent replay/credential volumes;
+- health checks and startup order;
+- Cloudflare Tunnel connectivity/failure diagnosis;
+- upgrade/rollback and cleanup of loaded tar artifacts.
+
+No production secret values belong in documentation or GitHub Actions.
+
+
+---
+
 ## Editorial & Community
 
 ### B-014 — Editorial/community layer
@@ -509,7 +689,7 @@ B-014–B-016 already have established meanings. Execution order is defined by
 
 ### B-018 — Canonical AI context and world-model contract
 
-**Status: In progress — prerequisite for B-016**
+**Status: Foundation largely implemented — remaining semantic/runtime policy work**
 
 **Implemented slices**
 
@@ -536,9 +716,9 @@ B-014–B-016 already have established meanings. Execution order is defined by
 
 **Remaining**
 
-- persisted/retrievable `social` and `memory` context;
+- automatic memory-write/summarization policy on top of persisted/retrievable `memory`;
 - broader semantic projection of mechanical source data into in-world domain facts;
-- integration of canonical context into the first persisted generation flow.
+- continued use of canonical context/provenance across direct social interaction flows.
 
 ### B-019 — Dedicated Fans community population reconciliation
 
@@ -560,7 +740,7 @@ B-014–B-016 already have established meanings. Execution order is defined by
 
 ### B-020 — First end-to-end AI editorial flow
 
-**Status: Backlog — prerequisite for B-016**
+**Status: Partial — article generation exists; deterministic direct social flow remains**
 
 Build one narrow deterministic flow before autonomous scheduling:
 

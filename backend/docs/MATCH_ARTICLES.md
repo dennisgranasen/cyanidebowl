@@ -85,6 +85,12 @@ Reporter enablement is resolved through `AiReporterEffectiveProfileService`, inc
 runtime `reportsEnabled` overrides. Provider id, model, provider request id and token
 usage are persisted on the resulting match article.
 
+Published match articles may then enter the shared AI interaction layer. Interaction
+policy determines whether a reporter reacts/comments/replies; the semantic reaction
+decision uses canonical reporter context to choose POW/SKULL direction and strength.
+Those interactions use the existing community primitives and remain idempotent per
+reporter/target.
+
 ## API
 
 ```text

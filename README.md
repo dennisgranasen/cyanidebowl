@@ -59,10 +59,17 @@ Canonical reporter profiles live in `backend/docs/ai_agents/reporters/`; their s
 technical documentation is in `backend/docs/ai_agents/README.md`. Portraits/avatars are
 served from `frontend/public/img/portraits/`.
 
-## Backlog
+## Roadmap and backlog
 
-`BACKLOG.md` is the development handoff/backlog. Temporary implementation notes should
-not be committed at repository root.
+Start with `ROADMAP.md` for the current execution order and cross-project dependencies.
+`BACKLOG.md` contains the detailed implementation cards and acceptance criteria.
+
+AI-specific architecture and sequencing live under `backend/docs/`, especially
+`AI_ARCHITECTURE.md` and `AI_ROADMAP.md`. The pybb3 integration boundary is documented
+in `pybb3-service/README.md`.
+
+Temporary implementation notes and one-off patch artifacts should not be committed at
+repository root.
 
 ## Disclaimer
 

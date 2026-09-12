@@ -4,6 +4,8 @@
 
 ### Changed
 
+- Refreshed project/AI roadmaps and documentation ownership so completed foundation work,
+  current priorities and external pybb3 dependencies are clearly separated.
 - Added admin-assisted LeagueSystem season/source discovery and optional email
   notifications for new candidates.
 - Added the public, read-only stage-match API and stage seed documentation.

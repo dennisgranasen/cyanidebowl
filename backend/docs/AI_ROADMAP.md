@@ -4,7 +4,7 @@
 > Scope: AI identity, context, community population and editorial generation  
 > Status: active implementation roadmap
 
-## Implementation status — 2026-09-12
+## Implementation status — 2026-09-13
 
 - **B-017 / identity + provenance:** implemented foundation.
 - **AI-003 / canonical retrieval:** implemented.
@@ -14,9 +14,9 @@
 - **AI-007 / OpenAI-compatible Responses + fallback:** implemented; xAI/Grok is the first configured compatible endpoint.
 - **AI-008 / editorial article generation context:** implemented and checked in.
 - **Match article review/publication integration:** implemented; see `MATCH_ARTICLES.md`.
-- **B-018:** in progress; social/memory persistence and broader domain semantic projection remain.
+- **B-018:** foundation largely implemented; social/memory persistence exists. Automatic memory-write policy and broader domain semantic projection remain.
 - **B-019:** not started.
-- **B-020:** provider-independent article invocation path is implemented; remaining work is scheduling/automation policy.
+- **B-020:** partial; provider-independent article generation and article/comment interaction paths exist. A deterministic direct social flow still needs to be closed before autonomous scheduling.
 
 ## Purpose
 
@@ -188,19 +188,25 @@ model, ad-hoc context assembly, missing provenance or an undefined community lif
 
 ## Current implementation sequence
 
-Continue in this order:
+The provider-foundation steps previously listed here are complete. Continue in this
+order:
 
-1. Finish migration of the old reporting prompt path to `CanonicalLlmRequest`.
-2. Add the first real provider adapter (Gemini) behind `LlmProvider`.
-3. Add an OpenAI-compatible adapter and provider fallback execution.
-4. Complete remaining B-018 social/memory/domain semantic projection.
-5. Implement and unit-test B-019 Dedicated Fans reconciliation.
-6. Build B-020 as a deterministic explicit/direct-tag end-to-end flow.
-7. Persist full provider/model/token provenance from canonical responses.
-8. Reassess B-016 only after B-017 through B-020 are green.
+1. Keep all reporting/interaction paths on `CanonicalLlmRequest`; remove remaining
+   feature-local prompt/request seams only when encountered with regression coverage.
+2. Complete B-018 domain semantic projection so replay/game mechanics are translated
+   into in-universe sporting facts before provider invocation.
+3. Define automatic memory-write/summarization policy on top of the existing persisted
+   `AiMemoryEntry` seam; do not promote attributed claims to domain facts.
+4. Implement and unit-test B-019 Dedicated Fans reconciliation using persistent
+   team-affinity relationships and activate/deactivate semantics.
+5. Finish B-020 with one deterministic direct-tag/direct-interaction vertical slice
+   using canonical context, existing community primitives and persisted provenance.
+6. Keep generation-trace retention and provider/model/token provenance operationally
+   bounded and inspectable.
+7. Reassess B-016 scheduling/quotas/cost controls only after B-019/B-020 are green.
 
-Do not reintroduce feature-local `LlmRequest`/prompt contracts while completing these
-steps. Provider adapters consume the canonical request only.
+Gemini, OpenAI-compatible Responses execution and provider fallback are existing
+infrastructure, not future roadmap items. Do not reimplement them under a new abstraction.
 
 ## Explicitly out of scope for the foundation
 

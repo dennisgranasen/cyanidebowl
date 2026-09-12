@@ -337,7 +337,7 @@ The reconciliation service decides population state, not what or when users post
 
 ## 7. Generation pipeline contract
 
-The first implementation should converge toward this sequence:
+The canonical implementation follows this sequence:
 
 ```text
 trigger
@@ -424,9 +424,9 @@ The foundation must not:
 
 ---
 
-## 10. Required test seams for the next implementation step
+## 10. Required regression seams
 
-Before provider integration, tests should be possible for:
+Provider integration now exists. Keep direct regression coverage for:
 
 - `HUMAN` vs `AI` canonical identity;
 - role/capability vs relationship separation;
@@ -437,5 +437,9 @@ Before provider integration, tests should be possible for:
 - world-model translation/no-leakage rules;
 - Dedicated Fans create/reactivate/deactivate/idempotent behavior.
 
-Provider-facing tests can then verify that the already-assembled context is rendered
+Provider-facing tests should verify that already-assembled context is rendered
 correctly rather than retesting all domain selection logic through an LLM call.
+
+Operational/provider routing, generation traces and retention must remain outside the
+canonical user identity. Adding a provider or changing a model must not create a new
+reporter/persona identity or a competing context taxonomy.
