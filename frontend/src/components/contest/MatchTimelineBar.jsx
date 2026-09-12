@@ -173,9 +173,35 @@ const eventCausesTurnover = (event, index, events) => {
   return false;
 };
 
+const teamRerollOverlay = (event) => {
+  const checks = Array.isArray(event?.checks) ? event.checks : [];
+  const lonerFailed = checks.some((check) =>
+    String(check?.type || '').trim().toLowerCase() === 'loner' && isFailedCheck(check));
+
+  for (const check of checks) {
+    const attempts = Array.isArray(check?.attempts) ? check.attempts : [];
+    const teamAttempt = attempts.find((attempt) =>
+      String(attempt?.reroll || '').trim().toLowerCase() === 'team');
+    const offered = Array.isArray(check?.reroll_offered)
+      && check.reroll_offered.some((source) => String(source).toLowerCase() === 'team');
+    const requested = Boolean(teamAttempt || check?.reroll_used || (offered && lonerFailed));
+    if (!requested) continue;
+
+    return {
+      status: lonerFailed ? 'loner_failed' : isFailedCheck(check) ? 'failed' : 'passed',
+      checkType: String(check?.type || 'check').trim().toLowerCase(),
+    };
+  }
+  return null;
+};
+
 const keepInOverviewTimeline = (event, index, events) => {
   const type = normalizedNarrativeType(event);
   const checks = Array.isArray(event?.checks) ? event.checks : [];
+
+  // Team rerolls are a limited team resource and always deserve a marker,
+  // even when the underlying action would normally be hidden from the overview.
+  if (teamRerollOverlay(event)) return true;
 
   // pybb3 keeps successful negatrait checks for semantic/narrative consumers;
   // the compact match bar only shows checks that actually changed play.
@@ -197,56 +223,6 @@ const keepInOverviewTimeline = (event, index, events) => {
     return blockHasMajorConsequence(event) || eventCausesTurnover(event, index, events);
   }
   return true;
-};
-
-const rerollDisplayEvents = (event, index, resolveParticipant) => {
-  const actor = resolveParticipant(event.actor);
-  const checks = Array.isArray(event?.checks) ? event.checks : [];
-  const result = [];
-
-  checks.forEach((check, checkIndex) => {
-    const attempts = Array.isArray(check?.attempts) ? check.attempts : [];
-    const rerolledAttempts = attempts
-      .map((attempt, attemptIndex) => ({ attempt, attemptIndex }))
-      .filter(({ attempt }) => attempt?.reroll);
-
-    const markers = rerolledAttempts.length
-      ? rerolledAttempts
-      : check?.reroll_used
-        ? [{ attempt: null, attemptIndex: attempts.length > 1 ? attempts.length - 1 : 1 }]
-        : [];
-
-    markers.forEach(({ attempt, attemptIndex }, markerIndex) => {
-      const source = attempt?.reroll ? humanizeType(String(attempt.reroll)) : 'Team';
-      const checkName = humanizeType(check?.type || 'check');
-
-      result.push({
-        id: `pybb3-${event.id ?? index}-reroll-${checkIndex}-${markerIndex}`,
-        type: 'REROLL',
-        title: `${source} reroll · ${checkName}`,
-        sequence: index,
-        replayEventId: event.id,
-        eventIndex: index + ((checkIndex + 1) / 100) + ((attemptIndex + 1) / 10000),
-        clock: event.clock,
-        half: event.half,
-        drive: event.drive,
-        turn: event.team_turn ?? event.turn,
-        activeTeamId: event.team_id,
-        teamId: actor?.teamId ?? event.team_id,
-        playerId: actor?.id,
-        playerName: actor?.name,
-        actorPlayerName: actor?.name,
-        rawEventType: 'reroll',
-        checks: [check],
-        details: {
-          rerollSource: source.toLowerCase(),
-          result: attempt?.outcome ?? check?.outcome,
-        },
-      });
-    });
-  });
-
-  return result;
 };
 
 const checkSummary = (check) => {
@@ -517,8 +493,7 @@ const narrativeDisplayEvents = (timeline) => {
   };
 
   const projected = (timeline.events || []).flatMap((event, index, events) => {
-    const rerolls = rerollDisplayEvents(event, index, resolveParticipant);
-    if (!keepInOverviewTimeline(event, index, events)) return rerolls;
+    if (!keepInOverviewTimeline(event, index, events)) return [];
 
     const actor = resolveParticipant(event.actor);
     const target = resolveParticipant(event.target);
@@ -541,19 +516,29 @@ const narrativeDisplayEvents = (timeline) => {
         ? actor
         : null);
     const actorPlayer = actor?.kind === 'player' ? actor : null;
-    const turnoverCaused = (rawType === 'move' && Boolean(failedCheck))
+    const rerollOverlay = teamRerollOverlay(event);
+    const displayCheck = rawType === 'move'
+      ? failedCheck || (rerollOverlay
+        ? checks.find((check) => String(check?.type || '').trim().toLowerCase() === rerollOverlay.checkType)
+        : null)
+      : null;
+    const turnoverCaused = Boolean(event?.details?.turnover)
+      || (rawType === 'move' && Boolean(failedCheck))
       || eventCausesTurnover(event, index, events);
-    const displayType = rawType === 'move' && failedCheck
+    const displayType = rawType === 'move' && displayCheck
       ? 'CHECK'
       : rawType === 'negatrait_check'
         ? NEGATRAIT_DISPLAY_TYPE[normalizedNegatrait(event)] || 'NEGATRAIT'
         : NARRATIVE_TYPE[rawType] || 'SPECIAL';
+    const displayTeamId = ['INJURY', 'CASUALTY', 'DEATH'].includes(displayType)
+      ? affected?.teamId ?? actorPlayer?.teamId ?? event.team_id
+      : actorPlayer?.teamId ?? affected?.teamId ?? event.team_id;
 
     const projectedEvent = {
       id: `pybb3-${event.id ?? index}`,
       type: displayType,
-      title: rawType === 'move' && failedCheck
-        ? `Failed ${humanizeType(failedCheck.type)}`
+      title: rawType === 'move' && displayCheck
+        ? `${isFailedCheck(displayCheck) ? 'Failed ' : ''}${humanizeType(displayCheck.type)}`
         : rawType === 'negatrait_check'
           ? `${negatraitIsSignificant(event) ? 'Failed ' : ''}${humanizeType(normalizedNegatrait(event) || 'negatrait')}`
           : humanizeType(event.type),
@@ -566,12 +551,13 @@ const narrativeDisplayEvents = (timeline) => {
       drive: event.drive,
       turn: event.team_turn ?? event.turn,
       activeTeamId: event.team_id,
-      teamId: affected?.teamId ?? actorPlayer?.teamId ?? event.team_id,
+      teamId: displayTeamId,
       playerId: actorPlayer?.id ?? affected?.id,
       playerName: actorPlayer?.name ?? affected?.name,
       actorPlayerName: actorPlayer?.name,
       affectedPlayerName: affected?.name,
       rawEventType: event.type,
+      rerollOverlay,
       turnoverCaused,
       checks,
       details: {
@@ -585,7 +571,7 @@ const narrativeDisplayEvents = (timeline) => {
       },
     };
 
-    return [projectedEvent, ...rerolls];
+    return [projectedEvent];
   });
 
   return groupOverviewEvents(
@@ -743,6 +729,12 @@ const eventPeople = (event) => {
         details.receiverName || affected ? `Receiver: ${details.receiverName || affected}` : null,
       ];
       break;
+    case 'PASS':
+      lines = [
+        actor ? `Passer: ${actor}` : null,
+        affected ? `Receiver: ${affected}` : null,
+      ];
+      break;
     case 'INTERCEPTION':
       lines = [details.interceptorName || actor ? `Interceptor: ${details.interceptorName || actor}` : null];
       break;
@@ -783,6 +775,8 @@ const eventPeople = (event) => {
   if (event?.type !== 'APOTHECARY' && details.sourceActionType) {
     lines.push(`From: ${details.sourceActionType}${details.selfInflicted ? ' (self-inflicted)' : ''}`);
   }
+  if (details.ball_loose) lines.push('Ball loose');
+  if (details.turnover) lines.push('Turnover');
   (details.consequences || []).forEach((consequence) => {
     const result = consequence.result ? ` · ${humanizeType(String(consequence.result))}` : '';
     if (consequence.playerName) {
@@ -953,6 +947,7 @@ function TimelineMarker({ event, match, left, laneOffset = 0 }) {
       <Box
         as="button"
         type="button"
+        position="relative"
         aria-label={`${style.label}: ${timelinePosition(event) || `replay step ${event.sequence}`}`}
         w={`${style.size}px`}
         h={`${style.size}px`}
@@ -981,6 +976,31 @@ function TimelineMarker({ event, match, left, laneOffset = 0 }) {
         transition="transform 0.12s ease, box-shadow 0.12s ease"
       >
         <TimelineIcon event={event} size={Math.max(18, style.size - 10)}/>
+        {event.rerollOverlay && <Box
+          position="absolute"
+          top="-8px"
+          right="-8px"
+          w="18px"
+          h="18px"
+          borderRadius="full"
+          borderWidth="2px"
+          borderColor={event.rerollOverlay.status === 'failed'
+            ? 'red.500'
+            : event.rerollOverlay.status === 'loner_failed'
+              ? 'orange.400'
+              : 'white'}
+          bg="gray.700"
+          color="white"
+          fontSize="11px"
+          lineHeight="14px"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          boxShadow="sm"
+          aria-label={`Team reroll: ${event.rerollOverlay.status}`}
+        >
+          ⚄
+        </Box>}
       </Box>
     </EventTooltip>
     {event.sppAwarded != null && <Badge
