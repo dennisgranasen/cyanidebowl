@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Alert, AlertIcon, Badge, Box, Button, Divider, FormControl, FormLabel,
+  Alert, AlertIcon, Avatar, Badge, Box, Button, Divider, FormControl, FormLabel,
   Heading, HStack, Input, Select, Spinner, Text, Textarea, VStack,
 } from '@chakra-ui/react';
 import useAuth0WithUserPermissions from '../../hooks/useAuth0WithUserPermissions';
 import EditorialCommunityApi from '../../EditorialCommunityApi';
+import AiReporterApi from '../../AiReporterApi';
 
 const statusScheme = {
   DRAFT: 'gray',
@@ -13,7 +14,7 @@ const statusScheme = {
   REJECTED: 'red',
 };
 
-function ArticleCard({ article, canReview, onSave, onPublish, onReject }) {
+function ArticleCard({ article, reporter, canReview, onSave, onPublish, onReject }) {
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(article.title);
   const [editBody, setEditBody] = useState(article.body);
@@ -44,7 +45,16 @@ function ArticleCard({ article, canReview, onSave, onPublish, onReject }) {
         </HStack>
       </> : <>
         <Heading size="sm">{article.title}</Heading>
-        <Text fontSize="sm" color="gray.500" mt={1}>Av {article.authorDisplayName}</Text>
+        <HStack mt={2} spacing={2}>
+          {article.authorType === 'AI' && (
+            <Avatar
+              size="md"
+              name={article.authorDisplayName || article.reporterAlias}
+              src={reporter?.avatarImage || reporter?.portraitImage}
+            />
+          )}
+          <Text fontSize="sm" color="gray.500">Av {article.authorDisplayName}</Text>
+        </HStack>
         <Text mt={3} whiteSpace="pre-wrap">{article.body}</Text>
       </>}
       {canReview && !editing && (
@@ -64,6 +74,7 @@ export default function MatchArticlesPanel({ matchId }) {
   const { isAuthenticated, getAccessTokenSilently } = useAuth0WithUserPermissions();
   const [articles, setArticles] = useState([]);
   const [caps, setCaps] = useState(null);
+  const [reportersById, setReportersById] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [title, setTitle] = useState('');
@@ -79,12 +90,14 @@ export default function MatchArticlesPanel({ matchId }) {
     setLoading(true);
     setError('');
     try {
-      const [articleData, capabilityData] = await Promise.all([
+      const [articleData, capabilityData, reporterData] = await Promise.all([
         EditorialCommunityApi.matchArticles(matchId, token),
         EditorialCommunityApi.matchArticleCapabilities(matchId, token),
+        AiReporterApi.reporters(),
       ]);
       setArticles(articleData || []);
       setCaps(capabilityData);
+      setReportersById(Object.fromEntries((reporterData || []).map(r => [r.id, r])));
       if (!reporterId && capabilityData?.reporters?.length) {
         setReporterId(capabilityData.reporters[0].id);
       }
@@ -140,7 +153,8 @@ export default function MatchArticlesPanel({ matchId }) {
         <Heading size="md" mb={3}>Blödareblaskan</Heading>
         {sections.editorial.length
           ? <VStack align="stretch" spacing={3}>{sections.editorial.map(a =>
-              <ArticleCard key={a.id} article={a} canReview={caps?.canReview}
+              <ArticleCard key={a.id} article={a} reporter={reportersById[a.reporterId]}
+                canReview={caps?.canReview}
                 onSave={(id, payload) => mutate(() => EditorialCommunityApi.updateMatchArticle(matchId, id, payload, getAccessTokenSilently))}
                 onPublish={id => mutate(() => EditorialCommunityApi.publishMatchArticle(matchId, id, getAccessTokenSilently))}
                 onReject={id => mutate(() => EditorialCommunityApi.rejectMatchArticle(matchId, id, getAccessTokenSilently))}/>)}</VStack>
@@ -153,7 +167,8 @@ export default function MatchArticlesPanel({ matchId }) {
           Dessa texter är skrivna av lagens coacher och är lagens egna rapporter, inte Blödareblaskans redaktionella material.
         </Text>
         <VStack align="stretch" spacing={3}>{sections.team.map(a =>
-          <ArticleCard key={a.id} article={a} canReview={caps?.canReview}
+          <ArticleCard key={a.id} article={a} reporter={reportersById[a.reporterId]}
+            canReview={caps?.canReview}
             onSave={(id, payload) => mutate(() => EditorialCommunityApi.updateMatchArticle(matchId, id, payload, getAccessTokenSilently))}
             onPublish={id => mutate(() => EditorialCommunityApi.publishMatchArticle(matchId, id, getAccessTokenSilently))}
             onReject={id => mutate(() => EditorialCommunityApi.rejectMatchArticle(matchId, id, getAccessTokenSilently))}/>)}</VStack>
@@ -162,7 +177,8 @@ export default function MatchArticlesPanel({ matchId }) {
       {sections.coach.length > 0 && <Box>
         <Heading size="md" mb={3}>Övriga coachbidrag</Heading>
         <VStack align="stretch" spacing={3}>{sections.coach.map(a =>
-          <ArticleCard key={a.id} article={a} canReview={caps?.canReview}
+          <ArticleCard key={a.id} article={a} reporter={reportersById[a.reporterId]}
+            canReview={caps?.canReview}
             onSave={(id, payload) => mutate(() => EditorialCommunityApi.updateMatchArticle(matchId, id, payload, getAccessTokenSilently))}
             onPublish={id => mutate(() => EditorialCommunityApi.publishMatchArticle(matchId, id, getAccessTokenSilently))}
             onReject={id => mutate(() => EditorialCommunityApi.rejectMatchArticle(matchId, id, getAccessTokenSilently))}/>)}</VStack>
