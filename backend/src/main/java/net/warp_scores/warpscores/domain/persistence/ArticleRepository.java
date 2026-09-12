@@ -15,4 +15,8 @@ public interface ArticleRepository extends MongoRepository<Article, String> {
     List<Article> findByStatusOrderByPublishedAtDesc(Article.Status status, Pageable pageable);
     List<Article> findByStatusAndLeagueSystemIdOrderByPublishedAtDesc(
             Article.Status status, String leagueSystemId, Pageable pageable);
+    List<Article> findByStatusAndAuthorUserIdOrderByPublishedAtDesc(
+            Article.Status status, Long authorUserId, Pageable pageable);
+    List<Article> findByStatusAndTagsInOrderByPublishedAtDesc(
+            Article.Status status, List<String> tags, Pageable pageable);
 }
