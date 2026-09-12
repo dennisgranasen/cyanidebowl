@@ -27,6 +27,7 @@ const EVENT_STYLE = {
   KICKOFF: { glyph: 'KO', label: 'Kick-off', size: 32 },
   KICKOFF_DETAIL: { glyph: 'K', label: 'Kick-off event', size: 28 },
   WEATHER: { glyph: '☁', label: 'Weather', size: 30 },
+  PRE_MATCH: { glyph: '☁', label: 'Pre-match', size: 32 },
   MATCH_START: { glyph: 'S', label: 'Match start', size: 30 },
   BLOCK: { glyph: 'B', label: 'Block', size: 30 },
   FOUL: { glyph: 'F', label: 'Foul', size: 30 },
@@ -34,7 +35,13 @@ const EVENT_STYLE = {
   COMPLETION: { glyph: '↗', label: 'Completion', size: 30 },
   CATCH: { glyph: 'C', label: 'Catch', size: 30 },
   HANDOFF: { glyph: 'H', label: 'Handoff', size: 30 },
-  ANIMAL_SAVAGERY: { glyph: 'A', label: 'Animal Savagery', size: 30 },
+  NEGATRAIT_BONE_HEAD: { glyph: '◉', label: 'Bone Head', size: 30 },
+  NEGATRAIT_REALLY_STUPID: { glyph: '?', label: 'Really Stupid', size: 30 },
+  NEGATRAIT_UNCHANNELLED_FURY: { glyph: 'ϟ', label: 'Unchannelled Fury', size: 30 },
+  NEGATRAIT_ANIMAL_SAVAGERY: { glyph: '爪', label: 'Animal Savagery', size: 30 },
+  NEGATRAIT_ALWAYS_HUNGRY: { glyph: '⌒', label: 'Always Hungry', size: 30 },
+  NEGATRAIT_TAKE_ROOT: { glyph: '♣', label: 'Take Root', size: 30 },
+  NEGATRAIT: { glyph: '!', label: 'Failed negatrait', size: 30 },
   CHECK: { glyph: '×', label: 'Failed check', size: 30 },
   REROLL: { glyph: '⚄', label: 'Reroll', size: 30 },
   TURNOVER: { glyph: '!', label: 'Turnover', size: 30 },
@@ -65,7 +72,9 @@ const NARRATIVE_TYPE = {
   casualty: 'CASUALTY',
   injury: 'INJURY',
   death: 'DEATH',
-  animal_savagery: 'ANIMAL_SAVAGERY',
+  negatrait_check: 'NEGATRAIT',
+  // Backward compatibility with older pybb3 timelines.
+  animal_savagery: 'NEGATRAIT_ANIMAL_SAVAGERY',
   kick_off_table: 'KICKOFF',
   weather_roll: 'WEATHER',
   turn_end: 'TURNOVER',
@@ -82,6 +91,27 @@ const humanizeType = (type = '') => type
 
 const normalizedNarrativeType = (event) =>
   String(event?.type || '').trim().toLowerCase();
+
+const normalizedNegatrait = (event) => String(
+  event?.details?.trait
+    || event?.trait
+    || (normalizedNarrativeType(event) === 'animal_savagery' ? 'animal_savagery' : ''),
+).trim().toLowerCase();
+
+const NEGATRAIT_DISPLAY_TYPE = {
+  bone_head: 'NEGATRAIT_BONE_HEAD',
+  really_stupid: 'NEGATRAIT_REALLY_STUPID',
+  unchannelled_fury: 'NEGATRAIT_UNCHANNELLED_FURY',
+  unchanneled_fury: 'NEGATRAIT_UNCHANNELLED_FURY',
+  animal_savagery: 'NEGATRAIT_ANIMAL_SAVAGERY',
+  always_hungry: 'NEGATRAIT_ALWAYS_HUNGRY',
+  take_root: 'NEGATRAIT_TAKE_ROOT',
+};
+
+const negatraitIsSignificant = (event) => {
+  const outcome = String(event?.outcome || '').trim().toLowerCase();
+  return outcome !== '' && outcome !== 'passed' && outcome !== 'success';
+};
 
 const checkOutcome = (check) => {
   if (check?.outcome != null) return String(check.outcome).trim().toLowerCase();
@@ -147,6 +177,11 @@ const keepInOverviewTimeline = (event, index, events) => {
   const type = normalizedNarrativeType(event);
   const checks = Array.isArray(event?.checks) ? event.checks : [];
 
+  // pybb3 keeps successful negatrait checks for semantic/narrative consumers;
+  // the compact match bar only shows checks that actually changed play.
+  if (type === 'negatrait_check' || type === 'animal_savagery') {
+    return negatraitIsSignificant(event);
+  }
   if (type === 'move') return checks.some(isFailedCheck);
   if ([
     'bounce',
@@ -320,10 +355,75 @@ const collapseDamageChains = (events) => {
     });
 };
 
-const groupOverviewEvents = (events) => {
+const groupOverviewEvents = (events, preMatchEvents = []) => {
   const skipped = new Set();
   const grouped = [];
   let initialWeatherGrouped = false;
+
+  // pybb3 narrative output keeps protocol-oriented pre-match metadata under
+  // match.pre_match_events, while MatchStart/WeatherRoll/AddInducement can also
+  // exist in the top-level event stream. Collapse both sources into one marker.
+  const firstKickoffIndex = events.findIndex((candidate) =>
+    normalizedNarrativeType({ type: candidate.rawEventType }) === 'kick_off_table');
+  const preMatchLimit = firstKickoffIndex >= 0 ? firstKickoffIndex : events.length;
+  const topLevelPreMatchTypes = new Set(['match_start', 'weather_roll', 'add_inducement']);
+  const indexedTopLevel = events
+    .map((event, index) => ({ event, index }))
+    .filter(({ event, index }) => index < preMatchLimit
+      && topLevelPreMatchTypes.has(
+        normalizedNarrativeType({ type: event.rawEventType }),
+      ));
+  const metadata = Array.isArray(preMatchEvents) ? preMatchEvents : [];
+
+  if (indexedTopLevel.length || metadata.length) {
+    indexedTopLevel.forEach(({ index }) => skipped.add(index));
+    const topLevel = indexedTopLevel.map(({ event }) => event);
+    const weather = topLevel.find((event) =>
+      normalizedNarrativeType({ type: event.rawEventType }) === 'weather_roll');
+    const weatherLabel = weather ? overviewResultLabel(weather) : null;
+    const base = topLevel[0] || {
+      id: 'pybb3-pre-match',
+      sequence: -1,
+      eventIndex: -1,
+      rawEventType: 'pre_match',
+      details: {},
+    };
+    const metadataByType = (type) => metadata
+      .filter((event) => normalizedNarrativeType(event) === type)
+      .map((event) => event.details || {});
+    const topLevelByType = (type) => topLevel
+      .filter((event) => normalizedNarrativeType({ type: event.rawEventType }) === type)
+      .map((event) => event.details || {});
+
+    grouped.push({
+      ...base,
+      id: `pre-match-${base.id}`,
+      type: 'PRE_MATCH',
+      rawEventType: 'pre_match',
+      title: weatherLabel
+        ? `Pre-match · ${humanizeType(String(weatherLabel))}`
+        : 'Pre-match',
+      details: {
+        ...(base.details || {}),
+        weather: weatherLabel,
+        inducements: [
+          ...topLevelByType('add_inducement'),
+          ...metadataByType('add_inducement'),
+        ],
+        fanFactor: metadataByType('fan_factor'),
+        journeymen: [
+          ...metadataByType('journey_men'),
+          ...metadataByType('journeymen'),
+        ],
+        preMatchEvents: metadata,
+        groupedEvents: [
+          ...topLevel.map((event) => event.rawEventType),
+          ...metadata.map((event) => event.type),
+        ].filter(Boolean),
+      },
+    });
+    initialWeatherGrouped = Boolean(weather);
+  }
 
   for (let index = 0; index < events.length; index += 1) {
     if (skipped.has(index)) continue;
@@ -445,14 +545,18 @@ const narrativeDisplayEvents = (timeline) => {
       || eventCausesTurnover(event, index, events);
     const displayType = rawType === 'move' && failedCheck
       ? 'CHECK'
-      : NARRATIVE_TYPE[rawType] || 'SPECIAL';
+      : rawType === 'negatrait_check'
+        ? NEGATRAIT_DISPLAY_TYPE[normalizedNegatrait(event)] || 'NEGATRAIT'
+        : NARRATIVE_TYPE[rawType] || 'SPECIAL';
 
     const projectedEvent = {
       id: `pybb3-${event.id ?? index}`,
       type: displayType,
       title: rawType === 'move' && failedCheck
         ? `Failed ${humanizeType(failedCheck.type)}`
-        : humanizeType(event.type),
+        : rawType === 'negatrait_check'
+          ? `${negatraitIsSignificant(event) ? 'Failed ' : ''}${humanizeType(normalizedNegatrait(event) || 'negatrait')}`
+          : humanizeType(event.type),
       sequence: index,
       replayEventId: event.id,
       causedByReplayEventId: event.caused_by ?? event.details?.caused_by ?? null,
@@ -484,7 +588,10 @@ const narrativeDisplayEvents = (timeline) => {
     return [projectedEvent, ...rerolls];
   });
 
-  return groupOverviewEvents(collapseDamageChains(projected));
+  return groupOverviewEvents(
+    collapseDamageChains(projected),
+    timeline?.match?.pre_match_events || [],
+  );
 };
 
 const teamIndex = (event) => {
@@ -502,7 +609,7 @@ const teamLogoUrl = (match, index) => {
   return team?.logo ? imageUrls.logo(team.logo, team?.id?.opus) : null;
 };
 
-const MATCH_WIDE_TYPES = new Set(['KICKOFF', 'WEATHER']);
+const MATCH_WIDE_TYPES = new Set(['KICKOFF', 'WEATHER', 'PRE_MATCH']);
 
 const laneTeamIndex = (event) => {
   const explicit = teamIndex(event);
