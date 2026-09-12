@@ -43,22 +43,27 @@ public class MongoCanonicalContextRetriever implements CanonicalContextRetriever
     public List<ContextItem> currentThread(SubjectRef thread, int limit) {
         int size = bounded(limit);
         List<ContextItem> result = new ArrayList<>();
-        CommunityComment.TargetType targetType = commentTargetType(thread.type());
-
         if (thread.type() == SubjectType.ARTICLE) {
             articles.findById(thread.id())
                     .filter(a -> a.getStatus() == Article.Status.PUBLISHED)
-                    .ifPresent(a -> result.add(mapper.article(a, ContextSource.CURRENT_THREAD)));
-        }
+                    .ifPresent(a -> {
+                        result.add(mapper.article(a, ContextSource.CURRENT_THREAD));
+                        addThreadComments(result, CommunityComment.TargetType.ARTICLE,
+                                thread.id(), mapper.articleSubjects(a), size);
+                    });
 
-        if (targetType != null) {
-            List<SubjectRef> inherited = inheritedSubjects(thread);
-            List<CommunityComment> recent = comments
-                    .findByTargetTypeAndTargetIdAndDeletedAtIsNullOrderByCreatedAtDesc(
-                            targetType, thread.id(), PageRequest.of(0, size));
-            recent.stream()
-                    .map(c -> mapper.comment(c, ContextSource.CURRENT_THREAD, inherited))
-                    .forEach(result::add);
+            matchArticles.findById(thread.id())
+                    .filter(a -> a.getStatus() == MatchArticle.Status.PUBLISHED)
+                    .ifPresent(a -> {
+                        result.add(matchArticleContext(a, ContextSource.CURRENT_THREAD));
+                        addThreadComments(result, CommunityComment.TargetType.MATCH_ARTICLE,
+                                thread.id(), matchArticleSubjects(a), size);
+                    });
+        } else {
+            CommunityComment.TargetType targetType = commentTargetType(thread.type());
+            if (targetType != null) {
+                addThreadComments(result, targetType, thread.id(), List.of(), size);
+            }
         }
         return chronological(result, size);
     }
@@ -108,7 +113,13 @@ public class MongoCanonicalContextRetriever implements CanonicalContextRetriever
                             .map(a -> mapper.article(a, ContextSource.OTHER_USERS))
                             .filter(item -> !Objects.equals(item.authorUserId(), excludingUserId))
                             .ifPresent(item -> result.put(item.id(), item));
+                    matchArticles.findById(subject.id())
+                            .filter(a -> a.getStatus() == MatchArticle.Status.PUBLISHED)
+                            .map(a -> matchArticleContext(a, ContextSource.OTHER_USERS))
+                            .filter(item -> !Objects.equals(item.authorUserId(), excludingUserId))
+                            .ifPresent(item -> result.put(item.id(), item));
                     addComments(result, CommunityComment.TargetType.ARTICLE, subject.id(), excludingUserId, candidates);
+                    addComments(result, CommunityComment.TargetType.MATCH_ARTICLE, subject.id(), excludingUserId, candidates);
                 }
                 case MATCH -> addComments(result, CommunityComment.TargetType.MATCH, subject.id(), excludingUserId, candidates);
                 case TEAM -> addComments(result, CommunityComment.TargetType.TEAM, subject.id(), excludingUserId, candidates);
@@ -160,9 +171,18 @@ public class MongoCanonicalContextRetriever implements CanonicalContextRetriever
         return List.of(mapper.match(value, ContextSource.DOMAIN, extra)).stream().limit(size).toList();
     }
 
+    private void addThreadComments(List<ContextItem> target, CommunityComment.TargetType type, String targetId,
+                                   List<SubjectRef> inherited, int limit) {
+        comments.findByTargetTypeAndTargetIdAndDeletedAtIsNullOrderByCreatedAtDesc(
+                        type, targetId, PageRequest.of(0, limit))
+                .stream()
+                .map(c -> mapper.comment(c, ContextSource.CURRENT_THREAD, inherited))
+                .forEach(target::add);
+    }
+
     private void addComments(Map<String, ContextItem> target, CommunityComment.TargetType type, String targetId,
                              long excludingUserId, int limit) {
-        List<SubjectRef> inherited = inheritedSubjects(new SubjectRef(subjectType(type), targetId));
+        List<SubjectRef> inherited = inheritedSubjects(type, targetId);
         comments.findByTargetTypeAndTargetIdAndDeletedAtIsNullOrderByCreatedAtDesc(
                         type, targetId, PageRequest.of(0, limit))
                 .stream().map(c -> mapper.comment(c, ContextSource.OTHER_USERS, inherited))
@@ -171,12 +191,20 @@ public class MongoCanonicalContextRetriever implements CanonicalContextRetriever
     }
 
     private List<SubjectRef> inheritedSubjects(CommunityComment comment) {
-        return inheritedSubjects(mapper.targetSubject(comment.getTargetType(), comment.getTargetId()));
+        return inheritedSubjects(comment.getTargetType(), comment.getTargetId());
     }
 
-    private List<SubjectRef> inheritedSubjects(SubjectRef thread) {
-        if (thread.type() != SubjectType.ARTICLE) return List.of();
-        return articles.findById(thread.id()).map(mapper::articleSubjects).orElse(List.of());
+    private List<SubjectRef> inheritedSubjects(CommunityComment.TargetType type, String targetId) {
+        return switch (type) {
+            case ARTICLE -> articles.findById(targetId)
+                    .map(mapper::articleSubjects)
+                    .orElse(List.of());
+            case MATCH_ARTICLE -> matchArticles.findById(targetId)
+                    .filter(a -> a.getStatus() == MatchArticle.Status.PUBLISHED)
+                    .map(this::matchArticleSubjects)
+                    .orElse(List.of());
+            case MATCH, TEAM -> List.of();
+        };
     }
 
     private ContextItem matchArticleContext(MatchArticle article, ContextSource source) {

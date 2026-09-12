@@ -42,6 +42,9 @@ public class MongoSocialContextRetriever implements SocialContextRetriever {
         for (SubjectRef subject : wanted) {
             relationships.findBySubjectTypeAndSubjectIdAndActiveTrueOrderByUpdatedAtDesc(
                             subject.type(), subject.id(), PageRequest.of(0, candidates))
+                    .stream()
+                    .filter(r -> !isSubjectiveAttitude(r)
+                            || java.util.Objects.equals(r.getUserId(), authorUserId))
                     .forEach(r -> found.put(r.getId(), r));
         }
 
@@ -52,6 +55,11 @@ public class MongoSocialContextRetriever implements SocialContextRetriever {
                 .map(mapper::relationship)
                 .limit(size)
                 .toList();
+    }
+
+    private static boolean isSubjectiveAttitude(AiSocialRelationship relationship) {
+        return relationship.getType() == AiSocialRelationship.Type.TEAM_ATTITUDE
+                || relationship.getType() == AiSocialRelationship.Type.COACH_ATTITUDE;
     }
 
     private static SubjectRef target(AiSocialRelationship relationship) {
