@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 from collections import defaultdict
 from typing import Any
 
-from .bb3_roll_types import bb3_roll_category, bb3_roll_name
+from .bb3_roll_types import bb3_roll_category, bb3_roll_counts_as_action_stat, bb3_roll_name
 from .replay_actions import (
     BLOCK_FACE_NAMES,
     BloodlustAction,
@@ -229,7 +229,11 @@ class Bb3ActionDecoder:
                     if result.tag == "ResultRoll":
                         roll_type = number(result, "RollType")
                         difficulty = number(result, "Difficulty")
-                        if roll_type is not None and difficulty is not None:
+                        if (
+                            roll_type is not None
+                            and difficulty is not None
+                            and bb3_roll_counts_as_action_stat(roll_type)
+                        ):
                             roll_groups[(roll_type, difficulty)].append(result)
                     elif result.tag == "QuestionBlockDice":
                         dice = result.findall("Dice/Die")

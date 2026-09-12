@@ -103,7 +103,10 @@ class Bb3RollType(IntEnum):
     BadHabitsPrayer = 82
     SwelteringHeatNumber = 83
     PrayersTable = 84
+    BallAndChainDirection = 87
+    BombExplosionHit = 88
     CindySpecial = 91
+    Bloodlust = 96
 
 
 _DISPLAY_OVERRIDES = {
@@ -121,7 +124,10 @@ _ACTION = {
     Bb3RollType.Pass, Bb3RollType.Interception, Bb3RollType.Catch,
     Bb3RollType.StandUp, Bb3RollType.JumpOver, Bb3RollType.ThrowTeamMate,
     Bb3RollType.Land, Bb3RollType.EscapeTeamMate, Bb3RollType.VomitAccuracy,
+    Bb3RollType.BombExplosionHit, Bb3RollType.Bloodlust,
 }
+
+_EXCLUDED_FROM_ACTION_STATS = {Bb3RollType.BallAndChainDirection}
 
 _SKILL_TRAIT = {
     Bb3RollType.Pro, Bb3RollType.Tentacles, Bb3RollType.Dauntless,
@@ -169,3 +175,13 @@ def bb3_roll_category(value: int) -> str:
     if roll_type in _INJURY_RECOVERY:
         return "injuryRecovery"
     return "system"
+
+
+def bb3_roll_counts_as_action_stat(value: int) -> bool:
+    """Return whether a D6 ResultRoll represents a success/failure attempt."""
+    try:
+        roll_type = Bb3RollType(value)
+    except ValueError:
+        # Preserve the previous behaviour for unknown protocol values.
+        return True
+    return roll_type not in _EXCLUDED_FROM_ACTION_STATS
