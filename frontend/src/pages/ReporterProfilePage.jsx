@@ -31,6 +31,7 @@ import AiReporterApi from '../AiReporterApi';
 import AiReporterRuntimeControls from '../components/ai-reporters/AiReporterRuntimeControls';
 import AiReporterInspector from '../components/ai-reporters/AiReporterInspector';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
+import { useIntl } from 'react-intl';
 
 const splitPublicProfile = (markdown = '') => {
   const sections = markdown.split(/(?=^##\s+)/m);
@@ -109,11 +110,12 @@ const markdownOverrides = {
 };
 
 function ReportCard({ report }) {
+  const intl = useIntl();
   return (
     <Card variant="outline">
       <CardBody>
         <Heading size="sm" lineHeight="1.3">
-          {report.headline || 'Untitled report'}
+          {report.headline || intl.formatMessage({ id: 'reporter.untitled' })}
         </Heading>
 
         {report.excerpt && (
@@ -133,6 +135,7 @@ function ReportCard({ report }) {
 }
 
 function ReporterProfilePage() {
+  const intl = useIntl();
   const { reporterId } = useParams();
   const [reporter, setReporter] = useState(null);
   const [reports, setReports] = useState([]);
@@ -291,7 +294,7 @@ function ReporterProfilePage() {
                         color="purple.500"
                         mb={2}
                       >
-                        BlaskScore staff
+                        {intl.formatMessage({ id: 'reporter.staff' })}
                       </Text>
 
                       <Heading
@@ -304,9 +307,9 @@ function ReporterProfilePage() {
                       </Heading>
 
                       <HStack mt={4} spacing={2} wrap="wrap">
-                        <Badge colorScheme="purple">AI Reporter</Badge>
+                        <Badge colorScheme="purple">{intl.formatMessage({ id: 'reporter.aiReporter' })}</Badge>
                         {reporter.race && <Badge>{reporter.race}</Badge>}
-                        {!reporter.active && <Badge colorScheme="gray">Inactive</Badge>}
+                        {!reporter.active && <Badge colorScheme="gray">{intl.formatMessage({ id: 'reporter.inactive' })}</Badge>}
                       </HStack>
                     </Box>
 
@@ -314,8 +317,8 @@ function ReporterProfilePage() {
                       <Popover placement="bottom-end" onOpen={loadAdminReporter}>
                         <PopoverTrigger>
                           <IconButton
-                            aria-label={`Settings for ${reporter.alias}`}
-                            title="Reporter settings"
+                            aria-label={intl.formatMessage({ id: 'reporter.settingsFor' }, { name: reporter.alias })}
+                            title={intl.formatMessage({ id: 'reporter.settings' })}
                             icon={<SettingsIcon />}
                             size="sm"
                             variant="outline"
@@ -326,7 +329,7 @@ function ReporterProfilePage() {
                           <PopoverArrow />
                           <PopoverCloseButton />
                           <PopoverHeader fontWeight="700">
-                            Reporter settings
+                            {intl.formatMessage({ id: 'reporter.settings' })}
                           </PopoverHeader>
                           <PopoverBody>
                             {adminError && (
@@ -406,7 +409,7 @@ function ReporterProfilePage() {
                 w="100%"
               >
                 <Heading size="lg" mb={1}>
-                  About {reporter.alias}
+                  {intl.formatMessage({ id: 'reporter.about' }, { name: reporter.alias })}
                 </Heading>
                 <Box w="48px" borderTopWidth="4px" borderColor="purple.400" mt={3} mb={6} />
 
@@ -431,7 +434,7 @@ function ReporterProfilePage() {
                   top={{ lg: 6 }}
                 >
                   <HStack justify="space-between" mb={4}>
-                    <Heading size="md">Latest reports</Heading>
+                    <Heading size="md">{intl.formatMessage({ id: 'reporter.latestReports' })}</Heading>
                     <Badge variant="subtle">{reports.length}</Badge>
                   </HStack>
 
@@ -446,9 +449,9 @@ function ReporterProfilePage() {
 
             {reports.length === 0 && (
               <Box mt={8} pt={6} borderTopWidth="1px">
-                <Heading size="md">Latest reports</Heading>
+                <Heading size="md">{intl.formatMessage({ id: 'reporter.latestReports' })}</Heading>
                 <Text mt={2} color="gray.500">
-                  No published reports yet.
+                  {intl.formatMessage({ id: 'reporter.noReports' })}
                 </Text>
               </Box>
             )}

@@ -8,8 +8,10 @@ import Link from '@tiptap/extension-link';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '../components/misc/Navigation';
 import EditorialCommunityApi from '../EditorialCommunityApi';
+import { useIntl } from 'react-intl';
 
 function ArticleEditorPage() {
+  const intl = useIntl();
   const { getAccessTokenSilently } = useAuth0WithUserPermissions();
   const navigate = useNavigate();
   const [form, setForm] = useState({ title: '', slug: '', excerpt: '', coverImageUrl: '',
@@ -34,18 +36,18 @@ function ArticleEditorPage() {
       <Navigation />
       <Box maxW="900px" mx="auto" w="full" p={4}>
         <VStack align="stretch" spacing={4}>
-          <FormControl><FormLabel>Rubrik</FormLabel><Input value={form.title} onChange={(e) => set('title', e.target.value)} /></FormControl>
-          <FormControl><FormLabel>Slug (valfri)</FormLabel><Input value={form.slug} onChange={(e) => set('slug', e.target.value)} /></FormControl>
-          <FormControl><FormLabel>Ingress</FormLabel><Input value={form.excerpt} onChange={(e) => set('excerpt', e.target.value)} /></FormControl>
-          <FormControl><FormLabel>Omslagsbild URL</FormLabel><Input value={form.coverImageUrl} onChange={(e) => set('coverImageUrl', e.target.value)} /></FormControl>
-          <FormControl><FormLabel>LeagueSystem ID (tom = site-wide)</FormLabel><Input value={form.leagueSystemId} onChange={(e) => set('leagueSystemId', e.target.value)} /></FormControl>
-          <FormControl><FormLabel>Season ID</FormLabel><Input value={form.seasonId} onChange={(e) => set('seasonId', e.target.value)} /></FormControl>
-          <FormControl><FormLabel>Status</FormLabel><Select value={form.status} onChange={(e) => set('status', e.target.value)}>
-            <option value="DRAFT">Draft</option><option value="PUBLISHED">Published</option><option value="ARCHIVED">Archived</option>
+          <FormControl><FormLabel>{intl.formatMessage({ id: 'articleEditor.title' })}</FormLabel><Input value={form.title} onChange={(e) => set('title', e.target.value)} /></FormControl>
+          <FormControl><FormLabel>{intl.formatMessage({ id: 'articleEditor.slug' })}</FormLabel><Input value={form.slug} onChange={(e) => set('slug', e.target.value)} /></FormControl>
+          <FormControl><FormLabel>{intl.formatMessage({ id: 'articleEditor.excerpt' })}</FormLabel><Input value={form.excerpt} onChange={(e) => set('excerpt', e.target.value)} /></FormControl>
+          <FormControl><FormLabel>{intl.formatMessage({ id: 'articleEditor.coverImage' })}</FormLabel><Input value={form.coverImageUrl} onChange={(e) => set('coverImageUrl', e.target.value)} /></FormControl>
+          <FormControl><FormLabel>{intl.formatMessage({ id: 'articleEditor.leagueSystem' })}</FormLabel><Input value={form.leagueSystemId} onChange={(e) => set('leagueSystemId', e.target.value)} /></FormControl>
+          <FormControl><FormLabel>{intl.formatMessage({ id: 'articleEditor.season' })}</FormLabel><Input value={form.seasonId} onChange={(e) => set('seasonId', e.target.value)} /></FormControl>
+          <FormControl><FormLabel>{intl.formatMessage({ id: 'articleEditor.status' })}</FormLabel><Select value={form.status} onChange={(e) => set('status', e.target.value)}>
+            <option value="DRAFT">{intl.formatMessage({ id: 'articleEditor.draft' })}</option><option value="PUBLISHED">{intl.formatMessage({ id: 'articleEditor.published' })}</option><option value="ARCHIVED">{intl.formatMessage({ id: 'articleEditor.archived' })}</option>
           </Select></FormControl>
-          <Checkbox isChecked={form.featured} onChange={(e) => set('featured', e.target.checked)}>Featured</Checkbox>
+          <Checkbox isChecked={form.featured} onChange={(e) => set('featured', e.target.checked)}>{intl.formatMessage({ id: 'articleEditor.featured' })}</Checkbox>
           <Box borderWidth="1px" borderRadius="md" p={3} minH="300px"><EditorContent editor={editor} /></Box>
-          <Button onClick={save}>Spara artikel</Button>
+          <Button onClick={save}>{intl.formatMessage({ id: 'articleEditor.save' })}</Button>
         </VStack>
       </Box>
     </VStack>

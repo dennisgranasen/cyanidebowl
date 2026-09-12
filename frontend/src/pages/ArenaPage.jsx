@@ -12,8 +12,10 @@ import useFetchArenaInfo from '../hooks/useFetchArenaInfo';
 import InfoItem from '../components/common/InfoItem';
 import WarpScoresApiService from '../WarpScoresApiService';
 import ArenaRunAccordionItem from '../components/arena/ArenaRunAccordionItem';
+import { useIntl } from 'react-intl';
 
 function ArenaPage() {
+  const intl = useIntl();
   const { competitionId, race } = useParams();
   const { fetchCompetition, competition, competitionLoading, error: competitionError } = useFetchCompetition();
   const [arenaTeams, setArenaTeams] = useState(null);
@@ -59,18 +61,18 @@ function ArenaPage() {
       <LoadingOrErrorWrapper loading={competitionLoading} error={competitionError}>
         <HeaderCard
           heading={`${competition?.name} - ${prettyPrint(race)}`}
-          subHeading={<RouteLink to={`/${competition?.leagueId}`}>League: {competition?.leagueName}</RouteLink>}
-          detailsHeading="Arena details"
+          subHeading={<RouteLink to={`/${competition?.leagueId}`}>{intl.formatMessage({ id: 'competition.league' }, { name: competition?.leagueName })}</RouteLink>}
+          detailsHeading={intl.formatMessage({ id: 'arena.details' })}
           mainImageSrc={competition?.logo ? imageUrls.logo(competition?.logo, competition?.id?.opus) : imageUrls.logo(competition?.leagueLogo, competition?.id?.opus)}
           additionalImageSrc={imageUrls.race(race, competition?.id?.opus)}
         >
           <LoadingOrErrorWrapper loading={arenaInfoLoading} error={arenaError}>
             <InfoArea>
-              <InfoItem key="Coaches" label="Coaches" info={arenaInfo?.coaches} />
-              <InfoItem key="Teams" label="Teams" info={arenaInfo?.teams} />
-              <InfoItem key="Active" label="Active runs" info={arenaInfo?.activeRuns} />
-              <InfoItem key="Completed" label="Completed runs" info={arenaInfo?.completedRuns} />
-              <InfoItem key="Failed" label="Failed runs" info={arenaInfo?.failedRuns} />
+              <InfoItem key="Coaches" label={intl.formatMessage({ id: 'arena.coaches' })} info={arenaInfo?.coaches} />
+              <InfoItem key="Teams" label={intl.formatMessage({ id: 'common.teams' })} info={arenaInfo?.teams} />
+              <InfoItem key="Active" label={intl.formatMessage({ id: 'arena.activeRuns' })} info={arenaInfo?.activeRuns} />
+              <InfoItem key="Completed" label={intl.formatMessage({ id: 'arena.completedRuns' })} info={arenaInfo?.completedRuns} />
+              <InfoItem key="Failed" label={intl.formatMessage({ id: 'arena.failedRuns' })} info={arenaInfo?.failedRuns} />
             </InfoArea>
           </LoadingOrErrorWrapper>
         </HeaderCard>
@@ -78,7 +80,7 @@ function ArenaPage() {
       <Accordion variant="simple" allowMultiple defaultIndex={[0]}>
         <ArenaRunAccordionItem
           key="completed"
-          label={`Completed runs (${arenaInfo?.completedRuns})`}
+          label={intl.formatMessage({ id: 'arena.completedRunsCount' }, { count: arenaInfo?.completedRuns })}
           loading={arenaTeamsLoading}
           error={arenaTeamsError}
           arenaTeams={arenaTeams?.completed ?? null}
@@ -87,7 +89,7 @@ function ArenaPage() {
         />
         <ArenaRunAccordionItem
           key="active"
-          label={`Active runs (${arenaInfo?.activeRuns})`}
+          label={intl.formatMessage({ id: 'arena.activeRunsCount' }, { count: arenaInfo?.activeRuns })}
           loading={arenaInfoLoading}
           error={arenaError}
           competitionId={competitionId}
@@ -96,7 +98,7 @@ function ArenaPage() {
         />
         <ArenaRunAccordionItem
           key="failed"
-          label={`Failed runs (${arenaInfo?.failedRuns})`}
+          label={intl.formatMessage({ id: 'arena.failedRunsCount' }, { count: arenaInfo?.failedRuns })}
           loading={arenaInfoLoading}
           error={arenaError}
           competitionId={competitionId}

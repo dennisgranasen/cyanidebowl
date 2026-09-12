@@ -11,6 +11,7 @@ import prettyPrint from '../../util/prettyPrint';
 import { getRaceLogo, resolveRace } from '../../util/raceUtil';
 import { getStarPlayerDisplayName, isStarPlayer } from '../../util/starplayerUtil';
 import { useMyTeams } from '../../context/MyTeamsContext';
+import { useIntl } from 'react-intl';
 
 const { boxSize, smallScreenBreakpointValues } = config;
 const editionOpus = (entry) => entry.opus || Number(String(entry.editions?.[0] || '').replace('BB', '')) || 3;
@@ -24,20 +25,23 @@ function RaceLogo({ entry }) {
 }
 
 function PlayerDisplayName({ name }) {
+  const intl = useIntl();
   const starPlayer = isStarPlayer(name);
   return <Text fontWeight="semibold" color={starPlayer ? '#FFD700' : 'inherit'}
     textShadow={starPlayer ? '1px 1px 2px rgba(0,0,0,0.8)' : 'none'}>
-    {starPlayer && '⭐ '}{name ? getStarPlayerDisplayName(name) : 'Unknown player'}
+    {starPlayer && '⭐ '}{name ? getStarPlayerDisplayName(name) : intl.formatMessage({ id: 'common.unknownPlayer' })}
   </Text>;
 }
 
 function PlayerColumns({ label, compact }) {
-  return <Tr><Th><Center>{compact ? 'R' : 'Rank'}</Center></Th><Th>Player</Th><Th>Team</Th>
+  const intl = useIntl();
+  return <Tr><Th><Center>{compact ? 'R' : intl.formatMessage({ id: 'common.rank' })}</Center></Th><Th>{intl.formatMessage({ id: 'common.player' })}</Th><Th>{intl.formatMessage({ id: 'common.team' })}</Th>
     {!compact && <Th />}<Th><Center>{label}</Center></Th>
-    {!compact && <><Th>Coach</Th><Th>Position</Th><Th><Center>Games</Center></Th><Th><Center>SPP</Center></Th><Th>Skills</Th></>}</Tr>;
+    {!compact && <><Th>{intl.formatMessage({ id: 'common.coach' })}</Th><Th>{intl.formatMessage({ id: 'common.position' })}</Th><Th><Center>{intl.formatMessage({ id: 'common.games' })}</Center></Th><Th><Center>SPP</Center></Th><Th>{intl.formatMessage({ id: 'common.skills' })}</Th></>}</Tr>;
 }
 
 export function PlayerTable({ category, mineOnly = false }) {
+  const intl = useIntl();
   const compact = useBreakpointValue(smallScreenBreakpointValues);
   const { isMyTeam, isMyCoach } = useMyTeams();
   return <TableContainer><Table variant="stripedClickable" size="sm">
@@ -48,7 +52,7 @@ export function PlayerTable({ category, mineOnly = false }) {
       <Td><Center><Heading size="sm">{index + 1}</Heading></Center></Td>
       <Td><PlayerDisplayName name={player.name} />
         {compact && <Text color="gray.500" fontSize="xs">{prettyPrint(player.position) || '–'}</Text>}</Td>
-      <Td><HStack><Text>{player.teamName || 'Unknown team'}</Text>{mine && <Badge colorScheme="green">My player</Badge>}</HStack>
+      <Td><HStack><Text>{player.teamName || intl.formatMessage({ id: 'common.unknownTeam' })}</Text>{mine && <Badge colorScheme="green">{intl.formatMessage({ id: 'statistics.myPlayer' })}</Badge>}</HStack>
         {compact && <Text color="gray.500" fontSize="xs">{player.coachName || '–'}</Text>}</Td>
       {!compact && <Td><RaceLogo entry={player} /></Td>}
       <Td><Center><Heading size="sm">{player.value}</Heading></Center></Td>
@@ -60,24 +64,26 @@ export function PlayerTable({ category, mineOnly = false }) {
 }
 
 function TeamColumns({ label, compact }) {
-  return <Tr><Th><Center>{compact ? 'R' : 'Rank'}</Center></Th><Th>{compact ? 'Team / coach' : 'Team-name'}</Th><Th />
-    {!compact && <Th>Coach-name</Th>}<Th><Center>{label}</Center></Th>
-    <Th><Center>W</Center></Th><Th><Center>D</Center></Th><Th><Center>L</Center></Th><Th><Center>{compact ? 'GP' : 'Games'}</Center></Th>
+  const intl = useIntl();
+  return <Tr><Th><Center>{compact ? 'R' : intl.formatMessage({ id: 'common.rank' })}</Center></Th><Th>{compact ? intl.formatMessage({ id: 'statistics.teamCoach' }) : intl.formatMessage({ id: 'statistics.teamName' })}</Th><Th />
+    {!compact && <Th>{intl.formatMessage({ id: 'statistics.coachName' })}</Th>}<Th><Center>{label}</Center></Th>
+    <Th><Center>W</Center></Th><Th><Center>D</Center></Th><Th><Center>L</Center></Th><Th><Center>{compact ? 'GP' : intl.formatMessage({ id: 'common.games' })}</Center></Th>
     {!compact && <><Th><Center>TD+</Center></Th><Th><Center>TD-</Center></Th><Th><Center>TDD</Center></Th>
       <Th><Center>CAS+</Center></Th><Th><Center>CAS-</Center></Th><Th><Center>CASD</Center></Th></>}</Tr>;
 }
 
 export function TeamTable({ category, entries, mineOnly = false }) {
+  const intl = useIntl();
   const compact = useBreakpointValue(smallScreenBreakpointValues);
   const { isMyTeam, isMyCoach } = useMyTeams();
   const rows = (entries || category.entries).filter(team => !mineOnly || isMyTeam(team.teamId) || isMyCoach(team.coachId, editionOpus(team)));
-  const label = category?.label || 'Score';
+  const label = category?.label || intl.formatMessage({ id: 'common.score' });
   return <TableContainer><Table variant="stripedClickable" size="sm">
     <Thead><TeamColumns label={label} compact={compact} /></Thead><Tbody>{rows.map((team, index) => {
       const mine = isMyTeam(team.teamId) || isMyCoach(team.coachId, editionOpus(team));
       return <Tr key={`${team.teamId}-${index}`} boxShadow={mine ? 'inset 4px 0 var(--chakra-colors-green-400)' : undefined}>
       <Td><Center><Heading size="sm">{index + 1}</Heading></Center></Td>
-      <Td><HStack><Text fontWeight="semibold">{team.name}</Text>{mine && <Badge colorScheme="green">My team</Badge>}{team.editions?.length > 1 && <Badge>{team.editions.join(' + ')}</Badge>}</HStack>
+      <Td><HStack><Text fontWeight="semibold">{team.name}</Text>{mine && <Badge colorScheme="green">{intl.formatMessage({ id: 'statistics.myTeam' })}</Badge>}{team.editions?.length > 1 && <Badge>{team.editions.join(' + ')}</Badge>}</HStack>
         {compact && <Text color="gray.500" fontSize="xs">{team.coachName || '–'}</Text>}</Td>
       <Td><RaceLogo entry={team} /></Td>{!compact && <Td>{team.coachName || '–'}</Td>}
       <Td><Center><Heading size="sm">{team.value ?? team.points}</Heading></Center></Td>
@@ -89,7 +95,8 @@ export function TeamTable({ category, entries, mineOnly = false }) {
 }
 
 export function CategoryTabs({ categories, type, mineOnly = false }) {
-  if (!categories?.length) return <Text color="gray.500">No statistics are available for this selection.</Text>;
+  const intl = useIntl();
+  if (!categories?.length) return <Text color="gray.500">{intl.formatMessage({ id: 'statistics.noData' })}</Text>;
   return <Box borderWidth="1px" borderRadius="md" overflow="hidden"><Tabs variant="enclosed" isLazy>
     <TabList overflowX="auto" px={2} pt={2}>{categories.map(category => <Tab flexShrink={0} key={category.key}>{category.label}</Tab>)}</TabList>
     <TabPanels>{categories.map(category => <TabPanel p={0} key={category.key}>
@@ -98,9 +105,10 @@ export function CategoryTabs({ categories, type, mineOnly = false }) {
 }
 
 export function VersusTable({ rows }) {
-  if (!rows?.length) return <Text color="gray.500">No opponents found for the mapped coach IDs.</Text>;
+  const intl = useIntl();
+  if (!rows?.length) return <Text color="gray.500">{intl.formatMessage({ id: 'statistics.noOpponents' })}</Text>;
   return <TableContainer borderWidth="1px" borderRadius="md"><Table variant="stripedClickable" size="sm">
-    <Thead><Tr><Th>Coach</Th><Th isNumeric>G</Th><Th isNumeric>W-D-L</Th><Th isNumeric>TD</Th><Th isNumeric>CAS</Th></Tr></Thead>
+    <Thead><Tr><Th>{intl.formatMessage({ id: 'common.coach' })}</Th><Th isNumeric>G</Th><Th isNumeric>W-D-L</Th><Th isNumeric>TD</Th><Th isNumeric>CAS</Th></Tr></Thead>
     <Tbody>{rows.map(row => <Tr key={row.coachId}><Td fontWeight="semibold">{row.coachName || row.coachId}</Td><Td isNumeric>{row.games}</Td>
       <Td isNumeric>{row.wins}-{row.draws}-{row.losses}</Td><Td isNumeric>{row.touchdownsFor}-{row.touchdownsAgainst}</Td>
       <Td isNumeric>{row.casualtiesFor}-{row.casualtiesAgainst}</Td></Tr>)}</Tbody>

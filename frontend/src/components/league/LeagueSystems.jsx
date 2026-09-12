@@ -7,6 +7,7 @@ import Standings from '../common/Standings';
 import MatchModalWithRosters from '../contest/MatchModalWithRosters';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import { resolveRace } from '../../util/raceUtil';
+import { useIntl } from 'react-intl';
 
 const orderedSeasons = (system) => [...(system?.seasons || [])].sort((a, b) => (b.sequence ?? b.number ?? 0) - (a.sequence ?? a.number ?? 0));
 const matchScore = (match, index) => match.officialScore?.[index ? 'away' : 'home'] ?? match.sourceScore?.[index ? 'away' : 'home'] ?? match.teams?.[index]?.score;
@@ -44,8 +45,9 @@ function standingsFor(stage) {
 }
 
 function GroupTable({ stage }) {
+  const intl = useIntl();
   const standings = standingsFor(stage);
-  return <Box><Heading size="sm" mb={2}>{stage.name || 'Group'}</Heading>{standings.length ? <Standings ranks={standings} loading={false} /> : <Text color="gray.500">No table results yet</Text>}</Box>;
+  return <Box><Heading size="sm" mb={2}>{stage.name || intl.formatMessage({ id: 'leagueSystems.group' })}</Heading>{standings.length ? <Standings ranks={standings} loading={false} /> : <Text color="gray.500">{intl.formatMessage({ id: 'leagueSystems.noTable' })}</Text>}</Box>;
 }
 
 const matchTime = (match) => new Date(match.finishedAt || match.startedAt || 0).getTime();
@@ -238,6 +240,14 @@ export function bracketCanvasHeight(rounds, style) {
 }
 
 function PlayoffBracket({ phase, onMatchClick }) {
+  const intl = useIntl();
+  const localizedRoundName = (name) => ({
+    'Play-in': intl.formatMessage({ id: 'leagueSystems.playIn' }),
+    Quarterfinals: intl.formatMessage({ id: 'leagueSystems.quarterfinals' }),
+    Semifinals: intl.formatMessage({ id: 'leagueSystems.semifinals' }),
+    Final: intl.formatMessage({ id: 'leagueSystems.final' }),
+    Finals: intl.formatMessage({ id: 'leagueSystems.finals' }),
+  }[name] || name);
   const explicitRounds = [...(phase.stages || [])].sort((a, b) => (a.step ?? 0) - (b.step ?? 0) || (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
   const rounds = explicitRounds.length === 1 && explicitRounds[0].matches?.length > 1
     ? inferPlayoffRounds(explicitRounds[0].matches) : explicitRounds;
@@ -268,14 +278,14 @@ function PlayoffBracket({ phase, onMatchClick }) {
       })),
       startTime: match.finishedAt || match.startedAt,
       state: match.finishedAt ? 'DONE' : null,
-      tournamentRoundText: currentRound?.name,
+      tournamentRoundText: localizedRoundName(currentRound?.name),
       seriesLength: match.seriesLength,
       replayCount: match.replayCount,
       replayAvailable: match.replayAvailable,
       compact: true,
       seriesResults: match.seriesMatches?.map((seriesMatch, index) => ({
         id: seriesMatch.sourceMatchKey,
-        label: `Match ${index + 1}`,
+        label: intl.formatMessage({ id: 'leagueSystems.match' }, { number: index + 1 }),
         score: `${playedScore(seriesMatch, 0) ?? '-'}–${playedScore(seriesMatch, 1) ?? '-'}`,
         date: seriesMatch.finishedAt || seriesMatch.startedAt,
         deciding: seriesMatch.sourceMatchKey === match.sourceMatchKey,
@@ -304,7 +314,7 @@ function PlayoffBracket({ phase, onMatchClick }) {
               name: `slot-${slot}`,
               participants: [],
               state: null,
-              tournamentRoundText: sourceRound.name,
+              tournamentRoundText: localizedRoundName(sourceRound.name),
               placeholder: true,
               compact: true,
             };
@@ -317,8 +327,8 @@ function PlayoffBracket({ phase, onMatchClick }) {
   const bronzeBracketMatch = bronze && bracketMatches.find((match) => match.id === bronze.sourceMatchKey);
   const bronzeWinner = bronze && winnerName(bronze);
   const bronzeParties = bronze && bronze.teams.map((team, index) => ({ id: team.id || { value: team.name, opus: 3 }, resultText: `${playedScore(bronze, index) ?? '-'}`, teamName: team.name, coachName: team.coachName, race: resolveRace(team, matchOpus(bronze)), picture: team.logo }));
-  const roundLabels = ['Play-in', 'Quarterfinals', 'Semifinals', 'Final'];
-  const bracketStyle = { width: 240, boxHeight: 86, canvasPadding: 8, spaceBetweenColumns: 18, spaceBetweenRows: 8, roundSeparatorWidth: 8, horizontalOffset: 6, roundHeader: { isShown: true, height: 20, marginBottom: 6, fontSize: 10, roundTextGenerator: (roundNumber, totalRounds) => roundLabels[roundLabels.length - totalRounds + roundNumber - 1] || `Round ${roundNumber}` } };
+  const roundLabels = [intl.formatMessage({ id: 'leagueSystems.playIn' }), intl.formatMessage({ id: 'leagueSystems.quarterfinals' }), intl.formatMessage({ id: 'leagueSystems.semifinals' }), intl.formatMessage({ id: 'leagueSystems.final' })];
+  const bracketStyle = { width: 240, boxHeight: 86, canvasPadding: 8, spaceBetweenColumns: 18, spaceBetweenRows: 8, roundSeparatorWidth: 8, horizontalOffset: 6, roundHeader: { isShown: true, height: 20, marginBottom: 6, fontSize: 10, roundTextGenerator: (roundNumber, totalRounds) => roundLabels[roundLabels.length - totalRounds + roundNumber - 1] || intl.formatMessage({ id: 'leagueSystems.round' }, { round: roundNumber }) } };
   const requiredHeight = bracketCanvasHeight(rounds, bracketStyle);
   const ResponsiveBracket = ({ children, bracketWidth }) => <Box w="full">{React.cloneElement(children, {
     height: requiredHeight,
@@ -333,10 +343,11 @@ function PlayoffBracket({ phase, onMatchClick }) {
     const selected = mainMatches.find((match) => match.sourceMatchKey === matchId);
     if (selected) onMatchClick(selected);
   };
-  return <Box w="full" overflow="visible">{bracketMatches.length > 0 && <SingleEliminationBracket matches={bracketMatches} matchComponent={BracketMatchComponent} svgWrapper={ResponsiveBracket} options={bracketOptions} onMatchClick={openBracketMatch} />}{bronze && <Box maxW="20rem" ml="auto" mt={4}><Heading size="sm" textAlign="center">Bronze match</Heading><MatchComponent match={{ ...bronzeBracketMatch, id: bronze.sourceMatchKey, state: 'DONE' }} topParty={bronzeParties[0]} bottomParty={bronzeParties[1]} topWon={bronzeParties[0].teamName === bronzeWinner} bottomWon={bronzeParties[1].teamName === bronzeWinner} topHovered={false} bottomHovered={false} connectorColor="gray.500" onMouseEnter={() => {}} onMouseLeave={() => {}} onMatchClick={() => onMatchClick(bronze)} /></Box>}</Box>;
+  return <Box w="full" overflow="visible">{bracketMatches.length > 0 && <SingleEliminationBracket matches={bracketMatches} matchComponent={BracketMatchComponent} svgWrapper={ResponsiveBracket} options={bracketOptions} onMatchClick={openBracketMatch} />}{bronze && <Box maxW="20rem" ml="auto" mt={4}><Heading size="sm" textAlign="center">{intl.formatMessage({ id: 'leagueSystems.bronze' })}</Heading><MatchComponent match={{ ...bronzeBracketMatch, id: bronze.sourceMatchKey, state: 'DONE' }} topParty={bronzeParties[0]} bottomParty={bronzeParties[1]} topWon={bronzeParties[0].teamName === bronzeWinner} bottomWon={bronzeParties[1].teamName === bronzeWinner} topHovered={false} bottomHovered={false} connectorColor="gray.500" onMouseEnter={() => {}} onMouseLeave={() => {}} onMatchClick={() => onMatchClick(bronze)} /></Box>}</Box>;
 }
 
 function RichMatchCard({ match, onMatchClick }) {
+  const intl = useIntl();
   const winner = winnerName(match);
   const parties = (match.teams || []).map((team, index) => ({
     id: team.id || { value: team.name, opus: Number(String(match.game || 'BB3').replace('BB', '')) || 3 },
@@ -347,7 +358,7 @@ function RichMatchCard({ match, onMatchClick }) {
     picture: team.logo,
   }));
   if (parties.length < 2) return null;
-  return <Box borderWidth="1px" borderRadius="md" p={2} cursor="pointer" _hover={{ boxShadow: 'md' }} onClick={() => onMatchClick(match)}><MatchComponent match={{ id: match.sourceMatchKey, state: match.finishedAt ? 'DONE' : null, startTime: match.finishedAt || match.startedAt }} topParty={parties[0]} bottomParty={parties[1]} topWon={parties[0].teamName === winner} bottomWon={parties[1].teamName === winner} topHovered={false} bottomHovered={false} connectorColor="gray.500" topText={match.finishedAt || match.startedAt} onMouseEnter={() => {}} onMouseLeave={() => {}} onMatchClick={() => {}} /><Text mt={1} px={1} fontSize="xs" color="gray.500">{match.finishedAt || match.startedAt || 'No date'}{match.teams?.length === 2 ? ` · Casualties ${match.teams[0].casualties ?? '-'}–${match.teams[1].casualties ?? '-'}` : ''}{match.conceded ? ' · Conceded/WO' : ''}{match.replayAvailable ? ' · 🎞 Replay' : ''}</Text></Box>;
+  return <Box borderWidth="1px" borderRadius="md" p={2} cursor="pointer" _hover={{ boxShadow: 'md' }} onClick={() => onMatchClick(match)}><MatchComponent match={{ id: match.sourceMatchKey, state: match.finishedAt ? 'DONE' : null, startTime: match.finishedAt || match.startedAt }} topParty={parties[0]} bottomParty={parties[1]} topWon={parties[0].teamName === winner} bottomWon={parties[1].teamName === winner} topHovered={false} bottomHovered={false} connectorColor="gray.500" topText={match.finishedAt || match.startedAt} onMouseEnter={() => {}} onMouseLeave={() => {}} onMatchClick={() => {}} /><Text mt={1} px={1} fontSize="xs" color="gray.500">{match.finishedAt || match.startedAt || intl.formatMessage({ id: 'leagueSystems.noDate' })}{match.teams?.length === 2 ? ` · ${intl.formatMessage({ id: 'leagueSystems.casualties' }, { home: match.teams[0].casualties ?? '-', away: match.teams[1].casualties ?? '-' })}` : ''}{match.conceded ? ` · ${intl.formatMessage({ id: 'leagueSystems.conceded' })}` : ''}{match.replayAvailable ? ` · 🎞 ${intl.formatMessage({ id: 'leagueSystems.replay' })}` : ''}</Text></Box>;
 }
 
 export function matchesByMatchDay(matches) {
@@ -406,11 +417,12 @@ export function matchesByMatchDay(matches) {
 }
 
 function StageRoundMatches({ stage, onMatchClick }) {
+  const intl = useIntl();
   const rounds = matchesByMatchDay(stage.matches || []);
   let initialIndex = 0;
   rounds.forEach(([, matches], index) => { if (matches.some((match) => match.finishedAt)) initialIndex = index; });
-  if (!rounds.length) return <Text color="gray.500">No matches yet</Text>;
-  return <Box mt={5}><Heading size="sm" mb={2}>Matcher per omgång</Heading><Tabs defaultIndex={initialIndex} isLazy><TabList overflowX="auto">{rounds.map(([round]) => <Tab key={round} flexShrink={0}>Omgång {round}</Tab>)}</TabList><TabPanels>{rounds.map(([round, matches]) => <TabPanel key={round} px={0}><SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing={3}>{[...matches].sort((a, b) => matchTime(a) - matchTime(b)).map((match) => <RichMatchCard key={match.sourceMatchKey} match={match} onMatchClick={onMatchClick} />)}</SimpleGrid></TabPanel>)}</TabPanels></Tabs></Box>;
+  if (!rounds.length) return <Text color="gray.500">{intl.formatMessage({ id: 'leagueSystems.noMatches' })}</Text>;
+  return <Box mt={5}><Heading size="sm" mb={2}>{intl.formatMessage({ id: 'leagueSystems.matchesPerRound' })}</Heading><Tabs defaultIndex={initialIndex} isLazy><TabList overflowX="auto">{rounds.map(([round]) => <Tab key={round} flexShrink={0}>{intl.formatMessage({ id: 'leagueSystems.round' }, { round })}</Tab>)}</TabList><TabPanels>{rounds.map(([round, matches]) => <TabPanel key={round} px={0}><SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing={3}>{[...matches].sort((a, b) => matchTime(a) - matchTime(b)).map((match) => <RichMatchCard key={match.sourceMatchKey} match={match} onMatchClick={onMatchClick} />)}</SimpleGrid></TabPanel>)}</TabPanels></Tabs></Box>;
 }
 
 export const matchResourceIdFor = (summary) => summary?.matchResourceId
@@ -419,6 +431,7 @@ export const matchResourceIdFor = (summary) => summary?.matchResourceId
     ? summary.sourceMatchId : null);
 
 function MatchDetails({ summary, isOpen, onClose }) {
+  const intl = useIntl();
   const [match, setMatch] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
@@ -426,20 +439,21 @@ function MatchDetails({ summary, isOpen, onClose }) {
     if (!isOpen || !summary) return;
     const matchResourceId = matchResourceIdFor(summary);
     if (!matchResourceId) {
-      setMatch(null); setLoading(false); setError('Matchen saknar ett internt BlaskScore-ID.');
+      setMatch(null); setLoading(false); setError(intl.formatMessage({ id: 'leagueSystems.matchMissingId' }));
       return;
     }
     setMatch(null); setError(null); setLoading(true);
     WarpScoresApiService.match(matchResourceId)
-      .then((result) => result ? setMatch(result) : setError('Matchstatistiken hittades inte.'))
-      .catch(() => setError('Matchstatistiken kunde inte hämtas.'))
+      .then((result) => result ? setMatch(result) : setError(intl.formatMessage({ id: 'leagueSystems.statsNotFound' })))
+      .catch(() => setError(intl.formatMessage({ id: 'leagueSystems.statsFetchFailed' })))
       .finally(() => setLoading(false));
   }, [isOpen, summary]);
   if (match) return <MatchModalWithRosters isOpen={isOpen} onClose={onClose} match={match} />;
-  return <Modal isOpen={isOpen} onClose={onClose}><ModalOverlay /><ModalContent><ModalHeader>Matchstatistik</ModalHeader><ModalCloseButton /><ModalBody pb={6}>{loading ? <HStack><Spinner /><Text>Hämtar matchstatistik…</Text></HStack> : <Text color="red.500">{error}</Text>}</ModalBody></ModalContent></Modal>;
+  return <Modal isOpen={isOpen} onClose={onClose}><ModalOverlay /><ModalContent><ModalHeader>{intl.formatMessage({ id: 'leagueSystems.matchStatistics' })}</ModalHeader><ModalCloseButton /><ModalBody pb={6}>{loading ? <HStack><Spinner /><Text>{intl.formatMessage({ id: 'leagueSystems.loadingStats' })}</Text></HStack> : <Text color="red.500">{error}</Text>}</ModalBody></ModalContent></Modal>;
 }
 
 function LeagueSystems({ summaries, leagueSystem, onSelectSystem, onSelectSeason }) {
+  const intl = useIntl();
   const matchDetails = useDisclosure();
   const [selectedMatch, setSelectedMatch] = React.useState(null);
   const openMatch = (match) => { setSelectedMatch(match); matchDetails.onOpen(); };
@@ -451,11 +465,11 @@ function LeagueSystems({ summaries, leagueSystem, onSelectSystem, onSelectSeason
     .flatMap((phase) => phase.stages || []).filter((stage) => stage.type === 'GROUP' || stage.matches?.length);
   const primary = summaries.find((item) => item.id === leagueSystem?.id)?.primary;
   return <VStack align="stretch" spacing={4} w="full">
-    <HStack justify="space-between"><HStack><Heading size="md">{leagueSystem?.name || 'League system'}</Heading>{primary && <Badge colorScheme="blue">Primary</Badge>}</HStack><Menu><MenuButton as={IconButton} icon={<HamburgerIcon />} aria-label="Select league system" variant="outline" /><MenuList>{summaries.map((item) => <MenuItem key={item.id} onClick={() => onSelectSystem(item.id)}>{item.primary ? '★ ' : ''}{item.name || item.id}</MenuItem>)}</MenuList></Menu></HStack>
-    {selectedSeason && <HStack justify="space-between"><Heading size="sm">{selectedSeason.name || `Season ${selectedSeason.number}`}</Heading><Menu><MenuButton as={IconButton} icon={<HamburgerIcon />} aria-label="Select season" size="sm" variant="ghost" /><MenuList>{seasons.map((season) => <MenuItem key={season.id} onClick={() => onSelectSeason(season.id)}>{season.name || `Season ${season.number}`}</MenuItem>)}</MenuList></Menu></HStack>}
+    <HStack justify="space-between"><HStack><Heading size="md">{leagueSystem?.name || intl.formatMessage({ id: 'leagueSystems.systemFallback' })}</Heading>{primary && <Badge colorScheme="blue">{intl.formatMessage({ id: 'leagueSystems.primary' })}</Badge>}</HStack><Menu><MenuButton as={IconButton} icon={<HamburgerIcon />} aria-label={intl.formatMessage({ id: 'leagueSystems.selectSystem' })} variant="outline" /><MenuList>{summaries.map((item) => <MenuItem key={item.id} onClick={() => onSelectSystem(item.id)}>{item.primary ? '★ ' : ''}{item.name || item.id}</MenuItem>)}</MenuList></Menu></HStack>
+    {selectedSeason && <HStack justify="space-between"><Heading size="sm">{selectedSeason.name || intl.formatMessage({ id: 'leagueSystems.season' }, { number: selectedSeason.number })}</Heading><Menu><MenuButton as={IconButton} icon={<HamburgerIcon />} aria-label={intl.formatMessage({ id: 'leagueSystems.selectSeason' })} size="sm" variant="ghost" /><MenuList>{seasons.map((season) => <MenuItem key={season.id} onClick={() => onSelectSeason(season.id)}>{season.name || intl.formatMessage({ id: 'leagueSystems.season' }, { number: season.number })}</MenuItem>)}</MenuList></Menu></HStack>}
     {playoffPhase && <Box borderWidth={0} p={1} w="calc(100vw - 1rem)" maxW="none" alignSelf="flex-start"><Heading size="md" mb={4}>{playoffPhase.name}</Heading><PlayoffBracket phase={playoffPhase} onMatchClick={openMatch} /></Box>}
     {groupStages.map((stage) => <Box key={stage.id} borderWidth="1px" borderRadius="md" p={4}><GroupTable stage={stage} /><StageRoundMatches stage={stage} onMatchClick={openMatch} /></Box>)}
-    {!playoffPhase && groupStages.length === 0 && <Text color="gray.500">No group stage or playoff matches yet</Text>}
+    {!playoffPhase && groupStages.length === 0 && <Text color="gray.500">{intl.formatMessage({ id: 'leagueSystems.empty' })}</Text>}
     <MatchDetails summary={selectedMatch} isOpen={matchDetails.isOpen} onClose={matchDetails.onClose} />
   </VStack>;
 }

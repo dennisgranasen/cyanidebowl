@@ -38,13 +38,14 @@ import useAuth0WithUserPermissions from '../../hooks/useAuth0WithUserPermissions
 const { smallBoxSize, isProduction } = config;
 
 function LastCheck({ status, textSize, statusOutdated }) {
+  const intl = useIntl();
   return (
     <Box align="left" pt={2} fontSize={textSize}>
       <HStack spacing={2} align="left" w="full">
-        <Box>Last check:</Box>
+        <Box>{intl.formatMessage({ id: 'menu.lastCheck' })}</Box>
         <Box>
           {status ? (
-            `${formatter.formatAsDate(status.lastCheck, 'unknown')}`
+            `${formatter.formatAsDate(status.lastCheck, intl.formatMessage({ id: 'common.unknown' }))}`
           ) : (
             <Spinner size={textSize} color="orange" />
           )}
@@ -52,7 +53,7 @@ function LastCheck({ status, textSize, statusOutdated }) {
         <Spacer />
         <Box align="right">
           {statusOutdated && (
-            <DelayedIconTooltip label="Outdated" placement="left-start" shouldWrapChildren>
+            <DelayedIconTooltip label={intl.formatMessage({ id: 'menu.outdated' })} placement="left-start" shouldWrapChildren>
               <Icon as={FaTriangleExclamation} color="yellow" size={textSize} />
             </DelayedIconTooltip>
           )}
@@ -214,7 +215,7 @@ function Menu() {
                 <Spacer />
                 <Box>
                   <Link href="https://web.cyanide-studio.com/bloodbowl/" isExternal>
-                    Cyanide Admin-Tools <ExternalLinkIcon mx={2} />
+                    {intl.formatMessage({ id: 'menu.cyanideAdminTools' })} <ExternalLinkIcon mx={2} />
                   </Link>
                 </Box>
               </VStack>

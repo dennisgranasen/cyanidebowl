@@ -5,6 +5,7 @@ import { GrInProgress } from "react-icons/gr";;
 import { FaFlagCheckered } from 'react-icons/fa6';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
 import prettyPrint from '../../util/prettyPrint';
+import { useIntl } from 'react-intl';
 
 function extractRoundData(currentRound, round, finishedMatchesInRound, roundLength, status) {
   let progress = 0;
@@ -123,6 +124,7 @@ function Progresses({
   format,
   withPadding,
 }) {
+  const intl = useIntl();
   if (status === 'Finished') return <FaFlagCheckered />;
   if (status === 'Registration') return <CalendarIcon />;
   if (status === 'InProgress' && playedMatches === null) return <GrInProgress />;
@@ -156,7 +158,7 @@ function Progresses({
       );
     case 'Ladder':
     case 'Arena':
-      return `${playedMatches || 0} played match${playedMatches !== 1 ? 'es' : ''}`;
+      return intl.formatMessage({ id: 'competition.playedMatches' }, { count: playedMatches || 0 });
     default:
       return <QuestionIcon />;
   }
@@ -182,14 +184,20 @@ function CompetitionProgress({
   liveMatches,
   withPadding,
 }) {
-  const currentRoundText = currentRound ? `, Round ${currentRound}` : '';
-  const totalRoundsText = currentRound && totalRounds ? `of ${totalRounds}` : '';
-  const progressText = `${prettyPrint(status)}${currentRoundText} ${totalRoundsText}`;
+  const intl = useIntl();
+  const currentRoundText = currentRound ? `, ${intl.formatMessage({ id: 'competition.round' }, { round: currentRound })}` : '';
+  const totalRoundsText = currentRound && totalRounds ? intl.formatMessage({ id: 'competition.ofRounds' }, { total: totalRounds }) : '';
+  const localizedStatus = intl.formatMessage({ id: `status.${status}`, defaultMessage: prettyPrint(status) });
+  const progressText = `${localizedStatus}${currentRoundText} ${totalRoundsText}`;
   const finishedMatches = playedMatches - (notValidatedMatches ?? 0);
-  const notYetValidatedMatches = notValidatedMatches > 0 ? ` (${notValidatedMatches} not yet validated)` : '';
-  const outOfTotalMatchesText = totalMatches ? ` out of ${totalMatches}` : '';
+  const notYetValidatedMatches = notValidatedMatches > 0
+    ? ` (${intl.formatMessage({ id: 'competition.notValidated' }, { count: notValidatedMatches })})`
+    : '';
   const progressAdditionalText = playedMatches
-    ? `Finished ${finishedMatches}${outOfTotalMatchesText} matches${notYetValidatedMatches}`
+    ? intl.formatMessage(
+        { id: 'competition.finishedMatches' },
+        { finished: finishedMatches, total: totalMatches || 'none', validation: notYetValidatedMatches }
+      )
     : undefined;
   return (
     <Box>

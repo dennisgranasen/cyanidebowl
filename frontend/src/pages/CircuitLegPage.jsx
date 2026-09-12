@@ -17,6 +17,7 @@ import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import LeagueInfo from '../components/league/LeagueInfo';
 import useFetchRanks from '../hooks/useFetchRanksForCircuitLeg';
 import useFetchTeams from '../hooks/useFetchTeamsForCircuitLeg';
+import { useIntl } from 'react-intl';
 
 const transformCountsToObject = (statusCounts) => {
   if (!statusCounts || !Array.isArray(statusCounts)) return {};
@@ -29,6 +30,7 @@ const transformCountsToObject = (statusCounts) => {
 
 
 function CircuitLegPage() {
+  const intl = useIntl();
   const {circuitId, legId} = useParams();  
   const [circuitLeg, setCircuitLeg] = useState();
   const [circuit, setCircuit] = useState();
@@ -77,7 +79,7 @@ function CircuitLegPage() {
         />
       </Box>
       {circuitLeg && (
-        <HeaderCard heading={circuitLeg.name} detailsHeading="CircuitLeg details">
+        <HeaderCard heading={circuitLeg.name} detailsHeading={intl.formatMessage({ id: 'circuit.legDetails' })}>
           {
             <CircuitLegEntities circuitLeg={circuitLeg} expanded={true} circuitId={circuitId} />
           }
@@ -92,7 +94,7 @@ function CircuitLegPage() {
             //<LatestMatches type={pageType} id={`${circuitId}-${circuitLeg.circuitLegId}`} data={circuitLeg} /> 
           }
         </>
-          : (error ? null : <Box>No Circuit Leg found with ID {legId}.</Box>)
+          : (error ? null : <Box>{intl.formatMessage({ id: 'circuit.legNotFound' }, { id: legId })}</Box>)
         }
       </LoadingOrErrorWrapper>
       {

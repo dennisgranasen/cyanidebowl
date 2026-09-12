@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Button, Checkbox, Heading, HStack, Select, SimpleGrid, Text, VStack } from '@chakra-ui/react';
 import WarpScoresApiService from '../../WarpScoresApiService';
+import { useIntl } from 'react-intl';
 
 export default function SiteUserAdmin({ auth }) {
+  const intl = useIntl();
   const [users, setUsers] = useState([]);
   const [systems, setSystems] = useState([]);
   const [selectedId, setSelectedId] = useState('');
@@ -47,7 +49,7 @@ export default function SiteUserAdmin({ auth }) {
   };
 
   return <Box borderWidth="1px" borderRadius="md" p={4}>
-    <Heading size="sm" mb={3}>Users and permissions</Heading>
+    <Heading size="sm" mb={3}>{intl.formatMessage({ id: 'adminUsers.heading' })}</Heading>
     {error && <Text color="red.400" mb={2}>{error}</Text>}
     <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={4}>
       <Box>
@@ -57,12 +59,12 @@ export default function SiteUserAdmin({ auth }) {
       </Box>
       {draft && <VStack align="stretch">
         <Text fontWeight="semibold">{draft.username || draft.email}</Text>
-        <Text fontSize="sm" color="gray.500">{draft.email || 'No email'} · {draft.provider || 'unknown provider'}</Text>
-        <Checkbox isChecked={Boolean(draft.siteAdmin)} onChange={e => set('siteAdmin', e.target.checked)}>Site admin</Checkbox>
-        <Checkbox isChecked={Boolean(draft.leagueAdmin)} onChange={e => set('leagueAdmin', e.target.checked)}>Admin for all LeagueSystems</Checkbox>
-        <Checkbox isChecked={Boolean(draft.registerLeague)} onChange={e => set('registerLeague', e.target.checked)}>May register/import leagues</Checkbox>
+        <Text fontSize="sm" color="gray.500">{draft.email || intl.formatMessage({ id: 'adminUsers.noEmail' })} · {draft.provider || intl.formatMessage({ id: 'adminUsers.unknownProvider' })}</Text>
+        <Checkbox isChecked={Boolean(draft.siteAdmin)} onChange={e => set('siteAdmin', e.target.checked)}>{intl.formatMessage({ id: 'adminUsers.siteAdmin' })}</Checkbox>
+        <Checkbox isChecked={Boolean(draft.leagueAdmin)} onChange={e => set('leagueAdmin', e.target.checked)}>{intl.formatMessage({ id: 'adminUsers.allSystemsAdmin' })}</Checkbox>
+        <Checkbox isChecked={Boolean(draft.registerLeague)} onChange={e => set('registerLeague', e.target.checked)}>{intl.formatMessage({ id: 'adminUsers.mayRegister' })}</Checkbox>
         <Box>
-          <Text fontSize="sm" fontWeight="semibold" mb={1}>LeagueSystem-specific admin</Text>
+          <Text fontSize="sm" fontWeight="semibold" mb={1}>{intl.formatMessage({ id: 'adminUsers.systemAdmin' })}</Text>
           <VStack align="stretch">
             {systems.map(system => <Checkbox key={system.id}
               isDisabled={Boolean(draft.siteAdmin || draft.leagueAdmin)}
@@ -70,7 +72,7 @@ export default function SiteUserAdmin({ auth }) {
               onChange={e => toggleSystem(system.id, e.target.checked)}>{system.name || system.id}</Checkbox>)}
           </VStack>
         </Box>
-        <HStack><Button colorScheme="blue" onClick={save}>Save permissions</Button></HStack>
+        <HStack><Button colorScheme="blue" onClick={save}>{intl.formatMessage({ id: 'adminUsers.save' })}</Button></HStack>
       </VStack>}
     </SimpleGrid>
   </Box>;

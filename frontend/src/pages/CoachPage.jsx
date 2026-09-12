@@ -9,6 +9,7 @@ import config from '../config';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import imageUrls from '../imageUrls';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
+import { useIntl } from 'react-intl';
 
 const { isProduction } = config;
 
@@ -19,6 +20,7 @@ function PermissionIcon({ granted }) {
 }
 
 function CoachPage() {
+  const intl = useIntl();
   const { user, authenticationReady, checkPermissions, userPermissions } = useAuth0WithUserPermissions();
   const navigate = useNavigate();
 
@@ -39,24 +41,24 @@ function CoachPage() {
             isProduction ? authenticationReady && user && user.picture : imageUrls.blaskscoreLogoPng('medium')
           }
           mainImageBorderRadius="full"
-          heading="Coach-Page"
+          heading={intl.formatMessage({ id: 'coachPage.title' })}
           subHeading={
             isProduction
-              ? authenticationReady && user && `Authenticated as ${user.name}`
-              : 'No real User in dev environment.'
+              ? authenticationReady && user && intl.formatMessage({ id: 'coachPage.authenticatedAs' }, { name: user.name })
+              : intl.formatMessage({ id: 'coachPage.devUser' })
           }
         />
         <Box>
-          <PermissionIcon granted={userPermissions?.readCurrentUser} /> User read permissions
+          <PermissionIcon granted={userPermissions?.readCurrentUser} /> {intl.formatMessage({ id: 'coachPage.readPermission' })}
         </Box>
         <Box>
-          <PermissionIcon granted={userPermissions?.writeRegisterLeague} /> Permission to register leagues
+          <PermissionIcon granted={userPermissions?.writeRegisterLeague} /> {intl.formatMessage({ id: 'coachPage.registerLeaguePermission' })}
         </Box>
         <Box>
-          <PermissionIcon granted={userPermissions?.writeLeagueAdmin} /> League admin permissions
+          <PermissionIcon granted={userPermissions?.writeLeagueAdmin} /> {intl.formatMessage({ id: 'coachPage.leagueAdminPermission' })}
         </Box>
         <Box>
-          <PermissionIcon granted={userPermissions?.writeSiteAdmin} /> Site admin permissions
+          <PermissionIcon granted={userPermissions?.writeSiteAdmin} /> {intl.formatMessage({ id: 'coachPage.siteAdminPermission' })}
         </Box>
       </LoadingOrErrorWrapper>
     </VStack>

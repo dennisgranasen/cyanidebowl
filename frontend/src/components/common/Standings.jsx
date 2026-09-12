@@ -4,6 +4,7 @@ import Rank from './Rank';
 import config from '../../config';
 import LoadingOrErrorWrapper from './LoadingOrErrorWrapper';
 import WarpScoresApiService from '../../WarpScoresApiService';
+import { useIntl } from 'react-intl';
 
 const { smallScreenBreakpointValues } = config;
 /*
@@ -14,26 +15,27 @@ function getLogoForTeam(teamId, teams) {
 */
 function TableColumns() {
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
+  const intl = useIntl();
   return (
     <Tr>
       <Th>
-        <Center>{isSmallScreen ? 'R' : 'Rank'}</Center>
+        <Center>{isSmallScreen ? 'R' : intl.formatMessage({ id: 'common.rank' })}</Center>
       </Th>
       {isSmallScreen ? (
         <>
-          <Th>Team/Coach</Th>
+          <Th>{intl.formatMessage({ id: 'statistics.teamCoach' })}</Th>
           <Th />
         </>
       ) : (
         <>
-          <Th>Team-Name</Th>
+          <Th>{intl.formatMessage({ id: 'statistics.teamName' })}</Th>
           <Th />
-          <Th>Coach-Name</Th>
-          <Th>Race</Th>
+          <Th>{intl.formatMessage({ id: 'statistics.coachName' })}</Th>
+          <Th>{intl.formatMessage({ id: 'team.race' })}</Th>
         </>
       )}
       <Th>
-        <Center>{isSmallScreen ? 'Sc.' : 'Score'}</Center>
+        <Center>{isSmallScreen ? 'Sc.' : intl.formatMessage({ id: 'common.score' })}</Center>
       </Th>
       <Th>
         <Center>W</Center>
@@ -45,7 +47,7 @@ function TableColumns() {
         <Center>L</Center>
       </Th>
       <Th>
-        <Center>{isSmallScreen ? 'GP' : 'Games'}</Center>
+        <Center>{isSmallScreen ? 'GP' : intl.formatMessage({ id: 'common.games' })}</Center>
       </Th>
       {!isSmallScreen && (
         <>

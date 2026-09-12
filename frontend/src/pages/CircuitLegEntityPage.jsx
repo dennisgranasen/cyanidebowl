@@ -20,6 +20,7 @@ import LatestMatches from '../components/contest/LatestMatches';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import LeagueInfo from '../components/league/LeagueInfo';
 import useFetchRanks from '../hooks/useFetchRanksForCircuitLegEntity';
+import { useIntl } from 'react-intl';
 //import useFetchTeams from '../hooks/useFetchTeamsForCircuitLegEntity';
 
 const transformCountsToObject = (statusCounts) => {
@@ -33,6 +34,7 @@ const transformCountsToObject = (statusCounts) => {
 
 
 function CircuitLegEntityPage() {
+  const intl = useIntl();
   const {circuitId, legId, entityId} = useParams();  
   //const [competitions, setCompetitions] = useState([]);
   const [entity, setEntity] = useState();
@@ -156,15 +158,15 @@ function CircuitLegEntityPage() {
       <LoadingOrErrorWrapper loading={loading || (loadingCompetition && loadingLeague)} error={error}>
 
         {circuitLeg && (
-          <HeaderCard heading={circuit.name} detailsHeading="CircuitLeg details">
+          <HeaderCard heading={circuit.name} detailsHeading={intl.formatMessage({ id: 'circuit.legDetails' })}>
             <InfoArea>
               {competition && (
                 <>
-                  <InfoItem key="Created" label="Created" info={formatter.formatAsDate(competition.dateCreated, '-')} />
-                  <InfoItem key="Format" label="Format" info={prettyPrint(competition.format)} />
+                  <InfoItem key="Created" label={intl.formatMessage({ id: 'competition.created' })} info={formatter.formatAsDate(competition.dateCreated, '-')} />
+                  <InfoItem key="Format" label={intl.formatMessage({ id: 'competition.format' })} info={intl.formatMessage({ id: `format.${competition.format}`, defaultMessage: prettyPrint(competition.format) })} />
                   <InfoItem
                     key="Progress"
-                    label="Progress"
+                    label={intl.formatMessage({ id: 'competition.progress' })}
                     info={
                       <CompetitionProgress
                         status={competition?.status}
@@ -181,12 +183,12 @@ function CircuitLegEntityPage() {
                   />
                 </>
               )}
-              <InfoItem key="Teams" label="Teams" info={formatter.formatAsNumber(ranks.length)} />
+              <InfoItem key="Teams" label={intl.formatMessage({ id: 'common.teams' })} info={formatter.formatAsNumber(ranks.length)} />
               <InfoItem
                 key="TimeSettings"
-                label="Time settings"
-                info={`Turn: ${formatter.formatAsNumber((competition?.turnDuration ?? 0) / 60)}m`}
-                additionalInfo={`Bonus: ${formatter.formatAsNumber((competition?.timeBonusDuration ?? 0) / 60)}m`}
+                label={intl.formatMessage({ id: 'competition.timeSettings' })}
+                info={intl.formatMessage({ id: 'competition.turnMinutes' }, { minutes: formatter.formatAsNumber((competition?.turnDuration ?? 0) / 60) })}
+                additionalInfo={intl.formatMessage({ id: 'competition.bonusMinutes' }, { minutes: formatter.formatAsNumber((competition?.timeBonusDuration ?? 0) / 60) })}
               />
             </InfoArea>
           </HeaderCard>
@@ -199,7 +201,7 @@ function CircuitLegEntityPage() {
             //<LatestMatches type={pageType} id={`${circuitId}-${circuitLeg.circuitLegId}`} data={circuitLeg} /> 
           }
         </>
-          : (error ? null : <Box>No Circuit Leg found with ID {legId}.</Box>)
+          : (error ? null : <Box>{intl.formatMessage({ id: 'circuit.legNotFound' }, { id: legId })}</Box>)
         }
       </LoadingOrErrorWrapper>
       {// activeCompetitionsIncludeRoundRobinOrWissenOrKnockoutTournaments && <LiveContests league={league} />

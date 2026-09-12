@@ -11,6 +11,7 @@ import LiveContests from '../components/contest/LiveContests';
 import LatestMatches from '../components/contest/LatestMatches';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import LeagueInfo from '../components/league/LeagueInfo';
+import { useIntl } from 'react-intl';
 
 const transformCountsToObject = (statusCounts) => {
   if (!statusCounts || !Array.isArray(statusCounts)) return {};
@@ -23,6 +24,7 @@ const transformCountsToObject = (statusCounts) => {
 
 
 function LeaguePage() {
+  const intl = useIntl();
   const {leagueId} = useParams();
   const [competitions, setCompetitions] = useState([]);
   const [league, setLeague] = useState();
@@ -70,7 +72,7 @@ function LeaguePage() {
       setLoading(true);
       if (leagueId === null || leagueId.length === 0) {
         setLoading(false);
-        setError({ type: 'info', message: 'No League selected.' });
+        setError({ type: 'info', message: intl.formatMessage({ id: 'league.noSelection' }) });
         return;
       }
       WarpScoresApiService.leagueCompetitions(leagueId)
@@ -89,7 +91,7 @@ function LeaguePage() {
         <Navigation currentPage="league" league={[league?.id.key, league?.name]} />
       </Box>
       {league && (
-        <HeaderCard heading={league.name} detailsHeading="League details" mainImageSrc={imageUrls.logo(league.logo,league?.id?.opus)}>
+        <HeaderCard heading={league.name} detailsHeading={intl.formatMessage({ id: 'league.details' })} mainImageSrc={imageUrls.logo(league.logo,league?.id?.opus)}>
           <LeagueInfo league={league} competitionCountByStatus={competitionCountByStatus}/>
         </HeaderCard>
       )}

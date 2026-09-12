@@ -17,6 +17,7 @@ import KnockoutCompetition from '../components/competition/KnockoutCompetition';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import ArenaCompetition from '../components/competition/ArenaCompetition';
 import LadderCompetition from '../components/competition/LadderCompetition';
+import { useIntl } from 'react-intl';
 
 const getTeamsFor = (competition) => {
   if (!competition) return null;
@@ -52,6 +53,7 @@ function TypedCompetition({ competition, competitionLoading }) {
 }
 
 function CompetitionPage() {
+  const intl = useIntl();
   const {
     authenticationReady,
     isAuthenticated,
@@ -91,17 +93,17 @@ function CompetitionPage() {
       <LoadingOrErrorWrapper loading={competitionLoading} error={error}>
         <HeaderCard
           heading={competition?.name}
-          subHeading={<RouteLink to={`/${competition?.leagueId}`}>League: {competition?.leagueName}</RouteLink>}
-          detailsHeading="Competition details"
+          subHeading={<RouteLink to={`/${competition?.leagueId}`}>{intl.formatMessage({ id: 'competition.league' }, { name: competition?.leagueName })}</RouteLink>}
+          detailsHeading={intl.formatMessage({ id: 'competition.details' })}
           mainImageSrc={competition?.logo ? imageUrls.logo(competition?.logo, competition?.id?.opus) : imageUrls.logo(competition?.leagueLogo, competition?.id?.opus)}
           additionalImageSrc={competition?.logo ? imageUrls.logo(competition?.leagueLogo, competition?.id?.opus) : null}
         >
           <InfoArea>
-            <InfoItem key="Created" label="Created" info={formatter.formatAsDate(competition?.dateCreated)} />
-            <InfoItem key="Format" label="Format" info={prettyPrint(competition?.format)} />
+            <InfoItem key="Created" label={intl.formatMessage({ id: 'competition.created' })} info={formatter.formatAsDate(competition?.dateCreated)} />
+            <InfoItem key="Format" label={intl.formatMessage({ id: 'competition.format' })} info={intl.formatMessage({ id: `format.${competition?.format}`, defaultMessage: prettyPrint(competition?.format) })} />
             <InfoItem
               key="Progress"
-              label="Progress"
+              label={intl.formatMessage({ id: 'competition.progress' })}
               info={
                 <CompetitionProgress
                   status={competition?.status}
@@ -116,18 +118,18 @@ function CompetitionPage() {
                 />
               }
             />
-            <InfoItem key="Teams" label="Teams" info={formatter.formatAsNumber(getTeamsFor(competition))} />
+            <InfoItem key="Teams" label={intl.formatMessage({ id: 'common.teams' })} info={formatter.formatAsNumber(getTeamsFor(competition))} />
             <InfoItem
               key="TimeSettings"
-              label="Time settings"
-              info={`Turn: ${formatter.formatAsNumber((competition?.turnDuration ?? 0) / 60)}m`}
-              additionalInfo={`Bonus: ${formatter.formatAsNumber((competition?.timeBonusDuration ?? 0) / 60)}m`}
+              label={intl.formatMessage({ id: 'competition.timeSettings' })}
+              info={intl.formatMessage({ id: 'competition.turnMinutes' }, { minutes: formatter.formatAsNumber((competition?.turnDuration ?? 0) / 60) })}
+              additionalInfo={intl.formatMessage({ id: 'competition.bonusMinutes' }, { minutes: formatter.formatAsNumber((competition?.timeBonusDuration ?? 0) / 60) })}
             />
             {competition?.status === 'Finished' &&
               (!checkPermissions || (authenticationReady && userPermissions.writeLeagueAdmin)) && (
                 <InfoItem
                   key="NafDataExport"
-                  label="Export"
+                  label={intl.formatMessage({ id: 'competition.export' })}
                   info={
                     <NafExportButton
                       authenticationReady={authenticationReady}
@@ -142,7 +144,7 @@ function CompetitionPage() {
               )}
           </InfoArea>
           <RouteLink to={`/competition/${competition?.id}/stats`}>
-            <Button size="xs">Statistics</Button>
+            <Button size="xs">{intl.formatMessage({ id: 'competition.statistics' })}</Button>
           </RouteLink>
         </HeaderCard>
       </LoadingOrErrorWrapper>

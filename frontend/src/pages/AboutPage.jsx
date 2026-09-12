@@ -13,10 +13,12 @@ import logger from '../util/logger';
 import DisclaimerCard from './aboutCards/DisclaimerCard';
 import parseMarkdownPrefixingLinks from '../util/markdownParser';
 import markDownTheme from '../theme/components/Markdown';
+import { useIntl } from 'react-intl';
 
 const readmeFile = '/README.md';
 
 function AboutPage() {
+  const intl = useIntl();
   const renderer = useMemo(() => ChakraUIRenderer(markDownTheme, true), []);
   const [readme, setReadme] = useState();
 
@@ -49,15 +51,14 @@ function AboutPage() {
         <Navigation currentPage="home" />
       </Box>
       <HeaderCard
-        heading="About"
+        heading={intl.formatMessage({ id: 'about.heading' })}
         subHeading={<RouteLink to="/">warp-scores.net</RouteLink>}
         mainImageSrc={imageUrls.blaskscoreLogoPng('medium')}
       />
       <VStack align="left">
         {!readme && (
           <Text>
-            This is a Spike-like (good old Spike made by poncho for BB2 <Icon as={FaRegHeart} />) facade to BB3 data
-            provided by Cyanide&apos;s BB3-API.
+            {intl.formatMessage({ id: 'about.fallback' })} <Icon as={FaRegHeart} />
           </Text>
         )}
         {readme && (

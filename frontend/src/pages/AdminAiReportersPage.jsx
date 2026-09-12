@@ -22,8 +22,10 @@ import { useNavigate } from 'react-router-dom';
 import Navigation from '../components/misc/Navigation';
 import AiReporterApi from '../AiReporterApi';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
+import { useIntl } from 'react-intl';
 
 function AdminAiReportersPage() {
+  const intl = useIntl();
   const {
     authenticationReady,
     userPermissions,
@@ -126,14 +128,14 @@ function AdminAiReportersPage() {
   return (
     <Box p={{ base: 3, md: 6 }}>
       <Navigation currentPage="admin" parentPage="admin" />
-      <Heading mt={6}>AI Reporters</Heading>
-      <Text mt={2} color="gray.400">Runtime overrides for all AI reporters.</Text>
+      <Heading mt={6}>{intl.formatMessage({ id: 'aiAdmin.heading' })}</Heading>
+      <Text mt={2} color="gray.400">{intl.formatMessage({ id: 'aiAdmin.help' })}</Text>
 
       {error && <Text mt={4} color="red.300">{error.message || String(error)}</Text>}
 
       {settings && (
         <Box mt={5} maxW="360px">
-          <Text mb={1} fontSize="sm" fontWeight="700">Default article language</Text>
+          <Text mb={1} fontSize="sm" fontWeight="700">{intl.formatMessage({ id: 'aiAdmin.defaultArticleLanguage' })}</Text>
           <Select
             size="sm"
             value={settings.defaultLanguage || 'sv'}
@@ -144,7 +146,7 @@ function AdminAiReportersPage() {
             <option value="en">English (en)</option>
           </Select>
           <Text mt={1} fontSize="xs" color="gray.500">
-            Used when a reporter has no profile or runtime language override.
+            {intl.formatMessage({ id: 'aiAdmin.defaultLanguageHelp' })}
           </Text>
         </Box>
       )}
@@ -156,13 +158,13 @@ function AdminAiReportersPage() {
           <Table size="sm">
             <Thead position="sticky" top={0} zIndex={1} bg="chakra-body-bg">
               <Tr>
-                <Th minW="260px">Reporter</Th>
-                <Th textAlign="center">Enabled</Th>
-                <Th textAlign="center">Reports</Th>
-                <Th textAlign="center">Interactions</Th>
-                <Th textAlign="center">Ratings</Th>
-                <Th minW="175px">Language</Th>
-                <Th minW="150px">Writing weight</Th>
+                <Th minW="260px">{intl.formatMessage({ id: 'aiAdmin.reporter' })}</Th>
+                <Th textAlign="center">{intl.formatMessage({ id: 'aiAdmin.enabled' })}</Th>
+                <Th textAlign="center">{intl.formatMessage({ id: 'aiAdmin.reports' })}</Th>
+                <Th textAlign="center">{intl.formatMessage({ id: 'aiAdmin.interactions' })}</Th>
+                <Th textAlign="center">{intl.formatMessage({ id: 'aiAdmin.ratings' })}</Th>
+                <Th minW="175px">{intl.formatMessage({ id: 'aiAdmin.language' })}</Th>
+                <Th minW="150px">{intl.formatMessage({ id: 'aiAdmin.writingWeight' })}</Th>
                 <Th />
               </Tr>
             </Thead>
@@ -225,13 +227,13 @@ function AdminAiReportersPage() {
                       })}
                     >
                       <option value="">
-                        Inherit ({reporter.profileLanguage || settings?.defaultLanguage || 'sv'})
+                        {intl.formatMessage({ id: 'aiAdmin.inherit' }, { language: reporter.profileLanguage || settings?.defaultLanguage || 'sv' })}
                       </option>
                       <option value="sv">Svenska (sv)</option>
                       <option value="en">English (en)</option>
                     </Select>
                     <Text mt={1} fontSize="xs" color="gray.500">
-                      Effective: {reporter.primaryLanguage}
+                      {intl.formatMessage({ id: 'aiAdmin.effective' }, { language: reporter.primaryLanguage })}
                     </Text>
                   </Td>
                   <Td>
@@ -259,7 +261,7 @@ function AdminAiReportersPage() {
                       isLoading={saving[reporter.id]}
                       onClick={() => reset(reporter)}
                     >
-                      Reset
+                      {intl.formatMessage({ id: 'aiAdmin.reset' })}
                     </Button>
                   </Td>
                 </Tr>

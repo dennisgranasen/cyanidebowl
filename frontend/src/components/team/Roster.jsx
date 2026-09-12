@@ -2,17 +2,19 @@ import React from 'react';
 import { Center, Spinner, Table, TableContainer, Tbody, Tfoot, Th, Thead, Tr } from '@chakra-ui/react';
 import Player from './Player';
 import { identityUtils } from '../../util/identityUtil';
+import { useIntl } from 'react-intl';
 
-const TableColumns = (
-  <Tr>
+function TableColumns() {
+  const intl = useIntl();
+  return <Tr>
     <Th>#</Th>
-    <Th>Name</Th>
-    <Th>Type</Th>
+    <Th>{intl.formatMessage({ id: 'common.name' })}</Th>
+    <Th>{intl.formatMessage({ id: 'common.type' })}</Th>
     <Th>
-      <Center>Level</Center>
+      <Center>{intl.formatMessage({ id: 'common.level' })}</Center>
     </Th>
-    <Th>Skills</Th>
-    <Th>Injuries</Th>
+    <Th>{intl.formatMessage({ id: 'common.skills' })}</Th>
+    <Th>{intl.formatMessage({ id: 'common.injuries' })}</Th>
     <Th>
       <Center>MNG</Center>
     </Th>
@@ -34,15 +36,15 @@ const TableColumns = (
     <Th>
       <Center>XP</Center>
     </Th>
-    <Th isNumeric>Value</Th>
+    <Th isNumeric>{intl.formatMessage({ id: 'common.value' })}</Th>
   </Tr>
-);
+}
 
 function Roster({ players }) {
   return (
     <TableContainer width="100%">
       <Table variant="striped" size="sm">
-        <Thead>{TableColumns}</Thead>
+        <Thead><TableColumns /></Thead>
         <Tbody>
           {players !== null ? (
             players.map((player) => {
@@ -52,7 +54,7 @@ function Roster({ players }) {
             <Spinner />
           )}
         </Tbody>
-        <Tfoot>{TableColumns}</Tfoot>
+        <Tfoot><TableColumns /></Tfoot>
       </Table>
     </TableContainer>
   );

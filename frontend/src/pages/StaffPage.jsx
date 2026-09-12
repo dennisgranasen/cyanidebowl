@@ -5,8 +5,10 @@ import {
 import { Link as RouteLink } from 'react-router-dom';
 import Navigation from '../components/misc/Navigation';
 import AiReporterApi from '../AiReporterApi';
+import { useIntl } from 'react-intl';
 
 function StaffPage() {
+  const intl = useIntl();
   const [reporters, setReporters] = useState(null);
   const [error, setError] = useState(null);
 
@@ -17,13 +19,13 @@ function StaffPage() {
   return (
     <Box p={{ base: 3, md: 6 }}>
       <Navigation currentPage="staff" />
-      <Heading mt={6}>BlaskScore staff</Heading>
+      <Heading mt={6}>{intl.formatMessage({ id: 'staff.heading' })}</Heading>
       <Text mt={2} color="gray.400">
-        The AI reporters covering Blood Bowl for BlaskScore.
+        {intl.formatMessage({ id: 'staff.description' })}
       </Text>
 
       {error && <Text mt={6} color="red.300">{error.message || String(error)}</Text>}
-      {!reporters && !error && <Text mt={8}>Loading staff…</Text>}
+      {!reporters && !error && <Text mt={8}>{intl.formatMessage({ id: 'staff.loading' })}</Text>}
 
       <Box
         mt={6}

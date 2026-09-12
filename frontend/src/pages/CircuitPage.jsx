@@ -7,6 +7,7 @@ import Circuit from '../components/circuit/Circuit';
 import CircuitLegs from '../components/circuit/CircuitLegs';
 import HeaderCard from '../components/common/HeaderCard';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
+import { useIntl } from 'react-intl';
 
 function TableColumns() {
   return (
@@ -18,6 +19,7 @@ function TableColumns() {
 }
 
 function CircuitPage() {
+  const intl = useIntl();
   const { circuitId } = useParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState();
@@ -48,9 +50,9 @@ function CircuitPage() {
       <Box>
         <Navigation currentPage="circuits" circuit={[circuitId, circuit?.circuitName]} />
       </Box>
-      <HeaderCard heading={circuit ? circuit.circuitName : 'Circuit'} detailsHeading="Circuit details" />
+      <HeaderCard heading={circuit ? circuit.circuitName : intl.formatMessage({ id: 'circuit.fallback' })} detailsHeading={intl.formatMessage({ id: 'circuit.details' })} />
       <LoadingOrErrorWrapper loading={loading} error={error}>
-        <Heading size="md">{circuit ? circuit.circuitName : 'Loading...'}</Heading>
+        <Heading size="md">{circuit ? circuit.circuitName : intl.formatMessage({ id: 'circuit.loading' })}</Heading>
         <CircuitLegs circuit={circuit} loading={loading} error={error} />
         <Circuit circuit={circuit} circuitLoading={loading} />
       </LoadingOrErrorWrapper>

@@ -11,10 +11,12 @@ import config from '../config';
 import Leagues from '../components/league/Leagues';
 import LeagueSystems from '../components/league/LeagueSystems';
 import ArticleFeed from '../components/community/ArticleFeed';
+import { useIntl } from 'react-intl';
 
 const { showCircuitsFeature } = config;
 
 function WarpScores() {
+  const intl = useIntl();
   const [circuits, setCircuits] = useState([]);
   const { authenticationReady, userPermissions } = useAuth0WithUserPermissions();
   const [leagueSystems, setLeagueSystems] = useState([]);
@@ -100,7 +102,7 @@ function WarpScores() {
         <HeaderCard
           mainImageSrc={imageUrls.blaskscoreLogoPng('medium')}
           heading="BlaskScore"
-          subHeading="Blödareblaskans omutliga(?) resultatförmedlingstjänst"
+          subHeading={intl.formatMessage({ id: 'home.tagline' })}
         />
         {!showCircuits && (
           <ArticleFeed leagueSystemId={selectedLeagueSystem?.id} limit={6} />

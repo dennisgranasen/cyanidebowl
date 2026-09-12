@@ -28,6 +28,7 @@ import formatter from '../../util/formatter';
 import ArenaProgress from './ArenaProgress';
 import config from '../../config';
 import prettyPrint from '../../util/prettyPrint';
+import { useIntl } from 'react-intl';
 
 const { boxSize } = config;
 
@@ -97,6 +98,8 @@ function TeamRow({ competitionId, arenaTeam, coachOrRace }) {
 }
 
 function ArenaRunAccordionItem({ competitionId, label, loading, error, arenaTeams, coachOrRace }) {
+  const intl = useIntl();
+  const coachOrRaceLabel = intl.formatMessage({ id: coachOrRace === 'Race' ? 'team.race' : 'common.coach' });
   return (
     <AccordionItem>
       <AccordionButton>
@@ -110,22 +113,22 @@ function ArenaRunAccordionItem({ competitionId, label, loading, error, arenaTeam
           {!arenaTeams && (
             <HStack gap="1rem">
               <Icon as={FaRegFaceSadTear} boxSize={boxSize} />
-              <Box>Not yet available...</Box>
+              <Box>{intl.formatMessage({ id: 'arena.notAvailable' })}</Box>
             </HStack>
           )}
-          {arenaTeams && arenaTeams.length === 0 && <Box>None...</Box>}
+          {arenaTeams && arenaTeams.length === 0 && <Box>{intl.formatMessage({ id: 'arena.none' })}</Box>}
           {arenaTeams && arenaTeams.length > 0 && (
             <TableContainer>
               <Table variant="striped" size="sm">
                 <Thead>
                   <Tr>
-                    <Th>Team</Th>
-                    <Th>{coachOrRace}</Th>
-                    <Th>First game</Th>
-                    <Th>Last game</Th>
-                    <Th>Games played</Th>
-                    <Th>Runs</Th>
-                    <Th>Progress</Th>
+                    <Th>{intl.formatMessage({ id: 'common.team' })}</Th>
+                    <Th>{coachOrRaceLabel}</Th>
+                    <Th>{intl.formatMessage({ id: 'arena.firstGame' })}</Th>
+                    <Th>{intl.formatMessage({ id: 'arena.lastGame' })}</Th>
+                    <Th>{intl.formatMessage({ id: 'arena.gamesPlayed' })}</Th>
+                    <Th>{intl.formatMessage({ id: 'arena.runs' })}</Th>
+                    <Th>{intl.formatMessage({ id: 'arena.progress' })}</Th>
                   </Tr>
                 </Thead>
                 <Tbody>
@@ -140,13 +143,13 @@ function ArenaRunAccordionItem({ competitionId, label, loading, error, arenaTeam
                 </Tbody>
                 <Tfoot>
                   <Tr>
-                    <Th>Team</Th>
-                    <Th>{coachOrRace}</Th>
-                    <Th>First game</Th>
-                    <Th>Last game</Th>
-                    <Th>Games played</Th>
-                    <Th>Runs</Th>
-                    <Th>Progress</Th>
+                    <Th>{intl.formatMessage({ id: 'common.team' })}</Th>
+                    <Th>{coachOrRaceLabel}</Th>
+                    <Th>{intl.formatMessage({ id: 'arena.firstGame' })}</Th>
+                    <Th>{intl.formatMessage({ id: 'arena.lastGame' })}</Th>
+                    <Th>{intl.formatMessage({ id: 'arena.gamesPlayed' })}</Th>
+                    <Th>{intl.formatMessage({ id: 'arena.runs' })}</Th>
+                    <Th>{intl.formatMessage({ id: 'arena.progress' })}</Th>
                   </Tr>
                 </Tfoot>
               </Table>
