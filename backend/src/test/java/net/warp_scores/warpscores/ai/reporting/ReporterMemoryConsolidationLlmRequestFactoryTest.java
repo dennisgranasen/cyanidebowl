@@ -21,13 +21,24 @@ class ReporterMemoryConsolidationLlmRequestFactoryTest {
                 {
                   "remember": true,
                   "body": "Jag tänker fortsätta hävda att Team One aldrig kan skydda bollen.",
-                  "subjectKeys": ["TEAM:team-1"]
+                  "subjectKeys": ["TEAM:team-1"],
+                  "relationships": [
+                    {
+                      "subjectKey": "TEAM:team-1",
+                      "sentiment": -0.6,
+                      "confidence": 0.8,
+                      "rationale": "Reportern uttrycker återkommande förakt för lagets bollskydd."
+                    }
+                  ]
                 }
                 """, List.of(team));
 
         assertTrue(result.remember());
         assertEquals(List.of(team), result.subjects());
         assertTrue(result.body().contains("Team One"));
+        assertEquals(1, result.relationships().size());
+        assertEquals(team, result.relationships().get(0).subject());
+        assertEquals(-0.6, result.relationships().get(0).sentiment(), 0.001);
     }
 
     @Test
@@ -40,7 +51,8 @@ class ReporterMemoryConsolidationLlmRequestFactoryTest {
                         {
                           "remember": true,
                           "body": "Ett minne.",
-                          "subjectKeys": ["TEAM:team-2"]
+                          "subjectKeys": ["TEAM:team-2"],
+                          "relationships": []
                         }
                         """, List.of(team)));
 
@@ -55,12 +67,39 @@ class ReporterMemoryConsolidationLlmRequestFactoryTest {
                 {
                   "remember": false,
                   "body": "",
-                  "subjectKeys": []
+                  "subjectKeys": [],
+                  "relationships": []
                 }
                 """, List.of(match));
 
         assertFalse(result.remember());
         assertNull(result.body());
         assertTrue(result.subjects().isEmpty());
+        assertTrue(result.relationships().isEmpty());
+    }
+
+    @Test
+    void rejectsRelationshipForNonTeamOrCoachSubject() {
+        SubjectRef match = new SubjectRef(SubjectType.MATCH, "m-1");
+
+        IllegalArgumentException error = assertThrows(
+                IllegalArgumentException.class,
+                () -> factory.parse("""
+                        {
+                          "remember": false,
+                          "body": "",
+                          "subjectKeys": [],
+                          "relationships": [
+                            {
+                              "subjectKey": "MATCH:m-1",
+                              "sentiment": -0.4,
+                              "confidence": 0.7,
+                              "rationale": "Fel sorts relationsmål."
+                            }
+                          ]
+                        }
+                        """, List.of(match)));
+
+        assertTrue(error.getMessage().contains("TEAM or COACH_IDENTITY"));
     }
 }

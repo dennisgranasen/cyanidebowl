@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 @Component
@@ -40,14 +41,19 @@ public class PersistentContextMapper {
         subjects.add(user);
         subjects.add(target);
 
+        boolean attitude = relationship.getType() == AiSocialRelationship.Type.TEAM_ATTITUDE
+                || relationship.getType() == AiSocialRelationship.Type.COACH_ATTITUDE;
+
         return new ContextItem(
                 "relationship:" + relationship.getId(),
                 ContextContentType.SOCIAL_RELATIONSHIP,
                 ContextSource.DOMAIN,
-                ContextAuthority.DOMAIN_FACT,
+                attitude
+                        ? ContextAuthority.ATTRIBUTED_DISCOURSE
+                        : ContextAuthority.DOMAIN_FACT,
+                attitude ? relationship.getUserId() : null,
                 null,
-                null,
-                null,
+                attitude ? relationship.getUserDisplayName() : null,
                 relationship.getUpdatedAt() != null
                         ? relationship.getUpdatedAt()
                         : relationship.getCreatedAt(),
@@ -74,7 +80,42 @@ public class PersistentContextMapper {
             case COACH_IDENTITY -> user + " is associated with coach " + target + ".";
             case LEAGUE_MEMBERSHIP -> user + " belongs to " + target + ".";
             case AFFILIATION -> user + " is affiliated with " + target + ".";
+            case TEAM_ATTITUDE, COACH_ATTITUDE ->
+                    attitudeText(user, target, relationship);
         };
+    }
+
+    private static String attitudeText(
+            String user,
+            String target,
+            AiSocialRelationship relationship) {
+        double sentiment = relationship.getSentiment() == null
+                ? 0.0 : relationship.getSentiment();
+        double confidence = relationship.getConfidence() == null
+                ? 0.0 : relationship.getConfidence();
+
+        String description;
+        if (sentiment <= -0.7) description = "strongly dislikes";
+        else if (sentiment <= -0.3) description = "has a negative attitude toward";
+        else if (sentiment < 0.3) description = "has a mixed or neutral attitude toward";
+        else if (sentiment < 0.7) description = "has a positive attitude toward";
+        else description = "strongly favours";
+
+        StringBuilder text = new StringBuilder()
+                .append(user).append(' ')
+                .append(description).append(' ')
+                .append(target)
+                .append(" (sentiment ")
+                .append(String.format(Locale.ROOT, "%.2f", sentiment))
+                .append(", confidence ")
+                .append(String.format(Locale.ROOT, "%.2f", confidence))
+                .append(").");
+
+        if (nonBlank(relationship.getRationale())) {
+            text.append(" Current basis: ")
+                    .append(relationship.getRationale().trim());
+        }
+        return text.toString();
     }
 
     private static boolean nonBlank(String value) {

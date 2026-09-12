@@ -12,6 +12,8 @@ import net.warp_scores.warpscores.ai.context.ContextTaskType;
 import net.warp_scores.warpscores.ai.context.SubjectRef;
 import net.warp_scores.warpscores.ai.context.SubjectType;
 import net.warp_scores.warpscores.ai.context.persistence.AiMemoryStore;
+import net.warp_scores.warpscores.ai.context.persistence.AiSocialRelationship;
+import net.warp_scores.warpscores.ai.context.persistence.AiSocialRelationshipStore;
 import net.warp_scores.warpscores.ai.provider.CanonicalLlmResponse;
 import net.warp_scores.warpscores.ai.provider.LlmExecutionService;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
@@ -41,6 +43,7 @@ public class ReporterMemoryConsolidationService {
     private final ReporterMemoryConsolidationLlmRequestFactory requestFactory;
     private final LlmExecutionService llm;
     private final AiMemoryStore memoryStore;
+    private final AiSocialRelationshipStore relationshipStore;
 
     private final Set<String> inFlight = ConcurrentHashMap.newKeySet();
 
@@ -66,6 +69,11 @@ public class ReporterMemoryConsolidationService {
     public void deactivateForArticle(MatchArticle article) {
         if (article == null || !StringUtils.hasText(article.getId())) return;
         memoryStore.deactivate(memoryId(article));
+        if (article.getAuthorUserId() != null) {
+            relationshipStore.removeEvidence(
+                    article.getAuthorUserId(),
+                    sourceContentId(article));
+        }
     }
 
     private void consolidate(MatchArticle article) {
@@ -86,17 +94,41 @@ public class ReporterMemoryConsolidationService {
         ReporterMemoryConsolidationLlmRequestFactory.MemoryCandidate candidate =
                 requestFactory.parse(response.content(), allowedSubjects.keySet());
 
-        if (!candidate.remember()) {
-            memoryStore.deactivate(memoryId(article));
-            return;
+        // Re-running consolidation for the same article must be idempotent.
+        relationshipStore.removeEvidence(
+                article.getAuthorUserId(),
+                sourceContentId(article));
+
+        for (ReporterMemoryConsolidationLlmRequestFactory.RelationshipObservation observation
+                : candidate.relationships()) {
+            SubjectRef subject = observation.subject();
+            AiSocialRelationship.Type type =
+                    subject.type() == SubjectType.TEAM
+                            ? AiSocialRelationship.Type.TEAM_ATTITUDE
+                            : AiSocialRelationship.Type.COACH_ATTITUDE;
+
+            relationshipStore.observeAttitude(
+                    article.getAuthorUserId(),
+                    reporter.getAlias(),
+                    type,
+                    subject,
+                    allowedSubjects.get(subject),
+                    sourceContentId(article),
+                    observation.sentiment(),
+                    observation.confidence(),
+                    observation.rationale());
         }
 
-        memoryStore.put(
-                memoryId(article),
-                article.getAuthorUserId(),
-                candidate.body(),
-                candidate.subjects(),
-                List.of("match-article:" + article.getId()));
+        if (!candidate.remember()) {
+            memoryStore.deactivate(memoryId(article));
+        } else {
+            memoryStore.put(
+                    memoryId(article),
+                    article.getAuthorUserId(),
+                    candidate.body(),
+                    candidate.subjects(),
+                    List.of(sourceContentId(article)));
+        }
     }
 
     private Map<SubjectRef, String> allowedSubjects(MatchArticle article, SubjectRef root) {
@@ -167,5 +199,9 @@ public class ReporterMemoryConsolidationService {
 
     private static String memoryId(MatchArticle article) {
         return MEMORY_ID_PREFIX + article.getId();
+    }
+
+    private static String sourceContentId(MatchArticle article) {
+        return "match-article:" + article.getId();
     }
 }
