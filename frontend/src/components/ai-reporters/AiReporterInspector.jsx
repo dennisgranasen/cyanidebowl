@@ -40,6 +40,7 @@ import {
   useDisclosure,
 } from '@chakra-ui/react';
 import AiReporterApi from '../../AiReporterApi';
+import { useIntl } from 'react-intl';
 
 const parseSubjects = (text) => text
   .split('\n')
@@ -109,6 +110,7 @@ function ConfirmDialog({ state, onClose, onConfirm, busy }) {
 }
 
 function MemoryEditor({ isOpen, onClose, memory, onPrepare }) {
+  const intl = useIntl();
   const [body, setBody] = useState('');
   const [subjects, setSubjects] = useState('');
 
@@ -150,7 +152,7 @@ function MemoryEditor({ isOpen, onClose, memory, onPrepare }) {
         <ModalCloseButton />
         <ModalBody>
           <FormControl>
-            <FormLabel>Memory</FormLabel>
+            <FormLabel>{intl.formatMessage({ id: 'reporterInspector.memory' })}</FormLabel>
             <Textarea
               minH="180px"
               value={body}
@@ -159,7 +161,7 @@ function MemoryEditor({ isOpen, onClose, memory, onPrepare }) {
             />
           </FormControl>
           <FormControl mt={4}>
-            <FormLabel>Subjects</FormLabel>
+            <FormLabel>{intl.formatMessage({ id: 'reporterInspector.references' })}</FormLabel>
             <Textarea
               minH="120px"
               value={subjects}
@@ -183,6 +185,7 @@ function MemoryEditor({ isOpen, onClose, memory, onPrepare }) {
 }
 
 function RelationshipEditor({ isOpen, onClose, relationship, onPrepare }) {
+  const intl = useIntl();
   const [subjectType, setSubjectType] = useState('TEAM');
   const [subjectId, setSubjectId] = useState('');
   const [subjectDisplayName, setSubjectDisplayName] = useState('');
@@ -234,7 +237,7 @@ function RelationshipEditor({ isOpen, onClose, relationship, onPrepare }) {
         <ModalBody>
           <Stack spacing={4}>
             <FormControl>
-              <FormLabel>Target type</FormLabel>
+              <FormLabel>{intl.formatMessage({ id: 'reporterInspector.targetType' })}</FormLabel>
               <Select
                 value={subjectType}
                 onChange={(e) => setSubjectType(e.target.value)}
@@ -245,7 +248,7 @@ function RelationshipEditor({ isOpen, onClose, relationship, onPrepare }) {
               </Select>
             </FormControl>
             <FormControl>
-              <FormLabel>Subject ID</FormLabel>
+              <FormLabel>{intl.formatMessage({ id: 'reporterInspector.referenceId' })}</FormLabel>
               <Input
                 value={subjectId}
                 onChange={(e) => setSubjectId(e.target.value)}
@@ -253,14 +256,14 @@ function RelationshipEditor({ isOpen, onClose, relationship, onPrepare }) {
               />
             </FormControl>
             <FormControl>
-              <FormLabel>Display name</FormLabel>
+              <FormLabel>{intl.formatMessage({ id: 'reporterInspector.displayName' })}</FormLabel>
               <Input
                 value={subjectDisplayName}
                 onChange={(e) => setSubjectDisplayName(e.target.value)}
               />
             </FormControl>
             <FormControl>
-              <FormLabel>Sentiment (-1 … +1)</FormLabel>
+              <FormLabel>{intl.formatMessage({ id: 'reporterInspector.sentiment' })} (-1 … +1)</FormLabel>
               <NumberInput
                 min={-1}
                 max={1}
@@ -273,7 +276,7 @@ function RelationshipEditor({ isOpen, onClose, relationship, onPrepare }) {
               </NumberInput>
             </FormControl>
             <FormControl>
-              <FormLabel>Confidence (0 … 1)</FormLabel>
+              <FormLabel>{intl.formatMessage({ id: 'reporterInspector.confidence' })} (0 … 1)</FormLabel>
               <NumberInput
                 min={0}
                 max={1}
@@ -311,6 +314,7 @@ export default function AiReporterInspector({
   getAccessTokenSilently,
   getAccessTokenWithPopup,
 }) {
+  const intl = useIntl();
   const [state, setState] = useState(null);
   const [runtime, setRuntime] = useState(null);
   const [error, setError] = useState(null);
@@ -435,9 +439,9 @@ export default function AiReporterInspector({
       <Box px={4} py={3} bg="gray.50" _dark={{ bg: 'gray.800' }}>
         <HStack justify="space-between">
           <Box>
-            <Text fontWeight="700">Technician · Internal state</Text>
+            <Text fontWeight="700">{intl.formatMessage({ id: 'reporterInspector.title' })}</Text>
             <Text fontSize="xs" color="gray.500">
-              Persistent MEMORY, social attitudes, runtime och senaste AI-provenance.
+              {intl.formatMessage({ id: 'reporterInspector.description' })}
             </Text>
           </Box>
           <Button size="xs" variant="outline" onClick={load}>Uppdatera</Button>
@@ -452,16 +456,16 @@ export default function AiReporterInspector({
 
       <Tabs variant="enclosed" size="sm">
         <TabList px={3} pt={3} overflowX="auto">
-          <Tab>Memories</Tab>
-          <Tab>Relationships</Tab>
-          <Tab>Activity</Tab>
-          <Tab>Runtime</Tab>
+          <Tab>{intl.formatMessage({ id: 'reporterInspector.memories' })}</Tab>
+          <Tab>{intl.formatMessage({ id: 'reporterInspector.relationships' })}</Tab>
+          <Tab>{intl.formatMessage({ id: 'reporterInspector.activity' })}</Tab>
+          <Tab>{intl.formatMessage({ id: 'reporterInspector.runtime' })}</Tab>
         </TabList>
         <TabPanels>
           <TabPanel>
             <HStack justify="space-between" mb={4}>
               <Text fontWeight="700">
-                Memories <Badge ml={2}>{state.memories?.length || 0}</Badge>
+                {intl.formatMessage({ id: 'reporterInspector.memories' })} <Badge ml={2}>{state.memories?.length || 0}</Badge>
               </Text>
               <HStack>
                 <Button
@@ -531,19 +535,19 @@ export default function AiReporterInspector({
                   </HStack>
                   <Divider my={3} />
                   <Text fontSize="xs" color="gray.500">
-                    Subjects: {(memory.subjects || []).map((s) => `${s.type}:${s.id}`).join(', ') || '—'}
+                    {intl.formatMessage({ id: 'reporterInspector.references' })}: {(memory.subjects || []).map((s) => `${s.type}:${s.id}`).join(', ') || '—'}
                   </Text>
                   <Text fontSize="xs" color="gray.500">
-                    Sources: {(memory.sourceContentIds || []).join(', ') || '—'}
+                    {intl.formatMessage({ id: 'reporterInspector.sources' })}: {(memory.sourceContentIds || []).join(', ') || '—'}
                   </Text>
                   {memory.supersededByMemoryId && (
                     <Text fontSize="xs" color="orange.400">
-                      Superseded by: {memory.supersededByMemoryId}
+                      {intl.formatMessage({ id: 'reporterInspector.supersededBy' })}: {memory.supersededByMemoryId}
                       {' · '}{formatTime(memory.supersededAt)}
                     </Text>
                   )}
                   <Text fontSize="xs" color="gray.500">
-                    Updated: {formatTime(memory.updatedAt)}
+                    {intl.formatMessage({ id: 'reporterInspector.updated' })}: {formatTime(memory.updatedAt)}
                   </Text>
                 </Box>
               ))}
@@ -556,7 +560,7 @@ export default function AiReporterInspector({
           <TabPanel>
             <HStack justify="space-between" mb={4}>
               <Text fontWeight="700">
-                Relationships <Badge ml={2}>{state.relationships?.length || 0}</Badge>
+                {intl.formatMessage({ id: 'reporterInspector.relationships' })} <Badge ml={2}>{state.relationships?.length || 0}</Badge>
               </Text>
               <Button
                 size="sm"
@@ -615,21 +619,21 @@ export default function AiReporterInspector({
                   </HStack>
                   <HStack mt={3} spacing={6}>
                     <Box>
-                      <Text fontSize="xs" color="gray.500">Sentiment</Text>
+                      <Text fontSize="xs" color="gray.500">{intl.formatMessage({ id: 'reporterInspector.sentiment' })}</Text>
                       <Text fontWeight="700">
                         {relationship.sentiment == null
                           ? '—' : relationship.sentiment.toFixed(2)}
                       </Text>
                     </Box>
                     <Box>
-                      <Text fontSize="xs" color="gray.500">Confidence</Text>
+                      <Text fontSize="xs" color="gray.500">{intl.formatMessage({ id: 'reporterInspector.confidence' })}</Text>
                       <Text fontWeight="700">
                         {relationship.confidence == null
                           ? '—' : relationship.confidence.toFixed(2)}
                       </Text>
                     </Box>
                     <Box>
-                      <Text fontSize="xs" color="gray.500">Evidence</Text>
+                      <Text fontSize="xs" color="gray.500">{intl.formatMessage({ id: 'reporterInspector.evidence' })}</Text>
                       <Text fontWeight="700">{relationship.evidenceCount ?? 0}</Text>
                     </Box>
                   </HStack>
@@ -638,7 +642,7 @@ export default function AiReporterInspector({
                   )}
                   {(relationship.evidence || []).length > 0 && (
                     <Box mt={3}>
-                      <Text fontSize="xs" fontWeight="700" mb={1}>Evidence</Text>
+                      <Text fontSize="xs" fontWeight="700" mb={1}>{intl.formatMessage({ id: 'reporterInspector.evidence' })}</Text>
                       {(relationship.evidence || []).map((evidence, index) => (
                         <Text key={`${evidence.sourceContentId}-${index}`} fontSize="xs" color="gray.500">
                           {evidence.manual ? '[MANUAL] ' : ''}
@@ -662,7 +666,7 @@ export default function AiReporterInspector({
 
           <TabPanel>
             <Text fontWeight="700" mb={4}>
-              Generation traces <Badge ml={2}>{state.traces?.length || 0}</Badge>
+              {intl.formatMessage({ id: 'reporterInspector.generationTraces' })} <Badge ml={2}>{state.traces?.length || 0}</Badge>
             </Text>
             <VStack align="stretch" spacing={3}>
               {(state.traces || []).map((trace) => {
@@ -728,7 +732,7 @@ export default function AiReporterInspector({
                       <Box mt={3}>
                         {(trace.hardConstraints || []).length > 0 && (
                           <Box mb={4}>
-                            <Text fontSize="xs" fontWeight="700" mb={1}>Hard constraints</Text>
+                            <Text fontSize="xs" fontWeight="700" mb={1}>{intl.formatMessage({ id: 'reporterInspector.hardConstraints' })}</Text>
                             {(trace.hardConstraints || []).map((constraint, index) => (
                               <Text key={index} fontSize="xs" color="gray.500">
                                 • {constraint}
@@ -757,12 +761,12 @@ export default function AiReporterInspector({
                             )}
                             {item.authorDisplayName && (
                               <Text fontSize="xs" color="gray.500">
-                                Author: {item.authorDisplayName}
+                                {intl.formatMessage({ id: 'reporterInspector.author' })}: {item.authorDisplayName}
                               </Text>
                             )}
                             {(item.subjects || []).length > 0 && (
                               <Text fontSize="xs" color="gray.500">
-                                Subjects: {(item.subjects || [])
+                                {intl.formatMessage({ id: 'reporterInspector.references' })}: {(item.subjects || [])
                                   .map((subject) => `${subject.type}:${subject.id}`)
                                   .join(', ')}
                               </Text>
@@ -777,7 +781,7 @@ export default function AiReporterInspector({
                         ))}
 
                         <Divider my={3} />
-                        <Text fontSize="xs" fontWeight="700">Task instruction preview</Text>
+                        <Text fontSize="xs" fontWeight="700">{intl.formatMessage({ id: 'reporterInspector.taskInstructionPreview' })}</Text>
                         <Text mt={1} fontSize="xs" color="gray.500">
                           SHA-256: {trace.taskInstructionSha256 || '—'}
                         </Text>
@@ -809,7 +813,7 @@ export default function AiReporterInspector({
             <Divider my={6} />
 
             <Text fontWeight="700" mb={4}>
-              Recent AI article activity <Badge ml={2}>{state.activity?.length || 0}</Badge>
+              {intl.formatMessage({ id: 'reporterInspector.recentActivity' })} <Badge ml={2}>{state.activity?.length || 0}</Badge>
             </Text>
             <VStack align="stretch" spacing={3}>
               {(state.activity || []).map((activity) => (
@@ -819,19 +823,19 @@ export default function AiReporterInspector({
                     <Badge>{activity.status}</Badge>
                   </HStack>
                   <Text mt={1} fontSize="xs" color="gray.500">
-                    Match: {activity.matchId}
+                    {intl.formatMessage({ id: 'reporterInspector.match' })}: {activity.matchId}
                   </Text>
                   <Text fontSize="xs" color="gray.500">
-                    Provider/model: {activity.providerId || '—'} / {activity.model || '—'}
+                    {intl.formatMessage({ id: 'reporterInspector.providerModel' })}: {activity.providerId || '—'} / {activity.model || '—'}
                   </Text>
                   <Text fontSize="xs" color="gray.500">
-                    Request: {activity.providerRequestId || '—'}
+                    {intl.formatMessage({ id: 'reporterInspector.request' })}: {activity.providerRequestId || '—'}
                   </Text>
                   <Text fontSize="xs" color="gray.500">
-                    Tokens: {activity.inputTokens ?? '—'} in / {activity.outputTokens ?? '—'} out
+                    {intl.formatMessage({ id: 'reporterInspector.tokens' })}: {activity.inputTokens ?? '—'} in / {activity.outputTokens ?? '—'} out
                   </Text>
                   <Text fontSize="xs" color="gray.500">
-                    Updated: {formatTime(activity.updatedAt)}
+                    {intl.formatMessage({ id: 'reporterInspector.updated' })}: {formatTime(activity.updatedAt)}
                   </Text>
                 </Box>
               ))}
@@ -844,15 +848,15 @@ export default function AiReporterInspector({
           <TabPanel>
             {!runtime ? <Spinner size="sm" /> : (
               <Stack spacing={2}>
-                <Text><b>Reporter:</b> {runtime.alias}</Text>
-                <Text><b>User ID:</b> {state.userId}</Text>
-                <Text><b>Enabled:</b> {String(runtime.enabled)}</Text>
-                <Text><b>Reports:</b> {String(runtime.reportsEnabled)}</Text>
-                <Text><b>Interactions:</b> {String(runtime.interactionsEnabled)}</Text>
-                <Text><b>Ratings:</b> {String(runtime.playerRatingsEnabled)}</Text>
-                <Text><b>Writing weight:</b> {runtime.writingWeight}</Text>
-                <Text><b>Effective language:</b> {runtime.primaryLanguage || '—'}</Text>
-                <Text><b>Profile language:</b> {runtime.profileLanguage || '—'}</Text>
+                <Text><b>{intl.formatMessage({ id: 'reporterInspector.reporter' })}:</b> {runtime.alias}</Text>
+                <Text><b>{intl.formatMessage({ id: 'reporterInspector.userId' })}:</b> {state.userId}</Text>
+                <Text><b>{intl.formatMessage({ id: 'reporterInspector.enabled' })}:</b> {String(runtime.enabled)}</Text>
+                <Text><b>{intl.formatMessage({ id: 'reporterInspector.reports' })}:</b> {String(runtime.reportsEnabled)}</Text>
+                <Text><b>{intl.formatMessage({ id: 'reporterInspector.interactions' })}:</b> {String(runtime.interactionsEnabled)}</Text>
+                <Text><b>{intl.formatMessage({ id: 'reporterInspector.ratings' })}:</b> {String(runtime.playerRatingsEnabled)}</Text>
+                <Text><b>{intl.formatMessage({ id: 'reporterInspector.writingWeight' })}:</b> {runtime.writingWeight}</Text>
+                <Text><b>{intl.formatMessage({ id: 'reporterInspector.effectiveLanguage' })}:</b> {runtime.primaryLanguage || '—'}</Text>
+                <Text><b>{intl.formatMessage({ id: 'reporterInspector.profileLanguage' })}:</b> {runtime.profileLanguage || '—'}</Text>
                 <Divider />
                 <Text fontSize="xs" color="gray.500">
                   Runtime overrides kan fortsatt ändras via kugghjulet på reporterprofilen.

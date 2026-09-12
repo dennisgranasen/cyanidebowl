@@ -13,6 +13,7 @@ import {
 
 import imageUrls from '../../imageUrls';
 import TimelineIcon from './TimelineIcon';
+import { useIntl } from 'react-intl';
 
 const EVENT_STYLE = {
   TOUCHDOWN: { glyph: 'TD', label: 'Touchdown', size: 34 },
@@ -70,6 +71,7 @@ const NARRATIVE_TYPE = {
   ejection: 'EJECTION',
   sent_off: 'EJECTION',
   casualty: 'CASUALTY',
+  damage: 'CASUALTY',
   injury: 'INJURY',
   death: 'DEATH',
   negatrait_check: 'NEGATRAIT',
@@ -1075,10 +1077,16 @@ function DetailedEvent({ event, match, children }) {
 }
 
 export default function MatchTimelineBar({ timeline, events = [], match }) {
+  const intl = useIntl();
   const [logOpen, setLogOpen] = React.useState(false);
-  const sourceEvents = timeline?.format === 'pybb3-narrative-timeline'
+  const rawSourceEvents = timeline?.format === 'pybb3-narrative-timeline'
     ? narrativeDisplayEvents(timeline)
     : events;
+  const sourceEvents = rawSourceEvents.map((event) =>
+    event?.type === 'CASUALTY'
+      ? { ...event, title: intl.formatMessage({ id: 'timeline.casualty' }) }
+      : event
+  );
   if (!sourceEvents.length) return null;
 
   const ordered = [...sourceEvents].sort(chronological);

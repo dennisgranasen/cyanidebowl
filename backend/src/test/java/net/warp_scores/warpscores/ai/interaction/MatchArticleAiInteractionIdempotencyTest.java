@@ -24,6 +24,7 @@ import static org.mockito.Mockito.*;
 class MatchArticleAiInteractionIdempotencyTest {
     private final AiReporterEffectiveProfileService profiles = mock(AiReporterEffectiveProfileService.class);
     private final ReporterInteractionPolicy policy = mock(ReporterInteractionPolicy.class);
+    private final AiReactionDecisionService reactionDecisions = mock(AiReactionDecisionService.class);
     private final ContextPlanner planner = mock(ContextPlanner.class);
     private final ContextAssemblyService assembly = mock(ContextAssemblyService.class);
     private final LlmExecutionService llm = mock(LlmExecutionService.class);
@@ -33,7 +34,7 @@ class MatchArticleAiInteractionIdempotencyTest {
     private final ReporterSocialContinuityService continuity = mock(ReporterSocialContinuityService.class);
 
     private final MatchArticleAiInteractionService service = new MatchArticleAiInteractionService(
-            profiles, policy, planner, assembly, llm,
+            profiles, policy, reactionDecisions, planner, assembly, llm,
             comments, reactions, matchArticles, continuity);
 
     @Test
