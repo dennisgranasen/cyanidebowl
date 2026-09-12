@@ -21,6 +21,13 @@ class ReplayBatchRequest(BaseModel):
 class ReplayAnalysisRequest(BaseModel):
     data:str
 
+class MatchDiscoveryRequest(BaseModel):
+    credentialId:str='replay-sweeper'
+    leagueId:str
+    afterGameId:str|None=None
+    pageSize:int=Field(default=50,ge=1,le=100)
+    maxPages:int=Field(default=20,ge=1,le=100)
+
 def download_replay_artifact(client:BB3Client,game_id:str)->tuple[bytes,bytes]:
     root=client.request('RequestDownloadReplay','ResponseDownloadReplay',f'<GameId>{b64_encode_text(game_id)}</GameId>')
     replay_data=root.findtext('ReplayData')
@@ -61,6 +68,58 @@ def download_batch(req:ReplayBatchRequest,_owner:str=Depends(trusted_owner)):
         status,detail=classify_login_error(str(error))
         raise HTTPException(status,detail) from error
     return {"results":results}
+
+def _team_summary(team):
+    if team is None:return None
+    return {"teamId":team.team_id,"name":team.name,"raceId":team.race_id,"value":team.value}
+
+def _gamer_summary(gamer):
+    if gamer is None:return None
+    return {"gamerId":gamer.gamer_id,"name":gamer.name}
+
+def _competition_summary(competition):
+    if competition is None:return None
+    return {"competitionId":competition.competition_id,"name":competition.name,
+            "leagueId":competition.league_id,"status":competition.status,
+            "day":competition.day,"format":competition.format}
+
+def _game_summary(game):
+    return {"gameId":game.game_id,"matchId":game.match_id,
+            "homeScore":game.home_score,"awayScore":game.away_score,
+            "homeValidation":game.home_validation,"awayValidation":game.away_validation,
+            "hasPendingValidation":game.has_pending_validation,
+            "homeTeam":_team_summary(game.home_team),"awayTeam":_team_summary(game.away_team),
+            "homeGamer":_gamer_summary(game.home_gamer),"awayGamer":_gamer_summary(game.away_gamer),
+            "competition":_competition_summary(game.competition)}
+
+@router.post("/discover")
+def discover_matches(req:MatchDiscoveryRequest,_owner:str=Depends(trusted_owner)):
+    try:stored=credential_store.load(req.credentialId)
+    except (KeyError,RuntimeError) as error:raise HTTPException(401,{"code":"REPLAY_CREDENTIAL_MISSING","message":"The replay service Steam ticket must be renewed"}) from error
+    state=SteamAuthState(stored['username'],stored['refreshToken'],stored.get('guardData'))
+    after=(req.afterGameId or '').strip() or None
+    results=[]
+    cursor_found=after is None
+    try:
+        with BB3Client(steam_auth=SteamAuthProcess.from_state(state,helper=settings.STEAM_HELPER_PATH)) as client:
+            client.login()
+            for page in range(req.maxPages):
+                games=client.get_games_model(size=req.pageSize,start=page*req.pageSize,
+                                             league_ids=[req.leagueId],is_live=[False],
+                                             has_replay=[True],descending=True)
+                for game in games.games:
+                    if after is not None and game.game_id == after:
+                        cursor_found=True
+                        break
+                    results.append(_game_summary(game))
+                if cursor_found and after is not None:break
+                if len(games.games) < req.pageSize:break
+    except Exception as error:
+        status,detail=classify_login_error(str(error))
+        raise HTTPException(status,detail) from error
+    if after is not None and not cursor_found:
+        return {"results":[],"cursorFound":False,"scanned":req.pageSize*req.maxPages}
+    return {"results":results,"cursorFound":cursor_found,"scanned":len(results)}
 
 @router.post("/analyze")
 def analyze(req:ReplayAnalysisRequest,_owner:str=Depends(trusted_owner)):

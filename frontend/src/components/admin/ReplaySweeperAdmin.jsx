@@ -1,6 +1,6 @@
 import React,{useEffect,useState} from 'react';
 import {Alert,AlertIcon,Badge,Box,Button,Checkbox,FormControl,FormLabel,Heading,HStack,IconButton,Input,Tooltip,Modal,ModalBody,ModalCloseButton,ModalContent,ModalHeader,ModalOverlay,NumberInput,NumberInputField,Stack,Table,Tbody,Td,Text,Textarea,Th,Thead,Tr,VStack} from '@chakra-ui/react';
-import {RepeatIcon} from '@chakra-ui/icons';
+import {RepeatIcon,Search2Icon} from '@chakra-ui/icons';
 import WarpScoresApiService from '../../WarpScoresApiService';
 
 const relativeAge=value=>{if(!value)return '—';const date=new Date(value),seconds=Math.max(0,Math.floor((Date.now()-date.getTime())/1000));if(Number.isNaN(seconds))return value;if(seconds<3600)return `${Math.max(1,Math.floor(seconds/60))} min ago`;if(seconds<86400)return `${Math.floor(seconds/3600)} h ago`;return `${Math.floor(seconds/86400)} days ago`;};
@@ -27,7 +27,7 @@ export default function ReplaySweeperAdmin({auth}){
       <FormControl maxW="8rem"><FormLabel>Batch size</FormLabel><NumberInput min={1} max={50} value={status.batchSize} onChange={(_,v)=>setStatus({...status,batchSize:v})}><NumberInputField/></NumberInput></FormControl>
       <Button onClick={()=>run(()=>WarpScoresApiService.updateReplaySweeper(status,...auth).then(setStatus))}>Save</Button>
       <Tooltip label="Sync replays"><IconButton aria-label="Sync replays" icon={<RepeatIcon/>} isLoading={status.running} isDisabled={busy||needsAuth||status.running} onClick={()=>run(()=>WarpScoresApiService.runReplaySweeper(...auth).then(setStatus))}/></Tooltip>
-      <Button isDisabled={busy} onClick={()=>run(()=>WarpScoresApiService.scanCyanideMatches(...auth).then(load))}>Scan Cyanide matches</Button>
+      <Tooltip label="Scan matches (Cyanide API, pybb3 fallback)"><IconButton aria-label="Scan matches" icon={<Search2Icon/>} isLoading={busy} isDisabled={busy} onClick={()=>run(()=>WarpScoresApiService.scanCyanideMatches(...auth).then(load))}/></Tooltip>
     </Stack>
     <Text color="gray.500" fontSize="sm" mt={2}>Default: 05:00 Europe/Stockholm. Last run: {status.lastCompletedAt||'never'} · downloaded: {status.lastDownloaded||0}</Text>
     {challenge?<Stack mt={4} maxW="md"><Text>{challenge.method==='device_confirmation'?'Approve in the Steam app, then continue.':'Enter the Steam Guard code.'}</Text>{challenge.method!=='device_confirmation'&&<Input value={code} onChange={e=>setCode(e.target.value)}/>}<Button colorScheme="blue" isLoading={busy} onClick={()=>run(()=>challenge.method==='device_confirmation'?WarpScoresApiService.confirmReplaySweeperGuard(challenge.challengeId,...auth).then(accept):WarpScoresApiService.replaySweeperGuardCode(challenge.challengeId,code,...auth).then(accept))}>Continue</Button></Stack>:

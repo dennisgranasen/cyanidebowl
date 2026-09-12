@@ -72,6 +72,8 @@ public class FetchDataService {
     private TeamDomainService teamDomainService;
     @Autowired
     private MatchRepository matchRepository;
+    @Autowired
+    private PyBb3MatchDiscoveryService pyBb3MatchDiscoveryService;
 
     @Value("${cyanide.defaults.fetchMatchMaxAgeLimit:5000}")
     private int defaultFetchMatchMaxAgeLimit;
@@ -85,6 +87,10 @@ public class FetchDataService {
             return;
         }
 
+        if (!cyanideApiService.isBb3ApiAvailable()) {
+            log.warn("Cyanide BB3 API is unavailable; BB3 sources will use pybb3 match discovery.");
+        }
+
         Calendar calendar = Calendar.getInstance();
         calendar.set(2001, Calendar.JANUARY, 1);
         Date ZERO = calendar.getTime();
@@ -93,6 +99,8 @@ public class FetchDataService {
         dataCollectionRepository.findAll()
                 .stream()
                 .forEach(dc -> {
+                        if (dc.getId() != null && dc.getId().getOpus() == 3
+                                && !cyanideApiService.isBb3ApiAvailable()) return;
                         Date dateLimit;
                         Date maxAge = Date.from(Instant.now().minus(Duration.ofDays(defaultFetchMatchMaxAgeLimit)));
                         if (dc.getDateLastCollectedMatches() == null || dc.getDateLastCollectedMatches().before(maxAge))
@@ -129,8 +137,15 @@ public class FetchDataService {
                             log.debug("No new matches found for {}.", dc.getId());
                         }
                 });
+
+        if (!cyanideApiService.isBb3ApiAvailable()) {
+            log.warn("Cyanide BB3 API failed during match scan; falling back to pybb3 for active registered BB3 leagues.");
+            pyBb3MatchDiscoveryService.scanRegisteredLeagues();
+        }
+
         //matchRepository.findAll().stream().filter(m -> m.getId().getOpus() == 2)
         matchRepository.findNonFinalized().stream()
+                .filter(m -> m.getId() == null || m.getId().getOpus() != 3 || cyanideApiService.isBb3ApiAvailable())
                 .filter(m -> m.getFinished() != null && m.getFinished().after(ZERO))
                 //.filter(m -> m.getId().getOpus() > 1) 
                 .forEach(match -> {

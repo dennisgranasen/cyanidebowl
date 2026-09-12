@@ -114,12 +114,14 @@ public class CyanideRestApiClient {
             Object body = response.getBody();
             if (!response.getStatusCode().
                     is2xxSuccessful() || (body instanceof Boolean && !(Boolean) body)) {
+                markBb3Unavailable(apiRequest);
                 log.warn("Got no successful response. Response: [{}]. Returning null.", response);
                 return null;
             } else {
                 return body;
             }
         } catch (Exception ex) {
+            markBb3Unavailable(apiRequest);
             log.error("Unable to process response as json.", ex);
             return null;
         }
@@ -144,6 +146,18 @@ public class CyanideRestApiClient {
                 .replaceQueryParam("key", "<redacted>")
                 .build()
                 .toUri();
+    }
+
+    private void markBb3Unavailable(ApiRequest<?, ?> apiRequest) {
+        MultiValueMap<String, String> params = apiRequest.toQueryParams();
+        if (!"3".equals(params.getFirst("opus")) && !"3".equals(params.getFirst("bb"))) return;
+        statusRepository.findById(BB3_GAME_NAME).ifPresent(status -> {
+            if (status.isOverall()) {
+                status.setOverall(false);
+                status.setLastCheck(new java.util.Date());
+                statusRepository.save(status);
+            }
+        });
     }
 
     private static void waitOneSecondIgnoringExceptions() {

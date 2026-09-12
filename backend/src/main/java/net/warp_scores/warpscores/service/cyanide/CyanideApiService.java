@@ -281,6 +281,12 @@ public class CyanideApiService {
         statusRepository.save(status);
     }
 
+    public boolean isBb3ApiAvailable() {
+        return statusRepository.findById(BB3_GAME_NAME)
+                .map(Status::isOverall)
+                .orElse(false);
+    }
+
     private TeamRequest createTeamRequestFor(Team team) {
         TeamRequest teamRequest = new TeamRequest();
         teamRequest.setId(team.getTeamId());
