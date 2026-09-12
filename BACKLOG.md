@@ -516,6 +516,8 @@ B-014–B-016 already have established meanings. Execution order is defined by
 - AI-003: canonical `SubjectRef` / `ContextItem` retrieval with explicit source and authority separation.
 - AI-004: deterministic `ContextProfile`, `ContextPlanner`, `ContextAssembler`, bounded selection and shared world-model policy.
 - AI-005: canonical provider request/response contract, provider registry and configurable provider/model routing.
+- AI-006: Gemini `LlmProvider` adapter using the current Interactions API with structured output, usage metadata and normalized provider failures.
+- AI-007: reusable OpenAI Responses-compatible provider instances plus ordered retryable fallback; xAI/Grok is the first configured endpoint.
 - Reporting migration to `CanonicalLlmRequest` is in progress.
 
 - Implement the canonical context envelope: `thread`, `social`, `self`, `discourse`,

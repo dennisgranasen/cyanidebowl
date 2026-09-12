@@ -10,6 +10,8 @@
 - **AI-003 / canonical retrieval:** implemented.
 - **AI-004 / planning + assembly:** implemented.
 - **AI-005 / provider core:** implemented.
+- **AI-006 / Gemini adapter:** implemented against the Gemini Interactions API.
+- **AI-007 / OpenAI-compatible Responses + fallback:** implemented; xAI/Grok is the first configured compatible endpoint.
 - **Reporting integration:** canonical request migration in progress.
 - **B-018:** in progress; social/memory persistence and broader domain semantic projection remain.
 - **B-019:** not started.

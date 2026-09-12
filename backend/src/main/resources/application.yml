@@ -86,5 +86,30 @@ league-system:
       cron: '${LEAGUE_SYSTEM_DISCOVERY_NOTIFICATIONS_CRON:0 0 8 * * *}'
 
 warpscores:
+  ai:
+    providers:
+      gemini:
+        api-key: ${AI_API_KEY_GEMINI:}
+        base-url: https://generativelanguage.googleapis.com/v1beta        
+        timeout: 60s
+      openai-compatible:
+        grok:
+          base-url: https://api.x.ai/v1
+          api-key: ${AI_API_KEY_GROK:}
+          timeout: 60s
+          structured-output: true
+          default-targets:
+        #openrouter:
+        #  base-url: https://...
+        #  api-key: ${AI_API_KEY_OPENROUTER:}
+        #local-llm:
+        #  base-url: http://localhost:8000/v1
+        #  api-key: ${AI_API_KEY_LOCAL:}
+        #  structured-output: false
+    default-targets:
+      - provider-id: gemini
+        model: <gemini-model>
+      - provider-id: grok
+        model: grok-4.6
   ai-reporting:
     enabled: false # Set to true to enable AI reporting, must fix implementation first.
