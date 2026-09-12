@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useIntl } from 'react-intl';
 import {
   Avatar,
   AvatarBadge,
@@ -62,6 +63,7 @@ function LastCheck({ status, textSize, statusOutdated }) {
 }
 
 function Menu() {
+  const intl = useIntl();
   const { user, authenticationReady, checkPermissions, userPermissions, isAuthenticated, loginWithRedirect, logout } =
     useAuth0WithUserPermissions();
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -99,7 +101,7 @@ function Menu() {
       <Drawer size={{ base: 'full', sm: 'xs' }} isOpen={isOpen} placement="right" onClose={onClose}>
         <DrawerOverlay />
         <DrawerContent>
-          <DrawerHeader backgroundColor="warpScoresBackgroundColor">Menu</DrawerHeader>
+          <DrawerHeader backgroundColor="warpScoresBackgroundColor">{intl.formatMessage({ id: 'menu.title' })}</DrawerHeader>
           <DrawerCloseButton />
           <DrawerBody
             p={0}
@@ -122,27 +124,27 @@ function Menu() {
               <VStack align="left" h="full">
                 <Box>
                   <Link variant="menu" as={RouteLink} to="/" onClick={() => onClose()}>
-                    Home
+                    {intl.formatMessage({ id: 'menu.home' })}
                   </Link>
                 </Box>
                 {checkPermissions && userPermissions?.readCurrentUser && (
                   <Box>
                     <Link variant="menu" as={RouteLink} to="/coachPage" onClick={() => onClose()}>
-                      Coach-Page
+                      {intl.formatMessage({ id: 'menu.coach' })}
                     </Link>
                   </Box>
                 )}
                 {checkPermissions && userPermissions?.writeEditor && (
                   <Box>
                     <Link variant="menu" as={RouteLink} to="/editor/articles/new" onClick={() => onClose()}>
-                      Write article
+                      {intl.formatMessage({ id: 'menu.writeArticle' })}
                     </Link>
                   </Box>
                 )}
                 {checkPermissions && (userPermissions?.writeSiteAdmin || userPermissions?.writeLeagueAdmin) && (
                   <Box>
                     <Link variant="menu" as={RouteLink} to="/admin" onClick={() => onClose()}>
-                      Admin
+                      {intl.formatMessage({ id: 'menu.admin' })}
                     </Link>
                   </Box>
                 )}
@@ -154,12 +156,19 @@ function Menu() {
                       to="/admin/ai-reporters"
                       onClick={() => onClose()}
                     >
-                      AI reporters
+                      {intl.formatMessage({ id: 'menu.aiReporters' })}
                     </Link>
                   </Box>
                 )}
-                <Box><Link variant="menu" as={RouteLink} to="/statistics" onClick={onClose}>Statistics</Link></Box>
-                <Box><Link variant="menu" as={RouteLink} to="/staff" onClick={onClose}>Staff</Link></Box>
+                {checkPermissions && userPermissions?.writeSiteAdmin && (
+                  <Box>
+                    <Link variant="menu" as={RouteLink} to="/admin/localization" onClick={onClose}>
+                      {intl.formatMessage({ id: 'menu.localizationAdmin' })}
+                    </Link>
+                  </Box>
+                )}
+                <Box><Link variant="menu" as={RouteLink} to="/statistics" onClick={onClose}>{intl.formatMessage({ id: 'menu.statistics' })}</Link></Box>
+                <Box><Link variant="menu" as={RouteLink} to="/staff" onClick={onClose}>{intl.formatMessage({ id: 'menu.staff' })}</Link></Box>
                 {isProduction && authenticationReady && (
                   <Box>
                     {!isAuthenticated ? (
@@ -177,22 +186,29 @@ function Menu() {
                           }
                         }}
                       >
-                        Login
+                        {intl.formatMessage({ id: 'menu.login' })}
                       </Link>
                     ) : (
                       <Link
                         variant="menu"
                         onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
-                      >{`Logout ${user.name}`}</Link>                      
+                      >
+                        {intl.formatMessage({ id: 'menu.logout' }, { name: user.name })}
+                      </Link>
                     )}
                   </Box>
                 )}
                 {authenticationReady && isAuthenticated && (
-                  <Box><Link variant="menu" as={RouteLink} to="/account" onClick={onClose}>Account &amp; Steam</Link></Box>
+                  <Box><Link variant="menu" as={RouteLink} to="/account" onClick={onClose}>{intl.formatMessage({ id: 'menu.account' })}</Link></Box>
                 )}
                 <Box>
+                  <Link variant="menu" as={RouteLink} to="/language" onClick={onClose}>
+                    {intl.formatMessage({ id: 'menu.language' })}
+                  </Link>
+                </Box>
+                <Box>
                   <Link variant="menu" as={RouteLink} to="/about" onClick={() => onClose()}>
-                    About
+                    {intl.formatMessage({ id: 'menu.about' })}
                   </Link>
                 </Box>
                 <Spacer />

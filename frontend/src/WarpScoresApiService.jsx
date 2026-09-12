@@ -92,6 +92,16 @@ const deleteDataWithAuthentication = async (endpoint, getAccessTokenSilently, ge
 export default {
   // misc
   backendVersion: async () => axios(`/version.json`).then(returnData).catch(handleError),
+  localization: async () => axios('/localization').then(returnData).catch(handleError),
+  userPreferences: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
+    getDataWithAuthentication('/user/preferences', getAccessTokenSilently, getAccessTokenWithPopup)
+      .then(returnData).catch(handleError),
+  updateUserPreferences: async (data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    putDataWithAuthentication('/user/preferences', data, getAccessTokenSilently, getAccessTokenWithPopup)
+      .then(returnData).catch(handleError),
+  updateLocalization: async (data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    putDataWithAuthentication('/admin/localization', data, getAccessTokenSilently, getAccessTokenWithPopup)
+      .then(returnData).catch(handleError),
 
 
   lookup: async(lookupFields, getAccessTokenSilently, getAccessTokenWithPopup) => {

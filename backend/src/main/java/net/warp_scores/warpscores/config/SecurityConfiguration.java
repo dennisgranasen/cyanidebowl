@@ -58,9 +58,10 @@ public class SecurityConfiguration {
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(requests -> requests
                         // status/misc
-                        .requestMatchers(GET, "/version.json", "/status").permitAll()
+                        .requestMatchers(GET, "/version.json", "/status", "/localization").permitAll()
                         // user endpoint
                         .requestMatchers(GET, "/userPermissions").permitAll()
+                        .requestMatchers("/user/preferences").authenticated()
                         .requestMatchers("/user/steam/**").authenticated()
                         .requestMatchers("/user/statistics/**").authenticated()                        
                         .requestMatchers("/user/coach-claims", "/user/coach-claims/**").authenticated()

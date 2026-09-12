@@ -34,6 +34,9 @@ public class WarpScoresUser {
     /** Presentation preference only. Ratings are generated independently of this setting. */
     private Boolean showAiPlayerRatings = true;
 
+    /** Nullable UI locale. null means: follow the site default locale. */
+    private String locale;
+
     public AccountType effectiveAccountType() {
         return accountType == null ? AccountType.HUMAN : accountType;
     }

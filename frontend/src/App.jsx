@@ -32,6 +32,9 @@ import StaffPage from './pages/StaffPage';
 import ReporterProfilePage from './pages/ReporterProfilePage';
 import AdminAiReportersPage from './pages/AdminAiReportersPage';
 import { MyTeamsProvider } from './context/MyTeamsContext';
+import I18nProvider from './i18n/I18nProvider';
+import LanguagePreferencesPage from './pages/LanguagePreferencesPage';
+import LocalizationAdminPage from './pages/LocalizationAdminPage';
 
 import { MockAuth0Provider } from './components/misc/MockAuthProvider';
 
@@ -114,6 +117,8 @@ function AppRoutes() {
       {/* Protected Routes/Needing authentication */}
       <Route path="/coachPage" element={<ProtectedRoute component={CoachPage} />} />
       <Route path="/account" element={<ProtectedRoute component={AccountPage} />} />
+      <Route path="/language" element={<LanguagePreferencesPage />} />
+      <Route path="/admin/localization" element={<ProtectedRoute component={LocalizationAdminPage} />} />
       <Route path="/my-statistics" element={<ProtectedRoute component={MyStatisticsPage} />} />
       <Route path="/admin" element={<ProtectedRoute component={AdminPage} />} />
       <Route path="/admin/ai-reporters" element={<ProtectedRoute component={AdminAiReportersPage} />} />
@@ -125,6 +130,14 @@ function AppRoutes() {
       />
       </Routes>
     </MyTeamsProvider>
+  );
+}
+
+function LocalizedAppRoutes() {
+  return (
+    <I18nProvider>
+      <AppRoutes />
+    </I18nProvider>
   );
 }
 
@@ -146,11 +159,11 @@ function App() {
                   audience: config.auth0Audience,
                 }}
               >
-                <AppRoutes />
+                <LocalizedAppRoutes />
               </Auth0ProviderWithRedirectCallback>
             ) : (
               <MockAuth0Provider>
-                <AppRoutes />
+                <LocalizedAppRoutes />
               </MockAuth0Provider>
             )}
           </Router>

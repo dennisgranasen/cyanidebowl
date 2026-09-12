@@ -1,5 +1,6 @@
 import React from 'react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, Flex, Spacer } from '@chakra-ui/react';
+import { useIntl } from 'react-intl';
 import { Link as RouteLink } from 'react-router-dom';
 import Menu from './Menu';
 import AuthButton from './AuthButton';
@@ -10,6 +11,7 @@ import prettyPrint from '../../util/prettyPrint';
 const { isProduction } = config;
 
 function Navigation({ currentPage, parentPage, league, competition, circuit, team, race, coach, circuitLeg, circuitLegEntity }) {
+  const intl = useIntl();
   const isPage = (pageName, currentPageName) => {
     return pageName === currentPageName;
   };
@@ -31,13 +33,13 @@ function Navigation({ currentPage, parentPage, league, competition, circuit, tea
       <Breadcrumb fontFamily="bigStar" spacing={1}>
         <BreadcrumbItem isCurrentPage={isPage('home', currentPage)}>
           <BreadcrumbLink variant="menu" as={RouteLink} to="/">
-            Home
+            {intl.formatMessage({ id: 'nav.home' })}
           </BreadcrumbLink>
         </BreadcrumbItem>
         {(isPage('admin', currentPage) || isPage('admin', parentPage)) && (
           <BreadcrumbItem isCurrentPage={isPage('admin', currentPage)} flexWrap>
             <BreadcrumbLink variant="menu" as={RouteLink} to="/admin">
-              Admin
+              {intl.formatMessage({ id: 'nav.admin' })}
             </BreadcrumbLink>
           </BreadcrumbItem>
         )}

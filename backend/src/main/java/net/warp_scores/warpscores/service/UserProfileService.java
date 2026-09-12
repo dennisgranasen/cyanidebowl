@@ -36,6 +36,12 @@ public class UserProfileService {
         return repository.save(user);
     }
 
+    public WarpScoresUser updateLocale(Jwt jwt, String locale) {
+        WarpScoresUser user = getOrCreate(jwt);
+        user.setLocale(locale);
+        return repository.save(user);
+    }
+
     /**
      * @deprecated coach ownership is stored exclusively in coachClaims.
      */
