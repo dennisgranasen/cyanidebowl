@@ -70,6 +70,12 @@ services:
       # Replay Sweeper Configuration
       - REPLAY_SWEEPER_STORAGE_DIRECTORY=/app/replays
 
+      # AI agents
+      - AI_API_KEY_GEMINI=${AI_API_KEY_GEMINI}
+      - AI_API_KEY_GROK=${AI_API_KEY_GROK}
+      #- AI_API_KEY_OPENROUTER=${AI_API_KEY_OPENROUTER}
+      #- AI_API_KEY_LOCAL=${AI_API_KEY_LOCAL}
+
     healthcheck:
       test:
         - CMD
