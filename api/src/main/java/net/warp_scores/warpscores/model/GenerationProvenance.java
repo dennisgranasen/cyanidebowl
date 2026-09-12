@@ -10,12 +10,19 @@ import java.time.Instant;
 @Setter
 @NoArgsConstructor
 public class GenerationProvenance {
-    private GenerationMode mode = GenerationMode.HUMAN;
+    /**
+     * Null means that provenance is unknown. This is expected for content
+     * created before generation metadata was introduced and must not be
+     * interpreted as HUMAN.
+     */
+    private GenerationMode mode;
     private String agentId;
+    private String agentVersion;
     private String provider;
     private String model;
     private String promptVersion;
     private String contextProfile;
+    private String taskType;
     private String providerRequestId;
     private String sourceRevision;
     private Integer inputTokens;
@@ -23,7 +30,9 @@ public class GenerationProvenance {
     private Instant generatedAt;
 
     public static GenerationProvenance human() {
-        return new GenerationProvenance();
+        GenerationProvenance provenance = new GenerationProvenance();
+        provenance.setMode(GenerationMode.HUMAN);
+        return provenance;
     }
 
     public static GenerationProvenance ai(String agentId, Instant generatedAt) {
@@ -34,12 +43,16 @@ public class GenerationProvenance {
         return provenance;
     }
 
+    /** Returns null when legacy content has no known provenance. */
     public GenerationMode effectiveMode() {
-        return mode == null ? GenerationMode.HUMAN : mode;
+        return mode;
+    }
+
+    public boolean hasKnownProvenance() {
+        return mode != null;
     }
 
     public boolean hasAiGeneration() {
-        GenerationMode effectiveMode = effectiveMode();
-        return effectiveMode == GenerationMode.AI || effectiveMode == GenerationMode.AI_EDITED;
+        return mode == GenerationMode.AI || mode == GenerationMode.AI_EDITED;
     }
 }

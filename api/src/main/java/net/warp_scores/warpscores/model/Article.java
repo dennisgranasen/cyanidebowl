@@ -35,7 +35,10 @@ public class Article {
     private String authorAgentId;
 
     private Long authorUserId;
-    private GenerationProvenance generation = GenerationProvenance.human();
+    /**
+     * Null is valid for legacy content whose generation provenance is unknown.
+     */
+    private GenerationProvenance generation;
     private String authorSubject;
     private String authorDisplayName;
     private String title;

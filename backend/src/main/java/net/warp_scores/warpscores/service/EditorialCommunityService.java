@@ -90,6 +90,10 @@ public class EditorialCommunityService {
             article.setAuthorSubject(user.subject());
             article.setAuthorUserId(user.userId());
             article.setAuthorDisplayName(user.displayName());
+            article.setGeneration(GenerationProvenance.human());
+        } else if (article.getGeneration() != null
+                && article.getGeneration().getMode() == GenerationMode.AI) {
+            article.getGeneration().setMode(GenerationMode.AI_EDITED);
         }
         article.setLeagueSystemId(input.leagueSystemId());
         article.setSeasonId(input.seasonId());
@@ -152,6 +156,7 @@ public class EditorialCommunityService {
         comment.setAuthorSubject(user.subject());
         comment.setAuthorUserId(user.userId());
         comment.setAuthorDisplayName(user.displayName());
+        comment.setGeneration(GenerationProvenance.human());
         comment.setCreatedAt(Instant.now());
         comment.setBody(body.trim());
 

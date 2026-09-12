@@ -24,7 +24,10 @@ public class CommunityComment {
     private String targetId;
     private String leagueSystemId;
     private Long authorUserId;
-    private GenerationProvenance generation = GenerationProvenance.human();
+    /**
+     * Null is valid for legacy content whose generation provenance is unknown.
+     */
+    private GenerationProvenance generation;
     private String authorSubject;
     private String authorDisplayName;
     private AuthorContext authorContext;
