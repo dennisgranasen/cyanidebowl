@@ -146,6 +146,11 @@ public class EditorialCommunityService {
 
     public CommunityComment addComment(Authentication auth, CommunityComment.TargetType type,
                                        String targetId, String body) {
+        return addComment(auth, type, targetId, body, null);
+    }
+
+    public CommunityComment addComment(Authentication auth, CommunityComment.TargetType type,
+                                       String targetId, String body, String replyToCommentId) {
         requireAuthenticated(auth);
         if (type == CommunityComment.TargetType.TEAM) {
             throw new IllegalStateException("Team comments are disabled until canonical team endpoint work is complete");
@@ -153,11 +158,22 @@ public class EditorialCommunityService {
         if (!StringUtils.hasText(body)) throw new IllegalArgumentException("body is required");
         if (body.length() > 10000) throw new IllegalArgumentException("comment exceeds 10000 characters");
 
+        CommunityComment parent = null;
+        if (StringUtils.hasText(replyToCommentId)) {
+            parent = comments.findById(replyToCommentId)
+                    .filter(c -> c.getDeletedAt() == null)
+                    .orElseThrow(() -> new IllegalArgumentException("reply target comment not found"));
+            if (parent.getTargetType() != type || !Objects.equals(parent.getTargetId(), targetId)) {
+                throw new IllegalArgumentException("reply target must belong to the same comment thread");
+            }
+        }
+
         UserRef user = currentUser(auth);
         CommunityComment comment = new CommunityComment();
         comment.setId(UUID.randomUUID().toString());
         comment.setTargetType(type);
         comment.setTargetId(targetId);
+        comment.setReplyToCommentId(parent == null ? null : parent.getId());
         comment.setAuthorSubject(user.subject());
         comment.setAuthorUserId(user.userId());
         comment.setAuthorDisplayName(user.displayName());
