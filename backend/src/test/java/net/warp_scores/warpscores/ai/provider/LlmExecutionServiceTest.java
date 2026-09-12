@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.ai.provider;
 
 import net.warp_scores.warpscores.ai.context.AssembledContext;
 import net.warp_scores.warpscores.ai.context.ContextTaskType;
+import net.warp_scores.warpscores.ai.provider.trace.AiGenerationTraceStore;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 
 class LlmExecutionServiceTest {
     @Test
@@ -26,7 +28,9 @@ class LlmExecutionServiceTest {
                 new LlmProviderRouter.ModelTarget("gemini", "gemini-model"),
                 new LlmProviderRouter.ModelTarget("grok", "grok-model"));
 
-        var result = new LlmExecutionService(router, registry).generate("putridia", request());
+        var result = new LlmExecutionService(
+                router, registry, mock(AiGenerationTraceStore.class))
+                .generate("putridia", request());
 
         assertThat(result.providerId()).isEqualTo("grok");
         assertThat(result.model()).isEqualTo("grok-model");
@@ -46,7 +50,8 @@ class LlmExecutionServiceTest {
                 reporterId -> List.of(
                         new LlmProviderRouter.ModelTarget("gemini", "gemini-model"),
                         new LlmProviderRouter.ModelTarget("grok", "grok-model")),
-                new LlmProviderRegistry(List.of(gemini, grok)));
+                new LlmProviderRegistry(List.of(gemini, grok)),
+                mock(AiGenerationTraceStore.class));
 
         assertThatThrownBy(() -> service.generate("putridia", request()))
                 .isInstanceOf(LlmProviderException.class)

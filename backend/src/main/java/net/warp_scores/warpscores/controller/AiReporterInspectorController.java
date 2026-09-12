@@ -12,6 +12,8 @@ import net.warp_scores.warpscores.ai.context.persistence.AiSocialRelationship;
 import net.warp_scores.warpscores.ai.context.persistence.AiSocialRelationshipRepository;
 import net.warp_scores.warpscores.ai.context.persistence.AiSocialRelationshipStore;
 import net.warp_scores.warpscores.domain.persistence.MatchArticleRepository;
+import net.warp_scores.warpscores.ai.provider.trace.AiGenerationTrace;
+import net.warp_scores.warpscores.ai.provider.trace.AiGenerationTraceRepository;
 import net.warp_scores.warpscores.model.MatchArticle;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -41,6 +43,7 @@ public class AiReporterInspectorController {
     private static final int MAX_MEMORIES = 100;
     private static final int MAX_RELATIONSHIPS = 200;
     private static final int MAX_ACTIVITY = 50;
+    private static final int MAX_TRACES = 100;
 
     private final AiReporterRegistry reporters;
     private final AiMemoryRepository memories;
@@ -48,6 +51,7 @@ public class AiReporterInspectorController {
     private final AiSocialRelationshipRepository relationships;
     private final AiSocialRelationshipStore relationshipStore;
     private final MatchArticleRepository matchArticles;
+    private final AiGenerationTraceRepository generationTraces;
 
     @GetMapping
     public InspectorState state(@PathVariable String reporterId) {
@@ -75,13 +79,18 @@ public class AiReporterInspectorController {
                 .map(ActivityView::from)
                 .toList();
 
+        List<AiGenerationTrace> traces = generationTraces
+                .findByReporterIdOrderByCreatedAtDesc(
+                        reporter.getId(), PageRequest.of(0, MAX_TRACES));
+
         return new InspectorState(
                 reporter.getId(),
                 reporter.getAlias(),
                 userId,
                 memoryViews,
                 relationshipViews,
-                activity);
+                activity,
+                traces);
     }
 
     @PostMapping("/memories")
@@ -266,7 +275,8 @@ public class AiReporterInspectorController {
             long userId,
             List<MemoryView> memories,
             List<RelationshipView> relationships,
-            List<ActivityView> activity) {}
+            List<ActivityView> activity,
+            List<AiGenerationTrace> traces) {}
 
     public record MemoryMutation(
             String body,

@@ -637,6 +637,153 @@ export default function AiReporterInspector({
 
           <TabPanel>
             <Text fontWeight="700" mb={4}>
+              Generation traces <Badge ml={2}>{state.traces?.length || 0}</Badge>
+            </Text>
+            <VStack align="stretch" spacing={3}>
+              {(state.traces || []).map((trace) => {
+                const sectionCounts = (trace.contextItems || []).reduce((acc, item) => {
+                  acc[item.section] = (acc[item.section] || 0) + 1;
+                  return acc;
+                }, {});
+                return (
+                  <Box key={trace.id} p={3} borderWidth="1px" borderRadius="md">
+                    <HStack justify="space-between" align="start">
+                      <Box>
+                        <HStack wrap="wrap">
+                          <Badge colorScheme={trace.status === 'SUCCESS' ? 'green' : 'red'}>
+                            {trace.status}
+                          </Badge>
+                          <Badge>{trace.taskType}</Badge>
+                          <Badge variant="outline">{trace.providerId}</Badge>
+                          <Badge variant="outline">{trace.model}</Badge>
+                        </HStack>
+                        <Text mt={2} fontSize="xs" color="gray.500">
+                          {formatTime(trace.createdAt)} · {trace.durationMs ?? '—'} ms
+                        </Text>
+                      </Box>
+                      <Text fontSize="xs" color="gray.500">
+                        {trace.inputTokens ?? '—'} in / {trace.outputTokens ?? '—'} out
+                      </Text>
+                    </HStack>
+
+                    {trace.status === 'FAILED' && (
+                      <Alert status="error" mt={3}>
+                        <AlertIcon />
+                        <Box>
+                          <Text fontSize="sm" fontWeight="700">
+                            {trace.failureKind || 'FAILED'}
+                            {trace.failureStatusCode ? ` · HTTP ${trace.failureStatusCode}` : ''}
+                          </Text>
+                          {trace.failureMessage && (
+                            <Text fontSize="xs">{trace.failureMessage}</Text>
+                          )}
+                        </Box>
+                      </Alert>
+                    )}
+
+                    <HStack mt={3} spacing={4} wrap="wrap">
+                      {Object.entries(sectionCounts).map(([section, count]) => (
+                        <Badge key={section} variant="subtle">
+                          {section}: {count}
+                        </Badge>
+                      ))}
+                    </HStack>
+
+                    <Text mt={3} fontSize="xs" color="gray.500">
+                      Context estimate: {trace.estimatedContextTokens ?? '—'} tokens ·
+                      dropped: {trace.droppedContextItems ?? 0} ·
+                      instruction: {trace.taskInstructionChars ?? '—'} chars
+                      {trace.taskInstructionTruncated ? ' (preview truncated)' : ''}
+                    </Text>
+
+                    <Box as="details" mt={3}>
+                      <Box as="summary" cursor="pointer" fontSize="sm" fontWeight="700">
+                        Visa context snapshot
+                      </Box>
+                      <Box mt={3}>
+                        {(trace.hardConstraints || []).length > 0 && (
+                          <Box mb={4}>
+                            <Text fontSize="xs" fontWeight="700" mb={1}>Hard constraints</Text>
+                            {(trace.hardConstraints || []).map((constraint, index) => (
+                              <Text key={index} fontSize="xs" color="gray.500">
+                                • {constraint}
+                              </Text>
+                            ))}
+                          </Box>
+                        )}
+
+                        {(trace.contextItems || []).map((item, index) => (
+                          <Box
+                            key={`${item.section}-${item.id}-${index}`}
+                            mb={3}
+                            p={2}
+                            borderWidth="1px"
+                            borderRadius="md"
+                          >
+                            <HStack wrap="wrap">
+                              <Badge>{item.section}</Badge>
+                              <Badge variant="outline">{item.contentType}</Badge>
+                              <Badge variant="outline">{item.source}</Badge>
+                              <Badge variant="outline">{item.authority}</Badge>
+                            </HStack>
+                            <Code mt={2} fontSize="xs">{item.id}</Code>
+                            {item.title && (
+                              <Text mt={2} fontSize="sm" fontWeight="700">{item.title}</Text>
+                            )}
+                            {item.authorDisplayName && (
+                              <Text fontSize="xs" color="gray.500">
+                                Author: {item.authorDisplayName}
+                              </Text>
+                            )}
+                            {(item.subjects || []).length > 0 && (
+                              <Text fontSize="xs" color="gray.500">
+                                Subjects: {(item.subjects || [])
+                                  .map((subject) => `${subject.type}:${subject.id}`)
+                                  .join(', ')}
+                              </Text>
+                            )}
+                            {item.body && (
+                              <Text mt={2} fontSize="xs" whiteSpace="pre-wrap">
+                                {item.body}
+                                {item.bodyTruncated ? '\n[…truncated…]' : ''}
+                              </Text>
+                            )}
+                          </Box>
+                        ))}
+
+                        <Divider my={3} />
+                        <Text fontSize="xs" fontWeight="700">Task instruction preview</Text>
+                        <Text mt={1} fontSize="xs" color="gray.500">
+                          SHA-256: {trace.taskInstructionSha256 || '—'}
+                        </Text>
+                        <Box
+                          mt={2}
+                          p={2}
+                          borderWidth="1px"
+                          borderRadius="md"
+                          maxH="360px"
+                          overflow="auto"
+                        >
+                          <Text fontSize="xs" whiteSpace="pre-wrap">
+                            {trace.taskInstructionPreview || '—'}
+                            {trace.taskInstructionTruncated ? '\n[…truncated…]' : ''}
+                          </Text>
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Box>
+                );
+              })}
+              {(state.traces || []).length === 0 && (
+                <Text color="gray.500">
+                  Inga generation traces ännu. Nya AI-anrop sparas här automatiskt.
+                </Text>
+              )}
+            </VStack>
+
+            <Divider my={6} />
+
+            <Text fontWeight="700" mb={4}>
               Recent AI article activity <Badge ml={2}>{state.activity?.length || 0}</Badge>
             </Text>
             <VStack align="stretch" spacing={3}>
@@ -667,11 +814,6 @@ export default function AiReporterInspector({
                 <Text color="gray.500">Ingen AI-artikelaktivitet ännu.</Text>
               )}
             </VStack>
-            <Alert status="info" mt={4}>
-              <AlertIcon />
-              Exakt context-snapshot per generation lagras inte ännu. Den här fliken visar
-              den provenance som redan finns på matchartikeln.
-            </Alert>
           </TabPanel>
 
           <TabPanel>
