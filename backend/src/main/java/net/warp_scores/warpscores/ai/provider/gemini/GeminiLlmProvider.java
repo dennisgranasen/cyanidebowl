@@ -8,6 +8,7 @@ import net.warp_scores.warpscores.ai.provider.LlmProvider;
 import net.warp_scores.warpscores.ai.provider.LlmProviderException;
 import net.warp_scores.warpscores.ai.provider.ProviderCapabilities;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
 import java.net.URI;
@@ -24,6 +25,7 @@ public class GeminiLlmProvider implements LlmProvider {
     private final GeminiInteractionMapper mapper;
     private final HttpClient httpClient;
 
+    @Autowired
     public GeminiLlmProvider(
             ObjectMapper objectMapper,
             GeminiProviderProperties properties,
