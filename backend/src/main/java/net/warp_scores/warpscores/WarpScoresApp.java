@@ -2,6 +2,7 @@ package net.warp_scores.warpscores;
 
 import net.warp_scores.warpscores.ai.context.persistence.AiMemoryRepository;
 import net.warp_scores.warpscores.ai.context.persistence.AiSocialRelationshipRepository;
+import net.warp_scores.warpscores.ai.provider.trace.AiGenerationTraceRepository;
 import net.warp_scores.warpscores.ai.reporting.AiReportingProperties;
 import net.warp_scores.warpscores.config.WarpScoresConfig;
 import net.warp_scores.warpscores.domain.cache.ImageCacheRepository;
@@ -21,7 +22,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
         StatusRepository.class,
         ImageCacheRepository.class,
         AiMemoryRepository.class,
-        AiSocialRelationshipRepository.class
+        AiSocialRelationshipRepository.class,
+        AiGenerationTraceRepository.class
 })
 @EnableConfigurationProperties(AiReportingProperties.class)
 @SpringBootApplication

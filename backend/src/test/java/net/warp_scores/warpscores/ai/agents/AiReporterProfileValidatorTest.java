@@ -49,6 +49,7 @@ class AiReporterProfileValidatorTest {
         r.setMarkdownBody("# " + alias);
         r.getPortrait().setImage("/images/staff/" + id + ".webp");
         r.getPortrait().setPromptKey(id);
+        r.getVoice().setPrimaryLanguage("sv");
         return r;
     }
 }

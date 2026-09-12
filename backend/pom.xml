@@ -179,6 +179,21 @@
 
     <build>
         <finalName>${project.artifactId}</finalName>
+        <resources>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+                <filtering>false</filtering>
+            </resource>
+            <resource>
+                <directory>${project.basedir}/docs/ai_agents</directory>
+                <targetPath>ai_agents</targetPath>
+                <filtering>false</filtering>
+            </resource>
+            <resource>
+                <directory>${project.basedir}/docker</directory>
+                <filtering>false</filtering>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -192,29 +207,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-                <configuration>
-                    <resources>
-                        <resource>
-                            <directory>${project.basedir}/src/main/resources</directory>
-                            <filtering>false</filtering>
-                            <!--                            <excludes>
-                                                            <exclude>
-                                                                application.yml
-                                                            </exclude>
-                                                        </excludes>
-                                                        -->
-                        </resource>
-                        <resource>
-                            <directory>${project.basedir}/docs/ai_agents</directory>
-                            <targetPath>ai_agents</targetPath>
-                            <filtering>false</filtering>
-                        </resource>                       
-                        <resource>
-                            <directory>${project.basedir}/docker</directory>
-                            <filtering>false</filtering>
-                        </resource>
-                    </resources>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
