@@ -23,6 +23,7 @@ public class AiReporterRuntimeState {
     private Double commentProbabilityOverride;
     private Double reactionProbabilityOverride;
     private Double replyProbabilityOverride;
+    private String primaryLanguageOverride;
 
     private Instant lastArticleAt;
     private Instant lastCommentAt;

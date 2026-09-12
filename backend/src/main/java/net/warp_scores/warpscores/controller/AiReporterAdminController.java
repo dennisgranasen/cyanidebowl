@@ -4,10 +4,13 @@ import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.ai.agents.AiReporterDefinition;
 import net.warp_scores.warpscores.ai.agents.AiReporterEffectiveProfileService;
 import net.warp_scores.warpscores.ai.agents.AiReporterRegistry;
+import net.warp_scores.warpscores.domain.persistence.AiSettingsRepository;
 import net.warp_scores.warpscores.domain.persistence.AiReporterRuntimeStateRepository;
+import net.warp_scores.warpscores.model.AiSettings;
 import net.warp_scores.warpscores.model.AiReporterRuntimeState;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.util.StringUtils;
 
 import java.time.Instant;
 import java.util.List;
@@ -22,6 +25,7 @@ public class AiReporterAdminController {
     private final AiReporterRegistry registry;
     private final AiReporterEffectiveProfileService effectiveProfiles;
     private final AiReporterRuntimeStateRepository runtimeRepository;
+    private final AiSettingsRepository settingsRepository;
 
     @GetMapping
     public List<AdminReporter> list() {
@@ -34,6 +38,25 @@ public class AiReporterAdminController {
     @GetMapping("/{id}")
     public AdminReporter get(@PathVariable String id) {
         return toAdminReporter(registry.require(id));
+    }
+
+    @GetMapping("/settings")
+    public AdminSettings settings() {
+        AiSettings settings = settingsRepository.findById(AiSettings.GLOBAL_ID)
+                .orElseGet(AiSettings::new);
+        return new AdminSettings(normalizeLanguage(settings.getDefaultLanguage(), "sv"));
+    }
+
+    @PutMapping("/settings")
+    public AdminSettings updateSettings(@RequestBody SettingsUpdate update) {
+        if (update == null || !StringUtils.hasText(update.defaultLanguage())) {
+            throw new IllegalArgumentException("defaultLanguage is required");
+        }
+        AiSettings settings = settingsRepository.findById(AiSettings.GLOBAL_ID)
+                .orElseGet(AiSettings::new);
+        settings.setDefaultLanguage(normalizeLanguage(update.defaultLanguage(), "sv"));
+        settingsRepository.save(settings);
+        return new AdminSettings(settings.getDefaultLanguage());
     }
 
     @PutMapping("/{id}/runtime")
@@ -56,6 +79,7 @@ public class AiReporterAdminController {
         runtime.setCommentProbabilityOverride(update.commentProbabilityOverride());
         runtime.setReactionProbabilityOverride(update.reactionProbabilityOverride());
         runtime.setReplyProbabilityOverride(update.replyProbabilityOverride());
+        runtime.setPrimaryLanguageOverride(normalizeLanguage(update.primaryLanguageOverride(), null));
         runtime.setUpdatedAt(Instant.now());
 
         runtimeRepository.save(runtime);
@@ -78,6 +102,8 @@ public class AiReporterAdminController {
                 effective.interactionsEnabled(),
                 effective.playerRatingsEnabled(),
                 effective.writingWeight(),
+                effective.primaryLanguage(),
+                definition.getVoice().getPrimaryLanguage(),
                 runtime);
     }
 
@@ -89,7 +115,11 @@ public class AiReporterAdminController {
             Double writingWeightOverride,
             Double commentProbabilityOverride,
             Double reactionProbabilityOverride,
-            Double replyProbabilityOverride) {}
+            Double replyProbabilityOverride,
+            String primaryLanguageOverride) {}
+
+    public record SettingsUpdate(String defaultLanguage) {}
+    public record AdminSettings(String defaultLanguage) {}
 
     public record AdminReporter(
             String id,
@@ -103,5 +133,16 @@ public class AiReporterAdminController {
             boolean interactionsEnabled,
             boolean playerRatingsEnabled,
             double writingWeight,
+            String primaryLanguage,
+            String profileLanguage,
             AiReporterRuntimeState runtime) {}
+
+    private static String normalizeLanguage(String value, String fallback) {
+        if (!StringUtils.hasText(value)) return fallback;
+        String normalized = value.trim().toLowerCase();
+        if (!normalized.matches("[a-z]{2,3}([_-][a-z0-9]{2,8})?")) {
+            throw new IllegalArgumentException("Invalid language code: " + value);
+        }
+        return normalized.replace('_', '-');
+    }
 }

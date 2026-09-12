@@ -7,6 +7,7 @@ import {
   HStack,
   NumberInput,
   NumberInputField,
+  Select,
   Spinner,
   Switch,
   Table,
@@ -32,6 +33,8 @@ function AdminAiReportersPage() {
 
   const navigate = useNavigate();
   const [reporters, setReporters] = useState(null);
+  const [settings, setSettings] = useState(null);
+  const [savingSettings, setSavingSettings] = useState(false);
   const [saving, setSaving] = useState({});
   const [error, setError] = useState(null);
 
@@ -43,7 +46,15 @@ function AdminAiReportersPage() {
       navigate('/admin');
       return;
     }
-    AiReporterApi.adminReporters(...auth).then(setReporters).catch(setError);
+    Promise.all([
+      AiReporterApi.adminReporters(...auth),
+      AiReporterApi.adminSettings(...auth),
+    ])
+      .then(([loadedReporters, loadedSettings]) => {
+        setReporters(loadedReporters);
+        setSettings(loadedSettings);
+      })
+      .catch(setError);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authenticationReady, userPermissions.writeSiteAdmin]);
 
@@ -58,6 +69,7 @@ function AdminAiReportersPage() {
       commentProbabilityOverride: runtime.commentProbabilityOverride ?? null,
       reactionProbabilityOverride: runtime.reactionProbabilityOverride ?? null,
       replyProbabilityOverride: runtime.replyProbabilityOverride ?? null,
+      primaryLanguageOverride: runtime.primaryLanguageOverride ?? null,
       ...patch,
     };
   };
@@ -90,7 +102,26 @@ function AdminAiReportersPage() {
     commentProbabilityOverride: null,
     reactionProbabilityOverride: null,
     replyProbabilityOverride: null,
+    primaryLanguageOverride: null,
   });
+
+  const saveDefaultLanguage = async (defaultLanguage) => {
+    setSavingSettings(true);
+    setError(null);
+    try {
+      const updated = await AiReporterApi.updateAdminSettings(
+        { defaultLanguage },
+        ...auth
+      );
+      setSettings(updated);
+      const refreshed = await AiReporterApi.adminReporters(...auth);
+      setReporters(refreshed);
+    } catch (reason) {
+      setError(reason);
+    } finally {
+      setSavingSettings(false);
+    }
+  };
 
   return (
     <Box p={{ base: 3, md: 6 }}>
@@ -99,6 +130,25 @@ function AdminAiReportersPage() {
       <Text mt={2} color="gray.400">Runtime overrides for all AI reporters.</Text>
 
       {error && <Text mt={4} color="red.300">{error.message || String(error)}</Text>}
+
+      {settings && (
+        <Box mt={5} maxW="360px">
+          <Text mb={1} fontSize="sm" fontWeight="700">Default article language</Text>
+          <Select
+            size="sm"
+            value={settings.defaultLanguage || 'sv'}
+            isDisabled={savingSettings}
+            onChange={(e) => saveDefaultLanguage(e.target.value)}
+          >
+            <option value="sv">Svenska (sv)</option>
+            <option value="en">English (en)</option>
+          </Select>
+          <Text mt={1} fontSize="xs" color="gray.500">
+            Used when a reporter has no profile or runtime language override.
+          </Text>
+        </Box>
+      )}
+
       {!reporters && !error && <Spinner mt={8} />}
 
       {reporters && (
@@ -111,6 +161,7 @@ function AdminAiReportersPage() {
                 <Th textAlign="center">Reports</Th>
                 <Th textAlign="center">Interactions</Th>
                 <Th textAlign="center">Ratings</Th>
+                <Th minW="175px">Language</Th>
                 <Th minW="150px">Writing weight</Th>
                 <Th />
               </Tr>
@@ -163,6 +214,25 @@ function AdminAiReportersPage() {
                       isDisabled={!reporter.enabled || saving[reporter.id]}
                       onChange={(e) => save(reporter, { playerRatingsEnabledOverride: e.target.checked })}
                     />
+                  </Td>
+                  <Td>
+                    <Select
+                      size="sm"
+                      value={reporter.runtime?.primaryLanguageOverride || ''}
+                      isDisabled={!reporter.enabled || saving[reporter.id]}
+                      onChange={(e) => save(reporter, {
+                        primaryLanguageOverride: e.target.value || null,
+                      })}
+                    >
+                      <option value="">
+                        Inherit ({reporter.profileLanguage || settings?.defaultLanguage || 'sv'})
+                      </option>
+                      <option value="sv">Svenska (sv)</option>
+                      <option value="en">English (en)</option>
+                    </Select>
+                    <Text mt={1} fontSize="xs" color="gray.500">
+                      Effective: {reporter.primaryLanguage}
+                    </Text>
                   </Td>
                   <Td>
                     <NumberInput

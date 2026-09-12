@@ -62,7 +62,11 @@ public class AiReporterDefinition {
 
     @Getter @Setter
     public static class Voice {
-        private String primaryLanguage = "sv";
+        /**
+         * Optional reporter-profile language. null means inherit the site default.
+         * A runtime override can still supersede this value.
+         */
+        private String primaryLanguage;
         private List<String> tone = new ArrayList<>();
         private Double humour;
         private Double tacticalAnalysis;

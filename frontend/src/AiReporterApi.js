@@ -44,6 +44,16 @@ const AiReporterApi = {
     )).data;
   },
 
+  adminSettings: async (getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.get('/admin/ai-reporters/settings', auth)).data;
+  },
+
+  updateAdminSettings: async (data, getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.put('/admin/ai-reporters/settings', data, auth)).data;
+  },
+
   updateRuntime: async (id, data, getAccessTokenSilently, getAccessTokenWithPopup) => {
     const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
     return (await axios.put(

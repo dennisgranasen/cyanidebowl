@@ -1,9 +1,12 @@
 package net.warp_scores.warpscores.ai.agents;
 
 import lombok.RequiredArgsConstructor;
+import net.warp_scores.warpscores.domain.persistence.AiSettingsRepository;
 import net.warp_scores.warpscores.domain.persistence.AiReporterRuntimeStateRepository;
+import net.warp_scores.warpscores.model.AiSettings;
 import net.warp_scores.warpscores.model.AiReporterRuntimeState;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -11,6 +14,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AiReporterEffectiveProfileService {
     private final AiReporterRegistry registry;
+    private final AiSettingsRepository settingsRepository;
     private final AiReporterRuntimeStateRepository runtimeRepository;
 
     public EffectiveReporter effective(AiReporterDefinition definition) {
@@ -33,7 +37,17 @@ public class AiReporterEffectiveProfileService {
         double writingWeight = runtime != null && runtime.getWritingWeightOverride() != null
                 ? runtime.getWritingWeightOverride() : definition.getBehaviour().getWritingWeight();
 
-        return new EffectiveReporter(definition, enabled, reports, interactions, ratings, writingWeight);
+        String siteDefaultLanguage = settingsRepository.findById(AiSettings.GLOBAL_ID)
+                .map(AiSettings::getDefaultLanguage)
+                .filter(StringUtils::hasText)
+                .orElse("sv");
+        String primaryLanguage = firstText(
+                runtime == null ? null : runtime.getPrimaryLanguageOverride(),
+                definition.getVoice().getPrimaryLanguage(),
+                siteDefaultLanguage,
+                "sv");
+
+        return new EffectiveReporter(definition, enabled, reports, interactions, ratings, writingWeight, primaryLanguage);
     }
 
     public List<EffectiveReporter> enabledForReports() {
@@ -52,11 +66,19 @@ public class AiReporterEffectiveProfileService {
         return override != null ? override : inherited;
     }
 
+    private static String firstText(String... values) {
+        for (String value : values) {
+            if (StringUtils.hasText(value)) return value.trim().toLowerCase();
+        }
+        return "sv";
+    }
+
     public record EffectiveReporter(
             AiReporterDefinition definition,
             boolean enabled,
             boolean reportsEnabled,
             boolean interactionsEnabled,
             boolean playerRatingsEnabled,
-            double writingWeight) {}
+            double writingWeight,
+            String primaryLanguage) {}
 }

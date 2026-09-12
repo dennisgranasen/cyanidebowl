@@ -131,6 +131,7 @@ public class OpenAiCompatibleLlmProvider implements LlmProvider {
         LlmProviderException.Kind kind = switch (status) {
             case 401, 403 -> LlmProviderException.Kind.AUTHENTICATION;
             case 408, 504 -> LlmProviderException.Kind.TIMEOUT;
+            case 413 -> LlmProviderException.Kind.REQUEST_TOO_LARGE;
             case 429 -> LlmProviderException.Kind.RATE_LIMIT;
             default -> status >= 500
                     ? LlmProviderException.Kind.UNAVAILABLE

@@ -10,6 +10,7 @@ import net.warp_scores.warpscores.ai.provider.LlmExecutionService;
 import net.warp_scores.warpscores.ai.provider.LlmProvider;
 import net.warp_scores.warpscores.ai.provider.LlmProviderRegistry;
 import net.warp_scores.warpscores.ai.provider.LlmProviderRouter;
+import net.warp_scores.warpscores.ai.reporting.MatchReportEvidenceBuilder;
 import net.warp_scores.warpscores.ai.reporting.MatchReportGenerationLlmRequestFactory;
 import net.warp_scores.warpscores.domain.persistence.*;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
@@ -39,6 +40,7 @@ public class MatchArticleService {
     private final AiReporterEffectiveProfileService reporterProfiles;
     private final ContextPlanner contextPlanner;
     private final ContextAssemblyService contextAssembly;
+    private final MatchReportEvidenceBuilder matchReportEvidenceBuilder;
     private final MatchReportGenerationLlmRequestFactory matchReportFactory;
     private final LlmExecutionService llm;
     private final LlmProviderRouter providerRouter;
@@ -210,7 +212,8 @@ public class MatchArticleService {
         }
 
         AiReporterDefinition reporter = reporterRegistry.require(input.reporterId());
-        if (!reporterProfiles.effective(reporter).reportsEnabled()) {
+        AiReporterEffectiveProfileService.EffectiveReporter effectiveReporter = reporterProfiles.effective(reporter);
+        if (!effectiveReporter.reportsEnabled()) {
             throw new IllegalStateException("Reporter is not enabled for reports");
         }
         if (reporter.getUserId() == null) {
@@ -219,6 +222,9 @@ public class MatchArticleService {
         requireRunnableReporter(reporter);
 
         MatchContext ctx = matchContext(auth, matchId);
+        ReplayAnalysis replayAnalysis = replayAnalyses.findById(matchId)
+                .orElseThrow(() -> new IllegalStateException("Analyzed replay disappeared before generation"));
+        MatchReportEvidenceBuilder.Evidence evidence = matchReportEvidenceBuilder.build(ctx.match(), replayAnalysis);
         ContextPlan plan = contextPlanner.plan(
                 ContextTaskType.MATCH_REPORT,
                 reporter.getUserId(),
@@ -231,10 +237,13 @@ public class MatchArticleService {
                 Integer.toString(reporter.getSchemaVersion()),
                 "router-selected",
                 assembled,
+                effectiveReporter.primaryLanguage(),
+                evidence,
                 trimToNull(input.editorialBrief()));
         CanonicalLlmResponse response = llm.generate(reporter.getId(), request);
         MatchReportGenerationLlmRequestFactory.GeneratedArticle generated =
                 matchReportFactory.parse(response.content());
+        validateGrounding(generated, evidence, effectiveReporter.primaryLanguage());
 
         Instant now = Instant.now();
         MatchArticle article = new MatchArticle();
@@ -313,6 +322,33 @@ public class MatchArticleService {
         throw new IllegalStateException(
                 "No configured LLM target is available for reporter "
                         + reporter.getId() + " (" + issues + ")");
+    }
+
+    private void validateGrounding(
+            MatchReportGenerationLlmRequestFactory.GeneratedArticle generated,
+            MatchReportEvidenceBuilder.Evidence evidence,
+            String language) {
+        if (!generated.language().equalsIgnoreCase(language)) {
+            throw new IllegalStateException(
+                    "Generated article reported language " + generated.language()
+                            + " but " + language + " was requested");
+        }
+        if (!sameText(generated.homeTeam(), evidence.homeTeam())
+                || !sameText(generated.awayTeam(), evidence.awayTeam())
+                || generated.homeScore() != evidence.homeScore()
+                || generated.awayScore() != evidence.awayScore()) {
+            throw new IllegalStateException(
+                    "Generated article contradicted authoritative result. Expected "
+                            + evidence.resultText()
+                            + " but model returned "
+                            + generated.homeTeam() + " " + generated.homeScore()
+                            + "–" + generated.awayScore() + " " + generated.awayTeam());
+        }
+    }
+
+    private static boolean sameText(String left, String right) {
+        return left != null && right != null
+                && left.trim().equalsIgnoreCase(right.trim());
     }
 
     private void publish(MatchArticle article, String reviewer) {

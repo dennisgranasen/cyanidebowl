@@ -7,6 +7,7 @@ public class LlmProviderException extends RuntimeException {
         RATE_LIMIT(true),
         TIMEOUT(true),
         UNAVAILABLE(true),
+        REQUEST_TOO_LARGE(true),
         BAD_REQUEST(false),
         REJECTED(false),
         MALFORMED_RESPONSE(false),
