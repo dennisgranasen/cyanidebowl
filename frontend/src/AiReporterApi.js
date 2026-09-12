@@ -62,6 +62,54 @@ const AiReporterApi = {
       auth
     )).data;
   },
+
+  inspectorState: async (id, getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.get(
+      `/admin/ai-reporters/${encodeURIComponent(id)}/inspector`,
+      auth
+    )).data;
+  },
+
+  injectMemory: async (id, data, getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.post(
+      `/admin/ai-reporters/${encodeURIComponent(id)}/inspector/memories`,
+      data,
+      auth
+    )).data;
+  },
+
+  updateMemory: async (id, memoryId, data, getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.put(
+      `/admin/ai-reporters/${encodeURIComponent(id)}/inspector/memories/${encodeURIComponent(memoryId)}`,
+      data,
+      auth
+    )).data;
+  },
+
+  setManualRelationship: async (id, data, getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.post(
+      `/admin/ai-reporters/${encodeURIComponent(id)}/inspector/relationships/manual`,
+      data,
+      auth
+    )).data;
+  },
+
+  clearManualRelationship: async (
+    id, subjectType, subjectId, getAccessTokenSilently, getAccessTokenWithPopup
+  ) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return axios.delete(
+      `/admin/ai-reporters/${encodeURIComponent(id)}/inspector/relationships/manual`,
+      {
+        ...auth,
+        params: { subjectType, subjectId },
+      }
+    );
+  },
 };
 
 export default AiReporterApi;

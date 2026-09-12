@@ -29,6 +29,7 @@ import ReactMarkdown from 'markdown-to-jsx';
 import Navigation from '../components/misc/Navigation';
 import AiReporterApi from '../AiReporterApi';
 import AiReporterRuntimeControls from '../components/ai-reporters/AiReporterRuntimeControls';
+import AiReporterInspector from '../components/ai-reporters/AiReporterInspector';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 
 const splitPublicProfile = (markdown = '') => {
@@ -450,6 +451,14 @@ function ReporterProfilePage() {
                   No published reports yet.
                 </Text>
               </Box>
+            )}
+
+            {canEdit && (
+              <AiReporterInspector
+                reporterId={reporter.id}
+                getAccessTokenSilently={getAccessTokenSilently}
+                getAccessTokenWithPopup={getAccessTokenWithPopup}
+              />
             )}
           </>
         )}

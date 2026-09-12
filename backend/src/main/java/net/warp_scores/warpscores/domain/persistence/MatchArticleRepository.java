@@ -15,4 +15,7 @@ public interface MatchArticleRepository extends MongoRepository<MatchArticle, St
             MatchArticle.Status status, Long authorUserId, Pageable pageable);
     List<MatchArticle> findByStatusOrderByPublishedAtDesc(
             MatchArticle.Status status, Pageable pageable);
+
+    List<MatchArticle> findByAuthorUserIdOrderByUpdatedAtDesc(
+            Long authorUserId, Pageable pageable);
 }

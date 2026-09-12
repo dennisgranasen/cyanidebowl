@@ -179,12 +179,12 @@ function MatchModal({ isOpen, onClose, match, contest }) {
               
               <Tabs>
                 <TabList>
-                  <Tab>Team Stats</Tab>
-                  <Tab>Player Rosters</Tab>
-                  <Tab>Player Ratings</Tab>
+                  <Tab>Lagstatistik</Tab>
+                  <Tab>Spelartrupper</Tab>
+                  <Tab>Spelarbetyg</Tab>
                   <Tab>Artiklar</Tab>
-                  <Tab>Comments</Tab>
-                  <Tab>Replay {replay?.available && <Badge ml={1} colorScheme="green">✓</Badge>}</Tab>
+                  <Tab>Kommentarer</Tab>
+                  <Tab>Matchsammanfattning {replay?.available && <Badge ml={1} colorScheme="green">✓</Badge>}</Tab>
                 </TabList>
                 <TabPanels>
                   <TabPanel>
@@ -195,82 +195,82 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                           <Tbody>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedtackles}</Td>
-                              <Td textAlign="center">Inflicted Tackles</Td>
+                              <Td textAlign="center">Utdelade nedslagningar</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedtackles}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedinjuries}</Td>
-                              <Td textAlign="center">Inflicted Injuries</Td>
+                              <Td textAlign="center">Utdelade rustningsbrytningar</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedinjuries}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedko}</Td>
-                              <Td textAlign="center">Inflicted K.O.s</Td>
+                              <Td textAlign="center">Utdelade KOs</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedko}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedcasualties}</Td>
-                              <Td textAlign="center">Inflicted Casualties</Td>
+                              <Td textAlign="center">Åsamkade skador</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedcasualties}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflicteddead}</Td>
-                              <Td textAlign="center">Inflicted Deaths</Td>
+                              <Td textAlign="center">Åsamkade dödsfall</Td>
                               <Td textAlign="center">{matchData.teams[1].inflicteddead}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedpushouts}</Td>
-                              <Td textAlign="center">Inflicted Pushouts</Td>
+                              <Td textAlign="center">Åsamkade utknuffningar</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedpushouts}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedinterceptions}</Td>
-                              <Td textAlign="center">Inflicted Interceptions</Td>
+                              <Td textAlign="center">Utförda passningsavbrott</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedinterceptions}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].sustainedinjuries}</Td>
-                              <Td textAlign="center">Sustained injuries</Td>
+                              <Td textAlign="center">Erhållna nedslagningar</Td>
                               <Td textAlign="center">{matchData.teams[1].sustainedinjuries}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].sustainedko}</Td>
-                              <Td textAlign="center">Sustained K.O.s</Td>
+                              <Td textAlign="center">Erhållna K.O.s</Td>
                               <Td textAlign="center">{matchData.teams[1].sustainedko}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].sustainedcasualties}</Td>
-                              <Td textAlign="center">Sustained casualties</Td>
+                              <Td textAlign="center">Erhållna skador</Td>
                               <Td textAlign="center">{matchData.teams[1].sustainedcasualties}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].sustaineddead}</Td>
-                              <Td textAlign="center">Sustained dead</Td>
+                              <Td textAlign="center">Erhållna dödsfall</Td>
                               <Td textAlign="center">{matchData.teams[1].sustaineddead}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].sustainedexpulsions}</Td>
-                              <Td textAlign="center">Sustained expulsions</Td>
+                              <Td textAlign="center"># utvisningar</Td>
                               <Td textAlign="center">{matchData.teams[1].sustainedexpulsions}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedpasses}</Td>
-                              <Td textAlign="center">Inflicted Passes</Td>
+                              <Td textAlign="center"># passningar</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedpasses}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedcatches}</Td>
-                              <Td textAlign="center">Inflicted Catches</Td>
+                              <Td textAlign="center"># mottagningar</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedcatches}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedmetersrunning}</Td>
-                              <Td textAlign="center">Inflicted meters Running</Td>
+                              <Td textAlign="center">Löpmeter</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedmetersrunning}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedmeterspassing}</Td>
-                              <Td textAlign="center">Inflicted meters Passing</Td>
+                              <Td textAlign="center">Passningsmeter</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedmeterspassing}</Td>
                             </Tr>
                           </Tbody>
@@ -297,10 +297,10 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                             
                             <Tabs variant="enclosed" size="sm">
                               <TabList>
-                                <Tab>Overview</Tab>
-                                <Tab>Core Stats</Tab>
-                                <Tab>Combat Stats</Tab>
-                                <Tab>Foul Play</Tab>
+                                <Tab>Översikt</Tab>
+                                <Tab>Grundläggande statistik</Tab>
+                                <Tab>Våldsstatistik</Tab>
+                                <Tab>Fulspel</Tab>
                               </TabList>
 
                               <TabPanels>
@@ -310,14 +310,14 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                                     <Table size="sm">
                                       <Thead>
                                         <Tr>
-                                          <Th>Player</Th>
-                                          <Th>Level</Th>
+                                          <Th>Spelare</Th>
+                                          <Th>Nivå</Th>
                                           <Th>SPP</Th>
                                           <Th>TD</Th>
-                                          <Th>Blocks</Th>
-                                          <Th>Injuries</Th>
-                                          <Th>Casualties</Th>
-                                          <Th>Yards</Th>
+                                          <Th>Tackl.</Th>
+                                          <Th>Rust.bryt</Th>
+                                          <Th>Skador</Th>
+                                          <Th>Meter</Th>
                                         </Tr>
                                       </Thead>
                                       <Tbody>
@@ -350,15 +350,15 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                                     <Table size="sm">
                                       <Thead>
                                         <Tr>
-                                          <Th>Player</Th>
+                                          <Th>Spelare</Th>
                                           <Th>Rush</Th>
                                           <Th>Dodge</Th>
-                                          <Th>Pickup</Th>
-                                          <Th>Catch</Th>
-                                          <Th>Passes</Th>
-                                          <Th>Interceptions</Th>
-                                          <Th>Yards Running</Th>
-                                          <Th>Yards Passing</Th>
+                                          <Th>Bollplock</Th>
+                                          <Th>Mottag</Th>
+                                          <Th>Passning</Th>
+                                          <Th>Intercept</Th>
+                                          <Th>Löpmeter</Th>
+                                          <Th>Passmeter</Th>
                                         </Tr>
                                       </Thead>
                                       <Tbody>
@@ -398,18 +398,18 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                                     <Table size="sm">
                                       <Thead>
                                         <Tr>
-                                          <Th>Player</Th>
-                                          <Th>Blocks Made</Th>
+                                          <Th>Spelare</Th>
+                                          <Th>Utförda tackl.</Th>
                                           <Th>Blitz</Th>
-                                          <Th>Armor Breaks</Th>
-                                          <Th>Stuns</Th>
-                                          <Th>KOs</Th>
-                                          <Th>Casualties</Th>
-                                          <Th>Blocks Taken</Th>
-                                          <Th>Injuries Taken</Th>
-                                          <Th>Stuns Taken</Th>
-                                          <Th>KOs Taken</Th>
-                                          <Th>Casualties Taken</Th>
+                                          <Th>Rustbryt</Th>
+                                          <Th>Avsvimma</Th>
+                                          <Th>KO</Th>
+                                          <Th>Skada</Th>
+                                          <Th>Mottag tackl.</Th>
+                                          <Th>Rustbryt</Th>
+                                          <Th>Avsvimma</Th>
+                                          <Th>KO</Th>
+                                          <Th>Skada</Th>
                                         </Tr>
                                       </Thead>
                                       <Tbody>
@@ -450,12 +450,12 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                                     <Table size="sm">
                                       <Thead>
                                         <Tr>
-                                          <Th>Player</Th>
-                                          <Th>Fouls Made</Th>
-                                          <Th>Fouls Taken</Th>
-                                          <Th>Ejections</Th>
-                                          <Th>Secret Weapons</Th>
-                                          <Th>Referee Bribes</Th>
+                                          <Th>Spelare</Th>
+                                          <Th>Utförda fouls</Th>
+                                          <Th>Mottagna fouls</Th>
+                                          <Th>Utvisningar</Th>
+                                          <Th>Dolda vapen</Th>
+                                          <Th>Mutor</Th>
                                         </Tr>
                                       </Thead>
                                       <Tbody>

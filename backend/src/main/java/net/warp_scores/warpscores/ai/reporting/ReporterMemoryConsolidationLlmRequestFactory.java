@@ -144,7 +144,7 @@ public class ReporterMemoryConsolidationLlmRequestFactory {
                 context,
                 task.toString(),
                 new OutputContract(OutputContract.Format.JSON, RESPONSE_SCHEMA),
-                new GenerationOptions(0.2, 700));
+                new GenerationOptions(0.2, 2000));
     }
 
     public MemoryCandidate parse(String content, Collection<SubjectRef> allowedSubjects) {

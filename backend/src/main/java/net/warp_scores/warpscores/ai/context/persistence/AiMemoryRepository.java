@@ -10,4 +10,7 @@ import java.util.List;
 public interface AiMemoryRepository extends MongoRepository<AiMemoryEntry, String> {
     List<AiMemoryEntry> findByOwnerUserIdAndActiveTrueOrderByUpdatedAtDesc(
             Long ownerUserId, Pageable pageable);
+
+    List<AiMemoryEntry> findByOwnerUserIdOrderByUpdatedAtDesc(
+            Long ownerUserId, Pageable pageable);
 }

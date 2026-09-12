@@ -12,6 +12,9 @@ public interface AiSocialRelationshipRepository extends MongoRepository<AiSocial
     List<AiSocialRelationship> findByUserIdAndActiveTrueOrderByUpdatedAtDesc(
             Long userId, Pageable pageable);
 
+    List<AiSocialRelationship> findByUserIdOrderByUpdatedAtDesc(
+            Long userId, Pageable pageable);
+
     List<AiSocialRelationship> findBySubjectTypeAndSubjectIdAndActiveTrueOrderByUpdatedAtDesc(
             SubjectType subjectType, String subjectId, Pageable pageable);
 }
