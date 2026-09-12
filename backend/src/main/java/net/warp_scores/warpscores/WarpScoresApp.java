@@ -1,5 +1,7 @@
 package net.warp_scores.warpscores;
 
+import net.warp_scores.warpscores.ai.context.persistence.AiMemoryRepository;
+import net.warp_scores.warpscores.ai.context.persistence.AiSocialRelationshipRepository;
 import net.warp_scores.warpscores.ai.reporting.AiReportingProperties;
 import net.warp_scores.warpscores.config.WarpScoresConfig;
 import net.warp_scores.warpscores.domain.cache.ImageCacheRepository;
@@ -15,7 +17,12 @@ import org.springframework.scheduling.annotation.EnableAsync;
 
 @EnableAsync
 @ConfigurationPropertiesScan(basePackageClasses = {WarpScoresConfig.class, AiReportingProperties.class})
-@EnableMongoRepositories(basePackageClasses = {StatusRepository.class, ImageCacheRepository.class})
+@EnableMongoRepositories(basePackageClasses = {
+        StatusRepository.class,
+        ImageCacheRepository.class,
+        AiMemoryRepository.class,
+        AiSocialRelationshipRepository.class
+})
 @EnableConfigurationProperties(AiReportingProperties.class)
 @SpringBootApplication
 public class WarpScoresApp {

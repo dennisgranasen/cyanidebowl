@@ -113,8 +113,46 @@ public class CanonicalContextMapper {
                 List.of(),
                 List.of(),
                 title,
-                null,
+                inWorldMatchSummary(match),
                 null);
+    }
+
+    private static String inWorldMatchSummary(Match match) {
+        List<String> facts = new ArrayList<>();
+        if (match.getCompetitionName() != null && !match.getCompetitionName().isBlank()) {
+            facts.add("Competition: " + match.getCompetitionName() + ".");
+        }
+        if (match.getRound() != null && !match.getRound().isBlank()) {
+            facts.add("Round: " + match.getRound() + ".");
+        }
+
+        Team[] teams = match.getTeams();
+        if (teams != null && teams.length >= 2 && teams[0] != null && teams[1] != null) {
+            String home = teams[0].getName();
+            String away = teams[1].getName();
+            if (teams[0].getScore() != null && teams[1].getScore() != null) {
+                facts.add("Result: " + home + " " + teams[0].getScore()
+                        + "–" + teams[1].getScore() + " " + away + ".");
+            } else {
+                facts.add("Fixture: " + home + " against " + away + ".");
+            }
+        }
+
+        if (match.getCoaches() != null) {
+            List<String> coaches = new ArrayList<>();
+            for (Match.Coach coach : match.getCoaches()) {
+                if (coach != null && coach.getName() != null && !coach.getName().isBlank()) {
+                    coaches.add(coach.getName());
+                }
+            }
+            if (!coaches.isEmpty()) facts.add("Coaches: " + String.join(" and ", coaches) + ".");
+        }
+        if (match.getStadium() != null && !match.getStadium().isBlank()) {
+            facts.add("Venue: " + match.getStadium() + ".");
+        }
+        if (match.isOvertime()) facts.add("The match went to overtime.");
+        if (match.isConcede()) facts.add("The match ended by concession.");
+        return String.join(" ", facts);
     }
 
     public List<SubjectRef> articleSubjects(Article article) {

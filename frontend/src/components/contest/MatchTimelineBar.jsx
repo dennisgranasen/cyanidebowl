@@ -184,7 +184,11 @@ const teamRerollOverlay = (event) => {
       String(attempt?.reroll || '').trim().toLowerCase() === 'team');
     const offered = Array.isArray(check?.reroll_offered)
       && check.reroll_offered.some((source) => String(source).toLowerCase() === 'team');
-    const requested = Boolean(teamAttempt || check?.reroll_used || (offered && lonerFailed));
+    // pybb3's reroll_used is source-agnostic and is also true for built-in
+    // skill rerolls such as Dodge. Only a team attempt, or a team reroll
+    // offer blocked by Loner, belongs on the overview timeline.
+    const teamRerollUsed = Boolean(teamAttempt || (offered && check?.reroll_used));
+    const requested = teamRerollUsed || (offered && lonerFailed);
     if (!requested) continue;
 
     return {
