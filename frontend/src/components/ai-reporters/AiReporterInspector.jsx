@@ -463,16 +463,35 @@ export default function AiReporterInspector({
               <Text fontWeight="700">
                 Memories <Badge ml={2}>{state.memories?.length || 0}</Badge>
               </Text>
-              <Button
-                size="sm"
-                colorScheme="orange"
-                onClick={() => {
-                  setEditingMemory(null);
-                  memoryModal.onOpen();
-                }}
-              >
-                Injicera minne
-              </Button>
+              <HStack>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  colorScheme="orange"
+                  onClick={() => setConfirm({
+                    title: 'Rekonsolidera publicerad historik?',
+                    message:
+                      'Upp till 100 publicerade AI-matchartiklar körs om genom nuvarande memory/relationship-policy. '
+                      + 'Det kan ändra minnen och relationer och gör LLM-anrop.',
+                    detail:
+                      'Detta är avsiktligt ett Technician-verktyg för migration/rebuild efter policyändringar.',
+                    action: () => AiReporterApi.reconsolidateReporter(
+                      reporterId, { limit: 100 }, ...auth),
+                  })}
+                >
+                  Rekonsolidera historik
+                </Button>
+                <Button
+                  size="sm"
+                  colorScheme="orange"
+                  onClick={() => {
+                    setEditingMemory(null);
+                    memoryModal.onOpen();
+                  }}
+                >
+                  Injicera minne
+                </Button>
+              </HStack>
             </HStack>
             <VStack align="stretch" spacing={3}>
               {(state.memories || []).map((memory) => (
@@ -517,6 +536,12 @@ export default function AiReporterInspector({
                   <Text fontSize="xs" color="gray.500">
                     Sources: {(memory.sourceContentIds || []).join(', ') || '—'}
                   </Text>
+                  {memory.supersededByMemoryId && (
+                    <Text fontSize="xs" color="orange.400">
+                      Superseded by: {memory.supersededByMemoryId}
+                      {' · '}{formatTime(memory.supersededAt)}
+                    </Text>
+                  )}
                   <Text fontSize="xs" color="gray.500">
                     Updated: {formatTime(memory.updatedAt)}
                   </Text>

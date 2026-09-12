@@ -11,6 +11,7 @@ import net.warp_scores.warpscores.ai.context.persistence.AiMemoryStore;
 import net.warp_scores.warpscores.ai.context.persistence.AiSocialRelationship;
 import net.warp_scores.warpscores.ai.context.persistence.AiSocialRelationshipRepository;
 import net.warp_scores.warpscores.ai.context.persistence.AiSocialRelationshipStore;
+import net.warp_scores.warpscores.ai.reporting.ReporterMemoryConsolidationService;
 import net.warp_scores.warpscores.domain.persistence.MatchArticleRepository;
 import net.warp_scores.warpscores.ai.provider.trace.AiGenerationTrace;
 import net.warp_scores.warpscores.ai.provider.trace.AiGenerationTraceRepository;
@@ -52,6 +53,7 @@ public class AiReporterInspectorController {
     private final AiSocialRelationshipStore relationshipStore;
     private final MatchArticleRepository matchArticles;
     private final AiGenerationTraceRepository generationTraces;
+    private final ReporterMemoryConsolidationService reporterMemory;
 
     @GetMapping
     public InspectorState state(@PathVariable String reporterId) {
@@ -91,6 +93,29 @@ public class AiReporterInspectorController {
                 relationshipViews,
                 activity,
                 traces);
+    }
+
+    @PostMapping("/reconsolidate")
+    public ReconsolidationResult reconsolidate(
+            @PathVariable String reporterId,
+            @RequestBody(required = false) ReconsolidationRequest request) {
+        AiReporterDefinition reporter = requireReporterUser(reporterId);
+        int requested = request == null || request.limit() == null ? 100 : request.limit();
+        int limit = Math.max(1, Math.min(requested, 250));
+
+        List<MatchArticle> source = matchArticles
+                .findByStatusAndAuthorUserIdOrderByPublishedAtDesc(
+                        MatchArticle.Status.PUBLISHED,
+                        reporter.getUserId(),
+                        PageRequest.of(0, limit));
+
+        List<MatchArticle> selected = source.stream()
+                .filter(article -> article.getAuthorType() == MatchArticle.AuthorType.AI)
+                .filter(article -> reporterId.equals(article.getReporterId()))
+                .toList();
+
+        selected.forEach(reporterMemory::considerPublished);
+        return new ReconsolidationResult(selected.size(), limit);
     }
 
     @PostMapping("/memories")
@@ -278,6 +303,9 @@ public class AiReporterInspectorController {
             List<ActivityView> activity,
             List<AiGenerationTrace> traces) {}
 
+    public record ReconsolidationRequest(Integer limit) {}
+    public record ReconsolidationResult(int scheduled, int limit) {}
+
     public record MemoryMutation(
             String body,
             List<SubjectRef> subjects,
@@ -297,6 +325,8 @@ public class AiReporterInspectorController {
             List<SubjectRef> subjects,
             List<String> sourceContentIds,
             boolean active,
+            String supersededByMemoryId,
+            Instant supersededAt,
             Instant createdAt,
             Instant updatedAt,
             boolean manual) {
@@ -310,6 +340,8 @@ public class AiReporterInspectorController {
                             ? List.of() : List.copyOf(entry.getSubjects()),
                     sources,
                     Boolean.TRUE.equals(entry.getActive()),
+                    entry.getSupersededByMemoryId(),
+                    entry.getSupersededAt(),
                     entry.getCreatedAt(),
                     entry.getUpdatedAt(),
                     sources.stream().anyMatch(source ->

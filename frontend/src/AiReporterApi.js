@@ -110,6 +110,15 @@ const AiReporterApi = {
       }
     );
   },
+
+  reconsolidateReporter: async (id, data, getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.post(
+      `/admin/ai-reporters/${encodeURIComponent(id)}/inspector/reconsolidate`,
+      data,
+      auth
+    )).data;
+  },
 };
 
 export default AiReporterApi;
