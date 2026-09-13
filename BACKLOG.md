@@ -382,6 +382,30 @@ disabled capability and retry/idempotency behavior.
 
 ### B-016 — AI scheduling, quotas and cost control
 
+**B-016e durable autonomous work queue**
+
+- Persistent Mongo-backed queue uses the stable candidate key as `_id`, providing
+  cross-process enqueue deduplication without relying on automatic index creation.
+- Atomic `findAndModify` claims highest-priority runnable work with a lease; expired
+  leases are reclaimable after worker/process failure.
+- Queue priority is explicit: `USER_TRIGGERED` > `EDITOR_REQUESTED` > `AUTONOMOUS`.
+  Existing direct-tag execution remains synchronous and therefore is not placed behind
+  autonomous queued work.
+- Handler failures use exponential retry backoff and become terminal after `maxAttempts`.
+- Missing handlers fail/retry visibly rather than silently dropping queued work.
+- Site-admin observability exposes queue status/recent terminal failures together with
+  the existing B-016a generation usage/budget snapshot.
+- The scheduler contains no topic discovery or implicit candidate scanning. Domain
+  candidate producers must first satisfy B-016c initiative policy and then enqueue a
+  stable candidate for a registered handler.
+
+Remaining B-016 work:
+
+- first canonical candidate producer/handler for autonomous match-thread activity;
+- autonomous article candidates only where a concrete domain event/source exists;
+- optional monetary cost accounting once explicit provider/model pricing metadata exists.
+
+
 **B-016d fan interaction integration**
 
 - General articles carry explicit canonical `teamIds`; fan affinity is never inferred

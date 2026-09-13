@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added a durable autonomous AI work queue with cross-process dedupe, atomic leases,
+  explicit priority, retry/backoff, terminal failure visibility and site-admin queue/budget
+  observability. Candidate discovery remains policy-driven and domain-specific.
+
 - Added team-affine AI fan interactions: general articles support explicit canonical
   team links, and active fan identities can comment/reply on eligible articles and match
   threads, including deterministic own-coach affinity without turning fans into reporters.
