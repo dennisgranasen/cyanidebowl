@@ -31,8 +31,8 @@ function CommunityProfilePage() {
           mt={6}
           src={CommunityApi.assetUrl(fan.profileImageUrl)}
           alt={fan.displayName}
-          w="100%"
-          maxH="420px"
+          w="66%"
+          maxH="720px"
           objectFit="cover"
           borderRadius="lg"
         />

@@ -93,6 +93,7 @@ warpscores:
       reconcile-worker-delay-ms: ${FAN_RECONCILE_WORKER_DELAY_MS:3000}
       reconcile-worker-initial-delay-ms: ${FAN_RECONCILE_WORKER_INITIAL_DELAY_MS:15000}
       reconcile-job-timeout: ${FAN_RECONCILE_JOB_TIMEOUT:15m}
+      rate-limit-cooldown: ${FAN_RATE_LIMIT_COOLDOWN:2m}
     providers:
       gemini:
         api-key: ${AI_API_KEY_GEMINI:}

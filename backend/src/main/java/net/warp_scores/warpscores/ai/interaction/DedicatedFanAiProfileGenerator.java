@@ -31,7 +31,6 @@ public class DedicatedFanAiProfileGenerator {
     private final LlmExecutionService llm;
     private final ObjectMapper objectMapper;
     private final AiCommunityMemberProfileRepository profiles;
-    private final DedicatedFanProfileGenerator fallback;
     private final LocalizationService localization;
 
     public void populateNewProfile(AiCommunityMemberProfile profile, Team team, int ordinal) {
@@ -62,17 +61,20 @@ public class DedicatedFanAiProfileGenerator {
             profile.setGenerationProvider(response.providerId());
             profile.setGenerationModel(response.model());
             profile.setProfileGeneratedAt(Instant.now());
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.warn(
-                    "AI Dedicated Fan generation failed for {} ordinal {}; using deterministic fallback: {}",
+                    "AI Dedicated Fan generation failed for {} ordinal {}; leaving profile uncreated so reconciliation can retry later: {}",
                     team == null || team.getId() == null ? "unknown" : team.getId().asMongoKey(),
                     ordinal,
                     e.getMessage());
-            fallback.initialize(profile, team, ordinal);
-            profile.setGenerationSource(AiCommunityMemberProfile.GenerationSource.FALLBACK_GENERATED);
-            profile.setGenerationProvider(null);
-            profile.setGenerationModel(null);
-            profile.setProfileGeneratedAt(Instant.now());
+            throw e;
+        } catch (Exception e) {
+            log.warn(
+                    "AI Dedicated Fan generation failed for {} ordinal {}; leaving profile uncreated so reconciliation can retry later: {}",
+                    team == null || team.getId() == null ? "unknown" : team.getId().asMongoKey(),
+                    ordinal,
+                    e.getMessage());
+            throw new IllegalStateException("Dedicated Fan AI profile generation failed", e);
         }
     }
 

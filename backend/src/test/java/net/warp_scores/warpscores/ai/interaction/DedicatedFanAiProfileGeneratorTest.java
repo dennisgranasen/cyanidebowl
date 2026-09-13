@@ -3,6 +3,7 @@ package net.warp_scores.warpscores.ai.interaction;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.warp_scores.warpscores.ai.provider.CanonicalLlmResponse;
 import net.warp_scores.warpscores.ai.provider.LlmExecutionService;
+import net.warp_scores.warpscores.ai.provider.LlmProviderException;
 import net.warp_scores.warpscores.domain.persistence.AiCommunityMemberProfileRepository;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.AiCommunityMemberProfile;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -23,7 +25,6 @@ class DedicatedFanAiProfileGeneratorTest {
     void usesStructuredAiProfileAsPrimaryGenerationPath() {
         LlmExecutionService llm = mock(LlmExecutionService.class);
         AiCommunityMemberProfileRepository profiles = mock(AiCommunityMemberProfileRepository.class);
-        DedicatedFanProfileGenerator fallback = mock(DedicatedFanProfileGenerator.class);
         LocalizationService localization = mock(LocalizationService.class);
         when(localization.defaultLocale()).thenReturn("sv");
         when(profiles.findByTeamIdOrderByOrdinalAsc(any())).thenReturn(List.of());
@@ -31,7 +32,7 @@ class DedicatedFanAiProfileGeneratorTest {
                 .thenReturn(new CanonicalLlmResponse("gemini", "gemini-test", "req", json(), null, "STOP"));
 
         DedicatedFanAiProfileGenerator generator = new DedicatedFanAiProfileGenerator(
-                llm, new ObjectMapper(), profiles, fallback, localization);
+                llm, new ObjectMapper(), profiles, localization);
         Team team = team();
         AiCommunityMemberProfile profile = new AiCommunityMemberProfile();
         profile.setId("community:test:1");
@@ -54,7 +55,34 @@ class DedicatedFanAiProfileGeneratorTest {
                                         "profileImagePrompt and avatarPrompt MUST be written")
                                 && request.taskInstruction().contains(
                                         "in English because they are internal prompts")));
-        verifyNoInteractions(fallback);
+    }
+
+    @Test
+    void propagatesRateLimitSoReconciliationQueueCanRetryLater() {
+        LlmExecutionService llm = mock(LlmExecutionService.class);
+        AiCommunityMemberProfileRepository profiles = mock(AiCommunityMemberProfileRepository.class);
+        LocalizationService localization = mock(LocalizationService.class);
+        when(localization.defaultLocale()).thenReturn("sv");
+        when(profiles.findByTeamIdOrderByOrdinalAsc(any())).thenReturn(List.of());
+        when(llm.generate(eq(DedicatedFanAiProfileGenerator.ROUTING_ID), any()))
+                .thenThrow(new LlmProviderException(
+                        "gemini",
+                        LlmProviderException.Kind.RATE_LIMIT,
+                        429,
+                        "Gemini HTTP 429"));
+
+        DedicatedFanAiProfileGenerator generator = new DedicatedFanAiProfileGenerator(
+                llm, new ObjectMapper(), profiles, localization);
+        AiCommunityMemberProfile profile = new AiCommunityMemberProfile();
+        profile.setId("community:test:1");
+        profile.setTeamColors("red and cream");
+
+        assertThatThrownBy(() -> generator.populateNewProfile(profile, team(), 1))
+                .isInstanceOf(LlmProviderException.class)
+                .hasMessageContaining("429");
+
+        assertThat(profile.getGenerationSource()).isNull();
+        assertThat(profile.getDisplayName()).isNull();
     }
 
     private static Team team() {
