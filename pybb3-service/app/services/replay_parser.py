@@ -16,7 +16,7 @@ from app.services.replay_statistics import aggregate_actions, event_statistics
 from app.services.replay_timeline import build_replay_timeline
 from app.services.replay_player_identity import build_player_index
 
-PARSER_VERSION = 19
+PARSER_VERSION = 20
 INTEGER = re.compile(r"^-?(?:0|[1-9][0-9]*)$")
 RESOURCE_MARKERS = ("reroll", "apothec", "wizard", "spell")
 SPECIAL_MARKERS = (
@@ -122,7 +122,7 @@ def _success(event: ET.Element) -> bool | None:
 def _event_team(event, context):
     # Match-wide events must never inherit whichever team happened to be
     # active in the surrounding board state.
-    if event.tag in {"EventWeatherRoll", "EventKickOffTable"}:
+    if event.tag == "EventWeatherRoll":
         return None
     team = _first(event, ("TeamId", "GamerSlot", "GamerId"))
     return context.get("activeTeam") if team is None else team

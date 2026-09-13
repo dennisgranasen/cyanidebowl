@@ -442,7 +442,7 @@ export default function ReplayAnalysisPanel({ replay, match, loading, error, onD
       <BlockOutcomeTable rows={blockActions} match={match}/>
       <SpecialActionTable rows={specials} match={match}/>
       <DiceContextTable rows={diceStats.filter((row) => row.category === 'pregame' && row.label !== 'Weather')} match={match} title="Pregame dice" description="Team-specific pre-match rolls such as Fan Factor. Weather has its own match-state presentation above."/>
-      <DiceHistogramTable rows={kickoffTableDice} match={match} title="Kick-off table rolls" outcomes={[2,3,4,5,6,7,8,9,10,11,12]} outcomeLabels={KICKOFF_OUTCOMES} matchWide compactOutcomes description="2D6 totals mapped to the Blood Bowl kick-off table. Component dice remain preserved in replay analysis data."/>
+      <DiceHistogramTable rows={kickoffTableDice} match={match} title="Kick-off table rolls" outcomes={[2,3,4,5,6,7,8,9,10,11,12]} outcomeLabels={KICKOFF_OUTCOMES} compactOutcomes description="2D6 totals mapped to the Blood Bowl kick-off table. Component dice remain preserved in replay analysis data."/>
       <DiceContextTable rows={kickoffRollOffDice} match={match} title="Kick-off event roll-offs" description="One D6 per team for kick-off events resolved by a roll-off."/>
       <DiceHistogramTable rows={armourDice} match={match} title="Armour rolls" outcomes={[2,3,4,5,6,7,8,9,10,11,12]} description="2D6 totals. Component dice remain preserved in replay analysis data."/>
       <DiceHistogramTable rows={injuryDice} match={match} title="Injury rolls" outcomes={[2,3,4,5,6,7,8,9,10,11,12]} description="2D6 totals. Component dice remain preserved in replay analysis data."/>
