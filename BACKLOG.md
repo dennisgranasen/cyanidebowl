@@ -30,8 +30,16 @@ Do not use old `main` behavior as the basis for implementation work.
 | Priority | Item | Outcome | Status |
 | --- | --- | --- | --- |
 | P1 | B-025 | Versioned pybb3 timeline/skill-reroll contract is consumed safely | Integration pending upstream |
+| P1 | B-033 | Replay parsing is stable and regression-tested | Backlog |
+| P1 | B-032 | Technician/editor users automatically get editable Redaktion profiles | Backlog |
 | P1 | B-019 | Dedicated Fans population reconciliation | Backlog |
 | P1 | B-020 | Deterministic direct AI textual interaction | Partial |
+| P2 | B-028 | Navigation hierarchy and back paths are consistent | Backlog |
+| P2 | B-029 | LeagueSystem selection lives in the primary navigation | Backlog |
+| P2 | B-030 | Match cards are fully internationalized | Backlog |
+| P2 | B-031 | AI reporter public profiles are improved | Backlog |
+| P2 | B-035 | BB1 and BB2 replays use the normalized replay pipeline | Backlog |
+| P2 | B-034 | Replays can be reconstructed and visualized interactively | Depends on B-033/B-035 |
 | P2 | B-016 | AI scheduling, quotas and cost controls | Deferred until B-019/B-020 |
 | P2 | B-027 | Raspberry Pi operational runbook is complete | Partial |
 | P3 | B-012 | Broad null/exception fallbacks become typed outcomes | Blocked on policy decision |
@@ -95,9 +103,177 @@ Cyanidebowl tasks:
 - render reason/roll/result only when semantically applicable;
 - preserve replay IP redaction in diagnostic/export paths.
 
+### B-033 — Stabilize replay parsing
+
+**Status: Backlog**
+
+Replay parsing still produces semantically odd or misleading results for some replays.
+Treat those as parser/normalization defects rather than compensating for them in the UI.
+
+Work:
+
+- collect every known bad/odd replay as a permanent regression fixture;
+- make event interpretation deterministic and preserve source ordering/provenance;
+- never invent a roll, target, outcome or reason when the replay does not establish it;
+- represent unknown/unsupported events explicitly rather than mapping them to a plausible
+  but incorrect generic event;
+- regression-test negative traits, movement tests, rerolls, kickoff events and other
+  historically fragile event families;
+- version parser/output changes that affect the normalized timeline contract.
+
+Detailed BB3 replay decoding belongs upstream in `pybb3`; Cyanidebowl owns the
+versioned service contract, validation and presentation of that data.
+
+**Acceptance criteria**
+
+- every reported parser defect has a fixture before or with the fix;
+- repeated parsing of the same replay produces the same normalized result;
+- ordinary movement cannot acquire a fabricated dice roll;
+- unsupported data remains inspectable without being presented as a known event.
+
+### B-035 — Add BB1 and BB2 replay support
+
+**Status: Backlog**
+
+BB1 and BB2 replays are not yet integrated into the current replay pipeline.
+
+Work:
+
+- detect replay game/edition before parsing;
+- add edition-specific adapters/parsers for BB1 and BB2;
+- normalize supported BB1/BB2 events into the same versioned replay contract consumed
+  by Cyanidebowl;
+- preserve edition-specific source/provenance where semantics differ;
+- keep unsupported events explicit rather than forcing BB1/BB2 data into BB3-specific
+  assumptions;
+- support ingestion, storage, diagnostics and match/replay presentation for all three
+  supported game generations;
+- add representative BB1 and BB2 replay fixtures.
+
+**Acceptance criteria**
+
+- Cyanidebowl can identify and process representative BB1, BB2 and BB3 replays through
+  one normalized consumer boundary;
+- edition-specific parser behavior is isolated behind adapters;
+- unsupported semantics degrade explicitly, not silently or incorrectly.
+
+### B-034 — Replay state engine and visualization
+
+**Status: Backlog — depends on a stable normalized replay contract**
+
+Build a replay engine that can reconstruct match state from normalized replay events
+and drive an interactive visualization.
+
+Separate the deterministic state engine from the visual renderer:
+
+- reconstruct pitch state, players, ball, possession, turn/half/drive and relevant
+  transient state from the event stream;
+- support step forward/back, play/pause, timeline seek/scrub and playback speed;
+- make event-to-state transitions deterministic and testable without the UI;
+- expose unknown/unsupported transitions instead of inventing visual state;
+- keep the renderer edition-agnostic wherever the normalized contract permits it.
+
+**Acceptance criteria**
+
+- a replay can be reconstructed to the same state at a given timeline position whether
+  reached by sequential playback or seeking;
+- engine tests do not require a browser;
+- visualization consumes the state engine rather than reparsing raw replay payloads.
+
+---
+
+## UI and navigation follow-up
+
+### B-028 — Audit and normalize navigation hierarchy
+
+**Status: Backlog**
+
+The UI is not yet consistent about parent navigation. For example, navigating
+Home -> Redaktion/Staff -> writer profile currently exposes a Home action but no clear
+path back to Redaktion.
+
+Work:
+
+- audit nested public/admin/editorial routes for missing parent navigation;
+- define one consistent breadcrumb/back-path pattern for hierarchical pages;
+- ensure writer/staff profiles expose Redaktion as their logical parent;
+- do not rely on browser Back as the only way to recover application hierarchy;
+- keep behavior coherent on desktop and mobile and accessible to keyboard/screen-reader
+  users.
+
+**Acceptance criteria**
+
+- every audited nested page has a deterministic parent path;
+- equivalent page types use the same navigation convention;
+- direct deep links still show a valid hierarchy without navigation history.
+
+### B-029 — Move LeagueSystem selection into primary navigation
+
+**Status: Backlog**
+
+The LeagueSystem selector should be part of the application's primary navigation rather
+than living in its own hamburger/secondary menu.
+
+Work:
+
+- integrate LeagueSystem selection into the main navigation on desktop and mobile;
+- remove the separate selector-specific hamburger/menu once the replacement is usable;
+- keep the current LeagueSystem visibly selected;
+- preserve the current sub-route when switching systems where that route has an
+  equivalent destination, otherwise use a deterministic LeagueSystem landing page;
+- preserve deep-link and responsive behavior.
+
+### B-030 — Complete i18n for match cards
+
+**Status: Backlog**
+
+Match cards still contain user-facing content that bypasses the application's i18n
+layer.
+
+Work:
+
+- inventory every visible label, status, tooltip and accessibility string on match
+  cards and their immediate child components;
+- replace hard-coded user-facing strings with the existing translation mechanism;
+- use locale-aware formatting for dates/times and other localized presentation where
+  applicable;
+- add regression coverage that detects reintroduced hard-coded match-card labels.
+
 ---
 
 ## Editorial/community follow-up
+
+### B-032 — Automatic, self-editable Redaktion profiles for staff
+
+**Status: Backlog**
+
+Every non-development user who has the `technician` role/capability and/or editorial
+permission should automatically have a public profile in Redaktion.
+
+Requirements:
+
+- explicitly exclude the development account;
+- create/ensure the Redaktion profile idempotently when an eligible user is resolved;
+- seed public name, profile image and avatar from the OAuth identity when those values
+  are available;
+- allow the user to replace OAuth-provided images/avatar;
+- allow the user to edit every public profile field, including the displayed name and
+  profile description;
+- treat OAuth values as initial/default values only: later sign-ins must not overwrite
+  user-edited local profile values;
+- keep authentication subject, roles and permissions separate from mutable public
+  profile data;
+- remove or hide a profile according to an explicit policy if the user later loses all
+  qualifying staff/editor permissions; do not delete authored history.
+
+**Acceptance criteria**
+
+- technician-only, editor-only and technician+editor users each receive exactly one
+  Redaktion profile;
+- the configured development account receives none;
+- OAuth data seeds previously unset fields but never destroys local overrides;
+- changing the public name cannot change login identity, authorization or ownership of
+  existing content.
 
 ### B-015 — Enable team comment streams
 
@@ -121,6 +297,28 @@ Then:
 ---
 
 ## AI work
+
+### B-031 — Improve AI reporter public profiles
+
+**Status: Backlog**
+
+AI reporters need stronger public person profiles so they read as distinct members of
+the Redaktion rather than thin technical identities.
+
+Work:
+
+- improve biography/profile copy and structured public profile information for each
+  reporter;
+- make personality, editorial role, affiliations and voice apparent without exposing
+  internal prompt/provider implementation details;
+- keep portrait/avatar and profile metadata consistent across Redaktion, articles and
+  other author surfaces;
+- define which profile fields are canonical public identity and which belong only to
+  AI runtime/persona configuration;
+- add sensible fallbacks so incomplete AI profiles do not produce broken staff pages.
+
+This is profile/editorial presentation work. It must not create a second AI identity
+model or couple public identity to a specific LLM provider.
 
 ### B-018 residual — Domain semantic projection and memory-write policy
 

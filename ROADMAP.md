@@ -40,7 +40,7 @@ active roadmap work.
 
 ## Active roadmap
 
-### R1 — Versioned replay/timeline integration
+### R1 — Replay platform
 
 - Consume a versioned pybb3 timeline contract through `pybb3-service`.
 - Render a roll only when an actual test occurred and expose the semantic reason for
@@ -48,14 +48,38 @@ active roadmap work.
 - Consume upstream `skill_rerolls` separately from team/generic rerolls while retaining
   compatibility with older payloads.
 - Preserve explicit unknown-event provenance and replay IP redaction.
+- Stabilize replay parsing around regression fixtures for every known odd/misleading
+  interpretation.
+- Add BB1 and BB2 edition-specific parsing/adapters behind the same normalized consumer
+  contract used for BB3.
+- Build a deterministic replay state engine, then an interactive visualization on top
+  of that engine.
 
 Detailed replay parsing belongs in the separate `pybb3` repository. Cyanidebowl owns
-the service contract, validation, compatibility and presentation.
+the service contract, validation, compatibility, state reconstruction and presentation.
 
-Exit condition: current and historical match views use stable normalized contracts and
-do not invent or mislabel replay events.
+Exit condition: representative BB1, BB2 and BB3 replays produce stable normalized
+events; known parser defects have regression fixtures; and the normalized stream can
+drive deterministic replay visualization without reparsing raw payloads.
 
-### R2 — Remaining AI product work
+### R2 — UI, navigation and Redaktion profiles
+
+- Audit hierarchical navigation and provide consistent parent/breadcrumb paths; a
+  writer opened through Redaktion must expose Redaktion as a parent, not only Home.
+- Move LeagueSystem selection into the primary application navigation and retire the
+  selector-specific hamburger/menu.
+- Complete i18n coverage for match cards and their immediate child components.
+- Automatically ensure a Redaktion profile for every eligible non-development
+  technician/editor user. Seed available image/avatar/name from OAuth, but let the user
+  override every public field, including displayed name, without changing auth identity.
+- Improve AI reporter public profiles and keep their public identity distinct from
+  provider/prompt/runtime configuration.
+
+Exit condition: navigation patterns are predictable across deep links, LeagueSystem
+switching is part of normal app navigation, match cards are fully localized, and human
+and AI Redaktion profiles have a coherent editable/public identity model.
+
+### R3 — Remaining AI product work
 
 The identity/context/provider/article/reaction foundation is implemented. Continue in
 this order:
@@ -70,7 +94,7 @@ this order:
 Do not reimplement provider adapters, social/memory persistence, article generation,
 generation traces or semantic reaction selection.
 
-### R3 — Production hardening
+### R4 — Production hardening
 
 - Finish hermetic server-profile/CI verification where external coupling remains.
 - Resolve B-012's typed failure-contract decision before replacing ambiguous

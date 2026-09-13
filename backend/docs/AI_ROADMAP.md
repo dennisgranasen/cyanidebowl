@@ -28,6 +28,23 @@ roadmap work:
 See `AI_ARCHITECTURE.md`, `AI_CONTEXT_PERSISTENCE.md`,
 `AI_REPORT_GENERATION.md` and `MATCH_ARTICLES.md` for the contracts.
 
+## Parallel profile work — B-031
+
+AI reporter public profiles need a dedicated editorial-quality pass. This work is
+independent of the generation sequence below and should not block A1-A4.
+
+- improve biography/profile copy and structured public information for each reporter;
+- make personality, editorial role, affiliations and voice visible in the public
+  profile;
+- keep portrait/avatar and profile metadata consistent across Redaktion and authored
+  content;
+- keep public profile identity separate from provider/model/prompt/runtime
+  configuration;
+- provide graceful fallbacks for incomplete profile metadata.
+
+This work must reuse the canonical AI `User` identity rather than introducing a second
+reporter identity model.
+
 ## Active sequence
 
 ### A1 / B-018 residual — Domain semantics and memory policy
