@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import WarpScoresApiService from '../WarpScoresApiService';
 import Roster from '../components/team/Roster';
 import TeamSupporters from '../components/team/TeamSupporters';
+import CommentThread from '../components/community/CommentThread';
 import prettyPrint from '../util/prettyPrint';
 import Navigation from '../components/misc/Navigation';
 import formatter from '../util/formatter';
@@ -131,6 +132,10 @@ function TeamPage() {
         <LoadingOrErrorWrapper loading={loadingMatches} error={matchesError}>
           <Matches matches={matches} />
         </LoadingOrErrorWrapper>
+      </Box>
+      <Box w="full">
+        <Heading size="md" mb={3}>Kommentarer</Heading>
+        <CommentThread targetType="TEAM" targetId={teamId} />
       </Box>
     </VStack>
   );

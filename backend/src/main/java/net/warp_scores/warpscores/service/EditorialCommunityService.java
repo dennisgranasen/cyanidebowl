@@ -7,6 +7,7 @@ import net.warp_scores.warpscores.ai.scheduling.AiPublishedArticleStaffWorkProdu
 import net.warp_scores.warpscores.ai.reporting.ReporterSocialContinuityService;
 import net.warp_scores.warpscores.domain.persistence.*;
 import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.IdentityUtil;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.*;
 import org.springframework.data.domain.PageRequest;
@@ -41,6 +42,7 @@ public class EditorialCommunityService {
     private final MatchPlayerParticipationRepository participation;
     private final MatchPlayerRatingRepository ratings;
     private final MatchRepository matches;
+    private final TeamRepository teams;
     private final StageSourceRepository stageSources;
     private final WarpScoresUserRepository users;
     private final CoachClaimRepository coachClaims;
@@ -156,9 +158,6 @@ public class EditorialCommunityService {
     }
 
     public List<CommunityComment> comments(CommunityComment.TargetType type, String targetId) {
-        if (type == CommunityComment.TargetType.TEAM) {
-            throw new IllegalStateException("Team comments are disabled until canonical team endpoint work is complete");
-        }
         return comments.findByTargetTypeAndTargetIdOrderByCreatedAtAsc(type, targetId);
     }
 
@@ -170,9 +169,6 @@ public class EditorialCommunityService {
     public CommunityComment addComment(Authentication auth, CommunityComment.TargetType type,
                                        String targetId, String body, String replyToCommentId) {
         requireAuthenticated(auth);
-        if (type == CommunityComment.TargetType.TEAM) {
-            throw new IllegalStateException("Team comments are disabled until canonical team endpoint work is complete");
-        }
         if (!StringUtils.hasText(body)) throw new IllegalArgumentException("body is required");
         if (body.length() > 10000) throw new IllegalArgumentException("comment exceeds 10000 characters");
 
@@ -215,6 +211,12 @@ public class EditorialCommunityService {
             MatchContext ctx = matchContext(auth, targetId);
             comment.setLeagueSystemId(ctx.leagueSystemId());
             comment.setAuthorContext(ctx.commentContext());
+        } else if (type == CommunityComment.TargetType.TEAM) {
+            String leagueSystemId = teamLeagueSystemId(targetId);
+            comment.setLeagueSystemId(leagueSystemId);
+            comment.setAuthorContext(StringUtils.hasText(leagueSystemId) && canEdit(auth, leagueSystemId)
+                    ? CommunityComment.AuthorContext.EDITOR
+                    : CommunityComment.AuthorContext.USER);
         }
 
         CommunityComment saved = comments.save(comment);
@@ -413,6 +415,26 @@ public class EditorialCommunityService {
         return Objects.equals(ownTeam, playerTeamId)
                 ? MatchPlayerRating.RaterContext.OWN_COACH
                 : MatchPlayerRating.RaterContext.OPPONENT_COACH;
+    }
+
+    private String teamLeagueSystemId(String teamId) {
+        Team team;
+        try {
+            team = teams.findById(IdentityUtil.fromId(teamId))
+                    .orElseThrow(() -> new NoSuchElementException("Team not found"));
+        } catch (IllegalArgumentException ex) {
+            throw new NoSuchElementException("Team not found");
+        }
+
+        Identity[] competitionIds = team.getCompetitionIds();
+        if (competitionIds == null) return null;
+        return Arrays.stream(competitionIds)
+                .filter(Objects::nonNull)
+                .flatMap(competitionId -> stageSources.findBySourceEntityId(competitionId).stream())
+                .map(StageSource::getLeagueSystemId)
+                .filter(StringUtils::hasText)
+                .findFirst()
+                .orElse(null);
     }
 
     private MatchContext matchContext(Authentication auth, String matchId) {
