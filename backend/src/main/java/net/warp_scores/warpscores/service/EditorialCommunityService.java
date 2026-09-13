@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.service;
 
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.ai.interaction.MatchArticleAiInteractionService;
+import net.warp_scores.warpscores.ai.interaction.AiCommunityFanInteractionService;
 import net.warp_scores.warpscores.ai.reporting.ReporterSocialContinuityService;
 import net.warp_scores.warpscores.domain.persistence.*;
 import net.warp_scores.warpscores.identity.Identity;
@@ -44,6 +45,7 @@ public class EditorialCommunityService {
     private final CoachClaimRepository coachClaims;
     private final UserPermissionService permissions;
     private final MatchArticleAiInteractionService articleAiInteractions;
+    private final AiCommunityFanInteractionService fanInteractions;
     private final ReporterSocialContinuityService reporterSocialContinuity;
 
     public record ReactionSummary(long pow, long doublePow, long triplePow,
@@ -57,7 +59,8 @@ public class EditorialCommunityService {
     public record ArticleInput(String leagueSystemId, String seasonId, String title, String slug,
                                String excerpt, String bodyHtml, String coverImageUrl,
                                Article.Status status, boolean featured,
-                               List<String> channels, List<String> tags, String legacySource) {}
+                               List<String> channels, List<String> tags,
+                               List<String> teamIds, String legacySource) {}
 
     public List<Article> publishedArticles(String leagueSystemId, int limit) {
         int size = Math.max(1, Math.min(limit, 100));
@@ -87,6 +90,7 @@ public class EditorialCommunityService {
         articles.findBySlug(slug).filter(existing -> !Objects.equals(existing.getId(), id))
                 .ifPresent(existing -> { throw new IllegalArgumentException("slug already exists"); });
 
+        boolean wasPublished = article.getStatus() == Article.Status.PUBLISHED;
         UserRef user = currentUser(auth);
         Instant now = Instant.now();
         if (article.getId() == null) {
@@ -111,12 +115,23 @@ public class EditorialCommunityService {
         article.setFeatured(input.featured());
         article.setChannels(input.channels() == null ? List.of() : List.copyOf(input.channels()));
         article.setTags(input.tags() == null ? List.of() : List.copyOf(input.tags()));
+        article.setTeamIds(input.teamIds() == null
+                ? List.of()
+                : input.teamIds().stream()
+                        .filter(StringUtils::hasText)
+                        .map(String::trim)
+                        .distinct()
+                        .toList());
         article.setLegacySource(trimToNull(input.legacySource()));
         article.setUpdatedAt(now);
         if (article.getStatus() == Article.Status.PUBLISHED && article.getPublishedAt() == null) {
             article.setPublishedAt(now);
         }
-        return articles.save(article);
+        Article saved = articles.save(article);
+        if (!wasPublished && saved.getStatus() == Article.Status.PUBLISHED) {
+            fanInteractions.onArticlePublished(saved);
+        }
+        return saved;
     }
 
     public List<Article> importLegacy(Authentication auth, List<ArticleInput> inputs) {
@@ -203,6 +218,7 @@ public class EditorialCommunityService {
         if (saved.getTargetType() == CommunityComment.TargetType.MATCH_ARTICLE) {
             articleAiInteractions.onHumanComment(saved);
         }
+        fanInteractions.onHumanComment(saved);
         return saved;
     }
 

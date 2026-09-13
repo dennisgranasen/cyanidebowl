@@ -382,6 +382,25 @@ disabled capability and retry/idempotency behavior.
 
 ### B-016 — AI scheduling, quotas and cost control
 
+**B-016d fan interaction integration**
+
+- General articles carry explicit canonical `teamIds`; fan affinity is never inferred
+  from article titles, prose or free-form tags.
+- Active `COMMUNITY_MEMBER` profiles may comment on published general articles according
+  to the B-016c fan policy, with own-team relevance determined from `teamIds`.
+- Fans comment on published match articles only when their canonical supported team is
+  one of the match teams.
+- Human comments on general articles, match articles and match threads can trigger fan
+  replies through the same fan policy.
+- `HOME_COACH` / `AWAY_COACH` author context is matched to canonical match team order, so
+  the "always when my coach writes" rule only applies to fans of that coach's team.
+- Fan-generated comments use the existing `CommunityComment`, canonical fan user identity,
+  canonical context assembly, generation provenance and global `LlmExecutionService`
+  admission/provider path. Fans are not converted into `AiReporterDefinition`s.
+- Independent unsolicited comments directly on a match still require the later scheduler
+  candidate source; B-016d does not invent a match event source.
+
+
 **B-016c initiative policy foundation**
 
 - Staff initiative is independently configurable for general articles, match articles,

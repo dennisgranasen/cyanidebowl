@@ -1,5 +1,6 @@
 package net.warp_scores.warpscores.service;
 
+import net.warp_scores.warpscores.ai.interaction.AiCommunityFanInteractionService;
 import net.warp_scores.warpscores.ai.interaction.MatchArticleAiInteractionService;
 import net.warp_scores.warpscores.ai.reporting.ReporterSocialContinuityService;
 import net.warp_scores.warpscores.domain.persistence.*;
@@ -27,11 +28,13 @@ class EditorialCommunityReplyTest {
     private final CoachClaimRepository coachClaims = mock(CoachClaimRepository.class);
     private final UserPermissionService permissions = mock(UserPermissionService.class);
     private final MatchArticleAiInteractionService interactions = mock(MatchArticleAiInteractionService.class);
+    private final AiCommunityFanInteractionService fanInteractions = mock(AiCommunityFanInteractionService.class);
     private final ReporterSocialContinuityService continuity = mock(ReporterSocialContinuityService.class);
 
     private final EditorialCommunityService service = new EditorialCommunityService(
             articles, matchArticles, comments, reactions, participation, ratings,
-            matches, stageSources, users, coachClaims, permissions, interactions, continuity);
+            matches, stageSources, users, coachClaims, permissions, interactions,
+            fanInteractions, continuity);
 
     @Test
     void replyMustBelongToSameThread() {

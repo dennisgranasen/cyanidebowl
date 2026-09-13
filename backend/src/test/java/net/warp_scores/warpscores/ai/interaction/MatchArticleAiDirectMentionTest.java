@@ -50,6 +50,8 @@ class MatchArticleAiDirectMentionTest {
             mock(ReporterAutonomousActivityGate.class);
     private final AiInitiativePolicyService initiativePolicy =
             mock(AiInitiativePolicyService.class);
+    private final AiCommunityFanInteractionService fanInteractions =
+            mock(AiCommunityFanInteractionService.class);
 
     private final MatchArticleAiInteractionService service =
             new MatchArticleAiInteractionService(
@@ -64,7 +66,8 @@ class MatchArticleAiDirectMentionTest {
                     matchArticles,
                     continuity,
                     autonomousActivity,
-                    initiativePolicy);
+                    initiativePolicy,
+                    fanInteractions);
 
     @Test
     void exactAliasAndReporterIdTagsAreRecognized() {

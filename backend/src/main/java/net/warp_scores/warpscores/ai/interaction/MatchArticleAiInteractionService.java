@@ -51,9 +51,11 @@ public class MatchArticleAiInteractionService {
     private final ReporterSocialContinuityService continuity;
     private final ReporterAutonomousActivityGate autonomousActivity;
     private final AiInitiativePolicyService initiativePolicy;
+    private final AiCommunityFanInteractionService fanInteractions;
 
     @Async
     public void onPublished(MatchArticle article) {
+        fanInteractions.onMatchArticlePublished(article);
         if (article == null
                 || article.getStatus() != MatchArticle.Status.PUBLISHED
                 || !StringUtils.hasText(article.getId())) {

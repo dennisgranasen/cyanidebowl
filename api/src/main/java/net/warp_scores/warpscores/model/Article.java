@@ -51,6 +51,13 @@ public class Article {
     private boolean featured;
     private List<String> channels = new ArrayList<>();
     private List<String> tags = new ArrayList<>();
+
+    /**
+     * Canonical team ids explicitly associated with this article.
+     * Never infer team relevance from title/body/tags.
+     */
+    private List<String> teamIds = new ArrayList<>();
+
     private String legacySource;
     private Instant createdAt;
     private Instant updatedAt;

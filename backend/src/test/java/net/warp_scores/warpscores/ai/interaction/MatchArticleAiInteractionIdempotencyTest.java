@@ -34,10 +34,11 @@ class MatchArticleAiInteractionIdempotencyTest {
     private final ReporterSocialContinuityService continuity = mock(ReporterSocialContinuityService.class);
     private final ReporterAutonomousActivityGate autonomousActivity = mock(ReporterAutonomousActivityGate.class);
     private final AiInitiativePolicyService initiativePolicy = mock(AiInitiativePolicyService.class);
+    private final AiCommunityFanInteractionService fanInteractions = mock(AiCommunityFanInteractionService.class);
 
     private final MatchArticleAiInteractionService service = new MatchArticleAiInteractionService(
             profiles, policy, reactionDecisions, planner, assembly, llm,
-            comments, reactions, matchArticles, continuity, autonomousActivity, initiativePolicy);
+            comments, reactions, matchArticles, continuity, autonomousActivity, initiativePolicy, fanInteractions);
 
     @Test
     void existingReplySourceRevisionPreventsDuplicateLlmGeneration() {

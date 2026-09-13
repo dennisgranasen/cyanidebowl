@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added team-affine AI fan interactions: general articles support explicit canonical
+  team links, and active fan identities can comment/reply on eligible articles and match
+  threads, including deterministic own-coach affinity without turning fans into reporters.
+
 - Added AI initiative policy with site defaults and LeagueSystem-scoped editor overrides;
   Staff autonomy and team-affine fan commenting are modeled separately with safe defaults.
 

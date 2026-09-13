@@ -596,7 +596,7 @@ const sv = {
   'localizationAdmin.save': 'Spara standardspråk',
   'localizationAdmin.saved': 'Standardspråket har sparats.',
   'localizationAdmin.saveError': 'Det gick inte att spara standardspråket.',
-  'home.tagline': 'Blödareblaskans omutliga(?) resultatförmedlingstjänst',
+  'home.tagline': 'Blödareblaskans omutbara(?) resultatförmedlingstjänst',
   'common.unknown': 'Okänd',
   'common.unknownPlayer': 'Okänd spelare',
   'common.unknownTeam': 'Okänt lag',
