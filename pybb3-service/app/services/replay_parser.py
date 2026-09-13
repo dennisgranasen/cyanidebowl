@@ -16,7 +16,7 @@ from app.services.replay_statistics import aggregate_actions, event_statistics
 from app.services.replay_timeline import build_replay_timeline
 from app.services.replay_player_identity import build_player_index
 
-PARSER_VERSION = 18
+PARSER_VERSION = 19
 INTEGER = re.compile(r"^-?(?:0|[1-9][0-9]*)$")
 RESOURCE_MARKERS = ("reroll", "apothec", "wizard", "spell")
 SPECIAL_MARKERS = (
@@ -202,6 +202,13 @@ def _dice(
                 event, label, inherited_player_id, inherited_target_player_id
             )
             team_id = context.get("playerTeams", {}).get(player_id) if player_id is not None else None
+        if roll_type == Bb3RollType.ArgueTheCall and explicit_team_id is None:
+            # Argue the Call belongs to the coach of the acting/sent-off
+            # player. ActiveTeam may already have advanced to the opponent.
+            owner_player_id = player_id if player_id is not None else inherited_player_id
+            owner_team_id = context.get("playerTeams", {}).get(owner_player_id)
+            if owner_team_id is not None:
+                team_id = owner_team_id
         # EventFanFactor contains HomeRoll and AwayRoll as separate Dice groups.
         if event.tag == "EventFanFactor" and len(groups) == 2:
             team_id = roll_index
@@ -268,7 +275,7 @@ def _decoded_sequence_dice(event: ET.Element, sequence: int, clock: Any, context
 def _semantic_results(label: str | None, die_type: int | None, values: list[Any]) -> list[int]:
     """Derive display results while retaining the original component dice."""
     numeric = [value for value in values if isinstance(value, int)]
-    if die_type == 0 and label in {"Armour", "Injury", "Weather"}:
+    if die_type == 0 and label in {"Armour", "Injury", "Weather", "Kick-off Table"}:
         if len(numeric) == 2:
             return [sum(numeric)]
         if len(numeric) > 2 and len(numeric) % 2 == 0:
