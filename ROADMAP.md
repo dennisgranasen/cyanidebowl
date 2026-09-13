@@ -88,20 +88,30 @@ Completed:
 
 New defects in these areas should be tracked as focused deltas rather than reopening R2.
 
-### R3 — Remaining AI product work
+### R3 — AI/community follow-up
 
-The identity/context/provider/article/reaction foundation is implemented. Continue in
-this order:
+The original B-019/B-020 sequencing is complete and the broad B-016 operational
+foundation is implemented. Do not reopen those cards as green-field work.
 
-1. finish semantic projection of mechanical data into in-universe domain facts;
-2. define automatic memory-write/summarization policy;
-3. implement B-019 Dedicated Fans population reconciliation;
-4. close B-020 with one deterministic direct-tag/direct-interaction textual flow;
-5. only then implement B-016 autonomous scheduling, quotas, budgets, retries,
-   idempotency and kill switches.
+Current AI/community follow-up is limited to focused deltas:
 
-Do not reimplement provider adapters, social/memory persistence, article generation,
-generation traces or semantic reaction selection.
+- Dedicated Fan profile generation is AI-only: provider failure leaves the reconciliation
+  job queued rather than creating a deterministic fallback identity;
+- human-facing Dedicated Fan profile text follows the Site Admin default locale;
+- Dedicated Fan population rebuilds are explicitly admin-queued rather than automatically
+  scanned at startup;
+- Cloudflare Workers AI is the default community image renderer, with OpenAI available as
+  an explicit alternate provider;
+- the current Dedicated Fan `RATE_LIMIT` protection is a fixed global worker cooldown.
+  Replace it later with provider-aware exponential backoff/jitter and quota-exhaustion
+  handling rather than tuning a permanent magic interval;
+- add further B-016 autonomous candidate producers only for concrete domain events where
+  the product explicitly wants autonomous activity;
+- monetary cost accounting remains deferred until provider/model pricing metadata is
+  explicit and versioned.
+
+The next broad product sequence is therefore R1 replay work and R4 production hardening,
+not reconstruction of the completed AI foundations.
 
 ### R4 — Production hardening
 

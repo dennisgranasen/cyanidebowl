@@ -38,10 +38,28 @@ Do not use old `main` behavior as the basis for implementation work.
 
 **B-019j — AI-generated Dedicated Fan profiles**
 
-- Gemini is the normal author of new Dedicated Fan identities through `LlmExecutionService`; the deterministic generator is fallback only.
-- Fan concepts are encoded as creative policy/inspiration rather than fixed name/archetype/ritual tables. Roster-derived species remains a hard validated constraint.
-- Existing same-team fans are diversity context to discourage duplicate names, roles, hooks and appearances.
-- Population reconciliation is queued per team and processed in the background. Admin reset removes generated profiles/media/assets, preserves canonical AI users/history, then queues a clean Gemini rebuild.
+- Gemini is the normal author of new Dedicated Fan identities through `LlmExecutionService`.
+- AI profile-generation failures do **not** create deterministic fallback identities. The
+  reconciliation job remains queued and retries later so persistent fan identities are
+  never silently downgraded because a provider is temporarily unavailable.
+- Fan concepts are encoded as creative policy/inspiration rather than fixed
+  name/archetype/ritual tables. Roster-derived species remains a hard validated constraint.
+- Existing same-team fans are diversity context to discourage duplicate names, roles,
+  hooks and appearances.
+- Human-facing generated profile fields use the site's canonical
+  `LocalizationService.defaultLocale()` value. Canonical species/domain values remain
+  language-neutral and image-generation prompts remain English.
+- Population reconciliation is queued per team and processed in the background only
+  after an explicit admin queue/reset action; startup no longer performs an automatic
+  full population scan.
+- Gemini `RATE_LIMIT` failures currently trigger one global Dedicated Fan worker cooldown
+  (configurable through `FAN_RATE_LIMIT_COOLDOWN`, currently defaulting to 2m) before
+  queued work resumes.
+- **Follow-up:** replace the fixed rate-limit cooldown with provider-aware exponential
+  backoff/jitter and distinguish transient rate limiting from quota exhaustion when the
+  provider contract exposes enough detail.
+- Admin reset removes generated profiles/media/assets, preserves canonical AI users/history,
+  then queues a clean Gemini rebuild.
 
 
 **B-019b generated public fan profiles and loyalty changes**
@@ -64,11 +82,15 @@ Do not use old `main` behavior as the basis for implementation work.
   the superseded local file to prevent unbounded media-volume growth.
 
 
-- B-019e: queued PROFILE_IMAGE/AVATAR requests are rendered by a scheduled OpenAI Images
-  worker when `AI_API_KEY_OPENAI` is configured. Assets are stored under the configurable
+- B-019e: queued PROFILE_IMAGE/AVATAR requests are rendered by the configured
+  `AiCommunityImageRenderer`. Cloudflare Workers AI is the current default provider;
+  OpenAI remains an explicit alternate provider.
+- Cloudflare configuration uses `CLOUDFLARE_ACCOUNT_ID`, `AI_API_KEY_CLOUDFLARE` and the
+  configurable Workers AI image model. Assets are stored under the configurable
   community-media storage directory and served publicly from `/community/media/assets/**`.
-- Default image model is `gpt-image-2.5-sunburst`; model, quality, poll interval and storage
-  directory are configuration properties. Missing API key leaves requests queued.
+- Provider failures are classified as retryable/non-retryable so durable media requests
+  can retry transient failures without endlessly retrying permanent quota/configuration
+  failures.
 - B-019f: `/admin/community-fans` is a full Site Admin UI for filtering/editing profiles,
   personality sliders, population settings, media status/regeneration and manual sync.
 - B-019g: Team pages show active generated community supporters and link each fan to the
@@ -79,10 +101,13 @@ Do not use old `main` behavior as the basis for implementation work.
 - Main menu and breadcrumb navigation include Community.
 - Profile image/avatar generation uses durable renderer-neutral media requests. New/enriched
   fans queue PROFILE_IMAGE and AVATAR requests when no asset exists; Site Admin can regenerate.
-- Periodic population reconciliation polls hourly and runs when the DB-configured interval is due.
-- Defaults: reconciliation enabled, 24-hour interval. Site Admin can configure enabled/interval.
-- Match-finalization reconciliation remains immediate, covering both match-driven changes and
-  Dedicated Fans purchased between matches.
+- Full population reconciliation is not started automatically at backend startup and no
+  periodic full scan is currently scheduled. Site Admin explicitly queues reconciliation
+  or reset/rebuild work.
+- Durable queued reconciliation jobs still survive restarts and are consumed by the
+  background worker.
+- Match-finalization reconciliation remains immediate for match-driven Dedicated Fans
+  changes.
 
 
 - Fan profiles now also carry a supporter archetype, generated profile-photo brief and
@@ -114,7 +139,7 @@ Do not use old `main` behavior as the basis for implementation work.
 | P2 | B-031 | AI reporter public profiles are improved | Done |
 | P2 | B-035 | BB1 and BB2 replays use the normalized replay pipeline | Backlog |
 | P2 | B-034 | Replays can be reconstructed and visualized interactively | Depends on B-033/B-035 |
-| P2 | B-016 | AI scheduling, quotas and cost controls | Deferred until B-019/B-020 |
+| P2 | B-016 | AI scheduling, quotas and cost controls | Core foundation done; focused follow-up remains |
 | P2 | B-027 | Raspberry Pi operational runbook is complete | Partial |
 | P3 | B-012 | Broad null/exception fallbacks become typed outcomes | Blocked on policy decision |
 | P3 | B-015 | Team comment streams | Blocked on canonical team identity |
@@ -453,6 +478,21 @@ Focused tests cover alias/id tags, false-positive boundaries, deterministic gene
 disabled capability and retry/idempotency behavior.
 
 ### B-016 — AI scheduling, quotas and cost control
+
+**B-016 current state**
+
+The broad foundation is implemented: generation admission/budgets, per-reporter activity
+policy, initiative policy, durable autonomous work queue, finalized-match fan candidates
+and general-article Staff comment candidates. Remaining work is deliberately narrower:
+
+- add further autonomous candidate producers only for concrete domain events where the
+  product explicitly wants autonomous activity;
+- add autonomous article candidates only when a canonical domain source exists;
+- add monetary cost accounting only when provider/model pricing metadata is explicit and
+  versioned;
+- improve provider-aware rate-limit/backpressure policy; Dedicated Fan generation currently
+  uses a fixed global cooldown as an operational stopgap.
+
 
 **B-016e durable autonomous work queue**
 

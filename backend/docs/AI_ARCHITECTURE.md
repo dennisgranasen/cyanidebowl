@@ -359,8 +359,24 @@ trigger
   -> persist generation provenance
 ```
 
-Scheduling, quotas and cost control are later operational layers around this pipeline,
-not substitutes for it.
+Scheduling, quotas and cost control are operational layers around this pipeline, not
+substitutes for it.
+
+### Retry and backpressure policy
+
+Provider/transient failure must not silently change persistent AI identity semantics.
+For Dedicated Fan profile creation in particular, a failed LLM call leaves the
+reconciliation work pending for retry; it must not substitute a deterministic identity
+merely because the provider is temporarily unavailable.
+
+The current Dedicated Fan worker uses a configurable fixed global cooldown after a
+normalized `RATE_LIMIT` failure. This is an operational stopgap, not the final provider
+policy. A later hardening pass should use provider-aware exponential backoff with jitter
+and distinguish transient throttling from quota exhaustion where the normalized provider
+error contract supports it.
+
+Retry/backpressure state belongs to operational work/queue/provider layers. It must not
+be persisted as persona identity or leak into public profiles.
 
 ### Implemented canonical seams
 

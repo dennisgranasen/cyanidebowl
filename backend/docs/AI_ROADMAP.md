@@ -47,59 +47,51 @@ reporter identity model.
 
 ## Active sequence
 
-### A1 / B-018 residual — Domain semantics and memory policy
+### Completed sequence — B-018/B-019/B-020 and B-016 foundation
 
-Persistence and context assembly already exist. Remaining work is policy/semantics:
+The earlier A1-A4 dependency chain is no longer the active execution plan.
 
-- project mechanical replay/game facts into in-universe sporting facts before provider
-  invocation;
-- define when memories are written, summarized, superseded or retained;
-- keep attributed discourse/memory separate from authoritative domain facts;
-- keep direct social flows on the same canonical context/provenance path.
+Implemented foundations now include:
 
-Exit condition: AI-facing context needs no feature-local mechanical prompt cleanup, and
-memory writes have one explicit/testable policy.
+- canonical domain/context semantics and memory persistence/policy seams;
+- Dedicated Fans population reconciliation and durable canonical identities;
+- AI-generated Dedicated Fan profiles with roster-constrained species, locale-aware
+  human-facing profile text and stable visual identity;
+- deterministic direct textual interaction through the canonical community path;
+- generation admission/budgets, per-reporter autonomous activity policy, initiative
+  policy and durable autonomous work queue;
+- finalized-match fan candidates and general-article Staff comment candidates;
+- durable community media queue with Cloudflare Workers AI as the default renderer.
 
-### A2 / B-019 — Dedicated Fans population reconciliation
+### Current focused follow-up
 
-Map team Dedicated Fans to persistent team-affine AI community identities.
+1. **Dedicated Fan operational verification**
+   - keep AI profile generation fail-closed: provider failures remain queued for retry
+     and never create deterministic fallback identities;
+   - keep startup/manual semantics explicit: full fan reconciliation begins from Site
+     Admin queue/reset actions, while already queued jobs remain durable across restart;
+   - verify profile/avatar consistency and Community Fans admin navigation end to end.
 
-- create clear team-affine personas on first reconciliation;
-- reactivate matching inactive identities before creating new ones;
-- deactivate surplus identities without deletion;
-- preserve posts, reactions, memories, relationships and provenance;
-- keep population reconciliation independent from content scheduling.
+2. **Rate-limit/backpressure follow-up**
+   - current Dedicated Fan `RATE_LIMIT` handling uses a configurable fixed global worker
+     cooldown as an operational stopgap;
+   - replace it later with provider-aware exponential backoff with jitter;
+   - distinguish transient rate limiting from quota exhaustion when normalized provider
+     error metadata makes that distinction reliable;
+   - avoid provider-specific retry policy leaking into canonical identity/profile models.
 
-Exit condition: create/reactivate/deactivate/unchanged are idempotent and require no
-provider/network access in unit tests.
+3. **B-016 incremental expansion**
+   - add autonomous candidate producers only for concrete domain events approved by the
+     product;
+   - do not invent topic discovery or generic polling;
+   - add monetary cost accounting only after explicit/versioned provider-model pricing
+     metadata exists.
 
-### A3 / B-020 residual — Deterministic direct textual interaction
+### Next broad work
 
-Article generation and AI article/comment interaction paths already exist. Close one
-narrow deterministic direct interaction:
-
-- explicit direct tag or equivalent deterministic trigger;
-- canonical context assembly;
-- canonical provider execution;
-- persisted provenance;
-- one persisted textual response through existing community primitives;
-- retry/idempotency protection against duplicate responses.
-
-Do not create a parallel AI comment model or a new provider abstraction.
-
-### A4 / B-016 — Autonomous scheduling and cost control
-
-Only after A1–A3 are stable:
-
-- queues/backpressure and scheduling;
-- per-user/global quotas and cooldowns;
-- provider/token/cost budgets;
-- retry/idempotency policy;
-- admin visibility and kill switches;
-- deterministic priority for direct tags.
-
-Editor-triggered article generation remains distinct from autonomous generation until
-this layer is implemented and explicitly enabled.
+After the focused AI/community verification above, broad feature work should return to
+the replay platform (`B-025`, `B-033`, `B-035`, then `B-034`) and production hardening.
+Do not recreate completed provider, context, community or scheduling foundations.
 
 ## Non-negotiable invariants
 
