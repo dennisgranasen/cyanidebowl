@@ -38,7 +38,7 @@ class UserProfileServiceTest {
     }
 
     @Test
-    void laterOauthLoginDoesNotOverwriteInitializedPublicProfile() {
+    void laterOauthLoginRefreshesLoginMetadataWithoutOverwritingInitializedPublicProfile() {
         WarpScoresUser existing = new WarpScoresUser();
         existing.setId(7L);
         existing.setAuthSubject("auth0|123");
@@ -64,7 +64,10 @@ class UserProfileServiceTest {
         assertThat(result.getPublicAvatarUrl()).isEqualTo("https://local.test/avatar.png");
         assertThat(result.getPublicPortraitUrl()).isEqualTo("https://local.test/portrait.png");
         assertThat(result.getPublicBio()).isEqualTo("Local biography");
-        verify(repository, never()).save(any());
+        assertThat(result.getEmail()).isEqualTo("new@example.com");
+        assertThat(result.getUsername()).isEqualTo("Changed OAuth Name");
+        assertThat(result.getProvider()).isEqualTo("auth0");
+        verify(repository).save(existing);
     }
 
     @Test
@@ -95,8 +98,8 @@ class UserProfileServiceTest {
         assertThat(updated.getPublicBio()).isEqualTo("Public biography");
 
         assertThat(updated.getAuthSubject()).isEqualTo("auth0|stable");
-        assertThat(updated.getEmail()).isEqualTo("stable@example.com");
-        assertThat(updated.getUsername()).isEqualTo("stable-login");
+        assertThat(updated.getEmail()).isEqualTo("ignored@example.com");
+        assertThat(updated.getUsername()).isEqualTo("Ignored OAuth Name");
         assertThat(updated.getSiteEditor()).isTrue();
     }
 
@@ -105,7 +108,9 @@ class UserProfileServiceTest {
         WarpScoresUser existing = new WarpScoresUser();
         existing.setId(10L);
         existing.setAuthSubject("auth0|validation");
-        existing.setUsername("validation-user");
+        existing.setUsername("Validation");
+        existing.setEmail("validation@example.com");
+        existing.setProvider("auth0");
         existing.setStaffProfileInitialized(true);
         when(repository.findByAuthSubject("auth0|validation")).thenReturn(Optional.of(existing));
         Jwt jwt = jwt("auth0|validation", "validation@example.com", "Validation", null, null);

@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.service;
 
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.domain.persistence.WarpScoresUserRepository;
+import net.warp_scores.warpscores.model.AccountType;
 import net.warp_scores.warpscores.model.WarpScoresUser;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -30,9 +32,10 @@ public class UserProfileService {
             created.setAuthSubject(subject);
             created.setEmail(email);
             created.setUsername(first(jwt.getClaimAsString("name"), jwt.getClaimAsString("nickname")));
-            created.setProvider(subject.contains("|") ? subject.substring(0, subject.indexOf('|')) : "oidc");
+            created.setProvider(provider(subject));
             return repository.save(created);
         });
+        refreshAuthenticationIdentity(user, jwt);
         return initializeStaffProfile(user, jwt);
     }
 
@@ -57,6 +60,35 @@ public class UserProfileService {
         user.setPublicPortraitUrl(cleanPublicUrl(portraitUrl, "portraitUrl"));
         user.setPublicBio(cleanLimited(bio, STAFF_BIO_MAX, "bio"));
         return repository.save(user);
+    }
+
+    private void refreshAuthenticationIdentity(WarpScoresUser user, Jwt jwt) {
+        if (user.effectiveAccountType() != AccountType.HUMAN) return;
+
+        String email = clean(jwt.getClaimAsString("email"));
+        String username = first(clean(jwt.getClaimAsString("name")), clean(jwt.getClaimAsString("nickname")));
+        String provider = provider(jwt.getSubject());
+
+        boolean changed = false;
+        if (email != null && !Objects.equals(user.getEmail(), email)) {
+            user.setEmail(email);
+            changed = true;
+        }
+        if (username != null && !Objects.equals(user.getUsername(), username)) {
+            user.setUsername(username);
+            changed = true;
+        }
+        if (!Objects.equals(user.getProvider(), provider)) {
+            user.setProvider(provider);
+            changed = true;
+        }
+        if (changed) repository.save(user);
+    }
+
+    private String provider(String subject) {
+        return subject != null && subject.contains("|")
+                ? subject.substring(0, subject.indexOf('|'))
+                : "oidc";
     }
 
     private WarpScoresUser initializeStaffProfile(WarpScoresUser user, Jwt jwt) {

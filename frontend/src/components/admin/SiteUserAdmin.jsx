@@ -54,11 +54,11 @@ export default function SiteUserAdmin({ auth }) {
     <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={4}>
       <Box>
         <Select value={selectedId} onChange={event => selectUser(event.target.value)}>
-          {users.map(user => <option key={user.id} value={user.id}>{user.username || user.email || user.id}</option>)}
+          {users.map(user => <option key={user.id} value={user.id}>{user.displayName}</option>)}
         </Select>
       </Box>
       {draft && <VStack align="stretch">
-        <Text fontWeight="semibold">{draft.username || draft.email}</Text>
+        <Text fontWeight="semibold">{draft.displayName}</Text>
         <Text fontSize="sm" color="gray.500">{draft.email || intl.formatMessage({ id: 'adminUsers.noEmail' })} · {draft.provider || intl.formatMessage({ id: 'adminUsers.unknownProvider' })}</Text>
         <Checkbox isChecked={Boolean(draft.siteAdmin)} onChange={e => set('siteAdmin', e.target.checked)}>{intl.formatMessage({ id: 'adminUsers.siteAdmin' })}</Checkbox>
         <Checkbox isChecked={Boolean(draft.leagueAdmin)} onChange={e => set('leagueAdmin', e.target.checked)}>{intl.formatMessage({ id: 'adminUsers.allSystemsAdmin' })}</Checkbox>

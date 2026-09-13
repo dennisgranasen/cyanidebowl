@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.domain.persistence.WarpScoresUserRepository;
+import net.warp_scores.warpscores.model.AccountType;
 import net.warp_scores.warpscores.model.WarpScoresUser;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,16 +24,18 @@ public class AdminUserController {
     @GetMapping
     public List<UserView> users() {
         return users.findAll().stream()
-                .sorted(Comparator.comparing(user -> user.getUsername() == null ? "" : user.getUsername(),
-                        String.CASE_INSENSITIVE_ORDER))
+                .filter(user -> user.effectiveAccountType() == AccountType.HUMAN)
                 .map(UserView::from)
+                .sorted(Comparator.comparing(UserView::displayName, String.CASE_INSENSITIVE_ORDER))
                 .toList();
     }
 
     @PutMapping("/{userId}/permissions")
     public ResponseEntity<UserView> permissions(@PathVariable Long userId,
             @RequestBody PermissionUpdate update) {
-        return users.findById(userId).map(user -> {
+        return users.findById(userId)
+                .filter(user -> user.effectiveAccountType() == AccountType.HUMAN)
+                .map(user -> {
             user.setSiteAdmin(Boolean.TRUE.equals(update.siteAdmin()));
             user.setLeagueAdmin(Boolean.TRUE.equals(update.leagueAdmin()));
             user.setRegisterLeague(Boolean.TRUE.equals(update.registerLeague()));
@@ -46,15 +49,29 @@ public class AdminUserController {
     public record PermissionUpdate(Boolean siteAdmin, Boolean leagueAdmin, Boolean registerLeague,
             List<String> adminForLeagueSystems) {}
 
-    public record UserView(Long id, String username, String email, String provider,
+    public record UserView(String id, String displayName, String username, String email, String provider,
             boolean siteAdmin, boolean leagueAdmin, boolean registerLeague,
             List<String> adminForLeagueSystems) {
         static UserView from(WarpScoresUser user) {
-            return new UserView(user.getId(), user.getUsername(), user.getEmail(), user.getProvider(),
+            String id = user.getId() == null ? "" : Long.toString(user.getId());
+            String displayName = firstNonBlank(
+                    user.getPublicDisplayName(),
+                    user.getUsername(),
+                    user.getEmail(),
+                    user.getAuthSubject(),
+                    id);
+            return new UserView(id, displayName, user.getUsername(), user.getEmail(), user.getProvider(),
                     Boolean.TRUE.equals(user.getSiteAdmin()),
                     Boolean.TRUE.equals(user.getLeagueAdmin()),
                     Boolean.TRUE.equals(user.getRegisterLeague()),
                     user.getAdminForLeagueSystems() == null ? List.of() : List.copyOf(user.getAdminForLeagueSystems()));
+        }
+
+        private static String firstNonBlank(String... values) {
+            for (String value : values) {
+                if (value != null && !value.isBlank()) return value;
+            }
+            return "";
         }
     }
 }
