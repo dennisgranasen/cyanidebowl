@@ -8,6 +8,7 @@ import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.AiCommunityMemberProfile;
 import net.warp_scores.warpscores.model.Player;
 import net.warp_scores.warpscores.model.Team;
+import net.warp_scores.warpscores.service.LocalizationService;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -23,12 +24,14 @@ class DedicatedFanAiProfileGeneratorTest {
         LlmExecutionService llm = mock(LlmExecutionService.class);
         AiCommunityMemberProfileRepository profiles = mock(AiCommunityMemberProfileRepository.class);
         DedicatedFanProfileGenerator fallback = mock(DedicatedFanProfileGenerator.class);
+        LocalizationService localization = mock(LocalizationService.class);
+        when(localization.defaultLocale()).thenReturn("sv");
         when(profiles.findByTeamIdOrderByOrdinalAsc(any())).thenReturn(List.of());
         when(llm.generate(eq(DedicatedFanAiProfileGenerator.ROUTING_ID), any()))
                 .thenReturn(new CanonicalLlmResponse("gemini", "gemini-test", "req", json(), null, "STOP"));
 
         DedicatedFanAiProfileGenerator generator = new DedicatedFanAiProfileGenerator(
-                llm, new ObjectMapper(), profiles, fallback);
+                llm, new ObjectMapper(), profiles, fallback, localization);
         Team team = team();
         AiCommunityMemberProfile profile = new AiCommunityMemberProfile();
         profile.setId("community:test:1");
@@ -41,6 +44,16 @@ class DedicatedFanAiProfileGeneratorTest {
         assertThat(profile.getDisplayName()).isEqualTo("Skritch Third Pint");
         assertThat(profile.getSpecies()).isEqualTo("Skaven");
         assertThat(profile.getBio().length()).isGreaterThan(160);
+        verify(llm).generate(
+                eq(DedicatedFanAiProfileGenerator.ROUTING_ID),
+                argThat(request ->
+                        request.taskInstruction().contains("site's default locale: sv")
+                                && request.taskInstruction().contains(
+                                        "species MUST remain the exact canonical value")
+                                && request.taskInstruction().contains(
+                                        "profileImagePrompt and avatarPrompt MUST be written")
+                                && request.taskInstruction().contains(
+                                        "in English because they are internal prompts")));
         verifyNoInteractions(fallback);
     }
 

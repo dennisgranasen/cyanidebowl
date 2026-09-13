@@ -23,7 +23,18 @@ public class AiCommunityMediaAssetController {
 
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.maxAge(30, TimeUnit.DAYS).cachePublic())
-                .contentType(MediaType.IMAGE_PNG)
+                .contentType(contentType(filename))
                 .body(resource);
+    }
+
+    private static MediaType contentType(String filename) {
+        String lower = filename.toLowerCase();
+        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) {
+            return MediaType.IMAGE_JPEG;
+        }
+        if (lower.endsWith(".webp")) {
+            return MediaType.parseMediaType("image/webp");
+        }
+        return MediaType.IMAGE_PNG;
     }
 }

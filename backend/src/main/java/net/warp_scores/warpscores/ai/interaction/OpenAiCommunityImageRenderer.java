@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.warp_scores.warpscores.model.AiCommunityMediaGenerationRequest;
 import net.warp_scores.warpscores.ai.provider.openai.OpenAiNativeProviderProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -17,6 +18,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Component
+@ConditionalOnProperty(
+        name = "warpscores.ai.community-media.provider",
+        havingValue = "openai")
 public class OpenAiCommunityImageRenderer implements AiCommunityImageRenderer {
     private static final URI ENDPOINT =
             URI.create("https://api.openai.com/v1/images/generations");
@@ -76,10 +80,20 @@ public class OpenAiCommunityImageRenderer implements AiCommunityImageRenderer {
                 httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
-            throw new IllegalStateException(
+            String bodyText = response.body() == null ? "" : response.body();
+            boolean quotaExhausted =
+                    bodyText.contains("credit_balance_exhausted")
+                            || bodyText.contains("insufficient_quota");
+            boolean retryable =
+                    !quotaExhausted
+                            && (response.statusCode() == 408
+                            || response.statusCode() == 429
+                            || response.statusCode() >= 500);
+            throw new AiCommunityImageProviderException(
                     "OpenAI image generation failed with HTTP "
                             + response.statusCode() + ": "
-                            + truncate(response.body(), 500));
+                            + truncate(bodyText, 500),
+                    retryable);
         }
 
         JsonNode root = objectMapper.readTree(response.body());

@@ -12,6 +12,7 @@ import net.warp_scores.warpscores.ai.provider.OutputContract;
 import net.warp_scores.warpscores.domain.persistence.AiCommunityMemberProfileRepository;
 import net.warp_scores.warpscores.model.AiCommunityMemberProfile;
 import net.warp_scores.warpscores.model.Team;
+import net.warp_scores.warpscores.service.LocalizationService;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -31,9 +32,11 @@ public class DedicatedFanAiProfileGenerator {
     private final ObjectMapper objectMapper;
     private final AiCommunityMemberProfileRepository profiles;
     private final DedicatedFanProfileGenerator fallback;
+    private final LocalizationService localization;
 
     public void populateNewProfile(AiCommunityMemberProfile profile, Team team, int ordinal) {
         DedicatedFanProfilePolicy policy = policy(profile, team);
+        String siteDefaultLocale = localization.defaultLocale();
         try {
             var response = llm.generate(
                     ROUTING_ID,
@@ -48,9 +51,9 @@ public class DedicatedFanAiProfileGenerator {
                                     Map.of(),
                                     0,
                                     0),
-                            instruction(policy, ordinal),
+                            instruction(policy, ordinal, siteDefaultLocale),
                             new OutputContract(OutputContract.Format.JSON, schema()),
-                            new GenerationOptions(1.15, 1800)));
+                            new GenerationOptions(0.95, 5000)));
 
             Draft draft = objectMapper.readValue(response.content(), Draft.class);
             validate(draft, policy);
@@ -100,7 +103,10 @@ public class DedicatedFanAiProfileGenerator {
                 DedicatedFanProfilePolicy.defaultCreativePolicy());
     }
 
-    private String instruction(DedicatedFanProfilePolicy policy, int ordinal) {
+    private String instruction(
+            DedicatedFanProfilePolicy policy,
+            int ordinal,
+            String siteDefaultLocale) {
         try {
             return """
                     Generate one new persistent Dedicated Fan profile.
@@ -111,8 +117,18 @@ public class DedicatedFanAiProfileGenerator {
 
                     Hard requirements:
                     - species MUST be exactly one value from allowedSpecies.
+                    - Human-facing profile fields MUST be written in the site's default locale: %s.
+                      This applies to supporterArchetype, ageGroup, bio, location, occupation,
+                      favoriteFood, favoriteDrink, favoriteChant, matchdayRitual, petPeeve
+                      and supporterQuirk.
+                    - displayName is a fantasy proper name. Do not translate an existing name
+                      or force it into a modern real-world naming convention.
+                    - species MUST remain the exact canonical value from allowedSpecies,
+                      regardless of the site's language.
+                    - appearanceBrief, profileImagePrompt and avatarPrompt MUST be written
+                      in English because they are internal prompts for downstream image generation.
                     - numerical personality fields MUST be numbers from 0.0 to 1.0.
-                    - bio should normally be 120-350 words and contain concrete personal detail.
+                    - bio should normally be 120-220 words and contain concrete personal detail.
                     - displayName, bio, appearanceBrief, profileImagePrompt and avatarPrompt must be non-empty.
                     - profileImagePrompt and avatarPrompt must describe the SAME person defined by appearanceBrief.
                     - Avoid duplicating existing supporters.
@@ -122,7 +138,10 @@ public class DedicatedFanAiProfileGenerator {
 
                     Policy and team context:
                     %s
-                    """.formatted(ordinal, objectMapper.writeValueAsString(policy));
+                    """.formatted(
+                    siteDefaultLocale,
+                    ordinal,
+                    objectMapper.writeValueAsString(policy));
         } catch (Exception e) {
             throw new IllegalStateException("Could not serialize Dedicated Fan policy", e);
         }

@@ -113,6 +113,12 @@ warpscores:
         api-key: ${AI_API_KEY_OPENAI:}
         image-model: ${OPENAI_IMAGE_MODEL:gpt-image-2}
         timeout: ${OPENAI_IMAGE_TIMEOUT:3m}
+      cloudflare:
+        account-id: ${CLOUDFLARE_ACCOUNT_ID:}
+        api-key: ${AI_API_KEY_CLOUDFLARE:}
+        image-model: ${CLOUDFLARE_IMAGE_MODEL:@cf/black-forest-labs/flux-1-schnell}
+        timeout: ${CLOUDFLARE_IMAGE_TIMEOUT:3m}
+        image-steps: ${CLOUDFLARE_IMAGE_STEPS:4}
         #local-llm:
         #  base-url: http://localhost:8000/v1
         #  api-key: ${AI_API_KEY_LOCAL:}
@@ -128,7 +134,7 @@ warpscores:
         model: openrouter/free
 
     community-media:
-      provider: openai
+      provider: ${COMMUNITY_MEDIA_PROVIDER:cloudflare}
       quality: ${COMMUNITY_MEDIA_QUALITY:low}
       storage-dir: ${COMMUNITY_MEDIA_STORAGE_DIR:/data/community-media}
       poll-ms: ${COMMUNITY_MEDIA_POLL_MS:30000}

@@ -20,30 +20,11 @@ public class DedicatedFansPeriodicReconciliationService {
     private final DedicatedFansCommunityReconciliationService reconciliation;
     private final DedicatedFanReconciliationQueueService queue;
 
-    @Scheduled(
-            fixedDelayString = "${warpscores.ai.fans.reconcile-poll-ms:3600000}",
-            initialDelayString = "${warpscores.ai.fans.reconcile-initial-delay-ms:60000}")
-    public void poll() {
-        AiSettings settings = settingsRepository.findById(AiSettings.GLOBAL_ID)
-                .orElseGet(AiSettings::new);
-
-        if (!settings.isFanPopulationReconciliationEffectivelyEnabled()) return;
-
-        Instant now = Instant.now();
-        Instant last = settings.getFanPopulationLastReconciledAt();
-        Duration interval = Duration.ofHours(
-                settings.effectiveFanPopulationReconciliationIntervalHours());
-
-        if (last != null && last.plus(interval).isAfter(now)) return;
-
-        var summary = enqueueNow();
-
-        log.info(
-                "Periodic Dedicated Fans reconciliation queued; {} teams scanned, {} new jobs queued",
-                summary.scannedTeams(),
-                summary.queuedTeams());
-    }
-
+    /**
+     * No automatic population scan. New fan work is created only by explicit
+     * admin actions (Queue fan sync / Reset generated fans). Existing queued
+     * jobs are still processed by the background worker.
+     */
     public DedicatedFanReconciliationQueueService.QueueSummary enqueueNow() {
         var summary = queue.enqueueAll();
         AiSettings currentSettings = settingsRepository.findById(AiSettings.GLOBAL_ID)

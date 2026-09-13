@@ -102,7 +102,12 @@ public class AiCommunityMediaWorker {
                     maxAttempts,
                     e.getMessage());
 
-            if (request.getAttempts() >= Math.max(1, maxAttempts)) {
+            boolean retryable =
+                    !(e instanceof AiCommunityImageProviderException providerFailure)
+                            || providerFailure.isRetryable();
+
+            if (!retryable
+                    || request.getAttempts() >= Math.max(1, maxAttempts)) {
                 terminalFail(request, e.getMessage());
             } else {
                 requeue(request, e.getMessage());
