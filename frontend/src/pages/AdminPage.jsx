@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Button, Checkbox, FormControl, FormLabel, Heading, HStack, IconButton, Input, Select, SimpleGrid, Text, Tooltip, VStack } from '@chakra-ui/react';
 import { SearchIcon } from '@chakra-ui/icons';
 import { useNavigate } from 'react-router-dom';
@@ -68,6 +68,8 @@ function AdminPage() {
   const [sourceMatches, setSourceMatches] = useState([]);
   const [sourceMatchesLoading, setSourceMatchesLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [fanSyncLoading, setFanSyncLoading] = useState(false);
+  const [fanSyncResult, setFanSyncResult] = useState(null);
   const auth = [getAccessTokenSilently, getAccessTokenWithPopup];
   const fail = (reason) => setError(reason?.message || String(reason));
   const loadSystems = () => WarpScoresApiService.leagueSystems(...auth).then(setSystems).catch(fail);
@@ -114,6 +116,19 @@ function AdminPage() {
     }
   }, [authenticationReady, isAuthenticated, checkPermissions, navigate, userPermissions.writeSiteAdmin, userPermissions.writeLeagueAdmin]);
 
+  const syncCommunityFansNow = async () => {
+    setFanSyncLoading(true);
+    setFanSyncResult(null);
+    setError(null);
+    try {
+      const result = await WarpScoresApiService.reconcileCommunityFansNow(...auth);
+      setFanSyncResult(result);
+    } catch (reason) {
+      fail(reason);
+    } finally {
+      setFanSyncLoading(false);
+    }
+  };
   const saveSystem = () => (selectedSystemId ? WarpScoresApiService.updateLeagueSystem(selectedSystemId, system, ...auth) : WarpScoresApiService.createLeagueSystem(system, ...auth)).then((item) => { loadSystems(); selectSystem(item); }).catch(fail);
   const saveSeason = () => { if (!selectedSystemId) return; const data = { ...season, number: numberOrNull(season.number) }; if (!selectedSeasonId) delete data.id; (selectedSeasonId ? WarpScoresApiService.updateSeason(selectedSeasonId, data, ...auth) : WarpScoresApiService.createSeason(selectedSystemId, data, ...auth)).then((item) => { WarpScoresApiService.seasons(selectedSystemId, ...auth).then(setSeasons); selectSeason(item); }).catch(fail); };
   const savePhase = () => { if (!selectedSeasonId) return; const data = { ...phase, sequence: numberOrNull(phase.sequence) }; (selectedPhaseId ? WarpScoresApiService.updatePhase(selectedPhaseId, data, ...auth) : WarpScoresApiService.createPhase(selectedSeasonId, data, ...auth)).then((item) => { WarpScoresApiService.phases(selectedSeasonId, ...auth).then(setPhases); selectPhase(item); }).catch(fail); };
@@ -227,6 +242,39 @@ function AdminPage() {
     <VStack align="stretch" spacing={5}>
       <Navigation currentPage="admin" />
       <HeaderCard mainImageSrc={imageUrls.blaskscoreLogoPng('medium')} heading="League Systems" subHeading="Manage seasons, stages, and match sources" />
+      {userPermissions.writeSiteAdmin && (
+        <Box borderWidth="1px" borderRadius="md" p={4}>
+          <HStack
+            justify="space-between"
+            align={{ base: 'stretch', md: 'center' }}
+            flexDirection={{ base: 'column', md: 'row' }}
+          >
+            <Box>
+              <Heading size="sm">Community fans</Heading>
+              <Text mt={1} color="gray.500" fontSize="sm">
+                Reconcile all team Dedicated Fans with community profiles immediately.
+              </Text>
+              {fanSyncResult && (
+                <Text
+                  mt={2}
+                  fontSize="sm"
+                  color={fanSyncResult.failedTeams ? 'orange.300' : 'green.300'}
+                >
+                  Scanned {fanSyncResult.scannedTeams} teams; changed {fanSyncResult.changedTeams}; failed {fanSyncResult.failedTeams}.
+                </Text>
+              )}
+            </Box>
+            <Button
+              colorScheme="purple"
+              isLoading={fanSyncLoading}
+              loadingText="Syncing"
+              onClick={syncCommunityFansNow}
+            >
+              Sync community fans now
+            </Button>
+          </HStack>
+        </Box>
+      )}
       {userPermissions.writeSiteAdmin && <ReplaySweeperAdmin auth={auth} />}
       {userPermissions.writeSiteAdmin && <SiteUserAdmin auth={auth} />}
       {userPermissions.writeSiteAdmin && (

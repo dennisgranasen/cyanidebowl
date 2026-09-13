@@ -102,6 +102,13 @@ export default {
   updateLocalization: async (data, getAccessTokenSilently, getAccessTokenWithPopup) =>
     putDataWithAuthentication('/admin/localization', data, getAccessTokenSilently, getAccessTokenWithPopup)
       .then(returnData).catch(handleError),
+  reconcileCommunityFansNow: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication(
+      '/admin/community-fans/reconcile-now',
+      {},
+      getAccessTokenSilently,
+      getAccessTokenWithPopup
+    ).then(returnData).catch(handleError),
 
 
   lookup: async(lookupFields, getAccessTokenSilently, getAccessTokenWithPopup) => {

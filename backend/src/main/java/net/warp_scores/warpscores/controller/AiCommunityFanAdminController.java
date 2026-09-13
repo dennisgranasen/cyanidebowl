@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.ai.interaction.AiCommunityFanMediaService;
+import net.warp_scores.warpscores.ai.interaction.DedicatedFansPeriodicReconciliationService;
 import net.warp_scores.warpscores.domain.persistence.AiCommunityMemberProfileRepository;
 import net.warp_scores.warpscores.domain.persistence.AiSettingsRepository;
 import net.warp_scores.warpscores.domain.persistence.WarpScoresUserRepository;
@@ -25,6 +26,7 @@ public class AiCommunityFanAdminController {
     private final AiSettingsRepository settings;
     private final WarpScoresUserRepository users;
     private final AiCommunityFanMediaService mediaService;
+    private final DedicatedFansPeriodicReconciliationService periodicReconciliation;
 
     @GetMapping
     public List<AiCommunityMemberProfile> list() {
@@ -74,6 +76,11 @@ public class AiCommunityFanAdminController {
             });
         }
         return saved;
+    }
+
+    @PostMapping("/reconcile-now")
+    public DedicatedFansPeriodicReconciliationService.ReconciliationSummary reconcileNow() {
+        return periodicReconciliation.runNow();
     }
 
     @GetMapping("/settings")

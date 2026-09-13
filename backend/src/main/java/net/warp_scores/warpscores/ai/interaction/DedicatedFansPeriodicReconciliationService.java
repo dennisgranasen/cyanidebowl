@@ -33,20 +33,45 @@ public class DedicatedFansPeriodicReconciliationService {
 
         if (last != null && last.plus(interval).isAfter(now)) return;
 
+        ReconciliationSummary summary = runNow();
+
+        log.info(
+                "Periodic Dedicated Fans reconciliation completed; {} of {} team populations changed",
+                summary.changedTeams(),
+                summary.scannedTeams());
+    }
+
+    public ReconciliationSummary runNow() {
+        int scanned = 0;
         int changed = 0;
+        int failed = 0;
+
         for (var team : teams.findAll()) {
+            scanned++;
             try {
                 var result = reconciliation.reconcile(team);
                 if (result.changed()) changed++;
             } catch (RuntimeException e) {
-                log.warn("Periodic Dedicated Fans reconciliation failed for team {}: {}",
-                        team.getId(), e.getMessage());
+                failed++;
+                log.warn(
+                        "Dedicated Fans reconciliation failed for team {}: {}",
+                        team.getId(),
+                        e.getMessage());
             }
         }
 
-        settings.setFanPopulationLastReconciledAt(now);
-        settingsRepository.save(settings);
-        log.info("Periodic Dedicated Fans reconciliation completed; {} team populations changed",
-                changed);
+        Instant completedAt = Instant.now();
+        AiSettings currentSettings = settingsRepository.findById(AiSettings.GLOBAL_ID)
+                .orElseGet(AiSettings::new);
+        currentSettings.setFanPopulationLastReconciledAt(completedAt);
+        settingsRepository.save(currentSettings);
+
+        return new ReconciliationSummary(scanned, changed, failed, completedAt);
     }
+
+    public record ReconciliationSummary(
+            int scannedTeams,
+            int changedTeams,
+            int failedTeams,
+            Instant completedAt) {}
 }
