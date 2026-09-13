@@ -71,6 +71,8 @@ public class FetchDataService {
     @Autowired
     private TeamDomainService teamDomainService;
     @Autowired
+    private net.warp_scores.warpscores.ai.interaction.DedicatedFansCommunityReconciliationService dedicatedFansCommunity;
+    @Autowired
     private MatchRepository matchRepository;
     @Autowired
     private PyBb3MatchDiscoveryService pyBb3MatchDiscoveryService;
@@ -305,8 +307,12 @@ public class FetchDataService {
         log.debug("Updating {} teams from the repository.", teams.size());
         teams.stream()
                 .filter(Objects::nonNull)
-                .forEach(team -> 
+                .forEach(team ->
                         cyanideApiService.loadTeam(team.getId(), true, ofNullable(true)));
+
+        // Re-read persisted teams after refresh so Dedicated Fans uses the latest
+        // known team state. Reconciliation itself is deterministic and local-only.
+        dedicatedFansCommunity.reconcileAll();
     }
 
     public void fetchCompetitionContestData() {

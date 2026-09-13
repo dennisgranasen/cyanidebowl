@@ -34,7 +34,7 @@ Do not use old `main` behavior as the basis for implementation work.
 | P1 | B-025 | Versioned pybb3 timeline/skill-reroll contract is consumed safely | Integration pending upstream |
 | P1 | B-033 | Replay parsing is stable and regression-tested | Backlog |
 | P1 | B-032 | Human editors have editable public Staff profiles | Done |
-| P1 | B-019 | Dedicated Fans population reconciliation | Backlog |
+| P1 | B-019 | Dedicated Fans population reconciliation | Done |
 | P1 | B-020 | Deterministic direct AI textual interaction | Partial |
 | P2 | B-028 | Legacy Circuit hierarchy retired; canonical navigation remains | Done |
 | P2 | B-029 | LeagueSystem selection lives in the primary navigation | Done |
@@ -333,21 +333,27 @@ Remaining:
 
 ### B-019 — Dedicated Fans community population reconciliation
 
-**Status: Backlog — prerequisite for B-016**
+**Status: Done**
 
-- desired active AI-backed `COMMUNITY_MEMBER` population equals team Dedicated Fans
-  value;
-- first reconciliation creates clear team-affine personas;
-- increases reactivate inactive matching identities before creating new identities;
-- decreases deactivate surplus identities without deletion;
-- preserve authored history, reactions, memory, relationships and provenance.
+Dedicated Fans owns the desired active population of persistent AI-backed
+`COMMUNITY_MEMBER` profiles for each team.
 
-**Acceptance criteria**
+Implemented:
 
-- supports create/reactivate/deactivate/unchanged;
-- unchanged input is idempotent;
-- reactivation preserves canonical user identity;
-- reconciliation tests require no provider, scheduler or network access.
+- canonical identity remains `WarpScoresUser` with `AccountType.AI`;
+- `AiCommunityMemberProfile` stores only community role, team affinity,
+  deterministic persona seed and lifecycle state;
+- active population equals the latest known non-null `Team.dedicatedFans` value;
+- increases reactivate inactive profiles before creating new canonical users;
+- decreases deactivate surplus profiles and never delete either profiles or users;
+- reactivation preserves the original canonical user ID and therefore authored
+  history, reactions, memory/relationships and provenance references;
+- null/unknown Dedicated Fans values are non-destructive and skip reconciliation;
+- scheduled team refreshes reconcile after refreshed team data has been persisted;
+- reconciliation is deterministic/local and has no provider or network dependency.
+
+Focused regression coverage protects create/reactivate/deactivate/idempotent behavior,
+canonical user-ID preservation, non-deletion and HUMAN/AI subject collision handling.
 
 ### B-020 — Deterministic direct AI textual interaction
 

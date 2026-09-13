@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added Dedicated Fans community reconciliation: each team's latest known Dedicated Fans
+  value controls a persistent AI-backed COMMUNITY_MEMBER population, reactivating identities
+  before creating new ones and deactivating surplus members without deleting history.
+
 - AI article generation now preserves replay chronology in context while explicitly
   forbidding technical turn/round counters in published prose; reporters must translate
   those values into natural in-world timing when chronology matters.
