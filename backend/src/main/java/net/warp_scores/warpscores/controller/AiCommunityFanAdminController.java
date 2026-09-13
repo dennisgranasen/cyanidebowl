@@ -30,7 +30,9 @@ public class AiCommunityFanAdminController {
     }
 
     @PutMapping("/{id}")
-    public AiCommunityMemberProfile update(@PathVariable String id, @RequestBody ProfileUpdate update) {
+    public AiCommunityMemberProfile update(
+            @PathVariable String id,
+            @RequestBody ProfileUpdate update) {
         if (update == null) throw new IllegalArgumentException("profile payload is required");
 
         AiCommunityMemberProfile profile = profiles.findById(id)
@@ -44,6 +46,12 @@ public class AiCommunityFanAdminController {
         profile.setFavoriteFood(text(update.favoriteFood()));
         profile.setFavoriteDrink(text(update.favoriteDrink()));
         profile.setFavoriteChant(text(update.favoriteChant()));
+        profile.setSupporterArchetype(text(update.supporterArchetype()));
+        profile.setTeamColors(text(update.teamColors()));
+        profile.setProfileImagePrompt(text(update.profileImagePrompt()));
+        profile.setAvatarPrompt(text(update.avatarPrompt()));
+        profile.setProfileImageUrl(text(update.profileImageUrl()));
+        profile.setAvatarImageUrl(text(update.avatarImageUrl()));
         profile.setOptimism(probability("optimism", update.optimism()));
         profile.setCoachPatience(probability("coachPatience", update.coachPatience()));
         profile.setPlayerPatience(probability("playerPatience", update.playerPatience()));
@@ -68,15 +76,20 @@ public class AiCommunityFanAdminController {
 
     @GetMapping("/settings")
     public FanSettings settings() {
-        AiSettings global = settings.findById(AiSettings.GLOBAL_ID).orElseGet(AiSettings::new);
+        AiSettings global = settings.findById(AiSettings.GLOBAL_ID)
+                .orElseGet(AiSettings::new);
         return new FanSettings(global.effectiveFanLoyaltySwitchProbability());
     }
 
     @PutMapping("/settings")
     public FanSettings updateSettings(@RequestBody FanSettings update) {
         if (update == null) throw new IllegalArgumentException("settings payload is required");
-        double value = probability("loyaltySwitchProbability", update.loyaltySwitchProbability());
-        AiSettings global = settings.findById(AiSettings.GLOBAL_ID).orElseGet(AiSettings::new);
+        double value = probability(
+                "loyaltySwitchProbability",
+                update.loyaltySwitchProbability());
+
+        AiSettings global = settings.findById(AiSettings.GLOBAL_ID)
+                .orElseGet(AiSettings::new);
         global.setFanLoyaltySwitchProbability(value);
         settings.save(global);
         return new FanSettings(value);
@@ -93,6 +106,12 @@ public class AiCommunityFanAdminController {
             String favoriteFood,
             String favoriteDrink,
             String favoriteChant,
+            String supporterArchetype,
+            String teamColors,
+            String profileImagePrompt,
+            String avatarPrompt,
+            String profileImageUrl,
+            String avatarImageUrl,
             double optimism,
             double coachPatience,
             double playerPatience,

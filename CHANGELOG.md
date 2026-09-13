@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added fan visual profile briefs and avatar/profile-photo metadata, including broad
+  supporter archetypes and team-colour hints for future image generation.
+
 - Added generated public Dedicated Fan profiles with behavioural personality dimensions,
   Site Admin editing and configurable loyalty switches when opponent fan counts move in
   opposite directions after a match.

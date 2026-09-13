@@ -38,6 +38,18 @@ Do not use old `main` behavior as the basis for implementation work.
 
 **B-019b generated public fan profiles and loyalty changes**
 
+**B-019c fan visual profiles**
+
+- Fan profiles now also carry a supporter archetype, generated profile-photo brief and
+  generated avatar brief.
+- Archetypes intentionally cover a broad supporter population: pub regulars, stadium
+  travellers, home supporters, family supporters, youth supporters, amateur players,
+  reserve hopefuls and former players.
+- Team color hints are derived from team data when available and used in visual briefs.
+- Site Admin can edit visual/profile-image fields directly.
+- This slice prepares actual media generation without tying the backend to one renderer.
+
+
 - Dedicated Fan population continues to reconcile against canonical `Team.dedicatedFans`.
 - New fans receive deterministic lightweight public profiles with species, bio, location,
   occupation, terrace preferences and behavioural dimensions.

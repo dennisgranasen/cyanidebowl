@@ -5,10 +5,14 @@ import net.warp_scores.warpscores.model.Team;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class DedicatedFanProfileGenerator {
@@ -39,8 +43,17 @@ public class DedicatedFanProfileGenerator {
             "Come on, you beauties!", "All the way!", "No fear, no mercy!",
             "We were here before the trophy!", "Sing when we're losing!");
 
-    public void initialize(AiCommunityMemberProfile profile, Team team, int ordinal) {
-        Random rng = new Random(stableSeed(teamId(team), ordinal));
+    private static final List<String> SUPPORTER_ARCHETYPES = List.of(
+            "pub regular", "pub regular", "stadium traveller", "home supporter",
+            "family supporter", "youth supporter", "amateur player",
+            "reserve hopeful", "former player");
+
+    public void initialize(
+            AiCommunityMemberProfile profile,
+            Team team,
+            int ordinal) {
+        long seed = stableSeed(teamId(team), ordinal);
+        Random rng = new Random(seed);
 
         profile.setSpecies(species(team, rng));
         profile.setDisplayName(name(rng));
@@ -49,6 +62,8 @@ public class DedicatedFanProfileGenerator {
         profile.setFavoriteFood(pick(FOODS, rng));
         profile.setFavoriteDrink(pick(DRINKS, rng));
         profile.setFavoriteChant(pick(CHANTS, rng));
+        profile.setSupporterArchetype(pick(SUPPORTER_ARCHETYPES, rng));
+        profile.setTeamColors(colorHint(team));
 
         String persona = profile.getPersonaKey() == null ? "die-hard" : profile.getPersonaKey();
         double optimism = around(rng, 0.64, 0.28);
@@ -95,6 +110,20 @@ public class DedicatedFanProfileGenerator {
             matchFocus = Math.min(matchFocus, 0.42);
         }
 
+        if ("former player".equals(profile.getSupporterArchetype())) {
+            tactics = Math.max(tactics, 0.70);
+            matchFocus = Math.max(matchFocus, 0.72);
+        } else if ("amateur player".equals(profile.getSupporterArchetype())
+                || "reserve hopeful".equals(profile.getSupporterArchetype())) {
+            tactics = Math.max(tactics, 0.66);
+        } else if ("youth supporter".equals(profile.getSupporterArchetype())) {
+            chant = Math.max(chant, 0.66);
+            optimism = Math.max(optimism, 0.68);
+        } else if ("family supporter".equals(profile.getSupporterArchetype())) {
+            coachPatience = Math.max(coachPatience, 0.58);
+            playerPatience = Math.max(playerPatience, 0.58);
+        }
+
         profile.setOptimism(clamp(optimism));
         profile.setCoachPatience(clamp(coachPatience));
         profile.setPlayerPatience(clamp(playerPatience));
@@ -105,11 +134,14 @@ public class DedicatedFanProfileGenerator {
         profile.setTrashTalk(clamp(trash));
         profile.setSuperstition(clamp(superstition));
         profile.setBio(bio(profile, team));
+        profile.setProfileImagePrompt(profileImagePrompt(profile, team));
+        profile.setAvatarPrompt(avatarPrompt(profile, team));
     }
 
-    public void fillMissing(AiCommunityMemberProfile profile, Team team) {
+    public void fillMissing(
+            AiCommunityMemberProfile profile,
+            Team team) {
         if (profile == null || team == null) return;
-
         AiCommunityMemberProfile generated = new AiCommunityMemberProfile();
         generated.setPersonaKey(profile.getPersonaKey());
         initialize(generated, team, Math.max(1, profile.getOrdinal()));
@@ -121,6 +153,18 @@ public class DedicatedFanProfileGenerator {
         if (!StringUtils.hasText(profile.getFavoriteFood())) profile.setFavoriteFood(generated.getFavoriteFood());
         if (!StringUtils.hasText(profile.getFavoriteDrink())) profile.setFavoriteDrink(generated.getFavoriteDrink());
         if (!StringUtils.hasText(profile.getFavoriteChant())) profile.setFavoriteChant(generated.getFavoriteChant());
+        if (!StringUtils.hasText(profile.getSupporterArchetype())) {
+            profile.setSupporterArchetype(generated.getSupporterArchetype());
+        }
+        if (!StringUtils.hasText(profile.getTeamColors())) {
+            profile.setTeamColors(generated.getTeamColors());
+        }
+        if (!StringUtils.hasText(profile.getProfileImagePrompt())) {
+            profile.setProfileImagePrompt(generated.getProfileImagePrompt());
+        }
+        if (!StringUtils.hasText(profile.getAvatarPrompt())) {
+            profile.setAvatarPrompt(generated.getAvatarPrompt());
+        }
 
         if (!StringUtils.hasText(profile.getDisplayName())
                 || profile.getDisplayName().matches(".* supporter #[0-9]+$")) {
@@ -204,6 +248,25 @@ public class DedicatedFanProfileGenerator {
     private static String bio(AiCommunityMemberProfile p, Team team) {
         String teamName = team != null && StringUtils.hasText(team.getName())
                 ? team.getName().trim() : "the team";
+        String archetype = StringUtils.hasText(p.getSupporterArchetype())
+                ? p.getSupporterArchetype() : "supporter";
+
+        if ("former player".equals(archetype)) {
+            return "Former player turned " + teamName
+                    + " supporter. Still sees the game through old bruises.";
+        }
+        if ("amateur player".equals(archetype) || "reserve hopeful".equals(archetype)) {
+            return "Supports " + teamName
+                    + " while dreaming about doing it on the pitch one day.";
+        }
+        if ("youth supporter".equals(archetype)) {
+            return "Young " + teamName
+                    + " supporter who lives for scarves, songs and matchday excitement.";
+        }
+        if ("family supporter".equals(archetype)) {
+            return "Family-first " + teamName
+                    + " supporter who treats matchday like a shared ritual.";
+        }
         if (p.getFoodDrinkInterest() > 0.75 && p.getMatchFocus() < 0.5) {
             return "Mostly here for " + p.getFavoriteFood() + ", " + p.getFavoriteDrink()
                     + " and singing for " + teamName + ".";
@@ -218,6 +281,70 @@ public class DedicatedFanProfileGenerator {
             return teamName + " supporter. Loud on the terrace, even louder after a win.";
         }
         return "Long-time " + teamName + " supporter. Takes the good days and bad days personally.";
+    }
+
+    private static String profileImagePrompt(
+            AiCommunityMemberProfile profile,
+            Team team) {
+        String teamName = value(team == null ? null : team.getName(), "the team");
+        String species = value(profile.getSpecies(), "supporter");
+        String colors = value(profile.getTeamColors(), "team colours");
+        String name = value(profile.getDisplayName(), "this fan");
+        String location = value(profile.getLocation(), "town");
+        String occupation = value(profile.getOccupation(), "local supporter");
+        String archetype = value(profile.getSupporterArchetype(), "supporter");
+        String base = "Create a candid, believable social-media profile photo of "
+                + name + ", a " + species + " " + archetype + " of " + teamName + ". "
+                + name + " is from " + location + " and works as " + occupation + ". ";
+
+        return switch (archetype) {
+            case "pub regular" -> base
+                    + "Scene: inside a cosy tavern or bar, watching Cabalvision with friends, "
+                    + "cheering for " + teamName + ", wearing a scarf or clothing in "
+                    + colors + ". Natural, warm, Facebook-like photo.";
+            case "stadium traveller" -> base
+                    + "Scene: on the way to the stadium or just outside it on matchday, "
+                    + "clearly excited, dressed in " + colors + ", realistic fan atmosphere.";
+            case "home supporter" -> base
+                    + "Scene: ordinary home environment, relaxed portrait at home, with subtle "
+                    + teamName + " memorabilia or colours " + colors + " visible.";
+            case "family supporter" -> base
+                    + "Scene: warm everyday home picture, optionally with partner, children or "
+                    + "other family members, showing shared support for " + teamName
+                    + " in " + colors + ".";
+            case "youth supporter" -> base
+                    + "Scene: younger fan, enthusiastic and genuine, on a street, at home or near "
+                    + "the ground, oversized scarf or hat in " + colors + ".";
+            case "amateur player" -> base
+                    + "Scene: amateur or korpliga player vibe, maybe after training or a local "
+                    + "match, carrying boots or kit, still clearly a supporter of " + teamName
+                    + " through " + colors + ".";
+            case "reserve hopeful" -> base
+                    + "Scene: B-team or youth-team hopeful energy, somewhere between supporter and "
+                    + "wannabe player, on the way to training or the stadium, in " + colors + ".";
+            case "former player" -> base
+                    + "Scene: older ex-player or retired local hero, realistic portrait either at "
+                    + "home, outside the ground or in a pub, with a keepsake scarf or old shirt in "
+                    + colors + ".";
+            default -> base
+                    + "Scene: realistic supporter portrait with visible " + teamName
+                    + " support and hints of " + colors + ".";
+        };
+    }
+
+    private static String avatarPrompt(
+            AiCommunityMemberProfile profile,
+            Team team) {
+        String teamName = value(team == null ? null : team.getName(), "the team");
+        String species = value(profile.getSpecies(), "supporter");
+        String colors = value(profile.getTeamColors(), "team colours");
+        String name = value(profile.getDisplayName(), "this fan");
+        String archetype = value(profile.getSupporterArchetype(), "supporter");
+        return "Create a square avatar portrait of " + name + ", a " + species + " "
+                + archetype + " who supports " + teamName + ". Tight composition, clear face, "
+                + "friendly but distinctive expression, suitable as a community avatar. Include "
+                + "subtle hints of " + colors + " in scarf, clothing or accessories. Keep it "
+                + "characterful, readable and social-profile friendly.";
     }
 
     private static String name(Random rng) {
@@ -265,5 +392,48 @@ public class DedicatedFanProfileGenerator {
                 && p.getChantInterest() == 0.0
                 && p.getTrashTalk() == 0.0
                 && p.getSuperstition() == 0.0;
+    }
+
+    private static String colorHint(Team team) {
+        if (team == null) return "team colours";
+        Set<String> values = new LinkedHashSet<>();
+        addReflectiveColor(values, team, "getPrimaryColor");
+        addReflectiveColor(values, team, "getSecondaryColor");
+        addReflectiveColor(values, team, "getPrimaryColour");
+        addReflectiveColor(values, team, "getSecondaryColour");
+        addReflectiveColor(values, team, "getColor1");
+        addReflectiveColor(values, team, "getColor2");
+        addReflectiveColor(values, team, "getColours");
+        addReflectiveColor(values, team, "getColors");
+        addReflectiveColor(values, team, "getTeamColors");
+        if (values.isEmpty()) return "team colours";
+        return values.stream().filter(StringUtils::hasText).collect(Collectors.joining(" and "));
+    }
+
+    private static void addReflectiveColor(Set<String> target, Team team, String methodName) {
+        try {
+            Method method = team.getClass().getMethod(methodName);
+            Object value = method.invoke(team);
+            if (value == null) return;
+            if (value instanceof String s) {
+                if (StringUtils.hasText(s)) target.add(s.trim());
+            } else if (value instanceof Iterable<?> iterable) {
+                for (Object item : iterable) {
+                    if (item != null) {
+                        String s = item.toString();
+                        if (StringUtils.hasText(s)) target.add(s.trim());
+                    }
+                }
+            } else {
+                String s = value.toString();
+                if (StringUtils.hasText(s)) target.add(s.trim());
+            }
+        } catch (ReflectiveOperationException ignored) {
+            // Best-effort only. Team color model may vary.
+        }
+    }
+
+    private static String value(String value, String fallback) {
+        return StringUtils.hasText(value) ? value.trim() : fallback;
     }
 }
