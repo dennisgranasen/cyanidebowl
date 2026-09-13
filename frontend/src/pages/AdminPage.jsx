@@ -240,12 +240,20 @@ function AdminPage() {
                 Manage generated fan identities, personalities, media and population reconciliation.
               </Text>
             </Box>
-            <Button
-              colorScheme="purple"
-              onClick={() => navigate('/admin/community-fans')}
-            >
-              Manage community fans
-            </Button>
+            <HStack>
+              <Button
+                colorScheme="purple"
+                onClick={() => navigate('/admin/community-fans')}
+              >
+                Manage community fans
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => navigate('/admin/ai-autonomous-work')}
+              >
+                Autonomous AI work
+              </Button>
+            </HStack>
           </HStack>
         </Box>
       )}

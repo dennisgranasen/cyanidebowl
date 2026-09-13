@@ -54,6 +54,18 @@ const AiReporterApi = {
     return (await axios.put('/admin/ai-reporters/settings', data, auth)).data;
   },
 
+  autonomousWorkOverview: async (getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.get('/admin/ai-autonomous-work', auth)).data;
+  },
+
+  setAutonomousWorkEnabled: async (
+    enabled, getAccessTokenSilently, getAccessTokenWithPopup
+  ) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.put('/admin/ai-autonomous-work/enabled', { enabled }, auth)).data;
+  },
+
   updateRuntime: async (id, data, getAccessTokenSilently, getAccessTokenWithPopup) => {
     const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
     return (await axios.put(

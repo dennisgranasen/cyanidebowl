@@ -34,6 +34,7 @@ import LocalizationAdminPage from './pages/LocalizationAdminPage';
 import CommunityPage from './pages/CommunityPage';
 import CommunityProfilePage from './pages/CommunityProfilePage';
 import AdminCommunityFansPage from './pages/AdminCommunityFansPage';
+import AdminAiAutonomousWorkPage from './pages/AdminAiAutonomousWorkPage';
 
 import { MockAuth0Provider } from './components/misc/MockAuthProvider';
 
@@ -122,6 +123,7 @@ function AppRoutes() {
       <Route path="/admin" element={<ProtectedRoute component={AdminPage} />} />
       <Route path="/admin/ai-reporters" element={<ProtectedRoute component={AdminAiReportersPage} />} />
       <Route path="/admin/community-fans" element={<ProtectedRoute component={AdminCommunityFansPage} />} />
+      <Route path="/admin/ai-autonomous-work" element={<ProtectedRoute component={AdminAiAutonomousWorkPage} />} />
       <Route path="/editor/articles/new" element={<ProtectedRoute component={ArticleEditorPage} />} />
       </Routes>
     </MyTeamsProvider>
