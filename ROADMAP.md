@@ -13,8 +13,8 @@ in architecture/reference documentation and `CHANGELOG.md`, not in the execution
 The following capabilities are already present on `dev` and should not be recreated as
 future roadmap work:
 
-- `LeagueSystem -> Season -> Stage -> StageSource` domain model, read APIs and admin CRUD;
-- LeagueSystem-first public navigation with season/stage selection;
+- `LeagueSystem -> Season -> Phase -> Stage -> StageSource` domain model, read APIs and admin CRUD;
+- LeagueSystem-first public navigation with season/phase/stage selection;
 - deterministic round/group presentation with match-day reconstruction and independent
   group progress;
 - standings and playoff bracket rendering, including play-in/QF/SF/final/bronze,
@@ -94,8 +94,9 @@ unimplemented deployment milestone.
 - B-021 through B-024 are completed foundations. If a historical season, bracket,
   discovery candidate or match-detail record is wrong, create a focused regression/data
   defect rather than reopening those broad cards.
-- A separate `Phase` domain layer is not roadmap work unless a concrete competition
-  structure demonstrates that Season/Stage cannot represent it cleanly.
+- `Phase` is implemented foundation between `Season` and `Stage`. Preserve the
+  phase-aware hierarchy; phase-less stages exist only as legacy/compatibility data and
+  are not evidence that the Phase model still needs to be designed.
 - AI-backed authors are canonical users; provider/model is provenance, not identity.
 - AI narrative receives in-universe sporting facts rather than replay/parser/dice/RNG
   implementation terminology.

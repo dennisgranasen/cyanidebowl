@@ -13,7 +13,7 @@ Do not use old `main` behavior as the basis for implementation work.
 ## Rules for Codex
 
 1. Read every affected file completely before editing it.
-2. Preserve the existing `LeagueSystem`, `Season`, `Stage`, `StageSource`,
+2. Preserve the existing `LeagueSystem`, `Season`, `Phase`, `Stage`, `StageSource`,
    `MatchInterpretation`, archive-provider and match-adapter architecture.
 3. Preserve the canonical authorization model: Auth0 subject identifies the user,
    `coachClaims` are game-aware coach identities, `siteAdmin` is the super-role and
@@ -41,8 +41,8 @@ Do not use old `main` behavior as the basis for implementation work.
 
 Already implemented:
 
-- canonical LeagueSystem/Season/Stage/StageSource model and admin CRUD;
-- LeagueSystem-first public navigation;
+- canonical LeagueSystem/Season/Phase/Stage/StageSource model and admin CRUD;
+- LeagueSystem-first public navigation with phase-aware season structure;
 - deterministic round-robin match-day reconstruction, independent current rounds and
   latest-played-round selection in the LeagueSystem UI;
 - standings and playoff bracket presentation, including play-in/QF/SF/final/bronze
@@ -254,8 +254,10 @@ handoff documents:
 - B-014 editorial/community foundation;
 - B-017 canonical Human/AI user identity and provenance;
 - canonical AI retrieval/planning/provider foundations AI-003 through AI-008;
-- B-021 competition round/presentation correctness: round-robin match days are
-  reconstructed deterministically, latest played round is selected by default and
+- B-021 competition structure and round/presentation correctness: the
+  `Season -> Phase -> Stage` hierarchy is implemented, including phase-aware public
+  overview data and legacy compatibility for phase-less stages; round-robin match days
+  are reconstructed deterministically, latest played round is selected by default and
   regression coverage includes postponed matches that must not create extra rounds;
 - B-022 standings/playoff series correctness: standings, play-in/QF/SF/final/bronze
   bracket inference, duplicate handling and replay/rematch series are implemented with
