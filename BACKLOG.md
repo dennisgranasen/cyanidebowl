@@ -408,25 +408,23 @@ Implemented:
 Future copy changes are content edits to reporter definitions, not an open architecture
 feature.
 
-### B-018 residual — Domain semantic projection and memory-write policy
+### B-018 — Domain semantic projection and memory-write policy
 
-**Status: Partial foundation**
+**Status: Done**
 
-Already implemented:
+Implemented:
 
-- canonical context envelope;
-- deterministic retrieval/planning/assembly;
-- social relationship persistence;
-- memory persistence/retrieval;
-- canonical provider requests and provenance.
+- canonical context envelope and deterministic retrieval/planning/assembly;
+- social relationship and memory persistence/retrieval;
+- explicit memory write/summarization/supersession policy;
+- mechanical replay/game facts are projected into in-universe sporting facts before
+  narrative/provider use;
+- attributed discourse and memory remain distinct from authoritative domain facts;
+- direct social flows use the same canonical context/provenance path;
+- canonical provider requests and generation provenance remain separate from identity.
 
-Remaining:
-
-- translate mechanical replay/game data into in-universe sporting facts before provider
-  invocation;
-- define when memories are written, summarized, superseded or retained;
-- prevent attributed discourse/memory from being promoted to authoritative domain facts;
-- keep direct social flows on the canonical context/provenance path.
+Future semantic defects should be tracked as focused regressions rather than reopening
+B-018 as a broad architecture card.
 
 ### B-019 — Dedicated Fans community population reconciliation
 
@@ -479,168 +477,47 @@ disabled capability and retry/idempotency behavior.
 
 ### B-016 — AI scheduling, quotas and cost control
 
-**B-016 current state**
+**Status: Core foundation done; focused follow-up remains**
 
-The broad foundation is implemented: generation admission/budgets, per-reporter activity
-policy, initiative policy, durable autonomous work queue, finalized-match fan candidates
-and general-article Staff comment candidates. Remaining work is deliberately narrower:
+Implemented slices:
 
-- add further autonomous candidate producers only for concrete domain events where the
-  product explicitly wants autonomous activity;
-- add autonomous article candidates only when a canonical domain source exists;
-- add monetary cost accounting only when provider/model pricing metadata is explicit and
-  versioned;
-- improve provider-aware rate-limit/backpressure policy; Dedicated Fan generation currently
-  uses a fixed global cooldown as an operational stopgap.
+- **B-016a admission/budgets:** central `LlmExecutionService` admission, hard kill switch,
+  concurrency and daily generation/token budgets, plus admin usage visibility;
+- **B-016b autonomous activity policy:** persisted per-reporter ARTICLE/COMMENT/REACTION
+  quotas and cooldowns with UTC-day rollover; explicit direct tags bypass autonomous
+  activity quotas but not site-wide hard limits;
+- **B-016c initiative policy:** configurable Staff/fan initiative policy with scoped
+  LeagueSystem overrides and explicit eligibility/probability separation;
+- **B-016d fan interaction integration:** canonical team affinity, coach context and
+  existing community primitives for fan comments/replies;
+- **B-016e durable autonomous work queue:** Mongo-backed deduplicated candidates,
+  priority, leases/recovery, retry/backoff and admin observability;
+- **B-016f finalized-match fan candidate:** finalized matches can emit one stable
+  team-eligible fan candidate through the canonical queue/policy/provider path;
+- **B-016g general-article Staff comments:** first publication can emit stable queued
+  Staff comment candidates with idempotency, policy revalidation and canonical
+  provenance.
 
+Release-oriented remaining work:
 
-**B-016e durable autonomous work queue**
+- review whether the current concrete autonomous candidate producers are sufficient for
+  the first release; add another producer only for a specific approved domain event,
+  never through generic topic discovery/polling;
+- autonomous article generation remains out of scope unless a canonical domain
+  event/source is explicitly chosen;
+- provider-aware rate-limit/backpressure hardening remains a follow-up. Dedicated Fan
+  generation currently uses a configurable fixed global cooldown after `RATE_LIMIT`;
+  replace that later with provider-aware exponential backoff/jitter and explicit
+  quota-exhaustion handling;
+- monetary provider/model cost accounting remains deferred until pricing metadata is
+  explicit and versioned.
 
-- Persistent Mongo-backed queue uses the stable candidate key as `_id`, providing
-  cross-process enqueue deduplication without relying on automatic index creation.
-- Atomic `findAndModify` claims highest-priority runnable work with a lease; expired
-  leases are reclaimable after worker/process failure.
-- Queue priority is explicit: `USER_TRIGGERED` > `EDITOR_REQUESTED` > `AUTONOMOUS`.
-  Existing direct-tag execution remains synchronous and therefore is not placed behind
-  autonomous queued work.
-- Handler failures use exponential retry backoff and become terminal after `maxAttempts`.
-- Missing handlers fail/retry visibly rather than silently dropping queued work.
-- Site-admin observability exposes queue status/recent terminal failures together with
-  the existing B-016a generation usage/budget snapshot.
-- The scheduler contains no topic discovery or implicit candidate scanning. Domain
-  candidate producers must first satisfy B-016c initiative policy and then enqueue a
-  stable candidate for a registered handler.
-
-Remaining B-016 work:
-
-- first canonical candidate producer/handler for autonomous match-thread activity;
-- autonomous article candidates only where a concrete domain event/source exists;
-- optional monetary cost accounting once explicit provider/model pricing metadata exists.
-
-
-**B-016d fan interaction integration**
-
-- General articles carry explicit canonical `teamIds`; fan affinity is never inferred
-  from article titles, prose or free-form tags.
-- Active `COMMUNITY_MEMBER` profiles may comment on published general articles according
-  to the B-016c fan policy, with own-team relevance determined from `teamIds`.
-- Fans comment on published match articles only when their canonical supported team is
-  one of the match teams.
-- Human comments on general articles, match articles and match threads can trigger fan
-  replies through the same fan policy.
-- `HOME_COACH` / `AWAY_COACH` author context is matched to canonical match team order, so
-  the "always when my coach writes" rule only applies to fans of that coach's team.
-- Fan-generated comments use the existing `CommunityComment`, canonical fan user identity,
-  canonical context assembly, generation provenance and global `LlmExecutionService`
-  admission/provider path. Fans are not converted into `AiReporterDefinition`s.
-- Independent unsolicited comments directly on a match still require the later scheduler
-  candidate source; B-016d does not invent a match event source.
-
-
-**B-016c initiative policy foundation**
-
-- Staff initiative is independently configurable for general articles, match articles,
-  article comments, direct match comments and explicit tag replies.
-- Defaults: general/match articles require an explicit request; article comments and
-  match comments may be autonomous; explicit tags are answered automatically.
-- Site admins own site-wide defaults. LeagueSystem editors/admins may override only
-  systems they can edit through the existing `canEditLeagueSystem` authorization path.
-- Fans use a separate policy and never author articles.
-- Fans may comment rarely on general articles, somewhat more often on own-team articles,
-  and automatically by default on own-team match articles and match threads.
-- Activity authored by the supported team's coach is automatic by default inside the
-  supported-team scope.
-- Fan target eligibility and probability are separate: unrelated matches/articles never
-  become eligible merely because a probability is non-zero.
-
-
-**Status: Partial — hard admission/budgets and per-reporter autonomous activity policy implemented; scheduler remains**
-
-Implemented foundation:
-
-- central provider-generation admission gate in front of `LlmExecutionService`;
-- site-wide hard generation kill switch;
-- optional global concurrent-generation limit for simple in-process backpressure;
-- optional successful-generation, input-token and output-token UTC-day budgets;
-- generation traces are the durable usage ledger rather than a parallel counter store;
-- configured token budgets fail closed if successful trace usage is unknown;
-- declared output-token limits and estimated input size are checked before provider use;
-- admin API exposes hard limits plus current-day usage/in-flight state;
-- all new global limits are opt-in so legacy behavior remains unchanged by default;
-- per-reporter autonomous `ARTICLE`, `COMMENT` and `REACTION` activity is gated by the
-  existing behaviour limits/cooldowns and persisted in `AiReporterRuntimeState`;
-- UTC day rollover resets daily counters without deleting last-activity timestamps;
-- spontaneous article comments, replies and reactions consume autonomous quota only
-  after idempotency checks;
-- explicit direct-tag replies bypass reporter autonomous quotas/cooldowns while still
-  passing through B-016a's global hard generation limits.
-
-Remaining B-016 work:
-
-- actual autonomous scheduler/queue and durable cross-process reservations;
-- a canonical autonomous article-candidate source/executor before scheduling articles;
-- explicit queue priority classes so direct/user-triggered work can outrank autonomous
-  queued work without bypassing hard site budgets;
-- retry scheduling/backoff policy above the existing provider fallback behavior;
-- provider/model price metadata and monetary cost budgets (do not infer monetary cost
-  from tokens until explicit pricing is configured);
-- richer admin operational visibility and queue controls.
-
-Editor-triggered article generation remains distinct from autonomous generation. Do not
-apply autonomous per-activity quotas to editor-triggered work merely because both use the
-same provider execution layer.
+Do not reopen the queue, admission, initiative or activity-policy foundations as broad
+work. New issues in those areas are focused defects or incremental candidate sources.
 
 ---
 
 ## Operational/maintainability work
-
-
-**B-016f finalized-match fan candidate**
-
-- The canonical finalized-match transition in `FetchDataService` now emits durable
-  `FAN_MATCH_COMMENT` candidates after the full match has been saved.
-- Competition identity is resolved through `StageSource.sourceEntityId`; no league,
-  competition or tournament names are hard-coded.
-- At most one active Dedicated Fan is selected deterministically per league-system/match
-  candidate, and only fans of a participating team are eligible.
-- The queue candidate is persisted before the initiative probability is sampled. This
-  ensures a policy rejection is evaluated once instead of being re-rolled on every
-  source refresh.
-- The handler evaluates `OWN_TEAM_MATCH` through the existing B-016c policy and treats
-  rejection as a successful no-op.
-- Approved work uses B-016d's canonical context/provider/provenance/community-comment
-  path and writes a normal `MATCH` comment.
-- These work items use `maxAttempts=1`: an autonomous provider failure remains visible
-  as terminal queue failure rather than consuming another probabilistic initiative
-  decision on retry.
-
-Remaining B-016 work:
-
-- add additional candidate producers only for concrete domain events where the product
-  wants autonomous staff/fan activity;
-- autonomous editorial/match articles still require an explicit canonical candidate
-  source and must not be invented by the scheduler;
-- optional monetary accounting remains deferred until provider/model pricing metadata
-  is explicit and versioned.
-
-
-**B-016g general-article Staff comments**
-
-- First publication of a general `Article` emits one stable queued comment candidate per
-  enabled interaction-capable Staff reporter when B-016c allows autonomous article
-  comments for that LeagueSystem.
-- A reporter never receives a candidate for its own AI-authored article.
-- Probability is sampled after the durable candidate exists, so a rejected comment is
-  not repeatedly re-rolled by publication retries.
-- Handler execution revalidates initiative policy and effective runtime interaction state.
-- Human-authored articles use user-article comment probability; AI-authored articles use
-  ordinary reporter-on-article probability.
-- Approved comments use B-016b COMMENT quota and B-016a provider admission, and persist
-  as canonical `CommunityComment.TargetType.ARTICLE` with generation provenance.
-- Work uses `maxAttempts=1`; provider failures remain visible without a second probability
-  or quota attempt.
-- Match-article Staff interaction is unchanged because it already has a publication-driven
-  autonomous comment path.
 
 
 ### B-027 — Finish ARM64/Raspberry Pi operational runbook
