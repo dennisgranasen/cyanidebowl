@@ -24,6 +24,8 @@ Do not use old `main` behavior as the basis for implementation work.
 6. Add regression coverage for behavior changes.
 7. If product behavior is genuinely ambiguous, document the decision point instead of
    inventing a second competing model.
+8. `Staff` is the canonical code/API/route term for public editorial identities.
+   `Redaktion` is only the Swedish UI translation.
 
 ## Priority overview
 
@@ -31,13 +33,13 @@ Do not use old `main` behavior as the basis for implementation work.
 | --- | --- | --- | --- |
 | P1 | B-025 | Versioned pybb3 timeline/skill-reroll contract is consumed safely | Integration pending upstream |
 | P1 | B-033 | Replay parsing is stable and regression-tested | Backlog |
-| P1 | B-032 | Technician/editor users automatically get editable Redaktion profiles | Backlog |
+| P1 | B-032 | Human editors have editable public Staff profiles | Partial — baseline implemented |
 | P1 | B-019 | Dedicated Fans population reconciliation | Backlog |
 | P1 | B-020 | Deterministic direct AI textual interaction | Partial |
-| P2 | B-028 | Navigation hierarchy and back paths are consistent | Backlog |
-| P2 | B-029 | LeagueSystem selection lives in the primary navigation | Backlog |
-| P2 | B-030 | Match cards are fully internationalized | Backlog |
-| P2 | B-031 | AI reporter public profiles are improved | Backlog |
+| P2 | B-028 | Navigation hierarchy and back paths are consistent | Partial — Staff hierarchy implemented |
+| P2 | B-029 | LeagueSystem selection lives in the primary navigation | Partial — primary selector implemented |
+| P2 | B-030 | Match cards are fully internationalized | Partial — core card/modal surface localized |
+| P2 | B-031 | AI reporter public profiles are improved | Partial — public identity DTO normalized |
 | P2 | B-035 | BB1 and BB2 replays use the normalized replay pipeline | Backlog |
 | P2 | B-034 | Replays can be reconstructed and visualized interactively | Depends on B-033/B-035 |
 | P2 | B-016 | AI scheduling, quotas and cost controls | Deferred until B-019/B-020 |
@@ -67,7 +69,13 @@ Already implemented:
 - persisted AI social relationships and memory entries;
 - AI article generation/review, interaction decisions, semantic reactions and
   generation traces;
-- ARM64 CI image builds and Raspberry Pi compose deployment baseline.
+- ARM64 CI image builds and Raspberry Pi compose deployment baseline;
+- primary-navigation LeagueSystem switching with URL-addressable selected-system state;
+- a shared public Staff surface containing human editors and AI reporters;
+- self-editable human Staff profile fields stored separately from auth/login identity;
+- public AI reporter profile type/display-name fields without public runtime/provider
+  configuration;
+- Staff-profile breadcrumb support and initial match-card/match-modal i18n coverage.
 
 Do not reopen those capabilities as broad feature cards. New defects should be tracked
 as focused deltas.
@@ -186,20 +194,22 @@ Separate the deterministic state engine from the visual renderer:
 
 ### B-028 — Audit and normalize navigation hierarchy
 
-**Status: Backlog**
+**Status: Partial — Staff profile hierarchy implemented**
 
-The UI is not yet consistent about parent navigation. For example, navigating
-Home -> Redaktion/Staff -> writer profile currently exposes a Home action but no clear
-path back to Redaktion.
+Implemented in R2:
 
-Work:
+- `/staff` is the canonical public parent for both human Staff profiles and AI reporter
+  profiles;
+- Staff profile routes expose the Staff parent in `Navigation`;
+- direct Staff-profile deep links no longer depend on browser Back to recover the
+  editorial hierarchy.
 
-- audit nested public/admin/editorial routes for missing parent navigation;
-- define one consistent breadcrumb/back-path pattern for hierarchical pages;
-- ensure writer/staff profiles expose Redaktion as their logical parent;
-- do not rely on browser Back as the only way to recover application hierarchy;
-- keep behavior coherent on desktop and mobile and accessible to keyboard/screen-reader
-  users.
+Remaining:
+
+- audit the other nested public/admin/editorial routes for missing or inconsistent
+  parent navigation;
+- define and apply one breadcrumb/back-path convention across equivalent page types;
+- verify desktop/mobile and keyboard/screen-reader behavior.
 
 **Acceptance criteria**
 
@@ -209,71 +219,89 @@ Work:
 
 ### B-029 — Move LeagueSystem selection into primary navigation
 
-**Status: Backlog**
+**Status: Partial — primary-navigation selector implemented**
 
-The LeagueSystem selector should be part of the application's primary navigation rather
-than living in its own hamburger/secondary menu.
+Implemented in R2:
 
-Work:
+- LeagueSystem choices are exposed in the primary application menu;
+- the old selector-specific control on the LeagueSystem page is removed;
+- selected LeagueSystem can be addressed with the `leagueSystem` query parameter;
+- the selected system is visually identifiable in the menu.
 
-- integrate LeagueSystem selection into the main navigation on desktop and mobile;
-- remove the separate selector-specific hamburger/menu once the replacement is usable;
-- keep the current LeagueSystem visibly selected;
-- preserve the current sub-route when switching systems where that route has an
-  equivalent destination, otherwise use a deterministic LeagueSystem landing page;
-- preserve deep-link and responsive behavior.
+Remaining:
+
+- when switching from a nested LeagueSystem route, preserve the equivalent sub-route
+  where one exists;
+- otherwise use the selected LeagueSystem landing page deterministically;
+- add focused responsive/deep-link regression coverage.
 
 ### B-030 — Complete i18n for match cards
 
-**Status: Backlog**
+**Status: Partial — core match-card and immediate modal surface localized**
 
-Match cards still contain user-facing content that bypasses the application's i18n
-layer.
+Implemented in R2:
 
-Work:
+- `ContestMatchCard` user-visible started/live/duration/details labels use react-intl;
+- the main `MatchModalWithRosters` tab/stat/roster/replay labels covered by R2 use
+  react-intl;
+- English and Swedish keys exist for the R2 surface.
 
-- inventory every visible label, status, tooltip and accessibility string on match
-  cards and their immediate child components;
-- replace hard-coded user-facing strings with the existing translation mechanism;
-- use locale-aware formatting for dates/times and other localized presentation where
-  applicable;
-- add regression coverage that detects reintroduced hard-coded match-card labels.
+Remaining:
+
+- inventory the rest of the immediate replay/match-detail UI for hard-coded labels,
+  tooltips and accessibility strings;
+- use locale-aware formatting consistently where presentation still bypasses i18n;
+- add regression coverage that catches hard-coded UI strings and, specifically, prevents
+  translation replacement from mutating JavaScript identifiers.
+
+Do not use global raw-string replacement for short words such as `Events` or `Count`;
+they also occur inside identifiers such as `specialEvents` and `checkpointCount`.
 
 ---
 
 ## Editorial/community follow-up
 
-### B-032 — Automatic, self-editable Redaktion profiles for staff
+### B-032 — Human public Staff profiles
 
-**Status: Backlog**
+**Status: Partial — functional baseline implemented**
 
-Every non-development user who has the `technician` role/capability and/or editorial
-permission should automatically have a public profile in Redaktion.
+`Staff` is the canonical internal/product domain. `Redaktion` is its Swedish UI
+translation only; do not create `RedaktionController`, `/redaktion/*`, `RedaktionApi`
+or a second persistence model.
 
-Requirements:
+Implemented in R2:
 
-- explicitly exclude the development account;
-- create/ensure the Redaktion profile idempotently when an eligible user is resolved;
-- seed public name, profile image and avatar from the OAuth identity when those values
-  are available;
-- allow the user to replace OAuth-provided images/avatar;
-- allow the user to edit every public profile field, including the displayed name and
-  profile description;
-- treat OAuth values as initial/default values only: later sign-ins must not overwrite
-  user-edited local profile values;
-- keep authentication subject, roles and permissions separate from mutable public
-  profile data;
-- remove or hide a profile according to an explicit policy if the user later loses all
-  qualifying staff/editor permissions; do not delete authored history.
+- eligible HUMAN users are exposed through the public `/staff/users` API alongside the
+  existing AI reporter Staff surface;
+- current eligibility is based on `siteEditor` or non-empty
+  `editorForLeagueSystems`;
+- public display name, avatar URL, portrait URL and bio are stored separately from
+  authentication/login identity;
+- the initial profile is seeded from available OAuth name/picture data once, then local
+  public-profile edits are preserved;
+- an authenticated eligible user can edit their own public Staff profile from Account;
+- public human profiles and AI profiles are presented together on `/staff`;
+- loss of current eligibility hides the human profile from the public Staff API without
+  deleting the underlying user or authored history.
+
+Remaining/hardening:
+
+- explicitly document and test development-account behavior;
+- add backend tests for site-editor-only, LeagueSystem-editor-only, combined-editor and
+  permission-loss cases;
+- verify whether any non-editor Staff capability should also qualify a HUMAN user; do
+  not invent a parallel role to solve this;
+- validate URL/public-bio input policy and fallback behavior;
+- add frontend tests for own-profile editing and human profile deep links.
 
 **Acceptance criteria**
 
-- technician-only, editor-only and technician+editor users each receive exactly one
-  Redaktion profile;
-- the configured development account receives none;
-- OAuth data seeds previously unset fields but never destroys local overrides;
-- changing the public name cannot change login identity, authorization or ownership of
-  existing content.
+- qualifying HUMAN users resolve to exactly one canonical Staff profile;
+- public-profile edits cannot change auth subject, authorization or ownership;
+- OAuth refresh/sign-in never overwrites an initialized local public profile;
+- removing all qualifying editorial permissions removes the profile from public Staff
+  listings without deleting authored history;
+- development behavior is explicit and covered by tests.
 
 ### B-015 — Enable team comment streams
 
@@ -300,22 +328,26 @@ Then:
 
 ### B-031 — Improve AI reporter public profiles
 
-**Status: Backlog**
+**Status: Partial — public identity contract normalized**
 
-AI reporters need stronger public person profiles so they read as distinct members of
-the Redaktion rather than thin technical identities.
+Implemented in R2:
 
-Work:
+- public AI reporter DTOs expose explicit `profileType` and `displayName`;
+- AI and HUMAN profiles can be composed on the same `/staff` public surface;
+- public profile identity remains separate from provider/prompt/runtime configuration;
+- Staff routing/presentation no longer requires a parallel Redaktion domain.
+
+Remaining:
 
 - improve biography/profile copy and structured public profile information for each
   reporter;
 - make personality, editorial role, affiliations and voice apparent without exposing
   internal prompt/provider implementation details;
-- keep portrait/avatar and profile metadata consistent across Redaktion, articles and
-  other author surfaces;
-- define which profile fields are canonical public identity and which belong only to
-  AI runtime/persona configuration;
-- add sensible fallbacks so incomplete AI profiles do not produce broken staff pages.
+- keep portrait/avatar and profile metadata consistent across Staff, articles and other
+  author surfaces;
+- define/finalize which fields are canonical public identity versus AI persona/runtime
+  configuration;
+- add sensible fallbacks so incomplete AI profiles do not produce broken Staff pages.
 
 This is profile/editorial presentation work. It must not create a second AI identity
 model or couple public identity to a specific LLM provider.

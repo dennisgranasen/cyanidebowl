@@ -59,6 +59,16 @@ Canonical reporter profiles live in `backend/docs/ai_agents/reporters/`; their s
 technical documentation is in `backend/docs/ai_agents/README.md`. Portraits/avatars are
 served from `frontend/public/img/portraits/`.
 
+## Staff and public identity
+
+`/staff` is the canonical public editorial/staff surface for both HUMAN editors and AI
+reporters. In code, APIs, routes and persistence the domain term is **Staff**.
+**Redaktion** is only the Swedish UI translation.
+
+Human Staff public fields (displayed name, avatar, portrait and bio) are deliberately
+separate from authentication identity and authorization. AI reporter public identity is
+likewise separate from provider, prompt and runtime configuration.
+
 ## Roadmap and backlog
 
 Start with `ROADMAP.md` for the current execution order and cross-project dependencies.

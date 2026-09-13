@@ -33,7 +33,15 @@ future roadmap work:
   bounded generation traces;
 - ARM64 image builds, Raspberry Pi compose deployment and Cloudflare Tunnel deployment
   topology;
-- authenticated `pybb3-service` boundary to the separately versioned pybb3 client.
+- authenticated `pybb3-service` boundary to the separately versioned pybb3 client;
+- primary-navigation LeagueSystem switching with URL-addressable selection on the
+  LeagueSystem landing page;
+- the canonical public `Staff` surface for both HUMAN editors and AI reporters, with
+  mutable human public profile fields kept separate from authentication identity;
+- public AI reporter DTOs that expose public identity fields without leaking
+  provider/prompt/runtime configuration;
+- initial Staff-profile breadcrumb hierarchy and react-intl coverage for the match-card
+  and immediate match-modal surface.
 
 Completed capability may remain documented in `BACKLOG.md` as history, but it is not
 active roadmap work.
@@ -62,22 +70,27 @@ Exit condition: representative BB1, BB2 and BB3 replays produce stable normalize
 events; known parser defects have regression fixtures; and the normalized stream can
 drive deterministic replay visualization without reparsing raw payloads.
 
-### R2 — UI, navigation and Redaktion profiles
+### R2 — UI, navigation and Staff follow-up
 
-- Audit hierarchical navigation and provide consistent parent/breadcrumb paths; a
-  writer opened through Redaktion must expose Redaktion as a parent, not only Home.
-- Move LeagueSystem selection into the primary application navigation and retire the
-  selector-specific hamburger/menu.
-- Complete i18n coverage for match cards and their immediate child components.
-- Automatically ensure a Redaktion profile for every eligible non-development
-  technician/editor user. Seed available image/avatar/name from OAuth, but let the user
-  override every public field, including displayed name, without changing auth identity.
-- Improve AI reporter public profiles and keep their public identity distinct from
-  provider/prompt/runtime configuration.
+The R2 baseline is implemented. `Staff` is the domain term in code, APIs and routes;
+`Redaktion` is only the Swedish localization of that concept.
 
-Exit condition: navigation patterns are predictable across deep links, LeagueSystem
-switching is part of normal app navigation, match cards are fully localized, and human
-and AI Redaktion profiles have a coherent editable/public identity model.
+Remaining work:
+
+- complete the navigation audit beyond Staff profiles so every nested public/admin/editorial
+  route exposes the same deterministic parent/breadcrumb convention;
+- preserve an equivalent sub-route when switching LeagueSystem where practical, falling
+  back to the selected LeagueSystem landing page when no equivalent route exists;
+- finish the i18n inventory for remaining replay/match-detail labels, tooltips and
+  accessibility strings and add regression coverage against hard-coded UI text;
+- harden and test human Staff eligibility/lifecycle policy, including development-user
+  behavior and what happens when all editorial permissions are removed;
+- improve AI reporter biography/profile content and structured public identity while
+  keeping runtime/provider/prompt configuration internal.
+
+Exit condition: deep links expose predictable hierarchy, LeagueSystem switching behaves
+coherently from nested routes, the relevant match/replay UI has complete localization
+coverage, and human/AI Staff profiles have tested lifecycle and public-identity rules.
 
 ### R3 — Remaining AI product work
 
@@ -122,6 +135,9 @@ unimplemented deployment milestone.
   phase-aware hierarchy; phase-less stages exist only as legacy/compatibility data and
   are not evidence that the Phase model still needs to be designed.
 - AI-backed authors are canonical users; provider/model is provenance, not identity.
+- `Staff` is the canonical domain/API/route term for public editorial identities.
+  `Redaktion` is a Swedish UI translation only and must not be introduced as a parallel
+  controller, API namespace, model or persistence concept.
 - AI narrative receives in-universe sporting facts rather than replay/parser/dice/RNG
   implementation terminology.
 - New behavior gets regression coverage and completed backlog/roadmap work is marked

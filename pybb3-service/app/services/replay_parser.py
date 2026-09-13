@@ -16,7 +16,7 @@ from app.services.replay_statistics import aggregate_actions, event_statistics
 from app.services.replay_timeline import build_replay_timeline
 from app.services.replay_player_identity import build_player_index
 
-PARSER_VERSION = 20
+PARSER_VERSION = 21
 INTEGER = re.compile(r"^-?(?:0|[1-9][0-9]*)$")
 RESOURCE_MARKERS = ("reroll", "apothec", "wizard", "spell")
 SPECIAL_MARKERS = (
@@ -124,6 +124,26 @@ def _event_team(event, context):
     # active in the surrounding board state.
     if event.tag == "EventWeatherRoll":
         return None
+
+    if event.tag == "EventKickOffTable":
+        # Kick-off table rolls belong to the kicking team. ActiveTeam is not
+        # reliable during kick-off setup, so use explicit protocol fields.
+        kicking_team = _first(event, ("KickingTeamId", "KickerTeamId"))
+        if kicking_team is not None:
+            return kicking_team
+
+        receiving_team = _first(event, ("ReceivingTeamId", "ReceiverTeamId"))
+        if receiving_team is not None:
+            team_ids = [team.get("teamId") for team in context.get("teamTurns", [])]
+            other_teams = [
+                team_id for team_id in team_ids
+                if team_id is not None and team_id != receiving_team
+            ]
+            if len(other_teams) == 1:
+                return other_teams[0]
+
+        return None
+
     team = _first(event, ("TeamId", "GamerSlot", "GamerId"))
     return context.get("activeTeam") if team is None else team
 

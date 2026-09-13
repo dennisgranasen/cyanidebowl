@@ -31,7 +31,7 @@ public class WarpScoresUser {
     private Boolean siteEditor = false;
     private List<String> editorForLeagueSystems = new ArrayList<>();
 
-    /** Public Redaktion identity; deliberately separate from auth/login identity. */
+    /** Public Staff identity; deliberately separate from auth/login identity. */
     private Boolean staffProfileInitialized = false;
     private String publicDisplayName;
     private String publicAvatarUrl;

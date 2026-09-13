@@ -4,6 +4,17 @@
 
 ### Changed
 
+- Moved LeagueSystem selection into the primary application navigation and made the
+  selected system URL-addressable on the LeagueSystem landing page.
+- Added a shared public `Staff` surface for HUMAN editors and AI reporters; `Redaktion`
+  remains only the Swedish UI translation.
+- Added self-editable public HUMAN Staff profile fields that are separate from
+  authentication identity and initially seeded from available OAuth profile data.
+- Added explicit public AI reporter profile type/display-name fields while keeping
+  provider/prompt/runtime configuration out of the public profile contract.
+- Added Staff-profile parent navigation and localized the R2 match-card/immediate
+  match-modal surface through react-intl.
+
 - Refreshed project/AI roadmaps and documentation ownership so completed foundation work,
   current priorities and external pybb3 dependencies are clearly separated.
 - Added admin-assisted LeagueSystem season/source discovery and optional email
