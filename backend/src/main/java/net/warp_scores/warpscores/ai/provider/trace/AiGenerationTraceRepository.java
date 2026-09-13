@@ -15,5 +15,8 @@ public interface AiGenerationTraceRepository
     List<AiGenerationTrace> findByStatusAndCreatedAtGreaterThanEqual(
             AiGenerationTrace.Status status, Instant createdAt);
 
+    List<AiGenerationTrace> findByCreatedAtGreaterThanEqual(
+            Instant createdAt);
+
     long deleteByCreatedAtBefore(Instant cutoff);
 }

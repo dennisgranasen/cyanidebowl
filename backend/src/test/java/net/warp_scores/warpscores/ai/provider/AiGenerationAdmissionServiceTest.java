@@ -141,6 +141,51 @@ class AiGenerationAdmissionServiceTest {
         assertThat(service.usageSnapshot().inFlight()).isZero();
     }
 
+    @Test
+    void usageSnapshotIsSplitByProviderAndModel() {
+        AiGenerationTrace geminiSuccess = trace(120, 40);
+        geminiSuccess.setProviderId("gemini");
+        geminiSuccess.setModel("gemini-2.5-flash");
+
+        AiGenerationTrace geminiRateLimit = new AiGenerationTrace();
+        geminiRateLimit.setStatus(AiGenerationTrace.Status.FAILED);
+        geminiRateLimit.setProviderId("gemini");
+        geminiRateLimit.setModel("gemini-2.5-flash");
+        geminiRateLimit.setFailureStatusCode(429);
+        geminiRateLimit.setCreatedAt(Instant.now());
+
+        AiGenerationTrace groqSuccess = trace(80, null);
+        groqSuccess.setProviderId("groq");
+        groqSuccess.setModel("llama");
+
+        when(traces.findByStatusAndCreatedAtGreaterThanEqual(
+                eq(AiGenerationTrace.Status.SUCCESS),
+                any(Instant.class)))
+                .thenReturn(List.of(geminiSuccess, groqSuccess));
+        when(traces.findByCreatedAtGreaterThanEqual(any(Instant.class)))
+                .thenReturn(List.of(
+                        geminiSuccess, geminiRateLimit, groqSuccess));
+
+        AiGenerationAdmissionService.UsageSnapshot snapshot =
+                service.usageSnapshot();
+
+        assertThat(snapshot.successfulGenerations()).isEqualTo(2);
+        assertThat(snapshot.inputTokens()).isEqualTo(200);
+        assertThat(snapshot.outputTokens()).isEqualTo(40);
+        assertThat(snapshot.providers()).hasSize(2);
+
+        AiGenerationAdmissionService.ProviderUsageSnapshot gemini =
+                snapshot.providers().get(0);
+        assertThat(gemini.providerId()).isEqualTo("gemini");
+        assertThat(gemini.requests()).isEqualTo(2);
+        assertThat(gemini.successfulGenerations()).isEqualTo(1);
+        assertThat(gemini.failedGenerations()).isEqualTo(1);
+        assertThat(gemini.inputTokens()).isEqualTo(120);
+        assertThat(gemini.outputTokens()).isEqualTo(40);
+        assertThat(gemini.rateLimitFailures()).isEqualTo(1);
+        assertThat(gemini.lastRateLimitAt()).isNotNull();
+    }
+
     private static AiGenerationTrace trace(Integer input, Integer output) {
         AiGenerationTrace trace = new AiGenerationTrace();
         trace.setStatus(AiGenerationTrace.Status.SUCCESS);

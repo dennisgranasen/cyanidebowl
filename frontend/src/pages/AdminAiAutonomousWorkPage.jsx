@@ -82,6 +82,7 @@ function AdminAiAutonomousWorkPage() {
   const queue = overview?.queue || {};
   const usage = overview?.generationUsage || {};
   const failures = queue.recentFailures || [];
+  const providerUsage = usage.providers || [];
 
   return (
     <Box p={{ base: 3, md: 6 }}>
@@ -141,19 +142,81 @@ function AdminAiAutonomousWorkPage() {
           </Box>
 
           <Box>
-            <Heading size="md" mb={3}>Generation usage today (UTC)</Heading>
+            <Heading size="md" mb={1}>Global AI safety budget today (UTC)</Heading>
+            <Text mb={3} fontSize="sm" color="gray.500">
+              Site-wide Cyanidebowl counters used by the generation admission gate.
+              These are aggregate safety/budget counters across all providers, not
+              Gemini, Groq, OpenRouter or other provider account quotas.
+            </Text>
             <SimpleGrid columns={{ base: 2, md: 4 }} spacing={3}>
               {metric('Successful generations', usage.successfulGenerations)}
-              {metric('Input tokens', usage.inputTokens)}
-              {metric('Output tokens', usage.outputTokens)}
+              {metric('Input tokens · all providers', usage.inputTokens)}
+              {metric('Output tokens · all providers', usage.outputTokens)}
               {metric('In flight', usage.inFlight)}
             </SimpleGrid>
             {(usage.unknownInputTokenGenerations > 0 || usage.unknownOutputTokenGenerations > 0) && (
               <Text mt={2} fontSize="sm" color="yellow.300">
-                Some successful generations have unknown token usage:
+                Some successful generations are missing token telemetry:
                 {' '}input {usage.unknownInputTokenGenerations || 0},
                 {' '}output {usage.unknownOutputTokenGenerations || 0}.
               </Text>
+            )}
+          </Box>
+
+          <Box>
+            <Heading size="md" mb={1}>Usage by provider and model today (UTC)</Heading>
+            <Text mb={3} fontSize="sm" color="gray.500">
+              Operational telemetry from actual provider attempts. Token counts are
+              measured on successful generations; Requests includes failed attempts.
+              429s show observed rate-limit responses and are not a provider quota counter.
+            </Text>
+            {providerUsage.length === 0 ? (
+              <Text color="gray.500">No provider usage recorded today.</Text>
+            ) : (
+              <Box borderWidth="1px" borderRadius="lg" overflowX="auto">
+                <Table size="sm">
+                  <Thead>
+                    <Tr>
+                      <Th>Provider</Th>
+                      <Th>Model</Th>
+                      <Th isNumeric>Requests</Th>
+                      <Th isNumeric>Success</Th>
+                      <Th isNumeric>Failed</Th>
+                      <Th isNumeric>Input tokens</Th>
+                      <Th isNumeric>Output tokens</Th>
+                      <Th isNumeric>429s</Th>
+                      <Th>Last 429</Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {providerUsage.map((provider) => (
+                      <Tr key={`${provider.providerId}:${provider.model}`}>
+                        <Td fontWeight="600">{provider.providerId}</Td>
+                        <Td>{provider.model}</Td>
+                        <Td isNumeric>{provider.requests ?? 0}</Td>
+                        <Td isNumeric>{provider.successfulGenerations ?? 0}</Td>
+                        <Td isNumeric>{provider.failedGenerations ?? 0}</Td>
+                        <Td isNumeric>
+                          {provider.inputTokens ?? 0}
+                          {provider.unknownInputTokenGenerations > 0
+                            ? ` (+${provider.unknownInputTokenGenerations} unknown)` : ''}
+                        </Td>
+                        <Td isNumeric>
+                          {provider.outputTokens ?? 0}
+                          {provider.unknownOutputTokenGenerations > 0
+                            ? ` (+${provider.unknownOutputTokenGenerations} unknown)` : ''}
+                        </Td>
+                        <Td isNumeric>{provider.rateLimitFailures ?? 0}</Td>
+                        <Td whiteSpace="nowrap">
+                          {provider.lastRateLimitAt
+                            ? new Date(provider.lastRateLimitAt).toLocaleString()
+                            : '—'}
+                        </Td>
+                      </Tr>
+                    ))}
+                  </Tbody>
+                </Table>
+              </Box>
             )}
           </Box>
 

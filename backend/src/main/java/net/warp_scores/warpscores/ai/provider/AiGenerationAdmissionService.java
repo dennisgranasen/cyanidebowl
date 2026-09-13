@@ -10,7 +10,11 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * Central hard admission gate for provider-backed generation.
@@ -49,6 +53,20 @@ public class AiGenerationAdmissionService {
         }
     }
 
+    public record ProviderUsageSnapshot(
+            String providerId,
+            String model,
+            int requests,
+            int successfulGenerations,
+            int failedGenerations,
+            long inputTokens,
+            long outputTokens,
+            int unknownInputTokenGenerations,
+            int unknownOutputTokenGenerations,
+            int rateLimitFailures,
+            Instant lastRateLimitAt) {
+    }
+
     public record UsageSnapshot(
             Instant windowStart,
             int successfulGenerations,
@@ -56,7 +74,8 @@ public class AiGenerationAdmissionService {
             long outputTokens,
             int unknownInputTokenGenerations,
             int unknownOutputTokenGenerations,
-            int inFlight) {
+            int inFlight,
+            List<ProviderUsageSnapshot> providers) {
     }
 
     public synchronized void acquire(
@@ -162,12 +181,83 @@ public class AiGenerationAdmissionService {
                 output,
                 unknownInput,
                 unknownOutput,
-                inFlight);
+                inFlight,
+                providerUsage(start));
     }
 
     private AiSettings settings() {
         return settingsRepository.findById(AiSettings.GLOBAL_ID)
                 .orElseGet(AiSettings::new);
+    }
+
+    private List<ProviderUsageSnapshot> providerUsage(Instant start) {
+        List<AiGenerationTrace> today =
+                traces.findByCreatedAtGreaterThanEqual(start);
+        if (today == null || today.isEmpty()) return List.of();
+
+        Map<ProviderModel, ProviderAccumulator> grouped = new LinkedHashMap<>();
+        for (AiGenerationTrace trace : today) {
+            ProviderModel key = new ProviderModel(
+                    label(trace.getProviderId()),
+                    label(trace.getModel()));
+            ProviderAccumulator accumulator =
+                    grouped.computeIfAbsent(key, ignored -> new ProviderAccumulator());
+            accumulator.requests++;
+
+            if (trace.getStatus() == AiGenerationTrace.Status.SUCCESS) {
+                accumulator.successful++;
+                if (trace.getInputTokens() == null) accumulator.unknownInput++;
+                else accumulator.inputTokens += Math.max(0, trace.getInputTokens());
+                if (trace.getOutputTokens() == null) accumulator.unknownOutput++;
+                else accumulator.outputTokens += Math.max(0, trace.getOutputTokens());
+            } else if (trace.getStatus() == AiGenerationTrace.Status.FAILED) {
+                accumulator.failed++;
+                if (Objects.equals(trace.getFailureStatusCode(), 429)) {
+                    accumulator.rateLimitFailures++;
+                    if (trace.getCreatedAt() != null
+                            && (accumulator.lastRateLimitAt == null
+                            || trace.getCreatedAt().isAfter(accumulator.lastRateLimitAt))) {
+                        accumulator.lastRateLimitAt = trace.getCreatedAt();
+                    }
+                }
+            }
+        }
+
+        return grouped.entrySet().stream()
+                .map(entry -> new ProviderUsageSnapshot(
+                        entry.getKey().providerId(),
+                        entry.getKey().model(),
+                        entry.getValue().requests,
+                        entry.getValue().successful,
+                        entry.getValue().failed,
+                        entry.getValue().inputTokens,
+                        entry.getValue().outputTokens,
+                        entry.getValue().unknownInput,
+                        entry.getValue().unknownOutput,
+                        entry.getValue().rateLimitFailures,
+                        entry.getValue().lastRateLimitAt))
+                .sorted(Comparator.comparing(ProviderUsageSnapshot::providerId)
+                        .thenComparing(ProviderUsageSnapshot::model))
+                .toList();
+    }
+
+    private static String label(String value) {
+        return value == null || value.isBlank() ? "unknown" : value;
+    }
+
+    private record ProviderModel(String providerId, String model) {
+    }
+
+    private static final class ProviderAccumulator {
+        private int requests;
+        private int successful;
+        private int failed;
+        private long inputTokens;
+        private long outputTokens;
+        private int unknownInput;
+        private int unknownOutput;
+        private int rateLimitFailures;
+        private Instant lastRateLimitAt;
     }
 
     private static long estimatedInputTokens(CanonicalLlmRequest request) {
