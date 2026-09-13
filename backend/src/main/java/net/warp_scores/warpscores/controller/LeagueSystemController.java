@@ -291,7 +291,7 @@ public class LeagueSystemController {
 
     private StageSource stageSource(StageSourceRequest request) {
                 if (request.sourceEntityId() == null || request.sourceEntityId().isBlank()
-                        || request.sourceType() == null || request.sourceType() == net.warp_scores.warpscores.model.EntityType.Circuit
+                        || request.sourceType() == null
                         || request.game() == null || request.platform() == null) {
                     throw new IllegalArgumentException("StageSource requires source entity, type, game, and platform");
                 }
@@ -307,8 +307,6 @@ public class LeagueSystemController {
         source.setFirstId(request.firstId());
         source.setLastId(request.lastId());
         source.setIsArchived(request.isArchived());
-        source.setLegacyCircuitId(request.legacyCircuitId());
-        source.setLegacyCircuitLegId(request.legacyCircuitLegId());
         source.setLegacyEntityIndex(request.legacyEntityIndex());
         return source;
     }

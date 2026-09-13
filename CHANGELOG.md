@@ -6,6 +6,10 @@
 
 - Moved LeagueSystem selection into the primary application navigation and made the
   selected system URL-addressable on the LeagueSystem landing page.
+- Removed the superseded Circuit/CircuitLeg frontend and backend domain, routes and APIs;
+  LeagueSystem/Season/Phase/Stage/StageSource is now the sole competition hierarchy.
+- Completed localization of the immediate match roster/replay modal surface and added
+  regression checks against hard-coded labels and identifier-corrupting replacements.
 - Added a shared public `Staff` surface for HUMAN editors and AI reporters; `Redaktion`
   remains only the Swedish UI translation.
 - Added self-editable public HUMAN Staff profile fields that are separate from

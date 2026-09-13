@@ -17,7 +17,5 @@ public class Season {
     private Integer number;
     private String name;
     private Integer sequence;
-    private Long legacyCircuitId;
-    private Long legacyCircuitLegId;
     private Boolean isCollected;
 }

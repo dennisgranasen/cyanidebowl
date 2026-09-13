@@ -111,16 +111,7 @@ export default {
         .catch(handleError)
   },
   status: async () => axios(`/status`).then(returnData).catch(handleError),
-  // circuits
-  newCircuit: async (name, getAccessTokenSilently, getAccessTokenWithPopup) =>
-    postDataWithAuthentication(`/circuits`, { circuitName: name }, getAccessTokenSilently, getAccessTokenWithPopup)
-      .then(returnData)
-      .catch(handleError),
-  circuits: async (circuitId) =>
-    axios(`/circuits${circuitId ? `/${circuitId}` : ''}`)
-      .then(returnData)
-      .catch(handleError),
-    publicLeagueSystems: async () =>
+  publicLeagueSystems: async () =>
       axios('/league-systems')
         .then(returnData)
         .catch(handleError),
@@ -291,96 +282,6 @@ export default {
       .then(returnData)
       .catch(handleError),
 
-  addEntityToCircuitLeg: async (
-    circuitId,
-    circuitLegId,
-    entityData,
-    getAccessTokenSilently,
-    getAccessTokenWithPopup
-  ) => 
-    postDataWithAuthentication(
-      `/circuits/${circuitId}/legs/${circuitLegId}/addEntity`,
-      entityData,
-      getAccessTokenSilently,
-      getAccessTokenWithPopup,
-    )
-        .then(returnData)
-        .catch(handleError),
-      
-  addLegToCircuit: async (
-    circuitId,
-    label,
-    entityData,
-    isCollected,
-    getAccessTokenSilently,
-    getAccessTokenWithPopup
-  ) =>
-    postDataWithAuthentication(
-      `/circuits/${circuitId}/legs`,
-      {
-        label: label,
-        entity: entityData,
-        isCollected: isCollected
-      },
-      getAccessTokenSilently,
-      getAccessTokenWithPopup
-    )
-      .then(returnData)
-      .catch(handleError),
-  removeCircuitLeg: async (
-    circuitId, 
-    circuitLegId,
-    getAccessTokenSilently,
-    getAccessTokenWithPopup
-  ) =>
-    deleteDataWithAuthentication(
-      `/circuits/${circuitId}/legs/${circuitLegId}`,
-      getAccessTokenSilently,
-      getAccessTokenWithPopup
-    )
-      .then(returnData)
-      .catch(handleError),
-  updateCircuitLeg: async (
-    circuitId, 
-    circuitLegId, 
-    updateFields, 
-    getAccessTokenSilently, 
-    getAccessTokenWithPopup
-  ) =>
-    postDataWithAuthentication(
-      `/circuits/${circuitId}/legs/${circuitLegId}/update`,
-      updateFields,
-      getAccessTokenSilently,
-      getAccessTokenWithPopup
-    )
-      .then(returnData)
-      .catch(handleError),
-
-  circuitRanks: async (circuitId, limit) =>
-    axios(`/ranks/circuit/${circuitId.key || circuitId}${limit ? `?limit=${limit}` : ''}`)
-      .then(returnData)
-      .catch(handleError),
-  circuitLegRanks: async (circuitId, circuitLegId, limit) =>
-    axios(`/ranks/circuit/${circuitId.key || circuitId}/leg/${circuitLegId}${limit ? `?limit=${limit}` : ''}`)
-      .then(returnData)
-      .catch(handleError),
-  circuitLegEntityRanks: async (circuitId, circuitLegId, entityId, limit) =>
-    axios(`/ranks/circuit/${circuitId.key || circuitId}/leg/${circuitLegId}/${entityId}${limit ? `?limit=${limit}` : ''}`)
-      .then(returnData)
-      .catch(handleError),  
-  circuitTeams: async (circuitId, limit) =>
-    axios(`/teams/circuit/${circuitId.key || circuitId}${limit ? `?limit=${limit}` : ''}`)
-      .then(returnData)
-      .catch(handleError),
-  circuitLegTeams: async (circuitId, circuitLegId, limit) =>
-    axios(`/teams/circuit/${circuitId.key || circuitId}/leg/${circuitLegId}${limit ? `?limit=${limit}` : ''}`)
-      .then(returnData)
-      .catch(handleError),  
-  circuitLegEntityTeams: async (circuitId, circuitLegId, entityId, limit) =>
-    axios(`/teams/circuit/${circuitId.key || circuitId}/leg/${circuitLegId}/${entityId}${limit ? `?limit=${limit}` : ''}`)
-      .then(returnData)
-      .catch(handleError),
-  
   // leagues
   leagues: async (leagueId) =>
     axios(`/leagues${leagueId ? `/${leagueId.key || leagueId}` : ''}`)
@@ -447,18 +348,12 @@ export default {
       .then(returnData)
       .catch(handleError),
 
-  circuitMatches: async (circuitId, limit) =>
-    axios(`/matches/circuit/${circuitId.key || circuitId}${limit ? `?limit=${limit}` : ''}`)
-      .then(returnData)
-      .catch(handleError),
-  circuitLegMatches: async (circuitId, circuitLegId, limit) =>
-    axios(`/matches/circuit/${circuitId.key || circuitId}/leg/${circuitLegId.key || circuitLegId}${limit ? `?limit=${limit}` : ''}`)
-      .then(returnData)
-      .catch(handleError),
-  circuitLegEntityMatches: async (circuitId, circuitLegId, entityId, limit) =>
-    axios(`/matches/circuit/${circuitId.key || circuitId}/leg/${circuitLegId.key || circuitLegId}/${entityId.key || entityId}${limit ? `?limit=${limit}` : ''}`)
-      .then(returnData)
-      .catch(handleError),
+  circuitMatches: async () =>
+    Promise.reject(new Error('Legacy match route removed; use stageMatches instead.')),
+  circuitLegMatches: async () =>
+    Promise.reject(new Error('Legacy match route removed; use stageMatches instead.')),
+  circuitLegEntityMatches: async () =>
+    Promise.reject(new Error('Legacy match route removed; use stageMatches instead.')),
 
   match: async (matchId) =>
     axios(`/matches/${encodeURIComponent(matchId.key || matchId)}`)

@@ -5,44 +5,22 @@ import Navigation from '../components/misc/Navigation';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import HeaderCard from '../components/common/HeaderCard';
 import imageUrls from '../imageUrls';
-import CircuitCard from '../components/circuit/CircuitCard';
-import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
-import config from '../config';
 import Leagues from '../components/league/Leagues';
 import LeagueSystems from '../components/league/LeagueSystems';
 import ArticleFeed from '../components/community/ArticleFeed';
 import { useIntl } from 'react-intl';
 import { useSearchParams } from 'react-router-dom';
 
-const { showCircuitsFeature } = config;
-
 function WarpScores() {
   const intl = useIntl();
   const [searchParams] = useSearchParams();
   const requestedLeagueSystemId = searchParams.get('leagueSystem');
-  const [circuits, setCircuits] = useState([]);
-  const { authenticationReady, userPermissions } = useAuth0WithUserPermissions();
   const [leagueSystems, setLeagueSystems] = useState([]);
   const [selectedLeagueSystem, setSelectedLeagueSystem] = useState(null);
   const [leagues, setLeagues] = useState([]);
   const [competitionCountsByStatus, setCompetitionCountsByStatus] = useState({});
   const [loading, setLoading] = useState(false);
-  const [showCircuits, setShowCircuits] = useState(false);
   const [error, setError] = useState(undefined);
-
-  const fetchCircuits = () => {
-    setLoading(true);
-    console.log("isProduction:", process.env.ENV_NODE === 'production');
-    console.log("MODE:", process.env.ENV_NODE);
-    WarpScoresApiService.circuits()
-      .then((data) => {
-        setCircuits(data);
-      })
-      .then(() => setLoading(false))
-      .catch((reason) => {
-        setError({ type: 'error', message: reason.toLocaleString() });
-      });
-  };
 
   const fetchLeagues = async () => {
     const data = await WarpScoresApiService.leagues();
@@ -85,24 +63,17 @@ function WarpScores() {
   };
 
   useEffect(() => {
-    if (showCircuits) {
-      fetchCircuits();
-    } else {
-      fetchHomeData();
-    }
-  }, [showCircuits, requestedLeagueSystemId]);
-
-  useEffect(() => {
-    setShowCircuits(showCircuitsFeature && authenticationReady && userPermissions.writeLeagueAdmin);
-  }, [authenticationReady, userPermissions]);
+    fetchHomeData();
+  }, [requestedLeagueSystemId]);
 
   return (
     <VStack align="stretch" w="full">
       <Box>
-        <Navigation currentPage="home"
-          leagueSystems={showCircuits ? [] : leagueSystems}
+        <Navigation
+          currentPage="home"
+          leagueSystems={leagueSystems}
           selectedLeagueSystemId={selectedLeagueSystem?.id}
-          onSelectLeagueSystem={showCircuits ? undefined : selectLeagueSystem}
+          onSelectLeagueSystem={selectLeagueSystem}
         />
       </Box>
       <>
@@ -111,14 +82,10 @@ function WarpScores() {
           heading="BlaskScore"
           subHeading={intl.formatMessage({ id: 'home.tagline' })}
         />
-        {!showCircuits && (
-          <ArticleFeed leagueSystemId={selectedLeagueSystem?.id} limit={6} />
-        )}
+        <ArticleFeed leagueSystemId={selectedLeagueSystem?.id} limit={6} />
         <Box>
           <LoadingOrErrorWrapper loading={loading} error={error}>
-            {showCircuits ? (
-              circuits.map((currCircuit) => <CircuitCard mb={2} circuit={currCircuit} key={currCircuit.id} />)
-            ) : leagueSystems.length > 0 ? (
+            {leagueSystems.length > 0 ? (
               <LeagueSystems summaries={leagueSystems} leagueSystem={selectedLeagueSystem} onSelectSeason={(seasonId) => selectLeagueSystem(selectedLeagueSystem.id, seasonId)} />
             ) : (
               <Leagues leagues={leagues} competitionCountByStatusPerLeague={competitionCountsByStatus} />

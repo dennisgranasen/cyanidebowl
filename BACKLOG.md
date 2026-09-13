@@ -36,9 +36,9 @@ Do not use old `main` behavior as the basis for implementation work.
 | P1 | B-032 | Human editors have editable public Staff profiles | Partial — lifecycle hardened |
 | P1 | B-019 | Dedicated Fans population reconciliation | Backlog |
 | P1 | B-020 | Deterministic direct AI textual interaction | Partial |
-| P2 | B-028 | Navigation hierarchy and back paths are consistent | Partial — Staff hierarchy implemented |
-| P2 | B-029 | LeagueSystem selection lives in the primary navigation | Partial — primary selector implemented |
-| P2 | B-030 | Match cards are fully internationalized | Partial — core card/modal surface localized |
+| P2 | B-028 | Legacy Circuit hierarchy retired; canonical navigation remains | Done |
+| P2 | B-029 | LeagueSystem selection lives in the primary navigation | Done |
+| P2 | B-030 | Match cards and immediate match modal are internationalized | Done |
 | P2 | B-031 | AI reporter public profiles are improved | Partial — public identity DTO normalized |
 | P2 | B-035 | BB1 and BB2 replays use the normalized replay pipeline | Backlog |
 | P2 | B-034 | Replays can be reconstructed and visualized interactively | Depends on B-033/B-035 |
@@ -192,70 +192,46 @@ Separate the deterministic state engine from the visual renderer:
 
 ## UI and navigation follow-up
 
-### B-028 — Audit and normalize navigation hierarchy
+### B-028 — Retire legacy Circuit navigation/domain
 
-**Status: Partial — Staff profile hierarchy implemented**
+**Status: Done**
 
-Implemented in R2:
+The superseded `Circuit -> CircuitLeg -> CircuitLegEntity` model has been removed from
+the frontend and backend, including routes, controllers, services, repository, client
+API calls and navigation state.
 
-- `/staff` is the canonical public parent for both human Staff profiles and AI reporter
-  profiles;
-- Staff profile routes expose the Staff parent in `Navigation`;
-- direct Staff-profile deep links no longer depend on browser Back to recover the
-  editorial hierarchy.
+`LeagueSystem -> Season -> Phase -> Stage -> StageSource` is the canonical competition
+structure. Do not reintroduce Circuit as a parallel hierarchy.
 
-Remaining:
-
-- audit the other nested public/admin/editorial routes for missing or inconsistent
-  parent navigation;
-- define and apply one breadcrumb/back-path convention across equivalent page types;
-- verify desktop/mobile and keyboard/screen-reader behavior.
-
-**Acceptance criteria**
-
-- every audited nested page has a deterministic parent path;
-- equivalent page types use the same navigation convention;
-- direct deep links still show a valid hierarchy without navigation history.
+Future breadcrumb regressions should be tracked as focused defects against the canonical
+routes.
 
 ### B-029 — Move LeagueSystem selection into primary navigation
 
-**Status: Partial — primary-navigation selector implemented**
+**Status: Done**
 
-Implemented in R2:
+LeagueSystem selection lives in the primary menu. Switching systems preserves query
+state while already on `/`, replaces the `leagueSystem` query value, and otherwise
+falls back deterministically to the selected LeagueSystem landing page. The behavior is
+covered by focused frontend tests.
 
-- LeagueSystem choices are exposed in the primary application menu;
-- the old selector-specific control on the LeagueSystem page is removed;
-- selected LeagueSystem can be addressed with the `leagueSystem` query parameter;
-- the selected system is visually identifiable in the menu.
-
-Remaining:
-
-- when switching from a nested LeagueSystem route, preserve the equivalent sub-route
-  where one exists;
-- otherwise use the selected LeagueSystem landing page deterministically;
-- add focused responsive/deep-link regression coverage.
+There are currently no separate nested LeagueSystem public routes. If such routes are
+introduced later, extend the navigation helper rather than adding another selector.
 
 ### B-030 — Complete i18n for match cards
 
-**Status: Partial — core match-card and immediate modal surface localized**
+**Status: Done**
 
-Implemented in R2:
+`ContestMatchCard` and the immediate `MatchModalWithRosters` roster/replay surface use
+react-intl for user-facing labels, warnings and download text.
 
-- `ContestMatchCard` user-visible started/live/duration/details labels use react-intl;
-- the main `MatchModalWithRosters` tab/stat/roster/replay labels covered by R2 use
-  react-intl;
-- English and Swedish keys exist for the R2 surface.
+Regression coverage verifies that hard-coded roster/replay labels are not reintroduced
+and that localization changes cannot mutate JavaScript identifiers such as
+`specialEvents`, `resourceEvents`, `checkpointCount`, `eventCount`, `stepCount` and
+`dieValueCounts`.
 
-Remaining:
-
-- inventory the rest of the immediate replay/match-detail UI for hard-coded labels,
-  tooltips and accessibility strings;
-- use locale-aware formatting consistently where presentation still bypasses i18n;
-- add regression coverage that catches hard-coded UI strings and, specifically, prevents
-  translation replacement from mutating JavaScript identifiers.
-
-Do not use global raw-string replacement for short words such as `Events` or `Count`;
-they also occur inside identifiers such as `specialEvents` and `checkpointCount`.
+Technical Blood Bowl abbreviations such as SPP, TD and KO remain intentionally
+untranslated.
 
 ---
 

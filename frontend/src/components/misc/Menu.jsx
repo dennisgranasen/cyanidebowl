@@ -19,7 +19,7 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { FaTriangleExclamation } from 'react-icons/fa6';
-import { Link as RouteLink } from 'react-router-dom';
+import { Link as RouteLink, useLocation } from 'react-router-dom';
 import { ExternalLinkIcon, HamburgerIcon, Icon } from '@chakra-ui/icons';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import config from '../../config';
@@ -34,6 +34,7 @@ import timeUtil from '../../util/timeUtil';
 import imageUrls from '../../imageUrls';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
 import useAuth0WithUserPermissions from '../../hooks/useAuth0WithUserPermissions';
+import { leagueSystemMenuTarget } from '../../util/leagueSystemNavigation';
 
 const { smallBoxSize, isProduction } = config;
 
@@ -66,6 +67,7 @@ function LastCheck({ status, textSize, statusOutdated }) {
 function Menu({ leagueSystems = [], selectedLeagueSystemId, onSelectLeagueSystem }) {
   const [menuLeagueSystems, setMenuLeagueSystems] = useState([]);
   const intl = useIntl();
+  const location = useLocation();
   const { user, authenticationReady, checkPermissions, userPermissions, isAuthenticated, loginWithRedirect, logout } =
     useAuth0WithUserPermissions();
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -140,7 +142,7 @@ function Menu({ leagueSystems = [], selectedLeagueSystemId, onSelectLeagueSystem
                     </Box>
                     <VStack align="left" spacing={1}>
                       {(leagueSystems.length ? leagueSystems : menuLeagueSystems).map((system) => (
-                        <Link key={system.id} variant="menu" as={RouteLink} to={`/?leagueSystem=${system.id}`} fontWeight={system.id === selectedLeagueSystemId ? 'bold' : 'normal'}
+                        <Link key={system.id} variant="menu" as={RouteLink} to={leagueSystemMenuTarget(location, system.id)} fontWeight={system.id === selectedLeagueSystemId ? 'bold' : 'normal'}
                           onClick={async () => { if (onSelectLeagueSystem) await onSelectLeagueSystem(system.id); onClose(); }}>
                           {system.primary ? '★ ' : ''}{system.name || system.id}
                         </Link>

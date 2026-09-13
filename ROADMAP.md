@@ -36,6 +36,8 @@ future roadmap work:
 - authenticated `pybb3-service` boundary to the separately versioned pybb3 client;
 - primary-navigation LeagueSystem switching with URL-addressable selection on the
   LeagueSystem landing page;
+- retired the legacy Circuit/CircuitLeg hierarchy in favor of the canonical
+  LeagueSystem/Season/Phase/Stage/StageSource structure;
 - the canonical public `Staff` surface for both HUMAN editors and AI reporters, with
   mutable human public profile fields kept separate from authentication identity;
 - public AI reporter DTOs that expose public identity fields without leaking
@@ -77,12 +79,6 @@ The R2 baseline is implemented. `Staff` is the domain term in code, APIs and rou
 
 Remaining work:
 
-- complete the navigation audit beyond Staff profiles so every nested public/admin/editorial
-  route exposes the same deterministic parent/breadcrumb convention;
-- preserve an equivalent sub-route when switching LeagueSystem where practical, falling
-  back to the selected LeagueSystem landing page when no equivalent route exists;
-- finish the i18n inventory for remaining replay/match-detail labels, tooltips and
-  accessibility strings and add regression coverage against hard-coded UI text;
 - finish human Staff input/fallback policy and frontend profile-flow regression coverage;
 - improve AI reporter biography/profile content and structured public identity while
   keeping runtime/provider/prompt configuration internal.

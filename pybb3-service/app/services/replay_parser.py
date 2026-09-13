@@ -16,7 +16,7 @@ from app.services.replay_statistics import aggregate_actions, event_statistics
 from app.services.replay_timeline import build_replay_timeline
 from app.services.replay_player_identity import build_player_index
 
-PARSER_VERSION = 21
+PARSER_VERSION = 22
 INTEGER = re.compile(r"^-?(?:0|[1-9][0-9]*)$")
 RESOURCE_MARKERS = ("reroll", "apothec", "wizard", "spell")
 SPECIAL_MARKERS = (
@@ -91,8 +91,35 @@ def _board_context(board: ET.Element | None) -> dict[str, Any]:
         "phase": _text(board, "./CurrentPhase"),
         "activeTeam": _text(board, "./ActiveTeam"),
         "activePlayer": _text(board, "./ActivePlayer"),
+        "kickOffTeam": _text(board, "./KickOffTeam"),
         "teamTurns": teams,
     }
+
+
+def _team_ids(context: dict[str, Any]) -> list[Any]:
+    return list(dict.fromkeys(
+        team.get("teamId")
+        for team in context.get("teamTurns", [])
+        if team.get("teamId") is not None
+    ))
+
+
+def _known_team_id(team_id: Any, context: dict[str, Any]) -> Any:
+    return team_id if team_id in _team_ids(context) else None
+
+
+def _other_team_id(team_id: Any, context: dict[str, Any]) -> Any:
+    others = [candidate for candidate in _team_ids(context) if candidate != team_id]
+    return others[0] if team_id is not None and len(others) == 1 else None
+
+
+def _second_half_started(context: dict[str, Any]) -> bool:
+    turns = [
+        team.get("gameTurn")
+        for team in context.get("teamTurns", [])
+        if isinstance(team.get("gameTurn"), int)
+    ]
+    return bool(turns) and max(turns) >= 9
 
 
 def _turn_signature(context: dict[str, Any]) -> tuple[Any, ...]:
@@ -126,21 +153,20 @@ def _event_team(event, context):
         return None
 
     if event.tag == "EventKickOffTable":
-        # Kick-off table rolls belong to the kicking team. ActiveTeam is not
-        # reliable during kick-off setup, so use explicit protocol fields.
+        # Real BB3 replays often omit KickingTeamId here. parse_replay tracks
+        # drive state and supplies kickoffTeamOverride from the opening kick,
+        # touchdowns and the half-time change of ends.
         kicking_team = _first(event, ("KickingTeamId", "KickerTeamId"))
         if kicking_team is not None:
             return kicking_team
 
+        kickoff_override = context.get("kickoffTeamOverride")
+        if kickoff_override is not None:
+            return kickoff_override
+
         receiving_team = _first(event, ("ReceivingTeamId", "ReceiverTeamId"))
         if receiving_team is not None:
-            team_ids = [team.get("teamId") for team in context.get("teamTurns", [])]
-            other_teams = [
-                team_id for team_id in team_ids
-                if team_id is not None and team_id != receiving_team
-            ]
-            if len(other_teams) == 1:
-                return other_teams[0]
+            return _other_team_id(receiving_team, context)
 
         return None
 
@@ -371,6 +397,10 @@ def parse_replay(xml: bytes, source_format: str = "BB3") -> dict[str, Any]:
     previous_signature: tuple[Any, ...] | None = None
     final_board: Any = None
     source_board_count = 0
+    opening_kickoff_team: Any = None
+    pending_touchdown_team: Any = None
+    kickoff_count = 0
+    halftime_kickoff_assigned = False
 
     for child in root:
         if child.tag != "ReplayStep":
@@ -393,6 +423,37 @@ def parse_replay(xml: bytes, source_format: str = "BB3") -> dict[str, Any]:
         for event in child:
             if event.tag in ("Clock", "BoardState"):
                 continue
+
+            if event.tag == "EventKickOffTable":
+                explicit_kicker = _first(event, ("KickingTeamId", "KickerTeamId"))
+                if kickoff_count == 0:
+                    opening_kickoff_team = (
+                        explicit_kicker
+                        if explicit_kicker is not None
+                        else _known_team_id(context.get("kickOffTeam"), context)
+                    )
+
+                if explicit_kicker is None:
+                    if kickoff_count == 0:
+                        context["kickoffTeamOverride"] = opening_kickoff_team
+                    elif not halftime_kickoff_assigned and _second_half_started(context):
+                        context["kickoffTeamOverride"] = _other_team_id(opening_kickoff_team, context)
+                        halftime_kickoff_assigned = True
+                    elif pending_touchdown_team is not None:
+                        context["kickoffTeamOverride"] = pending_touchdown_team
+                    else:
+                        context["kickoffTeamOverride"] = None
+
+                kickoff_count += 1
+                pending_touchdown_team = None
+
+            if event.tag == "EventTouchdown":
+                scorer_id = _first(event, ("PlayerId", "ScorerId", "ActivePlayer"))
+                scoring_team = _first(event, ("TeamId", "ScoringTeamId"))
+                if scoring_team is None and scorer_id is not None:
+                    scoring_team = player_teams.get(scorer_id)
+                pending_touchdown_team = scoring_team
+
             data = _value(event)
             step["events"].append({"type": event.tag, "data": data})
             event_counts[event.tag] += 1

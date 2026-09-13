@@ -68,8 +68,6 @@ public class SecurityConfiguration {
                         .requestMatchers("/user/coach-claims", "/user/coach-claims/**").authenticated()
                         // endpoints needing authentication
                             .requestMatchers("/admin/**").authenticated()
-                        .requestMatchers(POST, "/circuits/**").authenticated()
-                        .requestMatchers(DELETE, "/circuits/**").authenticated()
                         .requestMatchers(POST, "/contests/**").authenticated()
                         .requestMatchers(POST, "/leagueCollection/**").authenticated()
                         .requestMatchers(POST, "/lookup").authenticated()
@@ -88,8 +86,6 @@ public class SecurityConfiguration {
                         .requestMatchers(GET, "/articles/**").permitAll()
                         .requestMatchers(GET, "/community/**").permitAll()
                         .requestMatchers(GET, "/arena/**").permitAll()
-                        .requestMatchers(GET, "/circuit/**").permitAll()
-                        .requestMatchers(GET, "/circuits/**").permitAll()
                         .requestMatchers(GET, "/competition/**").permitAll()
                         .requestMatchers(GET, "/competitions/**").permitAll()
                         .requestMatchers(GET, "/contest/**").permitAll()

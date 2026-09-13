@@ -11,7 +11,6 @@ import net.warp_scores.warpscores.domain.stage.MatchAdapterRegistry;
 import net.warp_scores.warpscores.domain.stage.StageMatchView;
 import net.warp_scores.warpscores.identity.CompositeIdentity;
 import net.warp_scores.warpscores.identity.Identity;
-import net.warp_scores.warpscores.model.EntityType;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.MatchInterpretation;
 import net.warp_scores.warpscores.model.Stage;
@@ -207,7 +206,7 @@ public class StageMatchService {
         if (source.getSourceEntityId() == null) {
             throw new IllegalArgumentException("StageSource has no sourceEntityId: " + source.getId());
         }
-        if (source.getSourceType() == null || source.getSourceType() == EntityType.Circuit) {
+        if (source.getSourceType() == null) {
             throw new IllegalArgumentException("StageSource has no supported sourceType: " + source.getId());
         }
         if (source.getGame() == null) {

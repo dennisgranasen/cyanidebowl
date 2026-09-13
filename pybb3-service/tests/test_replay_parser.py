@@ -100,6 +100,62 @@ def test_kickoff_rolloff_dice_are_assigned_one_per_team():
     assert [row["rolls"] for row in rows] == [[[1]], [[4]]]
 
 
+def test_kickoff_table_tracks_opening_touchdowns_and_halftime_kicker():
+    def board(turn0, turn1, kickoff_team=1):
+        return f"""<BoardState>
+          <CurrentPhase>5</CurrentPhase><KickOffTeam>{kickoff_team}</KickOffTeam>
+          <ListTeams>
+            <TeamState><GameTurn>{turn0}</GameTurn><PlayerState><Id>10</Id></PlayerState></TeamState>
+            <TeamState><GameTurn>{turn1}</GameTurn><Data><TeamId>1</TeamId></Data><PlayerState><Id>20</Id></PlayerState></TeamState>
+          </ListTeams>
+        </BoardState>"""
+
+    def kickoff(a, b, turn0, turn1, kickoff_team=1):
+        return (
+            "<ReplayStep><Clock>1</Clock>"
+            f"<EventKickOffTable><Dice><Die><Value>{a}</Value></Die><Die><Value>{b}</Value></Die></Dice></EventKickOffTable>"
+            + board(turn0, turn1, kickoff_team)
+            + "</ReplayStep>"
+        )
+
+    def touchdown():
+        return (
+            "<ReplayStep><Clock>1</Clock><EventTouchdown><PlayerId>20</PlayerId></EventTouchdown>"
+            + board(1, 1)
+            + "</ReplayStep>"
+        )
+
+    replay = (
+        "<Replay>"
+        # BB3 can expose -1 before kick-off; only the value on the actual
+        # opening kick is authoritative.
+        + "<ReplayStep><Clock>0</Clock>" + board(0, 0, -1) + "</ReplayStep>"
+        + kickoff(4, 6, 0, 0)   # opening kick: team 1
+        + touchdown()
+        + kickoff(4, 2, 5, 4)   # after team 1 TD
+        + touchdown()
+        + kickoff(3, 4, 7, 6)   # after team 1 TD
+        + kickoff(6, 5, 8, 9)   # half-time: opposite opening kicker => team 0
+        + touchdown()
+        + kickoff(3, 5, 11, 11) # after team 1 TD
+        + touchdown()
+        + kickoff(4, 4, 14, 14) # after team 1 TD
+        + "</Replay>"
+    ).encode()
+
+    analysis = parse_replay(replay)["analysis"]
+    rows = {
+        row["teamId"]: row
+        for row in analysis["diceStatistics"]
+        if row["label"] == "Kick-off Table"
+    }
+
+    assert rows[0]["rollCount"] == 1
+    assert rows[0]["resultCounts"] == {"11": 1}
+    assert rows[1]["rollCount"] == 5
+    assert rows[1]["resultCounts"] == {"10": 1, "6": 1, "7": 1, "8": 2}
+
+
 def test_explicit_d6_zero_is_not_misreported_as_unknown():
     replay = b"""<Replay><ReplayStep><Clock>1</Clock>
     <EventFoo><Dice><Die><DieType>0</DieType><Value>4</Value></Die></Dice></EventFoo>

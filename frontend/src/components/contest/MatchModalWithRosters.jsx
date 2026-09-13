@@ -74,8 +74,8 @@ const PlayerNameCell = ({ player }) => {
 const formatBytes = (value) => value == null ? '—' : value < 1024 * 1024
   ? `${Math.round(value / 1024)} KiB` : `${(value / 1024 / 1024).toFixed(1)} MiB`;
 
-const eventSummary = (events = []) => Object.entries(events.reduce((result, event) => {
-  const key = event.eventType || 'Unknown event';
+const eventSummary = (events = [], unknownEventLabel = 'Unknown event') => Object.entries(events.reduce((result, event) => {
+  const key = event.eventType || unknownEventLabel;
   result[key] = (result[key] || 0) + 1;
   return result;
 }, {})).sort((a, b) => b[1] - a[1]);
@@ -86,16 +86,17 @@ function ReplayPanel({ replay, loading, error, onDownload }) {
   if (error) return <Text color="red.500">{error}</Text>;
   if (!replay?.available) return <Text color="gray.500">{intl.formatMessage({ id: 'matchModal.replay.unavailable' })}</Text>;
   const analysis = replay.analysis;
-  const specialEvents = eventSummary(analysis?.specialEvents);
-  const resourceEvents = eventSummary(analysis?.resourceEvents);
+  const unknownEventLabel = intl.formatMessage({ id: 'matchModal.replay.unknownEvent' });
+  const specialEvents = eventSummary(analysis?.specialEvents, unknownEventLabel);
+  const resourceEvents = eventSummary(analysis?.resourceEvents, unknownEventLabel);
   return <VStack align="stretch" spacing={4}>
     <HStack justify="space-between" align="start" flexWrap="wrap">
-      <Box><HStack><Badge colorScheme="green">{intl.formatMessage({ id: 'matchModal.replay.available' })}</Badge><Badge colorScheme={replay.analysisStatus === 'PROCESSED' ? 'blue' : replay.analysisStatus === 'FAILED' ? 'red' : 'orange'}>{replay.analysisStatus || 'PENDING'}</Badge></HStack><Text mt={1} fontSize="sm" color="gray.500">Original {formatBytes(replay.originalSize)} · compact {formatBytes(replay.compactSize)}</Text></Box>
-      <Button size="sm" colorScheme="blue" onClick={onDownload}>Download {replay.originalFormat === 'BBR' ? 'original .bbr' : 'stored replay'}</Button>
+      <Box><HStack><Badge colorScheme="green">{intl.formatMessage({ id: 'matchModal.replay.available' })}</Badge><Badge colorScheme={replay.analysisStatus === 'PROCESSED' ? 'blue' : replay.analysisStatus === 'FAILED' ? 'red' : 'orange'}>{replay.analysisStatus || 'PENDING'}</Badge></HStack><Text mt={1} fontSize="sm" color="gray.500">{intl.formatMessage({ id: 'matchModal.replay.sizes' }, { original: formatBytes(replay.originalSize), compact: formatBytes(replay.compactSize) })}</Text></Box>
+      <Button size="sm" colorScheme="blue" onClick={onDownload}>{intl.formatMessage({ id: replay.originalFormat === 'BBR' ? 'matchModal.replay.downloadOriginal' : 'matchModal.replay.downloadStored' })}</Button>
     </HStack>
     {!analysis && <Text color="gray.500">{intl.formatMessage({ id: 'matchModal.replay.pending' })}</Text>}
     {analysis && <>
-      {analysis.analysisConfidence === 'RAW_UNMAPPED' && <Alert status="warning"><AlertIcon/>Replaystrukturen är bevarad, men event- och enumtolkningen är ännu experimentell. Värdena nedan är råa parserresultat, inte verifierad Blood Bowl-statistik.</Alert>}
+      {analysis.analysisConfidence === 'RAW_UNMAPPED' && <Alert status="warning"><AlertIcon/>{intl.formatMessage({ id: 'matchModal.replay.rawWarning' })}</Alert>}
       <SimpleGrid columns={{base:2,md:4}} spacing={3}>
         <Stat borderWidth="1px" borderRadius="md" p={3}><StatLabel>{intl.formatMessage({ id: 'matchModal.replay.turns' })}</StatLabel><StatNumber>{analysis.checkpointCount || 0}</StatNumber></Stat>
         <Stat borderWidth="1px" borderRadius="md" p={3}><StatLabel>{intl.formatMessage({ id: 'matchModal.replay.events' })}</StatLabel><StatNumber>{analysis.eventCount || 0}</StatNumber></Stat>
@@ -313,14 +314,14 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                                     <Table size="sm">
                                       <Thead>
                                         <Tr>
-                                          <Th>Spelare</Th>
-                                          <Th>Nivå</Th>
+                                          <Th>{intl.formatMessage({ id: 'common.player' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'common.level' })}</Th>
                                           <Th>SPP</Th>
                                           <Th>TD</Th>
-                                          <Th>Tackl.</Th>
-                                          <Th>Rust.bryt</Th>
-                                          <Th>Skador</Th>
-                                          <Th>Meter</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.knockdowns' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.armorBreaks' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'common.injuries' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.metres' })}</Th>
                                         </Tr>
                                       </Thead>
                                       <Tbody>
@@ -353,15 +354,15 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                                     <Table size="sm">
                                       <Thead>
                                         <Tr>
-                                          <Th>Spelare</Th>
-                                          <Th>Rush</Th>
-                                          <Th>Dodge</Th>
-                                          <Th>Bollplock</Th>
-                                          <Th>Mottag</Th>
-                                          <Th>Passning</Th>
-                                          <Th>Intercept</Th>
+                                          <Th>{intl.formatMessage({ id: 'common.player' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.rush' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.dodge' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.pickup' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.catch' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.pass' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.interception' })}</Th>
                                           <Th>{intl.formatMessage({ id: 'matchModal.stats.runningMeters' })}</Th>
-                                          <Th>Passmeter</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.stats.passingMeters' })}</Th>
                                         </Tr>
                                       </Thead>
                                       <Tbody>
@@ -401,18 +402,18 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                                     <Table size="sm">
                                       <Thead>
                                         <Tr>
-                                          <Th>Spelare</Th>
-                                          <Th>Utförda tackl.</Th>
-                                          <Th>Blitz</Th>
+                                          <Th>{intl.formatMessage({ id: 'common.player' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.knockdownsInflicted' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.blitzes' })}</Th>
                                           <Th>Rustbryt</Th>
-                                          <Th>Avsvimma</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.stuns' })}</Th>
                                           <Th>KO</Th>
-                                          <Th>Skada</Th>
-                                          <Th>Mottag tackl.</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.casualties' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.knockdownsSustained' })}</Th>
                                           <Th>Rustbryt</Th>
-                                          <Th>Avsvimma</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.stuns' })}</Th>
                                           <Th>KO</Th>
-                                          <Th>Skada</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.casualties' })}</Th>
                                         </Tr>
                                       </Thead>
                                       <Tbody>
@@ -453,12 +454,12 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                                     <Table size="sm">
                                       <Thead>
                                         <Tr>
-                                          <Th>Spelare</Th>
-                                          <Th>Utförda fouls</Th>
-                                          <Th>Mottagna fouls</Th>
-                                          <Th>Utvisningar</Th>
-                                          <Th>Dolda vapen</Th>
-                                          <Th>Mutor</Th>
+                                          <Th>{intl.formatMessage({ id: 'common.player' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.foulsInflicted' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.foulsSustained' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.ejections' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.secretWeapons' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.bribes' })}</Th>
                                         </Tr>
                                       </Thead>
                                       <Tbody>

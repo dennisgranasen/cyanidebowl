@@ -20,7 +20,6 @@ const config = {
   auth0ClientId,
   auth0Domain,
   auth0Audience,
-  showCircuitsFeature: false,
   showRaceLogo: true,
   locale: 'en-UK',
   boxSize: '2rem',

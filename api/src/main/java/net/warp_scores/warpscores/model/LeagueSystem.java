@@ -18,7 +18,6 @@ public class LeagueSystem {
     private String id;
     private String name;
     private String slug;
-    private Long legacyCircuitId;
     private List<Long> legacySupersedesCircuitIds = new ArrayList<>();
     private String status;
     private Boolean primary = false;

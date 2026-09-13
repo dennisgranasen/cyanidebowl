@@ -33,7 +33,5 @@ public class StageSource {
     private List<String> includedMatchIds = new ArrayList<>();
     private List<String> excludedMatchIds = new ArrayList<>();
     private Boolean isArchived;
-    private Long legacyCircuitId;
-    private Long legacyCircuitLegId;
     private Integer legacyEntityIndex;
 }

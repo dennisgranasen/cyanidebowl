@@ -4,13 +4,10 @@ import { HashRouter as Router, Route, Routes, useLocation, useNavigate } from 'r
 import { Auth0Provider, withAuthenticationRequired } from '@auth0/auth0-react';
 import WarpScores from './pages/WarpScores';
 import TeamPage from './pages/TeamPage';
-import AdminCircuitPage from './pages/AdminCircuitPage';
 import CompetitionPage from './pages/CompetitionPage';
 import AboutPage from './pages/AboutPage';
 import CoachPage from './pages/CoachPage';
 import AdminPage from './pages/AdminPage';
-import CircuitLegPage from './pages/CircuitLegPage';
-import CircuitLegEntityPage from './pages/CircuitLegEntityPage';
 import StatisticsPage from './pages/StatisticsPage';
 import LatestMatchesPage from './pages/LatestMatchesPage';
 import LiveMatchesPage from './pages/LiveMatchesPage';
@@ -18,8 +15,6 @@ import LeaguePage from './pages/LeaguePage';
 import config from './config';
 import MarkdownPage from './pages/MarkdownPage';
 import warpScoresTheme from './theme/WarpScoresTheme';
-import CircuitPage from './pages/CircuitPage';
-import AdminCircuitLegPage from './pages/AdminCircuitLegPage';
 import Fonts from './theme/Fonts';
 import ArenaPage from './pages/ArenaPage';
 import ArenaCoachPage from './pages/ArenaCoachPage';
@@ -113,9 +108,6 @@ function AppRoutes() {
       <Route path="/competition/:competitionId/arena/:race" element={<ArenaPage />} />
       <Route path="/competition/:competitionId/arena/coach/:coachId" element={<ArenaCoachPage />} />
       <Route path="/competition/:competitionId/team/:teamId" element={<TeamPage />} />
-      <Route path="/circuit/:circuitId/leg/:legId" element={<CircuitLegPage />} />
-      <Route path="/circuit/:circuitId/leg/:legId/:entityId" element={<CircuitLegEntityPage />} />
-      <Route path="/circuit/:circuitId" element={<CircuitPage />} />
       {/* Protected Routes/Needing authentication */}
       <Route path="/coachPage" element={<ProtectedRoute component={CoachPage} />} />
       <Route path="/account" element={<ProtectedRoute component={AccountPage} />} />
@@ -125,11 +117,6 @@ function AppRoutes() {
       <Route path="/admin" element={<ProtectedRoute component={AdminPage} />} />
       <Route path="/admin/ai-reporters" element={<ProtectedRoute component={AdminAiReportersPage} />} />
       <Route path="/editor/articles/new" element={<ProtectedRoute component={ArticleEditorPage} />} />
-      <Route path="/admin/circuit/:circuitId" element={<ProtectedRoute component={AdminCircuitPage} />} />
-      <Route
-        path="/admin/circuit/:circuitId/leg/:legId"
-        element={<ProtectedRoute component={AdminCircuitLegPage} />}
-      />
       </Routes>
     </MyTeamsProvider>
   );

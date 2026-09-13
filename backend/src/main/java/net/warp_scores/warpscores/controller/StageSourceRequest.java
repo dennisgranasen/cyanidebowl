@@ -16,7 +16,5 @@ public record StageSourceRequest(
         String firstId,
         String lastId,
         Boolean isArchived,
-        Long legacyCircuitId,
-        Long legacyCircuitLegId,
         Integer legacyEntityIndex) {
 }
