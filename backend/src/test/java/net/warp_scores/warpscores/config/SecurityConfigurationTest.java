@@ -29,7 +29,7 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(
     classes = WarpScoresApp.class,
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-    properties = {"AUTH0_URI=https://auth.example.test/", "AUTH0_AUDIENCE=nst-scores-backend", "scheduler.enabled=false"})
+    properties = {"AUTH0_URI=https://auth.example.test/", "AUTH0_AUDIENCE=nst-scores-backend", "scheduler.enabled=false", "ai.reporters.user-reconciliation.enabled=false"})
 @ActiveProfiles("server")
 class SecurityConfigurationTest {
 

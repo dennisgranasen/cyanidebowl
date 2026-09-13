@@ -1,6 +1,5 @@
 package net.warp_scores.warpscores.ai.agents;
 
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.domain.SequenceGenerator;
@@ -17,7 +16,6 @@ public class AiReporterUserService {
     private final WarpScoresUserRepository users;
     private final SequenceGenerator sequenceGenerator;
 
-    @PostConstruct
     void reconcile() {
         for (AiReporterDefinition reporter : registry.all()) {
             String subject = reporter.resolvedUserSubject();
