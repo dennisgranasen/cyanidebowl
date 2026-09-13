@@ -31,6 +31,13 @@ public class WarpScoresUser {
     private Boolean siteEditor = false;
     private List<String> editorForLeagueSystems = new ArrayList<>();
 
+    /** Public Redaktion identity; deliberately separate from auth/login identity. */
+    private Boolean staffProfileInitialized = false;
+    private String publicDisplayName;
+    private String publicAvatarUrl;
+    private String publicPortraitUrl;
+    private String publicBio;
+
     /** Presentation preference only. Ratings are generated independently of this setting. */
     private Boolean showAiPlayerRatings = true;
 

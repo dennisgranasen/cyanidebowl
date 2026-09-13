@@ -11,6 +11,7 @@ import { identityUtils } from '../../util/identityUtil';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import MatchModal from './MatchModalWithRosters'; // Import the modal component
 import { useMyTeams } from '../../context/MyTeamsContext';
+import { useIntl } from 'react-intl';
 const { boxSize } = config;
 
 function TeamAndCoach({ teamId, teamName, coachName, race, reverse }) {
@@ -27,6 +28,7 @@ function TeamAndCoach({ teamId, teamName, coachName, race, reverse }) {
 }
 
 function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noContentHeading, noContentText, variant, clickable }) {
+  const intl = useIntl();
   const [teams, setTeams] = useState([]);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [contest, setContest] = useState(contestOrMatch);
@@ -187,17 +189,12 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
                   </Center>
                 </GridItem>
                 <GridItem colSpan={8}>
-                  <Center color="grey">{`Started: ${formatter.formatAsDate(started, '-')}`}</Center>
+                  <Center color="grey">{intl.formatMessage({ id: 'matchCard.started' }, { date: formatter.formatAsDate(started, '-') })}</Center>
                   <Center color="grey">
-                    {`${contestOrMatch.live ? 'Live since:' : 'Duration:'} ${formatter.formatAsDuration(
-                      started,
-                      finished
-                    )}`}
+                    {intl.formatMessage({ id: contestOrMatch.live ? 'matchCard.liveSince' : 'matchCard.duration' }, { duration: formatter.formatAsDuration(started, finished) })}
                   </Center>
                   {getIsClickable() && (
-                    <Center color="blue.500" fontSize="sm" mt={1}>
-                      Click for detailed stats
-                    </Center>
+                    <Center color="blue.500" fontSize="sm" mt={1}>{intl.formatMessage({ id: 'matchCard.details' })}</Center>
                   )}
                 </GridItem>
               </Grid>

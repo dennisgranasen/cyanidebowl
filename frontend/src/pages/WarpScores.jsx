@@ -12,11 +12,14 @@ import Leagues from '../components/league/Leagues';
 import LeagueSystems from '../components/league/LeagueSystems';
 import ArticleFeed from '../components/community/ArticleFeed';
 import { useIntl } from 'react-intl';
+import { useSearchParams } from 'react-router-dom';
 
 const { showCircuitsFeature } = config;
 
 function WarpScores() {
   const intl = useIntl();
+  const [searchParams] = useSearchParams();
+  const requestedLeagueSystemId = searchParams.get('leagueSystem');
   const [circuits, setCircuits] = useState([]);
   const { authenticationReady, userPermissions } = useAuth0WithUserPermissions();
   const [leagueSystems, setLeagueSystems] = useState([]);
@@ -59,7 +62,7 @@ function WarpScores() {
         setSelectedLeagueSystem(null);
         await fetchLeagues();
       } else {
-        const initial = systems.find((system) => system.primary) || systems[0];
+        const initial = systems.find((system) => system.id === requestedLeagueSystemId) || systems.find((system) => system.primary) || systems[0];
         setSelectedLeagueSystem(await WarpScoresApiService.leagueSystemOverview(initial.id));
       }
     } catch (reason) {
@@ -87,7 +90,7 @@ function WarpScores() {
     } else {
       fetchHomeData();
     }
-  }, [showCircuits]);
+  }, [showCircuits, requestedLeagueSystemId]);
 
   useEffect(() => {
     setShowCircuits(showCircuitsFeature && authenticationReady && userPermissions.writeLeagueAdmin);
@@ -96,7 +99,11 @@ function WarpScores() {
   return (
     <VStack align="stretch" w="full">
       <Box>
-        <Navigation currentPage="home" />
+        <Navigation currentPage="home"
+          leagueSystems={showCircuits ? [] : leagueSystems}
+          selectedLeagueSystemId={selectedLeagueSystem?.id}
+          onSelectLeagueSystem={showCircuits ? undefined : selectLeagueSystem}
+        />
       </Box>
       <>
         <HeaderCard
@@ -112,7 +119,7 @@ function WarpScores() {
             {showCircuits ? (
               circuits.map((currCircuit) => <CircuitCard mb={2} circuit={currCircuit} key={currCircuit.id} />)
             ) : leagueSystems.length > 0 ? (
-              <LeagueSystems summaries={leagueSystems} leagueSystem={selectedLeagueSystem} onSelectSystem={selectLeagueSystem} onSelectSeason={(seasonId) => selectLeagueSystem(selectedLeagueSystem.id, seasonId)} />
+              <LeagueSystems summaries={leagueSystems} leagueSystem={selectedLeagueSystem} onSelectSeason={(seasonId) => selectLeagueSystem(selectedLeagueSystem.id, seasonId)} />
             ) : (
               <Leagues leagues={leagues} competitionCountByStatusPerLeague={competitionCountsByStatus} />
             )}

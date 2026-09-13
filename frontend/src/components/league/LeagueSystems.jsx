@@ -452,7 +452,7 @@ function MatchDetails({ summary, isOpen, onClose }) {
   return <Modal isOpen={isOpen} onClose={onClose}><ModalOverlay /><ModalContent><ModalHeader>{intl.formatMessage({ id: 'leagueSystems.matchStatistics' })}</ModalHeader><ModalCloseButton /><ModalBody pb={6}>{loading ? <HStack><Spinner /><Text>{intl.formatMessage({ id: 'leagueSystems.loadingStats' })}</Text></HStack> : <Text color="red.500">{error}</Text>}</ModalBody></ModalContent></Modal>;
 }
 
-function LeagueSystems({ summaries, leagueSystem, onSelectSystem, onSelectSeason }) {
+function LeagueSystems({ summaries, leagueSystem, onSelectSeason }) {
   const intl = useIntl();
   const matchDetails = useDisclosure();
   const [selectedMatch, setSelectedMatch] = React.useState(null);
@@ -465,7 +465,7 @@ function LeagueSystems({ summaries, leagueSystem, onSelectSystem, onSelectSeason
     .flatMap((phase) => phase.stages || []).filter((stage) => stage.type === 'GROUP' || stage.matches?.length);
   const primary = summaries.find((item) => item.id === leagueSystem?.id)?.primary;
   return <VStack align="stretch" spacing={4} w="full">
-    <HStack justify="space-between"><HStack><Heading size="md">{leagueSystem?.name || intl.formatMessage({ id: 'leagueSystems.systemFallback' })}</Heading>{primary && <Badge colorScheme="blue">{intl.formatMessage({ id: 'leagueSystems.primary' })}</Badge>}</HStack><Menu><MenuButton as={IconButton} icon={<HamburgerIcon />} aria-label={intl.formatMessage({ id: 'leagueSystems.selectSystem' })} variant="outline" /><MenuList>{summaries.map((item) => <MenuItem key={item.id} onClick={() => onSelectSystem(item.id)}>{item.primary ? '★ ' : ''}{item.name || item.id}</MenuItem>)}</MenuList></Menu></HStack>
+    <HStack justify="space-between"><HStack><Heading size="md">{leagueSystem?.name || intl.formatMessage({ id: 'leagueSystems.systemFallback' })}</Heading>{primary && <Badge colorScheme="blue">{intl.formatMessage({ id: 'leagueSystems.primary' })}</Badge>}</HStack></HStack>
     {selectedSeason && <HStack justify="space-between"><Heading size="sm">{selectedSeason.name || intl.formatMessage({ id: 'leagueSystems.season' }, { number: selectedSeason.number })}</Heading><Menu><MenuButton as={IconButton} icon={<HamburgerIcon />} aria-label={intl.formatMessage({ id: 'leagueSystems.selectSeason' })} size="sm" variant="ghost" /><MenuList>{seasons.map((season) => <MenuItem key={season.id} onClick={() => onSelectSeason(season.id)}>{season.name || intl.formatMessage({ id: 'leagueSystems.season' }, { number: season.number })}</MenuItem>)}</MenuList></Menu></HStack>}
     {playoffPhase && <Box borderWidth={0} p={1} w="calc(100vw - 1rem)" maxW="none" alignSelf="flex-start"><Heading size="md" mb={4}>{playoffPhase.name}</Heading><PlayoffBracket phase={playoffPhase} onMatchClick={openMatch} /></Box>}
     {groupStages.map((stage) => <Box key={stage.id} borderWidth="1px" borderRadius="md" p={4}><GroupTable stage={stage} /><StageRoundMatches stage={stage} onMatchClick={openMatch} /></Box>)}

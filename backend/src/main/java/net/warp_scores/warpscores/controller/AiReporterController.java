@@ -82,6 +82,8 @@ public class AiReporterController {
 
     public record PublicReporter(
             String id,
+            String profileType,
+            String displayName,
             String alias,
             String race,
             String category,
@@ -94,6 +96,8 @@ public class AiReporterController {
             static PublicReporter from(AiReporterDefinition d, boolean active) {
                 return new PublicReporter(
                         d.getId(),
+                        "AI",
+                        d.getAlias(),
                         d.getAlias(),
                         d.getRace(),
                         d.getCategory(),

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, AlertIcon, Box, Button, Checkbox, FormControl, FormLabel, Heading, Input, Select, SimpleGrid, Stack, Text, VStack } from '@chakra-ui/react';
+import { Alert, AlertIcon, Box, Button, Checkbox, FormControl, FormLabel, Heading, Input, Select, SimpleGrid, Stack, Text, Textarea, VStack } from '@chakra-ui/react';
 import WarpScoresApiService from '../WarpScoresApiService';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 import Navigation from '../components/misc/Navigation';
 import { useMyTeams } from '../context/MyTeamsContext';
 import { useIntl } from 'react-intl';
+import StaffApi from '../StaffApi';
 
 export default function AccountPage() {
   const intl = useIntl();
@@ -22,6 +23,8 @@ export default function AccountPage() {
   const [adminClaims, setAdminClaims] = useState([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [staffProfile, setStaffProfile] = useState(null);
+  const [staffSaved, setStaffSaved] = useState(false);
 
   const reloadClaims = async (selectedGame = game) => { await refresh(); setCandidates(await WarpScoresApiService.coachClaimCandidates(selectedGame, ...auth)); if(userPermissions?.writeSiteAdmin)setAdminClaims(await WarpScoresApiService.adminCoachClaims(...auth)); };
 
@@ -40,6 +43,7 @@ export default function AccountPage() {
     WarpScoresApiService.steamConnection(...auth).then((value) => { setConnection(value); setUsername(value.steamUsername || ''); }).catch((reason) => setError(reason.message));
     WarpScoresApiService.coachClaimCandidates(game, ...auth).then(setCandidates).catch((reason)=>setError(reason.message));
     if(userPermissions?.writeSiteAdmin)WarpScoresApiService.adminCoachClaims(...auth).then(setAdminClaims).catch((reason)=>setError(reason.message));
+    StaffApi.ownProfile(...auth).then(setStaffProfile).catch((reason)=>setError(reason.message));
     // Token functions are stable in Auth0; loading once is intentional.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userPermissions?.writeSiteAdmin]);
@@ -51,6 +55,15 @@ export default function AccountPage() {
       <Box><Heading size="lg">{intl.formatMessage({ id: 'account.heading' })}</Heading><Text>{user?.name || user?.email}</Text>
         <Text fontSize="sm" color="gray.500">{intl.formatMessage({ id: 'account.steamOptional' })}</Text></Box>
       {error && <Alert status="error"><AlertIcon />{error}</Alert>}
+      {staffProfile?.eligible && <Box borderWidth="1px" borderRadius="md" p={5}>
+        <Heading size="md" mb={2}>{intl.formatMessage({id:'staff.profile'})}</Heading><Text fontSize="sm" color="gray.500" mb={4}>{intl.formatMessage({id:'staff.profileHelp'})}</Text>
+        <Stack><FormControl><FormLabel>{intl.formatMessage({id:'staff.displayName'})}</FormLabel><Input value={staffProfile.displayName||''} onChange={e=>setStaffProfile({...staffProfile,displayName:e.target.value})}/></FormControl>
+        <FormControl><FormLabel>{intl.formatMessage({id:'staff.avatarUrl'})}</FormLabel><Input value={staffProfile.avatarUrl||''} onChange={e=>setStaffProfile({...staffProfile,avatarUrl:e.target.value})}/></FormControl>
+        <FormControl><FormLabel>{intl.formatMessage({id:'staff.portraitUrl'})}</FormLabel><Input value={staffProfile.portraitUrl||''} onChange={e=>setStaffProfile({...staffProfile,portraitUrl:e.target.value})}/></FormControl>
+        <FormControl><FormLabel>{intl.formatMessage({id:'staff.bio'})}</FormLabel><Textarea value={staffProfile.bio||''} onChange={e=>setStaffProfile({...staffProfile,bio:e.target.value})}/></FormControl>
+        {staffSaved&&<Text color="green.400">{intl.formatMessage({id:'staff.saved'})}</Text>}
+        <Button alignSelf="start" colorScheme="blue" isLoading={busy} onClick={()=>run(async()=>{setStaffProfile(await StaffApi.updateOwnProfile({displayName:staffProfile.displayName,avatarUrl:staffProfile.avatarUrl,portraitUrl:staffProfile.portraitUrl,bio:staffProfile.bio},...auth));setStaffSaved(true);return{}})}>{intl.formatMessage({id:'staff.save'})}</Button></Stack>
+      </Box>}
       <Box borderWidth="1px" borderRadius="md" p={5}>
         <Heading size="md" mb={3}>{intl.formatMessage({ id: 'account.myCoaches' })}</Heading>
         {claims.length===0?<Text color="gray.500" mb={4}>{intl.formatMessage({ id: 'account.noCoaches' })}</Text>:<Stack mb={5}>{claims.map(claim=><Box key={claim.id} borderWidth="1px" borderRadius="md" p={3}><Text fontWeight="bold">{claim.coachName}</Text><Text fontSize="sm" color="gray.500">{claim.game} · {intl.formatMessage({ id: claim.source==='STEAM_LOGIN' ? 'account.claimedFromSteam' : 'account.manuallyClaimed' })}</Text><Button mt={2} size="sm" variant="outline" onClick={()=>run(async()=>{await WarpScoresApiService.releaseCoachClaim(claim.id,...auth);await reloadClaims();return{}})}>{intl.formatMessage({ id: 'account.releaseClaim' })}</Button></Box>)}</Stack>}

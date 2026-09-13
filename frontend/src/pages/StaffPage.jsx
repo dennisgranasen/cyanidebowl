@@ -5,6 +5,7 @@ import {
 import { Link as RouteLink } from 'react-router-dom';
 import Navigation from '../components/misc/Navigation';
 import AiReporterApi from '../AiReporterApi';
+import StaffApi from '../StaffApi';
 import { useIntl } from 'react-intl';
 
 function StaffPage() {
@@ -13,8 +14,12 @@ function StaffPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    AiReporterApi.reporters().then(setReporters).catch(setError);
-  }, []);
+    Promise.all([AiReporterApi.reporters(), StaffApi.users()])
+      .then(([ai, humans]) => setReporters([
+        ...(ai || []).map(r => ({...r, profileType:'AI', displayName:r.displayName || r.alias, profileUrl:`/staff/${r.id}`})),
+        ...(humans || []).map(r => ({...r, alias:r.displayName, avatarImage:r.avatarUrl, portraitImage:r.portraitUrl, role:intl.formatMessage({id:'staff.human'}), profileUrl:`/staff/user/${r.id}`})),
+      ])).catch(setError);
+  }, [intl]);
 
   return (
     <Box p={{ base: 3, md: 6 }}>
@@ -38,7 +43,7 @@ function StaffPage() {
           <Card key={reporter.id} overflow="hidden" minW={0}>
             <Box
               as={RouteLink}
-              to={`/staff/${reporter.id}`}
+              to={reporter.profileUrl || `/staff/${reporter.id}`}
               display="block"
               h="100%"
               _hover={{ textDecoration: 'none' }}
@@ -56,13 +61,13 @@ function StaffPage() {
               >
                 <Avatar
                   size="xl"
-                  name={reporter.alias}
+                  name={reporter.displayName || reporter.alias}
                   src={reporter.avatarImage || reporter.portraitImage || undefined}
                   mb={3}
                 />
-                <Heading size="sm" noOfLines={2}>{reporter.alias}</Heading>
+                <Heading size="sm" noOfLines={2}>{reporter.displayName || reporter.alias}</Heading>
                 <Box mt={2}>
-                  <Badge colorScheme="purple" mr={1}>AI</Badge>
+                  <Badge colorScheme={reporter.profileType === 'AI' ? 'purple' : 'blue'} mr={1}>{reporter.profileType === 'AI' ? 'AI' : intl.formatMessage({ id: 'staff.human' })}</Badge>
                   {reporter.race && <Badge>{reporter.race}</Badge>}
                 </Box>
                 <Text mt={2} color="gray.400" fontSize="sm" noOfLines={2}>

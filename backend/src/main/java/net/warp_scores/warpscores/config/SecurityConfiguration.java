@@ -62,6 +62,7 @@ public class SecurityConfiguration {
                         // user endpoint
                         .requestMatchers(GET, "/userPermissions").permitAll()
                         .requestMatchers("/user/preferences").authenticated()
+                        .requestMatchers("/user/staff-profile").authenticated()
                         .requestMatchers("/user/steam/**").authenticated()
                         .requestMatchers("/user/statistics/**").authenticated()                        
                         .requestMatchers("/user/coach-claims", "/user/coach-claims/**").authenticated()
@@ -83,6 +84,7 @@ public class SecurityConfiguration {
                         .requestMatchers(DELETE, "/community/**").authenticated()
                         // public api read only endpoints
                         .requestMatchers(GET, "/ai-reporters", "/ai-reporters/**").permitAll()
+                        .requestMatchers(GET, "/staff/**").permitAll()
                         .requestMatchers(GET, "/articles/**").permitAll()
                         .requestMatchers(GET, "/community/**").permitAll()
                         .requestMatchers(GET, "/arena/**").permitAll()

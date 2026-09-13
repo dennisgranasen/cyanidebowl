@@ -41,6 +41,7 @@ import ReactionBar from '../community/ReactionBar';
 import CommentThread from '../community/CommentThread';
 import MatchPlayerRatings from '../community/MatchPlayerRatings';
 import MatchArticlesPanel from '../community/MatchArticlesPanel';
+import { useIntl } from 'react-intl';
 
 const PlayerNameCell = ({ player }) => {
   const playerIsStarPlayer = isStarPlayer(player.name);
@@ -80,30 +81,31 @@ const eventSummary = (events = []) => Object.entries(events.reduce((result, even
 }, {})).sort((a, b) => b[1] - a[1]);
 
 function ReplayPanel({ replay, loading, error, onDownload }) {
-  if (loading) return <HStack><Spinner size="sm"/><Text>Hämtar replayinformation…</Text></HStack>;
+  const intl = useIntl();
+  if (loading) return <HStack><Spinner size="sm"/><Text>{intl.formatMessage({ id: 'matchModal.replay.loading' })}</Text></HStack>;
   if (error) return <Text color="red.500">{error}</Text>;
-  if (!replay?.available) return <Text color="gray.500">Ingen replay har laddats ned för den här matchen ännu.</Text>;
+  if (!replay?.available) return <Text color="gray.500">{intl.formatMessage({ id: 'matchModal.replay.unavailable' })}</Text>;
   const analysis = replay.analysis;
   const specialEvents = eventSummary(analysis?.specialEvents);
   const resourceEvents = eventSummary(analysis?.resourceEvents);
   return <VStack align="stretch" spacing={4}>
     <HStack justify="space-between" align="start" flexWrap="wrap">
-      <Box><HStack><Badge colorScheme="green">Replay available</Badge><Badge colorScheme={replay.analysisStatus === 'PROCESSED' ? 'blue' : replay.analysisStatus === 'FAILED' ? 'red' : 'orange'}>{replay.analysisStatus || 'PENDING'}</Badge></HStack><Text mt={1} fontSize="sm" color="gray.500">Original {formatBytes(replay.originalSize)} · compact {formatBytes(replay.compactSize)}</Text></Box>
+      <Box><HStack><Badge colorScheme="green">{intl.formatMessage({ id: 'matchModal.replay.available' })}</Badge><Badge colorScheme={replay.analysisStatus === 'PROCESSED' ? 'blue' : replay.analysisStatus === 'FAILED' ? 'red' : 'orange'}>{replay.analysisStatus || 'PENDING'}</Badge></HStack><Text mt={1} fontSize="sm" color="gray.500">Original {formatBytes(replay.originalSize)} · compact {formatBytes(replay.compactSize)}</Text></Box>
       <Button size="sm" colorScheme="blue" onClick={onDownload}>Download {replay.originalFormat === 'BBR' ? 'original .bbr' : 'stored replay'}</Button>
     </HStack>
-    {!analysis && <Text color="gray.500">Replayen finns, men analysen är inte klar ännu.</Text>}
+    {!analysis && <Text color="gray.500">{intl.formatMessage({ id: 'matchModal.replay.pending' })}</Text>}
     {analysis && <>
       {analysis.analysisConfidence === 'RAW_UNMAPPED' && <Alert status="warning"><AlertIcon/>Replaystrukturen är bevarad, men event- och enumtolkningen är ännu experimentell. Värdena nedan är råa parserresultat, inte verifierad Blood Bowl-statistik.</Alert>}
       <SimpleGrid columns={{base:2,md:4}} spacing={3}>
-        <Stat borderWidth="1px" borderRadius="md" p={3}><StatLabel>Turns/checkpoints</StatLabel><StatNumber>{analysis.checkpointCount || 0}</StatNumber></Stat>
-        <Stat borderWidth="1px" borderRadius="md" p={3}><StatLabel>Events</StatLabel><StatNumber>{analysis.eventCount || 0}</StatNumber></Stat>
-        <Stat borderWidth="1px" borderRadius="md" p={3}><StatLabel>Dice rolls</StatLabel><StatNumber>{analysis.diceRolls?.length || 0}</StatNumber></Stat>
-        <Stat borderWidth="1px" borderRadius="md" p={3}><StatLabel>Replay steps</StatLabel><StatNumber>{analysis.stepCount || 0}</StatNumber></Stat>
+        <Stat borderWidth="1px" borderRadius="md" p={3}><StatLabel>{intl.formatMessage({ id: 'matchModal.replay.turns' })}</StatLabel><StatNumber>{analysis.checkpointCount || 0}</StatNumber></Stat>
+        <Stat borderWidth="1px" borderRadius="md" p={3}><StatLabel>{intl.formatMessage({ id: 'matchModal.replay.events' })}</StatLabel><StatNumber>{analysis.eventCount || 0}</StatNumber></Stat>
+        <Stat borderWidth="1px" borderRadius="md" p={3}><StatLabel>{intl.formatMessage({ id: 'matchModal.replay.diceRolls' })}</StatLabel><StatNumber>{analysis.diceRolls?.length || 0}</StatNumber></Stat>
+        <Stat borderWidth="1px" borderRadius="md" p={3}><StatLabel>{intl.formatMessage({ id: 'matchModal.replay.steps' })}</StatLabel><StatNumber>{analysis.stepCount || 0}</StatNumber></Stat>
       </SimpleGrid>
-      <Box><Heading size="sm" mb={2}>Dice results</Heading><TableContainer><Table size="sm"><Thead><Tr><Th>Die / result</Th><Th isNumeric>Count</Th></Tr></Thead><Tbody>{Object.entries(analysis.dieValueCounts || {}).sort((a,b)=>b[1]-a[1]).map(([key,count])=><Tr key={key}><Td>{key}</Td><Td isNumeric>{count}</Td></Tr>)}</Tbody></Table></TableContainer></Box>
+      <Box><Heading size="sm" mb={2}>{intl.formatMessage({ id: 'matchModal.replay.diceResults' })}</Heading><TableContainer><Table size="sm"><Thead><Tr><Th>{intl.formatMessage({ id: 'matchModal.replay.dieResult' })}</Th><Th isNumeric>{intl.formatMessage({ id: 'matchModal.replay.count' })}</Th></Tr></Thead><Tbody>{Object.entries(analysis.dieValueCounts || {}).sort((a,b)=>b[1]-a[1]).map(([key,count])=><Tr key={key}><Td>{key}</Td><Td isNumeric>{count}</Td></Tr>)}</Tbody></Table></TableContainer></Box>
       <SimpleGrid columns={{base:1,md:2}} spacing={4}>
-        <Box><Heading size="sm" mb={2}>Resources</Heading>{resourceEvents.length ? <Table size="sm"><Tbody>{resourceEvents.map(([name,count])=><Tr key={name}><Td>{name}</Td><Td isNumeric>{count}</Td></Tr>)}</Tbody></Table> : <Text color="gray.500">No reroll, apothecary or wizard events found.</Text>}</Box>
-        <Box><Heading size="sm" mb={2}>Special events</Heading>{specialEvents.length ? <Table size="sm"><Tbody>{specialEvents.map(([name,count])=><Tr key={name}><Td>{name}</Td><Td isNumeric>{count}</Td></Tr>)}</Tbody></Table> : <Text color="gray.500">No special events found.</Text>}</Box>
+        <Box><Heading size="sm" mb={2}>{intl.formatMessage({ id: 'matchModal.replay.resources' })}</Heading>{resourceEvents.length ? <Table size="sm"><Tbody>{resourceEvents.map(([name,count])=><Tr key={name}><Td>{name}</Td><Td isNumeric>{count}</Td></Tr>)}</Tbody></Table> : <Text color="gray.500">{intl.formatMessage({ id: 'matchModal.replay.noResources' })}</Text>}</Box>
+        <Box><Heading size="sm" mb={2}>{intl.formatMessage({ id: 'matchModal.replay.specialEvents' })}</Heading>{specialEvents.length ? <Table size="sm"><Tbody>{specialEvents.map(([name,count])=><Tr key={name}><Td>{name}</Td><Td isNumeric>{count}</Td></Tr>)}</Tbody></Table> : <Text color="gray.500">{intl.formatMessage({ id: 'matchModal.replay.noSpecialEvents' })}</Text>}</Box>
       </SimpleGrid>
     </>}
   </VStack>;
@@ -118,6 +120,7 @@ function ReplayAnalysisAwarePanel({ replay, match, loading, error, onDownload })
 }
 
 function MatchModal({ isOpen, onClose, match, contest }) {
+  const intl = useIntl();
   const [matchData, setMatch] = useState(null);
   const [replay, setReplay] = useState(null);
   const [replayLoading, setReplayLoading] = useState(false);
@@ -151,7 +154,7 @@ function MatchModal({ isOpen, onClose, match, contest }) {
     if (!isOpen || !replayMatchId) return;
     setReplay(null); setReplayError(''); setReplayLoading(true);
     WarpScoresApiService.replay(replayMatchId).then(setReplay)
-      .catch(() => setReplayError('Replayinformationen kunde inte hämtas.'))
+      .catch(() => setReplayError(intl.formatMessage({ id: 'matchModal.replay.fetchError' })))
       .finally(() => setReplayLoading(false));
   }, [isOpen, replayMatchId]);
 
@@ -163,7 +166,7 @@ function MatchModal({ isOpen, onClose, match, contest }) {
       <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(5px)" />
       <ModalContent backgroundColor="warpScoresBackgroundColor">
         <ModalCloseButton />
-        <ModalHeader>{[matchData?.leagueName, matchData?.competitionName].filter(Boolean).join(' · ') || contest?.competitionName || 'Matchstatistik'}</ModalHeader>
+        <ModalHeader>{[matchData?.leagueName, matchData?.competitionName].filter(Boolean).join(' · ') || contest?.competitionName || intl.formatMessage({ id: 'matchModal.title' })}</ModalHeader>
         <ModalBody>
           {matchData && (!contest || contest.status === 'Validated') && (
             <>
@@ -179,12 +182,12 @@ function MatchModal({ isOpen, onClose, match, contest }) {
               
               <Tabs>
                 <TabList>
-                  <Tab>Lagstatistik</Tab>
-                  <Tab>Spelartrupper</Tab>
-                  <Tab>Spelarbetyg</Tab>
-                  <Tab>Artiklar</Tab>
-                  <Tab>Kommentarer</Tab>
-                  <Tab>Matchsammanfattning {replay?.available && <Badge ml={1} colorScheme="green">✓</Badge>}</Tab>
+                  <Tab>{intl.formatMessage({ id: 'matchModal.tabs.teamStats' })}</Tab>
+                  <Tab>{intl.formatMessage({ id: 'matchModal.tabs.rosters' })}</Tab>
+                  <Tab>{intl.formatMessage({ id: 'matchModal.tabs.ratings' })}</Tab>
+                  <Tab>{intl.formatMessage({ id: 'matchModal.tabs.articles' })}</Tab>
+                  <Tab>{intl.formatMessage({ id: 'matchModal.tabs.comments' })}</Tab>
+                  <Tab>{intl.formatMessage({ id: 'matchModal.tabs.summary' })} {replay?.available && <Badge ml={1} colorScheme="green">✓</Badge>}</Tab>
                 </TabList>
                 <TabPanels>
                   <TabPanel>
@@ -195,82 +198,82 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                           <Tbody>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedtackles}</Td>
-                              <Td textAlign="center">Utdelade nedslagningar</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.inflictedTackles' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedtackles}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedinjuries}</Td>
-                              <Td textAlign="center">Utdelade rustningsbrytningar</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.inflictedArmorBreaks' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedinjuries}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedko}</Td>
-                              <Td textAlign="center">Utdelade KOs</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.inflictedKos' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedko}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedcasualties}</Td>
-                              <Td textAlign="center">Åsamkade skador</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.inflictedCasualties' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedcasualties}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflicteddead}</Td>
-                              <Td textAlign="center">Åsamkade dödsfall</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.inflictedDeaths' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].inflicteddead}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedpushouts}</Td>
-                              <Td textAlign="center">Åsamkade utknuffningar</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.inflictedPushouts' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedpushouts}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedinterceptions}</Td>
-                              <Td textAlign="center">Utförda passningsavbrott</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.interceptions' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedinterceptions}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].sustainedinjuries}</Td>
-                              <Td textAlign="center">Erhållna nedslagningar</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.sustainedTackles' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].sustainedinjuries}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].sustainedko}</Td>
-                              <Td textAlign="center">Erhållna K.O.s</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.sustainedKos' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].sustainedko}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].sustainedcasualties}</Td>
-                              <Td textAlign="center">Erhållna skador</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.sustainedCasualties' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].sustainedcasualties}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].sustaineddead}</Td>
-                              <Td textAlign="center">Erhållna dödsfall</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.sustainedDeaths' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].sustaineddead}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].sustainedexpulsions}</Td>
-                              <Td textAlign="center"># utvisningar</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.ejections' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].sustainedexpulsions}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedpasses}</Td>
-                              <Td textAlign="center"># passningar</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.passes' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedpasses}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedcatches}</Td>
-                              <Td textAlign="center"># mottagningar</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.catches' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedcatches}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedmetersrunning}</Td>
-                              <Td textAlign="center">Löpmeter</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.runningMeters' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedmetersrunning}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedmeterspassing}</Td>
-                              <Td textAlign="center">Passningsmeter</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.passingMeters' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedmeterspassing}</Td>
                             </Tr>
                           </Tbody>
@@ -286,21 +289,21 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                         {!matchData.teams.some((team) => team.players?.length > 0) && (
                           <Text color="gray.500">
                             {matchData.detailsStatus === 'PLAYER_DATA_UNAVAILABLE'
-                              ? 'Matchen har kontrollerats, men Cyanide tillhandahåller ingen spelarstatistik.'
-                              : 'Spelarstatistik saknas ännu. Matchen väntar på bakgrundskontroll.'}
+                              ? intl.formatMessage({ id: 'matchModal.roster.unavailable' })
+                              : intl.formatMessage({ id: 'matchModal.roster.pending' })}
                           </Text>
                         )}
                         {matchData.teams.map((team, teamIndex) => (
                           <Box key={teamIndex} mb={6}>
                             <Heading size="md" mb={3}>{team.name}</Heading>
-                            {!team.players?.length ? <Text color="gray.500">Ingen spelartrupp finns lagrad.</Text> : (
+                            {!team.players?.length ? <Text color="gray.500">{intl.formatMessage({ id: 'matchModal.roster.empty' })}</Text> : (
                             
                             <Tabs variant="enclosed" size="sm">
                               <TabList>
-                                <Tab>Översikt</Tab>
-                                <Tab>Grundläggande statistik</Tab>
-                                <Tab>Våldsstatistik</Tab>
-                                <Tab>Fulspel</Tab>
+                                <Tab>{intl.formatMessage({ id: 'matchModal.roster.overview' })}</Tab>
+                                <Tab>{intl.formatMessage({ id: 'matchModal.roster.coreStats' })}</Tab>
+                                <Tab>{intl.formatMessage({ id: 'matchModal.roster.combatStats' })}</Tab>
+                                <Tab>{intl.formatMessage({ id: 'matchModal.roster.foulPlay' })}</Tab>
                               </TabList>
 
                               <TabPanels>
@@ -357,7 +360,7 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                                           <Th>Mottag</Th>
                                           <Th>Passning</Th>
                                           <Th>Intercept</Th>
-                                          <Th>Löpmeter</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.stats.runningMeters' })}</Th>
                                           <Th>Passmeter</Th>
                                         </Tr>
                                       </Thead>
@@ -490,21 +493,21 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                   <TabPanel>
                     {replayMatchId
                       ? <MatchPlayerRatings matchId={replayMatchId} />
-                      : <Text color="gray.500">Match-ID saknas; spelarbetyg kan inte laddas.</Text>}
+                      : <Text color="gray.500">{intl.formatMessage({ id: 'matchModal.missingId.ratings' })}</Text>}
                   </TabPanel>
                   <TabPanel>
                     {replayMatchId
                       ? <MatchArticlesPanel matchId={replayMatchId} />
-                      : <Text color="gray.500">Match-ID saknas; artiklar kan inte laddas.</Text>}
+                      : <Text color="gray.500">{intl.formatMessage({ id: 'matchModal.missingId.articles' })}</Text>}
                   </TabPanel>
                   <TabPanel>
                     {replayMatchId
                       ? <CommentThread targetType="MATCH" targetId={replayMatchId} />
-                      : <Text color="gray.500">Match-ID saknas; kommentarer kan inte laddas.</Text>}
+                      : <Text color="gray.500">{intl.formatMessage({ id: 'matchModal.missingId.comments' })}</Text>}
                   </TabPanel>
                   <TabPanel>
                     <ReplayAnalysisAwarePanel replay={replay} match={matchData} loading={replayLoading} error={replayError}
-                      onDownload={() => WarpScoresApiService.downloadOriginalReplay(replayMatchId).catch(() => setReplayError('Originalreplayen kunde inte laddas ned.'))}/>
+                      onDownload={() => WarpScoresApiService.downloadOriginalReplay(replayMatchId).catch(() => setReplayError(intl.formatMessage({ id: 'matchModal.replay.downloadError' })))}/>
                   </TabPanel>
                 </TabPanels>
               </Tabs>

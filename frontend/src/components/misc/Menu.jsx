@@ -63,7 +63,8 @@ function LastCheck({ status, textSize, statusOutdated }) {
   );
 }
 
-function Menu() {
+function Menu({ leagueSystems = [], selectedLeagueSystemId, onSelectLeagueSystem }) {
+  const [menuLeagueSystems, setMenuLeagueSystems] = useState([]);
   const intl = useIntl();
   const { user, authenticationReady, checkPermissions, userPermissions, isAuthenticated, loginWithRedirect, logout } =
     useAuth0WithUserPermissions();
@@ -83,6 +84,10 @@ function Menu() {
 
   useEffect(() => {
     fetchStatus();
+  }, []);
+
+  useEffect(() => {
+    WarpScoresApiService.publicLeagueSystems().then(setMenuLeagueSystems).catch(() => setMenuLeagueSystems([]));
   }, []);
 
   useEffect(() => {
@@ -128,6 +133,21 @@ function Menu() {
                     {intl.formatMessage({ id: 'menu.home' })}
                   </Link>
                 </Box>
+                {(leagueSystems.length > 0 || menuLeagueSystems.length > 0) && (
+                  <Box pt={2} pb={1}>
+                    <Box fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide" mb={1}>
+                      {intl.formatMessage({ id: 'menu.leagueSystem' })}
+                    </Box>
+                    <VStack align="left" spacing={1}>
+                      {(leagueSystems.length ? leagueSystems : menuLeagueSystems).map((system) => (
+                        <Link key={system.id} variant="menu" as={RouteLink} to={`/?leagueSystem=${system.id}`} fontWeight={system.id === selectedLeagueSystemId ? 'bold' : 'normal'}
+                          onClick={async () => { if (onSelectLeagueSystem) await onSelectLeagueSystem(system.id); onClose(); }}>
+                          {system.primary ? '★ ' : ''}{system.name || system.id}
+                        </Link>
+                      ))}
+                    </VStack>
+                  </Box>
+                )}
                 {checkPermissions && userPermissions?.readCurrentUser && (
                   <Box>
                     <Link variant="menu" as={RouteLink} to="/coachPage" onClick={() => onClose()}>

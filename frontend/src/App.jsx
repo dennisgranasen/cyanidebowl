@@ -30,6 +30,7 @@ import ArticlePage from './pages/ArticlePage';
 import ArticleEditorPage from './pages/ArticleEditorPage';
 import StaffPage from './pages/StaffPage';
 import ReporterProfilePage from './pages/ReporterProfilePage';
+import HumanStaffProfilePage from './pages/HumanStaffProfilePage';
 import AdminAiReportersPage from './pages/AdminAiReportersPage';
 import { MyTeamsProvider } from './context/MyTeamsContext';
 import I18nProvider from './i18n/I18nProvider';
@@ -105,6 +106,7 @@ function AppRoutes() {
       <Route path="/team/:teamId" element={<TeamPage />} />
       <Route path="/article/:slug" element={<ArticlePage />} />
       <Route path="/staff" element={<StaffPage />} />
+      <Route path="/staff/user/:profileId" element={<HumanStaffProfilePage />} />
       <Route path="/staff/:reporterId" element={<ReporterProfilePage />} />
       <Route path="/competition/:competitionId" element={<CompetitionPage />} />
       <Route path="/competition/:competitionId/stats" element={<CompetitionStatsPage />} />

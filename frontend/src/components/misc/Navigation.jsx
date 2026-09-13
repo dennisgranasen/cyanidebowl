@@ -10,7 +10,7 @@ import prettyPrint from '../../util/prettyPrint';
 
 const { isProduction } = config;
 
-function Navigation({ currentPage, parentPage, league, competition, circuit, team, race, coach, circuitLeg, circuitLegEntity }) {
+function Navigation({ currentPage, parentPage, currentLabel, league, competition, circuit, team, race, coach, circuitLeg, circuitLegEntity, leagueSystems, selectedLeagueSystemId, onSelectLeagueSystem }) {
   const intl = useIntl();
   const isPage = (pageName, currentPageName) => {
     return pageName === currentPageName;
@@ -41,6 +41,18 @@ function Navigation({ currentPage, parentPage, league, competition, circuit, tea
             <BreadcrumbLink variant="menu" as={RouteLink} to="/admin">
               {intl.formatMessage({ id: 'nav.admin' })}
             </BreadcrumbLink>
+          </BreadcrumbItem>
+        )}
+        {(isPage('staff', currentPage) || isPage('staff', parentPage) || isPage('staffProfile', currentPage)) && (
+          <BreadcrumbItem isCurrentPage={isPage('staff', currentPage)} flexWrap>
+            <BreadcrumbLink variant="menu" as={RouteLink} to="/staff">
+              {intl.formatMessage({ id: 'nav.staff' })}
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+        )}
+        {isPage('staffProfile', currentPage) && currentLabel && (
+          <BreadcrumbItem isCurrentPage flexWrap>
+            <BreadcrumbLink variant="menu">{currentLabel}</BreadcrumbLink>
           </BreadcrumbItem>
         )}
         {circuit && (
@@ -99,7 +111,7 @@ function Navigation({ currentPage, parentPage, league, competition, circuit, tea
       <Spacer />
       <ToggleColorModeButton />
       {isProduction && <AuthButton mr="0.5rem" />}
-      <Menu />
+      <Menu leagueSystems={leagueSystems} selectedLeagueSystemId={selectedLeagueSystemId} onSelectLeagueSystem={onSelectLeagueSystem} />
     </Flex>
   );
 }

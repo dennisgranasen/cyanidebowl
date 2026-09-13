@@ -244,7 +244,7 @@ function ReporterProfilePage() {
   return (
     <Box>
       <Container maxW="7xl" px={{ base: 3, md: 6 }} py={{ base: 3, md: 5 }}>
-        <Navigation currentPage="staff" />
+        <Navigation currentPage="staffProfile" parentPage="staff" currentLabel={reporter?.displayName || reporter?.alias} />
 
         {error && (
           <Text mt={6} color="red.400">
@@ -268,7 +268,7 @@ function ReporterProfilePage() {
                 >
                   <Image
                     src={reporter.portraitImage || reporter.avatarImage || undefined}
-                    alt={reporter.alias}
+                    alt={(reporter.displayName || reporter.alias)}
                     w="100%"
                     h="100%"
                     objectFit="cover"
@@ -303,7 +303,7 @@ function ReporterProfilePage() {
                         lineHeight="1"
                         letterSpacing="-0.02em"
                       >
-                        {reporter.alias}
+                        {(reporter.displayName || reporter.alias)}
                       </Heading>
 
                       <HStack mt={4} spacing={2} wrap="wrap">
@@ -317,7 +317,7 @@ function ReporterProfilePage() {
                       <Popover placement="bottom-end" onOpen={loadAdminReporter}>
                         <PopoverTrigger>
                           <IconButton
-                            aria-label={intl.formatMessage({ id: 'reporter.settingsFor' }, { name: reporter.alias })}
+                            aria-label={intl.formatMessage({ id: 'reporter.settingsFor' }, { name: (reporter.displayName || reporter.alias) })}
                             title={intl.formatMessage({ id: 'reporter.settings' })}
                             icon={<SettingsIcon />}
                             size="sm"
@@ -409,7 +409,7 @@ function ReporterProfilePage() {
                 w="100%"
               >
                 <Heading size="lg" mb={1}>
-                  {intl.formatMessage({ id: 'reporter.about' }, { name: reporter.alias })}
+                  {intl.formatMessage({ id: 'reporter.about' }, { name: (reporter.displayName || reporter.alias) })}
                 </Heading>
                 <Box w="48px" borderTopWidth="4px" borderColor="purple.400" mt={3} mb={6} />
 
