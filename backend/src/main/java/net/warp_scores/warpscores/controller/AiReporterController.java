@@ -51,6 +51,32 @@ public class AiReporterController {
         return reports.findByReporterIdOrderByPublishedAtDesc(id);
     }
 
+    private static String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) return value.trim();
+        }
+        return null;
+    }
+
+    private static String publicSummary(String markdown) {
+        if (markdown == null || markdown.isBlank()) return null;
+        Matcher matcher = H2_SECTION.matcher(markdown);
+        while (matcher.find()) {
+            if ("public profile".equalsIgnoreCase(matcher.group(1).trim())) {
+                String body = matcher.group(2).trim()
+                        .replaceAll("(?m)^#{1,6}\\s+", "")
+                        .replaceAll("\\*\\*|__|`", "")
+                        .replaceAll("\\s+", " ").trim();
+                if (body.isEmpty()) return null;
+                int end = body.length();
+                int sentence = body.indexOf(". ");
+                if (sentence >= 0) end = sentence + 1;
+                return body.substring(0, Math.min(end, 280)).trim();
+            }
+        }
+        return null;
+    }
+
     private static String publicMarkdown(String markdown) {
         if (markdown == null || markdown.isBlank()) {
             return "";
@@ -88,24 +114,22 @@ public class AiReporterController {
             String race,
             String category,
             String role,
+            String summary,
             String portraitImage,
             String avatarImage,
             String publicMarkdown,
             boolean active) {
 
             static PublicReporter from(AiReporterDefinition d, boolean active) {
+                String displayName = firstNonBlank(d.getAlias(), d.getId(), "AI reporter");
+                String role = firstNonBlank(d.getRole(), d.getCategory(), "Staff reporter");
+                String portrait = d.getPortrait() == null ? null : firstNonBlank(d.getPortrait().getImage(), d.getPortrait().getAvatar());
+                String avatar = d.getPortrait() == null ? null : firstNonBlank(d.getPortrait().getAvatar(), d.getPortrait().getImage());
+                String publicMarkdown = AiReporterController.publicMarkdown(d.getMarkdownBody());
+                String summary = firstNonBlank(AiReporterController.publicSummary(d.getMarkdownBody()), role, d.getCategory());
                 return new PublicReporter(
-                        d.getId(),
-                        "AI",
-                        d.getAlias(),
-                        d.getAlias(),
-                        d.getRace(),
-                        d.getCategory(),
-                        d.getRole(),
-                        d.getPortrait().getImage(),
-                        d.getPortrait().getAvatar(),
-                        AiReporterController.publicMarkdown(d.getMarkdownBody()),
-                        active);
+                        d.getId(), "AI", displayName, displayName, d.getRace(), d.getCategory(),
+                        role, summary, portrait, avatar, publicMarkdown, active);
             }
     }
 }

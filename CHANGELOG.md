@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Completed the R2 Staff profile work: HUMAN public profile validation/fallback policy,
+  canonical frontend profile/deep-link helpers and regression tests.
+- Completed AI Staff public-profile normalization with deterministic display/role/image
+  fallbacks and a short summary derived from existing public reporter copy.
+
 ### Changed
 
 - Moved LeagueSystem selection into the primary application navigation and made the

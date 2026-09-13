@@ -100,6 +100,50 @@ class UserProfileServiceTest {
         assertThat(updated.getSiteEditor()).isTrue();
     }
 
+    @Test
+    void rejectsInvalidPublicProfileInput() {
+        WarpScoresUser existing = new WarpScoresUser();
+        existing.setId(10L);
+        existing.setAuthSubject("auth0|validation");
+        existing.setUsername("validation-user");
+        existing.setStaffProfileInitialized(true);
+        when(repository.findByAuthSubject("auth0|validation")).thenReturn(Optional.of(existing));
+        Jwt jwt = jwt("auth0|validation", "validation@example.com", "Validation", null, null);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+                service.updateStaffProfile(jwt, "Name", "javascript:alert(1)", null, null))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("avatarUrl");
+        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+                service.updateStaffProfile(jwt, "A".repeat(81), null, null, null))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("displayName");
+        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+                service.updateStaffProfile(jwt, "Name", null, null, "B".repeat(2001)))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("bio");
+        verify(repository, never()).save(existing);
+    }
+
+    @Test
+    void blankPublicFieldsAreClearedForFallbackPresentation() {
+        WarpScoresUser existing = new WarpScoresUser();
+        existing.setId(11L);
+        existing.setAuthSubject("auth0|blank");
+        existing.setUsername("fallback-login");
+        existing.setStaffProfileInitialized(true);
+        existing.setPublicDisplayName("Old name");
+        existing.setPublicAvatarUrl("https://example.test/old.png");
+        when(repository.findByAuthSubject("auth0|blank")).thenReturn(Optional.of(existing));
+        when(repository.save(any(WarpScoresUser.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        WarpScoresUser updated = service.updateStaffProfile(
+                jwt("auth0|blank", "blank@example.com", "Ignored", null, null),
+                " ", " ", " ", " ");
+
+        assertThat(updated.getPublicDisplayName()).isNull();
+        assertThat(updated.getPublicAvatarUrl()).isNull();
+        assertThat(updated.getPublicPortraitUrl()).isNull();
+        assertThat(updated.getPublicBio()).isNull();
+    }
+
     private static Jwt jwt(String subject, String email, String name, String nickname, String picture) {
         Jwt.Builder builder = Jwt.withTokenValue("test-token")
                 .header("alg", "none")

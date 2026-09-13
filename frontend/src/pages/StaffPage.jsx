@@ -7,6 +7,7 @@ import Navigation from '../components/misc/Navigation';
 import AiReporterApi from '../AiReporterApi';
 import StaffApi from '../StaffApi';
 import { useIntl } from 'react-intl';
+import { toStaffCards } from '../util/staffProfiles';
 
 function StaffPage() {
   const intl = useIntl();
@@ -15,10 +16,10 @@ function StaffPage() {
 
   useEffect(() => {
     Promise.all([AiReporterApi.reporters(), StaffApi.users()])
-      .then(([ai, humans]) => setReporters([
-        ...(ai || []).map(r => ({...r, profileType:'AI', displayName:r.displayName || r.alias, profileUrl:`/staff/${r.id}`})),
-        ...(humans || []).map(r => ({...r, alias:r.displayName, avatarImage:r.avatarUrl, portraitImage:r.portraitUrl, role:intl.formatMessage({id:'staff.human'}), profileUrl:`/staff/user/${r.id}`})),
-      ])).catch(setError);
+      .then(([ai, humans]) => setReporters(toStaffCards(
+        ai, humans, intl.formatMessage({ id: 'staff.human' })
+      )))
+      .catch(setError);
   }, [intl]);
 
   return (
@@ -73,6 +74,7 @@ function StaffPage() {
                 <Text mt={2} color="gray.400" fontSize="sm" noOfLines={2}>
                   {reporter.role || reporter.category}
                 </Text>
+                {reporter.summary && <Text mt={2} color="gray.500" fontSize="xs" noOfLines={3}>{reporter.summary}</Text>}
               </CardBody>
             </Box>
           </Card>

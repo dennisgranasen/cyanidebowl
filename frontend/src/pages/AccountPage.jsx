@@ -6,6 +6,7 @@ import Navigation from '../components/misc/Navigation';
 import { useMyTeams } from '../context/MyTeamsContext';
 import { useIntl } from 'react-intl';
 import StaffApi from '../StaffApi';
+import { staffProfileUpdatePayload } from '../util/staffProfiles';
 
 export default function AccountPage() {
   const intl = useIntl();
@@ -57,12 +58,12 @@ export default function AccountPage() {
       {error && <Alert status="error"><AlertIcon />{error}</Alert>}
       {staffProfile?.eligible && <Box borderWidth="1px" borderRadius="md" p={5}>
         <Heading size="md" mb={2}>{intl.formatMessage({id:'staff.profile'})}</Heading><Text fontSize="sm" color="gray.500" mb={4}>{intl.formatMessage({id:'staff.profileHelp'})}</Text>
-        <Stack><FormControl><FormLabel>{intl.formatMessage({id:'staff.displayName'})}</FormLabel><Input value={staffProfile.displayName||''} onChange={e=>setStaffProfile({...staffProfile,displayName:e.target.value})}/></FormControl>
-        <FormControl><FormLabel>{intl.formatMessage({id:'staff.avatarUrl'})}</FormLabel><Input value={staffProfile.avatarUrl||''} onChange={e=>setStaffProfile({...staffProfile,avatarUrl:e.target.value})}/></FormControl>
-        <FormControl><FormLabel>{intl.formatMessage({id:'staff.portraitUrl'})}</FormLabel><Input value={staffProfile.portraitUrl||''} onChange={e=>setStaffProfile({...staffProfile,portraitUrl:e.target.value})}/></FormControl>
-        <FormControl><FormLabel>{intl.formatMessage({id:'staff.bio'})}</FormLabel><Textarea value={staffProfile.bio||''} onChange={e=>setStaffProfile({...staffProfile,bio:e.target.value})}/></FormControl>
+        <Stack><FormControl><FormLabel>{intl.formatMessage({id:'staff.displayName'})}</FormLabel><Input maxLength={80} value={staffProfile.displayName||''} onChange={e=>setStaffProfile({...staffProfile,displayName:e.target.value})}/></FormControl>
+        <FormControl><FormLabel>{intl.formatMessage({id:'staff.avatarUrl'})}</FormLabel><Input type="url" maxLength={2048} value={staffProfile.avatarUrl||''} onChange={e=>setStaffProfile({...staffProfile,avatarUrl:e.target.value})}/></FormControl>
+        <FormControl><FormLabel>{intl.formatMessage({id:'staff.portraitUrl'})}</FormLabel><Input type="url" maxLength={2048} value={staffProfile.portraitUrl||''} onChange={e=>setStaffProfile({...staffProfile,portraitUrl:e.target.value})}/></FormControl>
+        <FormControl><FormLabel>{intl.formatMessage({id:'staff.bio'})}</FormLabel><Textarea maxLength={2000} value={staffProfile.bio||''} onChange={e=>setStaffProfile({...staffProfile,bio:e.target.value})}/></FormControl>
         {staffSaved&&<Text color="green.400">{intl.formatMessage({id:'staff.saved'})}</Text>}
-        <Button alignSelf="start" colorScheme="blue" isLoading={busy} onClick={()=>run(async()=>{setStaffProfile(await StaffApi.updateOwnProfile({displayName:staffProfile.displayName,avatarUrl:staffProfile.avatarUrl,portraitUrl:staffProfile.portraitUrl,bio:staffProfile.bio},...auth));setStaffSaved(true);return{}})}>{intl.formatMessage({id:'staff.save'})}</Button></Stack>
+        <Button alignSelf="start" colorScheme="blue" isLoading={busy} onClick={()=>run(async()=>{setStaffProfile(await StaffApi.updateOwnProfile(staffProfileUpdatePayload(staffProfile),...auth));setStaffSaved(true);return{}})}>{intl.formatMessage({id:'staff.save'})}</Button></Stack>
       </Box>}
       <Box borderWidth="1px" borderRadius="md" p={5}>
         <Heading size="md" mb={3}>{intl.formatMessage({ id: 'account.myCoaches' })}</Heading>

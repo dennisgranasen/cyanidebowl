@@ -72,20 +72,21 @@ Exit condition: representative BB1, BB2 and BB3 replays produce stable normalize
 events; known parser defects have regression fixtures; and the normalized stream can
 drive deterministic replay visualization without reparsing raw payloads.
 
-### R2 — UI, navigation and Staff follow-up
+### R2 — UI, navigation and Staff
 
-The R2 baseline is implemented. `Staff` is the domain term in code, APIs and routes;
-`Redaktion` is only the Swedish localization of that concept.
+**Status: Done**
 
-Remaining work:
+Completed:
 
-- finish human Staff input/fallback policy and frontend profile-flow regression coverage;
-- improve AI reporter biography/profile content and structured public identity while
-  keeping runtime/provider/prompt configuration internal.
+- canonical primary-navigation LeagueSystem switching;
+- retirement of the legacy Circuit/CircuitLeg hierarchy;
+- match-card and immediate match-modal i18n with regression coverage;
+- shared HUMAN/AI Staff surface using `Staff` as the code/API/route domain;
+- editable HUMAN public profiles with explicit lifecycle, validation and fallback policy;
+- normalized AI public identity with structured role/category, public-summary and image
+  fallbacks while keeping provider/prompt/runtime configuration private.
 
-Exit condition: deep links expose predictable hierarchy, LeagueSystem switching behaves
-coherently from nested routes, the relevant match/replay UI has complete localization
-coverage, and human/AI Staff profiles have tested lifecycle and public-identity rules.
+New defects in these areas should be tracked as focused deltas rather than reopening R2.
 
 ### R3 — Remaining AI product work
 

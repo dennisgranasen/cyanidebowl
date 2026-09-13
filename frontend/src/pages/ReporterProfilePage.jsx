@@ -309,6 +309,7 @@ function ReporterProfilePage() {
                       <HStack mt={4} spacing={2} wrap="wrap">
                         <Badge colorScheme="purple">{intl.formatMessage({ id: 'reporter.aiReporter' })}</Badge>
                         {reporter.race && <Badge>{reporter.race}</Badge>}
+                        {reporter.category && <Badge variant="outline">{reporter.category}</Badge>}
                         {!reporter.active && <Badge colorScheme="gray">{intl.formatMessage({ id: 'reporter.inactive' })}</Badge>}
                       </HStack>
                     </Box>
@@ -361,7 +362,7 @@ function ReporterProfilePage() {
                     {reporter.role || reporter.category}
                   </Text>
 
-                  {publicProfile.intro && (
+                  {(publicProfile.intro || reporter.summary) && (
                     <>
                       <Divider my={6} />
                       <Box
@@ -382,7 +383,7 @@ function ReporterProfilePage() {
                             },
                           }}
                         >
-                          {publicProfile.intro}
+                          {publicProfile.intro || reporter.summary}
                         </ReactMarkdown>
                       </Box>
                     </>

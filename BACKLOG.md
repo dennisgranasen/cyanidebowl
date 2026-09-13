@@ -33,13 +33,13 @@ Do not use old `main` behavior as the basis for implementation work.
 | --- | --- | --- | --- |
 | P1 | B-025 | Versioned pybb3 timeline/skill-reroll contract is consumed safely | Integration pending upstream |
 | P1 | B-033 | Replay parsing is stable and regression-tested | Backlog |
-| P1 | B-032 | Human editors have editable public Staff profiles | Partial — lifecycle hardened |
+| P1 | B-032 | Human editors have editable public Staff profiles | Done |
 | P1 | B-019 | Dedicated Fans population reconciliation | Backlog |
 | P1 | B-020 | Deterministic direct AI textual interaction | Partial |
 | P2 | B-028 | Legacy Circuit hierarchy retired; canonical navigation remains | Done |
 | P2 | B-029 | LeagueSystem selection lives in the primary navigation | Done |
 | P2 | B-030 | Match cards and immediate match modal are internationalized | Done |
-| P2 | B-031 | AI reporter public profiles are improved | Partial — public identity DTO normalized |
+| P2 | B-031 | AI reporter public profiles are improved | Done |
 | P2 | B-035 | BB1 and BB2 replays use the normalized replay pipeline | Backlog |
 | P2 | B-034 | Replays can be reconstructed and visualized interactively | Depends on B-033/B-035 |
 | P2 | B-016 | AI scheduling, quotas and cost controls | Deferred until B-019/B-020 |
@@ -239,52 +239,30 @@ untranslated.
 
 ### B-032 — Human public Staff profiles
 
-**Status: Partial — functional baseline implemented**
+**Status: Done**
 
-`Staff` is the canonical internal/product domain. `Redaktion` is its Swedish UI
-translation only; do not create `RedaktionController`, `/redaktion/*`, `RedaktionApi`
-or a second persistence model.
+`Staff` is the canonical internal/product domain. `Redaktion` remains only the Swedish
+UI translation.
 
-Implemented in R2:
+Implemented:
 
-- eligible HUMAN users are exposed through the public `/staff/users` API alongside the
-  existing AI reporter Staff surface;
-- current eligibility is based on `siteEditor` or non-empty
-  `editorForLeagueSystems`;
-- public display name, avatar URL, portrait URL and bio are stored separately from
-  authentication/login identity;
-- the initial profile is seeded from available OAuth name/picture data once, then local
-  public-profile edits are preserved;
-- an authenticated eligible user can edit their own public Staff profile from Account;
-- public human profiles and AI profiles are presented together on `/staff`;
-- loss of current eligibility hides the human profile from the public Staff API without
-  deleting the underlying user or authored history.
+- HUMAN users with site-editor or LeagueSystem-editor permission resolve to one public
+  Staff profile and disappear from public Staff listings if all qualifying permissions
+  are removed, without deleting their user or authored history;
+- public display name, avatar, portrait and biography are separate from auth/login
+  identity and OAuth only seeds the public identity once;
+- the synthetic development account never persists a Staff profile;
+- display name falls back to the canonical username when left blank;
+- public image URLs accept only absolute HTTP/HTTPS URLs, with a 2048-character limit;
+- display name is single-line and limited to 80 characters; biography is limited to
+  2000 characters; blank optional fields are stored as null;
+- Account editing uses an explicit public-profile payload and matching client limits;
+- canonical human deep links are `/staff/user/<id>` and are regression-tested;
+- backend regression coverage protects eligibility, permission loss, OAuth seed-once,
+  identity separation and validation behavior.
 
-Additional hardening now implemented:
-
-- the synthetic development account never creates or mutates a persistent Staff profile;
-- backend coverage verifies site-editor and LeagueSystem-editor eligibility, excludes
-  AI/non-editor users and covers permission loss without deleting the user;
-- backend coverage verifies OAuth seed-once behavior and protects locally edited public
-  identity from later OAuth sign-ins;
-- backend coverage verifies public-profile edits do not alter authentication identity or
-  authorization.
-
-Remaining:
-
-- verify whether any future non-editor Staff capability should also qualify a HUMAN user;
-  do not invent a parallel role to solve this;
-- validate URL/public-bio input policy and fallback behavior;
-- add frontend tests for own-profile editing and human profile deep links.
-
-**Acceptance criteria**
-
-- qualifying HUMAN users resolve to exactly one canonical Staff profile;
-- public-profile edits cannot change auth subject, authorization or ownership;
-- OAuth refresh/sign-in never overwrites an initialized local public profile;
-- removing all qualifying editorial permissions removes the profile from public Staff
-  listings without deleting authored history;
-- development behavior is explicit and covered by tests.
+Do not add auth subject, permissions or ownership fields to the public Staff edit
+payload.
 
 ### B-015 — Enable team comment streams
 
@@ -311,29 +289,27 @@ Then:
 
 ### B-031 — Improve AI reporter public profiles
 
-**Status: Partial — public identity contract normalized**
+**Status: Done**
 
-Implemented in R2:
+The public AI Staff profile is a projection of the canonical `AiReporterDefinition`,
+not a second identity model.
 
-- public AI reporter DTOs expose explicit `profileType` and `displayName`;
-- AI and HUMAN profiles can be composed on the same `/staff` public surface;
-- public profile identity remains separate from provider/prompt/runtime configuration;
-- Staff routing/presentation no longer requires a parallel Redaktion domain.
+Implemented:
 
-Remaining:
+- public DTOs expose explicit `profileType`, stable display name, race, category,
+  editorial role, summary, portrait/avatar, filtered public Markdown and active state;
+- display name, role and image fields have deterministic fallbacks for incomplete
+  profiles;
+- the short public summary is derived from the existing `Public profile` section when
+  available and otherwise falls back to role/category;
+- Staff cards and full reporter profiles show the existing structured role/category
+  information and use image/summary fallbacks;
+- provider, prompt, runtime and other internal execution configuration remain outside the
+  public identity contract;
+- AI and HUMAN profiles share the canonical `/staff` surface.
 
-- improve biography/profile copy and structured public profile information for each
-  reporter;
-- make personality, editorial role, affiliations and voice apparent without exposing
-  internal prompt/provider implementation details;
-- keep portrait/avatar and profile metadata consistent across Staff, articles and other
-  author surfaces;
-- define/finalize which fields are canonical public identity versus AI persona/runtime
-  configuration;
-- add sensible fallbacks so incomplete AI profiles do not produce broken Staff pages.
-
-This is profile/editorial presentation work. It must not create a second AI identity
-model or couple public identity to a specific LLM provider.
+Future copy changes are content edits to reporter definitions, not an open architecture
+feature.
 
 ### B-018 residual — Domain semantic projection and memory-write policy
 

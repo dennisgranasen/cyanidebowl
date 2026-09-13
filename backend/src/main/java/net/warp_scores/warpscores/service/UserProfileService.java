@@ -6,12 +6,18 @@ import net.warp_scores.warpscores.model.WarpScoresUser;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class UserProfileService {
+    public static final int STAFF_DISPLAY_NAME_MAX = 80;
+    public static final int STAFF_BIO_MAX = 2000;
+    public static final int STAFF_URL_MAX = 2048;
+
     private final WarpScoresUserRepository repository;
 
     public WarpScoresUser getOrCreate(Jwt jwt) {
@@ -46,17 +52,22 @@ public class UserProfileService {
     public WarpScoresUser updateStaffProfile(Jwt jwt, String displayName, String avatarUrl, String portraitUrl, String bio) {
         WarpScoresUser user = getOrCreate(jwt);
         user.setStaffProfileInitialized(true);
-        user.setPublicDisplayName(clean(displayName));
-        user.setPublicAvatarUrl(clean(avatarUrl));
-        user.setPublicPortraitUrl(clean(portraitUrl));
-        user.setPublicBio(clean(bio));
+        user.setPublicDisplayName(cleanLimited(displayName, STAFF_DISPLAY_NAME_MAX, "displayName"));
+        user.setPublicAvatarUrl(cleanPublicUrl(avatarUrl, "avatarUrl"));
+        user.setPublicPortraitUrl(cleanPublicUrl(portraitUrl, "portraitUrl"));
+        user.setPublicBio(cleanLimited(bio, STAFF_BIO_MAX, "bio"));
         return repository.save(user);
     }
 
     private WarpScoresUser initializeStaffProfile(WarpScoresUser user, Jwt jwt) {
         if (Boolean.TRUE.equals(user.getStaffProfileInitialized())) return user;
         user.setPublicDisplayName(first(jwt.getClaimAsString("name"), first(jwt.getClaimAsString("nickname"), user.getUsername())));
-        user.setPublicAvatarUrl(clean(jwt.getClaimAsString("picture")));
+        String picture = clean(jwt.getClaimAsString("picture"));
+        try {
+            user.setPublicAvatarUrl(cleanPublicUrl(picture, "avatarUrl"));
+        } catch (IllegalArgumentException ignored) {
+            user.setPublicAvatarUrl(null);
+        }
         user.setStaffProfileInitialized(true);
         return repository.save(user);
     }
@@ -65,6 +76,35 @@ public class UserProfileService {
         if (value == null) return null;
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private String cleanLimited(String value, int maxLength, String field) {
+        String cleaned = clean(value);
+        if (cleaned == null) return null;
+        if (cleaned.length() > maxLength) {
+            throw new IllegalArgumentException(field + " must be at most " + maxLength + " characters");
+        }
+        if ("displayName".equals(field) && (cleaned.contains("\n") || cleaned.contains("\r"))) {
+            throw new IllegalArgumentException("displayName must be a single line");
+        }
+        return cleaned;
+    }
+
+    private String cleanPublicUrl(String value, String field) {
+        String cleaned = cleanLimited(value, STAFF_URL_MAX, field);
+        if (cleaned == null) return null;
+        try {
+            URI uri = new URI(cleaned);
+            String scheme = uri.getScheme();
+            if (!uri.isAbsolute() || uri.getHost() == null
+                    || !("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme))
+                    || uri.getUserInfo() != null) {
+                throw new IllegalArgumentException(field + " must be an absolute http/https URL");
+            }
+            return cleaned;
+        } catch (URISyntaxException ex) {
+            throw new IllegalArgumentException(field + " must be a valid URL", ex);
+        }
     }
 
     /**
