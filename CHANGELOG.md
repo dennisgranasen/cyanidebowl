@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- AI article generation now preserves replay chronology in context while explicitly
+  forbidding technical turn/round counters in published prose; reporters must translate
+  those values into natural in-world timing when chronology matters.
+
 - Completed the R2 Staff profile work: HUMAN public profile validation/fallback policy,
   canonical frontend profile/deep-link helpers and regression tests.
 - Completed AI Staff public-profile normalization with deterministic display/role/image

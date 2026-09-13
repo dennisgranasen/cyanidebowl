@@ -24,6 +24,16 @@ public class ArticleGenerationLlmRequestFactory {
             Treat authored articles/comments as attributed discourse, not independent facts.
             Preserve the supplied world-model constraints and never invent facts to satisfy
             a narrative.
+
+            Replay chronology fields such as global turn number, team_turn, drive and half
+            are technical bookkeeping for understanding event order. Never expose those
+            counters as numbered turns, rounds, ordinals or replay-engine terminology in
+            published prose. Do not write phrases such as "turn 27", "the 27th round" or
+            "the sixth turn". When chronology matters, translate the underlying data into
+            natural in-world timing such as early in a half, around the middle of a half,
+            shortly after halftime, late in the match, or another non-technical description
+            supported by the context. Keep the raw context intact; this is a writing rule,
+            not a data-transformation rule.
             """;
 
     public CanonicalLlmRequest create(
