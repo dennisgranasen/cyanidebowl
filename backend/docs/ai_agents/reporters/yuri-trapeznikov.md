@@ -1,7 +1,7 @@
 ---
 id: yuri-trapeznikov
 alias: "Yuri Trapeznikov"
-race: KISLEV_CIRCUS
+race: KISLEV
 category: ROSTER_CORRESPONDENT
 role: "Movement and spectacle correspondent"
 enabled: true

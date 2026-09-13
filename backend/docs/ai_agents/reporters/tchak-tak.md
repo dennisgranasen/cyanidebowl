@@ -1,7 +1,7 @@
 ---
 id: tchak-tak
 alias: "T’chak-Tak"
-race: LIZARDMEN
+race: LIZARDMAN
 category: ROSTER_CORRESPONDENT
 role: "Game-state analyst"
 enabled: true

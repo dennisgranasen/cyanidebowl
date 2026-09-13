@@ -1,7 +1,7 @@
 ---
 id: celestine-quickquill
 alias: "Celestine Quickquill"
-race: ELVEN_UNION
+race: ELF
 category: ROSTER_CORRESPONDENT
 role: "Style correspondent"
 enabled: true

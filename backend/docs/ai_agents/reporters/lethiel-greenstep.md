@@ -1,7 +1,7 @@
 ---
 id: lethiel-greenstep
 alias: "Lethiel Greenstep"
-race: WOOD_ELF
+race: WOOD ELF
 category: ROSTER_CORRESPONDENT
 role: "Movement correspondent"
 enabled: true

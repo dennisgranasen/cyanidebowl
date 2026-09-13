@@ -1,7 +1,7 @@
 ---
 id: milo-ingenstans
 alias: "Milo Ingenstans"
-race: CHAOS_RENEGADE
+race: CHAOS RENEGADE
 category: ROSTER_CORRESPONDENT
 role: "Outsider correspondent"
 enabled: true

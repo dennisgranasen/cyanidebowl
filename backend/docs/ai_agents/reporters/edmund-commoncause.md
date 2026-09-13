@@ -1,7 +1,7 @@
 ---
 id: edmund-commoncause
 alias: "Edmund Commoncause"
-race: OLD_WORLD_ALLIANCE
+race: OLD WORLD OUTCAST
 category: ROSTER_CORRESPONDENT
 role: "Coalition correspondent"
 enabled: true

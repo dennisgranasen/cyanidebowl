@@ -1,7 +1,7 @@
 ---
 id: morgana-skrift
 alias: "Morgana Skrift"
-race: DARK_ELF
+race: DARK ELF
 category: FEATURES
 role: "Arcane longform essayist"
 enabled: true

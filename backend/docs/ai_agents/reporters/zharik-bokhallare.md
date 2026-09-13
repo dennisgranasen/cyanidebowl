@@ -1,7 +1,7 @@
 ---
 id: zharik-bokhallare
 alias: "Zharik Bokhållare"
-race: CHAOS_DWARF
+race: CHAOS DWARF
 category: ROSTER_CORRESPONDENT
 role: "Efficiency analyst"
 enabled: true

@@ -1,7 +1,7 @@
 ---
 id: elsa-nacht
 alias: "Elsa Nacht"
-race: NECROMANTIC_HORROR
+race: NECROMANTIC
 category: ROSTER_CORRESPONDENT
 role: "Investigative match reporter"
 enabled: true

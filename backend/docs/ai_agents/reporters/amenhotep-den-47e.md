@@ -1,7 +1,7 @@
 ---
 id: amenhotep-den-47e
 alias: "Amenhotep den 47:e"
-race: TOMB_KINGS
+race: MUMMY
 category: ROSTER_CORRESPONDENT
 role: "Historical correspondent"
 enabled: true

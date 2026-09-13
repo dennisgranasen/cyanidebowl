@@ -1,7 +1,7 @@
 ---
 id: velithra-nattblack
 alias: "Velithra Nattbläck"
-race: DARK_ELF
+race: DARK ELF
 category: ROSTER_CORRESPONDENT
 role: "Senior critic"
 enabled: true

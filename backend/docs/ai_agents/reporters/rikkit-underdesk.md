@@ -1,7 +1,7 @@
 ---
 id: rikkit-underdesk
 alias: "Rikkit Underdesk"
-race: UNDERWORLD_DENIZENS
+race: UNDERWORLD DENIZEN
 category: ROSTER_CORRESPONDENT
 role: "Insider correspondent"
 enabled: true

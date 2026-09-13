@@ -1,6 +1,6 @@
 ---
 id: kragh-tre-utropstecken
-alias: "Kragh \"TRE UTROPSTECKEN\""
+alias: "Kragh !!!"
 race: KHORNE
 category: ROSTER_CORRESPONDENT
 role: "Momentum correspondent"

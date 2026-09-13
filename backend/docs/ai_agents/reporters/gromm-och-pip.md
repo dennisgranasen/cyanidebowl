@@ -1,7 +1,7 @@
 ---
 id: gromm-och-pip
 alias: "Gromm & Pip"
-race: OGRE
+race: OGRE AND GNOBLAR
 category: ROSTER_CORRESPONDENT
 role: "Joint correspondents"
 enabled: true

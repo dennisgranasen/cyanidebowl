@@ -1,7 +1,7 @@
 ---
 id: manskalken-skragga
 alias: "Månskalken Skragga"
-race: BAD_MOON_NIGHT_GOBLIN
+race: NIGHT GOBLIN
 category: ROSTER_CORRESPONDENT
 role: "Night columnist"
 enabled: true

@@ -1,7 +1,7 @@
 ---
 id: grubnak-tvatum
 alias: "Grubnak Tvåtum"
-race: BLACK_ORC
+race: BLACK ORC
 category: ROSTER_CORRESPONDENT
 role: "Formation analyst"
 enabled: true

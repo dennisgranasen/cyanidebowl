@@ -1,7 +1,7 @@
 ---
 id: lady-ottilia-von-pressburg
 alias: "Lady Ottilia von Pressburg"
-race: IMPERIAL_NOBILITY
+race: IMPERIAL NOBILITY
 category: ROSTER_CORRESPONDENT
 role: "Standards and conduct columnist"
 enabled: true

@@ -1,7 +1,7 @@
 ---
 id: balthor-blackmoor
 alias: "Balthor Blackmoor"
-race: SHAMBLING_UNDEAD
+race: SKELETON
 category: ARCHIVE
 role: "Mortuary archivist and stat historian"
 enabled: true

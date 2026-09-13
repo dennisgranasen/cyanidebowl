@@ -1,7 +1,7 @@
 ---
 id: sister-agatha-scriven
 alias: Sister Agatha Scriven
-race: Human
+race: HUMAN
 category: columnist
 role: Moral correspondent and disciplinary columnist
 enabled: true

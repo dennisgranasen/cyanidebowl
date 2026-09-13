@@ -1,7 +1,7 @@
 ---
 id: vexgor-den-oundviklige
 alias: "Vexgor den Oundviklige"
-race: CHAOS_CHOSEN
+race: CHAOS WARRIOR
 category: ROSTER_CORRESPONDENT
 role: "Columnist"
 enabled: true

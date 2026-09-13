@@ -1,7 +1,7 @@
 ---
 id: mortimer-graves
 alias: "Mortimer Graves"
-race: SHAMBLING_UNDEAD
+race: SKELETON
 category: ROSTER_CORRESPONDENT
 role: "Senior historical columnist"
 enabled: true
