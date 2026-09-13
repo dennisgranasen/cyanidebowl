@@ -511,6 +511,26 @@ Remaining B-016 work:
 - optional monetary accounting remains deferred until provider/model pricing metadata
   is explicit and versioned.
 
+
+**B-016g general-article Staff comments**
+
+- First publication of a general `Article` emits one stable queued comment candidate per
+  enabled interaction-capable Staff reporter when B-016c allows autonomous article
+  comments for that LeagueSystem.
+- A reporter never receives a candidate for its own AI-authored article.
+- Probability is sampled after the durable candidate exists, so a rejected comment is
+  not repeatedly re-rolled by publication retries.
+- Handler execution revalidates initiative policy and effective runtime interaction state.
+- Human-authored articles use user-article comment probability; AI-authored articles use
+  ordinary reporter-on-article probability.
+- Approved comments use B-016b COMMENT quota and B-016a provider admission, and persist
+  as canonical `CommunityComment.TargetType.ARTICLE` with generation provenance.
+- Work uses `maxAttempts=1`; provider failures remain visible without a second probability
+  or quota attempt.
+- Match-article Staff interaction is unchanged because it already has a publication-driven
+  autonomous comment path.
+
+
 ### B-027 — Finish ARM64/Raspberry Pi operational runbook
 
 **Status: Partial — build/deploy baseline exists**

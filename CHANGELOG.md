@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added queued Staff comments on general articles: publication creates stable per-reporter
+  candidates, policy/probability is evaluated once, and approved comments use existing
+  reporter quota, global admission and canonical provenance.
+
 - Added the first finalized-match Dedicated Fan queue producer: completed matches can
   create one stable supporter-comment candidate per league system, evaluated once through
   the existing initiative policy and executed through canonical AI context/provenance.

@@ -3,6 +3,7 @@ package net.warp_scores.warpscores.service;
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.ai.interaction.MatchArticleAiInteractionService;
 import net.warp_scores.warpscores.ai.interaction.AiCommunityFanInteractionService;
+import net.warp_scores.warpscores.ai.scheduling.AiPublishedArticleStaffWorkProducer;
 import net.warp_scores.warpscores.ai.reporting.ReporterSocialContinuityService;
 import net.warp_scores.warpscores.domain.persistence.*;
 import net.warp_scores.warpscores.identity.Identity;
@@ -46,6 +47,7 @@ public class EditorialCommunityService {
     private final UserPermissionService permissions;
     private final MatchArticleAiInteractionService articleAiInteractions;
     private final AiCommunityFanInteractionService fanInteractions;
+    private final AiPublishedArticleStaffWorkProducer staffArticleWork;
     private final ReporterSocialContinuityService reporterSocialContinuity;
 
     public record ReactionSummary(long pow, long doublePow, long triplePow,
@@ -130,6 +132,7 @@ public class EditorialCommunityService {
         Article saved = articles.save(article);
         if (!wasPublished && saved.getStatus() == Article.Status.PUBLISHED) {
             fanInteractions.onArticlePublished(saved);
+            staffArticleWork.onArticlePublished(saved);
         }
         return saved;
     }
