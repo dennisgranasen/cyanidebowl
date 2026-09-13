@@ -83,8 +83,7 @@ Remaining work:
   back to the selected LeagueSystem landing page when no equivalent route exists;
 - finish the i18n inventory for remaining replay/match-detail labels, tooltips and
   accessibility strings and add regression coverage against hard-coded UI text;
-- harden and test human Staff eligibility/lifecycle policy, including development-user
-  behavior and what happens when all editorial permissions are removed;
+- finish human Staff input/fallback policy and frontend profile-flow regression coverage;
 - improve AI reporter biography/profile content and structured public identity while
   keeping runtime/provider/prompt configuration internal.
 

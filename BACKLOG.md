@@ -33,7 +33,7 @@ Do not use old `main` behavior as the basis for implementation work.
 | --- | --- | --- | --- |
 | P1 | B-025 | Versioned pybb3 timeline/skill-reroll contract is consumed safely | Integration pending upstream |
 | P1 | B-033 | Replay parsing is stable and regression-tested | Backlog |
-| P1 | B-032 | Human editors have editable public Staff profiles | Partial — baseline implemented |
+| P1 | B-032 | Human editors have editable public Staff profiles | Partial — lifecycle hardened |
 | P1 | B-019 | Dedicated Fans population reconciliation | Backlog |
 | P1 | B-020 | Deterministic direct AI textual interaction | Partial |
 | P2 | B-028 | Navigation hierarchy and back paths are consistent | Partial — Staff hierarchy implemented |
@@ -284,13 +284,20 @@ Implemented in R2:
 - loss of current eligibility hides the human profile from the public Staff API without
   deleting the underlying user or authored history.
 
-Remaining/hardening:
+Additional hardening now implemented:
 
-- explicitly document and test development-account behavior;
-- add backend tests for site-editor-only, LeagueSystem-editor-only, combined-editor and
-  permission-loss cases;
-- verify whether any non-editor Staff capability should also qualify a HUMAN user; do
-  not invent a parallel role to solve this;
+- the synthetic development account never creates or mutates a persistent Staff profile;
+- backend coverage verifies site-editor and LeagueSystem-editor eligibility, excludes
+  AI/non-editor users and covers permission loss without deleting the user;
+- backend coverage verifies OAuth seed-once behavior and protects locally edited public
+  identity from later OAuth sign-ins;
+- backend coverage verifies public-profile edits do not alter authentication identity or
+  authorization.
+
+Remaining:
+
+- verify whether any future non-editor Staff capability should also qualify a HUMAN user;
+  do not invent a parallel role to solve this;
 - validate URL/public-bio input policy and fallback behavior;
 - add frontend tests for own-profile editing and human profile deep links.
 

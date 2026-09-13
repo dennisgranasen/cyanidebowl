@@ -32,11 +32,13 @@ public class StaffController {
 
     @GetMapping("/user/staff-profile")
     public EditorProfile own(JwtAuthenticationToken principal) {
+        if (principal == null) return developmentProfile();
         return EditorProfile.from(profiles.getOrCreate(principal.getToken()));
     }
 
     @PutMapping("/user/staff-profile")
     public EditorProfile update(JwtAuthenticationToken principal, @RequestBody Update update) {
+        if (principal == null) return developmentProfile();
         return EditorProfile.from(profiles.updateStaffProfile(principal.getToken(), update.displayName(), update.avatarUrl(), update.portraitUrl(), update.bio()));
     }
 
@@ -52,5 +54,14 @@ public class StaffController {
         static EditorProfile from(WarpScoresUser user) { return new EditorProfile(user.getId(), StaffController.eligible(user), StaffController.displayName(user), user.getPublicAvatarUrl(), user.getPublicPortraitUrl(), user.getPublicBio()); }
     }
     public record Update(String displayName, String avatarUrl, String portraitUrl, String bio) {}
-    private static String displayName(WarpScoresUser user) { return user.getPublicDisplayName() != null && !user.getPublicDisplayName().isBlank() ? user.getPublicDisplayName() : user.getUsername(); }
+
+    private static EditorProfile developmentProfile() {
+        return new EditorProfile(null, false, null, null, null, null);
+    }
+
+    private static String displayName(WarpScoresUser user) {
+        return user.getPublicDisplayName() != null && !user.getPublicDisplayName().isBlank()
+                ? user.getPublicDisplayName()
+                : user.getUsername();
+    }
 }

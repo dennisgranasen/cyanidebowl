@@ -10,6 +10,9 @@
   remains only the Swedish UI translation.
 - Added self-editable public HUMAN Staff profile fields that are separate from
   authentication identity and initially seeded from available OAuth profile data.
+- Hardened Staff profile lifecycle behavior: the synthetic dev account does not persist
+  a profile, permission loss removes public visibility without deleting identity/history,
+  and OAuth re-login does not overwrite initialized local public-profile edits.
 - Added explicit public AI reporter profile type/display-name fields while keeping
   provider/prompt/runtime configuration out of the public profile contract.
 - Added Staff-profile parent navigation and localized the R2 match-card/immediate
