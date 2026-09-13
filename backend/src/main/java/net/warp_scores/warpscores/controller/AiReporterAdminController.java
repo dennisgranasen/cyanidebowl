@@ -8,6 +8,7 @@ import net.warp_scores.warpscores.ai.provider.AiGenerationAdmissionService;
 import net.warp_scores.warpscores.domain.persistence.AiSettingsRepository;
 import net.warp_scores.warpscores.domain.persistence.AiReporterRuntimeStateRepository;
 import net.warp_scores.warpscores.model.AiSettings;
+import net.warp_scores.warpscores.model.AiInitiativePolicy;
 import net.warp_scores.warpscores.model.AiReporterRuntimeState;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -59,6 +60,26 @@ public class AiReporterAdminController {
         settings.setDefaultLanguage(normalizeLanguage(update.defaultLanguage(), "sv"));
         settingsRepository.save(settings);
         return new AdminSettings(settings.getDefaultLanguage());
+    }
+
+    @GetMapping("/initiative-policy")
+    public AiInitiativePolicy initiativePolicy() {
+        AiSettings settings = settingsRepository.findById(AiSettings.GLOBAL_ID)
+                .orElseGet(AiSettings::new);
+        return settings.getInitiativePolicy() == null
+                ? new AiInitiativePolicy()
+                : settings.getInitiativePolicy();
+    }
+
+    @PutMapping("/initiative-policy")
+    public AiInitiativePolicy updateInitiativePolicy(
+            @RequestBody AiInitiativePolicy policy) {
+        validateInitiativePolicy(policy);
+        AiSettings settings = settingsRepository.findById(AiSettings.GLOBAL_ID)
+                .orElseGet(AiSettings::new);
+        settings.setInitiativePolicy(policy);
+        settingsRepository.save(settings);
+        return policy;
     }
 
     @GetMapping("/limits")
@@ -206,6 +227,41 @@ public class AiReporterAdminController {
                 settings.getMaxInputTokensPerDay(),
                 settings.getMaxOutputTokensPerDay(),
                 generationAdmission.usageSnapshot());
+    }
+
+    private static void validateInitiativePolicy(AiInitiativePolicy policy) {
+        if (policy == null || policy.getStaff() == null || policy.getFans() == null) {
+            throw new IllegalArgumentException("staff and fans initiative policy are required");
+        }
+        if (policy.getStaff().getGeneralArticles() == null
+                || policy.getStaff().getMatchArticles() == null
+                || policy.getStaff().getArticleComments() == null
+                || policy.getStaff().getMatchComments() == null
+                || policy.getStaff().getDirectTagReplies() == null) {
+            throw new IllegalArgumentException("all staff initiative modes are required");
+        }
+
+        validateProbability(
+                "fans.generalArticleCommentProbability",
+                policy.getFans().getGeneralArticleCommentProbability());
+        validateProbability(
+                "fans.ownTeamArticleCommentProbability",
+                policy.getFans().getOwnTeamArticleCommentProbability());
+        validateProbability(
+                "fans.ownTeamMatchArticleCommentProbability",
+                policy.getFans().getOwnTeamMatchArticleCommentProbability());
+        validateProbability(
+                "fans.ownTeamMatchCommentProbability",
+                policy.getFans().getOwnTeamMatchCommentProbability());
+        validateProbability(
+                "fans.ownCoachActivityProbability",
+                policy.getFans().getOwnCoachActivityProbability());
+    }
+
+    private static void validateProbability(String field, double value) {
+        if (!Double.isFinite(value) || value < 0.0 || value > 1.0) {
+            throw new IllegalArgumentException(field + " must be between 0 and 1");
+        }
     }
 
     private static void validatePositive(String field, Number value) {

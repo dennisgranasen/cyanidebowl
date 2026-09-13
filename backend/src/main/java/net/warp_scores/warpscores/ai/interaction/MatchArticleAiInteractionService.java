@@ -50,6 +50,7 @@ public class MatchArticleAiInteractionService {
     private final MatchArticleRepository matchArticles;
     private final ReporterSocialContinuityService continuity;
     private final ReporterAutonomousActivityGate autonomousActivity;
+    private final AiInitiativePolicyService initiativePolicy;
 
     @Async
     public void onPublished(MatchArticle article) {
@@ -106,17 +107,29 @@ public class MatchArticleAiInteractionService {
             if (!runnableIdentity(reporter)) continue;
 
             boolean directMention = isExplicitDirectMention(source.getBody(), reporter);
+            boolean directReplyEnabled = directMention
+                    && initiativePolicy.staffMayRunAutonomously(
+                            article.getLeagueSystemId(),
+                            AiInitiativePolicyService.StaffActivity.DIRECT_TAG_REPLY);
             try {
                 if (policy.shouldReactToUserComment(reporter, 0.0, rng)) {
                     reactToCommentOnce(article, source, reporter);
                 }
 
                 if (reporter.getCapabilities().isCommentReplies()) {
-                    boolean shouldReply = directMention
-                            || policy.shouldReplyToUserComment(
+                    boolean spontaneousAllowed =
+                            initiativePolicy.staffMayRunAutonomously(
+                                    article.getLeagueSystemId(),
+                                    AiInitiativePolicyService.StaffActivity.ARTICLE_COMMENT);
+                    boolean spontaneousReply = spontaneousAllowed
+                            && policy.shouldReplyToUserComment(
                                     reporter, false, false, false, 0.0, rng);
-                    if (shouldReply) {
-                        replyToCommentOnce(article, source, reporter, !directMention);
+                    if (directReplyEnabled || spontaneousReply) {
+                        replyToCommentOnce(
+                                article,
+                                source,
+                                reporter,
+                                !directReplyEnabled);
                     }
                 }
             } catch (Exception e) {
@@ -204,6 +217,12 @@ public class MatchArticleAiInteractionService {
             AiReporterDefinition reporter) {
         String sourceRevision = "article-comment:" + article.getId();
         if (alreadyGenerated(article.getId(), reporter.getId(), sourceRevision)) return;
+
+        if (!initiativePolicy.staffMayRunAutonomously(
+                article.getLeagueSystemId(),
+                AiInitiativePolicyService.StaffActivity.ARTICLE_COMMENT)) {
+            return;
+        }
 
         if (!autonomousActivity.tryConsume(
                 reporter,

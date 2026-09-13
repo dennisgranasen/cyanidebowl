@@ -48,6 +48,8 @@ class MatchArticleAiDirectMentionTest {
             mock(ReporterSocialContinuityService.class);
     private final ReporterAutonomousActivityGate autonomousActivity =
             mock(ReporterAutonomousActivityGate.class);
+    private final AiInitiativePolicyService initiativePolicy =
+            mock(AiInitiativePolicyService.class);
 
     private final MatchArticleAiInteractionService service =
             new MatchArticleAiInteractionService(
@@ -61,7 +63,8 @@ class MatchArticleAiDirectMentionTest {
                     reactions,
                     matchArticles,
                     continuity,
-                    autonomousActivity);
+                    autonomousActivity,
+                    initiativePolicy);
 
     @Test
     void exactAliasAndReporterIdTagsAreRecognized() {
@@ -114,6 +117,10 @@ class MatchArticleAiDirectMentionTest {
 
         when(policy.shouldReactToUserComment(eq(reporter), anyDouble(), any()))
                 .thenReturn(false);
+        when(initiativePolicy.staffMayRunAutonomously(
+                any(),
+                eq(AiInitiativePolicyService.StaffActivity.DIRECT_TAG_REPLY)))
+                .thenReturn(true);
 
         ContextPlan plan = mock(ContextPlan.class);
         AssembledContext context = mock(AssembledContext.class);

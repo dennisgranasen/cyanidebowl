@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added AI initiative policy with site defaults and LeagueSystem-scoped editor overrides;
+  Staff autonomy and team-affine fan commenting are modeled separately with safe defaults.
+
 - Added per-reporter autonomous activity quotas/cooldowns backed by existing runtime state;
   spontaneous comments/replies/reactions are gated after idempotency checks, while direct
   tags bypass autonomous quotas but still retain global hard generation budgets.

@@ -382,6 +382,23 @@ disabled capability and retry/idempotency behavior.
 
 ### B-016 — AI scheduling, quotas and cost control
 
+**B-016c initiative policy foundation**
+
+- Staff initiative is independently configurable for general articles, match articles,
+  article comments, direct match comments and explicit tag replies.
+- Defaults: general/match articles require an explicit request; article comments and
+  match comments may be autonomous; explicit tags are answered automatically.
+- Site admins own site-wide defaults. LeagueSystem editors/admins may override only
+  systems they can edit through the existing `canEditLeagueSystem` authorization path.
+- Fans use a separate policy and never author articles.
+- Fans may comment rarely on general articles, somewhat more often on own-team articles,
+  and automatically by default on own-team match articles and match threads.
+- Activity authored by the supported team's coach is automatic by default inside the
+  supported-team scope.
+- Fan target eligibility and probability are separate: unrelated matches/articles never
+  become eligible merely because a probability is non-zero.
+
+
 **Status: Partial — hard admission/budgets and per-reporter autonomous activity policy implemented; scheduler remains**
 
 Implemented foundation:

@@ -37,6 +37,8 @@ public class AiSettings {
     /** Successful output tokens per UTC calendar day; null = unlimited. */
     private Long maxOutputTokensPerDay;
 
+    private AiInitiativePolicy initiativePolicy = new AiInitiativePolicy();
+
     public boolean isGenerationEffectivelyEnabled() {
         return generationEnabled == null || generationEnabled;
     }
