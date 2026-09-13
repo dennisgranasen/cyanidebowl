@@ -1,8 +1,9 @@
 package net.warp_scores.warpscores.config;
 
 import net.warp_scores.warpscores.WarpScoresApp;
+import net.warp_scores.warpscores.domain.persistence.LeagueSystemRepository;
+import net.warp_scores.warpscores.model.LeagueSystem;
 import net.warp_scores.warpscores.model.UserPermissions;
-import net.warp_scores.warpscores.service.CircuitService;
 import net.warp_scores.warpscores.service.UserPermissionService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,9 +20,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -39,7 +40,7 @@ class SecurityConfigurationTest {
     private JwtDecoder jwtDecoder;
 
     @MockitoBean
-    private CircuitService circuitService;
+    private LeagueSystemRepository leagueSystemRepository;
 
     @MockitoBean
     private UserPermissionService userPermissionService;
@@ -59,26 +60,26 @@ class SecurityConfigurationTest {
     }
 
     @Test
-    void circuitMutationRequiresLeagueAdminPermission() throws Exception {
-        assertThat(send(circuitLegRequest(null)).statusCode()).isEqualTo(401);
+    void leagueSystemMutationRequiresLeagueAdminPermission() throws Exception {
+        assertThat(send(leagueSystemRequest(null)).statusCode()).isEqualTo(401);
 
         when(jwtDecoder.decode("malformed-token")).thenThrow(new BadJwtException("malformed"));
-        assertThat(send(circuitLegRequest("malformed-token")).statusCode()).isEqualTo(401);
+        assertThat(send(leagueSystemRequest("malformed-token")).statusCode()).isEqualTo(401);
 
         when(jwtDecoder.decode("no-permission-token")).thenReturn(jwt(List.of()));
-        assertThat(send(circuitLegRequest("no-permission-token")).statusCode()).isEqualTo(403);
+        assertThat(send(leagueSystemRequest("no-permission-token")).statusCode()).isEqualTo(403);
 
         when(userPermissionService.hasAnyLeagueAdmin(org.mockito.ArgumentMatchers.any()))
                 .thenAnswer(invocation -> invocation.<org.springframework.security.core.Authentication>getArgument(0)
                         .getAuthorities().stream()
                         .anyMatch(authority -> "write:league_admin".equals(authority.getAuthority())));
-
         when(jwtDecoder.decode("league-admin-token"))
-                    .thenReturn(jwt(List.of("write:league_admin")));
-        when(circuitService.load(1L)).thenReturn(Optional.empty());
+                .thenReturn(jwt(List.of("write:league_admin")));
+        when(leagueSystemRepository.save(any(LeagueSystem.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertThat(send(circuitLegRequest("league-admin-token")).statusCode()).isEqualTo(400);
-        verify(circuitService).load(1L);
+        assertThat(send(leagueSystemRequest("league-admin-token")).statusCode()).isEqualTo(201);
+        verify(leagueSystemRepository).save(any(LeagueSystem.class));
     }
 
         @Test
@@ -100,11 +101,6 @@ class SecurityConfigurationTest {
         @Test
         void everyMutationRouteRequiresAuthenticationAndUnknownRoutesAreDenied() throws Exception {
             List<HttpRequest> mutationRequests = List.of(
-                    request("POST", "/circuits"),
-                    request("POST", "/circuits/1/legs"),
-                    request("DELETE", "/circuits/1/legs/2"),
-                    request("POST", "/circuits/1/legs/2/update"),
-                    request("POST", "/circuits/1/legs/2/addEntity"),
                     request("POST", "/contests/competition/3_competition"),
                     request("POST", "/leagueCollection/3_league"),
                         request("POST", "/admin/league-systems"),
@@ -117,8 +113,8 @@ class SecurityConfigurationTest {
             assertThat(send(request("GET", "/not-a-route")).statusCode()).isEqualTo(401);
         }
 
-    private HttpRequest circuitLegRequest(String token) {
-        HttpRequest.Builder request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/circuits/1/legs"))
+    private HttpRequest leagueSystemRequest(String token) {
+        HttpRequest.Builder request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/admin/league-systems"))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString("{}"));
         if (token != null) {

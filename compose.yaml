@@ -27,7 +27,7 @@ services:
     build:
       context: ./pybb3-service
       args:
-        PYBB3_REF: ${PYBB3_REF:-main}
+        PYBB3_REF: ${PYBB3_REF:-b1a36cc73f97b76f6e1610402980311edf7c5b8b}
     restart: unless-stopped
     environment:
       - PYBB3_INTERNAL_API_KEY=${PYBB3_INTERNAL_API_KEY}

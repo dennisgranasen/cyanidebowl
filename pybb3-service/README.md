@@ -10,5 +10,9 @@ Each application user gets an isolated Steam Guard flow, helper process,
 Environment: `PYBB3_INTERNAL_API_KEY` (required), `STEAM_HELPER_PATH`,
 `SESSION_TTL_SECONDS` (default 1800), and `CHALLENGE_TTL_SECONDS` (default 300).
 
-Build: `docker build -t blaskscore-pybb3 .`. Pin pybb3 with
-`--build-arg PYBB3_REF=<tag-or-commit>`.
+Replay timeline consumer contract: `pybb3-narrative-timeline` version `1`.
+The service rejects unsupported versions and malformed top-level contract shapes.
+
+Build: `docker build -t blaskscore-pybb3 .`. The default verified pybb3 revision is
+`b1a36cc73f97b76f6e1610402980311edf7c5b8b`. Override it deliberately with
+`--build-arg PYBB3_REF=<tag-or-commit>` only together with the contract tests.

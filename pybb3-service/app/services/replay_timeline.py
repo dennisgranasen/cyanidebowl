@@ -350,8 +350,37 @@ def _kickoff_details(event: ET.Element) -> dict[str, Any]:
     }
 
 
+NARRATIVE_TIMELINE_FORMAT = "pybb3-narrative-timeline"
+NARRATIVE_TIMELINE_VERSION = 1
+
+
 class ReplayTimelineError(ValueError):
-    """Raised when pybb3 cannot produce its canonical narrative timeline."""
+    """Raised when pybb3 cannot produce the supported narrative timeline contract."""
+
+
+def _validate_narrative_timeline(timeline: Any) -> dict[str, Any]:
+    if not isinstance(timeline, dict):
+        raise ReplayTimelineError("pybb3 returned a non-object narrative timeline")
+
+    if timeline.get("format") != NARRATIVE_TIMELINE_FORMAT:
+        raise ReplayTimelineError(
+            f"Unexpected pybb3 narrative timeline format: {timeline.get('format')!r}"
+        )
+
+    if timeline.get("version") != NARRATIVE_TIMELINE_VERSION:
+        raise ReplayTimelineError(
+            "Unsupported pybb3 narrative timeline version: "
+            f"{timeline.get('version')!r}; expected {NARRATIVE_TIMELINE_VERSION}"
+        )
+
+    if not isinstance(timeline.get("match"), dict):
+        raise ReplayTimelineError("pybb3 narrative timeline match must be an object")
+    if not isinstance(timeline.get("events"), list):
+        raise ReplayTimelineError("pybb3 narrative timeline events must be an array")
+    if not isinstance(timeline.get("unresolved"), dict):
+        raise ReplayTimelineError("pybb3 narrative timeline unresolved must be an object")
+
+    return timeline
 
 
 def build_replay_timeline(xml_content: bytes) -> dict[str, Any]:
@@ -365,13 +394,7 @@ def build_replay_timeline(xml_content: bytes) -> dict[str, Any]:
     except Exception as exc:
         raise ReplayTimelineError("pybb3 could not build the replay narrative timeline") from exc
 
-    if not isinstance(timeline, dict):
-        raise ReplayTimelineError("pybb3 returned a non-object narrative timeline")
-    if timeline.get("format") != "pybb3-narrative-timeline":
-        raise ReplayTimelineError(
-            f"Unexpected pybb3 narrative timeline format: {timeline.get('format')!r}"
-        )
-    return timeline
+    return _validate_narrative_timeline(timeline)
 
 
 def build_match_events(root: ET.Element, canonical_actions: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:

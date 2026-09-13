@@ -2,7 +2,7 @@
 # dotnet publish cross-compiles the resulting executable for TARGETARCH.
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS source
 
-ARG PYBB3_REF=main
+ARG PYBB3_REF=b1a36cc73f97b76f6e1610402980311edf7c5b8b
 ARG TARGETARCH
 
 RUN apt-get update \

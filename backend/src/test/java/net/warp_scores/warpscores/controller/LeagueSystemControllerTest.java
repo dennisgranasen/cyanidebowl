@@ -114,7 +114,7 @@ class LeagueSystemControllerTest {
                 StageSourceRequest request = new StageSourceRequest(
                         "source", "3_competition", net.warp_scores.warpscores.model.EntityType.Competition,
                         null, net.warp_scores.warpscores.model.Platform.PC,
-                        null, null, null, null, null, false, null, null, null);
+                        null, null, null, null, null, false, null);
 
                 assertThatThrownBy(() -> controller.createStageSource("nst:s1:main", request))
                         .isInstanceOf(IllegalArgumentException.class);
@@ -143,6 +143,6 @@ class LeagueSystemControllerTest {
             return new StageSourceRequest(
                     "nst:s1:regular:bb3", "3_competition", net.warp_scores.warpscores.model.EntityType.Competition,
                     net.warp_scores.warpscores.model.GameType.BB3, net.warp_scores.warpscores.model.Platform.PC,
-                    "BB2020", null, null, null, null, false, null, null, null);
+                    "BB2020", null, null, null, null, false, null);
         }
 }
