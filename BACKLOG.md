@@ -29,10 +29,6 @@ Do not use old `main` behavior as the basis for implementation work.
 
 | Priority | Item | Outcome | Status |
 | --- | --- | --- | --- |
-| P1 | B-021 | Remaining round/competition presentation defects are closed | Partial |
-| P1 | B-022 | Remaining standings/playoff series defects are closed | Partial |
-| P1 | B-023 | Interactive discovery gains proactive watches/suggestions | Partial |
-| P1 | B-024 | Historical match detail/enrichment gaps are closed | Partial |
 | P1 | B-025 | Versioned pybb3 timeline/skill-reroll contract is consumed safely | Integration pending upstream |
 | P1 | B-019 | Dedicated Fans population reconciliation | Backlog |
 | P1 | B-020 | Deterministic direct AI textual interaction | Partial |
@@ -47,8 +43,15 @@ Already implemented:
 
 - canonical LeagueSystem/Season/Stage/StageSource model and admin CRUD;
 - LeagueSystem-first public navigation;
-- interactive Cyanide discovery and explicit StageSource registration;
-- stage match APIs and current group/playoff presentation infrastructure;
+- deterministic round-robin match-day reconstruction, independent current rounds and
+  latest-played-round selection in the LeagueSystem UI;
+- standings and playoff bracket presentation, including play-in/QF/SF/final/bronze
+  inference and replay/rematch series;
+- interactive Cyanide discovery, LeagueSystem alias-based candidate discovery and
+  explicit StageSource registration;
+- historical match-detail backfill with retryable availability state and canonical race
+  presentation;
+- stage match APIs and normalized match presentation;
 - canonical game-aware authorization and scoped administration/editorial permissions;
 - editorial/community articles, comments, reactions and player ratings;
 - canonical AI identity, context assembly, provider abstraction and provenance;
@@ -64,93 +67,6 @@ as focused deltas.
 ---
 
 ## Active core product work
-
-### B-021 — Competition round/presentation correctness
-
-**Status: Partial**
-
-The LeagueSystem/Season/Stage UI already exists. This card is only for remaining
-correctness issues.
-
-Remaining work:
-
-- make round assignment deterministic when source scheduling/order is misleading;
-- default round views to the latest round with played results;
-- allow groups to have independent current rounds;
-- regression-test known schedules that previously produced an extra/misnumbered round;
-- keep navigation efficient without loading an entire season unnecessarily.
-
-A separate Phase model is **not** required by this card. Add one only if a concrete
-competition cannot be represented cleanly with the existing Season/Stage structure.
-
-**Acceptance criteria**
-
-- known multi-group seasons produce the expected round count and grouping;
-- existing LeagueSystem/Season/Stage data needs no migration solely for this card;
-- any Phase addition has a concrete unsupported use case and compatibility plan.
-
-### B-022 — Remaining standings/playoff series correctness
-
-**Status: Partial**
-
-Standings/bracket infrastructure already exists. Work from failing historical examples
-instead of rebuilding the bracket feature.
-
-Remaining work:
-
-- preserve every replay/rematch as an individually inspectable match;
-- keep series result separate from individual on-field results;
-- keep final/bronze and predecessor links deterministic where configured;
-- do not infer rematch identity solely from payload similarity/hash;
-- keep malformed/incomplete topology explicit rather than guessing;
-- preserve raw/pre-penalty score separately from administrative/adjudicated outcome
-  where available.
-
-**Acceptance criteria**
-
-- known QF/SF replay/rematch series render every played match exactly once;
-- no match appears in multiple slots unintentionally;
-- regression fixtures cover the historical cases that motivated the fixes.
-
-### B-023 — Proactive discovery watches/suggestions
-
-**Status: Partial — interactive search and source registration are implemented**
-
-Do not replace the existing admin search. Remaining work is automation:
-
-- normalize provider-specific candidate/watch data at the discovery boundary;
-- periodically suggest new competitions related to registered leagues/coaches;
-- allow incomplete candidates to mature idempotently;
-- deduplicate repeated suggestions;
-- keep inspection lightweight;
-- never enable collection until an administrator explicitly saves a `StageSource`.
-
-**Acceptance criteria**
-
-- application code does not depend on provider filesystem layout;
-- repeated watch runs are idempotent;
-- discovery cannot reset collection checkpoints or implicitly start collection.
-
-### B-024 — Historical match-detail/enrichment gaps
-
-**Status: Partial — normalized match-detail UI/pipeline exists**
-
-Remaining work:
-
-- backfill missing historical roster/SPP/skill/team-value data when a supported source
-  contains it;
-- resolve BB3 race/team kind through canonical mappings rather than unreliable legacy
-  race IDs;
-- keep enrichment asynchronous/outside overview rendering;
-- make unavailable enrichment explicit/retryable rather than presenting misleading
-  empty data;
-- keep on-field score separate from administrative outcome where both are known.
-
-**Acceptance criteria**
-
-- regression fixtures cover known historical blank-roster/race-mapping failures;
-- opening one match does not trigger unrelated bulk enrichment;
-- current and historical views use the same normalized presentation contract.
 
 ### B-025 — Consume the versioned pybb3 timeline contract
 
@@ -338,6 +254,19 @@ handoff documents:
 - B-014 editorial/community foundation;
 - B-017 canonical Human/AI user identity and provenance;
 - canonical AI retrieval/planning/provider foundations AI-003 through AI-008;
+- B-021 competition round/presentation correctness: round-robin match days are
+  reconstructed deterministically, latest played round is selected by default and
+  regression coverage includes postponed matches that must not create extra rounds;
+- B-022 standings/playoff series correctness: standings, play-in/QF/SF/final/bronze
+  bracket inference, duplicate handling and replay/rematch series are implemented with
+  regression coverage;
+- B-023 discovery candidate flow: interactive discovery plus LeagueSystem alias-based
+  candidate discovery and explicit StageSource registration are implemented. A future
+  external polling/watch service is not an active requirement; add it as a new focused
+  enhancement only when there is a concrete product need;
+- B-024 historical match-detail enrichment: retryable backfill/status handling and
+  canonical race presentation are implemented. Remaining bad historical records are
+  data-specific defects, not an open feature card;
 - primary LeagueSystem-first public navigation.
 
 If a regression is found in one of these areas, create a focused defect/fix rather than

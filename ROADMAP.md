@@ -15,9 +15,14 @@ future roadmap work:
 
 - `LeagueSystem -> Season -> Stage -> StageSource` domain model, read APIs and admin CRUD;
 - LeagueSystem-first public navigation with season/stage selection;
-- interactive Cyanide league/competition discovery and explicit source registration;
-- existing round/group/playoff presentation infrastructure, including replay/rematch
-  handling;
+- deterministic round/group presentation with match-day reconstruction and independent
+  group progress;
+- standings and playoff bracket rendering, including play-in/QF/SF/final/bronze,
+  replay/rematch series and historical-topology regression coverage;
+- interactive Cyanide league/competition discovery, LeagueSystem alias-based candidate
+  discovery and explicit source registration;
+- historical match-detail backfill with retryable availability classification and
+  canonical race presentation;
 - canonical game-aware `coachClaims`, `siteAdmin`, scoped LeagueSystem administration
   and scoped editorial permissions;
 - articles, comments, reactions, player ratings and match-article review flows;
@@ -35,47 +40,8 @@ active roadmap work.
 
 ## Active roadmap
 
-### R1 — Competition correctness and presentation polish
+### R1 — Versioned replay/timeline integration
 
-Work from known defects in the existing LeagueSystem UI rather than rebuilding the
-competition model.
-
-- Make round grouping deterministic when source scheduling/order produces the wrong
-  round count.
-- Regression-test known multi-group seasons where groups are on different current
-  rounds.
-- Close remaining standings/bracket presentation defects using the existing metadata
-  and bracket model.
-- Preserve every replay/rematch in a series and keep individual on-field results
-  inspectable.
-- Keep pre-penalty/on-field scores separate from administrative/adjudicated outcomes
-  where both are available.
-- Add a separate `Phase` layer only if a concrete competition structure cannot be
-  represented cleanly with the existing Season/Stage model.
-
-Exit condition: known historical seasons render rounds, groups and playoff series
-correctly without tournament-name special cases.
-
-### R2 — Automated discovery
-
-Interactive discovery and explicit `StageSource` registration already exist. Remaining
-work is proactive discovery:
-
-- normalize provider-specific candidate/watch data at the integration boundary;
-- periodically suggest likely new competitions from registered leagues/coaches;
-- allow incomplete candidates to mature idempotently;
-- deduplicate repeated suggestions;
-- keep discovery lightweight;
-- never enable collection until an administrator explicitly saves a source.
-
-Exit condition: likely new season/stage sources are surfaced automatically without
-changing collection state.
-
-### R3 — Historical match and replay quality
-
-- Close known historical roster/race/team-kind enrichment gaps through the canonical
-  match-detail pipeline.
-- Keep expensive enrichment/backfill out of overview rendering.
 - Consume a versioned pybb3 timeline contract through `pybb3-service`.
 - Render a roll only when an actual test occurred and expose the semantic reason for
   that test.
@@ -89,7 +55,7 @@ the service contract, validation, compatibility and presentation.
 Exit condition: current and historical match views use stable normalized contracts and
 do not invent or mislabel replay events.
 
-### R4 — Remaining AI product work
+### R2 — Remaining AI product work
 
 The identity/context/provider/article/reaction foundation is implemented. Continue in
 this order:
@@ -104,7 +70,7 @@ this order:
 Do not reimplement provider adapters, social/memory persistence, article generation,
 generation traces or semantic reaction selection.
 
-### R5 — Production hardening
+### R3 — Production hardening
 
 - Finish hermetic server-profile/CI verification where external coupling remains.
 - Resolve B-012's typed failure-contract decision before replacing ambiguous
@@ -121,8 +87,15 @@ unimplemented deployment milestone.
 - `dev` is the integration branch; do not infer current behavior from stale `main`.
 - No secret, Steam credential, API key, Auth0 token, MongoDB URI or replay IP address is
   committed or emitted in diagnostics.
-- Discovery never enables collection implicitly.
+- Discovery never enables collection implicitly. The existing discovery flow is
+  considered complete; do not add autonomous external polling unless it becomes a
+  concrete product requirement.
 - Competition behavior is metadata/configuration-driven, not tournament-name hardcoded.
+- B-021 through B-024 are completed foundations. If a historical season, bracket,
+  discovery candidate or match-detail record is wrong, create a focused regression/data
+  defect rather than reopening those broad cards.
+- A separate `Phase` domain layer is not roadmap work unless a concrete competition
+  structure demonstrates that Season/Stage cannot represent it cleanly.
 - AI-backed authors are canonical users; provider/model is provenance, not identity.
 - AI narrative receives in-universe sporting facts rather than replay/parser/dice/RNG
   implementation terminology.
