@@ -211,9 +211,10 @@ const resultTotal = (rows) => rows.reduce(
   (sum, row) => sum + Object.values(row?.resultCounts || {}).reduce((subtotal, count) => subtotal + Number(count || 0), 0), 0,
 );
 
-function DiceHistogramTable({ rows, match, title, outcomes, description, outcomeLabels, rotateOutcomeHeaders = false, matchWide = false }) {
+function DiceHistogramTable({ rows, match, title, outcomes, description, outcomeLabels, rotateOutcomeHeaders = false, matchWide = false, compactOutcomes = false }) {
   if (!rows.length) return null;
   const lanes = matchWide ? [-1] : [0, 1];
+  const visibleOutcomes = compactOutcomes ? outcomes.filter((value) => resultCount(rows, value) > 0) : outcomes;
   return <Box>
     <Heading size="sm" mb={2}>{title}</Heading>
     {description && <Text fontSize="sm" color="gray.500" mb={2}>{description}</Text>}
@@ -222,7 +223,7 @@ function DiceHistogramTable({ rows, match, title, outcomes, description, outcome
         <Thead>
           <Tr>
             <Th>Team</Th>
-            {outcomes.map((value) => {
+            {visibleOutcomes.map((value) => {
               const label = outcomeLabels?.[value];
               return <Th
                 key={value}
@@ -243,7 +244,7 @@ function DiceHistogramTable({ rows, match, title, outcomes, description, outcome
           const teamRows = diceRowsForTeam(rows, team);
           return <Tr key={team}>
             <Td fontWeight="semibold" whiteSpace="nowrap">{team < 0 ? 'Match' : teamName(match, team)}</Td>
-            {outcomes.map((value) => <Td key={`${team}-${value}`} isNumeric>{resultCount(teamRows, value) || '—'}</Td>)}
+            {visibleOutcomes.map((value) => <Td key={`${team}-${value}`} isNumeric>{resultCount(teamRows, value) || '—'}</Td>)}
             <Td isNumeric fontWeight="semibold">{resultTotal(teamRows) || '—'}</Td>
           </Tr>;
         })}</Tbody>
@@ -441,8 +442,8 @@ export default function ReplayAnalysisPanel({ replay, match, loading, error, onD
       <BlockOutcomeTable rows={blockActions} match={match}/>
       <SpecialActionTable rows={specials} match={match}/>
       <DiceContextTable rows={diceStats.filter((row) => row.category === 'pregame' && row.label !== 'Weather')} match={match} title="Pregame dice" description="Team-specific pre-match rolls such as Fan Factor. Weather has its own match-state presentation above."/>
+      <DiceHistogramTable rows={kickoffTableDice} match={match} title="Kick-off table rolls" outcomes={[2,3,4,5,6,7,8,9,10,11,12]} outcomeLabels={KICKOFF_OUTCOMES} matchWide compactOutcomes description="2D6 totals mapped to the Blood Bowl kick-off table. Component dice remain preserved in replay analysis data."/>
       <DiceContextTable rows={kickoffRollOffDice} match={match} title="Kick-off event roll-offs" description="One D6 per team for kick-off events resolved by a roll-off."/>
-      <DiceHistogramTable rows={kickoffTableDice} match={match} title="Kick-off table rolls" outcomes={[2,3,4,5,6,7,8,9,10,11,12]} outcomeLabels={KICKOFF_OUTCOMES} rotateOutcomeHeaders matchWide description="2D6 totals mapped to the Blood Bowl kick-off table. Component dice remain preserved in replay analysis data."/>
       <DiceHistogramTable rows={armourDice} match={match} title="Armour rolls" outcomes={[2,3,4,5,6,7,8,9,10,11,12]} description="2D6 totals. Component dice remain preserved in replay analysis data."/>
       <DiceHistogramTable rows={injuryDice} match={match} title="Injury rolls" outcomes={[2,3,4,5,6,7,8,9,10,11,12]} description="2D6 totals. Component dice remain preserved in replay analysis data."/>
       <DiceHistogramTable rows={casualtyDice} match={match} title="Casualty rolls" outcomes={[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]} description="D16 outcomes. Multiple values in one replay group are counted separately rather than added."/>
