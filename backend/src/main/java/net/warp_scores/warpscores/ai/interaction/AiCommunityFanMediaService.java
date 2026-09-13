@@ -68,7 +68,9 @@ public class AiCommunityFanMediaService {
         request.setTarget(target);
         request.setPrompt(prompt.trim());
         request.setStatus(AiCommunityMediaGenerationRequest.Status.QUEUED);
-        request.setCreatedAt(Instant.now());
+        Instant now = Instant.now();
+        request.setCreatedAt(now);
+        request.setNextAttemptAt(now);
         requests.save(request);
     }
 }

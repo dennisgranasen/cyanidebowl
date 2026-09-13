@@ -50,6 +50,24 @@ public class AiCommunityMediaAssetStore {
                 "/community/media/assets/" + filename);
     }
 
+    public void deletePublicUrl(String publicUrl) {
+        if (!StringUtils.hasText(publicUrl)) return;
+        String prefix = "/community/media/assets/";
+        if (!publicUrl.startsWith(prefix)) return;
+
+        String filename = publicUrl.substring(prefix.length());
+        if (!filename.matches("[A-Za-z0-9._-]+")) return;
+
+        Path file = storageDir.resolve(filename).normalize();
+        if (!file.startsWith(storageDir)) return;
+
+        try {
+            Files.deleteIfExists(file);
+        } catch (IOException ignored) {
+            // Cleanup failure must not invalidate a successfully stored replacement.
+        }
+    }
+
     public Resource resource(String filename) {
         if (!StringUtils.hasText(filename)
                 || !filename.matches("[A-Za-z0-9._-]+")) {

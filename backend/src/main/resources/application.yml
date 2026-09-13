@@ -126,6 +126,9 @@ warpscores:
       quality: ${COMMUNITY_MEDIA_QUALITY:low}
       storage-dir: ${COMMUNITY_MEDIA_STORAGE_DIR:/data/community-media}
       poll-ms: ${COMMUNITY_MEDIA_POLL_MS:30000}
+      max-attempts: ${COMMUNITY_MEDIA_MAX_ATTEMPTS:4}
+      retry-base-delay: ${COMMUNITY_MEDIA_RETRY_BASE_DELAY:30s}
+      running-timeout: ${COMMUNITY_MEDIA_RUNNING_TIMEOUT:10m}
 
     # reporter-targets: # non-gemini currently works ... so-so.
     #   aeltharion-quill:

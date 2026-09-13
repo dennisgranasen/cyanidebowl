@@ -44,6 +44,18 @@ Do not use old `main` behavior as the basis for implementation work.
 
 **B-019e/f/g completed community experience**
 
+**B-019h/i roster species, stable appearance and media recovery**
+
+- Fan species candidates now prefer actual `Team.players[].type` values and only
+  fall back to team-race weighting when roster types are unavailable.
+- Every fan has a persistent appearance brief shared by profile-photo and avatar
+  prompts so both assets describe the same recurring individual.
+- Media generation retries failures with exponential backoff, recovers stale RUNNING
+  jobs after backend restarts, and has configurable max attempts.
+- Successful regeneration switches the profile to the new asset first, then removes
+  the superseded local file to prevent unbounded media-volume growth.
+
+
 - B-019e: queued PROFILE_IMAGE/AVATAR requests are rendered by a scheduled OpenAI Images
   worker when `AI_API_KEY_OPENAI` is configured. Assets are stored under the configurable
   community-media storage directory and served publicly from `/community/media/assets/**`.

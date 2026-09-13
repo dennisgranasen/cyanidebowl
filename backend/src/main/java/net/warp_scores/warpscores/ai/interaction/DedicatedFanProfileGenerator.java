@@ -1,6 +1,7 @@
 package net.warp_scores.warpscores.ai.interaction;
 
 import net.warp_scores.warpscores.model.AiCommunityMemberProfile;
+import net.warp_scores.warpscores.model.Player;
 import net.warp_scores.warpscores.model.Team;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -64,6 +65,7 @@ public class DedicatedFanProfileGenerator {
         profile.setFavoriteChant(pick(CHANTS, rng));
         profile.setSupporterArchetype(pick(SUPPORTER_ARCHETYPES, rng));
         profile.setTeamColors(colorHint(team));
+        profile.setAppearanceBrief(appearanceBrief(profile, team, rng));
 
         String persona = profile.getPersonaKey() == null ? "die-hard" : profile.getPersonaKey();
         double optimism = around(rng, 0.64, 0.28);
@@ -159,6 +161,9 @@ public class DedicatedFanProfileGenerator {
         if (!StringUtils.hasText(profile.getTeamColors())) {
             profile.setTeamColors(generated.getTeamColors());
         }
+        if (!StringUtils.hasText(profile.getAppearanceBrief())) {
+            profile.setAppearanceBrief(generated.getAppearanceBrief());
+        }
         if (!StringUtils.hasText(profile.getProfileImagePrompt())) {
             profile.setProfileImagePrompt(generated.getProfileImagePrompt());
         }
@@ -185,6 +190,72 @@ public class DedicatedFanProfileGenerator {
     }
 
     static List<String> speciesCandidates(Team team) {
+        List<String> roster = rosterSpeciesCandidates(team);
+        if (!roster.isEmpty()) {
+            return roster;
+        }
+        return raceFallbackSpeciesCandidates(team);
+    }
+
+    private static List<String> rosterSpeciesCandidates(Team team) {
+        if (team == null || team.getPlayers() == null || team.getPlayers().length == 0) {
+            return List.of();
+        }
+
+        List<String> result = new ArrayList<>();
+        for (Player player : team.getPlayers()) {
+            if (player == null || !StringUtils.hasText(player.getType())) continue;
+            String species = speciesFromPlayerType(player.getType());
+            if (StringUtils.hasText(species)) result.add(species);
+        }
+        return List.copyOf(result);
+    }
+
+    static String speciesFromPlayerType(String playerType) {
+        if (!StringUtils.hasText(playerType)) return null;
+
+        String original = playerType.trim();
+        String normalized = normalize(original);
+
+        if (normalized.contains("nurgling")) return "Nurgling";
+        if (normalized.contains("nurgle") && normalized.contains("human")) return "Nurgle human";
+        if (normalized.contains("treeman")) return "Treeman";
+        if (normalized.contains("yhetee")) return "Yhetee";
+        if (normalized.contains("kroxigor")) return "Kroxigor";
+        if (normalized.contains("saurus")) return "Saurus";
+        if (normalized.contains("skink")) return "Skink";
+        if (normalized.contains("hobgoblin")) return "Hobgoblin";
+        if (normalized.contains("goblin")) return "Goblin";
+        if (normalized.contains("skaven") || normalized.contains("gutter runner")
+                || normalized.contains("rat ogre")) return "Skaven";
+        if (normalized.contains("vampire")) return "Vampire";
+        if (normalized.contains("thrall")) return "Human Thrall";
+        if (normalized.contains("zombie")) return "Zombie";
+        if (normalized.contains("skeleton")) return "Skeleton";
+        if (normalized.contains("ghoul")) return "Ghoul";
+        if (normalized.contains("werewolf")) return "Werewolf";
+        if (normalized.contains("wraith")) return "Wraith";
+        if (normalized.contains("flesh golem")) return "Flesh Golem";
+        if (normalized.contains("dark elf")) return "Dark Elf";
+        if (normalized.contains("wood elf")) return "Wood Elf";
+        if (normalized.contains("high elf")) return "High Elf";
+        if (normalized.contains("dwarf")) return "Dwarf";
+        if (normalized.contains("halfling")) return "Halfling";
+        if (normalized.contains("ogre")) return "Ogre";
+        if (normalized.contains("troll")) return "Troll";
+        if (normalized.contains("orc")) return "Orc";
+        if (normalized.contains("norse")) return "Norse";
+        if (normalized.contains("human")) return "Human";
+        if (normalized.contains("elf")) return "Elf";
+
+        String cleaned = original
+                .replaceAll("(?i)\\b(blitzer|blocker|runner|thrower|catcher|lineman|linewoman|renegade|chosen|prospect|rookie)\\b", "")
+                .replaceAll("\\s+", " ")
+                .trim();
+        return StringUtils.hasText(cleaned) ? cleaned : original;
+    }
+
+    private static List<String> raceFallbackSpeciesCandidates(Team team) {
         String race = normalize(team == null ? null : team.getRace());
         List<String> result = new ArrayList<>();
 
@@ -245,6 +316,34 @@ public class DedicatedFanProfileGenerator {
         return candidates.get(rng.nextInt(candidates.size()));
     }
 
+    private static String appearanceBrief(
+            AiCommunityMemberProfile profile,
+            Team team,
+            Random rng) {
+        String species = value(profile.getSpecies(), "supporter");
+        String archetype = value(profile.getSupporterArchetype(), "supporter");
+        String colors = value(profile.getTeamColors(), "team colours");
+
+        List<String> builds = List.of(
+                "slim build", "average build", "stocky build", "tall build",
+                "short build", "broad-shouldered build");
+        List<String> hair = List.of(
+                "dark hair", "light hair", "red hair", "grey hair",
+                "shaved head", "messy hair");
+        List<String> details = List.of(
+                "weathered face", "friendly eyes", "crooked smile",
+                "prominent nose", "round face", "angular face",
+                "small scar over one eyebrow", "freckles");
+
+        return species + "; " + archetype + "; "
+                + pick(builds, rng) + "; "
+                + pick(hair, rng) + "; "
+                + pick(details, rng) + "; "
+                + "recognisable recurring individual; usually wears or carries subtle "
+                + "supporter details in " + colors
+                + ". Keep these physical traits consistent across every image.";
+    }
+
     private static String bio(AiCommunityMemberProfile p, Team team) {
         String teamName = team != null && StringUtils.hasText(team.getName())
                 ? team.getName().trim() : "the team";
@@ -293,9 +392,11 @@ public class DedicatedFanProfileGenerator {
         String location = value(profile.getLocation(), "town");
         String occupation = value(profile.getOccupation(), "local supporter");
         String archetype = value(profile.getSupporterArchetype(), "supporter");
+        String appearance = value(profile.getAppearanceBrief(), species);
         String base = "Create a candid, believable social-media profile photo of "
                 + name + ", a " + species + " " + archetype + " of " + teamName + ". "
-                + name + " is from " + location + " and works as " + occupation + ". ";
+                + name + " is from " + location + " and works as " + occupation + ". "
+                + "Shared visual identity: " + appearance + " ";
 
         return switch (archetype) {
             case "pub regular" -> base
@@ -340,11 +441,13 @@ public class DedicatedFanProfileGenerator {
         String colors = value(profile.getTeamColors(), "team colours");
         String name = value(profile.getDisplayName(), "this fan");
         String archetype = value(profile.getSupporterArchetype(), "supporter");
+        String appearance = value(profile.getAppearanceBrief(), species);
         return "Create a square avatar portrait of " + name + ", a " + species + " "
                 + archetype + " who supports " + teamName + ". Tight composition, clear face, "
                 + "friendly but distinctive expression, suitable as a community avatar. Include "
                 + "subtle hints of " + colors + " in scarf, clothing or accessories. Keep it "
-                + "characterful, readable and social-profile friendly.";
+                + "characterful, readable and social-profile friendly. "
+                + "Shared visual identity: " + appearance;
     }
 
     private static String name(Random rng) {

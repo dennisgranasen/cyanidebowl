@@ -61,6 +61,8 @@ public class AiCommunityMemberProfile {
     private String supporterArchetype;
     /** Friendly human-readable color hint derived from team data when available. */
     private String teamColors;
+    /** Stable visual identity shared by avatar and contextual profile photos. */
+    private String appearanceBrief;
     /** Prompt/brief for a more social-media like profile photo. */
     private String profileImagePrompt;
     /** Prompt/brief for a tighter avatar portrait. */

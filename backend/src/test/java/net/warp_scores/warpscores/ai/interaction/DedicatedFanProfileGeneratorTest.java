@@ -89,6 +89,39 @@ class DedicatedFanProfileGeneratorTest {
                 "former player");
     }
 
+
+    @Test
+    void rosterPlayerTypesDriveSpeciesCandidates() {
+        Team team = team("Chaos Renegade");
+        var goblin = new net.warp_scores.warpscores.model.Player(
+                new SimpleIdentity("player-goblin", 3));
+        goblin.setType("Goblin Renegade");
+        var darkElf = new net.warp_scores.warpscores.model.Player(
+                new SimpleIdentity("player-elf", 3));
+        darkElf.setType("Dark Elf Renegade");
+        team.setPlayers(new net.warp_scores.warpscores.model.Player[] {
+                goblin, darkElf
+        });
+
+        assertThat(DedicatedFanProfileGenerator.speciesCandidates(team))
+                .containsExactly("Goblin", "Dark Elf");
+    }
+
+    @Test
+    void avatarAndProfilePromptsSharePersistentAppearanceIdentity() {
+        Team team = team("Human");
+        AiCommunityMemberProfile profile = new AiCommunityMemberProfile();
+        profile.setPersonaKey("optimist");
+
+        generator.initialize(profile, team, 4);
+
+        assertThat(profile.getAppearanceBrief()).isNotBlank();
+        assertThat(profile.getProfileImagePrompt())
+                .contains(profile.getAppearanceBrief());
+        assertThat(profile.getAvatarPrompt())
+                .contains(profile.getAppearanceBrief());
+    }
+
     private static Team team(String race) {
         Team team = new Team(new SimpleIdentity("team", 3));
         team.setName("Test Team");
