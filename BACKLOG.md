@@ -482,6 +482,35 @@ same provider execution layer.
 
 ## Operational/maintainability work
 
+
+**B-016f finalized-match fan candidate**
+
+- The canonical finalized-match transition in `FetchDataService` now emits durable
+  `FAN_MATCH_COMMENT` candidates after the full match has been saved.
+- Competition identity is resolved through `StageSource.sourceEntityId`; no league,
+  competition or tournament names are hard-coded.
+- At most one active Dedicated Fan is selected deterministically per league-system/match
+  candidate, and only fans of a participating team are eligible.
+- The queue candidate is persisted before the initiative probability is sampled. This
+  ensures a policy rejection is evaluated once instead of being re-rolled on every
+  source refresh.
+- The handler evaluates `OWN_TEAM_MATCH` through the existing B-016c policy and treats
+  rejection as a successful no-op.
+- Approved work uses B-016d's canonical context/provider/provenance/community-comment
+  path and writes a normal `MATCH` comment.
+- These work items use `maxAttempts=1`: an autonomous provider failure remains visible
+  as terminal queue failure rather than consuming another probabilistic initiative
+  decision on retry.
+
+Remaining B-016 work:
+
+- add additional candidate producers only for concrete domain events where the product
+  wants autonomous staff/fan activity;
+- autonomous editorial/match articles still require an explicit canonical candidate
+  source and must not be invented by the scheduler;
+- optional monetary accounting remains deferred until provider/model pricing metadata
+  is explicit and versioned.
+
 ### B-027 — Finish ARM64/Raspberry Pi operational runbook
 
 **Status: Partial — build/deploy baseline exists**

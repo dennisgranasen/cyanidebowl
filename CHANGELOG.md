@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added the first finalized-match Dedicated Fan queue producer: completed matches can
+  create one stable supporter-comment candidate per league system, evaluated once through
+  the existing initiative policy and executed through canonical AI context/provenance.
+
 - Added a durable autonomous AI work queue with cross-process dedupe, atomic leases,
   explicit priority, retry/backoff, terminal failure visibility and site-admin queue/budget
   observability. Candidate discovery remains policy-driven and domain-specific.

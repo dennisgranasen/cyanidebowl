@@ -73,6 +73,8 @@ public class FetchDataService {
     @Autowired
     private net.warp_scores.warpscores.ai.interaction.DedicatedFansCommunityReconciliationService dedicatedFansCommunity;
     @Autowired
+    private net.warp_scores.warpscores.ai.scheduling.AiCompletedMatchFanWorkProducer completedMatchFanWork;
+    @Autowired
     private MatchRepository matchRepository;
     @Autowired
     private PyBb3MatchDiscoveryService pyBb3MatchDiscoveryService;
@@ -160,7 +162,8 @@ public class FetchDataService {
                         }
                         log.info("Updating match {} with data from API and setting finalized True.", fullMatch.getId());
                         fullMatch.setIsFinalized(true);
-                        matchRepository.save(fullMatch);
+                        Match savedMatch = matchRepository.save(fullMatch);
+                        completedMatchFanWork.onMatchFinalized(savedMatch);
                 });
         
 

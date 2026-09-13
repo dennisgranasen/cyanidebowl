@@ -238,6 +238,61 @@ public class AiCommunityFanInteractionService {
                 null);
     }
 
+    public void commentOnMatchOnce(
+            String leagueSystemId,
+            String matchId,
+            String fanId) {
+        if (!StringUtils.hasText(leagueSystemId)
+                || !StringUtils.hasText(matchId)
+                || !StringUtils.hasText(fanId)) return;
+
+        AiCommunityMemberProfile fan = profiles.findById(fanId)
+                .filter(AiCommunityMemberProfile::isActive)
+                .filter(profile -> profile.getUserId() != null)
+                .filter(profile -> StringUtils.hasText(profile.getUserSubject()))
+                .filter(profile -> StringUtils.hasText(profile.getTeamId()))
+                .orElse(null);
+        if (fan == null) return;
+
+        Match match = matchById(matchId);
+        if (teamIndex(match, fan.getTeamId()) < 0) return;
+
+        String canonicalMatchId = canonicalMatchId(match);
+        String revision = "fan-match:" + canonicalMatchId;
+        if (alreadyGenerated(
+                CommunityComment.TargetType.MATCH,
+                canonicalMatchId,
+                fan.getId(),
+                revision)) return;
+
+        ContextPlan plan = contextPlanner.plan(
+                ContextTaskType.ARTICLE_COMMENT,
+                fan.getUserId(),
+                new SubjectRef(SubjectType.MATCH, canonicalMatchId),
+                new SubjectRef(SubjectType.TEAM, fan.getTeamId()),
+                List.of());
+        AssembledContext context = contextAssembly.assemble(plan);
+
+        String task = fanVoice(fan)
+                + "\nWrite a short public supporter comment on the completed match."
+                + "\nYour supported team played in the match."
+                + "\nUse only facts established by the supplied match context."
+                + "\nDo not invent events, quotes, motives or statistics."
+                + "\nDo not pretend to be a journalist or coach."
+                + "\nKeep it to at most two short paragraphs. Return only the comment text.";
+
+        CanonicalLlmResponse response =
+                generate(fan, context, task, ContextTaskType.ARTICLE_COMMENT);
+        save(
+                CommunityComment.TargetType.MATCH,
+                canonicalMatchId,
+                leagueSystemId,
+                fan,
+                response,
+                revision,
+                null);
+    }
+
     private void commentOnMatchArticleOnce(
             MatchArticle article,
             AiCommunityMemberProfile fan) {
