@@ -49,6 +49,7 @@ public class MatchArticleAiInteractionService {
     private final CommunityReactionRepository reactions;
     private final MatchArticleRepository matchArticles;
     private final ReporterSocialContinuityService continuity;
+    private final ReporterAutonomousActivityGate autonomousActivity;
 
     @Async
     public void onPublished(MatchArticle article) {
@@ -115,7 +116,7 @@ public class MatchArticleAiInteractionService {
                             || policy.shouldReplyToUserComment(
                                     reporter, false, false, false, 0.0, rng);
                     if (shouldReply) {
-                        replyToCommentOnce(article, source, reporter);
+                        replyToCommentOnce(article, source, reporter, !directMention);
                     }
                 }
             } catch (Exception e) {
@@ -132,6 +133,12 @@ public class MatchArticleAiInteractionService {
                 CommunityReaction.TargetType.MATCH_ARTICLE,
                 article.getId(),
                 reporter.resolvedUserSubject()).isPresent()) {
+            return;
+        }
+
+        if (!autonomousActivity.tryConsume(
+                reporter,
+                ReporterAutonomousActivityGate.Activity.REACTION).allowed()) {
             return;
         }
 
@@ -166,6 +173,12 @@ public class MatchArticleAiInteractionService {
             return;
         }
 
+        if (!autonomousActivity.tryConsume(
+                reporter,
+                ReporterAutonomousActivityGate.Activity.REACTION).allowed()) {
+            return;
+        }
+
         CommunityReaction.Type type;
         try {
             type = reactionDecisions.chooseForComment(reporter, article, source);
@@ -191,6 +204,12 @@ public class MatchArticleAiInteractionService {
             AiReporterDefinition reporter) {
         String sourceRevision = "article-comment:" + article.getId();
         if (alreadyGenerated(article.getId(), reporter.getId(), sourceRevision)) return;
+
+        if (!autonomousActivity.tryConsume(
+                reporter,
+                ReporterAutonomousActivityGate.Activity.COMMENT).allowed()) {
+            return;
+        }
 
         ContextPlan plan = contextPlanner.plan(
                 ContextTaskType.ARTICLE_COMMENT,
@@ -218,9 +237,17 @@ public class MatchArticleAiInteractionService {
     private void replyToCommentOnce(
             MatchArticle article,
             CommunityComment source,
-            AiReporterDefinition reporter) {
+            AiReporterDefinition reporter,
+            boolean autonomous) {
         String sourceRevision = "reply-to:" + source.getId();
         if (alreadyGenerated(article.getId(), reporter.getId(), sourceRevision)) return;
+
+        if (autonomous
+                && !autonomousActivity.tryConsume(
+                        reporter,
+                        ReporterAutonomousActivityGate.Activity.COMMENT).allowed()) {
+            return;
+        }
 
         ContextPlan plan = contextPlanner.plan(
                 ContextTaskType.SOCIAL_REPLY,

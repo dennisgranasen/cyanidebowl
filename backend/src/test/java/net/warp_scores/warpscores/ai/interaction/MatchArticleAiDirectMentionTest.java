@@ -46,6 +46,8 @@ class MatchArticleAiDirectMentionTest {
             mock(MatchArticleRepository.class);
     private final ReporterSocialContinuityService continuity =
             mock(ReporterSocialContinuityService.class);
+    private final ReporterAutonomousActivityGate autonomousActivity =
+            mock(ReporterAutonomousActivityGate.class);
 
     private final MatchArticleAiInteractionService service =
             new MatchArticleAiInteractionService(
@@ -58,7 +60,8 @@ class MatchArticleAiDirectMentionTest {
                     comments,
                     reactions,
                     matchArticles,
-                    continuity);
+                    continuity,
+                    autonomousActivity);
 
     @Test
     void exactAliasAndReporterIdTagsAreRecognized() {
@@ -141,6 +144,9 @@ class MatchArticleAiDirectMentionTest {
         service.onHumanComment(source);
 
         verify(llm, times(1)).generate(eq("lady-putridia"), any());
+        verify(autonomousActivity, never()).tryConsume(
+                eq(reporter),
+                eq(ReporterAutonomousActivityGate.Activity.COMMENT));
         verify(policy, never()).shouldReplyToUserComment(
                 eq(reporter), anyBoolean(), anyBoolean(), anyBoolean(), anyDouble(), any());
 

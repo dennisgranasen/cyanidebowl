@@ -32,10 +32,11 @@ class MatchArticleAiInteractionIdempotencyTest {
     private final CommunityReactionRepository reactions = mock(CommunityReactionRepository.class);
     private final MatchArticleRepository matchArticles = mock(MatchArticleRepository.class);
     private final ReporterSocialContinuityService continuity = mock(ReporterSocialContinuityService.class);
+    private final ReporterAutonomousActivityGate autonomousActivity = mock(ReporterAutonomousActivityGate.class);
 
     private final MatchArticleAiInteractionService service = new MatchArticleAiInteractionService(
             profiles, policy, reactionDecisions, planner, assembly, llm,
-            comments, reactions, matchArticles, continuity);
+            comments, reactions, matchArticles, continuity, autonomousActivity);
 
     @Test
     void existingReplySourceRevisionPreventsDuplicateLlmGeneration() {
@@ -79,6 +80,7 @@ class MatchArticleAiInteractionIdempotencyTest {
         service.onHumanComment(source);
 
         verifyNoInteractions(llm);
+        verify(autonomousActivity, never()).tryConsume(any(), any());
         verify(comments, never()).save(any());
     }
 }

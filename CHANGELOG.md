@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added per-reporter autonomous activity quotas/cooldowns backed by existing runtime state;
+  spontaneous comments/replies/reactions are gated after idempotency checks, while direct
+  tags bypass autonomous quotas but still retain global hard generation budgets.
+
 - Added central AI generation admission controls with an opt-in global kill switch,
   concurrency backpressure and daily generation/token budgets backed by durable generation
   traces; admin endpoints expose limits and current usage. Autonomous scheduling remains separate.

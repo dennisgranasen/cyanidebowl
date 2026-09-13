@@ -382,7 +382,7 @@ disabled capability and retry/idempotency behavior.
 
 ### B-016 — AI scheduling, quotas and cost control
 
-**Status: Partial — hard admission/budget foundation implemented; autonomous scheduling remains**
+**Status: Partial — hard admission/budgets and per-reporter autonomous activity policy implemented; scheduler remains**
 
 Implemented foundation:
 
@@ -394,15 +394,21 @@ Implemented foundation:
 - configured token budgets fail closed if successful trace usage is unknown;
 - declared output-token limits and estimated input size are checked before provider use;
 - admin API exposes hard limits plus current-day usage/in-flight state;
-- all new limits are opt-in so legacy behavior remains unchanged by default.
+- all new global limits are opt-in so legacy behavior remains unchanged by default;
+- per-reporter autonomous `ARTICLE`, `COMMENT` and `REACTION` activity is gated by the
+  existing behaviour limits/cooldowns and persisted in `AiReporterRuntimeState`;
+- UTC day rollover resets daily counters without deleting last-activity timestamps;
+- spontaneous article comments, replies and reactions consume autonomous quota only
+  after idempotency checks;
+- explicit direct-tag replies bypass reporter autonomous quotas/cooldowns while still
+  passing through B-016a's global hard generation limits.
 
 Remaining B-016 work:
 
-- autonomous scheduler/queue and durable cross-process reservations;
-- per-AI autonomous article/comment/reaction quotas using existing reporter behaviour
-  limits and cooldown fields;
-- explicit priority classes so direct tags can outrank autonomous work without bypassing
-  hard site budgets;
+- actual autonomous scheduler/queue and durable cross-process reservations;
+- a canonical autonomous article-candidate source/executor before scheduling articles;
+- explicit queue priority classes so direct/user-triggered work can outrank autonomous
+  queued work without bypassing hard site budgets;
 - retry scheduling/backoff policy above the existing provider fallback behavior;
 - provider/model price metadata and monetary cost budgets (do not infer monetary cost
   from tokens until explicit pricing is configured);
