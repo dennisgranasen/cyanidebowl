@@ -5,6 +5,8 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.Instant;
+
 /**
  * Site-wide AI settings. There is deliberately a single document.
  */
@@ -41,6 +43,21 @@ public class AiSettings {
 
     /** Probability that an existing fan changes allegiance instead of deactivate/create. */
     private Double fanLoyaltySwitchProbability = 0.50;
+
+    /** Periodic reconciliation catches Dedicated Fans bought between matches. */
+    private Boolean fanPopulationReconciliationEnabled = true;
+    private Integer fanPopulationReconciliationIntervalHours = 24;
+    private Instant fanPopulationLastReconciledAt;
+
+    public boolean isFanPopulationReconciliationEffectivelyEnabled() {
+        return fanPopulationReconciliationEnabled == null || fanPopulationReconciliationEnabled;
+    }
+
+    public int effectiveFanPopulationReconciliationIntervalHours() {
+        return fanPopulationReconciliationIntervalHours == null
+                ? 24
+                : Math.max(1, fanPopulationReconciliationIntervalHours);
+    }
 
     public double effectiveFanLoyaltySwitchProbability() {
         return fanLoyaltySwitchProbability == null ? 0.50 : fanLoyaltySwitchProbability;

@@ -43,6 +43,7 @@ public class DedicatedFansCommunityReconciliationService {
     private final SequenceGenerator sequenceGenerator;
     private final DedicatedFanProfileGenerator profileGenerator;
     private final AiSettingsRepository settingsRepository;
+    private final AiCommunityFanMediaService mediaService;
 
     public record Result(
             String teamId,
@@ -68,6 +69,7 @@ public class DedicatedFansCommunityReconciliationService {
         for (AiCommunityMemberProfile profile : existing) {
             boolean changed = enrichProfile(profile, team);
             if (changed) profiles.save(profile);
+            mediaService.ensureInitialRequests(profile);
         }
 
         if (dedicatedFans == null) {
@@ -182,7 +184,9 @@ public class DedicatedFansCommunityReconciliationService {
         profileGenerator.initialize(profile, team, ordinal);
         user.setUsername(profile.getDisplayName());
         users.save(user);
-        return profiles.save(profile);
+        AiCommunityMemberProfile savedProfile = profiles.save(profile);
+        mediaService.ensureInitialRequests(savedProfile);
+        return savedProfile;
     }
 
     public void reconcileAfterMatch(Match match) {

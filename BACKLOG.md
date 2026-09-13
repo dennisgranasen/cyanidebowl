@@ -40,6 +40,18 @@ Do not use old `main` behavior as the basis for implementation work.
 
 **B-019c fan visual profiles**
 
+**B-019d community directory, media queue and periodic population reconciliation**
+
+- Public `/community` and `/community/:fanId` frontend routes expose community profiles.
+- Main menu and breadcrumb navigation include Community.
+- Profile image/avatar generation uses durable renderer-neutral media requests. New/enriched
+  fans queue PROFILE_IMAGE and AVATAR requests when no asset exists; Site Admin can regenerate.
+- Periodic population reconciliation polls hourly and runs when the DB-configured interval is due.
+- Defaults: reconciliation enabled, 24-hour interval. Site Admin can configure enabled/interval.
+- Match-finalization reconciliation remains immediate, covering both match-driven changes and
+  Dedicated Fans purchased between matches.
+
+
 - Fan profiles now also carry a supporter archetype, generated profile-photo brief and
   generated avatar brief.
 - Archetypes intentionally cover a broad supporter population: pub regulars, stadium

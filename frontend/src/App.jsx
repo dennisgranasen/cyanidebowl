@@ -31,6 +31,8 @@ import { MyTeamsProvider } from './context/MyTeamsContext';
 import I18nProvider from './i18n/I18nProvider';
 import LanguagePreferencesPage from './pages/LanguagePreferencesPage';
 import LocalizationAdminPage from './pages/LocalizationAdminPage';
+import CommunityPage from './pages/CommunityPage';
+import CommunityProfilePage from './pages/CommunityProfilePage';
 
 import { MockAuth0Provider } from './components/misc/MockAuthProvider';
 
@@ -101,6 +103,8 @@ function AppRoutes() {
       <Route path="/team/:teamId" element={<TeamPage />} />
       <Route path="/article/:slug" element={<ArticlePage />} />
       <Route path="/staff" element={<StaffPage />} />
+      <Route path="/community" element={<CommunityPage />} />
+      <Route path="/community/:fanId" element={<CommunityProfilePage />} />
       <Route path="/staff/user/:profileId" element={<HumanStaffProfilePage />} />
       <Route path="/staff/:reporterId" element={<ReporterProfilePage />} />
       <Route path="/competition/:competitionId" element={<CompetitionPage />} />

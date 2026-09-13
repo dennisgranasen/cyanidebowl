@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a public Community directory/profile view, durable fan avatar/profile-media requests,
+  and configurable periodic Dedicated Fans reconciliation for purchases between matches.
+
 - Added fan visual profile briefs and avatar/profile-photo metadata, including broad
   supporter archetypes and team-colour hints for future image generation.
 

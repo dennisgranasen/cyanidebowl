@@ -40,6 +40,18 @@ function Navigation({ currentPage, parentPage, currentLabel, league, competition
             </BreadcrumbLink>
           </BreadcrumbItem>
         )}
+        {(isPage('community', currentPage) || isPage('community', parentPage) || isPage('communityProfile', currentPage)) && (
+          <BreadcrumbItem isCurrentPage={isPage('community', currentPage)} flexWrap>
+            <BreadcrumbLink variant="menu" as={RouteLink} to="/community">
+              Community
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+        )}
+        {isPage('communityProfile', currentPage) && currentLabel && (
+          <BreadcrumbItem isCurrentPage flexWrap>
+            <BreadcrumbLink variant="menu">{currentLabel}</BreadcrumbLink>
+          </BreadcrumbItem>
+        )}
         {isPage('staffProfile', currentPage) && currentLabel && (
           <BreadcrumbItem isCurrentPage flexWrap>
             <BreadcrumbLink variant="menu">{currentLabel}</BreadcrumbLink>

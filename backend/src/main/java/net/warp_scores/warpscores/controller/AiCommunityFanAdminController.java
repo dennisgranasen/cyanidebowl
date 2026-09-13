@@ -1,6 +1,7 @@
 package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
+import net.warp_scores.warpscores.ai.interaction.AiCommunityFanMediaService;
 import net.warp_scores.warpscores.domain.persistence.AiCommunityMemberProfileRepository;
 import net.warp_scores.warpscores.domain.persistence.AiSettingsRepository;
 import net.warp_scores.warpscores.domain.persistence.WarpScoresUserRepository;
@@ -23,6 +24,7 @@ public class AiCommunityFanAdminController {
     private final AiCommunityMemberProfileRepository profiles;
     private final AiSettingsRepository settings;
     private final WarpScoresUserRepository users;
+    private final AiCommunityFanMediaService mediaService;
 
     @GetMapping
     public List<AiCommunityMemberProfile> list() {
@@ -78,24 +80,58 @@ public class AiCommunityFanAdminController {
     public FanSettings settings() {
         AiSettings global = settings.findById(AiSettings.GLOBAL_ID)
                 .orElseGet(AiSettings::new);
-        return new FanSettings(global.effectiveFanLoyaltySwitchProbability());
+        return toFanSettings(global);
     }
 
     @PutMapping("/settings")
     public FanSettings updateSettings(@RequestBody FanSettings update) {
         if (update == null) throw new IllegalArgumentException("settings payload is required");
-        double value = probability(
-                "loyaltySwitchProbability",
-                update.loyaltySwitchProbability());
 
         AiSettings global = settings.findById(AiSettings.GLOBAL_ID)
                 .orElseGet(AiSettings::new);
-        global.setFanLoyaltySwitchProbability(value);
+        global.setFanLoyaltySwitchProbability(probability(
+                "loyaltySwitchProbability",
+                update.loyaltySwitchProbability()));
+        global.setFanPopulationReconciliationEnabled(
+                update.populationReconciliationEnabled());
+        if (update.populationReconciliationIntervalHours() < 1) {
+            throw new IllegalArgumentException(
+                    "populationReconciliationIntervalHours must be >= 1");
+        }
+        global.setFanPopulationReconciliationIntervalHours(
+                update.populationReconciliationIntervalHours());
+
         settings.save(global);
-        return new FanSettings(value);
+        return toFanSettings(global);
     }
 
-    public record FanSettings(double loyaltySwitchProbability) {}
+    @PostMapping("/{id}/media/regenerate")
+    public Object regenerateMedia(@PathVariable String id) {
+        AiCommunityMemberProfile profile = profiles.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Community fan profile not found"));
+        return mediaService.regenerate(profile);
+    }
+
+    @GetMapping("/{id}/media")
+    public Object mediaRequests(@PathVariable String id) {
+        profiles.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Community fan profile not found"));
+        return mediaService.requestsFor(id);
+    }
+
+    public record FanSettings(
+            double loyaltySwitchProbability,
+            boolean populationReconciliationEnabled,
+            int populationReconciliationIntervalHours,
+            java.time.Instant populationLastReconciledAt) {}
+
+    private static FanSettings toFanSettings(AiSettings settings) {
+        return new FanSettings(
+                settings.effectiveFanLoyaltySwitchProbability(),
+                settings.isFanPopulationReconciliationEffectivelyEnabled(),
+                settings.effectiveFanPopulationReconciliationIntervalHours(),
+                settings.getFanPopulationLastReconciledAt());
+    }
 
     public record ProfileUpdate(
             String displayName,

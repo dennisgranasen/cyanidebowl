@@ -30,6 +30,7 @@ class DedicatedFansCommunityReconciliationServiceTest {
     private SequenceGenerator sequence;
     private DedicatedFanProfileGenerator profileGenerator;
     private AiSettingsRepository settingsRepository;
+    private AiCommunityFanMediaService mediaService;
     private DedicatedFansCommunityReconciliationService service;
 
     private final List<AiCommunityMemberProfile> storedProfiles = new ArrayList<>();
@@ -44,6 +45,7 @@ class DedicatedFansCommunityReconciliationServiceTest {
         sequence = mock(SequenceGenerator.class);
         profileGenerator = new DedicatedFanProfileGenerator();
         settingsRepository = mock(AiSettingsRepository.class);
+        mediaService = mock(AiCommunityFanMediaService.class);
 
         service = new DedicatedFansCommunityReconciliationService(
                 profiles,
@@ -51,7 +53,8 @@ class DedicatedFansCommunityReconciliationServiceTest {
                 teams,
                 sequence,
                 profileGenerator,
-                settingsRepository);
+                settingsRepository,
+                mediaService);
 
         when(profiles.findByTeamIdOrderByOrdinalAsc(anyString()))
                 .thenAnswer(invocation -> storedProfiles.stream()

@@ -192,6 +192,7 @@ function Menu({ leagueSystems = [], selectedLeagueSystemId, onSelectLeagueSystem
                 )}
                 <Box><Link variant="menu" as={RouteLink} to="/statistics" onClick={onClose}>{intl.formatMessage({ id: 'menu.statistics' })}</Link></Box>
                 <Box><Link variant="menu" as={RouteLink} to="/staff" onClick={onClose}>{intl.formatMessage({ id: 'menu.staff' })}</Link></Box>
+                <Box><Link variant="menu" as={RouteLink} to="/community" onClick={onClose}>Community</Link></Box>
                 {isProduction && authenticationReady && (
                   <Box>
                     {!isAuthenticated ? (
