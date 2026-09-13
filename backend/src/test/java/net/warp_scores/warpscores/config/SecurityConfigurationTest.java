@@ -69,6 +69,9 @@ class SecurityConfigurationTest {
         when(jwtDecoder.decode("no-permission-token")).thenReturn(jwt(List.of()));
         assertThat(send(leagueSystemRequest("no-permission-token")).statusCode()).isEqualTo(403);
 
+        // The request passes two authorization layers: the global-admin interceptor
+        // and LeagueSystemController's @PreAuthorize(AUTHORITY_WRITE_LEAGUE_ADMIN).
+        when(userPermissionService.isGlobalLeagueAdmin(any())).thenReturn(true);
         when(userPermissionService.hasAnyLeagueAdmin(any())).thenReturn(true);
         when(jwtDecoder.decode("league-admin-token"))
                 .thenReturn(jwt(List.of("write:league_admin")));
