@@ -13,6 +13,7 @@ import {
 
 import imageUrls from '../../imageUrls';
 import TimelineIcon from './TimelineIcon';
+import { prepareNarrativeOverviewEvents } from './timelineOverview';
 import { useIntl } from 'react-intl';
 
 const EVENT_STYLE = {
@@ -498,7 +499,8 @@ const narrativeDisplayEvents = (timeline) => {
     };
   };
 
-  const projected = (timeline.events || []).flatMap((event, index, events) => {
+  const overviewEvents = prepareNarrativeOverviewEvents(timeline.events || []);
+  const projected = overviewEvents.flatMap((event, index, events) => {
     if (!keepInOverviewTimeline(event, index, events)) return [];
 
     const actor = resolveParticipant(event.actor || event?.details?.passer);
