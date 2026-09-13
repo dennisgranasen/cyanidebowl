@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added deterministic direct AI replies for explicit `@alias` / `@reporter-id` tags;
+  direct tags bypass reply probability while preserving capability checks, canonical context,
+  ordinary community-comment persistence, provenance and retry idempotency.
+
 - Added Dedicated Fans community reconciliation: each team's latest known Dedicated Fans
   value controls a persistent AI-backed COMMUNITY_MEMBER population, reactivating identities
   before creating new ones and deactivating surplus members without deleting history.

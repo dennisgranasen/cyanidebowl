@@ -30,7 +30,7 @@ import org.springframework.util.StringUtils;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Locale;
+import java.util.regex.Pattern;
 import java.util.UUID;
 import java.util.random.RandomGenerator;
 
@@ -104,16 +104,19 @@ public class MatchArticleAiInteractionService {
             AiReporterDefinition reporter = effective.definition();
             if (!runnableIdentity(reporter)) continue;
 
-            boolean namedMention = source.getBody()
-                    .toLowerCase(Locale.ROOT)
-                    .contains(reporter.getAlias().toLowerCase(Locale.ROOT));
+            boolean directMention = isExplicitDirectMention(source.getBody(), reporter);
             try {
                 if (policy.shouldReactToUserComment(reporter, 0.0, rng)) {
                     reactToCommentOnce(article, source, reporter);
                 }
-                if (policy.shouldReplyToUserComment(
-                        reporter, namedMention, false, false, 0.0, rng)) {
-                    replyToCommentOnce(article, source, reporter);
+
+                if (reporter.getCapabilities().isCommentReplies()) {
+                    boolean shouldReply = directMention
+                            || policy.shouldReplyToUserComment(
+                                    reporter, false, false, false, 0.0, rng);
+                    if (shouldReply) {
+                        replyToCommentOnce(article, source, reporter);
+                    }
                 }
             } catch (Exception e) {
                 log.warn("AI reporter {} could not respond to comment {}: {}",
@@ -318,6 +321,23 @@ public class MatchArticleAiInteractionService {
                 .anyMatch(comment -> comment.getGeneration() != null
                         && reporterId.equals(comment.getGeneration().getAgentId())
                         && sourceRevision.equals(comment.getGeneration().getSourceRevision()));
+    }
+
+    static boolean isExplicitDirectMention(
+            String body,
+            AiReporterDefinition reporter) {
+        if (!StringUtils.hasText(body) || reporter == null) return false;
+        return hasExplicitTag(body, reporter.getAlias())
+                || hasExplicitTag(body, reporter.getId());
+    }
+
+    private static boolean hasExplicitTag(String body, String token) {
+        if (!StringUtils.hasText(token)) return false;
+
+        String expression = "(?iu)(?<![\\p{L}\\p{N}_-])@"
+                + Pattern.quote(token.trim())
+                + "(?![\\p{L}\\p{N}_-])";
+        return Pattern.compile(expression).matcher(body).find();
     }
 
     private static boolean runnableIdentity(AiReporterDefinition reporter) {

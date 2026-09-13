@@ -58,7 +58,7 @@ class MatchArticleAiInteractionIdempotencyTest {
         source.setId("c-1");
         source.setTargetType(CommunityComment.TargetType.MATCH_ARTICLE);
         source.setTargetId("ma-1");
-        source.setBody("Reporter, svara på detta");
+        source.setBody("Kan någon svara på detta?");
         source.setGeneration(GenerationProvenance.human());
 
         CommunityComment existing = new CommunityComment();

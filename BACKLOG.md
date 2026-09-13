@@ -35,7 +35,7 @@ Do not use old `main` behavior as the basis for implementation work.
 | P1 | B-033 | Replay parsing is stable and regression-tested | Backlog |
 | P1 | B-032 | Human editors have editable public Staff profiles | Done |
 | P1 | B-019 | Dedicated Fans population reconciliation | Done |
-| P1 | B-020 | Deterministic direct AI textual interaction | Partial |
+| P1 | B-020 | Deterministic direct AI textual interaction | Done |
 | P2 | B-028 | Legacy Circuit hierarchy retired; canonical navigation remains | Done |
 | P2 | B-029 | LeagueSystem selection lives in the primary navigation | Done |
 | P2 | B-030 | Match cards and immediate match modal are internationalized | Done |
@@ -357,20 +357,28 @@ canonical user-ID preservation, non-deletion and HUMAN/AI subject collision hand
 
 ### B-020 — Deterministic direct AI textual interaction
 
-**Status: Partial — article generation and reaction/interaction paths exist**
+**Status: Done**
 
-Close one narrow deterministic textual flow before autonomous scheduling:
+Explicit direct tags now close one deterministic textual interaction path on top of the
+existing canonical community/AI infrastructure.
 
-- enabled AI user;
-- supported target/thread;
-- explicit direct tag or equivalent deterministic trigger;
-- canonical context assembly;
-- canonical provider execution;
-- persisted generation provenance;
-- persisted textual response through existing community primitives;
-- retry/idempotency protection against duplicate responses.
+Implemented:
 
-Do not add a parallel AI comment model or another provider abstraction.
+- `@<reporter alias>` and `@<reporter-id>` are case-insensitive explicit direct tags;
+- plain alias text without `@`, email-like text and longer-prefix collisions are not
+  treated as direct tags;
+- an enabled/interactions-enabled reporter with `commentReplies` capability responds
+  deterministically to an explicit tag;
+- explicit tags bypass reply probability, but never bypass disabled reply capability;
+- untagged spontaneous replies remain on the existing probabilistic policy path;
+- direct replies use canonical context planning/assembly and `LlmExecutionService`;
+- replies persist as ordinary `CommunityComment` records with canonical AI user identity,
+  reply threading and generation provenance;
+- `reply-to:<source-comment-id>` remains the idempotency key, so retries do not create
+  duplicate textual responses.
+
+Focused tests cover alias/id tags, false-positive boundaries, deterministic generation,
+disabled capability and retry/idempotency behavior.
 
 ### B-016 — AI scheduling, quotas and cost control
 
