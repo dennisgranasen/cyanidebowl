@@ -7,6 +7,7 @@ volumes:
   npm_data:
   npm_letsencrypt:
   replay_data:
+  community_media:
 
 services:
   # ========================================================
@@ -74,6 +75,12 @@ services:
       - AI_API_KEY_GEMINI=${AI_API_KEY_GEMINI}
       - AI_API_KEY_GROQ=${AI_API_KEY_GROQ}
       - AI_API_KEY_OPENROUTER=${AI_API_KEY_OPENROUTER}
+      - AI_API_KEY_OPENAI=${AI_API_KEY_OPENAI}
+      - OPENAI_IMAGE_MODEL=${OPENAI_IMAGE_MODEL:-gpt-image-2}
+      - OPENAI_IMAGE_TIMEOUT=${OPENAI_IMAGE_TIMEOUT:-3m}
+      - COMMUNITY_MEDIA_QUALITY=${COMMUNITY_MEDIA_QUALITY:-low}
+      - COMMUNITY_MEDIA_STORAGE_DIR=/data/community-media
+      - COMMUNITY_MEDIA_POLL_MS=${COMMUNITY_MEDIA_POLL_MS:-30000}
       #- AI_API_KEY_LOCAL=${AI_API_KEY_LOCAL}
 
     healthcheck:
@@ -92,6 +99,7 @@ services:
         condition: service_healthy
     volumes:
       - replay_data:/app/replays
+      - community_media:/data/community-media
     networks:
       - internal_net
 

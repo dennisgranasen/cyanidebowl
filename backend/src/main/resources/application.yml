@@ -106,6 +106,7 @@ warpscores:
       openai:
         api-key: ${AI_API_KEY_OPENAI:}
         image-model: ${OPENAI_IMAGE_MODEL:gpt-image-2}
+        timeout: ${OPENAI_IMAGE_TIMEOUT:3m}
         #local-llm:
         #  base-url: http://localhost:8000/v1
         #  api-key: ${AI_API_KEY_LOCAL:}

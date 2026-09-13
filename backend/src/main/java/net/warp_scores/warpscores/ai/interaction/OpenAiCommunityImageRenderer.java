@@ -3,7 +3,7 @@ package net.warp_scores.warpscores.ai.interaction;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.warp_scores.warpscores.model.AiCommunityMediaGenerationRequest;
-import org.springframework.beans.factory.annotation.Value;
+import net.warp_scores.warpscores.ai.provider.openai.OpenAiNativeProviderProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -22,19 +22,19 @@ public class OpenAiCommunityImageRenderer implements AiCommunityImageRenderer {
             URI.create("https://api.openai.com/v1/images/generations");
 
     private final ObjectMapper objectMapper;
+    private final OpenAiNativeProviderProperties providerProperties;
     private final HttpClient httpClient;
+    private final String quality;
 
-    @Value("${AI_API_KEY_OPENAI:}")
-    private String apiKey;
-
-    @Value("${warpscores.ai.community-media.model:gpt-image-2.5-sunburst}")
-    private String model;
-
-    @Value("${warpscores.ai.community-media.quality:low}")
-    private String quality;
-
-    public OpenAiCommunityImageRenderer(ObjectMapper objectMapper) {
+    public OpenAiCommunityImageRenderer(
+            ObjectMapper objectMapper,
+            OpenAiNativeProviderProperties providerProperties,
+            org.springframework.core.env.Environment environment) {
         this.objectMapper = objectMapper;
+        this.providerProperties = providerProperties;
+        this.quality = environment.getProperty(
+                "warpscores.ai.community-media.quality",
+                "low");
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(20))
                 .build();
@@ -42,7 +42,7 @@ public class OpenAiCommunityImageRenderer implements AiCommunityImageRenderer {
 
     @Override
     public boolean isConfigured() {
-        return StringUtils.hasText(apiKey);
+        return StringUtils.hasText(providerProperties.getApiKey());
     }
 
     @Override
@@ -50,11 +50,11 @@ public class OpenAiCommunityImageRenderer implements AiCommunityImageRenderer {
             String prompt,
             AiCommunityMediaGenerationRequest.Target target) throws Exception {
         if (!isConfigured()) {
-            throw new IllegalStateException("AI_API_KEY_OPENAI is not configured");
+            throw new IllegalStateException("warpscores.ai.providers.openai.api-key is not configured");
         }
 
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("model", model);
+        body.put("model", providerProperties.getImageModel());
         body.put("prompt", prompt);
         body.put(
                 "size",
@@ -65,8 +65,8 @@ public class OpenAiCommunityImageRenderer implements AiCommunityImageRenderer {
         body.put("output_format", "png");
 
         HttpRequest request = HttpRequest.newBuilder(ENDPOINT)
-                .timeout(Duration.ofMinutes(3))
-                .header("Authorization", "Bearer " + apiKey)
+                .timeout(providerProperties.getTimeout())
+                .header("Authorization", "Bearer " + providerProperties.getApiKey())
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(
                         objectMapper.writeValueAsString(body)))
@@ -94,7 +94,7 @@ public class OpenAiCommunityImageRenderer implements AiCommunityImageRenderer {
                 "image/png",
                 "png",
                 "openai",
-                model);
+                providerProperties.getImageModel());
     }
 
     private static String truncate(String value, int max) {
