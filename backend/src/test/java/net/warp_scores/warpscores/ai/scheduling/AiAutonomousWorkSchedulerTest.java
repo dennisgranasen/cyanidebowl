@@ -1,6 +1,8 @@
 package net.warp_scores.warpscores.ai.scheduling;
 
 import net.warp_scores.warpscores.model.AiAutonomousWorkItem;
+import net.warp_scores.warpscores.domain.persistence.AiSettingsRepository;
+import net.warp_scores.warpscores.model.AiSettings;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -18,7 +20,7 @@ class AiAutonomousWorkSchedulerTest {
         when(handler.handlerKey()).thenReturn("match-comment");
 
         AiAutonomousWorkScheduler scheduler =
-                new AiAutonomousWorkScheduler(queue, List.of(handler));
+                new AiAutonomousWorkScheduler(queue, enabledSettings(), List.of(handler));
 
         AiAutonomousWorkItem item = item("work-1", "match-comment");
         scheduler.executeOne(item);
@@ -35,7 +37,7 @@ class AiAutonomousWorkSchedulerTest {
         when(handler.handlerKey()).thenReturn("match-comment");
 
         AiAutonomousWorkScheduler scheduler =
-                new AiAutonomousWorkScheduler(queue, List.of(handler));
+                new AiAutonomousWorkScheduler(queue, enabledSettings(), List.of(handler));
 
         AiAutonomousWorkItem item = item("work-1", "match-comment");
         RuntimeException failure = new RuntimeException("provider unavailable");
@@ -54,7 +56,7 @@ class AiAutonomousWorkSchedulerTest {
     void missingHandlerFailsRatherThanDroppingWork() {
         AiAutonomousWorkQueue queue = mock(AiAutonomousWorkQueue.class);
         AiAutonomousWorkScheduler scheduler =
-                new AiAutonomousWorkScheduler(queue, List.of());
+                new AiAutonomousWorkScheduler(queue, enabledSettings(), List.of());
 
         AiAutonomousWorkItem item = item("work-1", "missing");
         scheduler.executeOne(item);
@@ -72,7 +74,7 @@ class AiAutonomousWorkSchedulerTest {
         when(handler.handlerKey()).thenReturn("h");
 
         AiAutonomousWorkScheduler scheduler =
-                new AiAutonomousWorkScheduler(queue, List.of(handler));
+                new AiAutonomousWorkScheduler(queue, enabledSettings(), List.of(handler));
 
         AiAutonomousWorkItem first = item("1", "h");
         AiAutonomousWorkItem second = item("2", "h");
@@ -86,6 +88,30 @@ class AiAutonomousWorkSchedulerTest {
         verify(handler).execute(first);
         verify(handler).execute(second);
         verify(queue, times(3)).claimNext(anyString(), any(Duration.class));
+    }
+
+    @Test
+    void disabledAutonomousExecutionDoesNotClaimQueuedWork() {
+        AiAutonomousWorkQueue queue = mock(AiAutonomousWorkQueue.class);
+        AiSettingsRepository settings = mock(AiSettingsRepository.class);
+        AiSettings disabled = new AiSettings();
+        disabled.setAutonomousExecutionEnabled(false);
+        when(settings.findById(AiSettings.GLOBAL_ID)).thenReturn(Optional.of(disabled));
+
+        AiAutonomousWorkScheduler scheduler =
+                new AiAutonomousWorkScheduler(queue, settings, List.of());
+
+        scheduler.tick();
+
+        verifyNoInteractions(queue);
+    }
+
+    private static AiSettingsRepository enabledSettings() {
+        AiSettingsRepository settings = mock(AiSettingsRepository.class);
+        AiSettings enabled = new AiSettings();
+        enabled.setAutonomousExecutionEnabled(true);
+        when(settings.findById(AiSettings.GLOBAL_ID)).thenReturn(Optional.of(enabled));
+        return settings;
     }
 
     private static AiAutonomousWorkItem item(String key, String handlerKey) {

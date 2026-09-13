@@ -500,11 +500,11 @@ Implemented slices:
 
 Release-oriented remaining work:
 
-- review whether the current concrete autonomous candidate producers are sufficient for
-  the first release; add another producer only for a specific approved domain event,
-  never through generic topic discovery/polling;
-- autonomous article generation remains out of scope unless a canonical domain
-  event/source is explicitly chosen;
+- the existing finalized-match fan and general-article Staff candidate producers are
+  sufficient for the first release; additional producers are post-release features and
+  must be tied to specific approved domain events, never generic topic discovery/polling;
+- autonomous article generation is explicitly post-release unless a canonical domain
+  event/source is chosen as a separate feature;
 - provider-aware rate-limit/backpressure hardening remains a follow-up. Dedicated Fan
   generation currently uses a configurable fixed global cooldown after `RATE_LIMIT`;
   replace that later with provider-aware exponential backoff/jitter and explicit

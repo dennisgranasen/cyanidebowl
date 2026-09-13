@@ -2,6 +2,8 @@ package net.warp_scores.warpscores.ai.scheduling;
 
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.model.AiAutonomousWorkItem;
+import net.warp_scores.warpscores.domain.persistence.AiSettingsRepository;
+import net.warp_scores.warpscores.model.AiSettings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,7 @@ import java.util.UUID;
 @Service
 public class AiAutonomousWorkScheduler {
     private final AiAutonomousWorkQueue queue;
+    private final AiSettingsRepository settingsRepository;
     private final Map<String, AiAutonomousWorkHandler> handlers;
     private final String leaseOwner = UUID.randomUUID().toString();
 
@@ -27,8 +30,10 @@ public class AiAutonomousWorkScheduler {
 
     public AiAutonomousWorkScheduler(
             AiAutonomousWorkQueue queue,
+            AiSettingsRepository settingsRepository,
             List<AiAutonomousWorkHandler> handlers) {
         this.queue = queue;
+        this.settingsRepository = settingsRepository;
         this.handlers = new LinkedHashMap<>();
         for (AiAutonomousWorkHandler handler : handlers) {
             AiAutonomousWorkHandler previous =
@@ -42,6 +47,10 @@ public class AiAutonomousWorkScheduler {
 
     @Scheduled(fixedDelayString = "${warpscores.ai.autonomous.poll-ms:15000}")
     public void tick() {
+        if (!autonomousExecutionEnabled()) {
+            return;
+        }
+
         int limit = Math.max(1, batchSize);
         Duration lease = Duration.ofSeconds(Math.max(30, leaseSeconds));
 
@@ -50,6 +59,12 @@ public class AiAutonomousWorkScheduler {
             if (claimed.isEmpty()) return;
             executeOne(claimed.get());
         }
+    }
+
+    private boolean autonomousExecutionEnabled() {
+        return settingsRepository.findById(AiSettings.GLOBAL_ID)
+                .map(AiSettings::isAutonomousExecutionEffectivelyEnabled)
+                .orElse(true);
     }
 
     void executeOne(AiAutonomousWorkItem item) {

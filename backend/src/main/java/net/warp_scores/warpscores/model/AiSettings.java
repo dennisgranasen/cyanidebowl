@@ -27,6 +27,15 @@ public class AiSettings {
      */
     private Boolean generationEnabled = true;
 
+    /**
+     * Master switch for scheduled autonomous AI work.
+     *
+     * <p>This is deliberately separate from generationEnabled: disabling autonomous
+     * execution must not disable explicit/direct/editor-triggered generation.</p>
+     * Missing/legacy values remain enabled for backwards compatibility.
+     */
+    private Boolean autonomousExecutionEnabled = true;
+
     /** null = unlimited. */
     private Integer maxConcurrentGenerations;
 
@@ -65,5 +74,9 @@ public class AiSettings {
 
     public boolean isGenerationEffectivelyEnabled() {
         return generationEnabled == null || generationEnabled;
+    }
+
+    public boolean isAutonomousExecutionEffectivelyEnabled() {
+        return autonomousExecutionEnabled == null || autonomousExecutionEnabled;
     }
 }
