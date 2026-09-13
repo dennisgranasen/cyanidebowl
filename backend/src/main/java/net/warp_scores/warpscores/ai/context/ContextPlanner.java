@@ -36,6 +36,7 @@ public class ContextPlanner {
             case ARTICLE_COMMENT, SOCIAL_REPLY -> ContextProfile.socialComment();
             case PLAYER_RATING -> ContextProfile.playerRating();
             case MEMORY_CONSOLIDATION -> ContextProfile.memoryConsolidation();
+            case FAN_PROFILE -> ContextProfile.fanProfile();
         };
     }
 }

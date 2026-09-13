@@ -30,6 +30,11 @@ public class AiCommunityMemberProfile {
         COMMUNITY_MEMBER
     }
 
+    public enum GenerationSource {
+        AI_GENERATED,
+        FALLBACK_GENERATED
+    }
+
     @Id
     private String id;
     private Long userId;
@@ -56,6 +61,10 @@ public class AiCommunityMemberProfile {
     private String favoriteFood;
     private String favoriteDrink;
     private String favoriteChant;
+    private String ageGroup;
+    private String matchdayRitual;
+    private String petPeeve;
+    private String supporterQuirk;
 
     /** Broad supporter identity, e.g. pub regular, family supporter or former player. */
     private String supporterArchetype;
@@ -71,6 +80,13 @@ public class AiCommunityMemberProfile {
     private String profileImageUrl;
     /** Generated or admin-supplied avatar URL. */
     private String avatarImageUrl;
+
+
+    /** Provenance for the persistent generated identity. */
+    private GenerationSource generationSource;
+    private String generationProvider;
+    private String generationModel;
+    private Instant profileGeneratedAt;
 
     /** Behavioural dimensions in [0,1]. */
     private double optimism = 0.65;

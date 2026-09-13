@@ -123,8 +123,33 @@ function AdminCommunityFansPage() {
     try {
       const result = await WarpScoresApiService.reconcileCommunityFansNow(...auth);
       setMessage(
-        `Fan sync complete: ${result.changedTeams}/${result.scannedTeams} teams changed`
-        + (result.failedTeams ? `; ${result.failedTeams} failed.` : '.')
+        `Fan sync queued for ${result.scannedTeams} teams; generation continues in the background.`
+      );
+      await load();
+    } catch (e) {
+      setError(e?.message || String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const resetGeneratedFans = async () => {
+    const confirmed = window.confirm(
+      'Delete all generated Community fan profiles, fan media jobs and local fan images? '
+      + 'Canonical AI users and authored history are preserved. '
+      + 'Profiles will be rebuilt by Gemini in the background.'
+    );
+    if (!confirmed) return;
+    setBusy(true);
+    setError('');
+    try {
+      const result = await WarpScoresApiService.resetGeneratedCommunityFans(...auth);
+      setSelectedId('');
+      setDraft(null);
+      setMedia([]);
+      setMessage(
+        `Reset complete: ${result.profilesDeleted} profiles removed; `
+        + `${result.teamsQueuedForRebuild} teams queued for AI rebuild.`
       );
       await load();
     } catch (e) {
@@ -160,9 +185,14 @@ function AdminCommunityFansPage() {
             Dedicated Fan profiles, personalities, media and reconciliation.
           </Text>
         </Box>
-        <Button colorScheme="purple" onClick={syncNow} isLoading={busy}>
-          Sync fans now
-        </Button>
+        <HStack>
+          <Button colorScheme="purple" onClick={syncNow} isLoading={busy}>
+            Queue fan sync
+          </Button>
+          <Button colorScheme="red" variant="outline" onClick={resetGeneratedFans} isLoading={busy}>
+            Reset generated fans
+          </Button>
+        </HStack>
       </HStack>
 
       {error && <Text color="red.300">{error}</Text>}

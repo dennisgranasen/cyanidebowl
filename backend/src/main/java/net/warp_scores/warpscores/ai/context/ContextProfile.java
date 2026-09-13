@@ -90,6 +90,18 @@ public record ContextProfile(
                 10, 10);
     }
 
+    public static ContextProfile fanProfile() {
+        // Fan creation supplies team policy and diversity context explicitly in
+        // the generation request; no generic discourse/memory sections are needed.
+        return profile("fan-profile-v1", 2_000,
+                0, 0,
+                0, 0,
+                0, 0,
+                0, 0,
+                0, 0,
+                0, 0);
+    }
+
     public static ContextProfile memoryConsolidation() {
         return profile("memory-consolidation-v1", 5_000,
                 0, 0,

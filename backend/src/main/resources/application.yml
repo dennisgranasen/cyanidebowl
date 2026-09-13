@@ -87,6 +87,12 @@ league-system:
 
 warpscores:
   ai:
+    fans:
+      reconcile-poll-ms: ${FAN_RECONCILE_POLL_MS:3600000}
+      reconcile-initial-delay-ms: ${FAN_RECONCILE_INITIAL_DELAY_MS:60000}
+      reconcile-worker-delay-ms: ${FAN_RECONCILE_WORKER_DELAY_MS:3000}
+      reconcile-worker-initial-delay-ms: ${FAN_RECONCILE_WORKER_INITIAL_DELAY_MS:15000}
+      reconcile-job-timeout: ${FAN_RECONCILE_JOB_TIMEOUT:15m}
     providers:
       gemini:
         api-key: ${AI_API_KEY_GEMINI:}
@@ -129,6 +135,11 @@ warpscores:
       max-attempts: ${COMMUNITY_MEDIA_MAX_ATTEMPTS:4}
       retry-base-delay: ${COMMUNITY_MEDIA_RETRY_BASE_DELAY:30s}
       running-timeout: ${COMMUNITY_MEDIA_RUNNING_TIMEOUT:10m}
+
+    reporter-targets:
+      dedicated-fan-profile:
+        - provider-id: gemini
+          model: gemini-3.6-flash
 
     # reporter-targets: # non-gemini currently works ... so-so.
     #   aeltharion-quill:

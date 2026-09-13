@@ -36,6 +36,14 @@ Do not use old `main` behavior as the basis for implementation work.
 | P1 | B-032 | Human editors have editable public Staff profiles | Done |
 | P1 | B-019 | Dedicated Fans population reconciliation | Done |
 
+**B-019j — AI-generated Dedicated Fan profiles**
+
+- Gemini is the normal author of new Dedicated Fan identities through `LlmExecutionService`; the deterministic generator is fallback only.
+- Fan concepts are encoded as creative policy/inspiration rather than fixed name/archetype/ritual tables. Roster-derived species remains a hard validated constraint.
+- Existing same-team fans are diversity context to discourage duplicate names, roles, hooks and appearances.
+- Population reconciliation is queued per team and processed in the background. Admin reset removes generated profiles/media/assets, preserves canonical AI users/history, then queues a clean Gemini rebuild.
+
+
 **B-019b generated public fan profiles and loyalty changes**
 
 **B-019c fan visual profiles**

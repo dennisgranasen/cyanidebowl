@@ -18,8 +18,11 @@ public class DedicatedFansPeriodicReconciliationService {
     private final TeamRepository teams;
     private final AiSettingsRepository settingsRepository;
     private final DedicatedFansCommunityReconciliationService reconciliation;
+    private final DedicatedFanReconciliationQueueService queue;
 
-    @Scheduled(fixedDelayString = "${warpscores.ai.fans.reconcile-poll-ms:3600000}")
+    @Scheduled(
+            fixedDelayString = "${warpscores.ai.fans.reconcile-poll-ms:3600000}",
+            initialDelayString = "${warpscores.ai.fans.reconcile-initial-delay-ms:60000}")
     public void poll() {
         AiSettings settings = settingsRepository.findById(AiSettings.GLOBAL_ID)
                 .orElseGet(AiSettings::new);
@@ -33,12 +36,21 @@ public class DedicatedFansPeriodicReconciliationService {
 
         if (last != null && last.plus(interval).isAfter(now)) return;
 
-        ReconciliationSummary summary = runNow();
+        var summary = enqueueNow();
 
         log.info(
-                "Periodic Dedicated Fans reconciliation completed; {} of {} team populations changed",
-                summary.changedTeams(),
-                summary.scannedTeams());
+                "Periodic Dedicated Fans reconciliation queued; {} teams scanned, {} new jobs queued",
+                summary.scannedTeams(),
+                summary.queuedTeams());
+    }
+
+    public DedicatedFanReconciliationQueueService.QueueSummary enqueueNow() {
+        var summary = queue.enqueueAll();
+        AiSettings currentSettings = settingsRepository.findById(AiSettings.GLOBAL_ID)
+                .orElseGet(AiSettings::new);
+        currentSettings.setFanPopulationLastReconciledAt(summary.queuedAt());
+        settingsRepository.save(currentSettings);
+        return summary;
     }
 
     public ReconciliationSummary runNow() {

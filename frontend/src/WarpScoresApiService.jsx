@@ -141,6 +141,13 @@ export default {
       getAccessTokenSilently,
       getAccessTokenWithPopup
     ).then(returnData).catch(handleError),
+  resetGeneratedCommunityFans: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication(
+      '/admin/community-fans/reset-generated',
+      {},
+      getAccessTokenSilently,
+      getAccessTokenWithPopup
+    ).then(returnData).catch(handleError),
   reconcileCommunityFansNow: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
     postDataWithAuthentication(
       '/admin/community-fans/reconcile-now',

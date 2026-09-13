@@ -3,6 +3,8 @@ package net.warp_scores.warpscores.controller;
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.ai.interaction.AiCommunityFanMediaService;
 import net.warp_scores.warpscores.ai.interaction.DedicatedFansPeriodicReconciliationService;
+import net.warp_scores.warpscores.ai.interaction.DedicatedFanReconciliationQueueService;
+import net.warp_scores.warpscores.ai.interaction.DedicatedFanResetService;
 import net.warp_scores.warpscores.domain.persistence.AiCommunityMemberProfileRepository;
 import net.warp_scores.warpscores.domain.persistence.AiSettingsRepository;
 import net.warp_scores.warpscores.domain.persistence.WarpScoresUserRepository;
@@ -27,6 +29,7 @@ public class AiCommunityFanAdminController {
     private final WarpScoresUserRepository users;
     private final AiCommunityFanMediaService mediaService;
     private final DedicatedFansPeriodicReconciliationService periodicReconciliation;
+    private final DedicatedFanResetService resetService;
 
     @GetMapping
     public List<AiCommunityMemberProfile> list() {
@@ -79,8 +82,13 @@ public class AiCommunityFanAdminController {
     }
 
     @PostMapping("/reconcile-now")
-    public DedicatedFansPeriodicReconciliationService.ReconciliationSummary reconcileNow() {
-        return periodicReconciliation.runNow();
+    public DedicatedFanReconciliationQueueService.QueueSummary reconcileNow() {
+        return periodicReconciliation.enqueueNow();
+    }
+
+    @PostMapping("/reset-generated")
+    public DedicatedFanResetService.ResetSummary resetGeneratedProfiles() {
+        return resetService.resetGeneratedProfilesAndQueueRebuild();
     }
 
     @GetMapping("/settings")

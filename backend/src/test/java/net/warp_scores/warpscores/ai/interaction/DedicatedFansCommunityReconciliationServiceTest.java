@@ -29,6 +29,7 @@ class DedicatedFansCommunityReconciliationServiceTest {
     private TeamRepository teams;
     private SequenceGenerator sequence;
     private DedicatedFanProfileGenerator profileGenerator;
+    private DedicatedFanAiProfileGenerator aiProfileGenerator;
     private AiSettingsRepository settingsRepository;
     private AiCommunityFanMediaService mediaService;
     private DedicatedFansCommunityReconciliationService service;
@@ -44,8 +45,22 @@ class DedicatedFansCommunityReconciliationServiceTest {
         teams = mock(TeamRepository.class);
         sequence = mock(SequenceGenerator.class);
         profileGenerator = new DedicatedFanProfileGenerator();
+        aiProfileGenerator = mock(DedicatedFanAiProfileGenerator.class);
         settingsRepository = mock(AiSettingsRepository.class);
         mediaService = mock(AiCommunityFanMediaService.class);
+
+        doAnswer(invocation -> {
+            AiCommunityMemberProfile profile = invocation.getArgument(0);
+            Team team = invocation.getArgument(1);
+            int ordinal = invocation.getArgument(2);
+            profileGenerator.initialize(profile, team, ordinal);
+            profile.setGenerationSource(
+                    AiCommunityMemberProfile.GenerationSource.FALLBACK_GENERATED);
+            return null;
+        }).when(aiProfileGenerator).populateNewProfile(
+                any(AiCommunityMemberProfile.class),
+                any(Team.class),
+                anyInt());
 
         service = new DedicatedFansCommunityReconciliationService(
                 profiles,
@@ -53,6 +68,7 @@ class DedicatedFansCommunityReconciliationServiceTest {
                 teams,
                 sequence,
                 profileGenerator,
+                aiProfileGenerator,
                 settingsRepository,
                 mediaService);
 

@@ -42,6 +42,7 @@ public class DedicatedFansCommunityReconciliationService {
     private final TeamRepository teams;
     private final SequenceGenerator sequenceGenerator;
     private final DedicatedFanProfileGenerator profileGenerator;
+    private final DedicatedFanAiProfileGenerator aiProfileGenerator;
     private final AiSettingsRepository settingsRepository;
     private final AiCommunityFanMediaService mediaService;
 
@@ -161,29 +162,35 @@ public class DedicatedFansCommunityReconciliationService {
             Instant now) {
 
         String subject = subject(teamId, ordinal);
-        String displayName = displayName(team, ordinal);
-
-        WarpScoresUser user = users.findByAuthSubject(subject)
-                .map(existing -> reconcileAiUser(existing, displayName, subject))
-                .orElseGet(() -> createUser(subject, displayName));
 
         AiCommunityMemberProfile profile = new AiCommunityMemberProfile();
         profile.setId(profileId(teamId, ordinal));
-        profile.setUserId(user.getId());
         profile.setUserSubject(subject);
         profile.setRole(AiCommunityMemberProfile.Role.COMMUNITY_MEMBER);
         profile.setTeamId(teamId);
         profile.setOriginalTeamId(teamId);
         profile.setOrdinal(ordinal);
-        profile.setDisplayName(displayName);
         profile.setPersonaKey(PERSONA_KEYS.get((ordinal - 1) % PERSONA_KEYS.size()));
         profile.setActive(true);
         profile.setCreatedAt(now);
         profile.setActivatedAt(now);
         refreshTeamMetadata(profile, team);
-        profileGenerator.initialize(profile, team, ordinal);
-        user.setUsername(profile.getDisplayName());
+
+        aiProfileGenerator.populateNewProfile(profile, team, ordinal);
+
+        String displayName = StringUtils.hasText(profile.getDisplayName())
+                ? profile.getDisplayName().trim()
+                : displayName(team, ordinal);
+
+        WarpScoresUser user = users.findByAuthSubject(subject)
+                .map(existing -> reconcileAiUser(existing, displayName, subject))
+                .orElseGet(() -> createUser(subject, displayName));
+
+        profile.setUserId(user.getId());
+        profile.setDisplayName(displayName);
+        user.setUsername(displayName);
         users.save(user);
+
         AiCommunityMemberProfile savedProfile = profiles.save(profile);
         mediaService.ensureInitialRequests(savedProfile);
         return savedProfile;
