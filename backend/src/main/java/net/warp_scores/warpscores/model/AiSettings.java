@@ -18,4 +18,26 @@ public class AiSettings {
     private String id = GLOBAL_ID;
 
     private String defaultLanguage = "sv";
+
+    /**
+     * Site-wide hard kill switch for provider-backed generation.
+     * Missing/legacy values remain enabled for backwards compatibility.
+     */
+    private Boolean generationEnabled = true;
+
+    /** null = unlimited. */
+    private Integer maxConcurrentGenerations;
+
+    /** Successful provider generations per UTC calendar day; null = unlimited. */
+    private Integer maxSuccessfulGenerationsPerDay;
+
+    /** Successful input tokens per UTC calendar day; null = unlimited. */
+    private Long maxInputTokensPerDay;
+
+    /** Successful output tokens per UTC calendar day; null = unlimited. */
+    private Long maxOutputTokensPerDay;
+
+    public boolean isGenerationEffectivelyEnabled() {
+        return generationEnabled == null || generationEnabled;
+    }
 }

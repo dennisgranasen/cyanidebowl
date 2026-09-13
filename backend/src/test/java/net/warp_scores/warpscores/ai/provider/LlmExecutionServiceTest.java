@@ -10,7 +10,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 class LlmExecutionServiceTest {
     @Test
@@ -28,9 +28,17 @@ class LlmExecutionServiceTest {
                 new LlmProviderRouter.ModelTarget("gemini", "gemini-model"),
                 new LlmProviderRouter.ModelTarget("grok", "grok-model"));
 
+        AiGenerationAdmissionService admission =
+                mock(AiGenerationAdmissionService.class);
         var result = new LlmExecutionService(
-                router, registry, mock(AiGenerationTraceStore.class))
+                router,
+                registry,
+                mock(AiGenerationTraceStore.class),
+                admission)
                 .generate("putridia", request());
+
+        verify(admission).acquire(eq("putridia"), any());
+        verify(admission).release();
 
         assertThat(result.providerId()).isEqualTo("grok");
         assertThat(result.model()).isEqualTo("grok-model");
@@ -46,17 +54,21 @@ class LlmExecutionServiceTest {
                 new CanonicalLlmResponse("grok", request.model(), "r1", "ok",
                         CanonicalLlmResponse.Usage.unknown(), "completed"));
 
+        AiGenerationAdmissionService admission =
+                mock(AiGenerationAdmissionService.class);
         LlmExecutionService service = new LlmExecutionService(
                 reporterId -> List.of(
                         new LlmProviderRouter.ModelTarget("gemini", "gemini-model"),
                         new LlmProviderRouter.ModelTarget("grok", "grok-model")),
                 new LlmProviderRegistry(List.of(gemini, grok)),
-                mock(AiGenerationTraceStore.class));
+                mock(AiGenerationTraceStore.class),
+                admission);
 
         assertThatThrownBy(() -> service.generate("putridia", request()))
                 .isInstanceOf(LlmProviderException.class)
                 .extracting("kind")
                 .isEqualTo(LlmProviderException.Kind.AUTHENTICATION);
+        verify(admission).release();
     }
 
     private interface Generator {

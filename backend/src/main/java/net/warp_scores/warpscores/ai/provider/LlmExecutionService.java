@@ -15,8 +15,20 @@ public class LlmExecutionService {
     private final LlmProviderRouter router;
     private final LlmProviderRegistry registry;
     private final AiGenerationTraceStore traceStore;
+    private final AiGenerationAdmissionService admission;
 
     public CanonicalLlmResponse generate(String reporterId, CanonicalLlmRequest request) {
+        admission.acquire(reporterId, request);
+        try {
+            return generateAdmitted(reporterId, request);
+        } finally {
+            admission.release();
+        }
+    }
+
+    private CanonicalLlmResponse generateAdmitted(
+            String reporterId,
+            CanonicalLlmRequest request) {
         List<LlmProviderRouter.ModelTarget> targets = router.targetsForReporter(reporterId);
         if (targets.isEmpty()) {
             throw new IllegalStateException("No LLM targets configured for reporter " + reporterId);

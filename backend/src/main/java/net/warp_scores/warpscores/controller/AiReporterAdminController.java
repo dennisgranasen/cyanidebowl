@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.ai.agents.AiReporterDefinition;
 import net.warp_scores.warpscores.ai.agents.AiReporterEffectiveProfileService;
 import net.warp_scores.warpscores.ai.agents.AiReporterRegistry;
+import net.warp_scores.warpscores.ai.provider.AiGenerationAdmissionService;
 import net.warp_scores.warpscores.domain.persistence.AiSettingsRepository;
 import net.warp_scores.warpscores.domain.persistence.AiReporterRuntimeStateRepository;
 import net.warp_scores.warpscores.model.AiSettings;
@@ -26,6 +27,7 @@ public class AiReporterAdminController {
     private final AiReporterEffectiveProfileService effectiveProfiles;
     private final AiReporterRuntimeStateRepository runtimeRepository;
     private final AiSettingsRepository settingsRepository;
+    private final AiGenerationAdmissionService generationAdmission;
 
     @GetMapping
     public List<AdminReporter> list() {
@@ -57,6 +59,50 @@ public class AiReporterAdminController {
         settings.setDefaultLanguage(normalizeLanguage(update.defaultLanguage(), "sv"));
         settingsRepository.save(settings);
         return new AdminSettings(settings.getDefaultLanguage());
+    }
+
+    @GetMapping("/limits")
+    public AdminGenerationLimits generationLimits() {
+        AiSettings settings = settingsRepository.findById(AiSettings.GLOBAL_ID)
+                .orElseGet(AiSettings::new);
+        return toGenerationLimits(settings);
+    }
+
+    @PutMapping("/limits")
+    public AdminGenerationLimits updateGenerationLimits(
+            @RequestBody GenerationLimitsUpdate update) {
+        if (update == null) {
+            throw new IllegalArgumentException("generation limits payload is required");
+        }
+
+        validatePositive(
+                "maxConcurrentGenerations",
+                update.maxConcurrentGenerations());
+        validatePositive(
+                "maxSuccessfulGenerationsPerDay",
+                update.maxSuccessfulGenerationsPerDay());
+        validatePositive(
+                "maxInputTokensPerDay",
+                update.maxInputTokensPerDay());
+        validatePositive(
+                "maxOutputTokensPerDay",
+                update.maxOutputTokensPerDay());
+
+        AiSettings settings = settingsRepository.findById(AiSettings.GLOBAL_ID)
+                .orElseGet(AiSettings::new);
+
+        settings.setGenerationEnabled(
+                update.generationEnabled() == null
+                        ? settings.isGenerationEffectivelyEnabled()
+                        : update.generationEnabled());
+        settings.setMaxConcurrentGenerations(update.maxConcurrentGenerations());
+        settings.setMaxSuccessfulGenerationsPerDay(
+                update.maxSuccessfulGenerationsPerDay());
+        settings.setMaxInputTokensPerDay(update.maxInputTokensPerDay());
+        settings.setMaxOutputTokensPerDay(update.maxOutputTokensPerDay());
+
+        settingsRepository.save(settings);
+        return toGenerationLimits(settings);
     }
 
     @PutMapping("/{id}/runtime")
@@ -121,6 +167,21 @@ public class AiReporterAdminController {
     public record SettingsUpdate(String defaultLanguage) {}
     public record AdminSettings(String defaultLanguage) {}
 
+    public record GenerationLimitsUpdate(
+            Boolean generationEnabled,
+            Integer maxConcurrentGenerations,
+            Integer maxSuccessfulGenerationsPerDay,
+            Long maxInputTokensPerDay,
+            Long maxOutputTokensPerDay) {}
+
+    public record AdminGenerationLimits(
+            boolean generationEnabled,
+            Integer maxConcurrentGenerations,
+            Integer maxSuccessfulGenerationsPerDay,
+            Long maxInputTokensPerDay,
+            Long maxOutputTokensPerDay,
+            AiGenerationAdmissionService.UsageSnapshot usage) {}
+
     public record AdminReporter(
             String id,
             String alias,
@@ -136,6 +197,22 @@ public class AiReporterAdminController {
             String primaryLanguage,
             String profileLanguage,
             AiReporterRuntimeState runtime) {}
+
+    private AdminGenerationLimits toGenerationLimits(AiSettings settings) {
+        return new AdminGenerationLimits(
+                settings.isGenerationEffectivelyEnabled(),
+                settings.getMaxConcurrentGenerations(),
+                settings.getMaxSuccessfulGenerationsPerDay(),
+                settings.getMaxInputTokensPerDay(),
+                settings.getMaxOutputTokensPerDay(),
+                generationAdmission.usageSnapshot());
+    }
+
+    private static void validatePositive(String field, Number value) {
+        if (value != null && value.longValue() <= 0L) {
+            throw new IllegalArgumentException(field + " must be positive or null");
+        }
+    }
 
     private static String normalizeLanguage(String value, String fallback) {
         if (!StringUtils.hasText(value)) return fallback;

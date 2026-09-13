@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added central AI generation admission controls with an opt-in global kill switch,
+  concurrency backpressure and daily generation/token budgets backed by durable generation
+  traces; admin endpoints expose limits and current usage. Autonomous scheduling remains separate.
+
 - Added deterministic direct AI replies for explicit `@alias` / `@reporter-id` tags;
   direct tags bypass reply probability while preserving capability checks, canonical context,
   ordinary community-comment persistence, provenance and retry idempotency.

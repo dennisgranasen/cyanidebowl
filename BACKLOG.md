@@ -382,19 +382,35 @@ disabled capability and retry/idempotency behavior.
 
 ### B-016 — AI scheduling, quotas and cost control
 
-**Status: Deferred until B-019/B-020 are stable**
+**Status: Partial — hard admission/budget foundation implemented; autonomous scheduling remains**
 
-Owns operational policy:
+Implemented foundation:
 
-- scheduling and queue/backpressure;
-- per-AI-user/global generation quotas;
-- provider/token/cost budgets;
-- cooldowns, retries and idempotency;
-- admin visibility and kill switches;
-- priority handling for direct tags.
+- central provider-generation admission gate in front of `LlmExecutionService`;
+- site-wide hard generation kill switch;
+- optional global concurrent-generation limit for simple in-process backpressure;
+- optional successful-generation, input-token and output-token UTC-day budgets;
+- generation traces are the durable usage ledger rather than a parallel counter store;
+- configured token budgets fail closed if successful trace usage is unknown;
+- declared output-token limits and estimated input size are checked before provider use;
+- admin API exposes hard limits plus current-day usage/in-flight state;
+- all new limits are opt-in so legacy behavior remains unchanged by default.
 
-Editor-triggered article generation remains distinct from autonomous generation until
-this layer is implemented and explicitly enabled.
+Remaining B-016 work:
+
+- autonomous scheduler/queue and durable cross-process reservations;
+- per-AI autonomous article/comment/reaction quotas using existing reporter behaviour
+  limits and cooldown fields;
+- explicit priority classes so direct tags can outrank autonomous work without bypassing
+  hard site budgets;
+- retry scheduling/backoff policy above the existing provider fallback behavior;
+- provider/model price metadata and monetary cost budgets (do not infer monetary cost
+  from tokens until explicit pricing is configured);
+- richer admin operational visibility and queue controls.
+
+Editor-triggered article generation remains distinct from autonomous generation. Do not
+apply autonomous per-activity quotas to editor-triggered work merely because both use the
+same provider execution layer.
 
 ---
 
