@@ -103,6 +103,9 @@ warpscores:
           api-key: ${AI_API_KEY_OPENROUTER:}
           timeout: 60s
           structured-output: true
+      openai:
+        api-key: ${AI_API_KEY_OPENAI:}
+        image-model: ${OPENAI_IMAGE_MODEL:gpt-image-2}
         #local-llm:
         #  base-url: http://localhost:8000/v1
         #  api-key: ${AI_API_KEY_LOCAL:}
@@ -116,6 +119,12 @@ warpscores:
         model: openai/gpt-oss-120b # qwen/qwen3.6-27b
       - provider-id: openrouter
         model: openrouter/free
+
+    community-media:
+      provider: openai
+      quality: ${COMMUNITY_MEDIA_QUALITY:low}
+      storage-dir: ${COMMUNITY_MEDIA_STORAGE_DIR:/data/community-media}
+      poll-ms: ${COMMUNITY_MEDIA_POLL_MS:30000}
 
     # reporter-targets: # non-gemini currently works ... so-so.
     #   aeltharion-quill:

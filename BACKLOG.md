@@ -42,6 +42,19 @@ Do not use old `main` behavior as the basis for implementation work.
 
 **B-019d community directory, media queue and periodic population reconciliation**
 
+**B-019e/f/g completed community experience**
+
+- B-019e: queued PROFILE_IMAGE/AVATAR requests are rendered by a scheduled OpenAI Images
+  worker when `AI_API_KEY_OPENAI` is configured. Assets are stored under the configurable
+  community-media storage directory and served publicly from `/community/media/assets/**`.
+- Default image model is `gpt-image-2.5-sunburst`; model, quality, poll interval and storage
+  directory are configuration properties. Missing API key leaves requests queued.
+- B-019f: `/admin/community-fans` is a full Site Admin UI for filtering/editing profiles,
+  personality sliders, population settings, media status/regeneration and manual sync.
+- B-019g: Team pages show active generated community supporters and link each fan to the
+  public community profile, alongside the canonical Dedicated Fans count.
+
+
 - Public `/community` and `/community/:fanId` frontend routes expose community profiles.
 - Main menu and breadcrumb navigation include Community.
 - Profile image/avatar generation uses durable renderer-neutral media requests. New/enriched

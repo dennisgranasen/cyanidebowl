@@ -185,6 +185,18 @@ function Menu({ leagueSystems = [], selectedLeagueSystemId, onSelectLeagueSystem
                 )}
                 {checkPermissions && userPermissions?.writeSiteAdmin && (
                   <Box>
+                    <Link
+                      variant="menu"
+                      as={RouteLink}
+                      to="/admin/community-fans"
+                      onClick={() => onClose()}
+                    >
+                      Community admin
+                    </Link>
+                  </Box>
+                )}
+                {checkPermissions && userPermissions?.writeSiteAdmin && (
+                  <Box>
                     <Link variant="menu" as={RouteLink} to="/admin/localization" onClick={onClose}>
                       {intl.formatMessage({ id: 'menu.localizationAdmin' })}
                     </Link>

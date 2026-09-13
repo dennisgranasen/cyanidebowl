@@ -3,6 +3,7 @@ import { Box, Heading, Spinner, VStack } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
 import WarpScoresApiService from '../WarpScoresApiService';
 import Roster from '../components/team/Roster';
+import TeamSupporters from '../components/team/TeamSupporters';
 import prettyPrint from '../util/prettyPrint';
 import Navigation from '../components/misc/Navigation';
 import formatter from '../util/formatter';
@@ -120,6 +121,7 @@ function TeamPage() {
                 </InfoArea>
               </HeaderCard>
               <Roster players={players} />
+              <TeamSupporters teamId={teamId} dedicatedFans={team.dedicatedFans} />
             </>
           )}
         </LoadingOrErrorWrapper>

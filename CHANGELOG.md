@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added OpenAI-rendered community images with local asset serving, a full Site Admin
+  Community editor, and team-page supporter cards linked to public fan profiles.
+
 - Added a public Community directory/profile view, durable fan avatar/profile-media requests,
   and configurable periodic Dedicated Fans reconciliation for purchases between matches.
 

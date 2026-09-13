@@ -11,4 +11,8 @@ public interface AiCommunityMediaGenerationRequestRepository
         extends MongoRepository<AiCommunityMediaGenerationRequest, String> {
     List<AiCommunityMediaGenerationRequest>
             findByFanProfileIdOrderByCreatedAtDesc(String fanProfileId);
+
+    java.util.Optional<AiCommunityMediaGenerationRequest>
+            findFirstByStatusOrderByCreatedAtAsc(
+                    AiCommunityMediaGenerationRequest.Status status);
 }

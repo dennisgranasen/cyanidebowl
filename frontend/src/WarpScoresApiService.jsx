@@ -102,6 +102,45 @@ export default {
   updateLocalization: async (data, getAccessTokenSilently, getAccessTokenWithPopup) =>
     putDataWithAuthentication('/admin/localization', data, getAccessTokenSilently, getAccessTokenWithPopup)
       .then(returnData).catch(handleError),
+  adminCommunityFans: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
+    getDataWithAuthentication(
+      '/admin/community-fans',
+      getAccessTokenSilently,
+      getAccessTokenWithPopup
+    ).then(returnData).catch(handleError),
+  adminCommunityFanSettings: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
+    getDataWithAuthentication(
+      '/admin/community-fans/settings',
+      getAccessTokenSilently,
+      getAccessTokenWithPopup
+    ).then(returnData).catch(handleError),
+  updateAdminCommunityFanSettings: async (data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    putDataWithAuthentication(
+      '/admin/community-fans/settings',
+      data,
+      getAccessTokenSilently,
+      getAccessTokenWithPopup
+    ).then(returnData).catch(handleError),
+  updateAdminCommunityFan: async (id, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    putDataWithAuthentication(
+      `/admin/community-fans/${encodeURIComponent(id)}`,
+      data,
+      getAccessTokenSilently,
+      getAccessTokenWithPopup
+    ).then(returnData).catch(handleError),
+  adminCommunityFanMedia: async (id, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    getDataWithAuthentication(
+      `/admin/community-fans/${encodeURIComponent(id)}/media`,
+      getAccessTokenSilently,
+      getAccessTokenWithPopup
+    ).then(returnData).catch(handleError),
+  regenerateAdminCommunityFanMedia: async (id, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication(
+      `/admin/community-fans/${encodeURIComponent(id)}/media/regenerate`,
+      {},
+      getAccessTokenSilently,
+      getAccessTokenWithPopup
+    ).then(returnData).catch(handleError),
   reconcileCommunityFansNow: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
     postDataWithAuthentication(
       '/admin/community-fans/reconcile-now',

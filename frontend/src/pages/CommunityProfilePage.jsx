@@ -29,7 +29,7 @@ function CommunityProfilePage() {
       {fan.profileImageUrl && (
         <Image
           mt={6}
-          src={fan.profileImageUrl}
+          src={CommunityApi.assetUrl(fan.profileImageUrl)}
           alt={fan.displayName}
           w="100%"
           maxH="420px"
@@ -42,7 +42,7 @@ function CommunityProfilePage() {
         <Avatar
           size="2xl"
           name={fan.displayName}
-          src={fan.avatarImageUrl || fan.profileImageUrl || undefined}
+          src={CommunityApi.assetUrl(fan.avatarImageUrl || fan.profileImageUrl)}
           borderWidth="4px"
           borderColor="gray.700"
         />

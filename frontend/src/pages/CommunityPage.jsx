@@ -43,7 +43,7 @@ function CommunityPage() {
               {fan.profileImageUrl && (
                 <Box
                   h="150px"
-                  backgroundImage={`url(${fan.profileImageUrl})`}
+                  backgroundImage={`url(${CommunityApi.assetUrl(fan.profileImageUrl)})`}
                   backgroundSize="cover"
                   backgroundPosition="center"
                 />
@@ -54,7 +54,7 @@ function CommunityPage() {
                   mb={3}
                   size="xl"
                   name={fan.displayName}
-                  src={fan.avatarImageUrl || fan.profileImageUrl || undefined}
+                  src={CommunityApi.assetUrl(fan.avatarImageUrl || fan.profileImageUrl)}
                   borderWidth={fan.profileImageUrl ? '4px' : 0}
                   borderColor="gray.700"
                 />

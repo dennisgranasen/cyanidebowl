@@ -12,7 +12,7 @@ import java.time.Instant;
 @Document("aiCommunityMediaGenerationRequests")
 public class AiCommunityMediaGenerationRequest {
     public enum Target { PROFILE_IMAGE, AVATAR }
-    public enum Status { QUEUED, COMPLETED, FAILED }
+    public enum Status { QUEUED, RUNNING, COMPLETED, FAILED }
 
     @Id
     private String id;
@@ -21,6 +21,9 @@ public class AiCommunityMediaGenerationRequest {
     private String prompt;
     private Status status = Status.QUEUED;
     private String assetUrl;
+    private String provider;
+    private String model;
+    private int attempts;
     private String error;
     private Instant createdAt;
     private Instant completedAt;

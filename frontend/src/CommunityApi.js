@@ -1,6 +1,6 @@
 import config from './config';
 
-const baseUrl = config.apiUrl || '';
+const baseUrl = config.backendUrl || '';
 
 async function json(url) {
   const response = await fetch(`${baseUrl}${url}`);
@@ -9,8 +9,15 @@ async function json(url) {
 }
 
 const CommunityApi = {
-  fans: () => json('/community/fans'),
+  fans: (teamId) => json(
+    `/community/fans${teamId ? `?teamId=${encodeURIComponent(teamId)}` : ''}`
+  ),
   fan: (id) => json(`/community/fans/${encodeURIComponent(id)}`),
+  assetUrl: (value) => {
+    if (!value) return undefined;
+    if (/^https?:\/\//i.test(value)) return value;
+    return `${baseUrl}${value}`;
+  },
 };
 
 export default CommunityApi;
