@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.ai.interaction;
 
 import net.warp_scores.warpscores.domain.SequenceGenerator;
 import net.warp_scores.warpscores.domain.persistence.AiCommunityMemberProfileRepository;
+import net.warp_scores.warpscores.domain.persistence.AiSettingsRepository;
 import net.warp_scores.warpscores.domain.persistence.TeamRepository;
 import net.warp_scores.warpscores.domain.persistence.WarpScoresUserRepository;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
@@ -27,6 +28,8 @@ class DedicatedFansCommunityReconciliationServiceTest {
     private WarpScoresUserRepository users;
     private TeamRepository teams;
     private SequenceGenerator sequence;
+    private DedicatedFanProfileGenerator profileGenerator;
+    private AiSettingsRepository settingsRepository;
     private DedicatedFansCommunityReconciliationService service;
 
     private final List<AiCommunityMemberProfile> storedProfiles = new ArrayList<>();
@@ -39,9 +42,16 @@ class DedicatedFansCommunityReconciliationServiceTest {
         users = mock(WarpScoresUserRepository.class);
         teams = mock(TeamRepository.class);
         sequence = mock(SequenceGenerator.class);
+        profileGenerator = new DedicatedFanProfileGenerator();
+        settingsRepository = mock(AiSettingsRepository.class);
 
         service = new DedicatedFansCommunityReconciliationService(
-                profiles, users, teams, sequence);
+                profiles,
+                users,
+                teams,
+                sequence,
+                profileGenerator,
+                settingsRepository);
 
         when(profiles.findByTeamIdOrderByOrdinalAsc(anyString()))
                 .thenAnswer(invocation -> storedProfiles.stream()

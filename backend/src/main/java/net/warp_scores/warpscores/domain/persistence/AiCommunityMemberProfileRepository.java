@@ -15,5 +15,7 @@ public interface AiCommunityMemberProfileRepository
 
     List<AiCommunityMemberProfile> findByActiveTrueOrderByTeamIdAscOrdinalAsc();
 
+    List<AiCommunityMemberProfile> findAllByOrderByDisplayNameAsc();
+
     Optional<AiCommunityMemberProfile> findByUserId(Long userId);
 }

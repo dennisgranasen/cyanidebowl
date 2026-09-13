@@ -35,6 +35,21 @@ Do not use old `main` behavior as the basis for implementation work.
 | P1 | B-033 | Replay parsing is stable and regression-tested | Backlog |
 | P1 | B-032 | Human editors have editable public Staff profiles | Done |
 | P1 | B-019 | Dedicated Fans population reconciliation | Done |
+
+**B-019b generated public fan profiles and loyalty changes**
+
+- Dedicated Fan population continues to reconcile against canonical `Team.dedicatedFans`.
+- New fans receive deterministic lightweight public profiles with species, bio, location,
+  occupation, terrace preferences and behavioural dimensions.
+- Behavioural dimensions feed directly into fan prompts, including optimism, patience,
+  tactics, match focus, terrace culture, trash talk and superstition.
+- Species generation is team-flavoured, including Norse/Yhetee, Nurgle human/Nurgling
+  and Wood Elf/Treeman variants.
+- `/community/fans` exposes profiles publicly; `/admin/community-fans` is Site Admin editable.
+- Loyalty-switch probability defaults to 0.50 and is configurable by Site Admin.
+- Opposing post-match fan surplus/deficit can move an existing identity between teams before
+  ordinary deactivate/create reconciliation; canonical user/profile history is preserved.
+
 | P1 | B-020 | Deterministic direct AI textual interaction | Done |
 | P2 | B-028 | Legacy Circuit hierarchy retired; canonical navigation remains | Done |
 | P2 | B-029 | LeagueSystem selection lives in the primary navigation | Done |

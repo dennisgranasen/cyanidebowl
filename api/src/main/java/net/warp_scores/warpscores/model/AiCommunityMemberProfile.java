@@ -41,12 +41,37 @@ public class AiCommunityMemberProfile {
     private String teamName;
     private String teamRace;
 
-    /** Stable slot within one team's fan population. Never reused for another team. */
+    /** Current slot within the supported team's fan population. */
     private int ordinal;
     private String displayName;
 
     /** Deterministic provider-independent behavioural seed. */
     private String personaKey;
+
+    /** Public, lightweight community-profile fields. */
+    private String species;
+    private String bio;
+    private String location;
+    private String occupation;
+    private String favoriteFood;
+    private String favoriteDrink;
+    private String favoriteChant;
+
+    /** Behavioural dimensions in [0,1]. */
+    private double optimism = 0.65;
+    private double coachPatience = 0.55;
+    private double playerPatience = 0.60;
+    private double tacticalInterest = 0.50;
+    private double matchFocus = 0.65;
+    private double foodDrinkInterest = 0.25;
+    private double chantInterest = 0.35;
+    private double trashTalk = 0.25;
+    private double superstition = 0.20;
+
+    /** Loyalty history; canonical user identity never changes. */
+    private String originalTeamId;
+    private String previousTeamId;
+    private Instant loyaltyChangedAt;
 
     private boolean active = true;
     private Instant createdAt;

@@ -163,6 +163,7 @@ public class FetchDataService {
                         log.info("Updating match {} with data from API and setting finalized True.", fullMatch.getId());
                         fullMatch.setIsFinalized(true);
                         Match savedMatch = matchRepository.save(fullMatch);
+                        dedicatedFansCommunity.reconcileAfterMatch(savedMatch);
                         completedMatchFanWork.onMatchFinalized(savedMatch);
                 });
         

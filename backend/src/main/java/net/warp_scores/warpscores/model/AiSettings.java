@@ -39,6 +39,13 @@ public class AiSettings {
 
     private AiInitiativePolicy initiativePolicy = new AiInitiativePolicy();
 
+    /** Probability that an existing fan changes allegiance instead of deactivate/create. */
+    private Double fanLoyaltySwitchProbability = 0.50;
+
+    public double effectiveFanLoyaltySwitchProbability() {
+        return fanLoyaltySwitchProbability == null ? 0.50 : fanLoyaltySwitchProbability;
+    }
+
     public boolean isGenerationEffectivelyEnabled() {
         return generationEnabled == null || generationEnabled;
     }

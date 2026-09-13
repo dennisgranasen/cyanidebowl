@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added generated public Dedicated Fan profiles with behavioural personality dimensions,
+  Site Admin editing and configurable loyalty switches when opponent fan counts move in
+  opposite directions after a match.
+
 - Added queued Staff comments on general articles: publication creates stable per-reporter
   candidates, policy/probability is evaluated once, and approved comments use existing
   reporter quota, global admission and canonical provenance.
