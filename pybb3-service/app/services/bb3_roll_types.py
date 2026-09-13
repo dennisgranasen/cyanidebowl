@@ -124,7 +124,7 @@ _ACTION = {
     Bb3RollType.Pass, Bb3RollType.Interception, Bb3RollType.Catch,
     Bb3RollType.StandUp, Bb3RollType.JumpOver, Bb3RollType.ThrowTeamMate,
     Bb3RollType.Land, Bb3RollType.EscapeTeamMate, Bb3RollType.VomitAccuracy,
-    Bb3RollType.BombExplosionHit, Bb3RollType.Bloodlust,
+    Bb3RollType.BombExplosionHit,
 }
 
 _EXCLUDED_FROM_ACTION_STATS = {Bb3RollType.BallAndChainDirection}
@@ -136,6 +136,7 @@ _SKILL_TRAIT = {
     Bb3RollType.FoulAppearance, Bb3RollType.Brawler,
     Bb3RollType.HypnoticGaze, Bb3RollType.Chainsaw, Bb3RollType.TakeRoot,
     Bb3RollType.Loner, Bb3RollType.Shadowing, Bb3RollType.Animosity,
+    Bb3RollType.Bloodlust,
 }
 
 _INJURY_RECOVERY = {

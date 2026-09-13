@@ -82,7 +82,8 @@ def bb3_dice_semantics(event_type: str, roll_type: int | None, roll_name: str | 
         return "scatter", roll_name or "Scatter / direction"
     if roll_type == 3 or "blockroll" in lowered or "blockdice" in lowered:
         return "block", "Block"
-    if roll_type in {1, 2, 4, 5, 6, 7, 29, 31, 32, 33, 34, 35, 36, 37, 42, 43, 66, 67, 68, 71, 73, 74}:
+    if roll_type in {1, 2, 4, 5, 6, 7, 29, 31, 32, 33, 34, 35, 36, 37, 41,
+                     42, 43, 66, 67, 68, 71, 73, 74, 96}:
         return "action", roll_name or "Action roll"
     return "other", roll_name or event_type
 

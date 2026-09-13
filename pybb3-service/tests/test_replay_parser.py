@@ -75,6 +75,31 @@ def test_fan_factor_d3_keeps_home_away_team_context():
     assert [row["rolls"] for row in fan] == [[[1]], [[3]]]
 
 
+def test_kickoff_rolloff_dice_are_assigned_one_per_team():
+    replay = b"""<Replay><ReplayStep><Clock>1</Clock>
+    <EventOfficiousRef>
+      <RollType>54</RollType>
+      <Dice>
+        <Die><Value>1</Value></Die>
+        <Die><Value>4</Value></Die>
+      </Dice>
+    </EventOfficiousRef>
+    <BoardState><CurrentPhase>4</CurrentPhase><ActiveTeam>1</ActiveTeam><ListTeams>
+      <TeamState><GameTurn>1</GameTurn><Data><TeamId>0</TeamId></Data></TeamState>
+      <TeamState><GameTurn>1</GameTurn><Data><TeamId>1</TeamId></Data></TeamState>
+    </ListTeams></BoardState>
+    </ReplayStep></Replay>"""
+
+    analysis = parse_replay(replay)["analysis"]
+    rows = [
+        row for row in analysis["diceStatistics"]
+        if row["label"] == "Officious Ref Roll Off"
+    ]
+
+    assert [row["teamId"] for row in rows] == [0, 1]
+    assert [row["rolls"] for row in rows] == [[[1]], [[4]]]
+
+
 def test_explicit_d6_zero_is_not_misreported_as_unknown():
     replay = b"""<Replay><ReplayStep><Clock>1</Clock>
     <EventFoo><Dice><Die><DieType>0</DieType><Value>4</Value></Die></Dice></EventFoo>

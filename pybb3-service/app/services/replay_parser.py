@@ -10,19 +10,25 @@ from collections import Counter
 from typing import Any
 
 from app.services.bb3_die_types import bb3_dice_semantics, bb3_die_name, infer_bb3_die_type
-from app.services.bb3_roll_types import bb3_roll_name
+from app.services.bb3_roll_types import Bb3RollType, bb3_roll_name
 from app.services.replay_decoders import Bb2ReplayDecoder, Bb3ActionDecoder, action_dicts, decode_message
 from app.services.replay_statistics import aggregate_actions, event_statistics
 from app.services.replay_timeline import build_replay_timeline
 from app.services.replay_player_identity import build_player_index
 
-PARSER_VERSION = 17
+PARSER_VERSION = 18
 INTEGER = re.compile(r"^-?(?:0|[1-9][0-9]*)$")
 RESOURCE_MARKERS = ("reroll", "apothec", "wizard", "spell")
 SPECIAL_MARKERS = (
     "regener", "resurrect", "raise", "bribe", "arguethecall", "secretweapon",
     "bomb", "chainsaw", "vomit", "bloodlust", "hypnotic",
 )
+ROLLOFF_ROLL_TYPES = {
+    Bb3RollType.BrilliantCoaching,
+    Bb3RollType.CheeringFans,
+    Bb3RollType.OfficiousRefRollOff,
+    Bb3RollType.SeismicActivityRollOff,
+}
 
 
 def _scalar(text: str | None) -> str | int | None:
@@ -189,6 +195,7 @@ def _dice(
         for modifier in event.findall(".//Modifier"):
             modifiers.append({"type": _text(modifier, "./ModifierType"), "value": _text(modifier, "./Value")})
         player_id = _first(event, ("PlayerId", "ActivePlayer", "AttackerId", "ThrowerId"))
+        explicit_team_id = _first(event, ("TeamId", "GamerSlot", "GamerId"))
         team_id = _event_team(event, context)
         if category == "injury":
             player_id = _injury_player_id(
@@ -198,17 +205,35 @@ def _dice(
         # EventFanFactor contains HomeRoll and AwayRoll as separate Dice groups.
         if event.tag == "EventFanFactor" and len(groups) == 2:
             team_id = roll_index
-        result.append({
+
+        # Kick-off roll-offs are match-wide contests: one D6 belongs to each
+        # team. They must not inherit ActiveTeam from the surrounding board.
+        # BB3 has been observed both with two Dice groups and with two dice in
+        # one Dice group, so preserve the source group while assigning the
+        # individual team rolls explicitly.
+        team_dice = [(team_id, dice)]
+        if roll_type in ROLLOFF_ROLL_TYPES and explicit_team_id is None:
+            if len(groups) == 2:
+                team_dice = [(roll_index, dice)]
+            elif len(groups) == 1 and len(dice) == 2:
+                team_dice = [(index, [die]) for index, die in enumerate(dice)]
+            else:
+                # An incomplete/unknown roll-off shape is safer as match-wide
+                # than falsely charging it to whichever team is active.
+                team_dice = [(None, dice)]
+
+        for resolved_team_id, resolved_dice in team_dice:
+            result.append({
             "sequence": sequence, "clock": clock, "source": source,
             "eventType": event.tag, "contextTag": event.tag, "rollIndex": roll_index,
             "rollType": roll_type, "rollTypeName": roll_name,
             "category": category, "label": label,
             "outcome": _text(event, ".//Outcome"),
             "playerId": player_id,
-            "teamId": team_id,
+            "teamId": resolved_team_id,
             "success": _success(event), "phase": context.get("phase"),
-            "teamTurns": context.get("teamTurns", []), "dice": dice, "modifiers": modifiers,
-        })
+            "teamTurns": context.get("teamTurns", []), "dice": resolved_dice, "modifiers": modifiers,
+            })
     return result
 
 

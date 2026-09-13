@@ -41,18 +41,21 @@ def test_new_roll_type_protocol_mapping():
     assert bb3_roll_name(88) == "Bomb Explosion Hit"
     assert bb3_roll_name(96) == "Bloodlust"
     assert bb3_roll_category(88) == "action"
-    assert bb3_roll_category(96) == "action"
+    assert bb3_roll_category(96) == "skillTrait"
 
 
-def test_bloodlust_and_bomb_explosion_are_action_d6_statistics():
-    for roll_type, name in ((96, "Bloodlust"), (88, "Bomb Explosion Hit")):
+def test_bloodlust_is_trait_and_bomb_explosion_is_action_d6_statistic():
+    for roll_type, name, category in (
+        (96, "Bloodlust", "skillTrait"),
+        (88, "Bomb Explosion Hit", "action"),
+    ):
         actions = Bb3ActionDecoder().decode(_replay_for_roll(roll_type))
         assert len(actions) == 1
         action = actions[0]
         assert isinstance(action, D6Action)
         assert action.action_type == name
         assert action.source_roll_type == roll_type
-        assert action.roll_category == "action"
+        assert action.roll_category == category
 
         stats = aggregate_actions(actions)
         assert stats == [{
@@ -63,7 +66,7 @@ def test_bloodlust_and_bomb_explosion_are_action_d6_statistics():
             "success": 1,
             "total": 1,
             "sourceRollType": roll_type,
-            "rollCategory": "action",
+            "rollCategory": category,
         }]
 
 
