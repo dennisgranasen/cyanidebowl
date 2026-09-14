@@ -23,7 +23,7 @@ function ArticleFeed({ leagueSystemId, limit = 6 }) {
           <Button size="sm" as={RouterLink} to="/editor/articles/new">Skriv artikel</Button>
         )}
       </HStack>
-      {!articles.length && <Text color="gray.500">Inga publicerade artiklar Ã¤nnu.</Text>}
+      {!articles.length && <Text color="gray.500">Inga publicerade artiklar ännu.</Text>}
       {featured && (
         <LinkBox borderWidth="1px" borderRadius="lg" overflow="hidden" mb={3}>
           {featured.coverImageUrl && <Image src={featured.coverImageUrl} w="full" maxH="320px" objectFit="cover" />}
