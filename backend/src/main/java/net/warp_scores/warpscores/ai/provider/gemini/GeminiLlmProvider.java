@@ -94,7 +94,10 @@ public class GeminiLlmProvider implements LlmProvider {
                     httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                throw httpFailure(response.statusCode());
+                throw httpFailure(
+                        response.statusCode(),
+                        response.body(),
+                        response.headers().firstValue("Retry-After").orElse(null));
             }
 
             JsonNode json = objectMapper.readTree(response.body());
@@ -118,7 +121,10 @@ public class GeminiLlmProvider implements LlmProvider {
         }
     }
 
-    private static LlmProviderException httpFailure(int status) {
+    private static LlmProviderException httpFailure(
+            int status,
+            String body,
+            String retryAfter) {
         LlmProviderException.Kind kind = switch (status) {
             case 401, 403 -> LlmProviderException.Kind.AUTHENTICATION;
             case 408, 504 -> LlmProviderException.Kind.TIMEOUT;
@@ -127,6 +133,31 @@ public class GeminiLlmProvider implements LlmProvider {
                     ? LlmProviderException.Kind.UNAVAILABLE
                     : LlmProviderException.Kind.BAD_REQUEST;
         };
-        return new LlmProviderException(ID, kind, status, "Gemini HTTP " + status);
+
+        String detail = sanitizeBody(body, 700);
+        StringBuilder message = new StringBuilder("Gemini HTTP ").append(status);
+        if (retryAfter != null && !retryAfter.isBlank()) {
+            message.append(" (Retry-After: ").append(retryAfter).append(")");
+        }
+        if (!detail.isBlank()) {
+            message.append(": ").append(detail);
+        }
+
+        return new LlmProviderException(
+                ID,
+                kind,
+                status,
+                message.toString());
+    }
+
+    private static String sanitizeBody(String body, int maxLength) {
+        if (body == null || body.isBlank()) return "";
+
+        String value = body
+                .replaceAll("\\s+", " ")
+                .trim();
+
+        if (value.length() <= maxLength) return value;
+        return value.substring(0, maxLength) + "…";
     }
 }

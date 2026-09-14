@@ -1,6 +1,7 @@
 package net.warp_scores.warpscores.ai.provider;
 
 import lombok.RequiredArgsConstructor;
+import net.warp_scores.warpscores.ai.context.ContextTaskType;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -14,12 +15,37 @@ public class ConfiguredLlmProviderRouter implements LlmProviderRouter {
 
     @Override
     public List<ModelTarget> targetsForReporter(String reporterId) {
+        return configuredReporterOrDefault(reporterId).stream()
+                .map(this::validatedTarget)
+                .toList();
+    }
+
+    @Override
+    public List<ModelTarget> targetsForTask(
+            String reporterId,
+            ContextTaskType taskType) {
+        List<AiProviderProperties.ModelTargetConfig> configured = null;
+
+        if (taskType != null) {
+            configured = properties.getTaskTargets().get(taskType.name());
+        }
+        if (configured == null || configured.isEmpty()) {
+            configured = configuredReporterOrDefault(reporterId);
+        }
+
+        return configured.stream()
+                .map(this::validatedTarget)
+                .toList();
+    }
+
+    private List<AiProviderProperties.ModelTargetConfig> configuredReporterOrDefault(
+            String reporterId) {
         List<AiProviderProperties.ModelTargetConfig> configured =
                 properties.getReporterTargets().get(reporterId);
         if (configured == null || configured.isEmpty()) {
             configured = properties.getDefaultTargets();
         }
-        return configured.stream().map(this::validatedTarget).toList();
+        return configured;
     }
 
     private ModelTarget validatedTarget(AiProviderProperties.ModelTargetConfig config) {

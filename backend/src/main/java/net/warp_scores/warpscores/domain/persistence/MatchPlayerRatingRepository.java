@@ -14,5 +14,6 @@ public interface MatchPlayerRatingRepository extends MongoRepository<MatchPlayer
     List<MatchPlayerRating> findByMatchId(String matchId);
     List<MatchPlayerRating> findByMatchIdAndPlayerId(String matchId, String playerId);
     List<MatchPlayerRating> findBySeasonIdAndPlayerId(String seasonId, String playerId);
+    List<MatchPlayerRating> findBySeasonId(String seasonId);
     List<MatchPlayerRating> findByPlayerId(String playerId);
 }

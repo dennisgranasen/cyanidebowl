@@ -100,7 +100,7 @@ public class OpenAiCompatibleLlmProvider implements LlmProvider {
                     httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                throw httpFailure(response.statusCode());
+                throw httpFailure(response.statusCode(), response.body());
             }
 
             JsonNode json = objectMapper.readTree(response.body());
@@ -119,7 +119,8 @@ public class OpenAiCompatibleLlmProvider implements LlmProvider {
         } catch (IOException e) {
             throw new LlmProviderException(
                     providerId, LlmProviderException.Kind.UNAVAILABLE, null,
-                    providerId + " request failed", e);
+                    providerId + " request failed"
+                            + (e.getMessage() == null ? "" : ": " + e.getMessage()), e);
         } catch (RuntimeException e) {
             throw new LlmProviderException(
                     providerId, LlmProviderException.Kind.MALFORMED_RESPONSE, null,
@@ -127,7 +128,7 @@ public class OpenAiCompatibleLlmProvider implements LlmProvider {
         }
     }
 
-    private LlmProviderException httpFailure(int status) {
+    private LlmProviderException httpFailure(int status, String body) {
         LlmProviderException.Kind kind = switch (status) {
             case 401, 403 -> LlmProviderException.Kind.AUTHENTICATION;
             case 408, 504 -> LlmProviderException.Kind.TIMEOUT;
@@ -137,6 +138,10 @@ public class OpenAiCompatibleLlmProvider implements LlmProvider {
                     ? LlmProviderException.Kind.UNAVAILABLE
                     : LlmProviderException.Kind.BAD_REQUEST;
         };
-        return new LlmProviderException(providerId, kind, status, providerId + " HTTP " + status);
+        String detail = body == null ? "" : body.replaceAll("\\s+", " ").trim();
+        if (detail.length() > 400) detail = detail.substring(0, 400) + "…";
+        String message = providerId + " HTTP " + status
+                + (detail.isBlank() ? "" : ": " + detail);
+        return new LlmProviderException(providerId, kind, status, message);
     }
 }

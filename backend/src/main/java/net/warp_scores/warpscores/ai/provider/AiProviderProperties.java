@@ -18,6 +18,7 @@ import java.util.Map;
 public class AiProviderProperties {
     private List<ModelTargetConfig> defaultTargets = new ArrayList<>();
     private Map<String, List<ModelTargetConfig>> reporterTargets = new LinkedHashMap<>();
+    private Map<String, List<ModelTargetConfig>> taskTargets = new LinkedHashMap<>();
 
     @Getter
     @Setter

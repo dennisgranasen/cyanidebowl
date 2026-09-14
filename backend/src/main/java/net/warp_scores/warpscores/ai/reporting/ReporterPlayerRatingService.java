@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.ai.agents.AiReporterDefinition;
 import net.warp_scores.warpscores.ai.agents.AiReporterEffectiveProfileService;
 import net.warp_scores.warpscores.domain.persistence.AiPlayerMatchRatingRepository;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
@@ -14,16 +14,22 @@ import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
-@ConditionalOnProperty(
-        prefix = "warpscores.ai-reporting",
-        name = "enabled",
-        havingValue = "true")
 public class ReporterPlayerRatingService {
     private final AiReporterEffectiveProfileService effectiveProfiles;
     private final AiPlayerMatchRatingRepository ratings;
     private final PlayerRatingGenerator generator;
 
+    @Value("${warpscores.ai-reporting.enabled:false}")
+    private boolean automaticReportingEnabled;
+
+    /**
+     * Automatic rating entry point. The ai-reporting flag controls only unsolicited
+     * automatic reporting, not explicit editor/technician requests.
+     */
     public void rateMatch(PlayerRatingFacts facts) {
+        if (!automaticReportingEnabled) {
+            return;
+        }
         rateMatch(facts, List.of(), null, false);
     }
 

@@ -493,7 +493,10 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                   </TabPanel>
                   <TabPanel>
                     {replayMatchId
-                      ? <MatchPlayerRatings matchId={replayMatchId} />
+                      ? <MatchPlayerRatings
+                          matchId={replayMatchId}
+                          replayReady={Boolean(replay?.available && replay?.analysis)}
+                        />
                       : <Text color="gray.500">{intl.formatMessage({ id: 'matchModal.missingId.ratings' })}</Text>}
                   </TabPanel>
                   <TabPanel>

@@ -46,6 +46,11 @@ public class OpenAiResponsesMapper {
         if (request.options().maxOutputTokens() != null) {
             body.put("max_output_tokens", request.options().maxOutputTokens());
         }
+        if (request.options().reasoningEffort() != null
+                && !request.options().reasoningEffort().isBlank()) {
+            body.putObject("reasoning")
+                    .put("effort", request.options().reasoningEffort());
+        }
 
         if (request.outputContract().format() == OutputContract.Format.JSON) {
             if (!structuredOutputSupported) {
@@ -77,8 +82,26 @@ public class OpenAiResponsesMapper {
                     null,
                     "OpenAI-compatible response ended with status " + status);
         }
+        if ("incomplete".equals(status)) {
+            String reason = text(root.path("incomplete_details"), "reason");
+            throw new LlmProviderException(
+                    providerId,
+                    "max_output_tokens".equals(reason)
+                            ? LlmProviderException.Kind.UNKNOWN
+                            : LlmProviderException.Kind.REJECTED,
+                    null,
+                    "OpenAI-compatible response was incomplete"
+                            + (reason == null || reason.isBlank() ? "" : ": " + reason));
+        }
 
         List<String> parts = new ArrayList<>();
+        List<String> refusals = new ArrayList<>();
+
+        String topLevelOutputText = text(root, "output_text");
+        if (topLevelOutputText != null && !topLevelOutputText.isBlank()) {
+            parts.add(topLevelOutputText);
+        }
+
         JsonNode output = root.path("output");
         if (output.isArray()) {
             for (JsonNode item : output) {
@@ -86,18 +109,34 @@ public class OpenAiResponsesMapper {
                 JsonNode content = item.path("content");
                 if (!content.isArray()) continue;
                 for (JsonNode part : content) {
-                    if ("output_text".equals(text(part, "type")) && part.hasNonNull("text")) {
-                        parts.add(part.get("text").asText());
+                    String type = text(part, "type");
+                    if (("output_text".equals(type) || "text".equals(type))
+                            && part.hasNonNull("text")) {
+                        String value = part.get("text").asText();
+                        if (!value.isBlank()) parts.add(value);
+                    } else if ("refusal".equals(type)) {
+                        String refusal = text(part, "refusal");
+                        if (refusal == null || refusal.isBlank()) refusal = text(part, "text");
+                        if (refusal != null && !refusal.isBlank()) refusals.add(refusal);
                     }
                 }
             }
         }
         if (parts.isEmpty()) {
+            if (!refusals.isEmpty()) {
+                throw new LlmProviderException(
+                        providerId,
+                        LlmProviderException.Kind.REJECTED,
+                        null,
+                        "OpenAI-compatible response refused the request: "
+                                + String.join(" ", refusals));
+            }
             throw new LlmProviderException(
                     providerId,
                     LlmProviderException.Kind.MALFORMED_RESPONSE,
                     null,
-                    "OpenAI-compatible response contained no output_text");
+                    "OpenAI-compatible response contained no output_text" + responseShape(root, status)
+                            + (status == null || status.isBlank() ? "" : " (status=" + status + ")"));
         }
 
         JsonNode usage = root.path("usage");
@@ -113,6 +152,28 @@ public class OpenAiResponsesMapper {
                 String.join("", parts),
                 new CanonicalLlmResponse.Usage(inputTokens, outputTokens),
                 status);
+    }
+
+    private static String responseShape(JsonNode root, String status) {
+        List<String> outputTypes = new ArrayList<>();
+        List<String> contentTypes = new ArrayList<>();
+        JsonNode output = root.path("output");
+        if (output.isArray()) {
+            for (JsonNode item : output) {
+                String itemType = text(item, "type");
+                if (itemType != null) outputTypes.add(itemType);
+                JsonNode content = item.path("content");
+                if (content.isArray()) {
+                    for (JsonNode part : content) {
+                        String partType = text(part, "type");
+                        if (partType != null) contentTypes.add(partType);
+                    }
+                }
+            }
+        }
+        return " (status=" + status
+                + ", outputTypes=" + outputTypes
+                + ", contentTypes=" + contentTypes + ")";
     }
 
     private static String text(JsonNode node, String field) {

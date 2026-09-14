@@ -19,6 +19,7 @@ import org.springframework.util.StringUtils;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.LinkedHashMap;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -41,6 +42,7 @@ public class EditorialCommunityService {
     private final CommunityReactionRepository reactions;
     private final MatchPlayerParticipationRepository participation;
     private final MatchPlayerRatingRepository ratings;
+    private final AiPlayerMatchRatingRepository aiPlayerRatings;
     private final MatchRepository matches;
     private final TeamRepository teams;
     private final StageSourceRepository stageSources;
@@ -59,6 +61,21 @@ public class EditorialCommunityService {
     public record RatingSummary(String playerId, String playerName, long count, double average,
                                 long coachCount, Double coachAverage,
                                 long spectatorCount, Double spectatorAverage) {}
+
+    public record RatingAggregate(long count, Double average) {}
+
+    public record PlayerRatingOverview(
+            String playerId,
+            String playerName,
+            Integer mine,
+            RatingAggregate matchTotal,
+            RatingAggregate matchCommunity,
+            RatingAggregate matchCoaches,
+            RatingAggregate matchEditorial,
+            RatingAggregate seasonTotal,
+            RatingAggregate seasonCommunity,
+            RatingAggregate seasonCoaches,
+            RatingAggregate seasonEditorial) {}
 
     public record ArticleInput(String leagueSystemId, String seasonId, String title, String slug,
                                String excerpt, String bodyHtml, String coverImageUrl,
@@ -332,6 +349,182 @@ public class EditorialCommunityService {
 
     public List<RatingSummary> ratingSummaryForMatch(String matchId) {
         return summarize(ratings.findByMatchId(matchId));
+    }
+
+    public List<PlayerRatingOverview> ratingOverviewForMatch(
+            Authentication auth, String matchId) {
+        ensureParticipation(matchId);
+        MatchContext ctx = matchContext(auth, matchId);
+        String currentSubject = subject(auth);
+
+        List<MatchPlayerRating> matchHuman = ratings.findByMatchId(matchId);
+        List<AiPlayerMatchRating> matchEditorial = editorialRatingsForMatch(matchId);
+
+        List<MatchPlayerRating> seasonHuman = StringUtils.hasText(ctx.seasonId())
+                ? ratings.findBySeasonId(ctx.seasonId())
+                : List.of();
+        List<AiPlayerMatchRating> seasonEditorial = StringUtils.hasText(ctx.seasonId())
+                ? aiPlayerRatings.findBySeasonId(ctx.seasonId())
+                : List.of();
+
+        return participation.findByMatchIdOrderByTeamIdAscPlayerNameAsc(matchId).stream()
+                .map(player -> {
+                    List<MatchPlayerRating> mh = matchHuman.stream()
+                            .filter(r -> samePlayerId(player.getPlayerId(), r.getPlayerId()))
+                            .toList();
+                    List<AiPlayerMatchRating> me = matchEditorial.stream()
+                            .filter(r -> samePlayerId(player.getPlayerId(), r.getPlayerId()))
+                            .toList();
+                    List<MatchPlayerRating> sh = seasonHuman.stream()
+                            .filter(r -> samePlayerId(player.getPlayerId(), r.getPlayerId()))
+                            .toList();
+                    List<AiPlayerMatchRating> se = seasonEditorial.stream()
+                            .filter(r -> samePlayerId(player.getPlayerId(), r.getPlayerId()))
+                            .toList();
+
+                    Integer mine = currentSubject == null ? null : mh.stream()
+                            .filter(r -> Objects.equals(currentSubject, r.getRaterSubject()))
+                            .map(MatchPlayerRating::getScore)
+                            .findFirst()
+                            .orElse(null);
+
+                    return new PlayerRatingOverview(
+                            player.getPlayerId(),
+                            player.getPlayerName(),
+                            mine,
+                            aggregateCombined(mh, me),
+                            aggregateCommunity(mh, me),
+                            aggregateCoaches(mh),
+                            aggregateEditorial(me),
+                            aggregateSeasonCombined(sh, se),
+                            aggregateSeasonCommunity(sh, se),
+                            aggregateSeasonCoaches(sh),
+                            aggregateSeasonEditorial(se));
+                })
+                .toList();
+    }
+
+    private List<AiPlayerMatchRating> editorialRatingsForMatch(String matchId) {
+        String raw = rawIdentityValue(matchId);
+        String canonical = raw == null ? null : "3_" + raw;
+
+        Map<String, AiPlayerMatchRating> unique = new LinkedHashMap<>();
+        aiPlayerRatings.findByMatchId(raw).forEach(rating ->
+                unique.put(rating.getId(), rating));
+        if (canonical != null && !Objects.equals(canonical, raw)) {
+            aiPlayerRatings.findByMatchId(canonical).forEach(rating ->
+                    unique.put(rating.getId(), rating));
+        }
+        return new ArrayList<>(unique.values());
+    }
+
+    private String rawIdentityValue(String id) {
+        if (!StringUtils.hasText(id)) return id;
+        int delimiter = id.indexOf('_');
+        return delimiter >= 0 && delimiter < id.length() - 1
+                ? id.substring(delimiter + 1)
+                : id;
+    }
+
+    private boolean samePlayerId(String left, String right) {
+        if (Objects.equals(left, right)) return true;
+        return Objects.equals(playerIdValue(left), playerIdValue(right));
+    }
+
+    private String playerIdValue(String id) {
+        if (!StringUtils.hasText(id)) return id;
+        int delimiter = id.indexOf(Identity.DELIMITER);
+        return delimiter >= 0 && delimiter < id.length() - 1
+                ? id.substring(delimiter + 1)
+                : id;
+    }
+
+    private RatingAggregate aggregateHuman(
+            List<MatchPlayerRating> source,
+            MatchPlayerRating.RaterContext context) {
+        List<Double> values = source.stream()
+                .filter(r -> r.getRaterContext() == context)
+                .map(r -> (double) r.getScore())
+                .toList();
+        return aggregate(values);
+    }
+
+    private RatingAggregate aggregateCoaches(List<MatchPlayerRating> source) {
+        List<Double> values = source.stream()
+                .filter(r -> r.getRaterContext() != MatchPlayerRating.RaterContext.SPECTATOR)
+                .map(r -> (double) r.getScore())
+                .toList();
+        return aggregate(values);
+    }
+
+    private RatingAggregate aggregateCommunity(
+            List<MatchPlayerRating> human,
+            List<AiPlayerMatchRating> ai) {
+        List<Double> values = new ArrayList<>();
+        human.stream()
+                .filter(r -> r.getRaterContext() == MatchPlayerRating.RaterContext.SPECTATOR)
+                .forEach(r -> values.add((double) r.getScore()));
+        ai.stream().filter(this::isFanRating).forEach(r -> values.add(r.getRating()));
+        return aggregate(values);
+    }
+
+    private RatingAggregate aggregateEditorial(List<AiPlayerMatchRating> source) {
+        return aggregate(source.stream()
+                .filter(r -> !isFanRating(r))
+                .map(AiPlayerMatchRating::getRating)
+                .toList());
+    }
+
+    private RatingAggregate aggregateSeasonCombined(List<MatchPlayerRating> human, List<AiPlayerMatchRating> ai) {
+        Set<String> matches = new HashSet<>();
+        human.stream().map(MatchPlayerRating::getMatchId).filter(Objects::nonNull).forEach(matches::add);
+        ai.stream().map(AiPlayerMatchRating::getMatchId).filter(Objects::nonNull).forEach(matches::add);
+        return matches.size() < 2 ? new RatingAggregate(0, null) : aggregateCombined(human, ai);
+    }
+
+    private RatingAggregate aggregateSeasonCommunity(List<MatchPlayerRating> human, List<AiPlayerMatchRating> ai) {
+        List<MatchPlayerRating> spectators = human.stream()
+                .filter(r -> r.getRaterContext() == MatchPlayerRating.RaterContext.SPECTATOR).toList();
+        List<AiPlayerMatchRating> fans = ai.stream().filter(this::isFanRating).toList();
+        Set<String> matches = new HashSet<>();
+        spectators.stream().map(MatchPlayerRating::getMatchId).filter(Objects::nonNull).forEach(matches::add);
+        fans.stream().map(AiPlayerMatchRating::getMatchId).filter(Objects::nonNull).forEach(matches::add);
+        return matches.size() < 2 ? new RatingAggregate(0, null) : aggregateCommunity(spectators, fans);
+    }
+
+    private RatingAggregate aggregateSeasonCoaches(List<MatchPlayerRating> source) {
+        List<MatchPlayerRating> coaches = source.stream()
+                .filter(r -> r.getRaterContext() != MatchPlayerRating.RaterContext.SPECTATOR).toList();
+        long matchCount = coaches.stream().map(MatchPlayerRating::getMatchId).filter(Objects::nonNull).distinct().count();
+        return matchCount < 2 ? new RatingAggregate(0, null) : aggregateCoaches(coaches);
+    }
+
+    private RatingAggregate aggregateSeasonEditorial(List<AiPlayerMatchRating> source) {
+        List<AiPlayerMatchRating> editorial = source.stream().filter(r -> !isFanRating(r)).toList();
+        long matchCount = editorial.stream().map(AiPlayerMatchRating::getMatchId).filter(Objects::nonNull).distinct().count();
+        return matchCount < 2 ? new RatingAggregate(0, null) : aggregateEditorial(editorial);
+    }
+
+    private boolean isFanRating(AiPlayerMatchRating rating) {
+        return rating.getSourceType() == AiPlayerMatchRating.SourceType.FAN;
+    }
+
+    private RatingAggregate aggregateCombined(
+            List<MatchPlayerRating> human,
+            List<AiPlayerMatchRating> ai) {
+        List<Double> values = new ArrayList<>(human.size() + ai.size());
+        human.forEach(r -> values.add((double) r.getScore()));
+        ai.stream().map(AiPlayerMatchRating::getRating).filter(Objects::nonNull).forEach(values::add);
+        return aggregate(values);
+    }
+
+
+    private RatingAggregate aggregate(List<Double> values) {
+        return values.isEmpty()
+                ? new RatingAggregate(0, null)
+                : new RatingAggregate(
+                        values.size(),
+                        values.stream().mapToDouble(Double::doubleValue).average().orElse(0));
     }
 
     public RatingSummary ratingSummaryForPlayer(String playerId, String seasonId) {

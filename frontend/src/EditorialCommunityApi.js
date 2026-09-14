@@ -25,8 +25,10 @@ const EditorialCommunityApi = {
   article: (slug) => get(`/articles/${encodeURIComponent(slug)}`),
   comments: (targetType, targetId) =>
     get(`/community/comments/${targetType}/${encodeURIComponent(targetId)}`),
-  reactions: (targetType, targetId) =>
-    get(`/community/reactions/${targetType}/${encodeURIComponent(targetId)}`),
+  reactions: (targetType, targetId, getToken = null) =>
+    getToken
+      ? authGet(`/community/reactions/${targetType}/${encodeURIComponent(targetId)}`, getToken)
+      : get(`/community/reactions/${targetType}/${encodeURIComponent(targetId)}`),
   createArticle: async (payload, getToken) =>
     (await axios.post(`${base}/articles`, payload, { headers: await authHeaders(getToken) })).data,
   updateArticle: async (id, payload, getToken) =>
@@ -44,6 +46,10 @@ const EditorialCommunityApi = {
       { headers: await authHeaders(getToken) }),
   matchPlayers: (matchId) => get(`/community/matches/${encodeURIComponent(matchId)}/players`),
   matchRatings: (matchId) => get(`/community/matches/${encodeURIComponent(matchId)}/ratings`),
+  matchRatingOverview: (matchId, getToken = null) =>
+    getToken
+      ? authGet(`/community/matches/${encodeURIComponent(matchId)}/rating-overview`, getToken)
+      : get(`/community/matches/${encodeURIComponent(matchId)}/rating-overview`),
   ratePlayer: async (matchId, playerId, score, getToken) =>
     (await axios.put(`${base}/community/matches/${encodeURIComponent(matchId)}/players/${encodeURIComponent(playerId)}/rating`,
       { score }, { headers: await authHeaders(getToken) })).data,
@@ -51,6 +57,16 @@ const EditorialCommunityApi = {
     get(`/matches/${encodeURIComponent(matchId)}/ai-player-ratings`),
   generateAiPlayerRatings: (matchId, payload, getToken) =>
     authPost(`/matches/${encodeURIComponent(matchId)}/ai-player-ratings/generate`, payload, getToken),
+  fanPlayerRatingAvailability: (matchId) =>
+    get(`/matches/${encodeURIComponent(matchId)}/ai-player-ratings/fan-availability`),
+  generateFanPlayerRatings: (matchId, payload, getToken) =>
+    authPost(`/matches/${encodeURIComponent(matchId)}/ai-player-ratings/generate-fans`, payload, getToken),
+  fanPlayerRatingStatus: (matchId) =>
+    get(`/matches/${encodeURIComponent(matchId)}/ai-player-ratings/fan-generation-status`),
+  aiPlayerRatingStatus: (matchId) =>
+    get(`/matches/${encodeURIComponent(matchId)}/ai-player-ratings/generation-status`),
+  cancelAiPlayerRatingJob: (matchId, jobId, getToken) =>
+    authPost(`/matches/${encodeURIComponent(matchId)}/ai-player-ratings/generation-jobs/${encodeURIComponent(jobId)}/cancel`, {}, getToken),
   matchArticles: (matchId, getToken) =>
     authGet(`/matches/${encodeURIComponent(matchId)}/articles`, getToken),
   matchArticleCapabilities: (matchId, getToken) =>

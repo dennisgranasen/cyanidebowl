@@ -19,8 +19,12 @@ function ReactionBar({ targetType, targetId }) {
   const { isAuthenticated, getAccessTokenSilently } = useAuth0WithUserPermissions();
   const [summary, setSummary] = useState(null);
 
-  const load = () => EditorialCommunityApi.reactions(targetType, targetId).then(setSummary);
-  useEffect(() => { load(); }, [targetType, targetId]);
+  const load = () => EditorialCommunityApi.reactions(
+    targetType,
+    targetId,
+    isAuthenticated ? getAccessTokenSilently : null,
+  ).then(setSummary);
+  useEffect(() => { load(); }, [targetType, targetId, isAuthenticated]);
 
   const react = async (type) => {
     if (!isAuthenticated) return;

@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
+import net.warp_scores.warpscores.domain.persistence.StageSourceRepository;
+import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Player;
 import net.warp_scores.warpscores.model.ReplayAnalysis;
@@ -16,6 +18,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class DefaultPlayerRatingFactsBuilder implements PlayerRatingFactsBuilder {
     private final MatchRepository matchRepository;
+    private final StageSourceRepository stageSources;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -27,6 +30,13 @@ public class DefaultPlayerRatingFactsBuilder implements PlayerRatingFactsBuilder
         matchSummary.put("competitionName", match.getCompetitionName());
         matchSummary.put("leagueName", match.getLeagueName());
         matchSummary.put("round", match.getRound());
+        String seasonId = match.getCompetitionId() == null ? null
+                : stageSources.findBySourceEntityId(match.getCompetitionId()).stream()
+                        .map(source -> source.getSeasonId())
+                        .filter(Objects::nonNull)
+                        .findFirst()
+                        .orElse(null);
+        matchSummary.put("seasonId", seasonId);
         matchSummary.put("finished", match.getFinished());
         matchSummary.put("overtime", match.isOvertime());
         matchSummary.put("concede", match.isConcede());
@@ -56,7 +66,7 @@ public class DefaultPlayerRatingFactsBuilder implements PlayerRatingFactsBuilder
                 }
 
                 players.add(PlayerRatingFacts.Player.builder()
-                        .playerId(player.getPlayerId())
+                        .playerId(player.getId().asMongoKey())
                         .playerName(player.getName())
                         .teamId(team.getTeamId())
                         .teamName(team.getName())
@@ -87,6 +97,14 @@ public class DefaultPlayerRatingFactsBuilder implements PlayerRatingFactsBuilder
         for (String id : candidates) {
             Optional<Match> found = matchRepository.findFirstByMatchId(id);
             if (found.isPresent()) return found.get();
+
+            try {
+                found = matchRepository.findById(SimpleIdentity.fromId(id));
+                if (found.isPresent()) return found.get();
+            } catch (IllegalArgumentException ignored) {
+                // Not an Identity key (for example a raw match UUID); the matchId lookup above
+                // is the appropriate lookup for that representation.
+            }
         }
         throw new IllegalStateException(
                 "Could not resolve canonical Match for replay analysis " + analysis.getMatchId());

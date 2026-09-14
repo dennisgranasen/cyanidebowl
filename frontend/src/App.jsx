@@ -63,7 +63,7 @@ function Auth0ProviderWithRedirectCallback({ children, ...props }) {
   /*
   const onRedirectCallback = (appState) => {
     navigate((appState && appState.returnTo) || window.location.pathname);
-  };  
+  };
   */
   const onRedirectCallback = (appState) => {
     // Skicka användaren till sparad returnTo, eller fallback till startsidan

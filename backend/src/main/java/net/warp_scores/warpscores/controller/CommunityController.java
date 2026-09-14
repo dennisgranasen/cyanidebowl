@@ -76,6 +76,13 @@ public class CommunityController {
         return service.ratingSummaryForMatch(matchId);
     }
 
+    @GetMapping("/matches/{matchId}/rating-overview")
+    public List<EditorialCommunityService.PlayerRatingOverview> matchRatingOverview(
+            Authentication auth,
+            @PathVariable String matchId) {
+        return service.ratingOverviewForMatch(auth, matchId);
+    }
+
     @GetMapping("/players/{playerId}/ratings")
     public EditorialCommunityService.RatingSummary playerRatings(@PathVariable String playerId,
                                                                   @RequestParam(required = false) String seasonId) {

@@ -9,6 +9,8 @@ import net.warp_scores.warpscores.ai.provider.CanonicalLlmResponse;
 import net.warp_scores.warpscores.ai.provider.LlmExecutionService;
 import net.warp_scores.warpscores.domain.persistence.AiPlayerMatchRatingRepository;
 import net.warp_scores.warpscores.model.AiPlayerMatchRating;
+import net.warp_scores.warpscores.service.LocalizationService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -23,10 +25,24 @@ class LlmPlayerRatingGeneratorTest {
     private final ContextPlanner planner = mock(ContextPlanner.class);
     private final ContextAssemblyService assembly = mock(ContextAssemblyService.class);
     private final LlmExecutionService llm = mock(LlmExecutionService.class);
-    private final AiPlayerMatchRatingRepository ratings = mock(AiPlayerMatchRatingRepository.class);
+    private final AiPlayerMatchRatingRepository ratings =
+            mock(AiPlayerMatchRatingRepository.class);
+    private final LocalizationService localization =
+            mock(LocalizationService.class);
 
-    private final LlmPlayerRatingGenerator generator = new LlmPlayerRatingGenerator(
-            new ObjectMapper(), planner, assembly, llm, ratings);
+    private LlmPlayerRatingGenerator generator;
+
+    @BeforeEach
+    void setUp() {
+        when(localization.defaultLocale()).thenReturn("sv");
+        generator = new LlmPlayerRatingGenerator(
+                new ObjectMapper(),
+                planner,
+                assembly,
+                llm,
+                ratings,
+                localization);
+    }
 
     @Test
     void validatesWholeResponseBeforeWritingAnything() {
@@ -72,10 +88,20 @@ class LlmPlayerRatingGeneratorTest {
         captor.getValue().forEach(saved::add);
 
         assertEquals(2, saved.size());
-        assertEquals(List.of("p1", "p2"),
-                saved.stream().map(AiPlayerMatchRating::getPlayerId).sorted().toList());
-        assertTrue(saved.stream().allMatch(r -> r.getRating() >= -3 && r.getRating() <= 3));
-        assertEquals(2, saved.stream().map(AiPlayerMatchRating::getId).distinct().count());
+        assertEquals(
+                List.of("p1", "p2"),
+                saved.stream()
+                        .map(AiPlayerMatchRating::getPlayerId)
+                        .sorted()
+                        .toList());
+        assertTrue(saved.stream()
+                .allMatch(r -> r.getRating() >= -3 && r.getRating() <= 3));
+        assertEquals(
+                2,
+                saved.stream()
+                        .map(AiPlayerMatchRating::getId)
+                        .distinct()
+                        .count());
         verify(llm, times(1)).generate(eq("r1"), any());
     }
 
@@ -88,7 +114,8 @@ class LlmPlayerRatingGeneratorTest {
                 ]}
                 """));
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(
+                IllegalArgumentException.class,
                 () -> generator.generateAndPersist(reporter(), facts(), null));
 
         verify(ratings, never()).saveAll(any());
@@ -109,9 +136,17 @@ class LlmPlayerRatingGeneratorTest {
                 .matchSummary(Map.of())
                 .players(List.of(
                         PlayerRatingFacts.Player.builder()
-                                .playerId("p1").playerName("One").teamId("t1").race("HUMAN").build(),
+                                .playerId("p1")
+                                .playerName("One")
+                                .teamId("t1")
+                                .race("HUMAN")
+                                .build(),
                         PlayerRatingFacts.Player.builder()
-                                .playerId("p2").playerName("Two").teamId("t2").race("ORC").build()))
+                                .playerId("p2")
+                                .playerName("Two")
+                                .teamId("t2")
+                                .race("ORC")
+                                .build()))
                 .build();
     }
 
@@ -121,7 +156,11 @@ class LlmPlayerRatingGeneratorTest {
 
     private static CanonicalLlmResponse response(String content) {
         return new CanonicalLlmResponse(
-                "test-provider", "test-model", "req-1", content,
-                CanonicalLlmResponse.Usage.unknown(), "stop");
+                "test-provider",
+                "test-model",
+                "req-1",
+                content,
+                CanonicalLlmResponse.Usage.unknown(),
+                "stop");
     }
 }

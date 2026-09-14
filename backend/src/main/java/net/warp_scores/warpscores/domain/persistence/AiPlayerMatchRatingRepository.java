@@ -10,5 +10,7 @@ import java.util.List;
 public interface AiPlayerMatchRatingRepository extends MongoRepository<AiPlayerMatchRating, String> {
     List<AiPlayerMatchRating> findByMatchId(String matchId);
     List<AiPlayerMatchRating> findByMatchIdAndReporterId(String matchId, String reporterId);
+    List<AiPlayerMatchRating> findBySeasonId(String seasonId);
+    List<AiPlayerMatchRating> findBySeasonIdAndPlayerId(String seasonId, String playerId);
     List<AiPlayerMatchRating> findByPlayerIdOrderByGeneratedAtDesc(String playerId);
 }

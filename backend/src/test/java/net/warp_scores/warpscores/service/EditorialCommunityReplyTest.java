@@ -28,6 +28,7 @@ class EditorialCommunityReplyTest {
     private final CommunityReactionRepository reactions = mock(CommunityReactionRepository.class);
     private final MatchPlayerParticipationRepository participation = mock(MatchPlayerParticipationRepository.class);
     private final MatchPlayerRatingRepository ratings = mock(MatchPlayerRatingRepository.class);
+    private final AiPlayerMatchRatingRepository aiPlayerRatings = mock(AiPlayerMatchRatingRepository.class);
     private final MatchRepository matches = mock(MatchRepository.class);
     private final TeamRepository teams = mock(TeamRepository.class);
     private final StageSourceRepository stageSources = mock(StageSourceRepository.class);
@@ -41,7 +42,7 @@ class EditorialCommunityReplyTest {
 
     private final EditorialCommunityService service = new EditorialCommunityService(
             articles, matchArticles, comments, reactions, participation, ratings,
-            matches, teams, stageSources, users, coachClaims, permissions, interactions,
+            aiPlayerRatings, matches, teams, stageSources, users, coachClaims, permissions, interactions,
             fanInteractions, staffArticleWork, continuity);
 
     @Test

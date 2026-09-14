@@ -29,7 +29,8 @@ public class LlmExecutionService {
     private CanonicalLlmResponse generateAdmitted(
             String reporterId,
             CanonicalLlmRequest request) {
-        List<LlmProviderRouter.ModelTarget> targets = router.targetsForReporter(reporterId);
+        List<LlmProviderRouter.ModelTarget> targets =
+                router.targetsForTask(reporterId, request.taskType());
         if (targets.isEmpty()) {
             throw new IllegalStateException("No LLM targets configured for reporter " + reporterId);
         }

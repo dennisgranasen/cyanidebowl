@@ -33,7 +33,7 @@ cyanide:
   request-limit:
     capacity: 30
     period-in-seconds: 30
-  defaults:  
+  defaults:
     opus: 3
     page-limit: 100
     fetch-match-max-age-limit: 10000
@@ -97,9 +97,16 @@ warpscores:
     providers:
       gemini:
         api-key: ${AI_API_KEY_GEMINI:}
-        base-url: https://generativelanguage.googleapis.com/v1beta        
+        base-url: https://generativelanguage.googleapis.com/v1beta
         timeout: 60s
       openai-compatible:
+        cloudflare:
+          base-url: https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID:}/ai/v1
+          api-key: ${AI_API_KEY_CLOUDFLARE:}
+          timeout: ${CLOUDFLARE_TEXT_TIMEOUT:60s}
+          structured-output: true
+          context-window-tokens: 128000
+          max-output-tokens: 8192
         groq:
           base-url: https://api.groq.com/openai/v1
           api-key: ${AI_API_KEY_GROQ:}
@@ -129,10 +136,56 @@ warpscores:
     default-targets:
       - provider-id: gemini
         model: gemini-3.6-flash
-      - provider-id: groq
-        model: openai/gpt-oss-120b # qwen/qwen3.6-27b
-      - provider-id: openrouter
-        model: openrouter/free
+      #- provider-id: groq
+      #  model: openai/gpt-oss-120b # qwen/qwen3.6-27b
+      #- provider-id: openrouter
+      #  model: openrouter/free
+
+    # Task-specific text routing. These routes take precedence over reporter-targets
+    # and default-targets. Ordered entries are retry/fallback targets.
+    task-targets:
+      EDITORIAL_ARTICLE:
+        - provider-id: gemini
+          model: gemini-3.6-flash
+        - provider-id: cloudflare
+          model: ${AI_MODEL_EDITORIAL:@cf/openai/gpt-oss-20b}
+        - provider-id: groq
+          model: openai/gpt-oss-120b
+      MATCH_REPORT:
+        - provider-id: gemini
+          model: gemini-3.6-flash
+        - provider-id: cloudflare
+          model: ${AI_MODEL_MATCH_REPORT:@cf/openai/gpt-oss-20b}
+        - provider-id: groq
+          model: openai/gpt-oss-120b
+      FAN_PROFILE:
+        - provider-id: cloudflare
+          model: ${AI_MODEL_FAN_PROFILE:@cf/openai/gpt-oss-20b}
+        - provider-id: groq
+          model: openai/gpt-oss-120b
+        - provider-id: gemini
+          model: gemini-3.6-flash
+      PLAYER_RATING:
+        - provider-id: cloudflare
+          model: ${AI_MODEL_PLAYER_RATING:@cf/openai/gpt-oss-20b}
+        - provider-id: groq
+          model: openai/gpt-oss-120b
+        - provider-id: gemini
+          model: gemini-3.6-flash
+      ARTICLE_COMMENT:
+        - provider-id: cloudflare
+          model: ${AI_MODEL_ARTICLE_COMMENT:@cf/openai/gpt-oss-20b}
+        - provider-id: groq
+          model: openai/gpt-oss-120b
+        - provider-id: gemini
+          model: gemini-3.6-flash
+      SOCIAL_REPLY:
+        - provider-id: cloudflare
+          model: ${AI_MODEL_SOCIAL_REPLY:@cf/openai/gpt-oss-20b}
+        - provider-id: groq
+          model: openai/gpt-oss-120b
+        - provider-id: gemini
+          model: gemini-3.6-flash
 
     community-media:
       provider: ${COMMUNITY_MEDIA_PROVIDER:cloudflare}
@@ -161,6 +214,6 @@ warpscores:
     #   lady-putridia:
     #     - provider-id: openrouter
     #       model: openrouter/free
-        
+
   ai-reporting:
     enabled: false # Set to true to enable AI reporting, must fix implementation first.

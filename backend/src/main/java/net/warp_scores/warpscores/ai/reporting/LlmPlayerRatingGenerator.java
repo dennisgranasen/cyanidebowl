@@ -18,7 +18,7 @@ import net.warp_scores.warpscores.ai.provider.LlmExecutionService;
 import net.warp_scores.warpscores.ai.provider.OutputContract;
 import net.warp_scores.warpscores.domain.persistence.AiPlayerMatchRatingRepository;
 import net.warp_scores.warpscores.model.AiPlayerMatchRating;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import net.warp_scores.warpscores.service.LocalizationService;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -32,14 +32,10 @@ import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
-@ConditionalOnProperty(
-        prefix = "warpscores.ai-reporting",
-        name = "enabled",
-        havingValue = "true")
 public class LlmPlayerRatingGenerator
         implements ReporterPlayerRatingService.PlayerRatingGenerator {
 
-    private static final String PROMPT_VERSION = "player-rating-v2-skull-pow";
+    private static final String PROMPT_VERSION = "player-rating-v3-site-locale";
     private static final String SCHEMA = """
             {
               "type":"object",
@@ -55,7 +51,7 @@ public class LlmPlayerRatingGenerator
                     "properties":{
                       "playerId":{"type":"string"},
                       "rating":{"type":"integer","minimum":-3,"maximum":3},
-                      "verdict":{"type":"string","minLength":1,"maxLength":500}
+                      "verdict":{"type":"string","minLength":1,"maxLength":240}
                     }
                   }
                 }
@@ -68,6 +64,7 @@ public class LlmPlayerRatingGenerator
     private final ContextAssemblyService contextAssembly;
     private final LlmExecutionService llm;
     private final AiPlayerMatchRatingRepository ratings;
+    private final LocalizationService localization;
 
     @Override
     public void generateAndPersist(
@@ -86,6 +83,8 @@ public class LlmPlayerRatingGenerator
                 List.of());
         AssembledContext context = contextAssembly.assemble(plan);
 
+        String siteDefaultLocale = localization.defaultLocale();
+
         String task = """
                 Rate EVERY listed player who participated in this match.
 
@@ -101,8 +100,16 @@ public class LlmPlayerRatingGenerator
                 Ratings MUST be integer values from -3 through +3.
                 Apply your own reporter personality, biases, memories and relationships,
                 but do not invent match events. The deterministic facts below are authoritative.
-                Return every supplied player exactly once. verdict should be short and in character.
+                Return every supplied player exactly once. verdict must be one short in-character sentence, maximum 180 characters.
                 """;
+
+        task += """
+
+                LANGUAGE REQUIREMENT:
+                Write every verdict in the site's default locale: %s.
+                Do not translate player names, team names, reporter names, IDs,
+                or other proper names merely to satisfy the locale requirement.
+                """.formatted(siteDefaultLocale);
 
         if (StringUtils.hasText(instruction)) {
             task += "\nEDITOR/TECHNICIAN INSTRUCTION "
@@ -126,27 +133,63 @@ public class LlmPlayerRatingGenerator
                 context,
                 task,
                 new OutputContract(OutputContract.Format.JSON, SCHEMA),
-                new GenerationOptions(0.65, 5000));
+                new GenerationOptions(null, 6000, null));
 
         CanonicalLlmResponse response = llm.generate(reporter.getId(), request);
         persistValidated(reporter, facts, response);
+    }
+
+    private JsonNode parseRatingJson(String content) {
+        if (!StringUtils.hasText(content)) {
+            throw new IllegalArgumentException(
+                    "Player rating response was not valid JSON: empty response");
+        }
+
+        try {
+            JsonNode direct = objectMapper.readTree(content);
+            if (direct != null && direct.path("ratings").isArray()) {
+                return direct;
+            }
+        } catch (Exception ignored) {
+            // Try embedded JSON objects below.
+        }
+
+        for (int offset = 0; offset < content.length(); offset++) {
+            if (content.charAt(offset) != '{') continue;
+            try {
+                JsonNode candidate = objectMapper.readTree(content.substring(offset));
+                if (candidate != null && candidate.path("ratings").isArray()) {
+                    return candidate;
+                }
+            } catch (Exception ignored) {
+                // Keep scanning.
+            }
+        }
+
+        throw new IllegalArgumentException(
+                "Player rating response was not valid JSON: no ratings object found");
     }
 
     private void persistValidated(
             AiReporterDefinition reporter,
             PlayerRatingFacts facts,
             CanonicalLlmResponse response) {
-        final JsonNode root;
-        try {
-            root = objectMapper.readTree(response.content());
-        } catch (Exception e) {
-            throw new IllegalArgumentException(
-                    "Player rating response was not valid JSON", e);
-        }
+        final JsonNode root = parseRatingJson(response.content());
 
         Map<String, PlayerRatingFacts.Player> allowed = new HashMap<>();
+        Map<String, String> canonicalPlayerIds = new HashMap<>();
         for (PlayerRatingFacts.Player player : facts.getPlayers()) {
-            allowed.put(player.getPlayerId(), player);
+            String canonical = player.getPlayerId();
+            allowed.put(canonical, player);
+            canonicalPlayerIds.put(canonical, canonical);
+            String raw = canonical != null && canonical.startsWith("3_")
+                    ? canonical.substring(2) : canonical;
+            if (raw != null) {
+                allowed.put(raw, player);
+                canonicalPlayerIds.put(raw, canonical);
+                allowed.put("3_" + raw, player);
+                canonicalPlayerIds.put("3_" + raw, canonical);
+            }
         }
 
         JsonNode rows = root.path("ratings");
@@ -161,7 +204,8 @@ public class LlmPlayerRatingGenerator
         for (JsonNode row : rows) {
             String playerId = row.path("playerId").asText("").trim();
             PlayerRatingFacts.Player player = allowed.get(playerId);
-            if (player == null || !seen.add(playerId)) {
+            String canonicalPlayerId = canonicalPlayerIds.get(playerId);
+            if (player == null || canonicalPlayerId == null || !seen.add(canonicalPlayerId)) {
                 throw new IllegalArgumentException(
                         "Unknown or duplicate player in rating response: " + playerId);
             }
@@ -181,10 +225,13 @@ public class LlmPlayerRatingGenerator
             AiPlayerMatchRating entity = new AiPlayerMatchRating();
             entity.setId(facts.getMatchId() + ":" + playerId + ":" + reporter.getId());
             entity.setMatchId(facts.getMatchId());
+            Object seasonId = facts.getMatchSummary().get("seasonId");
+            entity.setSeasonId(seasonId == null ? null : String.valueOf(seasonId));
             entity.setPlayerId(playerId);
             entity.setTeamId(player.getTeamId());
             entity.setPlayerRace(player.getRace());
             entity.setReporterId(reporter.getId());
+            entity.setSourceType(AiPlayerMatchRating.SourceType.EDITORIAL);
             entity.setObjectiveScore(player.getObjectiveScore());
             entity.setRating(rating);
             entity.setVerdict(verdict);

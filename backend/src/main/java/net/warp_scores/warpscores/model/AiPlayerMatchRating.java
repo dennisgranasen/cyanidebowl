@@ -16,12 +16,18 @@ import java.time.Instant;
         def = "{'matchId':1,'playerId':1,'reporterId':1}",
         unique = true)
 public class AiPlayerMatchRating {
+    public enum SourceType { EDITORIAL, FAN }
+
     @Id private String id;
     private String matchId;
+    private String seasonId;
     private String playerId;
     private String teamId;
     private String playerRace;
     private String reporterId;
+    private SourceType sourceType;
+    private String raterDisplayName;
+    private String raterTeamId;
 
     /** Deterministic application-owned performance metric, independent of persona. */
     private Double objectiveScore;

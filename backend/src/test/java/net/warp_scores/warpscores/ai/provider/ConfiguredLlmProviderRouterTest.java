@@ -1,5 +1,6 @@
 package net.warp_scores.warpscores.ai.provider;
 
+import net.warp_scores.warpscores.ai.context.ContextTaskType;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -21,6 +22,46 @@ class ConfiguredLlmProviderRouterTest {
                 .containsExactly(new LlmProviderRouter.ModelTarget("openrouter", "special-model"));
         assertThat(router.targetsForReporter("other"))
                 .containsExactly(new LlmProviderRouter.ModelTarget("gemini", "default-model"));
+    }
+
+    @Test
+    void usesTaskTargetsBeforeReporterAndDefaultTargets() {
+        AiProviderProperties props = new AiProviderProperties();
+        props.setDefaultTargets(List.of(target("gemini", "default-model")));
+        props.getReporterTargets().put(
+                "putridia",
+                List.of(target("openrouter", "reporter-model")));
+        props.getTaskTargets().put(
+                ContextTaskType.PLAYER_RATING.name(),
+                List.of(target("cloudflare", "@cf/openai/gpt-oss-20b")));
+
+        ConfiguredLlmProviderRouter router = new ConfiguredLlmProviderRouter(
+                props,
+                new LlmProviderRegistry(List.of(
+                        provider("gemini"),
+                        provider("openrouter"),
+                        provider("cloudflare"))));
+
+        assertThat(router.targetsForTask(
+                "putridia",
+                ContextTaskType.PLAYER_RATING))
+                .containsExactly(new LlmProviderRouter.ModelTarget(
+                        "cloudflare",
+                        "@cf/openai/gpt-oss-20b"));
+
+        assertThat(router.targetsForTask(
+                "putridia",
+                ContextTaskType.EDITORIAL_ARTICLE))
+                .containsExactly(new LlmProviderRouter.ModelTarget(
+                        "openrouter",
+                        "reporter-model"));
+
+        assertThat(router.targetsForTask(
+                "other",
+                ContextTaskType.EDITORIAL_ARTICLE))
+                .containsExactly(new LlmProviderRouter.ModelTarget(
+                        "gemini",
+                        "default-model"));
     }
 
     @Test
