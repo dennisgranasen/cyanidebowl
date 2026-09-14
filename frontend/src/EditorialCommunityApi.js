@@ -39,6 +39,9 @@ const EditorialCommunityApi = {
   react: async (targetType, targetId, type, getToken) =>
     (await axios.put(`${base}/community/reactions/${targetType}/${encodeURIComponent(targetId)}`,
       { type }, { headers: await authHeaders(getToken) })).data,
+  removeReaction: async (targetType, targetId, getToken) =>
+    axios.delete(`${base}/community/reactions/${targetType}/${encodeURIComponent(targetId)}`,
+      { headers: await authHeaders(getToken) }),
   matchPlayers: (matchId) => get(`/community/matches/${encodeURIComponent(matchId)}/players`),
   matchRatings: (matchId) => get(`/community/matches/${encodeURIComponent(matchId)}/ratings`),
   ratePlayer: async (matchId, playerId, score, getToken) =>

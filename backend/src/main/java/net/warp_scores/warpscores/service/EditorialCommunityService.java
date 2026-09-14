@@ -262,6 +262,14 @@ public class EditorialCommunityService {
         return reactions.save(reaction);
     }
 
+    public void removeReaction(Authentication auth, CommunityReaction.TargetType targetType,
+                               String targetId) {
+        requireAuthenticated(auth);
+        String userSubject = currentUser(auth).subject();
+        reactions.findByTargetTypeAndTargetIdAndUserSubject(targetType, targetId, userSubject)
+                .ifPresent(reactions::delete);
+    }
+
     public ReactionSummary reactionSummary(Authentication auth, CommunityReaction.TargetType targetType,
                                            String targetId) {
         List<CommunityReaction> list = reactions.findByTargetTypeAndTargetId(targetType, targetId);

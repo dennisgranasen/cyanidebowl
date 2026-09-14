@@ -24,7 +24,20 @@ function ReactionBar({ targetType, targetId }) {
 
   const react = async (type) => {
     if (!isAuthenticated) return;
-    await EditorialCommunityApi.react(targetType, targetId, type, getAccessTokenSilently);
+    if (summary?.mine === type) {
+      await EditorialCommunityApi.removeReaction(
+        targetType,
+        targetId,
+        getAccessTokenSilently,
+      );
+    } else {
+      await EditorialCommunityApi.react(
+        targetType,
+        targetId,
+        type,
+        getAccessTokenSilently,
+      );
+    }
     await load();
   };
 

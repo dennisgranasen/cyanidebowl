@@ -53,6 +53,13 @@ public class CommunityController {
         return service.react(auth, targetType, targetId, input.type());
     }
 
+    @DeleteMapping("/reactions/{targetType}/{targetId}")
+    public void removeReaction(Authentication auth,
+                               @PathVariable CommunityReaction.TargetType targetType,
+                               @PathVariable String targetId) {
+        service.removeReaction(auth, targetType, targetId);
+    }
+
     @GetMapping("/matches/{matchId}/players")
     public List<MatchPlayerParticipation> players(@PathVariable String matchId) {
         return service.eligiblePlayers(matchId);

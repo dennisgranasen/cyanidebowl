@@ -95,7 +95,11 @@ const difficultyOrder = (value) => {
 const orderedTargets = (rows) => unique(rows.map((row) => row.target))
   .sort((left, right) => difficultyOrder(left) - difficultyOrder(right) || String(left).localeCompare(String(right)));
 
-const formatSuccessTotal = (row) => row ? `${row.success || 0}/${row.total || 0}` : '—';
+const displayZeroBlank = (value) => Number(value || 0) === 0 ? '' : value;
+
+const formatSuccessTotal = (row) => row
+  ? `${Number(row.success || 0)}/${Number(row.total || 0)}`
+  : '—';
 
 const sumActionRows = (rows) => rows.reduce((totals, row) => ({
   success: totals.success + Number(row?.success || 0),
@@ -172,7 +176,7 @@ function BlockFaceTable({ rows, match }) {
           const teamRows = [0, 1].map((team) => findTeamRow(rows, team, (row) => row.target === target));
           return <Tr key={target}>
             <Td fontWeight="semibold">{target}</Td>
-            {teamRows.flatMap((row, team) => BLOCK_FACES.map(([key]) => <Td key={`${team}-${key}`} isNumeric {...teamTint(team)}>{row?.[key] || 0}</Td>))}
+            {teamRows.flatMap((row, team) => BLOCK_FACES.map(([key]) => <Td key={`${team}-${key}`} isNumeric {...teamTint(team)}>{displayZeroBlank(row?.[key])}</Td>))}
           </Tr>;
         })}</Tbody>
       </Table>
@@ -196,7 +200,7 @@ function BlockOutcomeTable({ rows, match }) {
           const teamRows = [0, 1].map((team) => findTeamRow(rows, team, (row) => row.target === target));
           return <Tr key={target}>
             <Td fontWeight="semibold">{target}</Td>
-            {teamRows.flatMap((row, team) => ['success', 'neutral', 'fail', 'total'].map((key) => <Td key={`${team}-${key}`} isNumeric {...teamTint(team)}>{row?.[key] || 0}</Td>))}
+            {teamRows.flatMap((row, team) => ['success', 'neutral', 'fail', 'total'].map((key) => <Td key={`${team}-${key}`} isNumeric {...teamTint(team)}>{displayZeroBlank(row?.[key])}</Td>))}
           </Tr>;
         })}</Tbody>
       </Table>
@@ -207,7 +211,9 @@ function BlockOutcomeTable({ rows, match }) {
 function SpecialActionTable({ rows, match }) {
   if (!rows.length) return null;
   const actions = unique(rows.map((row) => row.eventType));
-  const display = (row) => row ? `${row.success || 0} / ${row.neutral || 0} / ${row.fail || 0} · ${row.total || 0}` : '—';
+  const display = (row) => row
+    ? `${Number(row.success || 0)} / ${Number(row.neutral || 0)} / ${Number(row.fail || 0)} · ${Number(row.total || 0)}`
+    : '—';
   return <Box>
     <Heading size="sm" mb={2}>Special actions</Heading>
     <Text fontSize="sm" color="gray.500" mb={2}>Success / neutral / fail · total. Special-action dice are not double-counted as ordinary D6 actions.</Text>
@@ -267,8 +273,8 @@ function DiceHistogramTable({ rows, match, title, outcomes, description, outcome
           const teamRows = diceRowsForTeam(rows, team);
           return <Tr key={team} {...teamTint(team)}>
             <Td fontWeight="semibold" whiteSpace="nowrap">{team < 0 ? 'Match' : teamName(match, team)}</Td>
-            {visibleOutcomes.map((value) => <Td key={`${team}-${value}`} isNumeric>{resultCount(teamRows, value) || '—'}</Td>)}
-            <Td isNumeric fontWeight="semibold">{resultTotal(teamRows) || '—'}</Td>
+            {visibleOutcomes.map((value) => <Td key={`${team}-${value}`} isNumeric>{displayZeroBlank(resultCount(teamRows, value))}</Td>)}
+            <Td isNumeric fontWeight="semibold">{displayZeroBlank(resultTotal(teamRows))}</Td>
           </Tr>;
         })}</Tbody>
       </Table>
