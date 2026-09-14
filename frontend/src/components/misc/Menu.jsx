@@ -188,11 +188,6 @@ function Menu({ leagueSystems = [], selectedLeagueSystemId, onSelectLeagueSystem
                   </Box>
                   <VStack align="left" spacing={1}>
                     <Link variant="menu" as={RouteLink} to="/community" onClick={onClose}>Community</Link>
-                    {checkPermissions && userPermissions?.writeSiteAdmin && (
-                      <Link variant="menu" as={RouteLink} to="/admin/community-fans" onClick={onClose}>
-                        Community admin
-                      </Link>
-                    )}
                   </VStack>
                 </Box>
 
@@ -206,8 +201,18 @@ function Menu({ leagueSystems = [], selectedLeagueSystemId, onSelectLeagueSystem
                         {intl.formatMessage({ id: 'menu.admin' })}
                       </Link>
                       {checkPermissions && userPermissions?.writeSiteAdmin && (
+                        <Link variant="menu" as={RouteLink} to="/admin/community-fans" onClick={onClose}>
+                          Community admin
+                        </Link>
+                      )}
+                      {checkPermissions && userPermissions?.writeSiteAdmin && (
                         <Link variant="menu" as={RouteLink} to="/admin/ai-reporters" onClick={onClose}>
-                          {intl.formatMessage({ id: 'menu.admin.reporters' })}
+                          {intl.formatMessage({ id: 'menu.admin.reporters' })}                          
+                        </Link>
+                      )}
+                      {checkPermissions && userPermissions?.writeSiteAdmin && (
+                        <Link variant="menu" as={RouteLink} to="/admin/ai-autonomous-work" onClick={onClose}>
+                          {intl.formatMessage({ id: 'menu.admin.ai-autonomous-work' })}                          
                         </Link>
                       )}
                       {userPermissions?.writeSiteAdmin && (
