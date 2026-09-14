@@ -1,22 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import {
   Alert, AlertIcon, Badge, Box, Button, FormControl, FormLabel,
-  HStack, Select, Text, Textarea, VStack,
+  HStack, Menu, MenuButton, MenuItem, MenuList, Text, Textarea, VStack,
 } from '@chakra-ui/react';
 import useAuth0WithUserPermissions from '../../hooks/useAuth0WithUserPermissions';
 import EditorialCommunityApi from '../../EditorialCommunityApi';
+import NuffleDiceGlyph, { ratingGlyphs } from '../NuffleDiceGlyph';
 
-const scaleLabel = (value) => {
-  const n = Number(value);
-  if (n === -3) return '☠ ☠ ☠';
-  if (n === -2) return '☠ ☠';
-  if (n === -1) return '☠';
-  if (n === 0) return '0';
-  if (n === 1) return 'POW';
-  if (n === 2) return 'POW POW';
-  if (n === 3) return 'POW POW POW';
-  return String(value);
-};
+const RatingGlyph = ({ value, fontSize = '1.35rem' }) => (
+  <NuffleDiceGlyph
+    glyph={ratingGlyphs(value)}
+    label={`Rating ${value > 0 ? `+${value}` : value}`}
+    fontSize={fontSize}
+  />
+);
 
 function MatchPlayerRatings({ matchId }) {
   const { isAuthenticated, getAccessTokenSilently } = useAuth0WithUserPermissions();
@@ -137,25 +134,30 @@ function MatchPlayerRatings({ matchId }) {
                 <Text fontWeight="600">{player.playerName}</Text>
                 {!player.participated && <Badge>MNG</Badge>}
                 {item && (
-                  <Text fontSize="sm">
-                    Publikt snitt: {item.average.toFixed(1)} ({item.count})
-                  </Text>
+                  <HStack fontSize="sm" spacing={2}>
+                    <Text>Publikt snitt:</Text>
+                    <RatingGlyph value={Math.max(-3, Math.min(3, Math.round(item.average)))}/>
+                    <Text>{item.average.toFixed(1)} ({item.count})</Text>
+                  </HStack>
                 )}
               </Box>
 
               {isAuthenticated && player.participated && (
-                <Select
-                  size="sm"
-                  w="190px"
-                  placeholder="Ditt betyg"
-                  onChange={(e) => rate(player.playerId, e.target.value)}
-                >
-                  {[-3,-2,-1,0,1,2,3].map((n) => (
-                    <option key={n} value={n}>
-                      {scaleLabel(n)} ({n > 0 ? `+${n}` : n})
-                    </option>
-                  ))}
-                </Select>
+                <Menu>
+                  <MenuButton as={Button} size="sm" variant="outline" w="190px">
+                    Ditt betyg
+                  </MenuButton>
+                  <MenuList minW="190px">
+                    {[-3,-2,-1,0,1,2,3].map((n) => (
+                      <MenuItem key={n} onClick={() => rate(player.playerId, n)}>
+                        <HStack justify="space-between" w="full">
+                          <RatingGlyph value={n}/>
+                          <Text fontSize="sm">{n > 0 ? `+${n}` : n}</Text>
+                        </HStack>
+                      </MenuItem>
+                    ))}
+                  </MenuList>
+                </Menu>
               )}
             </HStack>
 
@@ -164,9 +166,9 @@ function MatchPlayerRatings({ matchId }) {
                 {agentRatings.map((rating) => (
                   <HStack key={rating.id} align="start">
                     <Badge minW="90px">{rating.reporterId}</Badge>
-                    <Text fontSize="sm" fontWeight="700">
-                      {scaleLabel(rating.rating)}
-                    </Text>
+                    <Box fontWeight="700">
+                      <RatingGlyph value={rating.rating}/>
+                    </Box>
                     <Text fontSize="sm" color="gray.500">
                       {rating.verdict}
                     </Text>

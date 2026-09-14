@@ -24,13 +24,19 @@ import {
 } from '@chakra-ui/react';
 
 import MatchTimelineBar from './MatchTimelineBar';
+import TimelineIcon from './TimelineIcon';
+import NuffleDiceGlyph, {
+  blockDieGlyph,
+  canonicalWeatherName,
+  weatherGlyph,
+} from '../NuffleDiceGlyph';
 
 const BLOCK_FACES = [
-  ['skull', '☠', 'Skull'],
-  ['bothDown', '⇅', 'Both down'],
-  ['push', '➜', 'Push'],
-  ['tackle', '✦', 'Defender stumbles'],
-  ['defenderDown', '★', 'Defender down'],
+  ['skull', 'attacker_down', 'Attacker down'],
+  ['bothDown', 'both_down', 'Both down'],
+  ['push', 'push', 'Push'],
+  ['tackle', 'tackle', 'Defender stumbles'],
+  ['defenderDown', 'defender_down', 'Defender down'],
 ];
 
 const KICKOFF_OUTCOMES = {
@@ -68,6 +74,12 @@ const findTeamRow = (rows, teamIndex, predicate) => rows
 
 const unique = (values) => [...new Set(values.filter((value) => value != null))];
 
+const teamTint = (team) => team === 0
+  ? { bg: 'blue.50', _dark: { bg: 'rgba(66, 153, 225, 0.10)' } }
+  : team === 1
+    ? { bg: 'orange.50', _dark: { bg: 'rgba(237, 137, 54, 0.10)' } }
+    : {};
+
 const actionTotal = (analysis) => Array.isArray(analysis?.canonicalActions)
   ? analysis.canonicalActions.length
   : (analysis?.actionStatistics || []).reduce((sum, row) => sum + Number(row.total || 0), 0);
@@ -104,7 +116,7 @@ function D6Table({ rows, match, title = 'D6 actions' }) {
           <Tr>
             <Th rowSpan={2}>Action</Th>
             {[0, 1].map((team) => (
-              <Th key={`team-${team}`} textAlign="center" colSpan={targets.length + 1}>{teamName(match, team)}</Th>
+              <Th key={`team-${team}`} textAlign="center" colSpan={targets.length + 1} {...teamTint(team)}>{teamName(match, team)}</Th>
             ))}
           </Tr>
           <Tr>
@@ -122,9 +134,9 @@ function D6Table({ rows, match, title = 'D6 actions' }) {
             {teamRows.flatMap((entries, team) => [
               ...targets.map((target) => {
                 const row = entries.find((entry) => entry.target === target);
-                return <Td key={`${team}-${eventType}-${target}`} isNumeric>{formatSuccessTotal(row)}</Td>;
+                return <Td key={`${team}-${eventType}-${target}`} isNumeric {...teamTint(team)}>{formatSuccessTotal(row)}</Td>;
               }),
-              <Td key={`${team}-${eventType}-total`} isNumeric fontWeight="semibold">{formatSuccessTotal(totals[team])}</Td>,
+              <Td key={`${team}-${eventType}-total`} isNumeric fontWeight="semibold" {...teamTint(team)}>{formatSuccessTotal(totals[team])}</Td>,
             ])}
           </Tr>;
         })}</Tbody>
@@ -142,14 +154,25 @@ function BlockFaceTable({ rows, match }) {
     <TableContainer>
       <Table size="sm">
         <Thead>
-          <Tr><Th rowSpan={2}>Dice</Th><Th textAlign="center" colSpan={5}>{teamName(match, 0)}</Th><Th textAlign="center" colSpan={5}>{teamName(match, 1)}</Th></Tr>
-          <Tr>{[0, 1].flatMap((team) => BLOCK_FACES.map(([key, symbol, label]) => <Th key={`${team}-${key}`} isNumeric title={label} aria-label={label}>{symbol}</Th>))}</Tr>
+          <Tr><Th rowSpan={2}>Dice</Th><Th textAlign="center" colSpan={5} {...teamTint(0)}>{teamName(match, 0)}</Th><Th textAlign="center" colSpan={5} {...teamTint(1)}>{teamName(match, 1)}</Th></Tr>
+          <Tr>{[0, 1].flatMap((team) => BLOCK_FACES.map(([key, face, label]) => (
+            <Th
+              key={`${team}-${key}`}
+              isNumeric
+              title={label}
+              aria-label={label}
+              textTransform="none"
+              {...teamTint(team)}
+            >
+              <NuffleDiceGlyph glyph={blockDieGlyph(face)} label={label} fontSize="1.55rem"/>
+            </Th>
+          )))}</Tr>
         </Thead>
         <Tbody>{targets.map((target) => {
           const teamRows = [0, 1].map((team) => findTeamRow(rows, team, (row) => row.target === target));
           return <Tr key={target}>
             <Td fontWeight="semibold">{target}</Td>
-            {teamRows.flatMap((row, team) => BLOCK_FACES.map(([key]) => <Td key={`${team}-${key}`} isNumeric>{row?.[key] || 0}</Td>))}
+            {teamRows.flatMap((row, team) => BLOCK_FACES.map(([key]) => <Td key={`${team}-${key}`} isNumeric {...teamTint(team)}>{row?.[key] || 0}</Td>))}
           </Tr>;
         })}</Tbody>
       </Table>
@@ -166,14 +189,14 @@ function BlockOutcomeTable({ rows, match }) {
     <TableContainer>
       <Table size="sm">
         <Thead>
-          <Tr><Th rowSpan={2}>Dice</Th><Th textAlign="center" colSpan={4}>{teamName(match, 0)}</Th><Th textAlign="center" colSpan={4}>{teamName(match, 1)}</Th></Tr>
-          <Tr>{[0, 1].flatMap((team) => ['Success', 'Neutral', 'Fail', 'Total'].map((label) => <Th key={`${team}-${label}`} isNumeric>{label}</Th>))}</Tr>
+          <Tr><Th rowSpan={2}>Dice</Th><Th textAlign="center" colSpan={4} {...teamTint(0)}>{teamName(match, 0)}</Th><Th textAlign="center" colSpan={4} {...teamTint(1)}>{teamName(match, 1)}</Th></Tr>
+          <Tr>{[0, 1].flatMap((team) => ['Success', 'Neutral', 'Fail', 'Total'].map((label) => <Th key={`${team}-${label}`} isNumeric {...teamTint(team)}>{label}</Th>))}</Tr>
         </Thead>
         <Tbody>{targets.map((target) => {
           const teamRows = [0, 1].map((team) => findTeamRow(rows, team, (row) => row.target === target));
           return <Tr key={target}>
             <Td fontWeight="semibold">{target}</Td>
-            {teamRows.flatMap((row, team) => ['success', 'neutral', 'fail', 'total'].map((key) => <Td key={`${team}-${key}`} isNumeric>{row?.[key] || 0}</Td>))}
+            {teamRows.flatMap((row, team) => ['success', 'neutral', 'fail', 'total'].map((key) => <Td key={`${team}-${key}`} isNumeric {...teamTint(team)}>{row?.[key] || 0}</Td>))}
           </Tr>;
         })}</Tbody>
       </Table>
@@ -190,11 +213,11 @@ function SpecialActionTable({ rows, match }) {
     <Text fontSize="sm" color="gray.500" mb={2}>Success / neutral / fail · total. Special-action dice are not double-counted as ordinary D6 actions.</Text>
     <TableContainer>
       <Table size="sm">
-        <Thead><Tr><Th>Action</Th><Th isNumeric>{teamName(match, 0)}</Th><Th isNumeric>{teamName(match, 1)}</Th></Tr></Thead>
+        <Thead><Tr><Th>Action</Th><Th isNumeric {...teamTint(0)}>{teamName(match, 0)}</Th><Th isNumeric {...teamTint(1)}>{teamName(match, 1)}</Th></Tr></Thead>
         <Tbody>{actions.map((action) => <Tr key={action}>
           <Td fontWeight="semibold">{action}</Td>
-          <Td isNumeric>{display(findTeamRow(rows, 0, (row) => row.eventType === action))}</Td>
-          <Td isNumeric>{display(findTeamRow(rows, 1, (row) => row.eventType === action))}</Td>
+          <Td isNumeric {...teamTint(0)}>{display(findTeamRow(rows, 0, (row) => row.eventType === action))}</Td>
+          <Td isNumeric {...teamTint(1)}>{display(findTeamRow(rows, 1, (row) => row.eventType === action))}</Td>
         </Tr>)}</Tbody>
       </Table>
     </TableContainer>
@@ -242,7 +265,7 @@ function DiceHistogramTable({ rows, match, title, outcomes, description, outcome
         </Thead>
         <Tbody>{lanes.map((team) => {
           const teamRows = diceRowsForTeam(rows, team);
-          return <Tr key={team}>
+          return <Tr key={team} {...teamTint(team)}>
             <Td fontWeight="semibold" whiteSpace="nowrap">{team < 0 ? 'Match' : teamName(match, team)}</Td>
             {visibleOutcomes.map((value) => <Td key={`${team}-${value}`} isNumeric>{resultCount(teamRows, value) || '—'}</Td>)}
             <Td isNumeric fontWeight="semibold">{resultTotal(teamRows) || '—'}</Td>
@@ -265,7 +288,7 @@ function DiceContextTable({ rows, match, title, description }) {
     {description && <Text fontSize="sm" color="gray.500" mb={2}>{description}</Text>}
     <TableContainer>
       <Table size="sm">
-        <Thead><Tr><Th>Roll</Th><Th>Die</Th><Th>{teamName(match, 0)}</Th><Th>{teamName(match, 1)}</Th><Th>Match</Th></Tr></Thead>
+        <Thead><Tr><Th>Roll</Th><Th>Die</Th><Th {...teamTint(0)}>{teamName(match, 0)}</Th><Th {...teamTint(1)}>{teamName(match, 1)}</Th><Th>Match</Th></Tr></Thead>
         <Tbody>{labels.map((key) => {
           const [label, dieTypeName] = key.split('\u0000');
           const matching = rows.filter((row) => row.label === label && (row.dieTypeName || 'Unknown') === dieTypeName);
@@ -274,8 +297,8 @@ function DiceContextTable({ rows, match, title, description }) {
           return <Tr key={key}>
             <Td fontWeight="semibold">{label}</Td>
             <Td title={inferred ? 'Die type inferred from replay context' : undefined}>{dieTypeName}{inferred ? '*' : ''}</Td>
-            <Td>{diceDisplay(diceRowsForTeam(matching, 0))}</Td>
-            <Td>{diceDisplay(diceRowsForTeam(matching, 1))}</Td>
+            <Td {...teamTint(0)}>{diceDisplay(diceRowsForTeam(matching, 0))}</Td>
+            <Td {...teamTint(1)}>{diceDisplay(diceRowsForTeam(matching, 1))}</Td>
             <Td>{diceDisplay(neutral)}</Td>
           </Tr>;
         })}</Tbody>
@@ -306,18 +329,36 @@ const diceExpression = (details = {}) => {
   return dice.length > 1 ? `${raw} = ${total}` : raw;
 };
 
+function WeatherLabel({ value, compact = false }) {
+  if (!value) return null;
+  const glyph = weatherGlyph(value);
+  const name = canonicalWeatherName(value);
+  return <HStack as="span" display="inline-flex" spacing={2}>
+    {glyph && <NuffleDiceGlyph glyph={glyph} label={name} fontSize={compact ? '1.25rem' : '1.7rem'}/>}
+    <Text as="span">{name}</Text>
+  </HStack>;
+}
+
 function WeatherPanel({ events }) {
   if (!events.length) return null;
   const current = [...events].reverse().find((event) => event.details?.weather);
   return <Box>
     <Heading size="sm" mb={2}>Weather</Heading>
-    {current && <Text fontSize="lg" fontWeight="semibold" mb={2}>{current.details.weather}</Text>}
+    {current && (
+      <Box fontSize="lg" fontWeight="semibold" mb={2}>
+        <WeatherLabel value={current.details.weather}/>
+      </Box>
+    )}
     <VStack align="stretch" spacing={2}>
       {events.map((event, index) => <Box key={event.id} borderWidth="1px" borderRadius="md" p={3}>
         <Text fontSize="xs" color="gray.500">{index === 0 ? 'Starting weather' : timelinePosition(event) || 'Weather change'}</Text>
         <HStack flexWrap="wrap">
           {diceExpression(event.details) && <Text>{diceExpression(event.details)}</Text>}
-          {event.details?.weather && <Badge>{event.details.weather}</Badge>}
+          {event.details?.weather && (
+            <Badge textTransform="none">
+              <WeatherLabel value={event.details.weather} compact/>
+            </Badge>
+          )}
           {event.details?.tableName && <Text fontSize="sm" color="gray.500">{event.details.tableName} weather table</Text>}
         </HStack>
       </Box>)}
@@ -339,10 +380,22 @@ function MatchTimeline({ events, match }) {
     const details = event.details || {};
     const roll = diceExpression(details);
     return <Box key={event.id} ml={nested ? 5 : 0} pl={3} py={2} borderLeftWidth={nested ? '2px' : '3px'}>
-      <Box>
-        <Text fontSize="xs" color="gray.500">{timelinePosition(event) || `Replay step ${event.sequence}`}</Text>
-        <HStack flexWrap="wrap">
-          <Text fontWeight="semibold">{event.title}</Text>
+      <HStack align="flex-start" spacing={3}>
+        <Box
+          minW="28px"
+          minH="28px"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          pt={1}
+          aria-hidden="true"
+        >
+          <TimelineIcon event={event} size={24}/>
+        </Box>
+        <Box flex="1" minW={0}>
+          <Text fontSize="xs" color="gray.500">{timelinePosition(event) || `Replay step ${event.sequence}`}</Text>
+          <HStack flexWrap="wrap">
+            <Text fontWeight="semibold">{event.title}</Text>
           {team && <Badge>{team}</Badge>}
           {event.sppAwarded != null && <Badge colorScheme="purple">+{event.sppAwarded} SPP</Badge>}
         </HStack>
@@ -351,8 +404,9 @@ function MatchTimeline({ events, match }) {
           {details.resultName ? ` → ${details.resultName}` : details.resultId != null ? ` → result ${details.resultId}` : ''}
         </Text>}
         {event.type !== 'KICKOFF' && roll && <Text fontSize="sm">{roll}</Text>}
-        {event.score && <Text fontSize="sm">Score {event.score.home}–{event.score.away}</Text>}
-      </Box>
+          {event.score && <Text fontSize="sm">Score {event.score.home}–{event.score.away}</Text>}
+        </Box>
+      </HStack>
       {(children[event.id] || []).map((child) => renderEvent(child, true))}
     </Box>;
   };

@@ -106,18 +106,19 @@ export const canonicalWeatherName = (value) => {
 export const ratingGlyphs = (value) => {
   const rating = Number(value);
   if (!Number.isInteger(rating) || rating < -3 || rating > 3) return null;
-  if (rating < 0) return Array(Math.abs(rating)).fill(NUFFLE_BLOCK_DICE.attackerDown).join(' ');
+  if (rating < 0) return Array(Math.abs(rating)).fill(NUFFLE_BLOCK_DICE.attackerDown).join('');
   if (rating === 0) return NUFFLE_BLOCK_DICE.bothDown;
-  return Array(rating).fill(NUFFLE_BLOCK_DICE.defenderDown).join(' ');
+  return Array(rating).fill(NUFFLE_BLOCK_DICE.defenderDown).join('');
 };
 
 export default function NuffleDiceGlyph({ glyph, label, fontSize = '1.35em', ...props }) {
   if (!glyph) return null;
   return <Box
     as="span"
-    fontFamily="nuffleDice"
+    fontFamily="'EmbeddedNuffleDice', sans-serif"
     fontSize={fontSize}
     lineHeight="1"
+    textTransform="none"
     aria-label={label}
     title={label}
     {...props}
