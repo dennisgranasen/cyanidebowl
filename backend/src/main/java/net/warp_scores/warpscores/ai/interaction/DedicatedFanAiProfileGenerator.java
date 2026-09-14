@@ -54,7 +54,7 @@ public class DedicatedFanAiProfileGenerator {
                             new OutputContract(OutputContract.Format.JSON, schema()),
                             new GenerationOptions(0.95, 5000)));
 
-            Draft draft = objectMapper.readValue(response.content(), Draft.class);
+            Draft draft = parseDraft(response.content());
             validate(draft, policy);
             apply(profile, draft);
             profile.setGenerationSource(AiCommunityMemberProfile.GenerationSource.AI_GENERATED);
@@ -76,6 +76,52 @@ public class DedicatedFanAiProfileGenerator {
                     e.getMessage());
             throw new IllegalStateException("Dedicated Fan AI profile generation failed", e);
         }
+    }
+
+    private Draft parseDraft(String content) {
+        if (!StringUtils.hasText(content)) {
+            throw new IllegalArgumentException(
+                    "Dedicated Fan profile response was empty");
+        }
+
+        String trimmed = content.trim();
+
+        try {
+            return objectMapper.readValue(trimmed, Draft.class);
+        } catch (Exception ignored) {
+            // Some models still wrap structured output in Markdown fences.
+        }
+
+        if (trimmed.startsWith("```")) {
+            int firstNewline = trimmed.indexOf('\n');
+            int closingFence = trimmed.lastIndexOf("```");
+            if (firstNewline >= 0 && closingFence > firstNewline) {
+                String fenced = trimmed.substring(firstNewline + 1, closingFence).trim();
+                try {
+                    return objectMapper.readValue(fenced, Draft.class);
+                } catch (Exception ignored) {
+                    // Continue with embedded-object extraction.
+                }
+            }
+        }
+
+        int start = trimmed.indexOf('{');
+        int end = trimmed.lastIndexOf('}');
+        if (start >= 0 && end > start) {
+            String embedded = trimmed.substring(start, end + 1);
+            try {
+                return objectMapper.readValue(embedded, Draft.class);
+            } catch (Exception e) {
+                throw new IllegalArgumentException(
+                        "Dedicated Fan profile response contained JSON-like content "
+                                + "but it could not be parsed: "
+                                + e.getMessage(),
+                        e);
+            }
+        }
+
+        throw new IllegalArgumentException(
+                "Dedicated Fan profile response did not contain a JSON object");
     }
 
     private DedicatedFanProfilePolicy policy(AiCommunityMemberProfile profile, Team team) {
