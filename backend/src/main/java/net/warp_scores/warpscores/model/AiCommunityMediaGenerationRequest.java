@@ -24,6 +24,7 @@ public class AiCommunityMediaGenerationRequest {
     private String provider;
     private String model;
     private int attempts;
+    private Integer priority;
     private Instant nextAttemptAt;
     private Instant startedAt;
     private String error;

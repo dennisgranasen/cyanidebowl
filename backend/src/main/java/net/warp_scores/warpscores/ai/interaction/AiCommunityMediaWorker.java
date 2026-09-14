@@ -38,7 +38,7 @@ public class AiCommunityMediaWorker {
         Instant now = Instant.now();
         recoverStaleRunning(now);
 
-        requests.findFirstByStatusAndNextAttemptAtLessThanEqualOrderByCreatedAtAsc(
+        requests.findFirstByStatusAndNextAttemptAtLessThanEqualOrderByPriorityDescCreatedAtAsc(
                         AiCommunityMediaGenerationRequest.Status.QUEUED,
                         now)
                 .ifPresent(this::process);
@@ -110,10 +110,20 @@ public class AiCommunityMediaWorker {
                     || request.getAttempts() >= Math.max(1, maxAttempts)) {
                 terminalFail(request, e.getMessage());
             } else {
-                requeue(request, e.getMessage());
+                Instant retryAt = e instanceof AiCommunityImageProviderException p ? p.retryAt() : null;
+                requeue(request, e.getMessage(), retryAt);
             }
         }
     }
+
+    public MediaQueueSnapshot snapshot() {
+        var pending = requests.findByStatusInOrderByPriorityDescCreatedAtAsc(java.util.List.of(AiCommunityMediaGenerationRequest.Status.QUEUED));
+        return new MediaQueueSnapshot(requests.countByStatus(AiCommunityMediaGenerationRequest.Status.QUEUED), requests.countByStatus(AiCommunityMediaGenerationRequest.Status.RUNNING), requests.countByStatus(AiCommunityMediaGenerationRequest.Status.COMPLETED), requests.countByStatus(AiCommunityMediaGenerationRequest.Status.FAILED), pending);
+    }
+    public boolean reprioritize(String id,int priority){if(priority<0||priority>100)throw new IllegalArgumentException("priority must be 0..100");var r=requests.findById(id).orElse(null);if(r==null||r.getStatus()!=AiCommunityMediaGenerationRequest.Status.QUEUED)return false;r.setPriority(priority);requests.save(r);return true;}
+    public boolean removePending(String id){var r=requests.findById(id).orElse(null);if(r==null||r.getStatus()!=AiCommunityMediaGenerationRequest.Status.QUEUED)return false;requests.delete(r);return true;}
+    public int clearPending(){var pending=requests.findByStatusInOrderByPriorityDescCreatedAtAsc(java.util.List.of(AiCommunityMediaGenerationRequest.Status.QUEUED));requests.deleteAll(pending);return pending.size();}
+    public record MediaQueueSnapshot(long queued,long running,long succeeded,long failed,java.util.List<AiCommunityMediaGenerationRequest> jobs) {}
 
     private void recoverStaleRunning(Instant now) {
         Instant staleBefore = now.minus(runningTimeout);
@@ -135,13 +145,15 @@ public class AiCommunityMediaWorker {
 
     private void requeue(
             AiCommunityMediaGenerationRequest request,
-            String error) {
+            String error,
+            Instant providerRetryAt) {
         long multiplier = 1L << Math.min(20, Math.max(0, request.getAttempts() - 1));
         Duration delay = retryBaseDelay.multipliedBy(multiplier);
 
         request.setStatus(AiCommunityMediaGenerationRequest.Status.QUEUED);
         request.setStartedAt(null);
-        request.setNextAttemptAt(Instant.now().plus(delay));
+        Instant calculated = Instant.now().plus(delay);
+        request.setNextAttemptAt(providerRetryAt != null && providerRetryAt.isAfter(calculated) ? providerRetryAt : calculated);
         request.setError(error == null ? "Unknown error" : error);
         requests.save(request);
     }

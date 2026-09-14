@@ -66,6 +66,19 @@ const AiReporterApi = {
     return (await axios.put('/admin/ai-autonomous-work/enabled', { enabled }, auth)).data;
   },
 
+  reprioritizeAiQueueJob: async (path, priority, getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.put(`/admin/ai-autonomous-work/${path}/priority`, { priority }, auth)).data;
+  },
+  deleteAiQueueJob: async (path, getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.delete(`/admin/ai-autonomous-work/${path}`, auth)).data;
+  },
+  clearAiQueue: async (path, getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.delete(`/admin/ai-autonomous-work/${path}`, auth)).data;
+  },
+
   updateRuntime: async (id, data, getAccessTokenSilently, getAccessTokenWithPopup) => {
     const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
     return (await axios.put(

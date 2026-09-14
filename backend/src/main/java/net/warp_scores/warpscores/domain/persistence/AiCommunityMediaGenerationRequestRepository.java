@@ -13,9 +13,15 @@ public interface AiCommunityMediaGenerationRequestRepository
             findByFanProfileIdOrderByCreatedAtDesc(String fanProfileId);
 
     java.util.Optional<AiCommunityMediaGenerationRequest>
-            findFirstByStatusAndNextAttemptAtLessThanEqualOrderByCreatedAtAsc(
+            findFirstByStatusAndNextAttemptAtLessThanEqualOrderByPriorityDescCreatedAtAsc(
                     AiCommunityMediaGenerationRequest.Status status,
                     java.time.Instant nextAttemptAt);
+
+    java.util.List<AiCommunityMediaGenerationRequest>
+            findByStatusInOrderByPriorityDescCreatedAtAsc(
+                    java.util.List<AiCommunityMediaGenerationRequest.Status> statuses);
+
+    long countByStatus(AiCommunityMediaGenerationRequest.Status status);
 
     java.util.List<AiCommunityMediaGenerationRequest>
             findByStatusAndStartedAtBefore(

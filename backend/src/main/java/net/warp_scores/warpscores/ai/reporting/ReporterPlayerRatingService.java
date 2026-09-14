@@ -80,5 +80,13 @@ public class ReporterPlayerRatingService {
                 AiReporterDefinition reporter,
                 PlayerRatingFacts facts,
                 String instruction);
+
+        default void generateAndPersist(
+                AiReporterDefinition reporter,
+                PlayerRatingFacts facts,
+                String instruction,
+                Integer priorityOverride) {
+            generateAndPersist(reporter, facts, instruction);
+        }
     }
 }

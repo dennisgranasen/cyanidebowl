@@ -44,7 +44,8 @@ public class AiAutonomousWorkQueue {
             long succeeded,
             long failed,
             Instant oldestPendingCreatedAt,
-            List<AiAutonomousWorkItem> recentFailures) {
+            List<AiAutonomousWorkItem> recentFailures,
+            List<AiAutonomousWorkItem> pendingJobs) {
     }
 
     public boolean enqueue(EnqueueRequest request) {
@@ -182,6 +183,28 @@ public class AiAutonomousWorkQueue {
         mongoTemplate.updateFirst(query, update, AiAutonomousWorkItem.class);
     }
 
+    public List<AiAutonomousWorkItem> pendingItems() {
+        Query query = new Query(Criteria.where("status").in(AiAutonomousWorkItem.Status.QUEUED, AiAutonomousWorkItem.Status.RETRY_WAIT))
+                .with(Sort.by(Sort.Order.desc("priorityRank"), Sort.Order.asc("createdAt")));
+        return mongoTemplate.find(query, AiAutonomousWorkItem.class);
+    }
+
+    public boolean reprioritize(String candidateKey, int priorityRank) {
+        if (priorityRank < 0 || priorityRank > 1000) throw new IllegalArgumentException("priority must be 0..1000");
+        Query query = new Query(Criteria.where("_id").is(candidateKey).and("status").in(AiAutonomousWorkItem.Status.QUEUED, AiAutonomousWorkItem.Status.RETRY_WAIT));
+        return mongoTemplate.updateFirst(query, new Update().set("priorityRank", priorityRank).set("updatedAt", Instant.now()), AiAutonomousWorkItem.class).getModifiedCount() > 0;
+    }
+
+    public boolean removePending(String candidateKey) {
+        Query query = new Query(Criteria.where("_id").is(candidateKey).and("status").in(AiAutonomousWorkItem.Status.QUEUED, AiAutonomousWorkItem.Status.RETRY_WAIT));
+        return mongoTemplate.remove(query, AiAutonomousWorkItem.class).getDeletedCount() > 0;
+    }
+
+    public long clearPending() {
+        Query query = new Query(Criteria.where("status").in(AiAutonomousWorkItem.Status.QUEUED, AiAutonomousWorkItem.Status.RETRY_WAIT));
+        return mongoTemplate.remove(query, AiAutonomousWorkItem.class).getDeletedCount();
+    }
+
     public QueueSnapshot snapshot() {
         long queued = count(AiAutonomousWorkItem.Status.QUEUED);
         long running = count(AiAutonomousWorkItem.Status.RUNNING);
@@ -210,7 +233,8 @@ public class AiAutonomousWorkQueue {
                 succeeded,
                 failed,
                 oldest == null ? null : oldest.getCreatedAt(),
-                mongoTemplate.find(failuresQuery, AiAutonomousWorkItem.class));
+                mongoTemplate.find(failuresQuery, AiAutonomousWorkItem.class),
+                pendingItems());
     }
 
     static Duration retryBackoff(int attempt) {

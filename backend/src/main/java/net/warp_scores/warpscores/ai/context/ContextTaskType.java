@@ -8,5 +8,7 @@ public enum ContextTaskType {
     SOCIAL_REPLY,
     PLAYER_RATING,
     MEMORY_CONSOLIDATION,
-    FAN_PROFILE
+    FAN_PROFILE,
+    PROFILE_IMAGE,
+    AVATAR_IMAGE
 }

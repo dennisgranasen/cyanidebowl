@@ -60,7 +60,8 @@ public class AiPlayerRatingJobService {
             String instruction,
             boolean force,
             int playerCount,
-            String requestedBy) {
+            String requestedBy,
+            Integer priorityOverride) {
         List<AiReporterDefinition> selected = selectReporters(reporterIds);
 
         AiPlayerRatingJob job = new AiPlayerRatingJob();
@@ -69,6 +70,7 @@ public class AiPlayerRatingJobService {
         job.setRequestedBy(requestedBy);
         job.setInstruction(instruction);
         job.setForce(force);
+        job.setPriority(priorityOverride);
         job.setPlayerCount(playerCount);
         job.setReporterCount(selected.size());
         job.setCreatedAt(Instant.now());
@@ -184,7 +186,7 @@ public class AiPlayerRatingJobService {
             int attempt = 0;
             while (true) {
                 try {
-                    generator.generateAndPersist(reporter, facts, job.getInstruction());
+                    generator.generateAndPersist(reporter, facts, job.getInstruction(), job.getPriority());
                     break;
                 } catch (AiGenerationAdmissionService.AdmissionDeniedException denied) {
                     if (denied.reason()

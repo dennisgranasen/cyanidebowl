@@ -7,6 +7,7 @@ import net.warp_scores.warpscores.ai.provider.CanonicalLlmResponse;
 import net.warp_scores.warpscores.ai.provider.LlmProvider;
 import net.warp_scores.warpscores.ai.provider.LlmProviderException;
 import net.warp_scores.warpscores.ai.provider.ProviderCapabilities;
+import net.warp_scores.warpscores.ai.provider.RetryAfter;
 
 import java.io.IOException;
 import java.net.URI;
@@ -100,7 +101,7 @@ public class OpenAiCompatibleLlmProvider implements LlmProvider {
                     httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                throw httpFailure(response.statusCode(), response.body());
+                throw httpFailure(response.statusCode(), response.body(), response.headers().firstValue("Retry-After").orElse(null));
             }
 
             JsonNode json = objectMapper.readTree(response.body());
@@ -128,7 +129,7 @@ public class OpenAiCompatibleLlmProvider implements LlmProvider {
         }
     }
 
-    private LlmProviderException httpFailure(int status, String body) {
+    private LlmProviderException httpFailure(int status, String body, String retryAfter) {
         LlmProviderException.Kind kind = switch (status) {
             case 401, 403 -> LlmProviderException.Kind.AUTHENTICATION;
             case 408, 504 -> LlmProviderException.Kind.TIMEOUT;
@@ -142,6 +143,6 @@ public class OpenAiCompatibleLlmProvider implements LlmProvider {
         if (detail.length() > 400) detail = detail.substring(0, 400) + "…";
         String message = providerId + " HTTP " + status
                 + (detail.isBlank() ? "" : ": " + detail);
-        return new LlmProviderException(providerId, kind, status, message);
+        return new LlmProviderException(providerId, kind, status, message, RetryAfter.parse(retryAfter, java.time.Instant.now()));
     }
 }

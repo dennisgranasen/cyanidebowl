@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -109,7 +110,7 @@ class AiCommunityMediaWorkerTest {
                 eq(AiCommunityMediaGenerationRequest.Status.RUNNING),
                 any(Instant.class)))
                 .thenReturn(List.of(stale));
-        when(requests.findFirstByStatusAndNextAttemptAtLessThanEqualOrderByCreatedAtAsc(
+        when(requests.findFirstByStatusAndNextAttemptAtLessThanEqualOrderByPriorityDescCreatedAtAsc(
                 eq(AiCommunityMediaGenerationRequest.Status.QUEUED),
                 any(Instant.class)))
                 .thenReturn(Optional.empty());

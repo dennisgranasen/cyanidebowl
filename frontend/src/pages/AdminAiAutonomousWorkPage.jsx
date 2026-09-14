@@ -83,6 +83,24 @@ function AdminAiAutonomousWorkPage() {
   const usage = overview?.generationUsage || {};
   const failures = queue.recentFailures || [];
   const providerUsage = usage.providers || [];
+  const executionQueues = overview?.executionQueues || [];
+  const mediaQueue = overview?.mediaQueue || {};
+  const autonomousJobs = queue.pendingJobs || [];
+
+  const mutateQueue = async (action) => {
+    setSaving(true); setError(null);
+    try { setOverview(await action()); } catch (reason) { setError(reason); } finally { setSaving(false); }
+  };
+  const priorityPrompt = (label, current, action, max = 100) => {
+    const raw = window.prompt(`Ny prioritet för ${label} (0–${max}):`, String(current ?? 50));
+    if (raw === null) return;
+    const priority = Number(raw);
+    if (!Number.isInteger(priority) || priority < 0 || priority > max) { window.alert(`Prioritet måste vara ett heltal 0–${max}.`); return; }
+    if (!window.confirm(`Ändra prioritet för ${label} till ${priority}?`)) return;
+    mutateQueue(() => action(priority));
+  };
+  const removePrompt = (label, action) => { if (window.confirm(`Ta bort ${label} ur kön?`)) mutateQueue(action); };
+  const clearPrompt = (label, count, action) => { if (count && window.confirm(`Rensa ${label}? ${count} väntande jobb tas bort. Körande jobb lämnas orörda.`)) mutateQueue(action); };
 
   return (
     <Box p={{ base: 3, md: 6 }}>
@@ -139,6 +157,22 @@ function AdminAiAutonomousWorkPage() {
                 ? new Date(queue.oldestPendingCreatedAt).toLocaleString()
                 : 'none'}
             </Text>
+          </Box>
+
+          <Box>
+            <HStack justify="space-between" mb={2}><Heading size="md">Autonomous queue jobs</Heading><Button size="xs" colorScheme="red" variant="outline" isDisabled={!autonomousJobs.length || saving} onClick={() => clearPrompt('autonomous queue', autonomousJobs.length, () => AiReporterApi.clearAiQueue('queue/jobs', getAccessTokenSilently, getAccessTokenWithPopup))}>Clear queue</Button></HStack>
+            {autonomousJobs.length === 0 ? <Text color="gray.500">No pending jobs.</Text> : <Box borderWidth="1px" borderRadius="lg" overflowX="auto"><Table size="sm"><Thead><Tr><Th>Job</Th><Th>Kind</Th><Th>Agent</Th><Th isNumeric>Priority</Th><Th>Status</Th><Th>Actions</Th></Tr></Thead><Tbody>{autonomousJobs.map((job) => <Tr key={job.candidateKey}><Td fontSize="xs">{job.candidateKey}</Td><Td>{job.kind || job.handlerKey}</Td><Td>{job.actorId || '—'}</Td><Td isNumeric>{job.priorityRank}</Td><Td>{job.status}</Td><Td><HStack><Button size="xs" onClick={() => priorityPrompt(job.candidateKey, job.priorityRank, (priority) => AiReporterApi.reprioritizeAiQueueJob(`queue/jobs/${encodeURIComponent(job.candidateKey)}`, priority, getAccessTokenSilently, getAccessTokenWithPopup), 1000)}>Priority</Button><Button size="xs" colorScheme="red" variant="outline" onClick={() => removePrompt(job.candidateKey, () => AiReporterApi.deleteAiQueueJob(`queue/jobs/${encodeURIComponent(job.candidateKey)}`, getAccessTokenSilently, getAccessTokenWithPopup))}>Remove</Button></HStack></Td></Tr>)}</Tbody></Table></Box>}
+          </Box>
+
+          <Box>
+            <Heading size="md" mb={2}>Model execution queues</Heading>
+            <VStack align="stretch" spacing={4}>{executionQueues.map((qs) => <Box key={qs.target} borderWidth="1px" borderRadius="lg" p={3}><HStack justify="space-between" align="start"><Box><Text fontWeight="700">{qs.target}</Text><Text fontSize="xs" color="gray.500">{qs.provider} · {qs.model} · quota {qs.quotaGroup}</Text><Text fontSize="xs" color="gray.500">queued {qs.queued ?? 0} · running {qs.running ?? 0}/{qs.concurrency ?? 0} · retry {qs.retryWaiting ?? 0}</Text>{qs.blockedUntil && <Text fontSize="xs" color="yellow.300">Throttled until {new Date(qs.blockedUntil).toLocaleString()}{qs.throttleReason ? ` · ${qs.throttleReason}` : ''}</Text>}{qs.lastError && <Text fontSize="xs" color="red.300">Last error{qs.lastStatusCode ? ` HTTP ${qs.lastStatusCode}` : ''}: {qs.lastError}</Text>}</Box><Button size="xs" colorScheme="red" variant="outline" isDisabled={!qs.jobs?.length || saving} onClick={() => clearPrompt(`${qs.target} queue`, qs.jobs?.length || 0, () => AiReporterApi.clearAiQueue(`execution-queues/${encodeURIComponent(qs.target)}/jobs`, getAccessTokenSilently, getAccessTokenWithPopup))}>Clear queue</Button></HStack>{qs.jobs?.length > 0 && <Box mt={3} overflowX="auto"><Table size="sm"><Thead><Tr><Th>Task</Th><Th>Agent</Th><Th isNumeric>Priority</Th><Th>Status</Th><Th>Attempts</Th><Th>Next attempt</Th><Th>Actions</Th></Tr></Thead><Tbody>{qs.jobs.map((job) => <Tr key={job.id}><Td>{job.task || '—'}</Td><Td>{job.agentId || '—'}</Td><Td isNumeric>{job.priority}</Td><Td>{job.status}</Td><Td>{job.attempts}</Td><Td>{job.nextAttemptAt ? new Date(job.nextAttemptAt).toLocaleString() : '—'}</Td><Td><HStack><Button size="xs" onClick={() => priorityPrompt(`${job.task}/${job.agentId}`, job.priority, (priority) => AiReporterApi.reprioritizeAiQueueJob(`execution-queues/${encodeURIComponent(qs.target)}/jobs/${encodeURIComponent(job.id)}`, priority, getAccessTokenSilently, getAccessTokenWithPopup))}>Priority</Button><Button size="xs" colorScheme="red" variant="outline" onClick={() => removePrompt(`${job.task}/${job.agentId}`, () => AiReporterApi.deleteAiQueueJob(`execution-queues/${encodeURIComponent(qs.target)}/jobs/${encodeURIComponent(job.id)}`, getAccessTokenSilently, getAccessTokenWithPopup))}>Remove</Button></HStack></Td></Tr>)}</Tbody></Table></Box>}</Box>)}</VStack>
+          </Box>
+
+          <Box>
+            <HStack justify="space-between" mb={2}><Heading size="md">Community media queue</Heading><Button size="xs" colorScheme="red" variant="outline" isDisabled={!mediaQueue.jobs?.length || saving} onClick={() => clearPrompt('media queue', mediaQueue.jobs?.length || 0, () => AiReporterApi.clearAiQueue('media-queue/jobs', getAccessTokenSilently, getAccessTokenWithPopup))}>Clear queue</Button></HStack>
+            <Text fontSize="sm" color="gray.500">queued {mediaQueue.queued ?? 0} · running {mediaQueue.running ?? 0} · succeeded {mediaQueue.succeeded ?? 0} · failed {mediaQueue.failed ?? 0}</Text>
+            {mediaQueue.jobs?.length > 0 && <Box mt={2} borderWidth="1px" borderRadius="lg" overflowX="auto"><Table size="sm"><Thead><Tr><Th>Job</Th><Th>Type</Th><Th isNumeric>Priority</Th><Th>Attempts</Th><Th>Next</Th><Th>Error</Th><Th>Actions</Th></Tr></Thead><Tbody>{mediaQueue.jobs.map((job) => <Tr key={job.id}><Td fontSize="xs">{job.id}</Td><Td>{job.target}</Td><Td isNumeric>{job.priority ?? 0}</Td><Td>{job.attempts ?? 0}</Td><Td>{job.nextAttemptAt ? new Date(job.nextAttemptAt).toLocaleString() : '—'}</Td><Td fontSize="xs">{job.error || '—'}</Td><Td><HStack><Button size="xs" onClick={() => priorityPrompt(job.id, job.priority ?? 0, (priority) => AiReporterApi.reprioritizeAiQueueJob(`media-queue/jobs/${encodeURIComponent(job.id)}`, priority, getAccessTokenSilently, getAccessTokenWithPopup))}>Priority</Button><Button size="xs" colorScheme="red" variant="outline" onClick={() => removePrompt(job.id, () => AiReporterApi.deleteAiQueueJob(`media-queue/jobs/${encodeURIComponent(job.id)}`, getAccessTokenSilently, getAccessTokenWithPopup))}>Remove</Button></HStack></Td></Tr>)}</Tbody></Table></Box>}
           </Box>
 
           <Box>

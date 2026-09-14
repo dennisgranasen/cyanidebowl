@@ -14,7 +14,6 @@ import java.time.Duration;
 public class CloudflareAiProviderProperties {
     private String accountId;
     private String apiKey;
-    private String imageModel = "@cf/black-forest-labs/flux-1-schnell";
     private Duration timeout = Duration.ofMinutes(3);
     private int imageSteps = 4;
 }

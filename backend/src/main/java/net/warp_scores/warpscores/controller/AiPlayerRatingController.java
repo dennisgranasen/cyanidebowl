@@ -70,7 +70,7 @@ public class AiPlayerRatingController {
         PlayerRatingFacts facts = factsBuilder.build(analysis);
 
         GenerationRequest normalized = request == null
-                ? new GenerationRequest(List.of(), null, false)
+                ? new GenerationRequest(List.of(), null, false, null)
                 : request;
 
         return ratingJobs.start(
@@ -79,7 +79,8 @@ public class AiPlayerRatingController {
                 normalized.instruction(),
                 normalized.force(),
                 facts.getPlayers().size(),
-                auth == null ? null : auth.getName());
+                auth == null ? null : auth.getName(),
+                normalized.priority());
     }
 
     @PostMapping("/generation-jobs/{jobId}/cancel")
@@ -131,7 +132,7 @@ public class AiPlayerRatingController {
         var analysis = replayAnalyses.findById(matchId)
                 .orElseThrow(() -> new IllegalStateException("An analyzed replay is required for fan player ratings"));
         PlayerRatingFacts facts = factsBuilder.build(analysis);
-        GenerationRequest normalized = request == null ? new GenerationRequest(List.of(), null, false) : request;
+        GenerationRequest normalized = request == null ? new GenerationRequest(List.of(), null, false, null) : request;
         return fanRatingJobs.start(matchId, facts, normalized.instruction(), normalized.force());
     }
 
@@ -143,5 +144,10 @@ public class AiPlayerRatingController {
     public record GenerationRequest(
             List<String> reporterIds,
             String instruction,
-            boolean force) {}
+            boolean force,
+            Integer priority) {
+        public GenerationRequest {
+            if (priority != null && (priority < 0 || priority > 100)) throw new IllegalArgumentException("priority must be 0..100");
+        }
+    }
 }

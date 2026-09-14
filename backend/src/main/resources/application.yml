@@ -117,6 +117,16 @@ warpscores:
           api-key: ${AI_API_KEY_OPENROUTER:}
           timeout: 60s
           structured-output: true
+        aion:
+          api-key: ${AI_API_KEY_AION:}
+          base-url: https://api.aionlabs.ai/v1
+          timeout: 60s
+          structured-output: true
+        mistral:
+          api-key: ${AI_API_KEY_MISTRAL:}
+          base-url: https://api.mistral.ai/v1
+          timeout: 60s
+          structured-output: true
       openai:
         api-key: ${AI_API_KEY_OPENAI:}
         image-model: ${OPENAI_IMAGE_MODEL:gpt-image-2}
@@ -124,68 +134,94 @@ warpscores:
       cloudflare:
         account-id: ${CLOUDFLARE_ACCOUNT_ID:}
         api-key: ${AI_API_KEY_CLOUDFLARE:}
-        image-model: ${CLOUDFLARE_IMAGE_MODEL:@cf/black-forest-labs/flux-1-schnell}
         timeout: ${CLOUDFLARE_IMAGE_TIMEOUT:3m}
         image-steps: ${CLOUDFLARE_IMAGE_STEPS:4}
         #local-llm:
         #  base-url: http://localhost:8000/v1
         #  api-key: ${AI_API_KEY_LOCAL:}
         #  structured-output: false
-    # Default editorial/report generation stays on Gemini's free tier.
-    # Add reporter-targets when specific agents should use another model/provider.
-    default-targets:
-      - provider-id: gemini
+    # Named executable targets. Provider blocks above contain credentials/transport.
+    targets:
+      editorial:
+        provider: gemini
         model: gemini-3.6-flash
-      #- provider-id: groq
-      #  model: openai/gpt-oss-120b # qwen/qwen3.6-27b
-      #- provider-id: openrouter
-      #  model: openrouter/free
+        modality: TEXT
+        quota-group: gemini-main
+        queue: { concurrency: 1, max-attempts: 4, base-backoff: 10s, max-backoff: 10m, jitter: 0.20 }
+      short-text:
+        provider: cloudflare
+        model: ${AI_MODEL_SHORT_TEXT:@cf/openai/gpt-oss-20b}
+        modality: TEXT
+        quota-group: cloudflare-text
+        queue: { concurrency: 2, max-attempts: 4, base-backoff: 10s, max-backoff: 10m, jitter: 0.20 }
+      groq-large:
+        provider: groq
+        model: openai/gpt-oss-120b
+        modality: TEXT
+        quota-group: groq-main
+        queue: { concurrency: 1, max-attempts: 3, base-backoff: 10s, max-backoff: 10m, jitter: 0.20 }
+      openrouter-free:
+        provider: openrouter
+        model: openrouter/free
+        modality: TEXT
+        quota-group: openrouter-free
+        queue: { concurrency: 1, max-attempts: 3, base-backoff: 15s, max-backoff: 15m, jitter: 0.20 }
+      profile-image:
+        provider: cloudflare
+        model: ${CLOUDFLARE_IMAGE_MODEL:@cf/black-forest-labs/flux-1-schnell}
+        modality: IMAGE
+        quota-group: cloudflare-image
+        queue: { concurrency: 1, max-attempts: 4, base-backoff: 30s, max-backoff: 15m, jitter: 0.20 }
+      # mistral-large:
+      #   provider: mistral
+      #   model: mistral/mistral-large-3-5
+      #   modality: TEXT
+      #   quota-group: mistral-main
+      #   queue: { concurrency: 1, max-attempts: 3, base-backoff: 10s, max-backoff: 10m, jitter: 0.20 }
+      # mistral-medium:
+      #   provider: mistral
+      #   model: mistral/mistral-medium-3-5
+      #   modality: TEXT
+      #   quota-group: mistral-main
+      #   queue: { concurrency: 1, max-attempts: 3, base-backoff: 10s, max-backoff: 10m, jitter: 0.20 }
+      # mistral-small:
+      #   provider: mistral
+      #   model: mistral/mistral-small-2603
+      #   modality: TEXT
+      #   quota-group: mistral-main
+      #   queue: { concurrency: 1, max-attempts: 3, base-backoff: 10s, max-backoff: 10m, jitter: 0.20 }
+      storytelling:
+        provider: aion
+        model: aion-labs/aion-3.0
+        modality: TEXT
+        quota-group: aion-main
+        queue: { concurrency: 1, max-attempts: 3, base-backoff: 10s, max-backoff: 10m, jitter: 0.20 }
+      chat:
+        provider: aion
+        model: aion-labs/aion-3.0-mini
+        modality: TEXT
+        quota-group: aion-main
+        queue: { concurrency: 1, max-attempts: 3, base-backoff: 10s, max-backoff: 10m, jitter: 0.20 }
 
-    # Task-specific text routing. These routes take precedence over reporter-targets
-    # and default-targets. Ordered entries are retry/fallback targets.
-    task-targets:
-      EDITORIAL_ARTICLE:
-        - provider-id: gemini
-          model: gemini-3.6-flash
-        - provider-id: cloudflare
-          model: ${AI_MODEL_EDITORIAL:@cf/openai/gpt-oss-20b}
-        - provider-id: groq
-          model: openai/gpt-oss-120b
-      MATCH_REPORT:
-        - provider-id: gemini
-          model: gemini-3.6-flash
-        - provider-id: cloudflare
-          model: ${AI_MODEL_MATCH_REPORT:@cf/openai/gpt-oss-20b}
-        - provider-id: groq
-          model: openai/gpt-oss-120b
-      FAN_PROFILE:
-        - provider-id: cloudflare
-          model: ${AI_MODEL_FAN_PROFILE:@cf/openai/gpt-oss-20b}
-        - provider-id: groq
-          model: openai/gpt-oss-120b
-        - provider-id: gemini
-          model: gemini-3.6-flash
-      PLAYER_RATING:
-        - provider-id: cloudflare
-          model: ${AI_MODEL_PLAYER_RATING:@cf/openai/gpt-oss-20b}
-        - provider-id: groq
-          model: openai/gpt-oss-120b
-        - provider-id: gemini
-          model: gemini-3.6-flash
-      ARTICLE_COMMENT:
-        - provider-id: cloudflare
-          model: ${AI_MODEL_ARTICLE_COMMENT:@cf/openai/gpt-oss-20b}
-        - provider-id: groq
-          model: openai/gpt-oss-120b
-        - provider-id: gemini
-          model: gemini-3.6-flash
-      SOCIAL_REPLY:
-        - provider-id: cloudflare
-          model: ${AI_MODEL_SOCIAL_REPLY:@cf/openai/gpt-oss-20b}
-        - provider-id: groq
-          model: openai/gpt-oss-120b
-        - provider-id: gemini
-          model: gemini-3.6-flash
+    tasks:
+      EDITORIAL_ARTICLE: { target: storytelling, priority: 80 }
+      MATCH_REPORT: { target: storytelling, priority: 90 }
+      FAN_PROFILE: { target: storytelling, priority: 50 }
+      PLAYER_RATING: { target: short-text, priority: 70 }
+      ARTICLE_COMMENT: { target: chat, priority: 60 }
+      SOCIAL_REPLY: { target: chat, priority: 75 }
+      MEMORY_CONSOLIDATION: { target: editorial, priority: 20 }
+      PROFILE_IMAGE: { target: profile-image, priority: 40 }
+      AVATAR_IMAGE: { target: profile-image, priority: 50 }
+
+    # Agent overrides are task-scoped; target and priority are independently optional.
+    agents: {}
+    # agents:
+    #   amenhotep-den-47e:
+    #     - task: EDITORIAL_ARTICLE
+    #       priority: 44
+    #     - task: SOCIAL_REPLY
+    #       target: short-text
 
     community-media:
       provider: ${COMMUNITY_MEDIA_PROVIDER:cloudflare}
@@ -195,25 +231,6 @@ warpscores:
       max-attempts: ${COMMUNITY_MEDIA_MAX_ATTEMPTS:4}
       retry-base-delay: ${COMMUNITY_MEDIA_RETRY_BASE_DELAY:30s}
       running-timeout: ${COMMUNITY_MEDIA_RUNNING_TIMEOUT:10m}
-
-    reporter-targets:
-      dedicated-fan-profile:
-        - provider-id: gemini
-          model: gemini-3.6-flash
-
-    # reporter-targets: # non-gemini currently works ... so-so.
-    #   aeltharion-quill:
-    #     - provider-id: gemini
-    #       model: gemini-3.6-flash
-    #   alaric-penworth:
-    #     - provider-id: groq
-    #       model: openai/gpt-oss-120b
-    #   amenhotep-den-47e:
-    #     - provider-id: groq
-    #       model: qwen/qwen3.6-27b
-    #   lady-putridia:
-    #     - provider-id: openrouter
-    #       model: openrouter/free
 
   ai-reporting:
     enabled: false # Set to true to enable AI reporting, must fix implementation first.

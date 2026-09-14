@@ -7,6 +7,7 @@ import net.warp_scores.warpscores.ai.provider.CanonicalLlmResponse;
 import net.warp_scores.warpscores.ai.provider.LlmProvider;
 import net.warp_scores.warpscores.ai.provider.LlmProviderException;
 import net.warp_scores.warpscores.ai.provider.ProviderCapabilities;
+import net.warp_scores.warpscores.ai.provider.RetryAfter;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -147,7 +148,8 @@ public class GeminiLlmProvider implements LlmProvider {
                 ID,
                 kind,
                 status,
-                message.toString());
+                message.toString(),
+                RetryAfter.parse(retryAfter, java.time.Instant.now()));
     }
 
     private static String sanitizeBody(String body, int maxLength) {

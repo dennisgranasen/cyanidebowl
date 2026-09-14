@@ -37,6 +37,8 @@ public class ContextPlanner {
             case PLAYER_RATING -> ContextProfile.playerRating();
             case MEMORY_CONSOLIDATION -> ContextProfile.memoryConsolidation();
             case FAN_PROFILE -> ContextProfile.fanProfile();
+            case PROFILE_IMAGE, AVATAR_IMAGE -> throw new IllegalArgumentException(
+                    "Image-generation tasks do not use ContextPlanner: " + taskType);
         };
     }
 }

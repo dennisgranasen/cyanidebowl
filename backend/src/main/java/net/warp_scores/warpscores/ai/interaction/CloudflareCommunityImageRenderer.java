@@ -3,6 +3,9 @@ package net.warp_scores.warpscores.ai.interaction;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.warp_scores.warpscores.ai.provider.cloudflare.CloudflareAiProviderProperties;
+import net.warp_scores.warpscores.ai.context.ContextTaskType;
+import net.warp_scores.warpscores.ai.provider.LlmProviderRouter;
+import net.warp_scores.warpscores.ai.provider.RetryAfter;
 import net.warp_scores.warpscores.model.AiCommunityMediaGenerationRequest;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -29,13 +32,16 @@ public class CloudflareCommunityImageRenderer implements AiCommunityImageRendere
 
     private final ObjectMapper objectMapper;
     private final CloudflareAiProviderProperties properties;
+    private final LlmProviderRouter routing;
     private final HttpClient httpClient;
 
     public CloudflareCommunityImageRenderer(
             ObjectMapper objectMapper,
-            CloudflareAiProviderProperties properties) {
+            CloudflareAiProviderProperties properties,
+            LlmProviderRouter routing) {
         this.objectMapper = objectMapper;
         this.properties = properties;
+        this.routing = routing;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(20))
                 .build();
@@ -44,8 +50,7 @@ public class CloudflareCommunityImageRenderer implements AiCommunityImageRendere
     @Override
     public boolean isConfigured() {
         return StringUtils.hasText(properties.getAccountId())
-                && StringUtils.hasText(properties.getApiKey())
-                && StringUtils.hasText(properties.getImageModel());
+                && StringUtils.hasText(properties.getApiKey());
     }
 
     @Override
@@ -57,8 +62,13 @@ public class CloudflareCommunityImageRenderer implements AiCommunityImageRendere
                     "Cloudflare Workers AI requires account-id and api-key");
         }
 
+        ContextTaskType taskType = target == AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE
+                ? ContextTaskType.PROFILE_IMAGE : ContextTaskType.AVATAR_IMAGE;
+        var plan = routing.planForTask("community-media", taskType, LlmProviderRouter.ExecutionOverrides.none());
+        if (!"cloudflare".equals(plan.primary().providerId())) throw new IllegalStateException("Community image target must use cloudflare");
+        String selectedModel = plan.primary().model();
         String encodedModel = URLEncoder.encode(
-                        properties.getImageModel(),
+                        selectedModel,
                         StandardCharsets.UTF_8)
                 .replace("%2F", "/")
                 .replace("%40", "@");
@@ -82,7 +92,7 @@ public class CloudflareCommunityImageRenderer implements AiCommunityImageRendere
                 httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
-            throw providerFailure(response.statusCode(), response.body());
+            throw providerFailure(response.statusCode(), response.body(), response.headers().firstValue("Retry-After").orElse(null));
         }
 
         JsonNode root = objectMapper.readTree(response.body());
@@ -98,12 +108,13 @@ public class CloudflareCommunityImageRenderer implements AiCommunityImageRendere
                 "image/jpeg",
                 "jpg",
                 "cloudflare",
-                properties.getImageModel());
+                selectedModel);
     }
 
     private AiCommunityImageProviderException providerFailure(
             int statusCode,
-            String body) {
+            String body,
+            String retryAfter) {
         String internalCode = extractCloudflareCode(body);
         boolean retryable =
                 statusCode == 408
@@ -119,8 +130,11 @@ public class CloudflareCommunityImageRenderer implements AiCommunityImageRendere
                         + statusCode
                         + (internalCode == null ? "" : " / code " + internalCode)
                         + ": "
+                        + (retryAfter == null || retryAfter.isBlank() ? "" : " (Retry-After: " + retryAfter + ")")
                         + truncate(body, 700),
-                retryable);
+                retryable,
+                statusCode,
+                RetryAfter.parse(retryAfter, java.time.Instant.now()));
     }
 
     private String extractCloudflareCode(String body) {

@@ -17,6 +17,7 @@ public class AiPlayerRatingJob {
     private String requestedBy;
     private String instruction;
     private boolean force;
+    private Integer priority;
     private int playerCount;
     private int reporterCount;
     private Instant createdAt;

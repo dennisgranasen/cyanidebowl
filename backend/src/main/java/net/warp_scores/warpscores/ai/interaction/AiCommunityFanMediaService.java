@@ -1,6 +1,8 @@
 package net.warp_scores.warpscores.ai.interaction;
 
 import lombok.RequiredArgsConstructor;
+import net.warp_scores.warpscores.ai.context.ContextTaskType;
+import net.warp_scores.warpscores.ai.provider.LlmProviderRouter;
 import net.warp_scores.warpscores.domain.persistence.AiCommunityMediaGenerationRequestRepository;
 import net.warp_scores.warpscores.model.AiCommunityMediaGenerationRequest;
 import net.warp_scores.warpscores.model.AiCommunityMemberProfile;
@@ -15,6 +17,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AiCommunityFanMediaService {
     private final AiCommunityMediaGenerationRequestRepository requests;
+    private final LlmProviderRouter routing;
 
     public void ensureInitialRequests(AiCommunityMemberProfile profile) {
         if (profile == null || !StringUtils.hasText(profile.getId())) return;
@@ -68,6 +71,8 @@ public class AiCommunityFanMediaService {
         request.setTarget(target);
         request.setPrompt(prompt.trim());
         request.setStatus(AiCommunityMediaGenerationRequest.Status.QUEUED);
+        ContextTaskType taskType = target == AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE ? ContextTaskType.PROFILE_IMAGE : ContextTaskType.AVATAR_IMAGE;
+        request.setPriority(routing.planForTask("community-media", taskType, LlmProviderRouter.ExecutionOverrides.none()).priority());
         Instant now = Instant.now();
         request.setCreatedAt(now);
         request.setNextAttemptAt(now);
