@@ -15,6 +15,7 @@ import imageUrls from '../../imageUrls';
 import TimelineIcon from './TimelineIcon';
 import { prepareNarrativeOverviewEvents } from './timelineOverview';
 import { useIntl } from 'react-intl';
+import { canonicalWeatherName } from '../NuffleDiceGlyph';
 
 const EVENT_STYLE = {
   TOUCHDOWN: { glyph: 'TD', label: 'Touchdown', size: 34 },
@@ -363,7 +364,9 @@ const groupOverviewEvents = (events, preMatchEvents = []) => {
     const topLevel = indexedTopLevel.map(({ event }) => event);
     const weather = topLevel.find((event) =>
       normalizedNarrativeType({ type: event.rawEventType }) === 'weather_roll');
-    const weatherLabel = weather ? overviewResultLabel(weather) : null;
+    const weatherLabel = weather
+      ? canonicalWeatherName(overviewResultLabel(weather))
+      : null;
     const base = topLevel[0] || {
       id: 'pybb3-pre-match',
       sequence: -1,
@@ -422,7 +425,7 @@ const groupOverviewEvents = (events, preMatchEvents = []) => {
 
       if (weatherIndex > index) {
         const weather = events[weatherIndex];
-        const weatherLabel = overviewResultLabel(weather) || 'Weather';
+        const weatherLabel = canonicalWeatherName(overviewResultLabel(weather) || 'Weather');
         skipped.add(weatherIndex);
         initialWeatherGrouped = true;
         grouped.push({
@@ -466,7 +469,9 @@ const groupOverviewEvents = (events, preMatchEvents = []) => {
           details: {
             ...(event.details || {}),
             kickoffEventType: detailType,
-            kickoffEventResult: overviewResultLabel(detail),
+            kickoffEventResult: detailType === 'changing_weather'
+              ? canonicalWeatherName(overviewResultLabel(detail))
+              : overviewResultLabel(detail),
             groupedEvents: [event.rawEventType, detail.rawEventType],
           },
         });

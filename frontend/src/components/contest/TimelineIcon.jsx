@@ -1,7 +1,6 @@
 import React from 'react';
 import { Box } from '@chakra-ui/react';
 import {
-  MdAcUnit,
   MdCampaign,
   MdCasino,
   MdCloud,
@@ -20,10 +19,9 @@ import {
   MdStars,
   MdSwapHoriz,
   MdWarning,
-  MdWbSunny,
-  MdUmbrella,
 } from 'react-icons/md';
 import { FaCow, FaShoePrints, FaSkull } from 'react-icons/fa6';
+import NuffleDiceGlyph, { blockDieGlyph, weatherGlyph } from '../NuffleDiceGlyph';
 
 const normalized = (value) => String(value || '').trim().toLowerCase();
 
@@ -48,21 +46,24 @@ function KickIcon({ size }) {
   </Box>;
 }
 
-const weatherIcon = (event) => {
+const weatherValue = (event) => {
   const details = event?.details || {};
-  const text = [
+  return [
     details.weather,
     details.weatherName,
     details.resultName,
+    details.kickoffEventResult,
     details.result,
     event?.title,
-  ].filter(Boolean).join(' ').toLowerCase();
-
-  if (text.includes('blizzard') || text.includes('snow')) return MdAcUnit;
-  if (text.includes('rain')) return MdUmbrella;
-  if (text.includes('sun') || text.includes('heat')) return MdWbSunny;
-  return MdCloud;
+  ].find((value) => weatherGlyph(value)) || null;
 };
+
+function WeatherIcon({ event, size }) {
+  const value = weatherValue(event);
+  const glyph = weatherGlyph(value);
+  if (!glyph) return <MdCloud size={size}/>;
+  return <NuffleDiceGlyph glyph={glyph} label={String(value)} fontSize={`${size}px`}/>;
+}
 
 const kickoffIcon = (event) => {
   const detail = normalized(event?.details?.kickoffEventType);
@@ -73,9 +74,14 @@ const kickoffIcon = (event) => {
   if (detail === 'pitch_invasion') return MdGroups;
   if (detail === 'quick_snap') return MdDirectionsRun;
   if (detail === 'riot' || detail === 'throw_a_rock' || detail === 'officious_ref') return MdWarning;
-  if (detail === 'changing_weather') return weatherIcon(event);
   return KickIcon;
 };
+
+const blockFaceValue = (event) => event?.details?.selectedFace
+  ?? event?.details?.selected_face
+  ?? event?.details?.resultName
+  ?? event?.details?.result
+  ?? event?.outcome;
 
 function PowIcon({ size }) {
   return <Box
@@ -218,16 +224,29 @@ export default function TimelineIcon({ event, size = 20 }) {
     event?.details?.sourceActionType || event?.details?.declared_action,
   );
 
-  if (type === 'weather') {
-    const Icon = weatherIcon(event);
-    return <Icon size={size}/>;
+  if (type === 'weather' || (type === 'pre_match' && weatherValue(event))) {
+    return <WeatherIcon event={event} size={size}/>;
   }
   if (type === 'kickoff') {
+    if (normalized(event?.details?.kickoffEventType) === 'changing_weather') {
+      return <WeatherIcon event={event} size={size}/>;
+    }
     const Icon = kickoffIcon(event);
     return <Icon size={size}/>;
   }
   if (type === 'touchdown') return <MdSportsFootball size={size}/>;
-  if (type === 'block') return <PowIcon size={size}/>;
+  if (type === 'block') {
+    const glyph = blockDieGlyph(blockFaceValue(event));
+    return glyph
+      ? <NuffleDiceGlyph glyph={glyph} label={String(blockFaceValue(event))} fontSize={`${size}px`}/>
+      : <PowIcon size={size}/>;
+  }
+  if (type === 'turnover') {
+    const glyph = blockDieGlyph(blockFaceValue(event));
+    if (glyph === 'k' || glyph === 'n') {
+      return <NuffleDiceGlyph glyph={glyph} label={String(blockFaceValue(event))} fontSize={`${size}px`}/>;
+    }
+  }
   if (type === 'foul') return <FaShoePrints size={size}/>;
   if (type === 'ejection') return <RedCardIcon size={size}/>;
   if (type === 'reroll') return <MdCasino size={size}/>;
