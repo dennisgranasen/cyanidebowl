@@ -176,11 +176,6 @@ function Menu({ leagueSystems = [], selectedLeagueSystemId, onSelectLeagueSystem
                         {intl.formatMessage({ id: 'menu.writeArticle' })}
                       </Link>
                     )}
-                    {checkPermissions && userPermissions?.writeSiteAdmin && (
-                      <Link variant="menu" as={RouteLink} to="/admin/ai-reporters" onClick={onClose}>
-                        {intl.formatMessage({ id: 'menu.aiReporters' })}
-                      </Link>
-                    )}
                     <Link variant="menu" as={RouteLink} to="/staff" onClick={onClose}>
                       {intl.formatMessage({ id: 'menu.staff' })}
                     </Link>
@@ -210,6 +205,11 @@ function Menu({ leagueSystems = [], selectedLeagueSystemId, onSelectLeagueSystem
                       <Link variant="menu" as={RouteLink} to="/admin" onClick={onClose}>
                         {intl.formatMessage({ id: 'menu.admin' })}
                       </Link>
+                      {checkPermissions && userPermissions?.writeSiteAdmin && (
+                        <Link variant="menu" as={RouteLink} to="/admin/ai-reporters" onClick={onClose}>
+                          {intl.formatMessage({ id: 'menu.admin.reporters' })}
+                        </Link>
+                      )}
                       {userPermissions?.writeSiteAdmin && (
                         <Link variant="menu" as={RouteLink} to="/admin/localization" onClick={onClose}>
                           {intl.formatMessage({ id: 'menu.localizationAdmin' })}
