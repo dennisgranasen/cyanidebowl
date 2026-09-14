@@ -129,130 +129,147 @@ function Menu({ leagueSystems = [], selectedLeagueSystemId, onSelectLeagueSystem
               opacity="0.9"
               overflowX="scroll"
             >
-              <VStack align="left" h="full">
-                <Box>
-                  <Link variant="menu" as={RouteLink} to="/" onClick={() => onClose()}>
-                    {intl.formatMessage({ id: 'menu.home' })}
-                  </Link>
+              <VStack align="left" h="full" spacing={0}>
+                <Box pb={2}>
+                  <Box fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide" mb={1}>
+                    {intl.formatMessage({ id: 'menu.section.start', defaultMessage: 'Start' })}
+                  </Box>
+                  <VStack align="left" spacing={1}>
+                    <Link variant="menu" as={RouteLink} to="/" onClick={onClose}>
+                      {intl.formatMessage({ id: 'menu.home' })}
+                    </Link>
+                  </VStack>
                 </Box>
-                {(leagueSystems.length > 0 || menuLeagueSystems.length > 0) && (
-                  <Box pt={2} pb={1}>
+
+                <Box py={2}>
+                  <Box fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide" mb={1}>
+                    {intl.formatMessage({ id: 'menu.leagueSystem' })}
+                  </Box>
+                  <VStack align="left" spacing={1}>
+                    {(leagueSystems.length ? leagueSystems : menuLeagueSystems).map((system) => (
+                      <Link key={system.id} variant="menu" as={RouteLink}
+                        to={leagueSystemMenuTarget(location, system.id)}
+                        fontWeight={system.id === selectedLeagueSystemId ? 'bold' : 'normal'}
+                        onClick={async () => {
+                          if (onSelectLeagueSystem) await onSelectLeagueSystem(system.id);
+                          onClose();
+                        }}>
+                        {system.primary ? '★ ' : ''}{system.name || system.id}
+                      </Link>
+                    ))}
+                    <Link variant="menu" as={RouteLink} to="/statistics" onClick={onClose}>
+                      {intl.formatMessage({ id: 'menu.statistics' })}
+                    </Link>
+                  </VStack>
+                </Box>
+
+                <Box py={2}>
+                  <Box fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide" mb={1}>
+                    {intl.formatMessage({ id: 'menu.section.editorial', defaultMessage: 'Editorial' })}
+                  </Box>
+                  <VStack align="left" spacing={1}>
+                    <Link variant="menu" as={RouteLink} to="/" onClick={onClose}>
+                      {intl.formatMessage({ id: 'menu.articles', defaultMessage: 'Articles' })}
+                    </Link>
+                    {checkPermissions && userPermissions?.writeEditor && (
+                      <Link variant="menu" as={RouteLink} to="/editor/articles/new" onClick={onClose}>
+                        {intl.formatMessage({ id: 'menu.writeArticle' })}
+                      </Link>
+                    )}
+                    {checkPermissions && userPermissions?.writeSiteAdmin && (
+                      <Link variant="menu" as={RouteLink} to="/admin/ai-reporters" onClick={onClose}>
+                        {intl.formatMessage({ id: 'menu.aiReporters' })}
+                      </Link>
+                    )}
+                    <Link variant="menu" as={RouteLink} to="/staff" onClick={onClose}>
+                      {intl.formatMessage({ id: 'menu.staff' })}
+                    </Link>
+                  </VStack>
+                </Box>
+
+                <Box py={2}>
+                  <Box fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide" mb={1}>
+                    {intl.formatMessage({ id: 'menu.section.community', defaultMessage: 'Community' })}
+                  </Box>
+                  <VStack align="left" spacing={1}>
+                    <Link variant="menu" as={RouteLink} to="/community" onClick={onClose}>Community</Link>
+                    {checkPermissions && userPermissions?.writeSiteAdmin && (
+                      <Link variant="menu" as={RouteLink} to="/admin/community-fans" onClick={onClose}>
+                        Community admin
+                      </Link>
+                    )}
+                  </VStack>
+                </Box>
+
+                {checkPermissions && (userPermissions?.writeSiteAdmin || userPermissions?.writeLeagueAdmin) && (
+                  <Box py={2}>
                     <Box fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide" mb={1}>
-                      {intl.formatMessage({ id: 'menu.leagueSystem' })}
+                      {intl.formatMessage({ id: 'menu.section.administration', defaultMessage: 'Administration' })}
                     </Box>
                     <VStack align="left" spacing={1}>
-                      {(leagueSystems.length ? leagueSystems : menuLeagueSystems).map((system) => (
-                        <Link key={system.id} variant="menu" as={RouteLink} to={leagueSystemMenuTarget(location, system.id)} fontWeight={system.id === selectedLeagueSystemId ? 'bold' : 'normal'}
-                          onClick={async () => { if (onSelectLeagueSystem) await onSelectLeagueSystem(system.id); onClose(); }}>
-                          {system.primary ? '★ ' : ''}{system.name || system.id}
+                      <Link variant="menu" as={RouteLink} to="/admin" onClick={onClose}>
+                        {intl.formatMessage({ id: 'menu.admin' })}
+                      </Link>
+                      {userPermissions?.writeSiteAdmin && (
+                        <Link variant="menu" as={RouteLink} to="/admin/localization" onClick={onClose}>
+                          {intl.formatMessage({ id: 'menu.localizationAdmin' })}
                         </Link>
-                      ))}
+                      )}
                     </VStack>
                   </Box>
                 )}
-                {checkPermissions && userPermissions?.readCurrentUser && (
-                  <Box>
-                    <Link variant="menu" as={RouteLink} to="/coachPage" onClick={() => onClose()}>
-                      {intl.formatMessage({ id: 'menu.coach' })}
-                    </Link>
+
+                <Box py={2}>
+                  <Box fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide" mb={1}>
+                    {intl.formatMessage({ id: 'menu.section.account', defaultMessage: 'My account' })}
                   </Box>
-                )}
-                {checkPermissions && userPermissions?.writeEditor && (
-                  <Box>
-                    <Link variant="menu" as={RouteLink} to="/editor/articles/new" onClick={() => onClose()}>
-                      {intl.formatMessage({ id: 'menu.writeArticle' })}
-                    </Link>
-                  </Box>
-                )}
-                {checkPermissions && (userPermissions?.writeSiteAdmin || userPermissions?.writeLeagueAdmin) && (
-                  <Box>
-                    <Link variant="menu" as={RouteLink} to="/admin" onClick={() => onClose()}>
-                      {intl.formatMessage({ id: 'menu.admin' })}
-                    </Link>
-                  </Box>
-                )}
-                {checkPermissions && userPermissions?.writeSiteAdmin && (
-                  <Box>
-                    <Link
-                      variant="menu"
-                      as={RouteLink}
-                      to="/admin/ai-reporters"
-                      onClick={() => onClose()}
-                    >
-                      {intl.formatMessage({ id: 'menu.aiReporters' })}
-                    </Link>
-                  </Box>
-                )}
-                {checkPermissions && userPermissions?.writeSiteAdmin && (
-                  <Box>
-                    <Link
-                      variant="menu"
-                      as={RouteLink}
-                      to="/admin/community-fans"
-                      onClick={() => onClose()}
-                    >
-                      Community admin
-                    </Link>
-                  </Box>
-                )}
-                {checkPermissions && userPermissions?.writeSiteAdmin && (
-                  <Box>
-                    <Link variant="menu" as={RouteLink} to="/admin/localization" onClick={onClose}>
-                      {intl.formatMessage({ id: 'menu.localizationAdmin' })}
-                    </Link>
-                  </Box>
-                )}
-                <Box><Link variant="menu" as={RouteLink} to="/statistics" onClick={onClose}>{intl.formatMessage({ id: 'menu.statistics' })}</Link></Box>
-                <Box><Link variant="menu" as={RouteLink} to="/staff" onClick={onClose}>{intl.formatMessage({ id: 'menu.staff' })}</Link></Box>
-                <Box><Link variant="menu" as={RouteLink} to="/community" onClick={onClose}>Community</Link></Box>
-                {isProduction && authenticationReady && (
-                  <Box>
-                    {!isAuthenticated ? (
-                      <Link 
-                        variant="menu" 
-                        onClick={async (e) => {
-                          e.preventDefault();
-                          try {
-                            console.log(isProduction ? "prop" : "dev");
-                            console.log("loginWithPopup funktion:", loginWithRedirect);
-                            await loginWithRedirect();
-                            onClose(); // Stänger meny-drawern när inloggningen lyckats
-                          } catch (error) {
-                            console.error("Redirect login failed:", error);
-                          }
-                        }}
-                      >
-                        {intl.formatMessage({ id: 'menu.login' })}
-                      </Link>
-                    ) : (
-                      <Link
-                        variant="menu"
-                        onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
-                      >
-                        {intl.formatMessage({ id: 'menu.logout' }, { name: user.name })}
+                  <VStack align="left" spacing={1}>
+                    {checkPermissions && userPermissions?.readCurrentUser && (
+                      <Link variant="menu" as={RouteLink} to="/coachPage" onClick={onClose}>
+                        {intl.formatMessage({ id: 'menu.coach' })}
                       </Link>
                     )}
+                    {authenticationReady && isAuthenticated && (
+                      <Link variant="menu" as={RouteLink} to="/account" onClick={onClose}>
+                        {intl.formatMessage({ id: 'menu.account' })}
+                      </Link>
+                    )}
+                    <Link variant="menu" as={RouteLink} to="/language" onClick={onClose}>
+                      {intl.formatMessage({ id: 'menu.language' })}
+                    </Link>
+                    {isProduction && authenticationReady && (
+                      !isAuthenticated ? (
+                        <Link variant="menu" onClick={async (e) => {
+                          e.preventDefault();
+                          await loginWithRedirect();
+                          onClose();
+                        }}>
+                          {intl.formatMessage({ id: 'menu.login' })}
+                        </Link>
+                      ) : (
+                        <Link variant="menu" onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}>
+                          {intl.formatMessage({ id: 'menu.logout' }, { name: user.name })}
+                        </Link>
+                      )
+                    )}
+                  </VStack>
+                </Box>
+
+                <Box py={2}>
+                  <Box fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide" mb={1}>
+                    {intl.formatMessage({ id: 'menu.section.other', defaultMessage: 'Other' })}
                   </Box>
-                )}
-                {authenticationReady && isAuthenticated && (
-                  <Box><Link variant="menu" as={RouteLink} to="/account" onClick={onClose}>{intl.formatMessage({ id: 'menu.account' })}</Link></Box>
-                )}
-                <Box>
-                  <Link variant="menu" as={RouteLink} to="/language" onClick={onClose}>
-                    {intl.formatMessage({ id: 'menu.language' })}
-                  </Link>
+                  <VStack align="left" spacing={1}>
+                    <Link variant="menu" as={RouteLink} to="/about" onClick={onClose}>
+                      {intl.formatMessage({ id: 'menu.about' })}
+                    </Link>
+                    <Link href="https://web.cyanide-studio.com/bloodbowl/" isExternal>
+                      {intl.formatMessage({ id: 'menu.cyanideAdminTools' })} <ExternalLinkIcon mx={2} />
+                    </Link>
+                  </VStack>
                 </Box>
-                <Box>
-                  <Link variant="menu" as={RouteLink} to="/about" onClick={() => onClose()}>
-                    {intl.formatMessage({ id: 'menu.about' })}
-                  </Link>
-                </Box>
+
                 <Spacer />
-                <Box>
-                  <Link href="https://web.cyanide-studio.com/bloodbowl/" isExternal>
-                    {intl.formatMessage({ id: 'menu.cyanideAdminTools' })} <ExternalLinkIcon mx={2} />
-                  </Link>
-                </Box>
               </VStack>
               <VStack align="left">
                 <NewsList news={status?.news} headerSize="sm" textSize="xs" mt={2} color="grey" />
