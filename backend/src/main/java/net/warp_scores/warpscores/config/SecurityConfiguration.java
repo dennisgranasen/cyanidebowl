@@ -74,6 +74,7 @@ public class SecurityConfiguration {
                         .requestMatchers(GET, "/competition/*/exportNafData").authenticated()
                         .requestMatchers(GET, "/competitions/*/exportNafData").authenticated()
                         // Editorial drafts and tools require authentication in addition to service-level scope checks.
+                        .requestMatchers(GET, "/articles/tools/photographers").permitAll()
                         .requestMatchers(GET, "/articles/editor/**", "/articles/review", "/articles/mine", "/articles/tools/**").authenticated()
                         // editorial/community mutations
                         .requestMatchers(POST, "/articles/**").authenticated()

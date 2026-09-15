@@ -1,5 +1,6 @@
 import axios from 'axios';
 import config from './config';
+import { boundedImageRequest, IMAGE_REQUEST_TIMEOUT_MS } from './util/boundedImageRequest';
 
 const base = config.backendUrl || '';
 
@@ -20,6 +21,8 @@ const authDelete = async (url, getToken) =>
   axios.delete(`${base}${url}`, { headers: await authHeaders(getToken) });
 
 const EditorialCommunityApi = {
+  photographers: () => get('/articles/tools/photographers'),
+  imageQueue: (photographerId, token) => authGet(`/articles/tools/image-queue?photographerId=${encodeURIComponent(photographerId)}`, token),
   articles: (leagueSystemId, limit = 20, seasonId, type, subjectId) =>
     get(`/articles?limit=${limit}${leagueSystemId ? `&leagueSystemId=${encodeURIComponent(leagueSystemId)}` : ''}${seasonId ? `&seasonId=${encodeURIComponent(seasonId)}` : ''}${type && subjectId ? `&type=${encodeURIComponent(type)}&subjectId=${encodeURIComponent(subjectId)}` : ''}`),
   resolveAssociation: (type, id) => get(`/articles/associations/resolve?${new URLSearchParams({ type, id })}`),
@@ -33,7 +36,12 @@ const EditorialCommunityApi = {
   articlePolicy: (system, token) => authGet(`/articles/tools/policy${system ? `?leagueSystemId=${encodeURIComponent(system)}` : ''}`, token),
   setArticlePolicy: (system, autoAccept, token) => authPut(`/articles/tools/policy${system ? `?leagueSystemId=${encodeURIComponent(system)}` : ''}`, { autoAccept }, token),
   generateArticle: (payload, token) => authPost('/articles/tools/generate', payload, token),
-  generateArticleImage: (payload, token) => authPost('/articles/tools/image', payload, token),
+  generateArticleImage: (payload, token) => boundedImageRequest(async signal => {
+    const headers = await authHeaders(token);
+    if (signal.aborted) throw new Error('Image generation cancelled');
+    return (await axios.post(`${base}/articles/tools/image`, payload,
+      { headers, signal, timeout: IMAGE_REQUEST_TIMEOUT_MS })).data;
+  }),
   uploadArticleImage: (file, system, token) => {
     const data = new FormData(); data.append('file', file);
     return authPost(`/articles/tools/upload${system ? `?leagueSystemId=${encodeURIComponent(system)}` : ''}`, data, token);

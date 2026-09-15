@@ -24,6 +24,13 @@ public class EditorialArticleToolsController {
     private final com.fasterxml.jackson.databind.ObjectMapper json;
     private final AiCommunityMediaAssetStore assets;
     private final ObjectProvider<AiCommunityImageRenderer> renderers;
+    private final net.warp_scores.warpscores.ai.agents.EditorialPhotographerRegistry photographers;
+    private final ArticleImagePromptService imagePrompts;
+
+    @GetMapping("/photographers")
+    public List<net.warp_scores.warpscores.ai.agents.EditorialPhotographerRegistry.Photographer> photographers() {
+        return photographers.all();
+    }
 
     @GetMapping("/reporters")
     public List<EditorialArticleAiService.Reporter> reporters(Authentication auth, @RequestParam(required = false) String leagueSystemId) {
@@ -42,23 +49,29 @@ public class EditorialArticleToolsController {
     public Article generate(Authentication auth, @RequestBody EditorialArticleAiService.Request input) throws Exception {
         return ai.generate(auth, input);
     }
-    public record ImageInput(List<Article.Association> associations, String prompt, String title, String body, String matchId, String reporterId) {}
+    public record ImageInput(List<Article.Association> associations, String prompt, String title, String body, String matchId, String reporterId, String photographerId) {
+        public ImageInput(List<Article.Association> associations, String prompt, String title, String body, String matchId, String reporterId) {
+            this(associations, prompt, title, body, matchId, reporterId, null);
+        }
+    }
     @PostMapping("/image")
     public Map<String, String> image(Authentication auth, @RequestBody ImageInput input) throws Exception {
         requireWriter(auth);
+        var photographer = photographers.require(input.photographerId());
         var renderer = renderers.orderedStream().filter(AiCommunityImageRenderer::isConfigured).findFirst()
                 .orElseThrow(() -> new IllegalStateException("Image generation is not configured"));
         String prompt = imagePrompt(input);
+        net.warp_scores.warpscores.ai.context.AssembledContext assembled = null;
         if (input.matchId() != null && !input.matchId().isBlank()) {
             var context = matchArticles.imageContext(auth, input.matchId(), input.reporterId());
             // The same assembly, evidence projection and history used by match-report generation.
-            prompt += "\n\nMATCH REPORT CONTEXT (authoritative facts override article claims):\n"
-                    + json.writeValueAsString(context.assembled())
-                    + "\nAUTHORITATIVE MATCH EVIDENCE:\n" + context.evidence().json()
+            assembled = context.assembled();
+            prompt += "\nAUTHORITATIVE MATCH EVIDENCE:\n" + context.evidence().json()
                     + "\nHISTORICAL COMPETITION CONTEXT:\n" + context.history().json();
         }
-        var image = renderer.render(prompt, AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE);
-        return Map.of("url", store(image.bytes()), "prompt", imagePrompt(input));
+        var image = renderer.render(imagePrompts.prepare(prompt, photographer, assembled), AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE);
+        return Map.of("url", store(image.bytes()), "prompt", imagePrompt(input),
+                "photographerId", photographer.id(), "photographerName", photographer.alias());
     }
     @PostMapping("/upload")
     public Map<String, String> upload(Authentication auth, @RequestParam(required = false) String leagueSystemId,

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Avatar, Badge, Box, Card, CardBody, Heading, Text
+  Avatar, Badge, Box, Card, CardBody, Heading, Text, Tabs, TabList, Tab, TabPanels, TabPanel
 } from '@chakra-ui/react';
 import { Link as RouteLink } from 'react-router-dom';
 import Navigation from '../components/misc/Navigation';
 import AiReporterApi from '../AiReporterApi';
 import StaffApi from '../StaffApi';
+import EditorialCommunityApi from '../EditorialCommunityApi';
 import { useIntl } from 'react-intl';
 import { toStaffCards } from '../util/staffProfiles';
 
@@ -13,6 +14,17 @@ function StaffPage() {
   const intl = useIntl();
   const [reporters, setReporters] = useState(null);
   const [error, setError] = useState(null);
+  const [photographers, setPhotographers] = useState([]);
+  const [photographerError, setPhotographerError] = useState(null);
+  const [photographersLoaded, setPhotographersLoaded] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    EditorialCommunityApi.photographers().then(people => {
+      if (active) { setPhotographers(people); setPhotographersLoaded(true); }
+    }).catch(error => { if (active) setPhotographerError(error); });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     Promise.all([AiReporterApi.reporters(), StaffApi.users()])
@@ -30,6 +42,12 @@ function StaffPage() {
         {intl.formatMessage({ id: 'staff.description' })}
       </Text>
 
+      <Tabs mt={6} colorScheme="teal">
+        <TabList>
+          <Tab>{intl.formatMessage({ id: 'staff.writers' })}</Tab>
+          <Tab>{intl.formatMessage({ id: 'staff.photographers' })} ({photographers.length})</Tab>
+        </TabList>
+        <TabPanels><TabPanel px={0}>
       {error && <Text mt={6} color="red.300">{error.message || String(error)}</Text>}
       {!reporters && !error && <Text mt={8}>{intl.formatMessage({ id: 'staff.loading' })}</Text>}
 
@@ -80,6 +98,28 @@ function StaffPage() {
           </Card>
         ))}
       </Box>
+        </TabPanel><TabPanel px={0}>
+          <Text mb={4}>{intl.formatMessage({ id: 'staff.photographersDescription' })}</Text>
+          {photographerError && <Text color="red.300">{intl.formatMessage({ id: 'news.photographersFailed' })}</Text>}
+          {!photographersLoaded && !photographerError && <Text>{intl.formatMessage({ id: 'staff.loading' })}</Text>}
+          <Box display="grid" gridTemplateColumns="repeat(auto-fill, minmax(min(100%, 300px), 1fr))" gap={4}>
+            {photographers.map(person => {
+              const description = person.descriptions[intl.locale.split('-')[0]] || person.descriptions.en;
+              return <Card key={person.id} id={`photographer-${person.id}`}>
+                <CardBody>
+                  <Avatar name={person.alias} mb={3} />
+                  <Heading size="md">{person.alias}</Heading>
+                  <Badge colorScheme="purple" mt={2}>AI</Badge>
+                  <Text mt={3}>{description.personality}</Text>
+                  <Text mt={3} fontSize="sm">{description.focus}</Text>
+                  <Text mt={3} fontSize="sm"><strong>{intl.formatMessage({ id: 'staff.medium' })}: </strong>{description.medium}</Text>
+                  <Text mt={2} fontSize="sm"><strong>{intl.formatMessage({ id: 'staff.equipment' })}: </strong>{description.equipment}</Text>
+                </CardBody>
+              </Card>;
+            })}
+          </Box>
+        </TabPanel></TabPanels>
+      </Tabs>
     </Box>
   );
 }

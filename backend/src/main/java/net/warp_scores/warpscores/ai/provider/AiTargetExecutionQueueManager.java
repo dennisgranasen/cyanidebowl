@@ -29,10 +29,30 @@ public class AiTargetExecutionQueueManager {
         if(cfg==null||cfg.getModality()!=AiProviderProperties.Modality.TEXT) throw new IllegalStateException("Unknown/non-text AI target: "+target.targetId());
         TargetQueue q=queues.computeIfAbsent(target.targetId(),x->new TargetQueue(target.targetId(),cfg));
         QueuedCall call=new QueuedCall(UUID.randomUUID().toString(),priority,target,agentId,request); q.enqueue(call);
-        try{return call.result.join();}catch(CompletionException e){Throwable c=e.getCause();if(c instanceof RuntimeException r)throw r;throw e;}
+        try{return call.result.get();}
+        catch(InterruptedException e){q.cancel(call);Thread.currentThread().interrupt();throw new CancellationException("AI execution caller cancelled");}
+        catch(ExecutionException e){Throwable c=e.getCause();if(c instanceof RuntimeException r)throw r;throw new CompletionException(c);}
     }
 
     public List<QueueSnapshot> snapshots(){return queues.values().stream().sorted(Comparator.comparing(q->q.targetId)).map(TargetQueue::snapshot).toList();}
+    /** Advisory wait for a newly submitted job; never exposes prompts or agent identities. */
+    public WaitEstimate estimate(String target, int priority) {
+        var q = target == null ? null : queues.get(target);
+        if (q == null) return new WaitEstimate(0, 0, null, null);
+        synchronized (q.monitor) {
+            Instant now = Instant.now();
+            int ahead = (int) q.pending.stream().filter(c -> !c.result.isDone() && c.priority >= priority
+                    && (c.availableAt == null || !c.availableAt.isAfter(now))).count();
+            Instant blocked = quota(q.group()).blockedUntil();
+            long samples = q.succeeded.get();
+            Long seconds = samples < 3 ? null : Math.max(0, (long) Math.ceil(
+                    (ahead + q.running.get()) * (q.completedMillis.get() / (double) samples) /
+                            (Math.max(1, q.config.getQueue().getConcurrency()) * 1000)));
+            if (seconds != null && blocked != null) seconds += Math.max(0, Duration.between(now, blocked).toSeconds());
+            return new WaitEstimate(ahead, q.running.get(), seconds, blocked);
+        }
+    }
+    public record WaitEstimate(int ahead, int running, Long estimatedWaitSeconds, Instant notBefore) {}
     public boolean reprioritize(String target,String job,int priority){validatePriority(priority);TargetQueue q=queues.get(target);return q!=null&&q.reprioritize(job,priority);}
     public boolean remove(String target,String job){TargetQueue q=queues.get(target);return q!=null&&q.remove(job);}
     public int clear(String target){TargetQueue q=queues.get(target);return q==null?0:q.clear();}
@@ -43,12 +63,14 @@ public class AiTargetExecutionQueueManager {
     private final class TargetQueue {
         final String targetId; final AiProviderProperties.TargetConfig config; final Object monitor=new Object(); final List<QueuedCall> pending=new ArrayList<>(); final List<Thread> workers=new ArrayList<>();
         final AtomicInteger running=new AtomicInteger(); final AtomicLong succeeded=new AtomicLong(); final AtomicLong failed=new AtomicLong();
+        final AtomicLong completedMillis = new AtomicLong();
         volatile boolean stopping; volatile String lastError; volatile Integer lastStatusCode; volatile Instant lastErrorAt;
         TargetQueue(String id,AiProviderProperties.TargetConfig cfg){targetId=id;config=cfg;for(int i=0;i<Math.max(1,cfg.getQueue().getConcurrency());i++){Thread t=new Thread(this::loop,"ai-target-"+id+"-"+(i+1));t.setDaemon(true);workers.add(t);t.start();}}
-        void enqueue(QueuedCall c){synchronized(monitor){pending.add(c);monitor.notifyAll();}}
+        void enqueue(QueuedCall c){synchronized(monitor){if(!c.result.isDone())pending.add(c);monitor.notifyAll();}}
+        void cancel(QueuedCall c){synchronized(monitor){c.result.cancel(false);pending.remove(c);c.status=JobStatus.CANCELLED;monitor.notifyAll();}}
         void loop(){while(!stopping&&!Thread.currentThread().isInterrupted()){try{QueuedCall c=take();if(c!=null)run(c);}catch(InterruptedException e){Thread.currentThread().interrupt();return;}}}
         QueuedCall take() throws InterruptedException {synchronized(monitor){while(!stopping){Instant now=Instant.now();Instant blocked=quota(group()).blockedUntil();QueuedCall best=pending.stream().filter(c->!c.result.isDone()).filter(c->c.availableAt==null||!c.availableAt.isAfter(now)).filter(c->blocked==null||!blocked.isAfter(now)).max(Comparator.comparingInt((QueuedCall c)->c.priority).thenComparing(c->c.createdAt,Comparator.reverseOrder())).orElse(null);if(best!=null){pending.remove(best);best.status=JobStatus.RUNNING;return best;}Instant wake=blocked;for(QueuedCall c:pending)if(c.availableAt!=null&&(wake==null||c.availableAt.isBefore(wake)))wake=c.availableAt;if(wake==null)monitor.wait();else monitor.wait(Math.max(1L,Duration.between(now,wake).toMillis()));}return null;}}
-        void run(QueuedCall c){running.incrementAndGet();boolean admitted=false;long start=System.nanoTime();try{try{admission.acquire(c.agentId,c.request);admitted=true;}catch(AiGenerationAdmissionService.AdmissionDeniedException d){if(d.reason()==AiGenerationAdmissionService.DenialReason.CONCURRENCY_LIMIT){c.status=JobStatus.QUEUED;c.availableAt=Instant.now().plusMillis(500);enqueue(c);return;}throw d;}LlmProvider p=registry.require(c.target.providerId());if(!p.isConfigured())throw new IllegalStateException("AI provider is not configured: "+c.target.providerId());c.attempts++;CanonicalLlmResponse response=p.generate(c.request);traceStore.recordSuccess(c.agentId,c.target.providerId(),c.request,response,elapsed(start));c.status=JobStatus.SUCCEEDED;succeeded.incrementAndGet();c.result.complete(response);}catch(LlmProviderException e){traceStore.recordFailure(c.agentId,c.target.providerId(),c.request,e,elapsed(start));remember(e);if(e.kind()==LlmProviderException.Kind.RATE_LIMIT&&c.attempts<Math.max(1,config.getQueue().getMaxAttempts())){Instant retry=e.retryAt();if(retry==null||!retry.isAfter(Instant.now()))retry=Instant.now().plus(backoff(c.attempts));quota(group()).blockUntil(retry,e.getMessage());c.status=JobStatus.RETRY_WAIT;c.availableAt=retry;c.lastError=shortError(e);enqueue(c);return;}c.status=JobStatus.FAILED;c.lastError=shortError(e);failed.incrementAndGet();c.result.completeExceptionally(e);}catch(RuntimeException e){traceStore.recordUnexpectedFailure(c.agentId,c.target.providerId(),c.request,e,elapsed(start));lastError=shortError(e);lastErrorAt=Instant.now();c.status=JobStatus.FAILED;c.lastError=shortError(e);failed.incrementAndGet();c.result.completeExceptionally(e);}finally{if(admitted)admission.release();running.decrementAndGet();}}
+        void run(QueuedCall c){running.incrementAndGet();boolean admitted=false;long start=System.nanoTime();try{try{admission.acquire(c.agentId,c.request);admitted=true;}catch(AiGenerationAdmissionService.AdmissionDeniedException d){if(d.reason()==AiGenerationAdmissionService.DenialReason.CONCURRENCY_LIMIT){c.status=JobStatus.QUEUED;c.availableAt=Instant.now().plusMillis(500);enqueue(c);return;}throw d;}LlmProvider p=registry.require(c.target.providerId());if(!p.isConfigured())throw new IllegalStateException("AI provider is not configured: "+c.target.providerId());c.attempts++;CanonicalLlmResponse response=p.generate(c.request);traceStore.recordSuccess(c.agentId,c.target.providerId(),c.request,response,elapsed(start));c.status=JobStatus.SUCCEEDED;completedMillis.addAndGet(elapsed(start));succeeded.incrementAndGet();c.result.complete(response);}catch(LlmProviderException e){traceStore.recordFailure(c.agentId,c.target.providerId(),c.request,e,elapsed(start));remember(e);if(e.kind()==LlmProviderException.Kind.RATE_LIMIT&&c.attempts<Math.max(1,config.getQueue().getMaxAttempts())){Instant retry=e.retryAt();if(retry==null||!retry.isAfter(Instant.now()))retry=Instant.now().plus(backoff(c.attempts));quota(group()).blockUntil(retry,e.getMessage());c.status=JobStatus.RETRY_WAIT;c.availableAt=retry;c.lastError=shortError(e);enqueue(c);return;}c.status=JobStatus.FAILED;c.lastError=shortError(e);failed.incrementAndGet();c.result.completeExceptionally(e);}catch(RuntimeException e){traceStore.recordUnexpectedFailure(c.agentId,c.target.providerId(),c.request,e,elapsed(start));lastError=shortError(e);lastErrorAt=Instant.now();c.status=JobStatus.FAILED;c.lastError=shortError(e);failed.incrementAndGet();c.result.completeExceptionally(e);}finally{if(admitted)admission.release();running.decrementAndGet();}}
         boolean reprioritize(String id,int p){synchronized(monitor){QueuedCall c=pending.stream().filter(x->x.id.equals(id)).findFirst().orElse(null);if(c==null)return false;c.priority=p;monitor.notifyAll();return true;}}
         boolean remove(String id){synchronized(monitor){QueuedCall c=pending.stream().filter(x->x.id.equals(id)).findFirst().orElse(null);if(c==null)return false;pending.remove(c);c.status=JobStatus.CANCELLED;c.result.completeExceptionally(new CancellationException("Removed from AI execution queue by admin"));monitor.notifyAll();return true;}}
         int clear(){synchronized(monitor){List<QueuedCall> copy=new ArrayList<>(pending);pending.clear();copy.forEach(c->{c.status=JobStatus.CANCELLED;c.result.completeExceptionally(new CancellationException("AI execution queue cleared by admin"));});monitor.notifyAll();return copy.size();}}

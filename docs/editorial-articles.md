@@ -100,7 +100,66 @@ replaced; otherwise the new image is inserted at the cursor.
 For match illustrations, `MatchArticleService.reportingContext` supplies the
 same canonical MATCH_REPORT assembly, replay evidence projection and competition
 history used by the reporter. The current title/text and optional visual brief
-are added to the image request, without truncating the match evidence. As with
+are supplied to a text-model step together with the complete match evidence. It
+selects one coherent scene and writes a compact image brief. The photographer's
+full visual direction is reserved separately, and the final image prompt is
+bounded to 2,048 characters for Cloudflare compatibility. If the text model
+exceeds its budget, only its generated scene is shortened; raw match evidence
+is never blindly truncated into an image prompt. Short general-article briefs
+that already fit do not need this additional text-model call. The text step uses
+the existing `EDITORIAL_ARTICLE` routing and therefore needs a configured text
+model as well as an image model. As with
 AI match reporting, an analyzed replay is required; manual image uploads remain
 available without a replay. Internal reporter context is not returned to the
 browser in the image response.
+
+The image-description text step has a 90-second deadline, including time spent
+in the AI execution queue. Its cancellation interrupts the queue wait and removes
+pending work, including work waiting for a quota reset. Calls already executing
+at a provider may finish under that provider's own timeout; their results do not
+start image rendering after the description deadline. The browser independently
+limits the complete request (including token acquisition) to five minutes and
+unlocks the editor with a localized error. This client limit is not a server job
+cancellation protocol. Existing requests need the updated backend/frontend to
+benefit from these limits.
+
+The image editor polls `/articles/tools/image-queue` every 15 seconds using the
+selected photographer's actual EDITORIAL_ARTICLE route and priority. The public
+response (authenticated writers only) contains aggregate counts, an earliest
+quota restart and an advisory wait for a new request; no prompts, agent identities
+or provider errors are exposed. After three successful text jobs, queue wait is
+estimated from average service time, eligible jobs of equal/higher priority,
+running work and concurrency. This is not a tracked job position or a guaranteed
+completion time. Image-provider latency is additional and currently unknown.
+Article images bypass the persisted community media queue; shared provider
+quotas can still affect both. Direct requests retain their timeouts rather than
+becoming durable multi-day orders.
+
+## Editorial photographers and illustrators
+
+The visual staff catalog contains 18 distinct photographers and illustrators in
+`backend/src/main/resources/ai/photographers.json`. Each has a stable id, name,
+and Swedish/English descriptions of personality, subject/composition preferences,
+medium, and equipment/material quality. Add or edit profiles there and restart
+the backend. The registry validates duplicate ids and incomplete descriptions at
+startup. Visual staff are separate from reporters and do not enter automatic
+writing assignments.
+
+The public `GET /articles/tools/photographers` endpoint feeds both the visual
+staff tab on the editorial page and the shared article image selector. Writers
+remain in their own tab. The selector shows the selected person's complete
+style and supports changing photographer between generation attempts.
+
+Image requests send `photographerId`; the server resolves the trusted profile
+and includes its visual direction alongside the article, custom brief, and any
+match context. The same direction applies to non-match subjects. Preferences
+must not invent events, and equipment quality affects visual texture rather than
+the accuracy of depicted facts. Unknown ids return HTTP 400 before rendering;
+older clients without an id use the first catalog entry. The image response
+includes the creator's id/name, and the editor retains a credit in the image's
+HTML title attribute. Uploaded images do not acquire an AI photographer credit.
+
+Tests cover loading the bilingual catalog, selected styles in match and general
+news requests, changing creator between requests, and rejecting unknown ids.
+The image renderer is mocked; visual fidelity of generated artwork depends on
+the configured image model and has not been tested with paid provider calls.

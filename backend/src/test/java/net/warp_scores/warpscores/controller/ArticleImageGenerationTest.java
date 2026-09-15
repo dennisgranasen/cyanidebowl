@@ -1,9 +1,11 @@
 package net.warp_scores.warpscores.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.warp_scores.warpscores.ai.agents.EditorialPhotographerRegistry;
 import net.warp_scores.warpscores.ai.context.AssembledContext;
 import net.warp_scores.warpscores.ai.interaction.*;
 import net.warp_scores.warpscores.ai.reporting.*;
+import net.warp_scores.warpscores.ai.provider.*;
 import net.warp_scores.warpscores.model.AiCommunityMediaGenerationRequest;
 import net.warp_scores.warpscores.service.*;
 import org.junit.jupiter.api.Test;
@@ -37,16 +39,52 @@ class ArticleImageGenerationTest {
         ImageIO.write(new BufferedImage(2, 2, BufferedImage.TYPE_INT_RGB), "png", output);
         when(renderer.render(anyString(), any())).thenReturn(new AiCommunityImageRenderer.RenderedImage(output.toByteArray(), "image/png", "png", "test", "model"));
         when(assets.save(anyString(), anyString(), anyString(), any())).thenReturn(new AiCommunityMediaAssetStore.StoredAsset("image.png", "/image.png"));
-        var controller = new EditorialArticleToolsController(ai, matches, new ObjectMapper(), assets, providers);
-        var input = new EditorialArticleToolsController.ImageInput(List.of(), "A newspaper illustration", "Title", "The coach's written text", "match", "reporter");
+        var photographers = new EditorialPhotographerRegistry(new ObjectMapper());
+        var llm = mock(LlmExecutionService.class);
+        when(llm.generate(anyString(), any(CanonicalLlmRequest.class))).thenReturn(
+                new CanonicalLlmResponse("test", "model", null, "A player passing the ball.", null, "stop"));
+        var controller = new EditorialArticleToolsController(ai, matches, new ObjectMapper(), assets, providers, photographers, new ArticleImagePromptService(llm));
+        var input = new EditorialArticleToolsController.ImageInput(List.of(), "A newspaper illustration", "Title", "The coach's written text", "match", "reporter", "selma-vattenfarg");
         var first = controller.image(auth, input);
         controller.image(auth, input);
-        verify(renderer, times(2)).render(argThat(prompt -> prompt.contains(evidence)
-                && prompt.contains("historical-match-facts") && prompt.contains("world-rule")
-                && prompt.contains("The coach's written text") && prompt.contains("A newspaper illustration")),
+        verify(llm, times(2)).generate(eq("selma-vattenfarg"), argThat(request -> request.context().equals(context.assembled())
+                && request.taskInstruction().contains(evidence) && request.taskInstruction().contains("historical-match-facts")
+                && request.taskInstruction().contains("The coach's written text") && request.taskInstruction().contains("A newspaper illustration")));
+        verify(renderer, times(2)).render(argThat(prompt -> prompt.length() <= 2048
+                && prompt.contains("A player passing the ball.")
+                && prompt.contains(photographers.require("selma-vattenfarg").imageDirection())),
                 eq(AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE));
         assertEquals("/image.png", first.get("url"));
+        assertEquals("selma-vattenfarg", first.get("photographerId"));
         assertFalse(first.get("prompt").contains(evidence));
+    }
+
+    @Test void generalNewsUsesSelectedVisualAuthorAndInvalidSelectionNeverRenders() throws Exception {
+        var photographers = new EditorialPhotographerRegistry(new ObjectMapper());
+        var matches = mock(MatchArticleService.class);
+        @SuppressWarnings("unchecked") ObjectProvider<AiCommunityImageRenderer> providers = mock(ObjectProvider.class);
+        var renderer = mock(AiCommunityImageRenderer.class);
+        var assets = mock(AiCommunityMediaAssetStore.class);
+        var auth = mock(Authentication.class);
+        when(auth.isAuthenticated()).thenReturn(true);
+        when(providers.orderedStream()).thenAnswer(i -> java.util.stream.Stream.of(renderer));
+        when(renderer.isConfigured()).thenReturn(true);
+        var bytes = new ByteArrayOutputStream();
+        ImageIO.write(new BufferedImage(2, 2, BufferedImage.TYPE_INT_RGB), "png", bytes);
+        when(renderer.render(anyString(), any())).thenReturn(new AiCommunityImageRenderer.RenderedImage(bytes.toByteArray(), "image/png", "png", "test", "model"));
+        when(assets.save(anyString(), anyString(), anyString(), any())).thenReturn(new AiCommunityMediaAssetStore.StoredAsset("image.png", "/image.png"));
+        var controller = new EditorialArticleToolsController(mock(EditorialArticleAiService.class), matches,
+                new ObjectMapper(), assets, providers, photographers, new ArticleImagePromptService(mock(LlmExecutionService.class)));
+        for (var id : List.of("pip-kritsmula", "siv-slutartid")) {
+            var result = controller.image(auth, new EditorialArticleToolsController.ImageInput(List.of(), "A library opening", "Community news", "Fans meet the librarian", null, null, id));
+            assertEquals(id, result.get("photographerId"));
+            verify(renderer).render(argThat(prompt -> prompt.contains(photographers.require(id).imageDirection())
+                    && prompt.contains("A library opening") && prompt.contains("Fans meet the librarian")), any());
+        }
+        verifyNoInteractions(matches);
+        assertThrows(org.springframework.web.server.ResponseStatusException.class, () -> controller.image(auth,
+                new EditorialArticleToolsController.ImageInput(List.of(), "News", "Title", "", null, null, "missing")));
+        verify(renderer, times(2)).render(anyString(), any());
     }
 
     @Test void titleOrCustomPromptDoesNotDependOnAnExistingImageOrBody() {
