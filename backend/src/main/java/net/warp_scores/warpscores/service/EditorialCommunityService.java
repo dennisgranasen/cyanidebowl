@@ -808,7 +808,7 @@ public class EditorialCommunityService {
                 : auth != null && auth.isAuthenticated() ? auth.getName() : null;
     }
 
-    private static String sanitizeHtml(String html) {
+    static String sanitizeHtml(String html) {
         if (html == null) return "";
         String safe = UNSAFE_TAGS.matcher(html).replaceAll("");
         safe = EVENT_HANDLERS.matcher(safe).replaceAll("");

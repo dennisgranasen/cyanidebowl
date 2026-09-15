@@ -1,4 +1,13 @@
 const en = {
+  "news.underline": "Underline",
+  "news.align.left": "Align left",
+  "news.align.center": "Center",
+  "news.align.right": "Align right",
+  "news.align.justify": "Justify",
+  "news.generateAnotherImage": "Generate another image",
+  "news.imageRegenerateHelp": "You can generate again, including after deleting an image. A title or your own prompt is enough.",
+  "news.matchImageContext": "Uses the reporter?s match context and your article text.",
+  "news.imageNeedsReplay": "An analyzed replay is needed for a match illustration. You can still upload your own images.",
   "news.formatting": "Article formatting",
   "news.textStyle": "Text style",
   "news.paragraph": "Paragraph",
@@ -552,6 +561,15 @@ const en = {
 };
 
 const sv = {
+  "news.underline": "Understruken",
+  "news.align.left": "V?nsterjustera",
+  "news.align.center": "Centrera",
+  "news.align.right": "H?gerjustera",
+  "news.align.justify": "Marginaljustera",
+  "news.generateAnotherImage": "Generera en ny bild",
+  "news.imageRegenerateHelp": "Du kan generera igen, ?ven efter att du tagit bort en bild. En titel eller egen prompt r?cker.",
+  "news.matchImageContext": "Anv?nder reporterns matchkontext och din artikeltext.",
+  "news.imageNeedsReplay": "En analyserad replay beh?vs f?r en matchillustration. Du kan fortfarande ladda upp egna bilder.",
   "news.formatting": "Artikelformatering",
   "news.textStyle": "Textstil",
   "news.paragraph": "Brödtext",

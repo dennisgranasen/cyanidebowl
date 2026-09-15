@@ -82,3 +82,25 @@ the automated tests.
 Targeted backend tests cover seasonal relevance, legacy associations, global
 publication confirmation, review transitions, authorization, and auto-accept
 policies. Frontend tests cover context propagation and the league season UI.
+
+## Shared match editor and illustrations
+
+Match article creation and editing use the same rich-text toolbar and image
+controls as general articles. The toolbar has grouped icon controls, tooltips,
+active states, underline and paragraph/heading alignment. Match articles store
+optional sanitized `bodyHtml` alongside a derived plain-text `body`; legacy
+reports are escaped when opened in the editor and remain readable without
+migration. AI context consumers continue using the plain-text body.
+
+Illustrations can be requested repeatedly, even after all body content/images
+have been removed: a title, custom prompt or match reference is sufficient.
+Requests reset their busy state on success and failure. A selected image can be
+replaced; otherwise the new image is inserted at the cursor.
+
+For match illustrations, `MatchArticleService.reportingContext` supplies the
+same canonical MATCH_REPORT assembly, replay evidence projection and competition
+history used by the reporter. The current title/text and optional visual brief
+are added to the image request, without truncating the match evidence. As with
+AI match reporting, an analyzed replay is required; manual image uploads remain
+available without a replay. Internal reporter context is not returned to the
+browser in the image response.

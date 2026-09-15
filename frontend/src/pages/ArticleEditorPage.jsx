@@ -2,12 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Box, Button, Checkbox, FormControl, FormLabel, Heading, HStack, Input, Select, Text, Textarea, VStack } from '@chakra-ui/react';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 import { useEditor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Image from '@tiptap/extension-image';
-import Link from '@tiptap/extension-link';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import Navigation from '../components/misc/Navigation';
 import Api from '../EditorialCommunityApi';
+import ArticleImageGenerator from '../components/community/ArticleImageGenerator';
+import { articleEditorExtensions } from '../components/community/articleEditorExtensions';
 import ArticleRichTextEditor from '../components/community/ArticleRichTextEditor';
 import { useIntl } from 'react-intl';
 import { pasteArticleImages, dropArticleImages, validArticleImage } from '../util/articleImages';
@@ -34,7 +33,6 @@ function ArticleEditorPage() {
   const uploadRef = useRef(null);
   const [mine, setMine] = useState([]);
   const [capabilities, setCapabilities] = useState(null);
-  const [prompt, setPrompt] = useState('');
   const [brief, setBrief] = useState('');
   const [reporters, setReporters] = useState([]);
   const [reporterId, setReporterId] = useState('');
@@ -42,7 +40,7 @@ function ArticleEditorPage() {
   const [autoAccept, setAutoAccept] = useState(false);
   const system = links.find(l => l.type === 'LEAGUE_SYSTEM')?.id;
   const editor = useEditor({
-    extensions: [StarterKit.configure({ heading: { levels: [1, 2, 3] } }), Image, Link.configure({ openOnClick: false })],
+    extensions: articleEditorExtensions(),
     content: '',
     editorProps: {
       attributes: { role: 'textbox', 'aria-multiline': 'true', 'aria-label': t('news.articleBody') },
@@ -50,7 +48,7 @@ function ArticleEditorPage() {
       handleDrop: (view, event, _slice, moved) => dropArticleImages(view, event, moved, (files, position) => uploadRef.current?.(files, position)),
     },
   });
-  useEffect(() => { editor?.setEditable(!busy && !loading); }, [editor, busy, loading]);
+  useEffect(() => { editor?.setEditable(!busy && !loading, false); }, [editor, busy, loading]);
   const set = (key, value) => setForm(old => ({ ...old, [key]: value }));
   const showError = e => setError(e.response?.data?.message || e.message || t('news.error'));
   const loadArticle = article => {
@@ -199,8 +197,8 @@ function ArticleEditorPage() {
         </Box>
         {articleIsGlobal(links) && <Alert status="warning">{t('news.globalWarning')}</Alert>}
         <ArticleRichTextEditor editor={editor} disabled={busy || loading} onUpload={uploadImages} onError={showError} />
-        <FormControl><FormLabel>{t('news.imagePrompt')}</FormLabel><Textarea value={prompt} onChange={e => setPrompt(e.target.value)} placeholder={t('news.imagePromptHelp')} /></FormControl>
-        <Button isDisabled={busy || !editor?.getText().trim()} onClick={() => run(async () => insertImage(await Api.generateArticleImage({ associations: payload().associations, prompt, title: form.title, body: editor?.getText() }, token)))}>{t('news.generateImage')}</Button>
+        <ArticleImageGenerator editor={editor} title={form.title} associations={payload().associations}
+          disabled={busy || loading} onError={showError} onBusyChange={setBusy} />
         <Text fontSize="sm">{t(`news.status.${form.status}`)}</Text>
         <Alert status="info">{t(capabilities?.canPublishDirect ? 'news.directPublication' : 'news.reviewRequired')}</Alert>
         {capabilities?.canReview ? <>

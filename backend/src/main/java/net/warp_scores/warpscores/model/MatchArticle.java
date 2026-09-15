@@ -21,6 +21,8 @@ public class MatchArticle {
 
     private String title;
     private String body;
+    /** Optional rich text; body remains plain text for legacy readers and AI context. */
+    private String bodyHtml;
     private Status status;
     private Kind kind;
     private AuthorType authorType;

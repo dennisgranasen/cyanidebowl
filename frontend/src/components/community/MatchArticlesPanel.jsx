@@ -9,6 +9,10 @@ import EditorialCommunityApi from '../../EditorialCommunityApi';
 import AiReporterApi from '../../AiReporterApi';
 import CommentThread from './CommentThread';
 import ReactionBar from './ReactionBar';
+import ArticleComposer from './ArticleComposer';
+import DOMPurify from 'dompurify';
+import { articleBodyStyles } from './articleBodyStyles';
+import { hasArticleContent } from '../../util/articleContent';
 
 const statusScheme = {
   DRAFT: 'gray',
@@ -19,16 +23,16 @@ const statusScheme = {
 
 function ArticleCard({
   article, reporter, canReview, canEdit, canDelete,
-  onSave, onPublish, onReject, onDelete,
+  onSave, onPublish, onReject, onDelete, matchId, contextAvailable, busy, onBusyChange, onError,
 }) {
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(article.title);
-  const [editBody, setEditBody] = useState(article.body);
+  const [editContent, setEditContent] = useState({ body: article.body, bodyHtml: article.bodyHtml });
   const teamReport = article.kind === 'TEAM_REPORT';
   const coachContribution = article.kind === 'COACH_CONTRIBUTION';
   const save = async () => {
-    await onSave(article.id, { title: editTitle, body: editBody });
-    setEditing(false);
+    const saved = await onSave(article.id, { title: editTitle, ...editContent });
+    if (saved !== false) setEditing(false);
   };
   const remove = async () => {
     if (!window.confirm('Är du säker på att du vill ta bort artikeln?')) return;
@@ -48,12 +52,13 @@ function ArticleCard({
       {editing ? <>
         <Input value={editTitle} onChange={e => setEditTitle(e.target.value)}
           maxLength={250} isReadOnly={!canEdit}/>
-        <Textarea mt={2} minH="220px" value={editBody} onChange={e => setEditBody(e.target.value)}
-          maxLength={100000} isReadOnly={!canEdit}/>
+        <Box mt={3}><ArticleComposer value={editContent} onChange={setEditContent} title={editTitle}
+          matchId={matchId} reporterId={article.reporterId} disabled={!canEdit || busy} contextAvailable={contextAvailable}
+          onBusyChange={onBusyChange} onError={onError} /></Box>
         <HStack mt={2}>
           {canEdit && (
             <Button size="sm" onClick={save}
-              isDisabled={!editTitle.trim() || !editBody.trim()}>Spara</Button>
+              isDisabled={busy || !editTitle.trim() || !hasArticleContent(editContent)}>Spara</Button>
           )}
           <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Avbryt</Button>
           {canDelete && (
@@ -81,7 +86,9 @@ function ArticleCard({
           )}
           <Text fontSize="sm" color="gray.500">Av {article.authorDisplayName}</Text>
         </HStack>
-        <Text mt={3} whiteSpace="pre-wrap">{article.body}</Text>
+        {article.bodyHtml != null
+          ? <Box mt={3} sx={articleBodyStyles} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.bodyHtml) }} />
+          : <Text mt={3} whiteSpace="pre-wrap">{article.body}</Text>}
       </>}
       {article.status === 'PUBLISHED' && !editing && (
         <Box mt={4}>
@@ -95,7 +102,7 @@ function ArticleCard({
       {(canEdit || canDelete || canReview) && !editing && (
         <HStack mt={3}>
           {(canEdit || canDelete) && (
-            <Button size="sm" variant="outline" onClick={() => setEditing(true)}>Redigera</Button>
+            <Button size="sm" variant="outline" onClick={() => { setEditTitle(article.title); setEditContent({ body: article.body, bodyHtml: article.bodyHtml }); setEditing(true); }}>Redigera</Button>
           )}
           {canReview && article.status === 'PENDING_REVIEW' && <>
             <Button size="sm" colorScheme="green" onClick={() => onPublish(article.id)}>Publicera</Button>
@@ -115,7 +122,7 @@ export default function MatchArticlesPanel({ matchId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
+  const [content, setContent] = useState({ body: '', bodyHtml: '' });
   const [reporterId, setReporterId] = useState('');
   const [brief, setBrief] = useState('');
   const [busy, setBusy] = useState(false);
@@ -159,8 +166,10 @@ export default function MatchArticlesPanel({ matchId }) {
     try {
       await fn();
       await load();
+      return true;
     } catch (e) {
       setError(e?.response?.data?.message || e?.message || 'Åtgärden misslyckades.');
+      return false;
     } finally {
       setBusy(false);
     }
@@ -168,10 +177,10 @@ export default function MatchArticlesPanel({ matchId }) {
 
   const create = () => mutate(async () => {
     const created = await EditorialCommunityApi.createMatchArticle(
-      matchId, { title, body }, getAccessTokenSilently);
+      matchId, { title, ...content }, getAccessTokenSilently);
     await EditorialCommunityApi.submitMatchArticle(matchId, created.id, getAccessTokenSilently);
     setTitle('');
-    setBody('');
+    setContent({ body: '', bodyHtml: '' });
   });
 
   const requestAi = () => mutate(async () => {
@@ -200,7 +209,8 @@ export default function MatchArticlesPanel({ matchId }) {
         <Heading size="md" mb={3}>Blödareblaskan</Heading>
         {sections.editorial.length
           ? <VStack align="stretch" spacing={3}>{sections.editorial.map(a =>
-              <ArticleCard key={a.id} article={a} reporter={reportersById[a.reporterId]}
+              <ArticleCard key={a.id} matchId={matchId} contextAvailable={caps?.replayAnalyzed}
+                busy={busy} onBusyChange={setBusy} onError={e => setError(e?.response?.data?.message || e.message)} article={a} reporter={reportersById[a.reporterId]}
                 canReview={caps?.canReview}
                 canEdit={articlePermissions(a).canEdit}
                 canDelete={articlePermissions(a).canDelete}
@@ -217,7 +227,8 @@ export default function MatchArticlesPanel({ matchId }) {
           Dessa texter är skrivna av lagens coacher och är lagens egna rapporter, inte Blödareblaskans redaktionella material.
         </Text>
         <VStack align="stretch" spacing={3}>{sections.team.map(a =>
-          <ArticleCard key={a.id} article={a} reporter={reportersById[a.reporterId]}
+          <ArticleCard key={a.id} matchId={matchId} contextAvailable={caps?.replayAnalyzed}
+                busy={busy} onBusyChange={setBusy} onError={e => setError(e?.response?.data?.message || e.message)} article={a} reporter={reportersById[a.reporterId]}
             canReview={caps?.canReview}
             canEdit={articlePermissions(a).canEdit}
             canDelete={articlePermissions(a).canDelete}
@@ -230,7 +241,8 @@ export default function MatchArticlesPanel({ matchId }) {
       {sections.coach.length > 0 && <Box>
         <Heading size="md" mb={3}>Övriga coachbidrag</Heading>
         <VStack align="stretch" spacing={3}>{sections.coach.map(a =>
-          <ArticleCard key={a.id} article={a} reporter={reportersById[a.reporterId]}
+          <ArticleCard key={a.id} matchId={matchId} contextAvailable={caps?.replayAnalyzed}
+                busy={busy} onBusyChange={setBusy} onError={e => setError(e?.response?.data?.message || e.message)} article={a} reporter={reportersById[a.reporterId]}
             canReview={caps?.canReview}
             canEdit={articlePermissions(a).canEdit}
             canDelete={articlePermissions(a).canDelete}
@@ -256,9 +268,10 @@ export default function MatchArticlesPanel({ matchId }) {
           </Alert>}
           <FormControl mb={2}><FormLabel>Rubrik</FormLabel>
             <Input value={title} onChange={e => setTitle(e.target.value)} maxLength={250}/></FormControl>
-          <FormControl><FormLabel>Text</FormLabel>
-            <Textarea minH="220px" value={body} onChange={e => setBody(e.target.value)} maxLength={100000}/></FormControl>
-          <Button mt={3} onClick={create} isLoading={busy} isDisabled={!title.trim() || !body.trim()}>
+          <ArticleComposer value={content} onChange={setContent} title={title} matchId={matchId}
+            reporterId={reporterId || undefined} contextAvailable={caps.replayAnalyzed} disabled={busy}
+            onBusyChange={setBusy} onError={e => setError(e?.response?.data?.message || e.message)} />
+          <Button mt={3} onClick={create} isLoading={busy} isDisabled={busy || !title.trim() || !hasArticleContent(content)}>
             {caps.canReview || caps.participatingCoach ? 'Publicera' : 'Skicka för granskning'}
           </Button>
         </Box>

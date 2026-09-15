@@ -20,7 +20,8 @@ import java.util.Map;
 @RequestMapping("/articles/tools")
 public class EditorialArticleToolsController {
     private final EditorialArticleAiService ai;
-    private final ArticleScopeService scopes;
+    private final MatchArticleService matchArticles;
+    private final com.fasterxml.jackson.databind.ObjectMapper json;
     private final AiCommunityMediaAssetStore assets;
     private final ObjectProvider<AiCommunityImageRenderer> renderers;
 
@@ -41,17 +42,23 @@ public class EditorialArticleToolsController {
     public Article generate(Authentication auth, @RequestBody EditorialArticleAiService.Request input) throws Exception {
         return ai.generate(auth, input);
     }
-    public record ImageInput(List<Article.Association> associations, String prompt, String title, String body) {}
+    public record ImageInput(List<Article.Association> associations, String prompt, String title, String body, String matchId, String reporterId) {}
     @PostMapping("/image")
     public Map<String, String> image(Authentication auth, @RequestBody ImageInput input) throws Exception {
         requireWriter(auth);
         var renderer = renderers.orderedStream().filter(AiCommunityImageRenderer::isConfigured).findFirst()
                 .orElseThrow(() -> new IllegalStateException("Image generation is not configured"));
-        String prompt = input.prompt();
-        if (prompt == null || prompt.isBlank()) prompt = "Create an editorial illustration without lettering for this article:\n" + input.title() + "\n" + input.body();
-        if (prompt.length() > 16000) prompt = prompt.substring(0, 16000);
+        String prompt = imagePrompt(input);
+        if (input.matchId() != null && !input.matchId().isBlank()) {
+            var context = matchArticles.imageContext(auth, input.matchId(), input.reporterId());
+            // The same assembly, evidence projection and history used by match-report generation.
+            prompt += "\n\nMATCH REPORT CONTEXT (authoritative facts override article claims):\n"
+                    + json.writeValueAsString(context.assembled())
+                    + "\nAUTHORITATIVE MATCH EVIDENCE:\n" + context.evidence().json()
+                    + "\nHISTORICAL COMPETITION CONTEXT:\n" + context.history().json();
+        }
         var image = renderer.render(prompt, AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE);
-        return Map.of("url", store(image.bytes()), "prompt", prompt);
+        return Map.of("url", store(image.bytes()), "prompt", imagePrompt(input));
     }
     @PostMapping("/upload")
     public Map<String, String> upload(Authentication auth, @RequestParam(required = false) String leagueSystemId,
@@ -59,6 +66,14 @@ public class EditorialArticleToolsController {
         requireWriter(auth);
         return Map.of("url", store(file.getBytes()));
     }
+    static String imagePrompt(ImageInput input) {
+        String direction = input.prompt() == null || input.prompt().isBlank()
+                ? "Create an editorial illustration without lettering." : input.prompt().trim();
+        return direction + "\nArticle title:\n" + (input.title() == null ? "" : input.title())
+                + "\nArticle text (editorial perspective, not independently verified facts):\n"
+                + (input.body() == null ? "" : input.body());
+    }
+
     private void requireWriter(Authentication auth) {
         if (auth == null || !auth.isAuthenticated() || auth instanceof org.springframework.security.authentication.AnonymousAuthenticationToken)
             throw new org.springframework.security.access.AccessDeniedException("Authentication required");

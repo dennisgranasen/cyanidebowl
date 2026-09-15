@@ -53,7 +53,9 @@ public class MatchArticleService {
     private final LlmProviderRouter providerRouter;
     private final LlmProviderRegistry providerRegistry;
 
-    public record ArticleInput(String title, String body) {}
+    public record ArticleInput(String title, String body, String bodyHtml) {
+        public ArticleInput(String title, String body) { this(title, body, null); }
+    }
     public record AiRequest(String reporterId, String editorialBrief) {}
     public record ReporterOption(String id, String alias, String providerId, String model) {}
     public record Capabilities(
@@ -126,7 +128,7 @@ public class MatchArticleService {
         article.setLeagueSystemId(ctx.leagueSystemId());
         article.setSeasonId(ctx.seasonId());
         article.setTitle(input.title().trim());
-        article.setBody(input.body().trim());
+        applyBody(article, input);
         article.setAuthorType(MatchArticle.AuthorType.HUMAN);
         article.setAuthorSubject(user.subject());
         article.setAuthorUserId(user.userId());
@@ -163,7 +165,7 @@ public class MatchArticleService {
             throw new AccessDeniedException("Rejected articles may only be edited by editors");
         }
         article.setTitle(input.title().trim());
-        article.setBody(input.body().trim());
+        applyBody(article, input);
         article.setUpdatedAt(Instant.now());
         MatchArticle saved = articles.save(article);
         reporterMemory.considerPublished(saved);
@@ -266,18 +268,10 @@ public class MatchArticleService {
                 generationGuard.acquire(matchId, reporter.getId());
         try {
         MatchContext ctx = matchContext(auth, matchId);
-        ReplayAnalysis replayAnalysis = replayAnalyses.findById(matchId)
-                .orElseThrow(() -> new IllegalStateException("Analyzed replay disappeared before generation"));
-        MatchReportEvidenceBuilder.Evidence evidence = matchReportEvidenceBuilder.build(ctx.match(), replayAnalysis);
-        MatchReportHistoricalContextService.HistoricalContext historicalContext =
-                matchReportHistoricalContext.build(ctx.match());
-        ContextPlan plan = contextPlanner.plan(
-                ContextTaskType.MATCH_REPORT,
-                reporter.getUserId(),
-                new SubjectRef(SubjectType.MATCH, matchId),
-                null,
-                List.of());
-        AssembledContext assembled = contextAssembly.assemble(plan);
+        ReportingContext reportContext = reportingContext(ctx.match(), matchId, reporter.getUserId());
+        var evidence = reportContext.evidence();
+        var historicalContext = reportContext.history();
+        var assembled = reportContext.assembled();
         var request = matchReportFactory.create(
                 reporter.getId(),
                 Integer.toString(reporter.getSchemaVersion()),
@@ -320,6 +314,34 @@ public class MatchArticleService {
         } finally {
             generationLease.close();
         }
+    }
+
+    public record ReportingContext(AssembledContext assembled, MatchReportEvidenceBuilder.Evidence evidence,
+                                   MatchReportHistoricalContextService.HistoricalContext history) {}
+
+    ReportingContext reportingContext(Match match, String matchId, long authorUserId) {
+        ReplayAnalysis replay = replayAnalyses.findById(matchId)
+                .orElseThrow(() -> new IllegalStateException("An analyzed replay is required for match illustrations"));
+        var evidence = matchReportEvidenceBuilder.build(match, replay);
+        var history = matchReportHistoricalContext.build(match);
+        var plan = contextPlanner.plan(ContextTaskType.MATCH_REPORT, authorUserId,
+                new SubjectRef(SubjectType.MATCH, matchId), null, List.of());
+        return new ReportingContext(contextAssembly.assemble(plan), evidence, history);
+    }
+
+    public ReportingContext imageContext(Authentication auth, String matchId, String reporterId) {
+        requireAuthenticated(auth);
+        MatchContext ctx = matchContext(auth, matchId);
+        if (!ctx.editor() && claimedCoachIds(auth).isEmpty()) throw new AccessDeniedException("Match author permission required");
+        Long authorId;
+        if (StringUtils.hasText(reporterId)) {
+            authorId = reporterRegistry.require(reporterId).getUserId();
+        } else {
+            authorId = reporterProfiles.enabledForReports().stream().map(profile -> profile.definition().getUserId())
+                    .filter(Objects::nonNull).findFirst().orElse(currentUser(auth).userId());
+        }
+        if (authorId == null) throw new IllegalStateException("An author identity is required for match context");
+        return reportingContext(ctx.match(), matchId, authorId);
     }
 
     private Optional<ReporterOption> runnableReporterOption(AiReporterDefinition reporter) {
@@ -495,9 +517,29 @@ public class MatchArticleService {
         if (input == null || !StringUtils.hasText(input.title())) {
             throw new IllegalArgumentException("title is required");
         }
-        if (!StringUtils.hasText(input.body())) throw new IllegalArgumentException("body is required");
+        String html = input.bodyHtml() == null ? null : EditorialCommunityService.sanitizeHtml(input.bodyHtml());
+        if (html != null ? !StringUtils.hasText(plainBody(html)) && !html.matches("(?is).*<img\\s[^>]*>.*")
+                : !StringUtils.hasText(input.body())) throw new IllegalArgumentException("body is required");
         if (input.title().length() > 250) throw new IllegalArgumentException("title exceeds 250 characters");
-        if (input.body().length() > 100_000) throw new IllegalArgumentException("body exceeds 100000 characters");
+        if ((input.body() != null && input.body().length() > 100_000)
+                || (input.bodyHtml() != null && input.bodyHtml().length() > 100_000)) throw new IllegalArgumentException("body exceeds 100000 characters");
+    }
+
+    static String plainBody(String html) {
+        return org.springframework.web.util.HtmlUtils.htmlUnescape(html
+                .replaceAll("(?i)<(?:br\\s*/?|/p|/div|/h[1-6]|/li)>", "\n")
+                .replaceAll("<[^>]+>", "")).trim();
+    }
+
+    static void applyBody(MatchArticle article, ArticleInput input) {
+        if (input.bodyHtml() == null) {
+            article.setBody(input.body().trim());
+            article.setBodyHtml(null);
+        } else {
+            String html = EditorialCommunityService.sanitizeHtml(input.bodyHtml());
+            article.setBodyHtml(html);
+            article.setBody(plainBody(html));
+        }
     }
 
     private static String trimToNull(String value) {

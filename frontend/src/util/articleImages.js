@@ -1,5 +1,8 @@
 const images = transfer => Array.from(transfer?.files || []).filter(file => file.type.startsWith('image/'));
 
+export const canGenerateArticleImage = ({ title, body, prompt, matchId }) =>
+  [title, body, prompt, matchId].some(value => Boolean(value?.trim()));
+
 export const validArticleImage = file => ['image/png', 'image/jpeg'].includes(file.type)
   && file.size > 0 && file.size <= 10 * 1024 * 1024;
 
