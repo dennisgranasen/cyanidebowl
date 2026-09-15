@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Heading, Spinner, VStack } from '@chakra-ui/react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import WarpScoresApiService from '../WarpScoresApiService';
 import Roster from '../components/team/Roster';
 import TeamSupporters from '../components/team/TeamSupporters';
@@ -37,9 +37,14 @@ function MatchesCount({ matches, teamId }) {
 function TeamPage() {
   const intl = useIntl();
   const { competitionId, teamId } = useParams();
+  const [searchParams] = useSearchParams();
   const [team, setTeam] = useState();
   const [matches, setMatches] = useState();
   const [players, setPlayers] = useState();
+  useEffect(() => {
+    const id = searchParams.get('player');
+    if (id && players?.length) document.getElementById(`player-${id}`)?.scrollIntoView({ block: 'center' });
+  }, [players, searchParams]);
   const [loadingTeam, setLoadingTeam] = useState(false);
   const [teamError, setTeamError] = useState(undefined);
   const [loadingMatches, setLoadingMatches] = useState(false);

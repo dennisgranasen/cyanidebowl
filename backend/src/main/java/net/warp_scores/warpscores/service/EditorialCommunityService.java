@@ -37,6 +37,8 @@ public class EditorialCommunityService {
     );
 
     private final ArticleRepository articles;
+    private final ArticleScopeService articleScopes;
+    private final ArticleAuthorPolicy articleAuthors;
     private final MatchArticleRepository matchArticles;
     private final CommunityCommentRepository comments;
     private final CommunityReactionRepository reactions;
@@ -81,15 +83,108 @@ public class EditorialCommunityService {
                                String excerpt, String bodyHtml, String coverImageUrl,
                                Article.Status status, boolean featured,
                                List<String> channels, List<String> tags,
-                               List<String> teamIds, String legacySource) {}
+                               List<String> teamIds, String legacySource,
+                               List<Article.Association> associations, boolean confirmGlobal) {
+        public ArticleInput(String leagueSystemId, String seasonId, String title, String slug,
+                            String excerpt, String bodyHtml, String coverImageUrl, Article.Status status,
+                            boolean featured, List<String> channels, List<String> tags, List<String> teamIds,
+                            String legacySource) {
+            this(leagueSystemId, seasonId, title, slug, excerpt, bodyHtml, coverImageUrl, status,
+                    featured, channels, tags, teamIds, legacySource, null, false);
+        }
+    }
+
+    public List<Article.Association> validateArticleScope(Authentication auth, ArticleInput input) {
+        requireAuthenticated(auth);
+        if (input == null) throw new IllegalArgumentException("Article is required");
+        Article scope = new Article();
+        scope.setLeagueSystemId(trimToNull(input.leagueSystemId()));
+        scope.setSeasonId(trimToNull(input.seasonId()));
+        scope.setTeamIds(input.teamIds());
+        if (input.associations() != null) {
+            if (input.associations().size() > 100) throw new IllegalArgumentException("Too many associations");
+            scope.setAssociations(input.associations().stream().map(link -> {
+                if (link == null || link.type() == null || !StringUtils.hasText(link.id()))
+                    throw new IllegalArgumentException("Association type and id are required");
+                return new Article.Association(link.type(), link.id().trim());
+            }).distinct().toList());
+        }
+        var links = ArticleScopeService.associations(scope);
+        articleScopes.systemsFor(links); // Validate explicit seasons without restricting authorship.
+        return links;
+    }
+
+    public Article editorArticle(Authentication auth, String id) {
+        Article article = articles.findById(id).orElseThrow(() -> new NoSuchElementException("Article not found"));
+        requireArticleAuthorOrEditor(auth, article);
+        return article;
+    }
+
+    public record ArticleCapabilities(boolean canReview, boolean canPublishDirect, boolean canUseAiWriter) {}
+
+    private boolean isArticleEditor(Authentication auth, List<Article.Association> links) {
+        try { articleScopes.requireEditor(auth, links); return true; }
+        catch (AccessDeniedException ex) { return false; }
+    }
+
+    private boolean humanArticle(Article article) {
+        return (article.getGeneration() == null || !article.getGeneration().hasAiGeneration())
+                && article.getAuthorType() != Article.AuthorType.AI_REPORTER;
+    }
+
+    private void requireArticleAuthorOrEditor(Authentication auth, Article article) {
+        requireAuthenticated(auth);
+        if (humanArticle(article) && Objects.equals(subject(auth), article.getAuthorSubject())) return;
+        articleScopes.requireEditor(auth, ArticleScopeService.associations(article));
+    }
+
+    public ArticleCapabilities articleCapabilities(Authentication auth, String id, ArticleInput input) {
+        var links = validateArticleScope(auth, input);
+        Article existing = id == null ? null : editorArticle(auth, id);
+        boolean editor = isArticleEditor(auth, links);
+        boolean canReview = editor && (existing == null || isArticleEditor(auth, ArticleScopeService.associations(existing)));
+        boolean coach = (existing == null || humanArticle(existing))
+                && articleAuthors.ownsEntireAudience(subject(auth), links, input.channels());
+        return new ArticleCapabilities(canReview, editor || coach, editor);
+    }
+
+    public List<Article> myArticles(Authentication auth) {
+        requireAuthenticated(auth);
+        return articles.findByAuthorSubjectOrderByUpdatedAtDesc(subject(auth), PageRequest.of(0, 100));
+    }
+
+    public List<Article> reviewQueue(Authentication auth, String leagueSystemId) {
+        requireEditor(auth, leagueSystemId);
+        return articles.findByStatusOrderByPublishedAtDesc(Article.Status.PENDING_REVIEW, PageRequest.of(0, 100))
+                .stream().filter(a -> {
+                    try { articleScopes.requireEditor(auth, ArticleScopeService.associations(a)); return true; }
+                    catch (AccessDeniedException ex) { return false; }
+                }).toList();
+    }
+
+    public Article reviewArticle(Authentication auth, String id, boolean accept, boolean confirmGlobal) {
+        Article article = editorArticle(auth, id);
+        articleScopes.requireEditor(auth, ArticleScopeService.associations(article));
+        if (article.getStatus() != Article.Status.PENDING_REVIEW) throw new IllegalArgumentException("Article is not pending review");
+        if (accept && ArticleScopeService.global(ArticleScopeService.associations(article)) && !confirmGlobal)
+            throw new IllegalArgumentException("Confirm global publication");
+        article.setStatus(accept ? Article.Status.PUBLISHED : Article.Status.REJECTED);
+        article.setReviewedBy(subject(auth));
+        article.setReviewedAt(Instant.now());
+        article.setUpdatedAt(Instant.now());
+        if (accept) article.setPublishedAt(Instant.now());
+        Article saved = articles.save(article);
+        if (accept) notifyPublished(saved);
+        return saved;
+    }
+
+    public void notifyPublished(Article article) {
+        fanInteractions.onArticlePublished(article);
+        staffArticleWork.onArticlePublished(article);
+    }
 
     public List<Article> publishedArticles(String leagueSystemId, int limit) {
-        int size = Math.max(1, Math.min(limit, 100));
-        return StringUtils.hasText(leagueSystemId)
-                ? articles.findByStatusAndLeagueSystemIdOrderByPublishedAtDesc(
-                    Article.Status.PUBLISHED, leagueSystemId, PageRequest.of(0, size))
-                : articles.findByStatusOrderByPublishedAtDesc(
-                    Article.Status.PUBLISHED, PageRequest.of(0, size));
+        return articleScopes.feed(leagueSystemId, null, limit);
     }
 
     public Article publicArticle(String slugOrId) {
@@ -102,10 +197,21 @@ public class EditorialCommunityService {
     }
 
     public Article saveArticle(Authentication auth, String id, ArticleInput input) {
-        requireEditor(auth, input.leagueSystemId());
+        var links = validateArticleScope(auth, input);
         Article article = id == null ? new Article() :
                 articles.findById(id).orElseThrow(() -> new NoSuchElementException("Article not found"));
 
+        if (id != null) requireArticleAuthorOrEditor(auth, article);
+        boolean editor = isArticleEditor(auth, links);
+        Article.Status requested = input.status() == null ? Article.Status.DRAFT : input.status();
+        if (!editor && requested != Article.Status.DRAFT && requested != Article.Status.PENDING_REVIEW
+                && requested != Article.Status.PUBLISHED) throw new AccessDeniedException("Only editors can reject or archive articles");
+        boolean submission = requested == Article.Status.PUBLISHED || requested == Article.Status.PENDING_REVIEW;
+        boolean direct = editor || (humanArticle(article) && articleAuthors.ownsEntireAudience(subject(auth), links, input.channels()));
+        Article.Status status = !editor && submission
+                ? (direct ? Article.Status.PUBLISHED : Article.Status.PENDING_REVIEW) : requested;
+        if (status == Article.Status.PUBLISHED && ArticleScopeService.global(links) && !input.confirmGlobal())
+            throw new IllegalArgumentException("Confirm global publication before publishing to every news feed");
         if (!StringUtils.hasText(input.title())) throw new IllegalArgumentException("title is required");
         String slug = StringUtils.hasText(input.slug()) ? slugify(input.slug()) : slugify(input.title());
         articles.findBySlug(slug).filter(existing -> !Objects.equals(existing.getId(), id))
@@ -125,25 +231,24 @@ public class EditorialCommunityService {
                 && article.getGeneration().getMode() == GenerationMode.AI) {
             article.getGeneration().setMode(GenerationMode.AI_EDITED);
         }
-        article.setLeagueSystemId(input.leagueSystemId());
-        article.setSeasonId(input.seasonId());
+        article.setAssociations(links);
+        article.setLeagueSystemId(ArticleScopeService.ids(links, Article.LinkType.LEAGUE_SYSTEM).stream().findFirst().orElse(null));
+        article.setSeasonId(ArticleScopeService.ids(links, Article.LinkType.SEASON).stream().findFirst().orElse(null));
         article.setTitle(input.title().trim());
         article.setSlug(slug);
         article.setExcerpt(trimToNull(input.excerpt()));
         article.setBodyHtml(sanitizeHtml(input.bodyHtml()));
         article.setCoverImageUrl(trimToNull(input.coverImageUrl()));
-        article.setStatus(input.status() == null ? Article.Status.DRAFT : input.status());
-        article.setFeatured(input.featured());
+        article.setStatus(status);
+        // A previous acceptance never authorizes a new revision or a wider audience.
+        article.setReviewedBy(null);
+        article.setReviewedAt(null);
+        if (status != Article.Status.PUBLISHED) article.setPublishedAt(null);
+        article.setFeatured(editor && input.featured());
         article.setChannels(input.channels() == null ? List.of() : List.copyOf(input.channels()));
         article.setTags(input.tags() == null ? List.of() : List.copyOf(input.tags()));
-        article.setTeamIds(input.teamIds() == null
-                ? List.of()
-                : input.teamIds().stream()
-                        .filter(StringUtils::hasText)
-                        .map(String::trim)
-                        .distinct()
-                        .toList());
-        article.setLegacySource(trimToNull(input.legacySource()));
+        article.setTeamIds(new ArrayList<>(ArticleScopeService.ids(links, Article.LinkType.TEAM)));
+        if (editor) article.setLegacySource(trimToNull(input.legacySource()));
         article.setUpdatedAt(now);
         if (article.getStatus() == Article.Status.PUBLISHED && article.getPublishedAt() == null) {
             article.setPublishedAt(now);
@@ -170,7 +275,7 @@ public class EditorialCommunityService {
 
     public void deleteArticle(Authentication auth, String id) {
         Article article = articles.findById(id).orElseThrow(() -> new NoSuchElementException("Article not found"));
-        requireEditor(auth, article.getLeagueSystemId());
+        articleScopes.requireEditor(auth, ArticleScopeService.associations(article));
         articles.delete(article);
     }
 
@@ -698,6 +803,7 @@ public class EditorialCommunityService {
     }
 
     private String subject(Authentication auth) {
+        if (auth instanceof org.springframework.security.authentication.AnonymousAuthenticationToken) return null;
         return auth instanceof JwtAuthenticationToken jwt ? jwt.getToken().getSubject()
                 : auth != null && auth.isAuthenticated() ? auth.getName() : null;
     }

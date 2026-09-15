@@ -9,6 +9,7 @@ import java.util.Optional;
 
 @Repository
 public interface MatchPlayerParticipationRepository extends MongoRepository<MatchPlayerParticipation, String> {
+    List<MatchPlayerParticipation> findByMatchIdIn(List<String> matchIds);
     List<MatchPlayerParticipation> findByMatchIdOrderByTeamIdAscPlayerNameAsc(String matchId);
     Optional<MatchPlayerParticipation> findByMatchIdAndPlayerId(String matchId, String playerId);
     long countByMatchId(String matchId);

@@ -10,6 +10,7 @@ import java.util.Optional;
 
 @Repository
 public interface ArticleRepository extends MongoRepository<Article, String> {
+    List<Article> findByAuthorSubjectOrderByUpdatedAtDesc(String authorSubject, Pageable pageable);
     Optional<Article> findBySlug(String slug);
     Optional<Article> findByLegacySource(String legacySource);
     List<Article> findByStatusOrderByPublishedAtDesc(Article.Status status, Pageable pageable);

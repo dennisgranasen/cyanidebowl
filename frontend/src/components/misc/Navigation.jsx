@@ -10,7 +10,7 @@ import prettyPrint from '../../util/prettyPrint';
 
 const { isProduction } = config;
 
-function Navigation({ currentPage, parentPage, currentLabel, league, competition, team, race, coach, leagueSystems, selectedLeagueSystemId, onSelectLeagueSystem }) {
+function Navigation({ currentPage, parentPage, currentLabel, league, competition, team, race, coach, leagueSystems, selectedLeagueSystemId, selectedSeasonId, onSelectLeagueSystem }) {
   const intl = useIntl();
   const isPage = (pageName, currentPageName) => {
     return pageName === currentPageName;
@@ -92,7 +92,7 @@ function Navigation({ currentPage, parentPage, currentLabel, league, competition
       <Spacer />
       <ToggleColorModeButton />
       {isProduction && <AuthButton mr="0.5rem" />}
-      <Menu leagueSystems={leagueSystems} selectedLeagueSystemId={selectedLeagueSystemId} onSelectLeagueSystem={onSelectLeagueSystem} />
+      <Menu selectedSeasonId={selectedSeasonId} leagueSystems={leagueSystems} selectedLeagueSystemId={selectedLeagueSystemId} onSelectLeagueSystem={onSelectLeagueSystem} />
     </Flex>
   );
 }

@@ -25,6 +25,8 @@ import WarpScoresApiService from '../../WarpScoresApiService';
 import config from '../../config';
 import formatter from '../../util/formatter';
 import NewsList from './NewsList';
+import ArticleFeed from '../community/ArticleFeed';
+import { articleContext, articleEditorUrl } from '../../util/articleContext';
 import SocialLinks from './SocialLinks';
 import Disclaimer from './Disclaimer';
 import Version from './Version';
@@ -64,10 +66,11 @@ function LastCheck({ status, textSize, statusOutdated }) {
   );
 }
 
-function Menu({ leagueSystems = [], selectedLeagueSystemId, onSelectLeagueSystem }) {
+function Menu({ leagueSystems = [], selectedLeagueSystemId, selectedSeasonId, onSelectLeagueSystem }) {
   const [menuLeagueSystems, setMenuLeagueSystems] = useState([]);
   const intl = useIntl();
   const location = useLocation();
+  const articleSubject = articleContext(location).filter(l => !['LEAGUE_SYSTEM', 'SEASON'].includes(l.type)).at(-1);
   const { user, authenticationReady, checkPermissions, userPermissions, isAuthenticated, loginWithRedirect, logout } =
     useAuth0WithUserPermissions();
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -171,8 +174,8 @@ function Menu({ leagueSystems = [], selectedLeagueSystemId, onSelectLeagueSystem
                     <Link variant="menu" as={RouteLink} to="/" onClick={onClose}>
                       {intl.formatMessage({ id: 'menu.articles', defaultMessage: 'Articles' })}
                     </Link>
-                    {checkPermissions && userPermissions?.writeEditor && (
-                      <Link variant="menu" as={RouteLink} to="/editor/articles/new" onClick={onClose}>
+                    {isAuthenticated && (
+                      <Link variant="menu" as={RouteLink} to={articleEditorUrl(articleContext(location, selectedLeagueSystemId, selectedSeasonId))} onClick={onClose}>
                         {intl.formatMessage({ id: 'menu.writeArticle' })}
                       </Link>
                     )}
@@ -277,6 +280,7 @@ function Menu({ leagueSystems = [], selectedLeagueSystemId, onSelectLeagueSystem
                 <Spacer />
               </VStack>
               <VStack align="left">
+                <ArticleFeed type={articleSubject?.type} subjectId={articleSubject?.id} leagueSystemId={selectedLeagueSystemId || new URLSearchParams(location.search).get('leagueSystem')} seasonId={selectedSeasonId || new URLSearchParams(location.search).get('season')} compact limit={4} />
                 <NewsList news={status?.news} headerSize="sm" textSize="xs" mt={2} color="grey" />
                 <SocialLinks socialLinks={status?.socialLinks} headerSize="sm" iconSize="sm" mt={2} color="grey" />
                 <Disclaimer mt={2} headerSize="sm" textSize="xs" color="grey" />

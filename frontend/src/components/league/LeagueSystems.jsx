@@ -452,13 +452,13 @@ function MatchDetails({ summary, isOpen, onClose }) {
   return <Modal isOpen={isOpen} onClose={onClose}><ModalOverlay /><ModalContent><ModalHeader>{intl.formatMessage({ id: 'leagueSystems.matchStatistics' })}</ModalHeader><ModalCloseButton /><ModalBody pb={6}>{loading ? <HStack><Spinner /><Text>{intl.formatMessage({ id: 'leagueSystems.loadingStats' })}</Text></HStack> : <Text color="red.500">{error}</Text>}</ModalBody></ModalContent></Modal>;
 }
 
-function LeagueSystems({ summaries, leagueSystem, onSelectSeason }) {
+function LeagueSystems({ summaries, leagueSystem, onSelectSeason, selectedSeasonId }) {
   const intl = useIntl();
   const matchDetails = useDisclosure();
   const [selectedMatch, setSelectedMatch] = React.useState(null);
   const openMatch = (match) => { setSelectedMatch(match); matchDetails.onOpen(); };
   const seasons = orderedSeasons(leagueSystem);
-  const selectedSeason = seasons.find((season) => (season.phases || []).some((phase) => (phase.stages || []).some((stage) => stage.matches?.length))) || seasons[0];
+  const selectedSeason = seasons.find(season => season.id === selectedSeasonId) || seasons.find((season) => (season.phases || []).some((phase) => (phase.stages || []).some((stage) => stage.matches?.length))) || seasons[0];
   const phasesWithMatches = (selectedSeason?.phases || []).filter((phase) => (phase.stages || []).some((stage) => stage.matches?.length));
   const playoffPhase = [...phasesWithMatches].filter((phase) => phase.type === 'PLAYOFFS').sort((a, b) => (b.sequence ?? 0) - (a.sequence ?? 0))[0];
   const groupStages = (selectedSeason?.phases || []).filter((phase) => phase.type === 'GROUP_STAGE')

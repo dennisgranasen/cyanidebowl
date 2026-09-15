@@ -41,7 +41,7 @@ class EditorialCommunityReplyTest {
     private final ReporterSocialContinuityService continuity = mock(ReporterSocialContinuityService.class);
 
     private final EditorialCommunityService service = new EditorialCommunityService(
-            articles, matchArticles, comments, reactions, participation, ratings,
+            articles, mock(ArticleScopeService.class), mock(ArticleAuthorPolicy.class), matchArticles, comments, reactions, participation, ratings,
             aiPlayerRatings, matches, teams, stageSources, users, coachClaims, permissions, interactions,
             fanInteractions, staffArticleWork, continuity);
 

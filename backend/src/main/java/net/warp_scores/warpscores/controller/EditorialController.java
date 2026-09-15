@@ -13,11 +13,48 @@ import java.util.List;
 @RequestMapping("/articles")
 public class EditorialController {
     private final EditorialCommunityService service;
+    private final net.warp_scores.warpscores.service.ArticleScopeService scopes;
 
     @GetMapping
     public List<Article> articles(@RequestParam(required = false) String leagueSystemId,
+                                  @RequestParam(required = false) String seasonId,
+                                  @RequestParam(required = false) Article.LinkType type,
+                                  @RequestParam(required = false) String subjectId,
                                   @RequestParam(defaultValue = "20") int limit) {
-        return service.publishedArticles(leagueSystemId, limit);
+        return scopes.feed(leagueSystemId, seasonId, type, subjectId, limit);
+    }
+
+    @GetMapping("/mine")
+    public List<Article> mine(Authentication auth) { return service.myArticles(auth); }
+
+    /** Scope-only request: opening the editor does not submit a publication decision. */
+    public record CapabilitiesInput(String leagueSystemId, String seasonId, List<String> teamIds,
+                                    List<Article.Association> associations, List<String> channels) {
+        EditorialCommunityService.ArticleInput articleInput() {
+            return new EditorialCommunityService.ArticleInput(leagueSystemId, seasonId,
+                    null, null, null, null, null, Article.Status.DRAFT, false,
+                    channels, List.of(), teamIds, null, associations, false);
+        }
+    }
+
+    @PostMapping("/capabilities")
+    public EditorialCommunityService.ArticleCapabilities capabilities(Authentication auth,
+            @RequestParam(required = false) String id, @RequestBody CapabilitiesInput input) {
+        return service.articleCapabilities(auth, id, input.articleInput());
+    }
+
+    @GetMapping("/editor/{id}")
+    public Article editorArticle(Authentication auth, @PathVariable String id) { return service.editorArticle(auth, id); }
+
+    @GetMapping("/review")
+    public List<Article> reviewQueue(Authentication auth, @RequestParam(required = false) String leagueSystemId) {
+        return service.reviewQueue(auth, leagueSystemId);
+    }
+
+    public record Review(boolean accept, boolean confirmGlobal) {}
+    @PostMapping("/{id}/review")
+    public Article review(Authentication auth, @PathVariable String id, @RequestBody Review input) {
+        return service.reviewArticle(auth, id, input.accept(), input.confirmGlobal());
     }
 
     @GetMapping("/{slugOrId}")

@@ -11,6 +11,8 @@ import java.util.List;
 
 @Repository
 public interface TeamRepository extends MongoRepository<Team, Identity> {
+    @Query("{ 'players._id': ?0, 'isDeleted': { $ne: true } }")
+    List<Team> findByPlayerId(Identity playerId);
     @Query("{ 'competitionIds': ?0 }")
     List<Team> findByCompetitionId(Identity competitionId);
     

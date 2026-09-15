@@ -124,6 +124,7 @@ function AppRoutes() {
       <Route path="/admin/ai-reporters" element={<ProtectedRoute component={AdminAiReportersPage} />} />
       <Route path="/admin/community-fans" element={<ProtectedRoute component={AdminCommunityFansPage} />} />
       <Route path="/admin/ai-autonomous-work" element={<ProtectedRoute component={AdminAiAutonomousWorkPage} />} />
+      <Route path="/editor/articles/:articleId" element={<ProtectedRoute component={ArticleEditorPage} />} />
       <Route path="/editor/articles/new" element={<ProtectedRoute component={ArticleEditorPage} />} />
       </Routes>
     </MyTeamsProvider>

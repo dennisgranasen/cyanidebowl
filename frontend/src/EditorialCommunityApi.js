@@ -20,8 +20,25 @@ const authDelete = async (url, getToken) =>
   axios.delete(`${base}${url}`, { headers: await authHeaders(getToken) });
 
 const EditorialCommunityApi = {
-  articles: (leagueSystemId, limit = 20) =>
-    get(`/articles?limit=${limit}${leagueSystemId ? `&leagueSystemId=${encodeURIComponent(leagueSystemId)}` : ''}`),
+  articles: (leagueSystemId, limit = 20, seasonId, type, subjectId) =>
+    get(`/articles?limit=${limit}${leagueSystemId ? `&leagueSystemId=${encodeURIComponent(leagueSystemId)}` : ''}${seasonId ? `&seasonId=${encodeURIComponent(seasonId)}` : ''}${type && subjectId ? `&type=${encodeURIComponent(type)}&subjectId=${encodeURIComponent(subjectId)}` : ''}`),
+  resolveAssociation: (type, id) => get(`/articles/associations/resolve?${new URLSearchParams({ type, id })}`),
+  associationOptions: (type, q, leagueSystemId) => get(`/articles/associations?${new URLSearchParams({ type, q, ...(leagueSystemId ? { leagueSystemId } : {}) })}`),
+  myArticles: token => authGet('/articles/mine', token),
+  articleCapabilities: (id, payload, token) => authPost(`/articles/capabilities${id ? `?id=${encodeURIComponent(id)}` : ''}`, payload, token),
+  editorArticle: (id, token) => authGet(`/articles/editor/${encodeURIComponent(id)}`, token),
+  reviewQueue: (system, token) => authGet(`/articles/review${system ? `?leagueSystemId=${encodeURIComponent(system)}` : ''}`, token),
+  reviewArticle: (id, accept, confirmGlobal, token) => authPost(`/articles/${encodeURIComponent(id)}/review`, { accept, confirmGlobal }, token),
+  reporters: (system, token) => authGet(`/articles/tools/reporters${system ? `?leagueSystemId=${encodeURIComponent(system)}` : ''}`, token),
+  articlePolicy: (system, token) => authGet(`/articles/tools/policy${system ? `?leagueSystemId=${encodeURIComponent(system)}` : ''}`, token),
+  setArticlePolicy: (system, autoAccept, token) => authPut(`/articles/tools/policy${system ? `?leagueSystemId=${encodeURIComponent(system)}` : ''}`, { autoAccept }, token),
+  generateArticle: (payload, token) => authPost('/articles/tools/generate', payload, token),
+  generateArticleImage: (payload, token) => authPost('/articles/tools/image', payload, token),
+  uploadArticleImage: (file, system, token) => {
+    const data = new FormData(); data.append('file', file);
+    return authPost(`/articles/tools/upload${system ? `?leagueSystemId=${encodeURIComponent(system)}` : ''}`, data, token);
+  },
+  assetUrl: (url) => url?.startsWith('/community/media/assets/') ? `${base}${url}` : url,
   article: (slug) => get(`/articles/${encodeURIComponent(slug)}`),
   comments: (targetType, targetId) =>
     get(`/community/comments/${targetType}/${encodeURIComponent(targetId)}`),

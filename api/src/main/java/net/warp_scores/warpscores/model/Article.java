@@ -15,15 +15,21 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @Document("articles")
+@CompoundIndex(name = "article_published_feed", def = "{'status': 1, 'publishedAt': -1, '_id': -1}")
 @CompoundIndex(name = "article_slug_unique", def = "{'slug': 1}", unique = true)
 public class Article {
-    public enum Status { DRAFT, PUBLISHED, ARCHIVED }
+    public enum Status { DRAFT, PENDING_REVIEW, PUBLISHED, REJECTED, ARCHIVED }
+    public enum LinkType { LEAGUE_SYSTEM, SEASON, TEAM, PLAYER, FAN, STAFF }
+    public record Association(LinkType type, String id) {}
     public enum AuthorType { HUMAN, AI_REPORTER }
 
     @Id
     private String id;
     private String leagueSystemId;
     private String seasonId;
+    private List<Association> associations = new ArrayList<>();
+    private String reviewedBy;
+    private Instant reviewedAt;
 
     /**
      * Legacy author classification kept temporarily for stored documents and old readers.

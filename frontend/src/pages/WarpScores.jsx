@@ -17,6 +17,7 @@ function WarpScores() {
   const requestedLeagueSystemId = searchParams.get('leagueSystem');
   const [leagueSystems, setLeagueSystems] = useState([]);
   const [selectedLeagueSystem, setSelectedLeagueSystem] = useState(null);
+  const [selectedSeasonId, setSelectedSeasonId] = useState(null);
   const [leagues, setLeagues] = useState([]);
   const [competitionCountsByStatus, setCompetitionCountsByStatus] = useState({});
   const [loading, setLoading] = useState(false);
@@ -41,7 +42,10 @@ function WarpScores() {
         await fetchLeagues();
       } else {
         const initial = systems.find((system) => system.id === requestedLeagueSystemId) || systems.find((system) => system.primary) || systems[0];
-        setSelectedLeagueSystem(await WarpScoresApiService.leagueSystemOverview(initial.id));
+        const overview = await WarpScoresApiService.leagueSystemOverview(initial.id, searchParams.get('season'));
+        setSelectedLeagueSystem(overview);
+        const ordered = [...(overview.seasons || [])].sort((a, b) => (b.sequence ?? b.number ?? 0) - (a.sequence ?? a.number ?? 0));
+        setSelectedSeasonId(searchParams.get('season') || (ordered.find(s => (s.phases || []).some(p => (p.stages || []).some(st => st.matches?.length))) || ordered[0])?.id);
       }
     } catch (reason) {
       setError({ type: 'error', message: reason.toLocaleString() });
@@ -54,7 +58,10 @@ function WarpScores() {
     setLoading(true);
     setError(undefined);
     try {
-      setSelectedLeagueSystem(await WarpScoresApiService.leagueSystemOverview(leagueSystemId, seasonId));
+      const overview = await WarpScoresApiService.leagueSystemOverview(leagueSystemId, seasonId);
+      setSelectedLeagueSystem(overview);
+      const ordered = [...(overview.seasons || [])].sort((a, b) => (b.sequence ?? b.number ?? 0) - (a.sequence ?? a.number ?? 0));
+      setSelectedSeasonId(seasonId || (ordered.find(s => (s.phases || []).some(p => (p.stages || []).some(st => st.matches?.length))) || ordered[0])?.id);
     } catch (reason) {
       setError({ type: 'error', message: reason.toLocaleString() });
     } finally {
@@ -64,7 +71,7 @@ function WarpScores() {
 
   useEffect(() => {
     fetchHomeData();
-  }, [requestedLeagueSystemId]);
+  }, [requestedLeagueSystemId, searchParams.get('season')]);
 
   return (
     <VStack align="stretch" w="full">
@@ -73,6 +80,7 @@ function WarpScores() {
           currentPage="home"
           leagueSystems={leagueSystems}
           selectedLeagueSystemId={selectedLeagueSystem?.id}
+          selectedSeasonId={selectedSeasonId}
           onSelectLeagueSystem={selectLeagueSystem}
         />
       </Box>
@@ -82,11 +90,11 @@ function WarpScores() {
           heading="BlaskScore"
           subHeading={intl.formatMessage({ id: 'home.tagline' })}
         />
-        <ArticleFeed leagueSystemId={selectedLeagueSystem?.id} limit={6} />
+        <ArticleFeed leagueSystemId={selectedLeagueSystem?.id} seasonId={selectedSeasonId} limit={6} />
         <Box>
           <LoadingOrErrorWrapper loading={loading} error={error}>
             {leagueSystems.length > 0 ? (
-              <LeagueSystems summaries={leagueSystems} leagueSystem={selectedLeagueSystem} onSelectSeason={(seasonId) => selectLeagueSystem(selectedLeagueSystem.id, seasonId)} />
+              <LeagueSystems selectedSeasonId={selectedSeasonId} summaries={leagueSystems} leagueSystem={selectedLeagueSystem} onSelectSeason={(seasonId) => selectLeagueSystem(selectedLeagueSystem.id, seasonId)} />
             ) : (
               <Leagues leagues={leagues} competitionCountByStatusPerLeague={competitionCountsByStatus} />
             )}
