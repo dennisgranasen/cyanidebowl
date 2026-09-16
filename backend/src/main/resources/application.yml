@@ -207,11 +207,11 @@ warpscores:
     tasks:
       EDITORIAL_ARTICLE: { target: groq-large, priority: 80 }
       MATCH_REPORT: { target: groq-large, priority: 90 }
-      FAN_PROFILE: { target: groq-large, priority: 50 }
+      FAN_PROFILE: { target: editorial, priority: 50 }
       PLAYER_RATING: { target: openrouter-free, priority: 70 }
       ARTICLE_COMMENT: { target: openrouter-free, priority: 60 }
       SOCIAL_REPLY: { target: openrouter-free, priority: 75 }
-      MEMORY_CONSOLIDATION: { target: groq-large, priority: 20 }
+      MEMORY_CONSOLIDATION: { target: editorial, priority: 20 }
       PROFILE_IMAGE: { target: profile-image, priority: 40 }
       AVATAR_IMAGE: { target: profile-image, priority: 50 }
 
