@@ -19,8 +19,6 @@ public class AiPendingWorkService {
     private final MongoTemplate mongo;
     private final TeamRepository teams;
     private final AiCommunityMemberProfileRepository fans;
-    private final ReplayDownloadRepository downloads;
-    private final ReplayArtifactService artifacts;
     private final DedicatedFanPlayerRatingJobService fanRatings;
     private final LlmProviderRouter routing;
 
@@ -65,17 +63,6 @@ public class AiPendingWorkService {
             result.add(new Work("media:" + job.getId(), job.getTarget().name(), fan == null ? job.getFanProfileId() : fan.getDisplayName(),
                     fan == null ? null : "/community/" + encode(fan.getId()), target("community-media", type), job.getStatus().name(), true, 1,
                     fan == null ? "" : teamName(teamMap, fan.getTeamId()), job.getNextAttemptAt(), job.getError()));
-        }
-        for (var replay : downloads.findAll()) {
-            if (!"DOWNLOADED".equals(replay.getStatus())) continue;
-            String status = replay.getAnalysisStatus();
-            boolean running = "PROCESSING".equals(status);
-            boolean pending = status == null || "PENDING".equals(status) || !Objects.equals(replay.getParserVersion(), ReplayArtifactService.PARSER_VERSION);
-            if (!running && !pending) continue;
-            boolean available = artifacts.originalAvailable(replay);
-            result.add(new Work("replay:" + replay.getMatchId(), "REPLAY_ANALYSIS", "Match · " + replay.getMatchId(), null,
-                    "Replay parser (not an LLM)", running ? "RUNNING" : available ? "QUEUED" : "BLOCKED", true, 1,
-                    available ? "Replay analysis / parser update" : "Original replay file missing", null, replay.getAnalysisError()));
         }
         result.sort(Comparator.comparing(Work::service).thenComparing(Work::kind).thenComparing(Work::id));
         return new Snapshot(Instant.now(), result);

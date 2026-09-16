@@ -23,8 +23,8 @@ export default function PendingAiWork({ getAccessTokenSilently, getAccessTokenWi
   const jobs = snapshot?.jobs || [];
   const visible = jobs.filter(j => (!service || j.service === service) && `${j.subject} ${j.kind} ${j.detail}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()));
   return <Box borderWidth="1px" borderRadius="lg" p={4}>
-    <Heading size="md">Queued content and analysis tasks</Heading>
-    <Text mt={2} fontSize="sm">Saved work is listed here before it reaches a model. Service execution queues below show individual model calls for the same work; do not add those counts together. Direct requests appear only when they enter an execution queue.</Text>
+    <Heading size="md">Queued AI content tasks</Heading>
+    <Text mt={2} fontSize="sm">Saved AI work is listed here before it reaches a model. Deterministic replay analysis is shown separately below and never waits for LLM quota. Service execution queues show individual model calls for the same work; do not add those counts together.</Text>
     <Text mt={2} fontSize="sm">Refreshes every 10 seconds. {snapshot ? `Last update: ${new Date(snapshot.capturedAt).toLocaleString()}. ${jobs.length} unfinished tasks.` : 'Loading…'}</Text>
     {error && <Text color="red.300">Could not refresh. Displayed data may be out of date: {error.message}</Text>}
     <HStack my={3} flexWrap="wrap">

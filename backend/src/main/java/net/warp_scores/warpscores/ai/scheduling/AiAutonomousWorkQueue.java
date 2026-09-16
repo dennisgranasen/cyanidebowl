@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -45,7 +46,11 @@ public class AiAutonomousWorkQueue {
             long failed,
             Instant oldestPendingCreatedAt,
             List<AiAutonomousWorkItem> recentFailures,
-            List<AiAutonomousWorkItem> pendingJobs) {
+            List<AiAutonomousWorkItem> pendingJobs,
+            long completedLastHour,
+            long completedLast24Hours,
+            Instant nextEligibleAt,
+            Long estimatedClearSeconds) {
     }
 
     public boolean enqueue(EnqueueRequest request) {
@@ -225,6 +230,20 @@ public class AiAutonomousWorkQueue {
                 Criteria.where("status").is(AiAutonomousWorkItem.Status.FAILED))
                 .with(Sort.by(Sort.Order.desc("updatedAt")))
                 .limit(20);
+        List<AiAutonomousWorkItem> pending = pendingItems();
+        Instant now = Instant.now();
+        long completedHour = countCompletedSince(now.minus(Duration.ofHours(1)));
+        long completedDay = countCompletedSince(now.minus(Duration.ofHours(24)));
+        Instant nextEligible = pending.stream()
+                .map(AiAutonomousWorkItem::getNextAttemptAt)
+                .filter(Objects::nonNull)
+                .min(Instant::compareTo)
+                .orElse(null);
+        long outstanding = queued + retry + running;
+        double perHour = completedHour > 0 ? completedHour : completedDay / 24.0;
+        Long eta = outstanding == 0
+                ? 0L
+                : perHour <= 0 ? null : (long) Math.ceil(outstanding / perHour * 3600.0);
 
         return new QueueSnapshot(
                 queued,
@@ -234,7 +253,11 @@ public class AiAutonomousWorkQueue {
                 failed,
                 oldest == null ? null : oldest.getCreatedAt(),
                 mongoTemplate.find(failuresQuery, AiAutonomousWorkItem.class),
-                pendingItems());
+                pending,
+                completedHour,
+                completedDay,
+                nextEligible,
+                eta);
     }
 
     static Duration retryBackoff(int attempt) {
@@ -276,6 +299,12 @@ public class AiAutonomousWorkQueue {
         return mongoTemplate.count(
                 new Query(Criteria.where("status").is(status)),
                 AiAutonomousWorkItem.class);
+    }
+
+    private long countCompletedSince(Instant cutoff) {
+        Criteria criteria = Criteria.where("completedAt").gte(cutoff)
+                .and("status").in(AiAutonomousWorkItem.Status.SUCCEEDED, AiAutonomousWorkItem.Status.FAILED);
+        return mongoTemplate.count(new Query(criteria), AiAutonomousWorkItem.class);
     }
 
     private static void validate(EnqueueRequest request) {

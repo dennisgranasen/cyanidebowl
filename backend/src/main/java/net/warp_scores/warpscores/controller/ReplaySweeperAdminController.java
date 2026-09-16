@@ -10,6 +10,7 @@ import net.warp_scores.warpscores.domain.persistence.ReplayDownloadRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.identity.IdentityUtil;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -40,6 +41,9 @@ public class ReplaySweeperAdminController {
         var result=new java.util.LinkedHashMap<String,Object>();
         result.put("matchId",replay.getMatchId());result.put("gameId",replay.getGameId());
         result.put("status",replay.getStatus());result.put("analysisStatus",replay.getAnalysisStatus());
+        result.put("parserVersion",replay.getParserVersion());
+        result.put("analysisAttemptVersion",replay.getAnalysisAttemptVersion());
+        result.put("analysisRequestedAt",replay.getAnalysisRequestedAt());
         result.put("downloadedAt",replay.getDownloadedAt());result.put("originalSize",replay.getOriginalSize());
         result.put("compactSize",replay.getCompactSize());result.put("error",replay.getError());
         result.put("analysisError",replay.getAnalysisError());
@@ -60,7 +64,8 @@ public class ReplaySweeperAdminController {
         if(rightPlayed==null)return -1;
         return rightPlayed.compareTo(leftPlayed);
     }).toList();}
-    @PostMapping("/replays/{matchId}/analyze") public Map<String,Object> analyze(@PathVariable String matchId){analysis.analyze(matchId);return Map.of("matchId",matchId,"status","PROCESSED");}
+    @GetMapping("/analysis-queue") public Object analysisQueue(){return analysis.snapshot();}
+    @PostMapping("/replays/{matchId}/analyze") public Map<String,Object> analyze(@PathVariable String matchId, Authentication authentication){analysis.requestReanalysis(matchId,authentication==null?null:authentication.getName());return Map.of("matchId",matchId,"status","QUEUED");}
     @GetMapping(value="/replays/{matchId}/inspect",produces=MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<byte[]> inspect(@PathVariable String matchId){try{return ResponseEntity.ok(replayArtifacts.readCompactJson(matchId));}catch(IllegalArgumentException error){return ResponseEntity.notFound().build();}catch(Exception error){return ResponseEntity.internalServerError().build();}}
     @PostMapping(value="/replays/import",consumes=MediaType.MULTIPART_FORM_DATA_VALUE)

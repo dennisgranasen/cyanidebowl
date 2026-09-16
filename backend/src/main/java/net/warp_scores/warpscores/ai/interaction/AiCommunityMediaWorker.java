@@ -31,6 +31,9 @@ public class AiCommunityMediaWorker {
     @Value("${warpscores.ai.community-media.running-timeout:10m}")
     private Duration runningTimeout;
 
+    @Value("${warpscores.ai.community-media.poll-ms:30000}")
+    private long pollMs;
+
     @Scheduled(fixedDelayString = "${warpscores.ai.community-media.poll-ms:30000}")
     public synchronized void poll() {
         if (!renderer.isConfigured()) return;
@@ -117,13 +120,30 @@ public class AiCommunityMediaWorker {
     }
 
     public MediaQueueSnapshot snapshot() {
+        Instant now=Instant.now();
         var pending = requests.findByStatusInOrderByPriorityDescCreatedAtAsc(java.util.List.of(AiCommunityMediaGenerationRequest.Status.QUEUED));
-        return new MediaQueueSnapshot(requests.countByStatus(AiCommunityMediaGenerationRequest.Status.QUEUED), requests.countByStatus(AiCommunityMediaGenerationRequest.Status.RUNNING), requests.countByStatus(AiCommunityMediaGenerationRequest.Status.COMPLETED), requests.countByStatus(AiCommunityMediaGenerationRequest.Status.FAILED), pending);
+        var all=requests.findAll();
+        long completedHour=all.stream().filter(r->r.getCompletedAt()!=null&&!r.getCompletedAt().isBefore(now.minus(Duration.ofHours(1)))).count();
+        long completedDay=all.stream().filter(r->r.getCompletedAt()!=null&&!r.getCompletedAt().isBefore(now.minus(Duration.ofHours(24)))).count();
+        long queued=requests.countByStatus(AiCommunityMediaGenerationRequest.Status.QUEUED);
+        long running=requests.countByStatus(AiCommunityMediaGenerationRequest.Status.RUNNING);
+        Instant resume=pending.stream().map(r->r.getNextAttemptAt()==null?now:r.getNextAttemptAt()).min(Instant::compareTo).orElse(null);
+        if(resume!=null&&resume.isBefore(now))resume=now.plusMillis(Math.max(1,pollMs));
+        double perHour=completedHour>0?completedHour:completedDay/24.0;
+        Long eta=queued+running==0?0L:perHour<=0?null:(long)Math.ceil((queued+running)/perHour*3600.0);
+        if(eta!=null&&resume!=null&&resume.isAfter(now))eta+=Duration.between(now,resume).toSeconds();
+        return new MediaQueueSnapshot(queued, running,
+                requests.countByStatus(AiCommunityMediaGenerationRequest.Status.COMPLETED),
+                requests.countByStatus(AiCommunityMediaGenerationRequest.Status.FAILED),
+                renderer.isConfigured(), resume, completedHour, completedDay, eta, pending);
     }
     public boolean reprioritize(String id,int priority){if(priority<0||priority>100)throw new IllegalArgumentException("priority must be 0..100");var r=requests.findById(id).orElse(null);if(r==null||r.getStatus()!=AiCommunityMediaGenerationRequest.Status.QUEUED)return false;r.setPriority(priority);requests.save(r);return true;}
     public boolean removePending(String id){var r=requests.findById(id).orElse(null);if(r==null||r.getStatus()!=AiCommunityMediaGenerationRequest.Status.QUEUED)return false;requests.delete(r);return true;}
     public int clearPending(){var pending=requests.findByStatusInOrderByPriorityDescCreatedAtAsc(java.util.List.of(AiCommunityMediaGenerationRequest.Status.QUEUED));requests.deleteAll(pending);return pending.size();}
-    public record MediaQueueSnapshot(long queued,long running,long succeeded,long failed,java.util.List<AiCommunityMediaGenerationRequest> jobs) {}
+    public record MediaQueueSnapshot(long queued,long running,long succeeded,long failed,
+                                     boolean providerConfigured,Instant resumeAt,long completedLastHour,
+                                     long completedLast24Hours,Long estimatedClearSeconds,
+                                     java.util.List<AiCommunityMediaGenerationRequest> jobs) {}
 
     private void recoverStaleRunning(Instant now) {
         Instant staleBefore = now.minus(runningTimeout);

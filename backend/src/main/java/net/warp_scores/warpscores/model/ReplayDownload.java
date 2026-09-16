@@ -23,9 +23,12 @@ public class ReplayDownload {
     private String status;
     private String analysisStatus;
     private Integer parserVersion;
+    private Integer analysisAttemptVersion;
     private Date attemptedAt;
     private Date downloadedAt;
     private Date analyzedAt;
+    private Date analysisRequestedAt;
+    private String analysisRequestedBy;
     private String error;
     private String analysisError;
 }

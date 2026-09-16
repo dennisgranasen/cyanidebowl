@@ -179,6 +179,17 @@ public class ReplayArtifactService {
         normalized.put("data", response.get("originalData"));
         if (!storeDownloaded(record.getMatchId(), record.getGameId(), normalized))
             throw new IllegalStateException("Reprocessed replay artifacts could not be stored");
+        ReplayDownload updated = downloads.findById(record.getMatchId())
+                .orElseThrow(() -> new IllegalStateException("Reprocessed replay record disappeared"));
+        if (!"PROCESSED".equals(updated.getAnalysisStatus())) {
+            throw new IllegalStateException(Objects.toString(
+                    updated.getAnalysisError(),
+                    "Replay parser returned artifacts but the analysis was not stored"));
+        }
+        if (!Objects.equals(updated.getParserVersion(), PARSER_VERSION)) {
+            throw new IllegalStateException("Replay parser returned version "
+                    + updated.getParserVersion() + ", expected " + PARSER_VERSION);
+        }
     }
 
     private void storeAnalysis(ReplayDownload record, Object rawAnalysis) {
@@ -195,10 +206,15 @@ public class ReplayArtifactService {
             analyses.save(analysis);
             record.setAnalysisStatus("PROCESSED");
             record.setParserVersion(analysis.getParserVersion());
+            record.setAnalysisAttemptVersion(PARSER_VERSION);
             record.setAnalyzedAt(new Date());
+            record.setAnalysisRequestedAt(null);
+            record.setAnalysisRequestedBy(null);
             record.setAnalysisError(null);
         } catch (RuntimeException error) {
             record.setAnalysisStatus("FAILED");
+            record.setAnalysisAttemptVersion(PARSER_VERSION);
+            record.setAnalyzedAt(new Date());
             record.setAnalysisError(Objects.toString(error.getMessage(), "Replay analysis could not be stored"));
         }
     }
