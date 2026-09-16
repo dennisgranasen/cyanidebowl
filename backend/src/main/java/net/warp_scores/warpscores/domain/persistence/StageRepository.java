@@ -8,6 +8,7 @@ import java.util.List;
 
 @Repository
 public interface StageRepository extends MongoRepository<Stage, String> {
+    List<Stage> findBySeasonIdInOrderBySequenceAsc(List<String> seasonIds);
     List<Stage> findBySeasonIdOrderBySequenceAsc(String seasonId);
     List<Stage> findByPhaseIdOrderByStepAscDisplayOrderAsc(String phaseId);
 }

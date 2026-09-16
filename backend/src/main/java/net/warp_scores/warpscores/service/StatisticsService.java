@@ -74,9 +74,10 @@ public class StatisticsService {
 
     private Dataset dataset(List<String> seasonIds) {
         Map<String, Selected> unique = new LinkedHashMap<>();
-        Map<String,String> seasonByStage = new HashMap<>();
-        for (String seasonId : seasonIds) for (Stage stage : stages.findBySeasonIdOrderBySequenceAsc(seasonId)) {
-            seasonByStage.put(stage.getId(), seasonId);
+        Map<String, List<Stage>> stagesBySeason = (seasonIds.isEmpty() ? List.<Stage>of()
+                : stages.findBySeasonIdInOrderBySequenceAsc(seasonIds)).stream()
+                .collect(java.util.stream.Collectors.groupingBy(Stage::getSeasonId));
+        for (String seasonId : seasonIds) for (Stage stage : stagesBySeason.getOrDefault(seasonId, List.of())) {
             try {
                 for (StageMatchView view : stageMatches.getMatchesForStage(stage.getId())) {
                     if (view.sourceMatchId() == null) continue;

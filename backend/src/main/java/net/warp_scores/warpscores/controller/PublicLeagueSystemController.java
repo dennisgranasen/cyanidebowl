@@ -65,10 +65,19 @@ public class PublicLeagueSystemController {
                 var leagueSystem = leagueSystems.findById(leagueSystemId)
                     .orElseThrow(() -> new IllegalArgumentException("League system not found: " + leagueSystemId));
                 List<Season> systemSeasons = seasons.findByLeagueSystemIdOrderBySequenceAsc(leagueSystemId);
+                List<String> seasonIds = systemSeasons.stream().map(Season::getId).toList();
+                Map<String, List<Stage>> stagesBySeason = (seasonIds.isEmpty() ? List.<Stage>of()
+                        : stages.findBySeasonIdInOrderBySequenceAsc(seasonIds)).stream()
+                        .collect(java.util.stream.Collectors.groupingBy(Stage::getSeasonId));
+                List<Phase> systemPhases = seasonIds.isEmpty() ? List.of()
+                        : phases.findBySeasonIdInOrderBySequenceAsc(seasonIds);
+                Map<String, List<Phase>> phasesBySeason = systemPhases.stream()
+                        .collect(java.util.stream.Collectors.groupingBy(Phase::getSeasonId));
+                Map<String, String> phaseNames = new HashMap<>();
+                systemPhases.forEach(phase -> phaseNames.put(phase.getId(), phase.getName()));
                 List<StageWithSeason> systemStages = systemSeasons.stream()
-                    .flatMap(season -> stages.findBySeasonIdOrderBySequenceAsc(season.getId()).stream()
-                        .map(stage -> new StageWithSeason(season, stage)))
-                    .toList();
+                        .flatMap(season -> stagesBySeason.getOrDefault(season.getId(), List.of()).stream()
+                                .map(stage -> new StageWithSeason(season, stage))).toList();
 
                 Season selectedSeason = seasonId == null
                     ? systemSeasons.stream().max(Comparator
@@ -81,7 +90,7 @@ public class PublicLeagueSystemController {
 
                 List<LeagueSystemOverview.RecentMatch> allRecentMatches = systemStages.stream()
                     .filter(stage -> selectedSeason != null && stage.season().getId().equals(selectedSeason.getId()))
-                    .flatMap(stage -> recentMatchesForStage(stage, matchCache))
+                    .flatMap(stage -> recentMatchesForStage(stage, matchCache, phaseNames))
                     .sorted(Comparator.comparing(
                         recent -> recent.match().finishedAt(),
                         Comparator.nullsLast(Comparator.reverseOrder())))
@@ -93,7 +102,7 @@ public class PublicLeagueSystemController {
                         season.getNumber(),
                         season.getName(),
                         season.getSequence(),
-                        phaseOverviews(season, systemStages, matchCache,
+                        phaseOverviews(season, systemStages, matchCache, phasesBySeason,
                             selectedSeason != null && season.getId().equals(selectedSeason.getId())),
                         systemStages.stream()
                             .filter(stage -> stage.season().getId().equals(season.getId()))
@@ -117,8 +126,8 @@ public class PublicLeagueSystemController {
                 }
 
                 private List<LeagueSystemOverview.Phase> phaseOverviews(Season season, List<StageWithSeason> systemStages,
-                        Map<String, List<StageMatchResponse>> matchCache, boolean includeMatches) {
-                    List<Phase> seasonPhases = phases.findBySeasonIdOrderBySequenceAsc(season.getId());
+                        Map<String, List<StageMatchResponse>> matchCache, Map<String, List<Phase>> phasesBySeason, boolean includeMatches) {
+                    List<Phase> seasonPhases = phasesBySeason.getOrDefault(season.getId(), List.of());
                     List<LeagueSystemOverview.Phase> result = seasonPhases.stream().map(phase ->
                             new LeagueSystemOverview.Phase(phase.getId(), phase.getName(),
                                     phase.getType() == null ? null : phase.getType().name(), phase.getSequence(),
@@ -146,7 +155,7 @@ public class PublicLeagueSystemController {
                         var matches = stageMatchService.getMatchesForStage(stage.getId());
                         var ids = matches.stream().filter(match -> match.sourceMatchId() != null)
                                 .map(match -> match.sourceMatchId().asMongoKey()).toList();
-                        var replayIds = replayDownloads.findAllById(ids).stream()
+                        var replayIds = (ids.isEmpty() ? List.<net.warp_scores.warpscores.model.ReplayDownload>of() : replayDownloads.findAllById(ids)).stream()
                                 .filter(replay -> "DOWNLOADED".equals(replay.getStatus()))
                                 .map(replay -> replay.getMatchId()).collect(java.util.stream.Collectors.toSet());
                         List<StageMatchResponse> result = matches.stream()
@@ -165,14 +174,14 @@ public class PublicLeagueSystemController {
                 }
 
                     private Stream<LeagueSystemOverview.RecentMatch> recentMatchesForStage(StageWithSeason stage,
-                            Map<String, List<StageMatchResponse>> matchCache) {
+                            Map<String, List<StageMatchResponse>> matchCache, Map<String, String> phaseNames) {
                         try {
                             return matchesForStage(stage.stage(), matchCache).stream()
                                     .filter(match -> match.finishedAt() != null)
                                     .map(match -> new LeagueSystemOverview.RecentMatch(
                                                 stage.season().getId(),
                                                 stage.stage().getPhaseId(),
-                                                phaseName(stage.stage().getPhaseId()),
+                                                phaseNames.get(stage.stage().getPhaseId()),
                                                 stage.stage().getId(),
                                                 stage.stage().getName(),
                                                 match));
@@ -182,7 +191,4 @@ public class PublicLeagueSystemController {
                         }
                     }
 
-                    private String phaseName(String phaseId) {
-                        return phaseId == null ? null : phases.findById(phaseId).map(Phase::getName).orElse(null);
-                    }
 }
