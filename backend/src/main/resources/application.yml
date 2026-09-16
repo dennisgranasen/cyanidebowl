@@ -141,6 +141,41 @@ warpscores:
         #  base-url: http://localhost:8000/v1
         #  api-key: ${AI_API_KEY_LOCAL:}
         #  structured-output: false
+    # Execution queues are scoped to the actual provider quota resource.
+    # Multiple targets sharing a quota-group compete in one priority queue and
+    # share concurrency/backoff/cooldown.
+    quota-groups:
+      gemini-main:
+        concurrency: 1
+        base-backoff: 10s
+        max-backoff: 10m
+        jitter: 0.20
+      cloudflare-text:
+        concurrency: 2
+        base-backoff: 10s
+        max-backoff: 10m
+        jitter: 0.20
+      groq-main:
+        concurrency: 1
+        base-backoff: 10s
+        max-backoff: 10m
+        jitter: 0.20
+      openrouter-free:
+        concurrency: 1
+        base-backoff: 15s
+        max-backoff: 15m
+        jitter: 0.20
+      cloudflare-image:
+        concurrency: 1
+        base-backoff: 30s
+        max-backoff: 15m
+        jitter: 0.20
+      aion-main:
+        concurrency: 1
+        base-backoff: 10s
+        max-backoff: 10m
+        jitter: 0.20
+
     # Named executable targets. Provider blocks above contain credentials/transport.
     targets:
       editorial:

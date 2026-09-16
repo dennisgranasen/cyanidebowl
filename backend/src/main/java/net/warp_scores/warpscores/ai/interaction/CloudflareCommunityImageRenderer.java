@@ -126,6 +126,15 @@ public class CloudflareCommunityImageRenderer implements AiCommunityImageRendere
             retryable = false;
         }
 
+        java.time.Instant retryAt = RetryAfter.parse(retryAfter, java.time.Instant.now());
+        if (quotaExhausted && (retryAt == null || !retryAt.isAfter(java.time.Instant.now()))) {
+            retryAt = java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC)
+                    .toLocalDate()
+                    .plusDays(1)
+                    .atStartOfDay(java.time.ZoneOffset.UTC)
+                    .toInstant();
+        }
+
         return new AiCommunityImageProviderException(
                 "Cloudflare Workers AI failed with HTTP "
                         + statusCode
@@ -135,7 +144,7 @@ public class CloudflareCommunityImageRenderer implements AiCommunityImageRendere
                         + truncate(body, 700),
                 retryable,
                 statusCode,
-                RetryAfter.parse(retryAfter, java.time.Instant.now()),
+                retryAt,
                 quotaExhausted);
     }
 

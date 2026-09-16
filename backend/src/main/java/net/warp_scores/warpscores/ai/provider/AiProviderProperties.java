@@ -22,6 +22,7 @@ public class AiProviderProperties {
     private Map<String, List<ModelTargetConfig>> reporterTargets = new LinkedHashMap<>();
     private Map<String, List<ModelTargetConfig>> taskTargets = new LinkedHashMap<>();
 
+    private Map<String, QueueConfig> quotaGroups = new LinkedHashMap<>();
     private Map<String, TargetConfig> targets = new LinkedHashMap<>();
     private Map<String, TaskPolicyConfig> tasks = new LinkedHashMap<>();
     private Map<String, List<AgentTaskOverrideConfig>> agents = new LinkedHashMap<>();

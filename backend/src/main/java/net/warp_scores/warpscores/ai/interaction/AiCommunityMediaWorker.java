@@ -118,7 +118,13 @@ public class AiCommunityMediaWorker {
 
             if (e instanceof AiCommunityImageProviderException providerFailure
                     && providerFailure.quotaExhausted()) {
-                Instant blockedUntil = Instant.now().plus(quotaExhaustedCooldown);
+                Instant blockedUntil = providerFailure.retryAt() != null
+                        && providerFailure.retryAt().isAfter(Instant.now())
+                        ? providerFailure.retryAt()
+                        : nextUtcMidnight();
+                if (blockedUntil == null || !blockedUntil.isAfter(Instant.now())) {
+                    blockedUntil = Instant.now().plus(quotaExhaustedCooldown);
+                }
                 blockProvider(blockedUntil, "Cloudflare daily image quota exhausted");
                 // Quota exhaustion is provider-wide, not a failure of this specific job.
                 // Put it back among the normally eligible jobs. When the provider block
@@ -200,6 +206,15 @@ public class AiCommunityMediaWorker {
         request.setNextAttemptAt(providerRetryAt != null && providerRetryAt.isAfter(calculated) ? providerRetryAt : calculated);
         request.setError(error == null ? "Unknown error" : error);
         requests.save(request);
+    }
+
+    private Instant nextUtcMidnight() {
+        return java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC)
+                .toLocalDate()
+                .plusDays(1)                
+                .atStartOfDay(java.time.ZoneOffset.UTC)
+                .plusMinutes(15)
+                .toInstant();
     }
 
     private boolean providerBlocked(Instant now) {
