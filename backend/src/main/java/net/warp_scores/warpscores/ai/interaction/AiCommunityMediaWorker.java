@@ -69,7 +69,9 @@ public class AiCommunityMediaWorker {
         requests.save(request);
 
         try {
-            var rendered = renderer.render(request.getPrompt(), request.getTarget());
+            var rendered = request.getRequestedProvider() == null
+                    ? renderer.render(request.getPrompt(), request.getTarget())
+                    : renderer.render(request.getPrompt(), request.getTarget(), request.getRequestedProvider());
             var stored = assets.save(
                     profile.getId(),
                     request.getTarget().name(),
@@ -81,25 +83,29 @@ public class AiCommunityMediaWorker {
                             ? profile.getProfileImageUrl()
                             : profile.getAvatarImageUrl();
 
-            if (request.getTarget()
-                    == AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE) {
-                profile.setProfileImageUrl(stored.publicUrl());
-            } else {
-                profile.setAvatarImageUrl(stored.publicUrl());
+            if (!request.isApprovalRequired()) {
+                if (request.getTarget() == AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE) {
+                    profile.setProfileImageUrl(stored.publicUrl());
+                } else {
+                    profile.setAvatarImageUrl(stored.publicUrl());
+                }
+                profiles.save(profile);
             }
-            profiles.save(profile);
 
             request.setProvider(rendered.provider());
             request.setModel(rendered.model());
             request.setAssetUrl(stored.publicUrl());
-            request.setStatus(AiCommunityMediaGenerationRequest.Status.COMPLETED);
+            request.setStatus(request.isApprovalRequired()
+                    ? AiCommunityMediaGenerationRequest.Status.AWAITING_APPROVAL
+                    : AiCommunityMediaGenerationRequest.Status.COMPLETED);
+            request.setActiveKey(null);
             request.setCompletedAt(Instant.now());
             request.setStartedAt(null);
             request.setNextAttemptAt(null);
             request.setError(null);
             requests.save(request);
 
-            if (previousAssetUrl != null
+            if (!request.isApprovalRequired() && previousAssetUrl != null
                     && !previousAssetUrl.equals(stored.publicUrl())) {
                 assets.deletePublicUrl(previousAssetUrl);
             }
@@ -248,6 +254,7 @@ public class AiCommunityMediaWorker {
             AiCommunityMediaGenerationRequest request,
             String error) {
         request.setStatus(AiCommunityMediaGenerationRequest.Status.FAILED);
+        request.setActiveKey(null);
         request.setStartedAt(null);
         request.setNextAttemptAt(null);
         request.setError(error == null ? "Unknown error" : error);

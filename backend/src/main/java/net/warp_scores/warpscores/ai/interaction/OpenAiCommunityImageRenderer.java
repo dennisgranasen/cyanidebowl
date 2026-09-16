@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.warp_scores.warpscores.model.AiCommunityMediaGenerationRequest;
 import net.warp_scores.warpscores.ai.provider.openai.OpenAiNativeProviderProperties;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.net.URI;
@@ -17,10 +15,6 @@ import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Component
-@ConditionalOnProperty(
-        name = "warpscores.ai.community-media.provider",
-        havingValue = "openai")
 public class OpenAiCommunityImageRenderer implements AiCommunityImageRenderer {
     private static final URI ENDPOINT =
             URI.create("https://api.openai.com/v1/images/generations");

@@ -6,9 +6,12 @@ import { useParams } from 'react-router-dom';
 import Navigation from '../components/misc/Navigation';
 import CommunityApi from '../CommunityApi';
 import MemberComments from '../components/community/MemberComments';
+import CommunityProfileMediaAdmin from '../components/community/CommunityProfileMediaAdmin';
+import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 
 function CommunityProfilePage() {
   const { fanId } = useParams();
+  const { userPermissions } = useAuth0WithUserPermissions();
   const [fan, setFan] = useState(null);
   const [error, setError] = useState(null);
 
@@ -76,6 +79,9 @@ function CommunityProfilePage() {
         </VStack>
       </SimpleGrid>
       <MemberComments key={fanId} fanId={fanId} />
+      {userPermissions.writeSiteAdmin && <Box mt={6}>
+        <CommunityProfileMediaAdmin key={fanId} profileId={fanId} onProfileUpdated={setFan} />
+      </Box>}
     </Box>
   );
 }

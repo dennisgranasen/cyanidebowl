@@ -5,6 +5,12 @@ import net.warp_scores.warpscores.model.AiCommunityMediaGenerationRequest;
 public interface AiCommunityImageRenderer {
     boolean isConfigured();
 
+    default RenderedImage render(String prompt, AiCommunityMediaGenerationRequest.Target target,
+                                 String provider) throws Exception {
+        if (provider != null && !provider.isBlank()) throw new IllegalArgumentException("Provider selection is not supported");
+        return render(prompt, target);
+    }
+
     RenderedImage render(
             String prompt,
             AiCommunityMediaGenerationRequest.Target target) throws Exception;

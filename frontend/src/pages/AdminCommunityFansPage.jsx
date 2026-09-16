@@ -7,6 +7,7 @@ import {
 import Navigation from '../components/misc/Navigation';
 import WarpScoresApiService from '../WarpScoresApiService';
 import CommunityApi from '../CommunityApi';
+import CommunityProfileMediaAdmin from '../components/community/CommunityProfileMediaAdmin';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 
 const behavioralFields = [
@@ -30,7 +31,6 @@ function AdminCommunityFansPage() {
   const [selectedId, setSelectedId] = useState('');
   const [draft, setDraft] = useState(null);
   const [settings, setSettings] = useState(null);
-  const [media, setMedia] = useState([]);
   const [filterTeam, setFilterTeam] = useState('');
   const [filterActive, setFilterActive] = useState('active');
   const [busy, setBusy] = useState(false);
@@ -72,11 +72,7 @@ function AdminCommunityFansPage() {
     setSelectedId(fan.id);
     setDraft({ ...fan });
     setMessage('');
-    try {
-      setMedia(await WarpScoresApiService.adminCommunityFanMedia(fan.id, ...auth));
-    } catch {
-      setMedia([]);
-    }
+
   };
 
   const update = (field, value) =>
@@ -102,20 +98,14 @@ function AdminCommunityFansPage() {
     }
   };
 
-  const regenerate = async () => {
-    if (!draft) return;
-    setBusy(true);
+  const queueMissing = async (target) => {
+    setBusy(true); setError(''); setMessage('');
     try {
-      const result = await WarpScoresApiService.regenerateAdminCommunityFanMedia(
-        draft.id, ...auth
-      );
-      setMedia(result || []);
-      setMessage('New profile-image and avatar jobs queued.');
-    } catch (e) {
-      setError(e?.message || String(e));
-    } finally {
-      setBusy(false);
-    }
+      const result = await WarpScoresApiService.queueMissingCommunityFanMedia(target, ...auth);
+      setMessage(`${result.queued} image jobs queued; ${result.alreadyQueued} already queued/running; ${result.missingPrompt} skipped because an image prompt is missing.`);
+      await load();
+    } catch (e) { setError(e?.message || String(e)); }
+    finally { setBusy(false); }
   };
 
   const syncNow = async () => {
@@ -146,7 +136,6 @@ function AdminCommunityFansPage() {
       const result = await WarpScoresApiService.resetGeneratedCommunityFans(...auth);
       setSelectedId('');
       setDraft(null);
-      setMedia([]);
       setMessage(
         `Reset complete: ${result.profilesDeleted} profiles removed; `
         + `${result.teamsQueuedForRebuild} teams queued for AI rebuild.`
@@ -197,6 +186,22 @@ function AdminCommunityFansPage() {
 
       {error && <Text color="red.300">{error}</Text>}
       {message && <Text color="green.300">{message}</Text>}
+
+      <Box borderWidth="1px" borderRadius="md" p={4}>
+        <HStack justify="space-between"><Heading size="sm">Missing images</Heading>
+          <Button size="sm" onClick={load} isDisabled={busy}>Refresh counts</Button></HStack>
+        <Text fontSize="sm" mt={2}>All community profiles, including inactive members. Existing images are kept; queued and running jobs are skipped.</Text>
+        <SimpleGrid mt={3} columns={{ base: 1, md: 2 }} spacing={4}>
+          {[
+            ['PROFILE_IMAGE', 'profileImageUrl', 'Profile images'],
+            ['AVATAR', 'avatarImageUrl', 'Avatars'],
+          ].map(([target, field, label]) => {
+            const count = fans.filter(fan => !fan[field]?.trim()).length;
+            return <Box key={target}><Text>{label} missing: <strong>{count}</strong></Text>
+              <Button mt={2} size="sm" isLoading={busy} isDisabled={!count} onClick={() => queueMissing(target)}>Queue missing {label.toLowerCase()}</Button></Box>;
+          })}
+        </SimpleGrid>
+      </Box>
 
       {settings && (
         <Box borderWidth="1px" borderRadius="md" p={4}>
@@ -381,30 +386,14 @@ function AdminCommunityFansPage() {
                 <Button colorScheme="blue" onClick={saveFan} isLoading={busy}>
                   Save profile
                 </Button>
-                <Button onClick={regenerate} isLoading={busy}>
-                  Regenerate images
-                </Button>
               </HStack>
 
-              <Box>
-                <Heading size="xs" mb={2}>Media jobs</Heading>
-                <VStack align="stretch">
-                  {media.map((job) => (
-                    <Box key={job.id} borderWidth="1px" borderRadius="md" p={2}>
-                      <Text fontSize="sm">
-                        {job.target} · {job.status}
-                        {job.model ? ` · ${job.model}` : ''}
-                      </Text>
-                      {job.error && (
-                        <Text color="red.300" fontSize="xs">{job.error}</Text>
-                      )}
-                    </Box>
-                  ))}
-                  {!media.length && (
-                    <Text color="gray.500" fontSize="sm">No media jobs.</Text>
-                  )}
-                </VStack>
-              </Box>
+              <CommunityProfileMediaAdmin key={draft.id} profileId={draft.id} onProfileUpdated={(fan) => {
+                setFans(current => current.map(item => item.id === fan.id ? fan : item));
+                setDraft(current => current?.id === fan.id ? {
+                  ...current, profileImageUrl: fan.profileImageUrl, avatarImageUrl: fan.avatarImageUrl,
+                } : current);
+              }} />
             </VStack>
           )}
         </Box>

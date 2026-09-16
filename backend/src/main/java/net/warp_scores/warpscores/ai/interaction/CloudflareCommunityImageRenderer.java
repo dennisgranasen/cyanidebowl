@@ -7,8 +7,6 @@ import net.warp_scores.warpscores.ai.context.ContextTaskType;
 import net.warp_scores.warpscores.ai.provider.LlmProviderRouter;
 import net.warp_scores.warpscores.ai.provider.RetryAfter;
 import net.warp_scores.warpscores.model.AiCommunityMediaGenerationRequest;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.net.URI;
@@ -22,11 +20,6 @@ import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Component
-@ConditionalOnProperty(
-        name = "warpscores.ai.community-media.provider",
-        havingValue = "cloudflare",
-        matchIfMissing = true)
 public class CloudflareCommunityImageRenderer implements AiCommunityImageRenderer {
     private static final String API_ROOT = "https://api.cloudflare.com/client/v4/accounts/";
 

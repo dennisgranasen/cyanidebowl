@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Box,
   Button,
@@ -61,18 +61,26 @@ function AdminAiAutonomousWorkPage() {
   const [overview, setOverview] = useState(null);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const loadInProgress = useRef(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   const load = useCallback(async () => {
+    if (loadInProgress.current) return;
+    loadInProgress.current = true;
+    setLoading(true);
     try {
-      setError(null);
       const data = await AiReporterApi.autonomousWorkOverview(
         getAccessTokenSilently,
         getAccessTokenWithPopup
       );
       setOverview(data);
+      setError(null);
     } catch (reason) {
       setError(reason);
+    } finally {
+      loadInProgress.current = false;
+      setLoading(false);
     }
   }, [getAccessTokenSilently, getAccessTokenWithPopup]);
 
@@ -161,7 +169,7 @@ function AdminAiAutonomousWorkPage() {
             Direct and editor-triggered generation is not affected by this switch.
           </Text>
         </Box>
-        <Button variant="outline" onClick={load} isDisabled={!overview}>
+        <Button variant="outline" onClick={load} isLoading={loading} isDisabled={!authenticationReady || !userPermissions.writeSiteAdmin}>
           Refresh
         </Button>
       </HStack>

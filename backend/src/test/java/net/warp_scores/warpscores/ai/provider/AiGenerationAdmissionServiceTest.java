@@ -12,6 +12,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -139,6 +142,35 @@ class AiGenerationAdmissionServiceTest {
         assertThat(service.usageSnapshot().inFlight()).isEqualTo(1);
         service.release();
         assertThat(service.usageSnapshot().inFlight()).isZero();
+    }
+
+    @Test
+    void stalledDashboardReadDoesNotBlockGenerationAdmissionOrRelease() throws Exception {
+        when(settings.findById(AiSettings.GLOBAL_ID)).thenReturn(Optional.empty());
+        CountDownLatch readingProviders = new CountDownLatch(1);
+        CountDownLatch finishRead = new CountDownLatch(1);
+        when(traces.findByCreatedAtGreaterThanEqual(any(Instant.class))).thenAnswer(invocation -> {
+            readingProviders.countDown();
+            if (!finishRead.await(5, TimeUnit.SECONDS)) throw new IllegalStateException("Test read timed out");
+            return List.of();
+        });
+        var executor = Executors.newFixedThreadPool(2);
+        try {
+            var overview = executor.submit(service::usageSnapshot);
+            assertThat(readingProviders.await(2, TimeUnit.SECONDS)).isTrue();
+            var generation = executor.submit(() -> {
+                service.acquire("r1", request(100));
+                service.release();
+            });
+            generation.get(2, TimeUnit.SECONDS);
+            finishRead.countDown();
+            assertThat(overview.get(2, TimeUnit.SECONDS).inFlight()).isZero();
+            // Only the dashboard needs the per-provider telemetry query.
+            verify(traces, times(1)).findByCreatedAtGreaterThanEqual(any(Instant.class));
+        } finally {
+            finishRead.countDown();
+            executor.shutdownNow();
+        }
     }
 
     @Test

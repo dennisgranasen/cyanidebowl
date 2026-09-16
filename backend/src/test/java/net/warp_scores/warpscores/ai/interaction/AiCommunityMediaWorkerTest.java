@@ -19,6 +19,32 @@ import static org.mockito.Mockito.*;
 
 class AiCommunityMediaWorkerTest {
     @Test
+    void previewStoresCandidateWithoutReplacingOrDeletingCurrentImage() throws Exception {
+        var requests = mock(AiCommunityMediaGenerationRequestRepository.class);
+        var profiles = mock(AiCommunityMemberProfileRepository.class);
+        var renderer = mock(AiCommunityImageRenderer.class);
+        var assets = mock(AiCommunityMediaAssetStore.class);
+        var profile = new AiCommunityMemberProfile();
+        profile.setId("fan"); profile.setAvatarImageUrl("/old-avatar");
+        when(profiles.findById("fan")).thenReturn(Optional.of(profile));
+        var request = request(); request.setApprovalRequired(true); request.setRequestedProvider("openai");
+        request.setActiveKey("fan:AVATAR");
+        when(renderer.render("prompt", request.getTarget(), "openai")).thenReturn(
+                new AiCommunityImageRenderer.RenderedImage(new byte[]{1}, "image/png", "png", "openai", "image-model"));
+        when(assets.save(eq("fan"), eq("AVATAR"), eq("png"), any())).thenReturn(
+                new AiCommunityMediaAssetStore.StoredAsset("candidate.png", "/candidate.png"));
+        var worker = new AiCommunityMediaWorker(requests, profiles, renderer, assets);
+        configure(worker);
+        worker.process(request);
+        org.assertj.core.api.Assertions.assertThat(request.getStatus()).isEqualTo(AiCommunityMediaGenerationRequest.Status.AWAITING_APPROVAL);
+        org.assertj.core.api.Assertions.assertThat(request.getAssetUrl()).isEqualTo("/candidate.png");
+        org.assertj.core.api.Assertions.assertThat(request.getActiveKey()).isNull();
+        org.assertj.core.api.Assertions.assertThat(profile.getAvatarImageUrl()).isEqualTo("/old-avatar");
+        verify(profiles, never()).save(any());
+        verify(assets, never()).deletePublicUrl(any());
+    }
+
+    @Test
     void missingRendererConfigurationLeavesQueuedWorkUntouched() {
         var requests = mock(AiCommunityMediaGenerationRequestRepository.class);
         var profiles = mock(AiCommunityMemberProfileRepository.class);

@@ -134,13 +134,23 @@ export default {
       getAccessTokenSilently,
       getAccessTokenWithPopup
     ).then(returnData).catch(handleError),
-  regenerateAdminCommunityFanMedia: async (id, getAccessTokenSilently, getAccessTokenWithPopup) =>
+  adminCommunityFan: async (id, silent, popup) =>
+    getDataWithAuthentication(`/admin/community-fans/${encodeURIComponent(id)}`, silent, popup).then(returnData).catch(handleError),
+  regenerateAdminCommunityFanMedia: async (id, getAccessTokenSilently, getAccessTokenWithPopup, target) =>
     postDataWithAuthentication(
-      `/admin/community-fans/${encodeURIComponent(id)}/media/regenerate`,
+      `/admin/community-fans/${encodeURIComponent(id)}/media/regenerate${target ? `?target=${encodeURIComponent(target)}` : ''}`,
       {},
       getAccessTokenSilently,
       getAccessTokenWithPopup
     ).then(returnData).catch(handleError),
+  queueMissingCommunityFanMedia: async (target, silent, popup) =>
+    postDataWithAuthentication(`/admin/community-fans/media/queue-missing?target=${encodeURIComponent(target)}`, {}, silent, popup).then(returnData).catch(handleError),
+  communityImageProviders: async (silent, popup) =>
+    getDataWithAuthentication('/admin/community-fans/media/providers', silent, popup).then(returnData).catch(handleError),
+  previewCommunityFanMedia: async (id, data, silent, popup) =>
+    postDataWithAuthentication(`/admin/community-fans/${encodeURIComponent(id)}/media/preview`, data, silent, popup).then(returnData).catch(handleError),
+  reviewCommunityFanMedia: async (id, requestId, approve, silent, popup) =>
+    postDataWithAuthentication(`/admin/community-fans/${encodeURIComponent(id)}/media/${encodeURIComponent(requestId)}/review`, { approve }, silent, popup).then(returnData).catch(handleError),
   resetGeneratedCommunityFans: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
     postDataWithAuthentication(
       '/admin/community-fans/reset-generated',

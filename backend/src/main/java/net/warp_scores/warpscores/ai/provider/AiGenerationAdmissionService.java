@@ -29,7 +29,7 @@ public class AiGenerationAdmissionService {
     private final AiSettingsRepository settingsRepository;
     private final AiGenerationTraceRepository traces;
 
-    private int inFlight;
+    private volatile int inFlight;
 
     public enum DenialReason {
         GENERATION_DISABLED,
@@ -94,7 +94,7 @@ public class AiGenerationAdmissionService {
                     "AI generation concurrency limit reached");
         }
 
-        UsageSnapshot usage = usageSnapshotInternal();
+        UsageSnapshot usage = usageSnapshotInternal(false);
 
         Integer maxGenerations = positive(settings.getMaxSuccessfulGenerationsPerDay());
         if (maxGenerations != null
@@ -147,11 +147,12 @@ public class AiGenerationAdmissionService {
         if (inFlight > 0) inFlight--;
     }
 
-    public synchronized UsageSnapshot usageSnapshot() {
-        return usageSnapshotInternal();
+    // Dashboard reads must not hold the admission lock while waiting for MongoDB.
+    public UsageSnapshot usageSnapshot() {
+        return usageSnapshotInternal(true);
     }
 
-    private UsageSnapshot usageSnapshotInternal() {
+    private UsageSnapshot usageSnapshotInternal(boolean includeProviders) {
         Instant start = LocalDate.now(ZoneOffset.UTC)
                 .atStartOfDay()
                 .toInstant(ZoneOffset.UTC);
@@ -182,7 +183,7 @@ public class AiGenerationAdmissionService {
                 unknownInput,
                 unknownOutput,
                 inFlight,
-                providerUsage(start));
+                includeProviders ? providerUsage(start) : List.of());
     }
 
     private AiSettings settings() {

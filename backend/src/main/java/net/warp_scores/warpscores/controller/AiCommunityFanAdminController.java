@@ -9,6 +9,7 @@ import net.warp_scores.warpscores.domain.persistence.AiCommunityMemberProfileRep
 import net.warp_scores.warpscores.domain.persistence.AiSettingsRepository;
 import net.warp_scores.warpscores.domain.persistence.WarpScoresUserRepository;
 import net.warp_scores.warpscores.model.AiCommunityMemberProfile;
+import net.warp_scores.warpscores.model.AiCommunityMediaGenerationRequest.Target;
 import net.warp_scores.warpscores.model.AiSettings;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
@@ -30,6 +31,8 @@ public class AiCommunityFanAdminController {
     private final AiCommunityFanMediaService mediaService;
     private final DedicatedFansPeriodicReconciliationService periodicReconciliation;
     private final DedicatedFanResetService resetService;
+    private final net.warp_scores.warpscores.ai.interaction.CommunityImageProviders imageProviders;
+    private final net.warp_scores.warpscores.ai.interaction.CommunityMediaReviewService mediaReviews;
 
     @GetMapping
     public List<AiCommunityMemberProfile> list() {
@@ -81,6 +84,11 @@ public class AiCommunityFanAdminController {
         return saved;
     }
 
+    @GetMapping("/{id}")
+    public AiCommunityMemberProfile profile(@PathVariable String id) {
+        return profiles.findById(id).orElseThrow(() -> new NoSuchElementException("Community fan profile not found"));
+    }
+
     @PostMapping("/reconcile-now")
     public DedicatedFanReconciliationQueueService.QueueSummary reconcileNow() {
         return periodicReconciliation.enqueueNow();
@@ -121,10 +129,16 @@ public class AiCommunityFanAdminController {
     }
 
     @PostMapping("/{id}/media/regenerate")
-    public Object regenerateMedia(@PathVariable String id) {
+    public Object regenerateMedia(@PathVariable String id, @RequestParam(required = false) Target target) {
         AiCommunityMemberProfile profile = profiles.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Community fan profile not found"));
-        return mediaService.regenerate(profile);
+        return mediaService.regenerate(profile, target);
+    }
+
+    @PostMapping("/media/queue-missing")
+    public AiCommunityFanMediaService.QueueMissingResult queueMissingMedia(
+            @RequestParam(required = false) Target target) {
+        return mediaService.queueMissing(profiles.findAllByOrderByDisplayNameAsc(), target);
     }
 
     @GetMapping("/{id}/media")
@@ -132,6 +146,25 @@ public class AiCommunityFanAdminController {
         profiles.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Community fan profile not found"));
         return mediaService.requestsFor(id);
+    }
+
+    @GetMapping("/media/providers")
+    public Object imageProviders() { return imageProviders.available(); }
+
+    public record PreviewInput(Target target, String provider, String prompt) {}
+    @PostMapping("/{id}/media/preview")
+    public Object previewMedia(@PathVariable String id, @RequestBody PreviewInput input) {
+        imageProviders.requireConfigured(input.provider());
+        var profile = profiles.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Community fan profile not found"));
+        return mediaService.preview(profile, input.target(), input.provider(), input.prompt());
+    }
+
+    public record ReviewInput(boolean approve) {}
+    @PostMapping("/{id}/media/{requestId}/review")
+    public AiCommunityMemberProfile reviewMedia(@PathVariable String id, @PathVariable String requestId,
+            @RequestBody ReviewInput input) {
+        return mediaReviews.review(id, requestId, input.approve());
     }
 
     public record FanSettings(

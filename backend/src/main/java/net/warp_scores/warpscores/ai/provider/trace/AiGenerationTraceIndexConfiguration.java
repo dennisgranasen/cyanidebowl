@@ -31,6 +31,15 @@ public class AiGenerationTraceIndexConfiguration implements ApplicationRunner {
                 .named("trace_reporter_created"));
 
         indexes.ensureIndex(new Index()
+                .on("createdAt", Sort.Direction.DESC)
+                .named("trace_created"));
+
+        indexes.ensureIndex(new Index()
+                .on("status", Sort.Direction.ASC)
+                .on("createdAt", Sort.Direction.DESC)
+                .named("trace_status_created"));
+
+        indexes.ensureIndex(new Index()
                 .on("expiresAt", Sort.Direction.ASC)
                 .expire(Duration.ZERO)
                 .named("trace_expires_ttl"));

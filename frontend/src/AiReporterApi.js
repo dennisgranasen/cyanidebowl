@@ -56,8 +56,31 @@ const AiReporterApi = {
   },
 
   autonomousWorkOverview: async (getAccessTokenSilently, getAccessTokenWithPopup) => {
-    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
-    return (await axios.get('/admin/ai-autonomous-work', auth)).data;
+    const controller = new AbortController();
+    let timer;
+    try {
+      return await Promise.race([
+        (async () => {
+          const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+          if (controller.signal.aborted) throw new Error('Overview request expired');
+          const { data } = await axios.get('/admin/ai-autonomous-work', {
+            ...auth, signal: controller.signal, timeout: 20000,
+          });
+          if (!data || typeof data !== 'object' || Array.isArray(data)) {
+            throw new Error('Unable to load the work overview: invalid server response.');
+          }
+          return data;
+        })(),
+        new Promise((resolve, reject) => {
+          timer = setTimeout(() => {
+            reject(new Error('Loading the work overview timed out. Please try Refresh.'));
+            controller.abort();
+          }, 20000);
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
   },
 
   setAutonomousWorkEnabled: async (

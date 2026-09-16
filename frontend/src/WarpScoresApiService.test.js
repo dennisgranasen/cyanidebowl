@@ -11,6 +11,17 @@ import axios from 'axios';
 import WarpScoresApiService from './WarpScoresApiService';
 
 describe('WarpScoresApiService', () => {
+  test('queues only the requested media type and submits preview approval separately', async () => {
+    await WarpScoresApiService.regenerateAdminCommunityFanMedia('fan/1', jest.fn(), jest.fn(), 'AVATAR');
+    expect(axios.post).toHaveBeenLastCalledWith('/admin/community-fans/fan%2F1/media/regenerate?target=AVATAR', {}, expect.any(Object));
+    await WarpScoresApiService.queueMissingCommunityFanMedia('PROFILE_IMAGE', jest.fn(), jest.fn());
+    expect(axios.post).toHaveBeenLastCalledWith('/admin/community-fans/media/queue-missing?target=PROFILE_IMAGE', {}, expect.any(Object));
+    const preview = { target: 'AVATAR', provider: 'openai', prompt: 'New avatar' };
+    await WarpScoresApiService.previewCommunityFanMedia('fan/1', preview, jest.fn(), jest.fn());
+    expect(axios.post).toHaveBeenLastCalledWith('/admin/community-fans/fan%2F1/media/preview', preview, expect.any(Object));
+    await WarpScoresApiService.reviewCommunityFanMedia('fan/1', 'job/1', false, jest.fn(), jest.fn());
+    expect(axios.post).toHaveBeenLastCalledWith('/admin/community-fans/fan%2F1/media/job%2F1/review', { approve: false }, expect.any(Object));
+  });
   test.each(['leagueSystems', 'adminUsers'])('%s returns lists and rejects malformed responses', async (method) => {
     const systems = [{ id: 'nst', name: 'NST' }];
     axios.mockResolvedValueOnce({ data: systems });
