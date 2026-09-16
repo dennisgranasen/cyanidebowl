@@ -63,6 +63,10 @@ public class ReplayAnalysisBackfillService {
         }
     }
 
+    public void analyze(String matchId) {
+        requestReanalysis(matchId, "site-admin");
+    }
+
     public void requestReanalysis(String matchId, String requestedBy) {
         var record = downloads.findById(matchId)
                 .orElseThrow(() -> new IllegalArgumentException("No downloaded replay exists for match " + matchId));
