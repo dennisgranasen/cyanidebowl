@@ -34,7 +34,11 @@ public class DedicatedFanAiProfileGenerator {
     private final LocalizationService localization;
 
     public void populateNewProfile(AiCommunityMemberProfile profile, Team team, int ordinal) {
-        DedicatedFanProfilePolicy policy = policy(profile, team);
+        DedicatedFanProfilePolicy basePolicy = policy(profile, team);
+        DedicatedFanProfilePolicy policy = new DedicatedFanProfilePolicy(basePolicy.teamId(), basePolicy.teamName(),
+                basePolicy.teamRace(), basePolicy.teamColors(),
+                List.of(DedicatedFanProfileGenerator.selectedSpecies(team, ordinal)),
+                basePolicy.existingFans(), basePolicy.creativePolicy());
         String siteDefaultLocale = localization.defaultLocale();
         try {
             var response = llm.generate(
@@ -165,6 +169,7 @@ public class DedicatedFanAiProfileGenerator {
 
                     Hard requirements:
                     - species MUST be exactly one value from allowedSpecies.
+                    - The application has already randomly selected the single allowed species. Do not substitute another species. Write the entire identity and appearance for that species.
                     - Human-facing profile fields MUST be written in the site's default locale: %s.
                       This applies to supporterArchetype, ageGroup, bio, location, occupation,
                       favoriteFood, favoriteDrink, favoriteChant, matchdayRitual, petPeeve

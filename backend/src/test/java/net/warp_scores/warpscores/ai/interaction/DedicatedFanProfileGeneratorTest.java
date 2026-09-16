@@ -108,6 +108,24 @@ class DedicatedFanProfileGeneratorTest {
     }
 
     @Test
+    void trollsAndChameleonsRemainDistinctAndCanBeSelected() {
+        Team team = team("Mixed test roster");
+        var types = java.util.List.of("Goblin Lineman", "Trained Troll", "Skink Runner", "Chameleon Skink");
+        team.setPlayers(types.stream().map(type -> {
+            var p = new net.warp_scores.warpscores.model.Player(new SimpleIdentity(type, 3));
+            p.setType(type); return p;
+        }).toArray(net.warp_scores.warpscores.model.Player[]::new));
+        assertThat(DedicatedFanProfileGenerator.speciesCandidates(team)).containsExactly("Goblin", "Troll", "Skink", "Chameleon");
+        var selected = new java.util.HashSet<String>();
+        for (int ordinal = 1; ordinal <= 1000; ordinal++) {
+            String species = DedicatedFanProfileGenerator.selectedSpecies(team, ordinal);
+            assertThat(DedicatedFanProfileGenerator.selectedSpecies(team, ordinal)).isEqualTo(species);
+            selected.add(species);
+        }
+        assertThat(selected).containsExactlyInAnyOrder("Goblin", "Troll", "Skink", "Chameleon");
+    }
+
+    @Test
     void avatarAndProfilePromptsSharePersistentAppearanceIdentity() {
         Team team = team("Human");
         AiCommunityMemberProfile profile = new AiCommunityMemberProfile();

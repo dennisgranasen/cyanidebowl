@@ -56,7 +56,7 @@ public class DedicatedFanProfileGenerator {
         long seed = stableSeed(teamId(team), ordinal);
         Random rng = new Random(seed);
 
-        profile.setSpecies(species(team, rng));
+        profile.setSpecies(selectedSpecies(team, ordinal));
         profile.setDisplayName(name(rng));
         profile.setLocation(pick(LOCATIONS, rng));
         profile.setOccupation(pick(JOBS, rng));
@@ -223,6 +223,7 @@ public class DedicatedFanProfileGenerator {
         if (normalized.contains("yhetee")) return "Yhetee";
         if (normalized.contains("kroxigor")) return "Kroxigor";
         if (normalized.contains("saurus")) return "Saurus";
+        if (normalized.contains("chameleon")) return "Chameleon";
         if (normalized.contains("skink")) return "Skink";
         if (normalized.contains("hobgoblin")) return "Hobgoblin";
         if (normalized.contains("goblin")) return "Goblin";
@@ -314,6 +315,15 @@ public class DedicatedFanProfileGenerator {
     static String species(Team team, Random rng) {
         List<String> candidates = speciesCandidates(team);
         return candidates.get(rng.nextInt(candidates.size()));
+    }
+
+    static String selectedSpecies(Team team, int ordinal) {
+        // Stable on retries; the language model must not choose or reroll the species.
+        long seed = stableSeed(teamId(team), ordinal);
+        // Mix adjacent ordinal seeds before taking Random's first sample.
+        seed = (seed ^ (seed >>> 30)) * 0xbf58476d1ce4e5b9L;
+        seed = (seed ^ (seed >>> 27)) * 0x94d049bb133111ebL;
+        return species(team, new Random(seed ^ (seed >>> 31)));
     }
 
     private static String appearanceBrief(
