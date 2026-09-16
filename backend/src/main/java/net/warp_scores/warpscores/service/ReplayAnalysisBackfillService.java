@@ -19,8 +19,8 @@ public class ReplayAnalysisBackfillService {
     private final ReplayArtifactService artifacts;
     @Value("${replay-analysis.enabled:true}") private boolean enabled;
 
-    @Scheduled(fixedDelayString="${replay-analysis.fixed-delay-ms:600000}",
-            initialDelayString="${replay-analysis.initial-delay-ms:120000}")
+    @Scheduled(scheduler="replayAnalysisScheduler", fixedDelayString="${replay-analysis.fixed-delay-ms:1000}",
+            initialDelayString="${replay-analysis.initial-delay-ms:10000}")
     public void analyzeNewestPending() {
         if (!enabled) return;
         nextAvailable()

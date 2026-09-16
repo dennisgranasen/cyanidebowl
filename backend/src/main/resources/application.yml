@@ -75,8 +75,9 @@ replay-sweeper:
 
 replay-analysis:
   enabled: ${REPLAY_ANALYSIS_ENABLED:true}
-  initial-delay-ms: ${REPLAY_ANALYSIS_INITIAL_DELAY_MS:120000}
-  fixed-delay-ms: ${REPLAY_ANALYSIS_FIXED_DELAY_MS:600000}
+  initial-delay-ms: ${REPLAY_ANALYSIS_INITIAL_DELAY_MS:10000}
+  # One analysis at a time, with a short pause after completion.
+  fixed-delay-ms: ${REPLAY_ANALYSIS_FIXED_DELAY_MS:1000}
 
 league-system:
   discovery:
