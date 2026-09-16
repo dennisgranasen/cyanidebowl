@@ -31,6 +31,7 @@ class ArticleImagePromptServiceTest {
             String prompt = service.prepare(source, person, null);
             assertTrue(prompt.length() <= 2048);
             assertTrue(prompt.startsWith(person.imageDirection()));
+            assertTrue(prompt.contains(ArticleImagePromptService.BLOOD_BOWL_WORLD));
             assertTrue(prompt.contains("A crowd watching a player."));
             verify(llm).generate(eq(person.id()), argThat(request -> request.taskInstruction().contains(source)));
         }
@@ -40,7 +41,10 @@ class ArticleImagePromptServiceTest {
         var llm = mock(LlmExecutionService.class);
         var service = new ArticleImagePromptService(llm);
         var person = new EditorialPhotographerRegistry(new ObjectMapper()).all().getFirst();
-        assertTrue(service.prepare("A library opening", person, null).contains("A library opening"));
+        String shortPrompt = service.prepare("Morg 'n' Thorg bathing in a fountain", person, null);
+        assertTrue(shortPrompt.contains("Morg 'n' Thorg bathing in a fountain"));
+        assertTrue(shortPrompt.contains(ArticleImagePromptService.BLOOD_BOWL_WORLD));
+        assertTrue(shortPrompt.contains("Never depict generic real-world American football or NFL"));
         verifyNoInteractions(llm);
         when(llm.generate(anyString(), any(CanonicalLlmRequest.class))).thenReturn(
                 new CanonicalLlmResponse("test", "model", null, "   ", null, "stop"));
