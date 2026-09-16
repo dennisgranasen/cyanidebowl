@@ -5,6 +5,8 @@ import net.warp_scores.warpscores.ai.context.ContextTaskType;
 import net.warp_scores.warpscores.ai.provider.LlmProviderRouter;
 import net.warp_scores.warpscores.ai.reporting.DedicatedFanPlayerRatingJobService;
 import net.warp_scores.warpscores.domain.persistence.*;
+import net.warp_scores.warpscores.identity.Identity;
+import net.warp_scores.warpscores.identity.IdentityUtil;
 import net.warp_scores.warpscores.model.*;
 import org.springframework.stereotype.Service;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -29,12 +31,69 @@ public class AiPendingWorkService {
 
     public Snapshot snapshot() {
         var result = new ArrayList<Work>();
-        Map<String, Team> teamMap = new HashMap<>();
-        teams.findAll().forEach(t -> { if (t.getId() != null) teamMap.put(t.getId().asMongoKey(), t); });
+
+        var reconciliationJobs = pending(DedicatedFanReconciliationJob.class, "QUEUED", "RUNNING");
+        var mediaJobs = pending(AiCommunityMediaGenerationRequest.class, "QUEUED", "RUNNING");
+
+        Set<String> reconciliationTeamIds = new HashSet<>();
+        for (var job : reconciliationJobs) {
+            if (job.getTeamId() != null) reconciliationTeamIds.add(job.getTeamId());
+        }
+
+        Set<String> mediaFanIds = new HashSet<>();
+        for (var job : mediaJobs) {
+            if (job.getFanProfileId() != null) mediaFanIds.add(job.getFanProfileId());
+        }
+
         Map<String, List<AiCommunityMemberProfile>> byTeam = new HashMap<>();
         Map<String, AiCommunityMemberProfile> fanMap = new HashMap<>();
-        fans.findAll().forEach(f -> { byTeam.computeIfAbsent(f.getTeamId(), x -> new ArrayList<>()).add(f); fanMap.put(f.getId(), f); });
-        for (var job : mongo.findAll(DedicatedFanReconciliationJob.class)) {
+        if (!reconciliationTeamIds.isEmpty() || !mediaFanIds.isEmpty()) {
+            var fanCriteria = new ArrayList<Criteria>();
+            if (!reconciliationTeamIds.isEmpty()) {
+                fanCriteria.add(Criteria.where("teamId").in(reconciliationTeamIds));
+            }
+            if (!mediaFanIds.isEmpty()) {
+                fanCriteria.add(Criteria.where("_id").in(mediaFanIds));
+            }
+
+            Query fanQuery = fanCriteria.size() == 1
+                    ? Query.query(fanCriteria.get(0))
+                    : Query.query(new Criteria().orOperator(fanCriteria.toArray(Criteria[]::new)));
+            fanQuery.fields()
+                    .include("_id")
+                    .include("teamId")
+                    .include("displayName")
+                    .include("active");
+
+            for (var fan : mongo.find(fanQuery, AiCommunityMemberProfile.class)) {
+                byTeam.computeIfAbsent(fan.getTeamId(), x -> new ArrayList<>()).add(fan);
+                fanMap.put(fan.getId(), fan);
+            }
+        }
+
+        Set<String> requiredTeamIds = new HashSet<>(reconciliationTeamIds);
+        for (var fan : fanMap.values()) {
+            if (fan.getTeamId() != null) requiredTeamIds.add(fan.getTeamId());
+        }
+
+        Map<String, Team> teamMap = new HashMap<>();
+        if (!requiredTeamIds.isEmpty()) {
+            List<Identity> identities = requiredTeamIds.stream()
+                    .map(IdentityUtil::fromId)
+                    .toList();
+
+            Query teamQuery = Query.query(Criteria.where("_id").in(identities));
+            teamQuery.fields()
+                    .include("_id")
+                    .include("name")
+                    .include("dedicatedFans");
+
+            for (var team : mongo.find(teamQuery, Team.class)) {
+                if (team.getId() != null) teamMap.put(team.getId().asMongoKey(), team);
+            }
+        }
+
+        for (var job : reconciliationJobs) {
             var team = teamMap.get(job.getTeamId());
             var existing = byTeam.getOrDefault(job.getTeamId(), List.of());
             var progress = fanProgress(team == null ? null : team.getDedicatedFans(), existing);
@@ -57,7 +116,7 @@ public class AiPendingWorkService {
                     "Resolved per fan", job.running() > 0 ? "RUNNING" : "QUEUED", false, job.queued() + job.running(),
                     job.succeeded() + " completed / " + job.fanCount() + "; " + job.failed() + " failed", null, null));
         }
-        for (var job : pending(AiCommunityMediaGenerationRequest.class, "QUEUED", "RUNNING")) {
+        for (var job : mediaJobs) {
             var fan = fanMap.get(job.getFanProfileId());
             var type = job.getTarget() == AiCommunityMediaGenerationRequest.Target.AVATAR ? ContextTaskType.AVATAR_IMAGE : ContextTaskType.PROFILE_IMAGE;
             result.add(new Work("media:" + job.getId(), job.getTarget().name(), fan == null ? job.getFanProfileId() : fan.getDisplayName(),

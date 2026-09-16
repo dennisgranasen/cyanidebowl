@@ -1,6 +1,7 @@
 package net.warp_scores.warpscores.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.domain.persistence.MatchInterpretationRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.domain.persistence.StageRepository;
@@ -31,6 +32,7 @@ import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class StageMatchService {
     private static final Comparator<Match> MATCH_ORDER = Comparator
             .comparing(Match::getStarted, Comparator.nullsLast(Comparator.naturalOrder()))
@@ -155,11 +157,16 @@ public class StageMatchService {
 
     private List<Match> applyBoundaries(StageSource source, List<Match> sourceMatches) {
         List<Match> matches = sourceMatches.stream().sorted(MATCH_ORDER).toList();
+        if (matches.isEmpty()) {
+            return List.of();
+        }
         int from = markerIndex(matches, source.getFirstId(), 0, source, "firstId");
-        int to = markerIndex(matches, source.getLastId(), matches.size() - 1, source, "lastId") + 1;
-            if (matches.isEmpty()) {
-                return List.of();
-            }
+        int last = markerIndex(matches, source.getLastId(), matches.size() - 1, source, "lastId");
+        // Never widen a season's selection when its historical boundary data is incomplete.
+        if (from < 0 || last < 0) {
+            return List.of();
+        }
+        int to = last + 1;
         if (from > to) {
             throw new IllegalStateException("Invalid ID boundaries for StageSource " + source.getId());
         }
@@ -192,8 +199,9 @@ public class StageMatchService {
                 return index;
             }
         }
-        throw new IllegalStateException(
-                boundaryName + " " + marker + " was not found for StageSource " + source.getId());
+        log.warn("{} {} was not found for StageSource {}; skipping automatic match selection",
+                boundaryName, marker, source.getId());
+        return -1;
     }
 
     private StageMatchView adapt(

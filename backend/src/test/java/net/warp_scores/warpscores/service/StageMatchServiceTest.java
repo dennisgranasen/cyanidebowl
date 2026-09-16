@@ -202,8 +202,7 @@ class StageMatchServiceTest {
                 givenStage(stageId, List.of(source));
                 when(matchRepository.findByLeagueId(source.getSourceEntityId()))
                         .thenReturn(List.of(match("first", "league", 1, 0, 0, 1)));
-                assertThatThrownBy(() -> service.getMatchesForStage(stageId))
-                        .isInstanceOf(IllegalStateException.class);
+                assertThat(service.getMatchesForStage(stageId)).isEmpty();
 
                 source.setFirstId("second");
                 source.setLastId("first");
@@ -307,6 +306,44 @@ class StageMatchServiceTest {
         assertThatThrownBy(() -> service.getMatchesForStage(stageId))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("StageSource has no game: archive-missing-game");
+    }
+
+    @Test
+    void missingBoundaryDoesNotWidenSelectionOrHideOtherSources() {
+        String stageId = "nst:s7:main";
+        StageSource incomplete = leagueSource("nst:s7:main:src1", stageId, "historical");
+        StageSource valid = competitionSource("valid", stageId, "competition", GameType.BB3);
+        givenStage(stageId, List.of(incomplete, valid));
+        when(matchRepository.findByLeagueId(incomplete.getSourceEntityId()))
+                .thenReturn(List.of(match("outside-season", "historical", 1, 0, 0, 1)));
+        when(matchRepository.findByCompetitionId(valid.getSourceEntityId()))
+                .thenReturn(List.of(match("valid-match", "competition", 3, 1, 0, 2)));
+
+        incomplete.setFirstId("1a000e0342");
+        assertThat(service.getMatchesForStage(stageId))
+                .extracting(StageMatchView::sourceMatchKey).containsExactly("valid-match");
+
+        incomplete.setFirstId(null);
+        incomplete.setLastId("missing-last");
+        assertThat(service.getAllMatchesForStage(stageId))
+                .extracting(StageMatchView::sourceMatchKey).containsExactly("valid-match");
+    }
+
+    @Test
+    void missingBoundaryStillAllowsExplicitInclusionsAndExclusions() {
+        String stageId = "nst:s7:main";
+        StageSource source = leagueSource("source", stageId, "historical");
+        source.setFirstId("missing-first");
+        source.setIncludedMatchIds(List.of("included", "excluded"));
+        source.setExcludedMatchIds(List.of("excluded"));
+        givenStage(stageId, List.of(source));
+        when(matchRepository.findByLeagueId(source.getSourceEntityId())).thenReturn(List.of(
+                match("outside-season", "historical", 1, 0, 0, 1),
+                match("included", "historical", 1, 0, 0, 2),
+                match("excluded", "historical", 1, 0, 0, 3)));
+
+        assertThat(service.getMatchesForStage(stageId))
+                .extracting(StageMatchView::sourceMatchKey).containsExactly("included");
     }
 
     private void givenStage(String stageId, List<StageSource> sources) {
