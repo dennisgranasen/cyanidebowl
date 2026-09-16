@@ -9,6 +9,9 @@ async function json(url) {
 }
 
 const CommunityApi = {
+  directory: system => json(`/community/directory?leagueSystemId=${encodeURIComponent(system)}`),
+  comments: (id, page = 0) => json(`/community/fans/${encodeURIComponent(id)}/comments?page=${page}`),
+  discussion: (type, id) => json(`/community/discussion/${encodeURIComponent(type)}/${encodeURIComponent(id)}`),
   fans: (teamId) => json(
     `/community/fans${teamId ? `?teamId=${encodeURIComponent(teamId)}` : ''}`
   ),

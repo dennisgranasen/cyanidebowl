@@ -8,7 +8,7 @@ export function articleContext(location, system, season) {
   add('SEASON', season || query.get('season'));
   const team = location.pathname.match(/\/team\/([^/]+)/);
   const player = location.pathname.match(/\/player\/([^/]+)/);
-  const fan = location.pathname.match(/^\/community\/([^/]+)/);
+  const fan = location.pathname.match(/^\/community\/([^/]+)\/?$/);
   const staff = location.pathname.match(/^\/staff\/(?:user\/)?([^/]+)/);
   add('TEAM', team && decodeURIComponent(team[1]));
   add('PLAYER', (player && decodeURIComponent(player[1])) || query.get('player'));

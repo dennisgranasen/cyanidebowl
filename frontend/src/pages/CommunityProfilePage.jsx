@@ -5,6 +5,7 @@ import {
 import { useParams } from 'react-router-dom';
 import Navigation from '../components/misc/Navigation';
 import CommunityApi from '../CommunityApi';
+import MemberComments from '../components/community/MemberComments';
 
 function CommunityProfilePage() {
   const { fanId } = useParams();
@@ -74,6 +75,7 @@ function CommunityProfilePage() {
           {fan.previousTeamId && <Text color="gray.400">Previously supported another team.</Text>}
         </VStack>
       </SimpleGrid>
+      <MemberComments key={fanId} fanId={fanId} />
     </Box>
   );
 }

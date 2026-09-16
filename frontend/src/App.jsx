@@ -1,4 +1,5 @@
 import React from 'react';
+import CommunityDiscussionPage from './pages/CommunityDiscussionPage';
 import { Box, ChakraProvider, CSSReset, DarkMode } from '@chakra-ui/react';
 import { HashRouter as Router, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { Auth0Provider, withAuthenticationRequired } from '@auth0/auth0-react';
@@ -106,6 +107,7 @@ function AppRoutes() {
       <Route path="/article/:slug" element={<ArticlePage />} />
       <Route path="/staff" element={<StaffPage />} />
       <Route path="/community" element={<CommunityPage />} />
+      <Route path="/community/discussion/:type/:targetId" element={<CommunityDiscussionPage />} />
       <Route path="/community/:fanId" element={<CommunityProfilePage />} />
       <Route path="/staff/user/:profileId" element={<HumanStaffProfilePage />} />
       <Route path="/staff/:reporterId" element={<ReporterProfilePage />} />

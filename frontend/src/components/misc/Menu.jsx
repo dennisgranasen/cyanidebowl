@@ -190,7 +190,7 @@ function Menu({ leagueSystems = [], selectedLeagueSystemId, selectedSeasonId, on
                     {intl.formatMessage({ id: 'menu.section.community', defaultMessage: 'Community' })}
                   </Box>
                   <VStack align="left" spacing={1}>
-                    <Link variant="menu" as={RouteLink} to="/community" onClick={onClose}>Community</Link>
+                    <Link variant="menu" as={RouteLink} to={`/community${selectedLeagueSystemId || new URLSearchParams(location.search).get('leagueSystem') ? `?leagueSystem=${encodeURIComponent(selectedLeagueSystemId || new URLSearchParams(location.search).get('leagueSystem'))}` : ''}`} onClick={onClose}>Community</Link>
                   </VStack>
                 </Box>
 

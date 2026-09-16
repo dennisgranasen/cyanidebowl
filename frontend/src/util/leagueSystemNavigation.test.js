@@ -1,6 +1,10 @@
 import { leagueSystemMenuTarget } from './leagueSystemNavigation';
 
 describe('leagueSystemMenuTarget', () => {
+  test('keeps the community view when switching league system', () => {
+    expect(leagueSystemMenuTarget({ pathname: '/community', search: '?leagueSystem=old' }, 'new'))
+      .toBe('/community?leagueSystem=new');
+  });
   test('preserves home-page query state when switching LeagueSystem', () => {
     expect(leagueSystemMenuTarget(
       { pathname: '/', search: '?view=playoffs&leagueSystem=old' },

@@ -1,5 +1,6 @@
 export function leagueSystemMenuTarget(location, leagueSystemId) {
   const encoded = encodeURIComponent(leagueSystemId);
+  if (location?.pathname === '/community') return `/community?leagueSystem=${encoded}`;
 
   if (location?.pathname !== '/') {
     return `/?leagueSystem=${encoded}`;
