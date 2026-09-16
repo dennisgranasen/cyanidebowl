@@ -46,6 +46,9 @@ public class DedicatedFanPlayerRatingJobService {
         String id = latestByMatch.get(matchId);
         return id == null ? null : snapshot(jobs.get(id));
     }
+    public List<JobSnapshot> pendingSnapshots() {
+        return jobs.values().stream().map(this::snapshot).filter(j -> !j.complete()).toList();
+    }
 
     private void runOne(MutableJob job, AiCommunityMemberProfile fan, PlayerRatingFacts facts, String instruction, boolean force) {
         synchronized (job) { job.queued--; job.running++; }

@@ -27,6 +27,7 @@ const authConfig = async (getAccessTokenSilently, getAccessTokenWithPopup) => {
 };
 
 const AiReporterApi = {
+  pendingWork: async (silent, popup) => (await axios.get('/admin/ai-autonomous-work/pending', { ...(await authConfig(silent, popup)), timeout: 20000 })).data,
   reporters: async () => (await axios.get('/ai-reporters')).data,
   reporter: async (id) => (await axios.get(`/ai-reporters/${encodeURIComponent(id)}`)).data,
   reports: async (id) => (await axios.get(`/ai-reporters/${encodeURIComponent(id)}/reports`)).data,

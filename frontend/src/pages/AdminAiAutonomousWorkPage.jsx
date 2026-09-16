@@ -19,6 +19,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import Navigation from '../components/misc/Navigation';
 import AiReporterApi from '../AiReporterApi';
+import PendingAiWork from '../components/ai-reporters/PendingAiWork';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 
 const metric = (label, value) => (
@@ -59,7 +60,13 @@ function AdminAiAutonomousWorkPage() {
       navigate('/admin');
       return;
     }
-    load();
+    let active = true, timer;
+    const refresh = async () => {
+      await load();
+      if (active) timer = setTimeout(refresh, 10000);
+    };
+    refresh();
+    return () => { active = false; clearTimeout(timer); };
   }, [authenticationReady, userPermissions.writeSiteAdmin, navigate, load]);
 
   const setEnabled = async (enabled) => {
@@ -126,6 +133,7 @@ function AdminAiAutonomousWorkPage() {
 
       {overview && (
         <VStack mt={6} spacing={6} align="stretch">
+          <PendingAiWork getAccessTokenSilently={getAccessTokenSilently} getAccessTokenWithPopup={getAccessTokenWithPopup} />
           <Box borderWidth="1px" borderRadius="lg" p={4}>
             <HStack justify="space-between">
               <Box>
