@@ -23,41 +23,79 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
 public class ImageService {
-    private final CyanideApiProperties cyanideApiProperties;
+    private static final int MAX_MEMORY_CACHE_ENTRIES = 1024;
+    private static final RestTemplate REST_TEMPLATE = new RestTemplate();
 
+    private final CyanideApiProperties cyanideApiProperties;
     private final ImageCacheRepository imageCacheRepository;
+
+    private final ConcurrentMap<String, MemoryCacheEntry> memoryCache = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Object> loadLocks = new ConcurrentHashMap<>();
 
     @DurationLogging
     public Optional<byte[]> loadImage(String imageUrl, Optional<Integer> maxWidth) {
-        Optional<ImageCache> imageCache = imageCacheRepository.findById(imageUrl);
-        boolean cacheOutdated = imageCache.map(this::cacheOutdated).orElse(true);
-        if (!cacheOutdated) {
-            log.debug("Got image for url '{}' from cache.", imageUrl);
-            return Optional.of(imageCache.get().getImageData());
+        String cacheKey = cacheKey(imageUrl, maxWidth);
+
+        Optional<byte[]> memoryHit = getFromMemoryCache(cacheKey);
+        if (memoryHit.isPresent()) {
+            return memoryHit;
         }
-        var image = new Object() {
-            Optional<byte[]> data = loadImageFromCyanide(imageUrl);
-        };
-        if (image.data.isEmpty()) {
-            image.data = loadFromClassPath(imageUrl);
+
+        Object lock = loadLocks.computeIfAbsent(cacheKey, ignored -> new Object());
+        try {
+            synchronized (lock) {
+                memoryHit = getFromMemoryCache(cacheKey);
+                if (memoryHit.isPresent()) {
+                    return memoryHit;
+                }
+
+                Optional<ImageCache> imageCache = imageCacheRepository.findById(cacheKey);
+                boolean cacheOutdated = imageCache.map(this::cacheOutdated).orElse(true);
+
+                if (!cacheOutdated) {
+                    byte[] data = imageCache.get().getImageData();
+                    putInMemoryCache(cacheKey, data);
+                    log.debug("Got image for key '{}' from persistent cache.", cacheKey);
+                    return Optional.of(data);
+                }
+
+                Optional<byte[]> data = loadImageFromCyanide(imageUrl);
+                if (data.isEmpty()) {
+                    data = loadFromClassPath(imageUrl);
+                }
+
+                if (maxWidth.isPresent()) {
+                    data = rescaleImage(data, maxWidth.get());
+                }
+
+                if (data.isPresent()) {
+                    byte[] bytes = data.get();
+                    cacheImage(cacheKey, bytes);
+                    putInMemoryCache(cacheKey, bytes);
+                    return Optional.of(bytes);
+                }
+
+                Optional<byte[]> stale = imageCache.map(ImageCache::getImageData);
+                stale.ifPresent(bytes -> putInMemoryCache(cacheKey, bytes));
+                return stale;
+            }
+        } finally {
+            loadLocks.remove(cacheKey, lock);
         }
-        image.data = maxWidth.map(width -> rescaleImage(image.data, width)).orElse(image.data);
-        image.data.ifPresent(bytes -> cacheImage(imageUrl, bytes));
-        return image.data.isPresent() ? image.data : imageCache.map(ImageCache::getImageData);
     }
 
     private Optional<byte[]> loadImageFromCyanide(String imageUrl) {
         try {
-            RestTemplate restTemplate = new RestTemplate();
-            ResponseEntity<byte[]> response = restTemplate.getForEntity(imageUrl, byte[].class);
+            ResponseEntity<byte[]> response = REST_TEMPLATE.getForEntity(imageUrl, byte[].class);
             if (response.getStatusCode().is2xxSuccessful()) {
-                byte[] data = response.getBody();
-                return Optional.ofNullable(data);
+                return Optional.ofNullable(response.getBody());
             }
         } catch (Exception ex) {
             log.error("Can't load image from cyanide (msg: {}).", ex.getMessage());
@@ -107,19 +145,67 @@ public class ImageService {
         return resizedImage;
     }
 
-    private void cacheImage(String imageUrl, byte[] imageData) {
+    private void cacheImage(String cacheKey, byte[] imageData) {
         ImageCache imageCache = new ImageCache();
-        imageCache.setImageUrl(imageUrl);
+        imageCache.setImageUrl(cacheKey);
         imageCache.setImageData(imageData);
         imageCache.setLastAccess(new Date());
         imageCacheRepository.save(imageCache);
-        log.info("Stored image for url '{}' to cache.", imageUrl);
+        log.debug("Stored image for key '{}' in persistent cache.", cacheKey);
+    }
+
+    private Optional<byte[]> getFromMemoryCache(String cacheKey) {
+        MemoryCacheEntry entry = memoryCache.get(cacheKey);
+        if (entry == null) {
+            return Optional.empty();
+        }
+        if (entry.expiresAt().isBefore(Instant.now())) {
+            memoryCache.remove(cacheKey, entry);
+            return Optional.empty();
+        }
+        return Optional.of(entry.data());
+    }
+
+    private void putInMemoryCache(String cacheKey, byte[] imageData) {
+        if (memoryCache.size() >= MAX_MEMORY_CACHE_ENTRIES) {
+            evictExpiredMemoryEntries();
+            if (memoryCache.size() >= MAX_MEMORY_CACHE_ENTRIES) {
+                memoryCache.clear();
+            }
+        }
+
+        memoryCache.put(
+                cacheKey,
+                new MemoryCacheEntry(
+                        imageData,
+                        Instant.now().plus(cacheDuration())
+                )
+        );
+    }
+
+    private void evictExpiredMemoryEntries() {
+        Instant now = Instant.now();
+        memoryCache.entrySet().removeIf(entry -> entry.getValue().expiresAt().isBefore(now));
     }
 
     private boolean cacheOutdated(ImageCache imageCache) {
-        Instant cacheInvalidAfter = Instant.now()
-                .minus(Duration.ofMinutes(cyanideApiProperties.getImagesCache().getMaxValidityInMinutes()));
-        return cacheInvalidAfter.isAfter(imageCache.getLastAccess().toInstant());
+        return Instant.now()
+                .minus(cacheDuration())
+                .isAfter(imageCache.getLastAccess().toInstant());
     }
 
+    private Duration cacheDuration() {
+        return Duration.ofMinutes(
+                cyanideApiProperties.getImagesCache().getMaxValidityInMinutes()
+        );
+    }
+
+    private static String cacheKey(String imageUrl, Optional<Integer> maxWidth) {
+        return maxWidth
+                .map(width -> imageUrl + "#width=" + width)
+                .orElse(imageUrl);
+    }
+
+    private record MemoryCacheEntry(byte[] data, Instant expiresAt) {
+    }
 }

@@ -1,6 +1,8 @@
 const en = {
   "community.all": "All",
   "community.team": "Team",
+  "community.coach": "Coach",
+  "community.myCoaches": "My coaches",
   "community.season": "Season",
   "community.race": "Team race",
   "community.species": "Member species",
@@ -605,6 +607,8 @@ const en = {
 const sv = {
   "community.all": "Alla",
   "community.team": "Lag",
+  "community.coach": "Coach",
+  "community.myCoaches": "Mina coacher",
   "community.season": "Säsong",
   "community.race": "Lagets ras",
   "community.species": "Medlemmens art",

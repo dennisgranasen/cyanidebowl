@@ -9,7 +9,15 @@ async function json(url) {
 }
 
 const CommunityApi = {
-  directory: system => json(`/community/directory?leagueSystemId=${encodeURIComponent(system)}`),
+  directory: (system, options = {}) => {
+    const params = new URLSearchParams({ leagueSystemId: system });
+    Object.entries(options).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params.set(key, String(value));
+      }
+    });
+    return json(`/community/directory?${params.toString()}`);
+  },
   comments: (id, page = 0) => json(`/community/fans/${encodeURIComponent(id)}/comments?page=${page}`),
   discussion: (type, id) => json(`/community/discussion/${encodeURIComponent(type)}/${encodeURIComponent(id)}`),
   fans: (teamId) => json(

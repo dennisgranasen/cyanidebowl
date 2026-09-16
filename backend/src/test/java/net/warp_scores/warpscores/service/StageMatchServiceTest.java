@@ -346,6 +346,45 @@ class StageMatchServiceTest {
                 .extracting(StageMatchView::sourceMatchKey).containsExactly("included");
     }
 
+    @Test
+    void previewListsAllSourceMatchesAndComputesAutomaticSelection() {
+        StageSource source = leagueSource("source", "stage", "league");
+        source.setFirstId("second");
+        source.setLastId("second");
+        source.setIncludedMatchIds(List.of("first"));
+        source.setExcludedMatchIds(List.of("second"));
+        source.setIsArchived(true);
+        when(matchRepository.findByLeagueId(source.getSourceEntityId()))
+                .thenReturn(List.of(match("first", "league", 1, 1, 0, 1)));
+        when(archiveMatchProvider.supports(source)).thenReturn(true);
+        when(archiveMatchProvider.findMatches(source)).thenReturn(List.of(
+                match("second", "league", 1, 2, 1, 2), match("first", "league", 1, 1, 0, 1)));
+
+        var preview = service.previewSelection(source);
+
+        assertThat(preview.matches()).extracting(StageMatchService.SelectionCandidate::key)
+                .containsExactly("first", "second");
+        assertThat(preview.matches()).extracting(StageMatchService.SelectionCandidate::automaticSelected)
+                .containsExactly(false, true);
+        assertThat(preview.matches().get(1).teams()).extracting(StageMatchService.CandidateTeam::score)
+                .containsExactly(2, 1);
+        assertThat(preview.warnings()).isEmpty();
+    }
+
+    @Test
+    void previewKeepsCandidatesVisibleWhenLegacyBoundariesAreInvalid() {
+        StageSource source = leagueSource("source", "stage", "league");
+        source.setFirstId("missing");
+        source.setFirstIndex(13);
+        when(matchRepository.findByLeagueId(source.getSourceEntityId()))
+                .thenReturn(List.of(match("first", "league", 1, 1, 0, 1)));
+        var preview = service.previewSelection(source);
+        assertThat(preview.matches()).hasSize(1);
+        assertThat(preview.matches().getFirst().automaticSelected()).isFalse();
+        assertThat(preview.warnings()).hasSize(2);
+        verify(stageSourceRepository, never()).save(any());
+    }
+
     private void givenStage(String stageId, List<StageSource> sources) {
         Stage stage = new Stage();
         stage.setId(stageId);

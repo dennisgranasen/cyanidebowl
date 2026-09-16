@@ -193,7 +193,10 @@ public class ImageController {
    
 
     private static ResponseEntity<byte[]> ok(byte[] data) {
-        return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(data);
+        return ResponseEntity.ok()
+                .cacheControl(org.springframework.http.CacheControl.maxAge(java.time.Duration.ofHours(12)).cachePublic())
+                .contentType(MediaType.IMAGE_PNG)
+                .body(data);
     }
 
     private static ResponseEntity<byte[]> noContent() {

@@ -296,6 +296,8 @@ export default {
     postDataWithAuthentication(`/admin/seasons/${encodeURIComponent(seasonId)}/registered-sources`, data, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   createMatchSelection: async (stageId, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
     postDataWithAuthentication(`/admin/stages/${encodeURIComponent(stageId)}/match-selections`, data, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  previewMatchSelection: async (id, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication(`/admin/match-selections/${encodeURIComponent(id)}/preview`, data, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   updateMatchSelection: async (id, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
     putDataWithAuthentication(`/admin/match-selections/${encodeURIComponent(id)}`, data, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   stages: async (seasonId, getAccessTokenSilently, getAccessTokenWithPopup) =>

@@ -1,73 +1,185 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Avatar, Badge, Box, Button, Card, CardBody, Heading, Text, SimpleGrid, FormControl, FormLabel, Select
+  Avatar, Badge, Box, Button, Card, CardBody, Heading, Image, Text, SimpleGrid, FormControl, FormLabel, Select
 } from '@chakra-ui/react';
 import { Link as RouteLink, useSearchParams } from 'react-router-dom';
 import Navigation from '../components/misc/Navigation';
 import CommunityApi from '../CommunityApi';
 import { useIntl } from 'react-intl';
-import { selectMembers } from '../util/communityDirectory';
 import WarpScoresApiService from '../WarpScoresApiService';
+import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
+import { claimedCoachIds, MY_COACHES } from '../util/claimedCoachIds';
+
+const PAGE_SIZE = 24;
+const DEFAULT_FILTERS = {
+  team: '', coach: '', season: '', race: '', species: '', status: 'active', sort: 'name', direction: 'asc',
+};
+const EMPTY_FACETS = { teams: [], coaches: [], races: [], species: [] };
 
 function CommunityPage() {
+  const { isAuthenticated, authenticationReady, user, getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0WithUserPermissions();
+  const [coachClaims, setCoachClaims] = useState({ subject: null, ids: [] });
+  const myCoachIds = isAuthenticated && coachClaims.subject === user?.sub ? coachClaims.ids : [];
+  const myCoachKey = myCoachIds.join(',');
   const [searchParams, setSearchParams] = useSearchParams();
   const systemId = searchParams.get('leagueSystem');
   const [systems, setSystems] = useState([]);
   const intl = useIntl();
   const t = id => intl.formatMessage({ id });
   const [seasons, setSeasons] = useState([]);
-  const defaults = { team: '', season: '', race: '', species: '', status: 'active', sort: 'name', direction: 'asc' };
-  const [filters, setFilters] = useState(defaults);
+  const [facets, setFacets] = useState(EMPTY_FACETS);
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [fans, setFans] = useState(null);
+  const [pageInfo, setPageInfo] = useState(null);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
+  const requestVersion = useRef(0);
+  const loadMoreRef = useRef(null);
 
   useEffect(() => {
     let active = true;
-    setFans(null); setError(null); setSeasons([]); setFilters(defaults);
-    const load = async () => {
+    setCoachClaims({ subject: null, ids: [] });
+    if (authenticationReady && isAuthenticated) {
+      WarpScoresApiService.coachClaims(getAccessTokenSilently, getAccessTokenWithPopup)
+        .then(claims => { if (active) setCoachClaims({ subject: user?.sub, ids: claimedCoachIds(claims) }); })
+        .catch(() => { if (active) setCoachClaims({ subject: null, ids: [] }); });
+    }
+    return () => { active = false; };
+  }, [authenticationReady, isAuthenticated, user?.sub, getAccessTokenSilently, getAccessTokenWithPopup]);
+
+  useEffect(() => {
+    if (filters.coach === MY_COACHES && !myCoachKey) {
+      setFilters(current => ({ ...current, coach: '' }));
+    }
+  }, [myCoachKey, filters.coach]);
+
+  useEffect(() => {
+    let active = true;
+    const loadSystems = async () => {
       const available = await WarpScoresApiService.publicLeagueSystems();
       if (!active) return;
       setSystems(available);
-      const selected = available.find(s => s.id === systemId) || (!systemId && (available.find(s => s.primary) || available[0]));
-      if (!selected) { setFans([]); return; }
-      if (!systemId) { setSearchParams({ leagueSystem: selected.id }, { replace: true }); return; }
-      const data = await CommunityApi.directory(selected.id);
-      if (!active) return;
-      setFans(data.members.map(m => ({ ...m.profile, commentCount: m.commentCount, seasonIds: m.seasonIds,
-        seasonNames: m.seasonIds.map(id => data.seasons.find(s => s.id === id)?.name || id).sort() })));
-      setSeasons(data.seasons);
+      const selected = available.find(s => s.id === systemId)
+        || (!systemId && (available.find(s => s.primary) || available[0]));
+      if (!selected) {
+        setFans([]);
+        return;
+      }
+      if (!systemId) {
+        setSearchParams({ leagueSystem: selected.id }, { replace: true });
+      }
     };
-    load().catch(e => { if (active) setError(e); });
+    loadSystems().catch(e => { if (active) setError(e); });
     return () => { active = false; };
-  }, [systemId]);
-  const visible = useMemo(() => selectMembers(fans || [], filters, intl.locale), [fans, filters, intl.locale]);
-  const options = key => [...new Set((fans || []).map(p => p[key]).filter(Boolean))].sort((a, b) => a.localeCompare(b, intl.locale));
+  }, [systemId, setSearchParams]);
+
+  useEffect(() => {
+    if (!systemId) return undefined;
+    let active = true;
+    const version = ++requestVersion.current;
+    setFans(null);
+    setPageInfo(null);
+    setError(null);
+    setLoadingMore(false);
+
+    CommunityApi.directory(systemId, {
+      ...filters,
+      coach: filters.coach === MY_COACHES ? (myCoachKey || MY_COACHES) : filters.coach,
+      locale: intl.locale,
+      page: 0,
+      size: PAGE_SIZE,
+    }).then(data => {
+      if (!active || version !== requestVersion.current) return;
+      setFans(data.members || []);
+      setSeasons(data.seasons || []);
+      setFacets(data.facets || EMPTY_FACETS);
+      setPageInfo(data);
+    }).catch(e => {
+      if (active && version === requestVersion.current) setError(e);
+    });
+
+    return () => { active = false; };
+  }, [systemId, filters, intl.locale, myCoachKey]);
+
+  const loadMore = useCallback(async () => {
+    if (!systemId || !pageInfo?.hasMore || loadingMore) return;
+    const version = requestVersion.current;
+    setLoadingMore(true);
+    try {
+      const data = await CommunityApi.directory(systemId, {
+        ...filters,
+        coach: filters.coach === MY_COACHES ? (myCoachKey || MY_COACHES) : filters.coach,
+        locale: intl.locale,
+        page: pageInfo.page + 1,
+        size: PAGE_SIZE,
+      });
+      if (version !== requestVersion.current) return;
+      setFans(current => [...(current || []), ...(data.members || [])]);
+      setPageInfo(data);
+      setSeasons(data.seasons || []);
+      setFacets(data.facets || EMPTY_FACETS);
+    } catch (e) {
+      if (version === requestVersion.current) setError(e);
+    } finally {
+      if (version === requestVersion.current) setLoadingMore(false);
+    }
+  }, [systemId, pageInfo, loadingMore, filters, intl.locale, myCoachKey]);
+
+  useEffect(() => {
+    const node = loadMoreRef.current;
+    if (!node || !pageInfo?.hasMore || loadingMore) return undefined;
+    const observer = new IntersectionObserver(entries => {
+      if (entries[0]?.isIntersecting) loadMore();
+    }, { rootMargin: '300px' });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [loadMore, pageInfo?.hasMore, loadingMore]);
+
   const select = (key, label, values, all = true) => <FormControl><FormLabel>{label}</FormLabel>
     <Select value={filters[key]} onChange={e => setFilters(f => ({ ...f, [key]: e.target.value }))}>
       {all && <option value="">{t('community.all')}</option>}
       {values.map(([value, text]) => <option key={value} value={value}>{text}</option>)}
     </Select></FormControl>;
 
+  const changeLeagueSystem = id => {
+    requestVersion.current += 1;
+    setFilters(DEFAULT_FILTERS);
+    setSearchParams({ leagueSystem: id });
+  };
+
   return (
     <Box p={{ base: 3, md: 6 }}>
-      <Navigation currentPage="community" leagueSystems={systems} selectedLeagueSystemId={systemId} onSelectLeagueSystem={id => setSearchParams({ leagueSystem: id })} />
+      <Navigation
+        currentPage="community"
+        leagueSystems={systems}
+        selectedLeagueSystemId={systemId}
+        onSelectLeagueSystem={changeLeagueSystem}
+      />
       <Heading mt={6}>Community</Heading>
       <Text mt={2} fontWeight="bold">{systems.find(s => s.id === systemId)?.name}</Text>
       <Text mt={2} color="gray.400">
         Supporters and other community members around the Blood Bowl world.
       </Text>
       <SimpleGrid mt={5} columns={{ base: 1, md: 3, xl: 4 }} spacing={3}>
-        {select('team', t('community.team'), options('teamId').map(id => [id, fans.find(p => p.teamId === id)?.teamName || id]))}
+        {select('team', t('community.team'), facets.teams.map(team => [team.id, team.name]))}
+        {select('coach', t('community.coach'), [...(myCoachIds.length ? [[MY_COACHES, t('community.myCoaches')]] : []), ...(facets.coaches || []).map(coach => [coach.id, coach.name])])}
         {select('season', t('community.season'), seasons.map(s => [s.id, `${s.name || s.number || s.id} · ${s.leagueSystemId}`]))}
-        {select('race', t('community.race'), options('teamRace').map(r => [r, r]))}
-        {select('species', t('community.species'), options('species').map(r => [r, r]))}
+        {select('race', t('community.race'), facets.races.map(r => [r, r]))}
+        {select('species', t('community.species'), facets.species.map(s => [s, s]))}
         {select('status', t('community.status'), [['active', t('community.active')], ['inactive', t('community.inactive')]])}
         {select('sort', t('community.sort'), ['name', 'joined', 'comments', 'team', 'season', 'race', 'status'].map(key => [key, t(`community.${key}`)]), false)}
         {select('direction', t('community.direction'), [['asc', t('community.ascending')], ['desc', t('community.descending')]], false)}
       </SimpleGrid>
       <Text mt={2} fontSize="sm">{t('community.seasonHelp')}</Text>
-      <Button mt={3} size="sm" onClick={() => setFilters(defaults)}>{t('community.reset')}</Button>
-      {fans && <Text mt={3}>{intl.formatMessage({ id: 'community.results' }, { count: visible.length, total: fans.length })}</Text>}
+      <Button mt={3} size="sm" onClick={() => setFilters(DEFAULT_FILTERS)}>{t('community.reset')}</Button>
+      {pageInfo && (
+        <Text mt={3}>
+          {intl.formatMessage(
+            { id: 'community.results' },
+            { count: pageInfo.filteredTotal, total: pageInfo.total }
+          )}
+        </Text>
+      )}
 
       {error && <Text mt={6} color="red.300">{error.message || String(error)}</Text>}
       {!fans && !error && <Text mt={8}>Loading community...</Text>}
@@ -78,7 +190,7 @@ function CommunityPage() {
         gridTemplateColumns="repeat(auto-fill, minmax(min(100%, 210px), 1fr))"
         gap={4}
       >
-        {visible.map((fan) => (
+        {(fans || []).map((fan) => (
           <Card key={fan.id} overflow="hidden">
             <Box
               as={RouteLink}
@@ -88,11 +200,14 @@ function CommunityPage() {
               _hover={{ textDecoration: 'none' }}
             >
               {fan.profileImageUrl && (
-                <Box
+                <Image
+                  src={CommunityApi.assetUrl(fan.profileImageUrl)}
+                  alt=""
                   h="150px"
-                  backgroundImage={`url(${CommunityApi.assetUrl(fan.profileImageUrl)})`}
-                  backgroundSize="cover"
-                  backgroundPosition="center"
+                  w="100%"
+                  objectFit="cover"
+                  loading="lazy"
+                  decoding="async"
                 />
               )}
               <CardBody textAlign="center">
@@ -102,6 +217,7 @@ function CommunityPage() {
                   size="xl"
                   name={fan.displayName}
                   src={CommunityApi.assetUrl(fan.avatarImageUrl || fan.profileImageUrl)}
+                  loading="lazy"
                   borderWidth={fan.profileImageUrl ? '4px' : 0}
                   borderColor="gray.700"
                 />
@@ -119,6 +235,14 @@ function CommunityPage() {
           </Card>
         ))}
       </Box>
+
+      {pageInfo?.hasMore && (
+        <Box ref={loadMoreRef} py={6} textAlign="center">
+          <Button onClick={loadMore} isLoading={loadingMore}>
+            {intl.formatMessage({ id: 'community.loadMore', defaultMessage: 'Load more' })}
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 }

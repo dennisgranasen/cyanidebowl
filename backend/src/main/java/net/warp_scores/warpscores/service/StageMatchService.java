@@ -107,6 +107,15 @@ public class StageMatchService {
                 }
 
     private List<Match> resolveSourceMatches(StageSource source) {
+        List<Match> allMatches = loadSourceMatches(source);
+        if (allMatches.isEmpty()) return List.of();
+        if (source.getGame() == null) {
+            throw new IllegalArgumentException("StageSource has no game: " + source.getId());
+        }
+        return applyExplicitSelection(source, allMatches, applyBoundaries(source, allMatches));
+    }
+
+    private List<Match> loadSourceMatches(StageSource source) {
         validate(source);
         Map<String, Match> matches = new LinkedHashMap<>();
         consolidatedMatches(source).forEach(match -> matches.put(identityKey(match), match));
@@ -114,15 +123,42 @@ public class StageMatchService {
                 .filter(provider -> provider.supports(source))
                 .flatMap(provider -> provider.findMatches(source).stream())
                 .forEach(match -> matches.putIfAbsent(identityKey(match), match));
-        // Historical tabletop sources may have no digital game or registered matches yet.
-        if (matches.isEmpty()) {
-            return List.of();
+        return matches.values().stream().sorted(MATCH_ORDER).toList();
+    }
+
+    public record SelectionCandidate(String key, java.util.Date startedAt, java.util.Date finishedAt,
+            List<CandidateTeam> teams, boolean automaticSelected) {}
+    public record CandidateTeam(String name, Integer score) {}
+    public record SelectionPreview(List<SelectionCandidate> matches, List<String> warnings) {}
+
+    @Transactional(readOnly = true)
+    public SelectionPreview previewSelection(StageSource source) {
+        List<Match> matches = loadSourceMatches(source);
+        List<String> warnings = new ArrayList<>();
+        if (source.getFirstId() != null && !source.getFirstId().isBlank()
+                && markerIndex(matches, source.getFirstId(), 0, source, "firstId") < 0)
+            warnings.add("First match ID was not found: " + source.getFirstId());
+        if (source.getLastId() != null && !source.getLastId().isBlank()
+                && markerIndex(matches, source.getLastId(), 0, source, "lastId") < 0)
+            warnings.add("Last match ID was not found: " + source.getLastId());
+        if ((source.getFirstIndex() != null || source.getLastIndex() != null)
+                && ((source.getFirstId() != null && !source.getFirstId().isBlank())
+                || (source.getLastId() != null && !source.getLastId().isBlank())))
+            warnings.add("Both ID and index boundaries are configured. Indices apply after ID boundaries.");
+        List<Match> automatic;
+        try {
+            automatic = applyBoundaries(source, matches);
+        } catch (IllegalStateException exception) {
+            warnings.add(exception.getMessage());
+            automatic = List.of();
         }
-        if (source.getGame() == null) {
-            throw new IllegalArgumentException("StageSource has no game: " + source.getId());
-        }
-        List<Match> allMatches = new ArrayList<>(matches.values());
-        return applyExplicitSelection(source, allMatches, applyBoundaries(source, allMatches));
+        var selected = automatic.stream().map(this::identityKey).collect(Collectors.toSet());
+        return new SelectionPreview(matches.stream().map(match -> new SelectionCandidate(
+                identityKey(match), match.getStarted(), match.getFinished(),
+                match.getTeams() == null ? List.of() : java.util.Arrays.stream(match.getTeams())
+                    .map(team -> new CandidateTeam(team == null ? null : team.getName(),
+                            team == null ? null : team.getScore())).toList(),
+                selected.contains(identityKey(match)))).toList(), warnings);
     }
 
     private List<Match> applyExplicitSelection(StageSource source, List<Match> allMatches, List<Match> selected) {

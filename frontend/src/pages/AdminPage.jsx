@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Button, Checkbox, FormControl, FormLabel, Heading, HStack, IconButton, Input, Select, SimpleGrid, Text, Tooltip, VStack } from '@chakra-ui/react';
+import { Box, Button, Checkbox, FormControl, FormLabel, Heading, HStack, IconButton, Input, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, Select, SimpleGrid, Text, Tooltip, VStack } from '@chakra-ui/react';
 import { SearchIcon } from '@chakra-ui/icons';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '../components/misc/Navigation';
@@ -8,6 +8,7 @@ import imageUrls from '../imageUrls';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 import WarpScoresApiService from '../WarpScoresApiService';
 import formatter from '../util/formatter';
+import MatchSelectionEditor from '../components/admin/MatchSelectionEditor';
 import ReplaySweeperAdmin from '../components/admin/ReplaySweeperAdmin';
 import SiteUserAdmin from '../components/admin/SiteUserAdmin';
 import RejectedMatchArticlesAdmin from '../components/admin/RejectedMatchArticlesAdmin';
@@ -19,8 +20,8 @@ const emptyStage = { id: '', name: '', type: 'OTHER', format: '', step: '', disp
 const emptySource = { id: '', sourceEntityId: '', sourceType: 'Competition', game: 'BB3', platform: 'PC', ruleset: '', firstIndex: '', lastIndex: '', firstId: '', lastId: '', includedMatchIds: [], excludedMatchIds: [], isArchived: false };
 const numberOrNull = (value) => (value === '' ? null : Number(value));
 
-function TextField({ label, value, onChange, type = 'text' }) {
-  return <FormControl><FormLabel>{label}</FormLabel><Input type={type} value={value ?? ''} onChange={(event) => onChange(event.target.value)} /></FormControl>;
+function TextField({ label, value, onChange, type = 'text', readOnly = false }) {
+  return <FormControl><FormLabel>{label}</FormLabel><Input isReadOnly={readOnly} type={type} value={value ?? ''} onChange={(event) => onChange(event.target.value)} /></FormControl>;
 }
 
 function ResourceList({ heading, items, selectedId, onSelect, label }) {
@@ -65,14 +66,15 @@ function AdminPage() {
   const [openCyanideInspections, setOpenCyanideInspections] = useState({});
   const [cyanideInspectionLoading, setCyanideInspectionLoading] = useState({});
   const [preparedCandidate, setPreparedCandidate] = useState(null);
-  const [sourceMatches, setSourceMatches] = useState([]);
-  const [sourceMatchesLoading, setSourceMatchesLoading] = useState(false);
+  const [pendingSelection, setPendingSelection] = useState(null);
+  const [savingSelection, setSavingSelection] = useState(false);
+  const [selectionSaveError, setSelectionSaveError] = useState(null);
   const [error, setError] = useState(null);
   const auth = [getAccessTokenSilently, getAccessTokenWithPopup];
   const fail = (reason) => setError(reason?.message || String(reason));
   const loadSystems = () => WarpScoresApiService.leagueSystems(...auth).then(setSystems).catch(fail);
 
-  const clearSourceMatches = () => { setSourceMatches([]); setSourceMatchesLoading(false); };
+  const clearSourceMatches = () => { setPendingSelection(null); };
   const selectSystem = (item) => { setSelectedSystemId(item.id); setSystem({ ...emptySystem, ...item }); setSelectedSeasonId(null); setSelectedStageId(null); setSelectedSourceId(null); setSeason(emptySeason); setStage(emptyStage); setSource(emptySource); setStages([]); setSources([]); setDiscoveryCandidates([]); setPreparedCandidate(null); clearSourceMatches(); WarpScoresApiService.seasons(item.id, ...auth).then(setSeasons).catch(fail); };
   const loadSourceInspections = (seasonId) => WarpScoresApiService.registeredSourceInspections(seasonId, ...auth)
     .then((items) => setSourceInspections(Object.fromEntries(items.map((item) => [item.registeredSourceId, item])))).catch(fail);
@@ -87,17 +89,13 @@ function AdminPage() {
       .catch(fail);
   };
   const selectSeason = (item) => { setSelectedSeasonId(item.id); setSeason(item); setSelectedPhaseId(null); setSelectedStageId(null); setSelectedSourceId(null); setInspectedRegisteredSourceId(null); setRegisteredSourceMatches([]); setPhase(emptyPhase); setStage(emptyStage); setSource(emptySource); setPhases([]); setStages([]); setSources([]); clearSourceMatches(); WarpScoresApiService.phases(item.id, ...auth).then(setPhases).catch(fail); loadRegisteredSources(item.id); };
-  const selectPhase = (item) => { setSelectedPhaseId(item.id); setPhase(item); setSelectedStageId(null); setStage(emptyStage); setSources([]); WarpScoresApiService.phaseStages(item.id, ...auth).then(setStages).catch(fail); };
+  const selectPhase = (item) => { setSelectedPhaseId(item.id); setPhase(item); setSelectedStageId(null); setSelectedSourceId(null); setSource(emptySource); setStage(emptyStage); setSources([]); WarpScoresApiService.phaseStages(item.id, ...auth).then(setStages).catch(fail); };
   const sourceFromCandidate = (candidate) => ({ ...emptySource, sourceEntityId: candidate.sourceEntityId, sourceType: candidate.sourceType, game: candidate.game || emptySource.game, platform: candidate.platform || emptySource.platform });
   const selectStage = (item) => { setSelectedStageId(item.id); setStage(item); setSelectedSourceId(null); setSource(preparedCandidate ? sourceFromCandidate(preparedCandidate) : emptySource); clearSourceMatches(); WarpScoresApiService.stageSources(item.id, ...auth).then(setSources).catch(fail); };
   const selectSource = (item) => {
     setSelectedSourceId(item.id);
     setSource({ ...item, sourceEntityId: item.sourceEntityId?.key || '' });
-    setSourceMatchesLoading(true);
-    WarpScoresApiService.stageMatches(item.stageId || selectedStageId)
-      .then((matches) => setSourceMatches(matches.filter((match) => match.stageSourceId === item.id)))
-      .catch(fail)
-      .finally(() => setSourceMatchesLoading(false));
+
   };
 
   useEffect(() => {
@@ -118,7 +116,30 @@ function AdminPage() {
   const saveSeason = () => { if (!selectedSystemId) return; const data = { ...season, number: numberOrNull(season.number) }; if (!selectedSeasonId) delete data.id; (selectedSeasonId ? WarpScoresApiService.updateSeason(selectedSeasonId, data, ...auth) : WarpScoresApiService.createSeason(selectedSystemId, data, ...auth)).then((item) => { WarpScoresApiService.seasons(selectedSystemId, ...auth).then(setSeasons); selectSeason(item); }).catch(fail); };
   const savePhase = () => { if (!selectedSeasonId) return; const data = { ...phase, sequence: numberOrNull(phase.sequence) }; (selectedPhaseId ? WarpScoresApiService.updatePhase(selectedPhaseId, data, ...auth) : WarpScoresApiService.createPhase(selectedSeasonId, data, ...auth)).then((item) => { WarpScoresApiService.phases(selectedSeasonId, ...auth).then(setPhases); selectPhase(item); }).catch(fail); };
   const saveStage = () => { if (!selectedPhaseId) return; const data = { ...stage, step: numberOrNull(stage.step), displayOrder: numberOrNull(stage.displayOrder) }; (selectedStageId ? WarpScoresApiService.updateStage(selectedStageId, data, ...auth) : WarpScoresApiService.createPhaseStage(selectedPhaseId, data, ...auth)).then((item) => { WarpScoresApiService.phaseStages(selectedPhaseId, ...auth).then(setStages); selectStage(item); }).catch(fail); };
-  const saveSource = () => { if (!selectedStageId) return; const data = { ...source, firstIndex: numberOrNull(source.firstIndex), lastIndex: numberOrNull(source.lastIndex) }; const action = selectedSourceId && source.registeredSourceId ? WarpScoresApiService.updateMatchSelection(selectedSourceId, data, ...auth) : selectedSourceId ? WarpScoresApiService.updateStageSource(selectedSourceId, data, ...auth) : WarpScoresApiService.createStageSource(selectedStageId, data, ...auth); action.then((item) => { WarpScoresApiService.stageSources(selectedStageId, ...auth).then(setSources); selectSource(item); setPreparedCandidate(null); }).catch(fail); };
+  const saveSource = () => {
+    if (!selectedSourceId) return;
+    const data = { ...source, firstIndex: source.firstIndex == null ? null : numberOrNull(source.firstIndex), lastIndex: source.lastIndex == null ? null : numberOrNull(source.lastIndex) };
+    const original = sources.find((item) => item.id === selectedSourceId);
+    const fields = ['firstIndex', 'lastIndex', 'firstId', 'lastId', 'includedMatchIds', 'excludedMatchIds', 'isArchived'];
+    const changes = fields.filter((field) => JSON.stringify(original?.[field] ?? null) !== JSON.stringify(data[field] ?? null))
+      .map((field) => ({ field, before: original?.[field], after: data[field] }));
+    setSelectionSaveError(null);
+    setPendingSelection({ id: selectedSourceId, data, changes });
+  };
+  const confirmSelection = async () => {
+    if (!pendingSelection || savingSelection) return;
+    setSavingSelection(true);
+    setSelectionSaveError(null);
+    try {
+      const item = await WarpScoresApiService.updateMatchSelection(pendingSelection.id, pendingSelection.data, ...auth);
+      setSources((items) => items.map((existing) => existing.id === item.id ? item : existing));
+      selectSource(item);
+      setPendingSelection(null);
+      setPreparedCandidate(null);
+    } catch (reason) { setSelectionSaveError(reason?.message || String(reason)); }
+    finally { setSavingSelection(false); }
+  };
+
   const scanForCandidates = () => WarpScoresApiService.leagueSystemDiscoveryCandidates(selectedSystemId, ...auth).then(setDiscoveryCandidates).catch(fail);
   const suggestedSeason = (...names) => {
     for (const name of names) {
@@ -287,8 +308,23 @@ function AdminPage() {
       {selectedSeasonId && <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}><ResourceList heading="Phases" items={phases} selectedId={selectedPhaseId} onSelect={selectPhase} label={(item) => item.name || item.id} /><Box><Heading size="sm" mb={2}>{selectedPhaseId ? 'Edit phase' : 'New phase'}</Heading><SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}><TextField label="Name" value={phase.name} onChange={(name) => setPhase({ ...phase, name })} /><FormControl><FormLabel>Type</FormLabel><Select value={phase.type} onChange={(event) => setPhase({ ...phase, type: event.target.value })}>{['OFF_SEASON','PRESEASON','FRIENDLIES','QUALIFICATION','GROUP_STAGE','PLAYOFFS','OTHER'].map((type) => <option key={type}>{type}</option>)}</Select></FormControl><TextField label="Sequence" type="number" value={phase.sequence} onChange={(sequence) => setPhase({ ...phase, sequence })} /></SimpleGrid><HStack mt={3}><Button onClick={() => { setSelectedPhaseId(null); setPhase(emptyPhase); setStages([]); }}>New</Button><Button colorScheme="blue" onClick={savePhase}>Save</Button>{selectedPhaseId && <Button colorScheme="red" onClick={() => remove('phase', () => WarpScoresApiService.deletePhase(selectedPhaseId, ...auth), () => { setSelectedPhaseId(null); setPhase(emptyPhase); setStages([]); })}>Delete</Button>}</HStack></Box></SimpleGrid>}
       {selectedPhaseId && <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}><ResourceList heading="Stages" items={stages} selectedId={selectedStageId} onSelect={selectStage} label={(item) => item.name || item.id} /><Box><Heading size="sm" mb={2}>{selectedStageId ? 'Edit stage' : 'New stage'}</Heading><SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}><TextField label="Name" value={stage.name} onChange={(name) => setStage({ ...stage, name })} /><FormControl><FormLabel>Type</FormLabel><Select value={stage.type} onChange={(event) => setStage({ ...stage, type: event.target.value })}><option>GROUP</option><option>ROUND</option><option>OTHER</option></Select></FormControl><TextField label="Format" value={stage.format} onChange={(format) => setStage({ ...stage, format })} /><TextField label="Step (same means parallel)" type="number" value={stage.step} onChange={(step) => setStage({ ...stage, step })} /><TextField label="Display order" type="number" value={stage.displayOrder} onChange={(displayOrder) => setStage({ ...stage, displayOrder })} /></SimpleGrid><HStack mt={3}><Button onClick={() => { setSelectedStageId(null); setStage(emptyStage); }}>New</Button><Button colorScheme="blue" onClick={saveStage}>Save</Button>{selectedStageId && <Button colorScheme="red" onClick={() => remove('stage', () => WarpScoresApiService.deleteStage(selectedStageId, ...auth), () => { setSelectedStageId(null); setStage(emptyStage); setSources([]); })}>Delete</Button>}</HStack></Box></SimpleGrid>}
       {selectedSeasonId && <Box><Heading size="sm" mb={2}>Registered and watched sources</Heading><VStack align="stretch">{registeredSources.map((item) => { const inspection = sourceInspections[item.id]; const isInspected = inspectedRegisteredSourceId === item.id; return <Box key={item.id} borderWidth="1px" borderRadius="md" p={3}><HStack justify="space-between" align="start"><Box><Text fontWeight="bold">{item.sourceEntityId?.key}</Text><Text color="gray.500" fontSize="sm">{item.game} / {item.platform} Â· {item.collectionEnabled ? 'Watched' : 'Not watched'}</Text><Text color="gray.500" fontSize="sm">{inspection ? `${inspection.matchCount} matches Â· ${inspection.teamCount} teams Â· latest ${formatter.formatAsDate(inspection.latestMatch, 'unknown')}` : 'Reading local match summaryâ€¦'}</Text></Box><HStack><Button size="sm" variant="outline" onClick={() => inspectRegisteredSource(item)}>{isInspected ? 'Close' : 'Inspect'}</Button>{selectedStageId && <Button size="sm" onClick={() => attachSource(item)}>Use in selected stage</Button>}</HStack></HStack>{isInspected && <Box mt={3} pt={3} borderTopWidth="1px">{registeredSourceInspectLoading ? <Text color="gray.500">Loading latest matchesâ€¦</Text> : registeredSourceMatches.length === 0 ? <Text color="gray.500">No locally stored matches.</Text> : <VStack align="stretch" maxH="24rem" overflowY="auto">{registeredSourceMatches.map((match) => <Box key={match.matchId || match.id?.key} borderWidth="1px" borderRadius="md" p={2}><Text fontWeight="bold">{(match.teams || []).map((team) => `${team.name || '-'} ${team.score ?? '-'}`).join(' â€“ ')}</Text><Text fontSize="sm" color="gray.500">{(match.teams || []).map((team, index) => [team.race, match.coaches?.[index]?.name || team.coachName].filter(Boolean).join(' Â· ')).join(' / ')}</Text><Text fontSize="xs" color="gray.500">{formatter.formatAsDate(match.finished || match.started, 'No date')} Â· {match.matchId || match.id?.key}</Text></Box>)}</VStack>}</Box>}</Box>; })}</VStack></Box>}
-      {selectedStageId && <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}><ResourceList heading="Match selections" items={sources} selectedId={selectedSourceId} onSelect={selectSource} label={(item) => item.sourceEntityId?.key || item.id} /><Box><Heading size="sm" mb={2}>{selectedSourceId ? 'Edit match selection' : 'Legacy inline source'}</Heading><SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}><TextField label="Source entity ID" value={source.sourceEntityId} onChange={(sourceEntityId) => setSource({ ...source, sourceEntityId })} /><TextField label="First index" type="number" value={source.firstIndex} onChange={(firstIndex) => setSource({ ...source, firstIndex })} /><TextField label="Last index" type="number" value={source.lastIndex} onChange={(lastIndex) => setSource({ ...source, lastIndex })} /><TextField label="First match ID" value={source.firstId} onChange={(firstId) => setSource({ ...source, firstId })} /><TextField label="Last match ID" value={source.lastId} onChange={(lastId) => setSource({ ...source, lastId })} /><TextField label="Always include match IDs (comma separated)" value={(source.includedMatchIds || []).join(', ')} onChange={(value) => setSource({ ...source, includedMatchIds: value.split(',').map((id) => id.trim()).filter(Boolean) })} /><TextField label="Always exclude match IDs (comma separated)" value={(source.excludedMatchIds || []).join(', ')} onChange={(value) => setSource({ ...source, excludedMatchIds: value.split(',').map((id) => id.trim()).filter(Boolean) })} /><Checkbox isChecked={Boolean(source.isArchived)} onChange={(event) => setSource({ ...source, isArchived: event.target.checked })}>Archive source</Checkbox></SimpleGrid><HStack mt={3}><Button colorScheme="blue" isDisabled={!selectedSourceId} onClick={saveSource}>Save selection</Button>{selectedSourceId && <Button colorScheme="red" onClick={() => remove('match selection', () => WarpScoresApiService.deleteStageSource(selectedSourceId, ...auth), () => { setSelectedSourceId(null); setSource(emptySource); })}>Delete</Button>}</HStack></Box></SimpleGrid>}
-      {selectedSourceId && <Box><Heading size="sm" mb={2}>Database matches for selected source</Heading>{sourceMatchesLoading ? <Text color="gray.500">Loading matchesâ€¦</Text> : sourceMatches.length === 0 ? <Text color="gray.500">No matches found for this source.</Text> : <VStack align="stretch" maxH="24rem" overflowY="auto">{[...sourceMatches].sort((first, second) => new Date(second.finishedAt || second.startedAt || 0) - new Date(first.finishedAt || first.startedAt || 0)).map((match) => <Box key={match.sourceMatchKey} borderWidth="1px" borderRadius="md" p={3}><HStack justify="space-between" align="start"><Box><Text fontWeight="bold">{(match.teams || []).map((team) => `${team.name || '-'} ${team.score ?? '-'}`).join(' â€“ ') || match.sourceMatchKey}</Text><Text color="gray.500" fontSize="sm">{match.finishedAt || match.startedAt || 'No date'} Â· {match.status || 'Unknown status'}</Text></Box><Text fontSize="sm">{match.game} / {match.platform}</Text></HStack><Text mt={1} fontSize="xs" color="gray.500">{match.sourceMatchKey}</Text></Box>)}</VStack>}</Box>}
+      {selectedStageId && <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}><ResourceList heading="Match selections" items={sources} selectedId={selectedSourceId} onSelect={selectSource} label={(item) => item.sourceEntityId?.key || item.id} /><Box><Heading size="sm" mb={2}>{selectedSourceId ? 'Edit match selection' : 'Legacy inline source'}</Heading><SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}><TextField readOnly label="Source entity ID" value={source.sourceEntityId} onChange={(sourceEntityId) => setSource({ ...source, sourceEntityId })} /><TextField label="First index" type="number" value={source.firstIndex} onChange={(firstIndex) => setSource({ ...source, firstIndex })} /><TextField label="Last index" type="number" value={source.lastIndex} onChange={(lastIndex) => setSource({ ...source, lastIndex })} /><TextField label="First match ID" value={source.firstId} onChange={(firstId) => setSource({ ...source, firstId })} /><TextField label="Last match ID" value={source.lastId} onChange={(lastId) => setSource({ ...source, lastId })} /><TextField label="Always include match IDs (comma separated)" value={(source.includedMatchIds || []).join(', ')} onChange={(value) => setSource({ ...source, includedMatchIds: value.split(',').map((id) => id.trim()).filter(Boolean) })} /><TextField label="Always exclude match IDs (comma separated)" value={(source.excludedMatchIds || []).join(', ')} onChange={(value) => setSource({ ...source, excludedMatchIds: value.split(',').map((id) => id.trim()).filter(Boolean) })} /><Checkbox isChecked={Boolean(source.isArchived)} onChange={(event) => setSource({ ...source, isArchived: event.target.checked })}>Archive source</Checkbox></SimpleGrid><HStack mt={3}><Button colorScheme="blue" isDisabled={!selectedSourceId} onClick={saveSource}>Review changes</Button><Button isDisabled={!selectedSourceId} onClick={() => selectSource(sources.find((item) => item.id === selectedSourceId))}>Reset draft</Button>{selectedSourceId && <Button colorScheme="red" onClick={() => remove('match selection', () => WarpScoresApiService.deleteStageSource(selectedSourceId, ...auth), () => { setSelectedSourceId(null); setSource(emptySource); })}>Delete</Button>}</HStack></Box></SimpleGrid>}
+      <Modal isOpen={Boolean(pendingSelection)} onClose={() => { if (!savingSelection) setPendingSelection(null); }} closeOnOverlayClick={false} closeOnEsc={!savingSelection} size="xl">
+        <ModalOverlay /><ModalContent><ModalHeader>Confirm match selection changes</ModalHeader><ModalBody>
+          <Text mb={3}>Review the changes for {pendingSelection?.id}. Nothing is saved until you confirm.</Text>
+          {pendingSelection?.changes.length === 0 && <Text>No changes to save.</Text>}
+          {pendingSelection?.changes.map((change) => <Box key={change.field} mb={3} overflowWrap="anywhere">
+            <Text fontWeight="bold">{({ firstIndex: 'First index', lastIndex: 'Last index', firstId: 'First match ID', lastId: 'Last match ID', includedMatchIds: 'Always included matches', excludedMatchIds: 'Always excluded matches', isArchived: 'Archive source' })[change.field]}</Text>
+            <Text>Before: {Array.isArray(change.before) ? change.before.join(', ') || 'None' : String(change.before ?? 'None')}</Text>
+            <Text>After: {Array.isArray(change.after) ? change.after.join(', ') || 'None' : String(change.after ?? 'None')}</Text>
+          </Box>)}
+          {selectionSaveError && <Text color="red.500">{selectionSaveError}</Text>}
+        </ModalBody><ModalFooter gap={3}>
+          <Button isDisabled={savingSelection} onClick={() => setPendingSelection(null)}>Cancel</Button>
+          <Button colorScheme="blue" isLoading={savingSelection} isDisabled={!pendingSelection?.changes.length} onClick={confirmSelection}>Confirm and save</Button>
+        </ModalFooter></ModalContent>
+      </Modal>
+      {selectedSourceId && <MatchSelectionEditor key={selectedSourceId} source={source} onChange={setSource} getAccessTokenSilently={getAccessTokenSilently} getAccessTokenWithPopup={getAccessTokenWithPopup} />}
     </VStack>
   );
 }
