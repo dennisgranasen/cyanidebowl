@@ -218,10 +218,12 @@ export default {
     getDataWithAuthentication('/admin/replay-sweeper', getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   replaySweeperLogs: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
     getDataWithAuthentication('/admin/replay-sweeper/logs', getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
-  replaySweeperReplays: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
-    getDataWithAuthentication('/admin/replay-sweeper/replays', getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  replaySweeperReplays: async (page, size, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    getDataWithAuthentication(`/admin/replay-sweeper/replays?page=${page}&size=${size}`, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   analyzeReplay: async (matchId, getAccessTokenSilently, getAccessTokenWithPopup) =>
     postDataWithAuthentication(`/admin/replay-sweeper/replays/${encodeURIComponent(matchId)}/analyze`, {}, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  analyzeAllReplays: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication('/admin/replay-sweeper/replays/analyze-all', {}, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   importReplays: async (files, getAccessTokenSilently, getAccessTokenWithPopup) => {
     const data = new FormData(); files.forEach(file => data.append('files', file));
     return postDataWithAuthentication('/admin/replay-sweeper/replays/import', data, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError);

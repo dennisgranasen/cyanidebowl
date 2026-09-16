@@ -34,6 +34,9 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
     List<Match> findByCompetitionId(Identity competitionId, Pageable pageable);
 
     List<Match> findAllById(List<Identity> matchIds);
+
+    @Query("{ '_id.opus': 3, 'finished': { '$ne': null }, 'matchId': { '$nin': [null, ''] } }")
+    List<Match> findReplayAdminMatches(Pageable pageable);
     //List<Match> findAllByFinishedNullOrNotFinished();
 
     @Aggregation(pipeline = {

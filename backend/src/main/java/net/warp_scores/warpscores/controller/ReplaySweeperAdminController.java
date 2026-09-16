@@ -8,7 +8,10 @@ import net.warp_scores.warpscores.service.ReplayArtifactService;
 import net.warp_scores.warpscores.service.FetchDataService;
 import net.warp_scores.warpscores.domain.persistence.ReplayDownloadRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
-import net.warp_scores.warpscores.identity.IdentityUtil;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.PageRequest;
+import net.warp_scores.warpscores.model.ReplayDownload;
+import net.warp_scores.warpscores.model.Match;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,40 +40,77 @@ public class ReplaySweeperAdminController {
     @PutMapping public Map<String,Object> update(@RequestBody Settings value){service.update(value.enabled(),value.cron(),value.zoneId(),value.batchSize(),value.steamUsername());return service.status();}
     @PostMapping("/run") public Map<String,Object> run(){boolean accepted=service.run();var status=new HashMap<>(service.status());status.put("accepted",accepted);return status;}
     @PostMapping("/scan-matches") public Map<String,Object> scanMatches(){fetchDataService.fetchNewMatches();return Map.of("status","COMPLETED");}
-    @GetMapping("/replays") public Object replays(){var cutoff=java.util.Date.from(java.time.Instant.now().minus(java.time.Duration.ofDays(Math.max(1,availabilityWindowDays))));var replays=downloads.findTop50ByAttemptedAtAfterOrderByAttemptedAtDesc(cutoff);
-        var ids=new java.util.ArrayList<net.warp_scores.warpscores.identity.Identity>();
-        for(var replay:replays) try { ids.add(IdentityUtil.fromId(replay.getMatchId())); } catch(IllegalArgumentException ignored) {}
-        var matchById=new java.util.HashMap<String,net.warp_scores.warpscores.model.Match>();
-        if(!ids.isEmpty()) for(var match:matches.findAllById(ids)) if(match.getId()!=null) matchById.put(match.getId().asMongoKey(),match);
-        return replays.stream().map(replay->{
-        var result=new java.util.LinkedHashMap<String,Object>();
-        result.put("matchId",replay.getMatchId());result.put("gameId",replay.getGameId());
-        result.put("status",replay.getStatus());result.put("analysisStatus",replay.getAnalysisStatus());
-        result.put("parserVersion",replay.getParserVersion());
-        result.put("analysisAttemptVersion",replay.getAnalysisAttemptVersion());
-        result.put("analysisRequestedAt",replay.getAnalysisRequestedAt());
-        result.put("downloadedAt",replay.getDownloadedAt());result.put("originalSize",replay.getOriginalSize());
-        result.put("compactSize",replay.getCompactSize());result.put("error",replay.getError());
-        result.put("analysisError",replay.getAnalysisError());
-        result.put("originalFormat",replay.getOriginalFormat());
-        result.put("originalAvailable",replayArtifacts.originalAvailable(replay));
-        result.put("compactAvailable",replayArtifacts.compactAvailable(replay));
-        result.put("availabilityWindowDays",availabilityWindowDays);
-        var match=matchById.get(replay.getMatchId());
-        if(match!=null){
-            result.put("playedAt",match.getFinished());result.put("competitionName",match.getCompetitionName());
-            if(match.getTeams()!=null)result.put("teams",java.util.Arrays.stream(match.getTeams()).filter(java.util.Objects::nonNull).map(team->team.getName()).toList());
+    @GetMapping("/replays")
+    public Map<String,Object> replays(@RequestParam(defaultValue="0") int page,
+                                      @RequestParam(defaultValue="10") int size) {
+        int safePage = Math.max(0, page);
+        int safeSize = Math.max(1, Math.min(size, 50));
+
+        // One extra row tells the UI whether an older page exists without a count query.
+        var recent = matches.findReplayAdminMatches(PageRequest.of(
+                safePage,
+                safeSize + 1,
+                Sort.by(Sort.Direction.DESC, "finished")));
+        boolean hasMore = recent.size() > safeSize;
+        var pageMatches = hasMore ? recent.subList(0, safeSize) : recent;
+
+        var replayIds = pageMatches.stream()
+                .filter(match -> match.getId() != null)
+                .map(match -> match.getId().asMongoKey())
+                .toList();
+        var replayById = new java.util.HashMap<String, ReplayDownload>();
+        if (!replayIds.isEmpty()) {
+            downloads.findAllById(replayIds)
+                    .forEach(replay -> replayById.put(replay.getMatchId(), replay));
+        }
+
+        var items = pageMatches.stream()
+                .map(match -> replayRow(match, replayById.get(match.getId().asMongoKey())))
+                .toList();
+
+        return Map.of(
+                "items", items,
+                "page", safePage,
+                "size", safeSize,
+                "hasPrevious", safePage > 0,
+                "hasMore", hasMore);
+    }
+
+    private Map<String,Object> replayRow(Match match, ReplayDownload replay) {
+        var result = new java.util.LinkedHashMap<String,Object>();
+        String matchId = match.getId().asMongoKey();
+        result.put("matchId", matchId);
+        result.put("gameId", replay == null ? match.getMatchId() : replay.getGameId());
+        result.put("status", replay == null ? "NOT_DOWNLOADED" : replay.getStatus());
+        result.put("analysisStatus", replay == null ? null : replay.getAnalysisStatus());
+        result.put("parserVersion", replay == null ? null : replay.getParserVersion());
+        result.put("analysisAttemptVersion", replay == null ? null : replay.getAnalysisAttemptVersion());
+        result.put("analysisRequestedAt", replay == null ? null : replay.getAnalysisRequestedAt());
+        result.put("downloadedAt", replay == null ? null : replay.getDownloadedAt());
+        result.put("originalSize", replay == null ? null : replay.getOriginalSize());
+        result.put("compactSize", replay == null ? null : replay.getCompactSize());
+        result.put("error", replay == null ? null : replay.getError());
+        result.put("analysisError", replay == null ? null : replay.getAnalysisError());
+        result.put("originalFormat", replay == null ? null : replay.getOriginalFormat());
+        result.put("originalAvailable", replay != null && replayArtifacts.originalAvailable(replay));
+        result.put("compactAvailable", replay != null && replayArtifacts.compactAvailable(replay));
+        result.put("availabilityWindowDays", availabilityWindowDays);
+        result.put("playedAt", match.getFinished());
+        result.put("competitionName", match.getCompetitionName());
+        if (match.getTeams() != null) {
+            result.put("teams", java.util.Arrays.stream(match.getTeams())
+                    .filter(java.util.Objects::nonNull)
+                    .map(team -> team.getName())
+                    .toList());
         }
         return result;
-    }).sorted((left,right)->{
-        var leftPlayed=(java.util.Date)left.get("playedAt");
-        var rightPlayed=(java.util.Date)right.get("playedAt");
-        if(leftPlayed==null&&rightPlayed==null)return 0;
-        if(leftPlayed==null)return 1;
-        if(rightPlayed==null)return -1;
-        return rightPlayed.compareTo(leftPlayed);
-    }).toList();}
+    }
+
     @GetMapping("/analysis-queue") public Object analysisQueue(){return analysis.snapshot();}
+    @PostMapping("/replays/analyze-all")
+    public ReplayAnalysisBackfillService.BulkReanalysisResult analyzeAll(Authentication authentication) {
+        return analysis.requestReanalysisAll(authentication == null ? null : authentication.getName());
+    }
     @PostMapping("/replays/{matchId}/analyze") public Map<String,Object> analyze(@PathVariable String matchId, Authentication authentication){analysis.requestReanalysis(matchId,authentication==null?null:authentication.getName());return Map.of("matchId",matchId,"status","QUEUED");}
     @GetMapping(value="/replays/{matchId}/inspect",produces=MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<byte[]> inspect(@PathVariable String matchId){try{return ResponseEntity.ok(replayArtifacts.readCompactJson(matchId));}catch(IllegalArgumentException error){return ResponseEntity.notFound().build();}catch(Exception error){return ResponseEntity.internalServerError().build();}}

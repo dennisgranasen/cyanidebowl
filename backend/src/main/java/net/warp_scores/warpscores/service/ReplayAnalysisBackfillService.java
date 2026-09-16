@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.domain.persistence.ReplayDownloadRepository;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -80,6 +81,44 @@ public class ReplayAnalysisBackfillService {
         record.setAnalysisError(null);
         downloads.save(record);
     }
+
+    public BulkReanalysisResult requestReanalysisAll(String requestedBy) {
+        String actor = requestedBy == null || requestedBy.isBlank() ? "site-admin" : requestedBy;
+        int queued = 0;
+        int missingLocal = 0;
+        int unavailable = 0;
+
+        for (int page = 0; ; page++) {
+            var records = downloads.findAll(PageRequest.of(
+                    page,
+                    100,
+                    Sort.by(Sort.Direction.ASC, "matchId"))).getContent();
+            if (records.isEmpty()) break;
+
+            var changed = new ArrayList<net.warp_scores.warpscores.model.ReplayDownload>();
+            for (var record : records) {
+                if (!"DOWNLOADED".equals(record.getStatus())) {
+                    unavailable++;
+                    continue;
+                }
+                if (!artifacts.originalAvailable(record)) {
+                    missingLocal++;
+                    continue;
+                }
+                record.setAnalysisRequestedAt(new Date());
+                record.setAnalysisRequestedBy(actor);
+                record.setAnalysisError(null);
+                changed.add(record);
+                queued++;
+            }
+            if (!changed.isEmpty()) downloads.saveAll(changed);
+            if (records.size() < 100) break;
+        }
+
+        return new BulkReanalysisResult(queued, missingLocal, unavailable);
+    }
+
+    public record BulkReanalysisResult(int queued, int missingLocal, int unavailable) {}
 
     public QueueSnapshot snapshot() {
         Instant now = Instant.now();
