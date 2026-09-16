@@ -84,7 +84,7 @@ public class AiTargetExecutionQueueManager {
             Instant now=Instant.now(); pruneHistory(now);
             long hour=completedHistory.stream().filter(t->!t.isBefore(now.minus(Duration.ofHours(1)))).count();
             long day=completedHistory.size(); long completedCount=completed.get();
-            Long average=completedCount==0?null:Math.max(0,completedMillis.get()/completedCount);
+            Long average=completedCount==0?null:Long.valueOf(Math.max(0,completedMillis.get()/completedCount));
             QuotaState q=quota(group()); Instant blocked=q.blockedUntil();
             Instant earliest=jobs.stream().filter(j->j.status()!=JobStatus.RUNNING).map(j->j.nextAttemptAt()==null?now:j.nextAttemptAt()).min(Instant::compareTo).orElse(null);
             Instant resume=earliest;
@@ -92,7 +92,7 @@ public class AiTargetExecutionQueueManager {
             double observedHours=Math.max(1.0/60.0,Math.min(24.0,Duration.between(historyStartedAt,now).toMillis()/3600000.0));
             double perHour=hour>=3?hour:(day/observedHours);
             long outstanding=jobs.size();
-            Long eta=outstanding==0?0L:perHour<=0?null:(long)Math.ceil(outstanding/perHour*3600.0);
+            Long eta=outstanding==0?Long.valueOf(0L):perHour<=0?null:Long.valueOf((long)Math.ceil(outstanding/perHour*3600.0));
             if(eta!=null&&resume!=null&&resume.isAfter(now))eta+=Duration.between(now,resume).toSeconds();
             return new QueueSnapshot(targetId,config.getProvider(),config.getModel(),group(),Math.max(1,config.getQueue().getConcurrency()),(int)jobs.stream().filter(j->j.status()!=JobStatus.RUNNING).count(),running.get(),jobs.stream().filter(j->j.status()==JobStatus.RETRY_WAIT).count(),succeeded.get(),failed.get(),blocked,q.reason(),lastError,lastStatusCode,lastErrorAt,historyStartedAt,hour,day,average,resume,eta,jobs);
         }
