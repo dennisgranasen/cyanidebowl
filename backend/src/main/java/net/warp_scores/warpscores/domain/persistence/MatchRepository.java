@@ -8,6 +8,7 @@ import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Race;
 import net.warp_scores.warpscores.model.Team;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 //import org.springframework.data.mongodb.core.aggregation.ArrayOperators.In;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.Query;
@@ -35,8 +36,9 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
 
     List<Match> findAllById(List<Identity> matchIds);
 
-    @Query("{ '_id.opus': 3, 'finished': { '$ne': null }, 'matchId': { '$nin': [null, ''] } }")
-    List<Match> findReplayAdminMatches(Pageable pageable);
+    @Query("{ '_id.type': 'SimpleIdentity', '_id.value': { '$regex': '^3-' }, "
+            + "'finished': { '$ne': null }, 'matchId': { '$nin': [null, ''] } }")
+    Slice<Match> findReplayAdminMatches(Pageable pageable);
     //List<Match> findAllByFinishedNullOrNotFinished();
 
     @Aggregation(pipeline = {

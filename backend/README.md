@@ -49,11 +49,13 @@ BlaskScore has several different work mechanisms. They must not be conflated.
 Durable application-level candidate/work queue. It represents content/community work that
 may survive process restarts and can be reprioritized or removed by Site Admin.
 
-### AI target execution queues
+### AI quota execution queues
 
-Per-target provider/model execution queues. They handle concurrency, retries, quota blocks
-and provider backpressure. These queues are process-local; durable history comes from
-generation traces rather than the queue itself.
+Text execution is queued per configured quota group rather than per target. Multiple
+targets that share the same provider quota compete in one priority queue and share
+concurrency, retry/resume state and provider backpressure. Target/provider/model remain
+job provenance and routing metadata. These queues are process-local; durable history comes
+from generation traces rather than the queue itself.
 
 ### Community media queue
 

@@ -14,55 +14,66 @@ BlaskScore already has the foundations required for continued product work:
 - LeagueSystem-first public navigation, standings, group rounds and playoff brackets;
 - Cyanide discovery/source registration and historical match enrichment;
 - articles, comments, reactions, ratings and public Staff/community surfaces;
+- human and AI-authored article workflows with review, provenance and configurable auto-accept;
 - canonical HUMAN/AI identity, AI context/provenance and provider abstraction;
 - durable autonomous AI work and community-media queues;
+- quota-scoped text execution queues with provider-aware retry/resume handling;
+- Cloudflare community-image quota handling that waits for free quota reset rather than
+  accumulating paid usage;
 - deterministic replay download/storage/reanalysis separated from LLM execution;
+- BB3 semantic replay timeline/narrative parsing with checks, rerolls, unknown-event
+  provenance and IP redaction;
 - authenticated `pybb3-service` boundary and versioned replay-analysis contract;
 - ARM64/Raspberry Pi Compose deployment behind Cloudflare Tunnel.
 
 Do not reopen those foundations as green-field roadmap items.
 
-## R1 — Replay correctness and visualization
+## R1 — Runtime correctness and production hardening
 
-The immediate replay priority is correctness rather than more presentation features.
+The immediate priority is eliminating remaining runtime edge cases and making operation
+recoverable without maintainer-specific knowledge.
 
-- Keep the cyanidebowl/pybb3 contract versioned and covered by fixtures.
-- Stabilize semantic timeline output: rolls appear only for actual tests and include the
-  reason for the test.
-- Consume skill rerolls separately from team/generic rerolls while remaining compatible
-  with older replay payloads where required.
-- Preserve unknown-event provenance and replay IP redaction.
-- Add BB1/BB2 adapters behind the same normalized consumer model when upstream support is
-  ready.
-- Build deterministic replay state reconstruction before interactive visualization.
-
-The backend owns orchestration, compatibility and presentation. `pybb3` owns raw BB3
-replay decoding/parsing.
-
-## R2 — Production hardening
-
-Reduce operational knowledge that currently lives only with the maintainer.
-
+- Make `StageSource` consumers correct when `game` is legitimately unknown. Match/source
+  discovery must not make unrelated community/editorial pages fail merely because a source
+  is not yet game-classified.
+- Keep queue diagnostics accurate under real quota/backlog conditions, including
+  retry/resume reasons, cooldown countdowns, throughput and stale-job recovery.
 - Keep build/test paths hermetic enough that normal verification does not require live
   external services.
-- Document and verify upgrade/rollback for ARM64 images and Compose.
-- Make persistent-volume ownership and backup expectations explicit.
-- Improve startup/health diagnostics for backend, pybb3 and Cloudflare Tunnel.
-- Replace ambiguous integration null/error handling with typed outcomes where practical.
-- Keep queue diagnostics useful: backlog size, retry/resume state, throughput and failures.
+- Document and verify ARM64 image upgrade/rollback.
+- Document persistent-volume backup/restore expectations for replay data, community media
+  and pybb3 credentials.
+- Improve startup/health diagnosis for backend, pybb3 and Cloudflare Tunnel.
+- Replace ambiguous integration null/error handling with typed outcomes where callers
+  genuinely need to distinguish unavailable, unauthorized, rate-limited and invalid data.
 
-## R3 — Editorial/community evolution
+## R2 — Editorial/community product evolution
 
-Continue editorial and community work through the existing primitives rather than adding
-parallel systems.
+Continue through the existing article/community primitives rather than adding parallel
+systems.
 
-- General articles, match reports and AI-authored material should share the same
+- Keep general articles, match reports and AI-authored material on the same
   publication/review/provenance model where their semantics overlap.
-- AI-generated content must remain reviewable or explicitly configured for automatic
-  acceptance.
-- Community/Fan generation should remain durable and recoverable across restarts.
-- Add autonomous candidate producers only for concrete product events; avoid generic
-  background content polling.
+- AI-generated content remains reviewable unless automatic acceptance is explicitly
+  configured.
+- Community/Fan generation remains durable and recoverable across restarts.
+- Add autonomous candidate producers only for concrete product/domain events; avoid
+  generic background content polling.
+- Keep image generation renderer-neutral in the domain model and cost-safe: automatic
+  fallback must never introduce paid usage unless explicitly enabled by configuration.
+
+## R3 — Replay state and visualization
+
+The BB3 parser/timeline itself is no longer the primary replay project. Future replay work
+is product functionality above the normalized semantic event stream.
+
+- Maintain the cyanidebowl/pybb3 contract with representative fixtures and regression
+  coverage as parser knowledge evolves.
+- Build deterministic replay state reconstruction from normalized events.
+- Build interactive replay visualization only after deterministic reconstruction is
+  stable.
+- Add BB1/BB2 adapters behind the same normalized consumer model when upstream support is
+  available.
 
 ## Cross-cutting invariants
 
@@ -70,6 +81,8 @@ parallel systems.
 - Competition behavior is metadata/configuration driven, never tournament-name hardcoded.
 - `Staff` is the canonical editorial identity term in code/API/routes.
 - HUMAN/AI is identity; provider/model is provenance.
+- AI text scheduling is scoped to the actual configured quota resource, not artificially
+  separated by target.
 - Replay analysis is deterministic and independent of LLM quotas.
 - Successful replay parser version and latest attempted parser version are distinct facts.
 - Secrets, Steam credentials, Auth0 tokens, MongoDB URIs and replay IP addresses must not

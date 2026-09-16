@@ -6,43 +6,39 @@
 This file contains **active actionable work only**. It is intentionally not a history of
 the project. See `ROADMAP.md` for direction and `CHANGELOG.md` for completed work.
 
-## P1 — Replay contract and parser correctness
+## P1 — Stage/source runtime correctness
 
-### Replay timeline contract
+### Nullable StageSource game
 
-- Pin and validate the pybb3 replay-analysis/timeline contract at the service boundary.
-- Add representative consumer fixtures for known replay shapes.
-- Render roll/result only when an actual test occurred and preserve the semantic reason.
-- Consume `skill_rerolls` distinctly from generic/team rerolls.
-- Preserve explicit unknown-event provenance.
-- Keep replay IP redaction covered by regression tests.
+`StageSource.game` is legitimately unknown for some sources. Current match adaptation still
+fails when such a source contains matches because game-specific `MatchAdapter` selection is
+required too early.
 
-### Replay parser regressions
-
-- Turn every known misleading replay interpretation into a permanent regression fixture.
-- Fix defects in pybb3/normalization rather than compensating for parser mistakes in UI.
-- Keep backend parser-version handling synchronized with the normalized pybb3 response.
-- Verify failed current-version analyses do not enter an infinite retry loop.
-
-### Replay state and visualization
-
-- Define deterministic replay state transitions from normalized events.
-- Add BB1/BB2 adapters behind the same normalized model when upstream support is ready.
-- Build interactive visualization only after deterministic reconstruction is stable.
+- Separate raw source-match lookup/selection from game-specific adaptation.
+- Ensure community/editorial audience aggregation can obtain relevant teams/players without
+  requiring `game` when that information is not semantically necessary.
+- Keep strict errors only at call sites that truly require a game-specific adapter.
+- Add regression coverage for:
+  - source without `game` and no matches;
+  - source without `game` with matches;
+  - community-directory/article-audience requests spanning such a source.
 
 ## P2 — Production and queue hardening
 
-### Queue diagnostics
+### Queue diagnostics and lifecycle
 
-- Validate the admin diagnostics under realistic backlog/quota conditions.
-- Persist model-execution throughput history if restart-surviving history proves useful;
-  current provider execution queues are in-memory.
+- Validate admin queue diagnostics under realistic backlog/quota conditions.
 - Keep deterministic replay analysis visually and operationally separate from AI queues.
-- Prefer explicit retry/resume reasons over opaque “pending” states.
+- Keep explicit retry/resume reasons and cooldown countdowns rather than opaque pending
+  states.
+- Verify stale RUNNING recovery, provider cooldown expiry and fresh priority selection with
+  regression tests.
+- Persist model-execution throughput history only if restart-surviving history proves
+  operationally useful; current quota execution queues are intentionally process-local.
 
 ### Deployment/runbook
 
-- Document image upgrade and rollback on Raspberry Pi/ARM64.
+- Document and verify image upgrade and rollback on Raspberry Pi/ARM64.
 - Document persistent volumes (`replay_data`, `community_media`, pybb3 credentials) and
   backup/restore expectations.
 - Document Cloudflare Tunnel diagnosis and container health/start ordering.
@@ -51,20 +47,31 @@ the project. See `ROADMAP.md` for direction and `CHANGELOG.md` for completed wor
 
 ### Integration failure contracts
 
-- Replace broad null/exception fallbacks with typed outcomes where the caller needs to
+- Replace broad null/exception fallbacks with typed outcomes only where callers need to
   distinguish unavailable, unauthorized, rate-limited and invalid data.
 - Do this incrementally at integration boundaries; do not create a parallel error model.
 
 ## P2 — Editorial/community follow-up
 
-- Reuse the existing article/review/provenance model for broader editorial article flows.
-- Keep AI-authored articles reviewable, with automatic acceptance only when explicitly
-  configured.
-- Keep image generation renderer-neutral from the editorial/domain model.
+- Keep general articles, match reports and AI-authored articles converged on the existing
+  review/publication/provenance model.
+- Keep image generation renderer-neutral from editorial/community domain state.
 - Add autonomous content producers only for explicit domain events approved by product
   behavior.
-- Replace fixed provider cooldowns with provider-aware retry/backoff when normalized error
-  metadata supports it reliably.
+- Preserve the zero-unplanned-cost rule for image generation: free-quota exhaustion waits
+  for provider reset unless a future paid fallback is explicitly enabled.
+
+## P3 — Replay state and visualization
+
+The BB3 semantic parser/timeline is an established baseline, not an active parser-correctness
+project.
+
+- Maintain representative cyanidebowl/pybb3 contract fixtures as new replay shapes are
+  discovered.
+- Turn newly discovered misleading interpretations into permanent regression fixtures.
+- Define deterministic replay state transitions from normalized events.
+- Build interactive replay visualization only after deterministic reconstruction is stable.
+- Add BB1/BB2 adapters behind the same normalized model when upstream support is ready.
 
 ## Rules for implementation
 

@@ -46,13 +46,12 @@ public class ReplaySweeperAdminController {
         int safePage = Math.max(0, page);
         int safeSize = Math.max(1, Math.min(size, 50));
 
-        // One extra row tells the UI whether an older page exists without a count query.
         var recent = matches.findReplayAdminMatches(PageRequest.of(
                 safePage,
-                safeSize + 1,
+                safeSize,
                 Sort.by(Sort.Direction.DESC, "finished")));
-        boolean hasMore = recent.size() > safeSize;
-        var pageMatches = hasMore ? recent.subList(0, safeSize) : recent;
+        boolean hasMore = recent.hasNext();
+        var pageMatches = recent.getContent();
 
         var replayIds = pageMatches.stream()
                 .filter(match -> match.getId() != null)

@@ -45,8 +45,8 @@ public class AiCommunityMediaWorker {
         if (!renderer.isConfigured()) return;
 
         Instant now = Instant.now();
-        if (providerBlocked(now)) return;
         recoverStaleRunning(now);
+        if (providerBlocked(now)) return;
 
         requests.findFirstByStatusAndNextAttemptAtLessThanEqualOrderByPriorityDescCreatedAtAsc(
                         AiCommunityMediaGenerationRequest.Status.QUEUED,
@@ -159,7 +159,13 @@ public class AiCommunityMediaWorker {
         }
         if(resume!=null&&resume.isBefore(now))resume=now.plusMillis(Math.max(1,pollMs));
         double perHour=completedHour>0?completedHour:completedDay/24.0;
-        Long eta=queued+running==0?0L:perHour<=0?null:(long)Math.ceil((queued+running)/perHour*3600.0);
+        long outstanding=queued+running;
+        Long eta=null;
+        if(outstanding==0){
+            eta=Long.valueOf(0L);
+        }else if(perHour>0){
+            eta=Long.valueOf((long)Math.ceil(outstanding/perHour*3600.0));
+        }
         if(eta!=null&&resume!=null&&resume.isAfter(now))eta+=Duration.between(now,resume).toSeconds();
         return new MediaQueueSnapshot(queued, running,
                 requests.countByStatus(AiCommunityMediaGenerationRequest.Status.COMPLETED),
