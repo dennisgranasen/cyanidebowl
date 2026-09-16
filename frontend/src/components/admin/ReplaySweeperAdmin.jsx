@@ -9,9 +9,18 @@ const relativeAge=(value,intl)=>{if(!value)return '—';const date=new Date(valu
 export default function ReplaySweeperAdmin({auth}){
   const intl=useIntl();
   const[status,setStatus]=useState(null),[logs,setLogs]=useState([]),[replays,setReplays]=useState([]),[files,setFiles]=useState([]),[importResults,setImportResults]=useState([]),[inspect,setInspect]=useState(null),[password,setPassword]=useState(''),[challenge,setChallenge]=useState(null),[code,setCode]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
-  const load=()=>Promise.all([WarpScoresApiService.replaySweeperStatus(...auth),WarpScoresApiService.replaySweeperLogs(...auth),WarpScoresApiService.replaySweeperReplays(...auth)]).then(([s,l,r])=>{setStatus(s);setLogs(l);setReplays(r)}).catch(e=>setError(e.message));
-  useEffect(()=>{load()},[]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(()=>{const interval=setInterval(load,status?.running?2000:30000);return()=>clearInterval(interval)},[status?.running]); // eslint-disable-line react-hooks/exhaustive-deps
+  const load=()=>Promise.all([WarpScoresApiService.replaySweeperStatus(...auth),WarpScoresApiService.replaySweeperLogs(...auth),WarpScoresApiService.replaySweeperReplays(...auth)])
+    .then(([s,l,r])=>{setStatus(s);setLogs(l);setReplays(r);setError('');return s})
+    .catch(e=>{setError(e.message);return null});
+  useEffect(()=>{
+    let active=true,timer;
+    const refresh=async()=>{
+      const currentStatus=await load();
+      if(active)timer=setTimeout(refresh,currentStatus?.running?2000:30000);
+    };
+    refresh();
+    return()=>{active=false;clearTimeout(timer)};
+  },[]); // eslint-disable-line react-hooks/exhaustive-deps
   const run=async action=>{setBusy(true);setError('');try{return await action()}catch(e){setError(e?.response?.data?.message||e.message)}finally{setPassword('');setBusy(false)}};
   const accept=result=>{if(result.status==='GUARD_REQUIRED')setChallenge(result);if(result.status==='AUTHENTICATED'){setChallenge(null);load()}};
   const openInspect=replay=>run(()=>WarpScoresApiService.inspectReplay(replay.matchId,...auth).then(data=>setInspect({replay,text:JSON.stringify(data,null,2)})));

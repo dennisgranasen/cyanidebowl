@@ -245,6 +245,70 @@ class StageMatchServiceTest {
                 assertThat(service.getMatchesForStage(stageId)).isEmpty();
             }
 
+    @Test
+    void returnsNoMatchesForHistoricalSourceWithoutGameOrRegisteredMatches() {
+        String stageId = "nst:s1:main";
+        StageSource source = leagueSource("nst:s1:main:src1", stageId, "historical-league");
+        source.setGame(null);
+        source.setIsArchived(true);
+        source.setFirstId("not-imported-yet");
+        givenStage(stageId, List.of(source));
+        when(matchRepository.findByLeagueId(source.getSourceEntityId())).thenReturn(List.of());
+        when(archiveMatchProvider.supports(source)).thenReturn(true);
+        when(archiveMatchProvider.findMatches(source)).thenReturn(List.of());
+
+        assertThat(service.getAllMatchesForStage(stageId)).isEmpty();
+        assertThat(service.getMatchesForStage(stageId)).isEmpty();
+        verify(interpretationRepository, never()).findRelevantToMatchIds(anyList(), any(Pattern.class));
+        assertThat(source.getGame()).isNull();
+    }
+
+    @Test
+    void emptyHistoricalSourceDoesNotHideMatchesFromOtherSources() {
+        String stageId = "nst:s1:mixed";
+        StageSource historical = leagueSource("historical", stageId, "historical-league");
+        historical.setGame(null);
+        StageSource digital = competitionSource("digital", stageId, "competition", GameType.BB3);
+        givenStage(stageId, List.of(historical, digital));
+        when(matchRepository.findByLeagueId(historical.getSourceEntityId())).thenReturn(List.of());
+        when(matchRepository.findByCompetitionId(digital.getSourceEntityId()))
+                .thenReturn(List.of(match("digital-match", "competition", 3, 1, 0, 1)));
+
+        assertThat(service.getMatchesForStage(stageId))
+                .extracting(StageMatchView::sourceMatchKey).containsExactly("digital-match");
+    }
+
+    @Test
+    void stillRequiresGameWhenSourceHasRegisteredMatches() {
+        String stageId = "nst:s1:missing-game";
+        StageSource source = leagueSource("missing-game", stageId, "league");
+        source.setGame(null);
+        givenStage(stageId, List.of(source));
+        when(matchRepository.findByLeagueId(source.getSourceEntityId()))
+                .thenReturn(List.of(match("registered", "league", 1, 0, 0, 1)));
+
+        assertThatThrownBy(() -> service.getMatchesForStage(stageId))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("StageSource has no game: missing-game");
+    }
+
+    @Test
+    void stillRequiresGameWhenOnlyArchiveHasMatches() {
+        String stageId = "nst:s1:archive-missing-game";
+        StageSource source = leagueSource("archive-missing-game", stageId, "league");
+        source.setGame(null);
+        source.setIsArchived(true);
+        givenStage(stageId, List.of(source));
+        when(matchRepository.findByLeagueId(source.getSourceEntityId())).thenReturn(List.of());
+        when(archiveMatchProvider.supports(source)).thenReturn(true);
+        when(archiveMatchProvider.findMatches(source))
+                .thenReturn(List.of(match("archived", "league", 1, 0, 0, 1)));
+
+        assertThatThrownBy(() -> service.getMatchesForStage(stageId))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("StageSource has no game: archive-missing-game");
+    }
+
     private void givenStage(String stageId, List<StageSource> sources) {
         Stage stage = new Stage();
         stage.setId(stageId);

@@ -75,6 +75,10 @@ public class StageMatchService {
             }
         }
 
+        if (uniqueMatches.isEmpty()) {
+            return List.of();
+        }
+
         List<MatchInterpretation> interpretations = findInterpretationsFor(uniqueMatches);
         return uniqueMatches.values().stream()
                 .map(sourceMatch -> adapt(stageId, sourceMatch, interpretations))
@@ -108,6 +112,13 @@ public class StageMatchService {
                 .filter(provider -> provider.supports(source))
                 .flatMap(provider -> provider.findMatches(source).stream())
                 .forEach(match -> matches.putIfAbsent(identityKey(match), match));
+        // Historical tabletop sources may have no digital game or registered matches yet.
+        if (matches.isEmpty()) {
+            return List.of();
+        }
+        if (source.getGame() == null) {
+            throw new IllegalArgumentException("StageSource has no game: " + source.getId());
+        }
         List<Match> allMatches = new ArrayList<>(matches.values());
         return applyExplicitSelection(source, allMatches, applyBoundaries(source, allMatches));
     }
@@ -208,9 +219,6 @@ public class StageMatchService {
         }
         if (source.getSourceType() == null) {
             throw new IllegalArgumentException("StageSource has no supported sourceType: " + source.getId());
-        }
-        if (source.getGame() == null) {
-            throw new IllegalArgumentException("StageSource has no game: " + source.getId());
         }
     }
 
