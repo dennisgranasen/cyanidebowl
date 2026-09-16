@@ -37,7 +37,12 @@ public class ReplaySweeperAdminController {
     @PutMapping public Map<String,Object> update(@RequestBody Settings value){service.update(value.enabled(),value.cron(),value.zoneId(),value.batchSize(),value.steamUsername());return service.status();}
     @PostMapping("/run") public Map<String,Object> run(){boolean accepted=service.run();var status=new HashMap<>(service.status());status.put("accepted",accepted);return status;}
     @PostMapping("/scan-matches") public Map<String,Object> scanMatches(){fetchDataService.fetchNewMatches();return Map.of("status","COMPLETED");}
-    @GetMapping("/replays") public Object replays(){var cutoff=java.util.Date.from(java.time.Instant.now().minus(java.time.Duration.ofDays(Math.max(1,availabilityWindowDays))));return downloads.findTop50ByAttemptedAtAfterOrderByAttemptedAtDesc(cutoff).stream().map(replay->{
+    @GetMapping("/replays") public Object replays(){var cutoff=java.util.Date.from(java.time.Instant.now().minus(java.time.Duration.ofDays(Math.max(1,availabilityWindowDays))));var replays=downloads.findTop50ByAttemptedAtAfterOrderByAttemptedAtDesc(cutoff);
+        var ids=new java.util.ArrayList<net.warp_scores.warpscores.identity.Identity>();
+        for(var replay:replays) try { ids.add(IdentityUtil.fromId(replay.getMatchId())); } catch(IllegalArgumentException ignored) {}
+        var matchById=new java.util.HashMap<String,net.warp_scores.warpscores.model.Match>();
+        if(!ids.isEmpty()) for(var match:matches.findAllById(ids)) if(match.getId()!=null) matchById.put(match.getId().asMongoKey(),match);
+        return replays.stream().map(replay->{
         var result=new java.util.LinkedHashMap<String,Object>();
         result.put("matchId",replay.getMatchId());result.put("gameId",replay.getGameId());
         result.put("status",replay.getStatus());result.put("analysisStatus",replay.getAnalysisStatus());
@@ -51,10 +56,11 @@ public class ReplaySweeperAdminController {
         result.put("originalAvailable",replayArtifacts.originalAvailable(replay));
         result.put("compactAvailable",replayArtifacts.compactAvailable(replay));
         result.put("availabilityWindowDays",availabilityWindowDays);
-        try{matches.findById(IdentityUtil.fromId(replay.getMatchId())).ifPresent(match->{
+        var match=matchById.get(replay.getMatchId());
+        if(match!=null){
             result.put("playedAt",match.getFinished());result.put("competitionName",match.getCompetitionName());
             if(match.getTeams()!=null)result.put("teams",java.util.Arrays.stream(match.getTeams()).filter(java.util.Objects::nonNull).map(team->team.getName()).toList());
-        });}catch(RuntimeException ignored){}
+        }
         return result;
     }).sorted((left,right)->{
         var leftPlayed=(java.util.Date)left.get("playedAt");

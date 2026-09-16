@@ -125,6 +125,10 @@ public class ReplayArtifactService {
     public boolean storeDownloaded(String matchId, String gameId, Map<?, ?> result) {
         ReplayDownload record = downloads.findById(matchId).orElseGet(ReplayDownload::new);
         record.setMatchId(matchId);
+        return storeDownloaded(record, gameId, result);
+    }
+
+    private boolean storeDownloaded(ReplayDownload record, String gameId, Map<?, ?> result) {
         record.setGameId(gameId);
         record.setAttemptedAt(new Date());
         try {
@@ -177,14 +181,14 @@ public class ReplayArtifactService {
                 Map.of("data", Base64.getEncoder().encodeToString(raw)));
         Map<String, Object> normalized = new HashMap<>(response);
         normalized.put("data", response.get("originalData"));
-        if (!storeDownloaded(record.getMatchId(), record.getGameId(), normalized))
+        if (!storeDownloaded(record, record.getGameId(), normalized))
             throw new IllegalStateException("Reprocessed replay artifacts could not be stored");
-        ReplayDownload updated = downloads.findById(record.getMatchId())
-                .orElseThrow(() -> new IllegalStateException("Reprocessed replay record disappeared"));
+        // Validate this operation's result, not a separate read that another worker may change.
+        ReplayDownload updated = record;
         if (!"PROCESSED".equals(updated.getAnalysisStatus())) {
             throw new IllegalStateException(Objects.toString(
                     updated.getAnalysisError(),
-                    "Replay parser returned artifacts but the analysis was not stored"));
+                    "Replay parser returned no analysis (status: " + updated.getAnalysisStatus() + ")"));
         }
         if (!Objects.equals(updated.getParserVersion(), PARSER_VERSION)) {
             throw new IllegalStateException("Replay parser returned version "
