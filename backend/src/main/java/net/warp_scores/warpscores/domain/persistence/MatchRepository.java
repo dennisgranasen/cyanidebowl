@@ -36,7 +36,7 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
 
     List<Match> findAllById(List<Identity> matchIds);
 
-    @Query("{ '_id.type': 'SimpleIdentity', '_id.value': { '$regex': '^3-' }, "
+    @Query("{ '_id.type': 'SimpleIdentity', '_id.value': { '$regex': '^3_' }, "
             + "'finished': { '$ne': null }, 'matchId': { '$nin': [null, ''] } }")
     Slice<Match> findReplayAdminMatches(Pageable pageable);
     //List<Match> findAllByFinishedNullOrNotFinished();
