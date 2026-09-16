@@ -34,11 +34,18 @@ public class AiCommunityMediaWorker {
     @Value("${warpscores.ai.community-media.poll-ms:30000}")
     private long pollMs;
 
+    @Value("${warpscores.ai.community-media.quota-exhausted-cooldown:12h}")
+    private Duration quotaExhaustedCooldown;
+
+    private volatile Instant providerBlockedUntil;
+    private volatile String providerBlockReason;
+
     @Scheduled(fixedDelayString = "${warpscores.ai.community-media.poll-ms:30000}")
     public synchronized void poll() {
         if (!renderer.isConfigured()) return;
 
         Instant now = Instant.now();
+        if (providerBlocked(now)) return;
         recoverStaleRunning(now);
 
         requests.findFirstByStatusAndNextAttemptAtLessThanEqualOrderByPriorityDescCreatedAtAsc(
@@ -109,6 +116,18 @@ public class AiCommunityMediaWorker {
                     !(e instanceof AiCommunityImageProviderException providerFailure)
                             || providerFailure.isRetryable();
 
+            if (e instanceof AiCommunityImageProviderException providerFailure
+                    && providerFailure.quotaExhausted()) {
+                Instant blockedUntil = Instant.now().plus(quotaExhaustedCooldown);
+                blockProvider(blockedUntil, "Cloudflare daily image quota exhausted");
+                // Quota exhaustion is provider-wide, not a failure of this specific job.
+                // Put it back among the normally eligible jobs. When the provider block
+                // expires, the repository performs a fresh priority-ordered queue pick.
+                request.setAttempts(Math.max(0, request.getAttempts() - 1));
+                requeue(request, e.getMessage(), Instant.now());
+                return;
+            }
+
             if (!retryable
                     || request.getAttempts() >= Math.max(1, maxAttempts)) {
                 terminalFail(request, e.getMessage());
@@ -128,6 +147,10 @@ public class AiCommunityMediaWorker {
         long queued=requests.countByStatus(AiCommunityMediaGenerationRequest.Status.QUEUED);
         long running=requests.countByStatus(AiCommunityMediaGenerationRequest.Status.RUNNING);
         Instant resume=pending.stream().map(r->r.getNextAttemptAt()==null?now:r.getNextAttemptAt()).min(Instant::compareTo).orElse(null);
+        Instant blockedUntil = activeProviderBlockedUntil(now);
+        if (blockedUntil != null && (resume == null || blockedUntil.isAfter(resume))) {
+            resume = blockedUntil;
+        }
         if(resume!=null&&resume.isBefore(now))resume=now.plusMillis(Math.max(1,pollMs));
         double perHour=completedHour>0?completedHour:completedDay/24.0;
         Long eta=queued+running==0?0L:perHour<=0?null:(long)Math.ceil((queued+running)/perHour*3600.0);
@@ -135,13 +158,14 @@ public class AiCommunityMediaWorker {
         return new MediaQueueSnapshot(queued, running,
                 requests.countByStatus(AiCommunityMediaGenerationRequest.Status.COMPLETED),
                 requests.countByStatus(AiCommunityMediaGenerationRequest.Status.FAILED),
-                renderer.isConfigured(), resume, completedHour, completedDay, eta, pending);
+                renderer.isConfigured(), blockedUntil, blockedUntil == null ? null : providerBlockReason,
+                resume, completedHour, completedDay, eta, pending);
     }
     public boolean reprioritize(String id,int priority){if(priority<0||priority>100)throw new IllegalArgumentException("priority must be 0..100");var r=requests.findById(id).orElse(null);if(r==null||r.getStatus()!=AiCommunityMediaGenerationRequest.Status.QUEUED)return false;r.setPriority(priority);requests.save(r);return true;}
     public boolean removePending(String id){var r=requests.findById(id).orElse(null);if(r==null||r.getStatus()!=AiCommunityMediaGenerationRequest.Status.QUEUED)return false;requests.delete(r);return true;}
     public int clearPending(){var pending=requests.findByStatusInOrderByPriorityDescCreatedAtAsc(java.util.List.of(AiCommunityMediaGenerationRequest.Status.QUEUED));requests.deleteAll(pending);return pending.size();}
     public record MediaQueueSnapshot(long queued,long running,long succeeded,long failed,
-                                     boolean providerConfigured,Instant resumeAt,long completedLastHour,
+                                     boolean providerConfigured,Instant blockedUntil,String blockReason,Instant resumeAt,long completedLastHour,
                                      long completedLast24Hours,Long estimatedClearSeconds,
                                      java.util.List<AiCommunityMediaGenerationRequest> jobs) {}
 
@@ -176,6 +200,27 @@ public class AiCommunityMediaWorker {
         request.setNextAttemptAt(providerRetryAt != null && providerRetryAt.isAfter(calculated) ? providerRetryAt : calculated);
         request.setError(error == null ? "Unknown error" : error);
         requests.save(request);
+    }
+
+    private boolean providerBlocked(Instant now) {
+        return activeProviderBlockedUntil(now) != null;
+    }
+
+    private Instant activeProviderBlockedUntil(Instant now) {
+        Instant blockedUntil = providerBlockedUntil;
+        if (blockedUntil != null && !blockedUntil.isAfter(now)) {
+            providerBlockedUntil = null;
+            providerBlockReason = null;
+            return null;
+        }
+        return blockedUntil;
+    }
+
+    private synchronized void blockProvider(Instant until, String reason) {
+        if (until != null && (providerBlockedUntil == null || until.isAfter(providerBlockedUntil))) {
+            providerBlockedUntil = until;
+            providerBlockReason = reason;
+        }
     }
 
     private void terminalFail(

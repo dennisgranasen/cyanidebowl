@@ -39,6 +39,17 @@ const duration = (seconds) => {
 
 const when = (value) => value ? new Date(value).toLocaleString() : '—';
 
+const countdown = (value, nowMs) => {
+  if (!value) return null;
+  const remaining = Math.max(0, Math.ceil((new Date(value).getTime() - nowMs) / 1000));
+  const hours = Math.floor(remaining / 3600);
+  const minutes = Math.floor((remaining % 3600) / 60);
+  const seconds = remaining % 60;
+  if (hours > 0) return `${hours}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
+  if (minutes > 0) return `${minutes}m ${String(seconds).padStart(2, '0')}s`;
+  return `${seconds}s`;
+};
+
 function AdminAiAutonomousWorkPage() {
   const {
     authenticationReady,
@@ -50,6 +61,7 @@ function AdminAiAutonomousWorkPage() {
   const [overview, setOverview] = useState(null);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
   const load = useCallback(async () => {
     try {
@@ -78,6 +90,11 @@ function AdminAiAutonomousWorkPage() {
     refresh();
     return () => { active = false; clearTimeout(timer); };
   }, [authenticationReady, userPermissions.writeSiteAdmin, navigate, load]);
+
+  useEffect(() => {
+    const timer = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const setEnabled = async (enabled) => {
     setSaving(true);
@@ -224,12 +241,24 @@ function AdminAiAutonomousWorkPage() {
 
           <Box>
             <Heading size="md" mb={2}>Model execution queues</Heading>
-            <VStack align="stretch" spacing={4}>{executionQueues.map((qs) => <Box key={qs.target} borderWidth="1px" borderRadius="lg" p={3}><HStack justify="space-between" align="start"><Box><Text fontWeight="700">{qs.target} · {qs.jobs?.length || 0} jobs</Text><Text fontSize="xs" color="gray.500">{qs.provider} · {qs.model} · quota {qs.quotaGroup}</Text><Text fontSize="xs" color="gray.500">queued {qs.queued ?? 0} · running {qs.running ?? 0}/{qs.concurrency ?? 0} · retry {qs.retryWaiting ?? 0} · completed 1h/24h {qs.completedLastHour ?? 0}/{qs.completedLast24Hours ?? 0} · avg {qs.averageDurationMs == null ? '—' : `${Math.round(qs.averageDurationMs/1000)}s`} · ETA {duration(qs.estimatedClearSeconds)}</Text><Text fontSize="xs" color="gray.500">Resume/next eligible: {qs.jobs?.length ? (qs.resumeAt ? when(qs.resumeAt) : 'now') : '—'} · throughput history since {when(qs.historyStartedAt)}</Text>{qs.blockedUntil && <Text fontSize="xs" color="yellow.300">Throttled until {new Date(qs.blockedUntil).toLocaleString()}{qs.throttleReason ? ` · ${qs.throttleReason}` : ''}</Text>}{qs.lastError && <Text fontSize="xs" color="red.300">Last error{qs.lastStatusCode ? ` HTTP ${qs.lastStatusCode}` : ''}: {qs.lastError}</Text>}</Box><Button size="xs" colorScheme="red" variant="outline" isDisabled={!qs.jobs?.length || saving} onClick={() => clearPrompt(`${qs.target} queue`, qs.jobs?.length || 0, () => AiReporterApi.clearAiQueue(`execution-queues/${encodeURIComponent(qs.target)}/jobs`, getAccessTokenSilently, getAccessTokenWithPopup))}>Clear queue</Button></HStack>{qs.jobs?.length > 0 && <Box mt={3} overflowX="auto"><Table size="sm"><Thead><Tr><Th>Task</Th><Th>Agent</Th><Th isNumeric>Priority</Th><Th>Status</Th><Th>Attempts</Th><Th>Next attempt</Th><Th>Actions</Th></Tr></Thead><Tbody>{qs.jobs.map((job, index) => <Tr key={job.id}><Td>{job.task || '—'}</Td><Td>{job.agentId || '—'}</Td><Td isNumeric>{job.priority}</Td><Td>{job.status}</Td><Td>{job.attempts}</Td><Td>{job.nextAttemptAt ? new Date(job.nextAttemptAt).toLocaleString() : '—'}</Td><Td><HStack><Button size="xs" isDisabled={index===0||job.status==='RUNNING'||saving} onClick={() => movePriority(qs.jobs,index,-1,j=>j.priority,100,(priority)=>AiReporterApi.reprioritizeAiQueueJob(`execution-queues/${encodeURIComponent(qs.target)}/jobs/${encodeURIComponent(job.id)}`,priority,getAccessTokenSilently,getAccessTokenWithPopup))}>↑</Button><Button size="xs" isDisabled={index===qs.jobs.length-1||job.status==='RUNNING'||saving} onClick={() => movePriority(qs.jobs,index,1,j=>j.priority,100,(priority)=>AiReporterApi.reprioritizeAiQueueJob(`execution-queues/${encodeURIComponent(qs.target)}/jobs/${encodeURIComponent(job.id)}`,priority,getAccessTokenSilently,getAccessTokenWithPopup))}>↓</Button><Button size="xs" isDisabled={job.status==='RUNNING'} onClick={() => priorityPrompt(`${job.task}/${job.agentId}`, job.priority, (priority) => AiReporterApi.reprioritizeAiQueueJob(`execution-queues/${encodeURIComponent(qs.target)}/jobs/${encodeURIComponent(job.id)}`, priority, getAccessTokenSilently, getAccessTokenWithPopup))}>Priority</Button><Button size="xs" colorScheme="red" variant="outline" isDisabled={job.status==='RUNNING'} onClick={() => removePrompt(`${job.task}/${job.agentId}`, () => AiReporterApi.deleteAiQueueJob(`execution-queues/${encodeURIComponent(qs.target)}/jobs/${encodeURIComponent(job.id)}`, getAccessTokenSilently, getAccessTokenWithPopup))}>Remove</Button></HStack></Td></Tr>)}</Tbody></Table></Box>}</Box>)}</VStack>
+            <VStack align="stretch" spacing={4}>{executionQueues.map((qs) => <Box key={qs.target} borderWidth="1px" borderRadius="lg" p={3}><HStack justify="space-between" align="start"><Box><Text fontWeight="700">{qs.target} · {qs.jobs?.length || 0} jobs</Text><Text fontSize="xs" color="gray.500">{qs.provider} · {qs.model} · quota {qs.quotaGroup}</Text><Text fontSize="xs" color="gray.500">queued {qs.queued ?? 0} · running {qs.running ?? 0}/{qs.concurrency ?? 0} · retry {qs.retryWaiting ?? 0} · completed 1h/24h {qs.completedLastHour ?? 0}/{qs.completedLast24Hours ?? 0} · avg {qs.averageDurationMs == null ? '—' : `${Math.round(qs.averageDurationMs/1000)}s`} · ETA {duration(qs.estimatedClearSeconds)}</Text><Text fontSize="xs" color="gray.500">Resume/next eligible: {qs.jobs?.length ? (qs.resumeAt ? when(qs.resumeAt) : 'now') : '—'} · throughput history since {when(qs.historyStartedAt)}</Text>{qs.blockedUntil && <Text fontSize="sm" fontWeight="700" color="yellow.300">Throttled · retry in {countdown(qs.blockedUntil, nowMs)} <Text as="span" fontSize="xs" fontWeight="400">({when(qs.blockedUntil)}){qs.throttleReason ? ` · ${qs.throttleReason}` : ''}</Text></Text>}{qs.lastError && <Text fontSize="xs" color="red.300">Last error{qs.lastStatusCode ? ` HTTP ${qs.lastStatusCode}` : ''}: {qs.lastError}</Text>}</Box><Button size="xs" colorScheme="red" variant="outline" isDisabled={!qs.jobs?.length || saving} onClick={() => clearPrompt(`${qs.target} queue`, qs.jobs?.length || 0, () => AiReporterApi.clearAiQueue(`execution-queues/${encodeURIComponent(qs.target)}/jobs`, getAccessTokenSilently, getAccessTokenWithPopup))}>Clear queue</Button></HStack>{qs.jobs?.length > 0 && <Box mt={3} overflowX="auto"><Table size="sm"><Thead><Tr><Th>Task</Th><Th>Agent</Th><Th isNumeric>Priority</Th><Th>Status</Th><Th>Attempts</Th><Th>Next attempt</Th><Th>Actions</Th></Tr></Thead><Tbody>{qs.jobs.map((job, index) => <Tr key={job.id}><Td>{job.task || '—'}</Td><Td>{job.agentId || '—'}</Td><Td isNumeric>{job.priority}</Td><Td>{job.status}</Td><Td>{job.attempts}</Td><Td>{job.nextAttemptAt ? new Date(job.nextAttemptAt).toLocaleString() : '—'}</Td><Td><HStack><Button size="xs" isDisabled={index===0||job.status==='RUNNING'||saving} onClick={() => movePriority(qs.jobs,index,-1,j=>j.priority,100,(priority)=>AiReporterApi.reprioritizeAiQueueJob(`execution-queues/${encodeURIComponent(qs.target)}/jobs/${encodeURIComponent(job.id)}`,priority,getAccessTokenSilently,getAccessTokenWithPopup))}>↑</Button><Button size="xs" isDisabled={index===qs.jobs.length-1||job.status==='RUNNING'||saving} onClick={() => movePriority(qs.jobs,index,1,j=>j.priority,100,(priority)=>AiReporterApi.reprioritizeAiQueueJob(`execution-queues/${encodeURIComponent(qs.target)}/jobs/${encodeURIComponent(job.id)}`,priority,getAccessTokenSilently,getAccessTokenWithPopup))}>↓</Button><Button size="xs" isDisabled={job.status==='RUNNING'} onClick={() => priorityPrompt(`${job.task}/${job.agentId}`, job.priority, (priority) => AiReporterApi.reprioritizeAiQueueJob(`execution-queues/${encodeURIComponent(qs.target)}/jobs/${encodeURIComponent(job.id)}`, priority, getAccessTokenSilently, getAccessTokenWithPopup))}>Priority</Button><Button size="xs" colorScheme="red" variant="outline" isDisabled={job.status==='RUNNING'} onClick={() => removePrompt(`${job.task}/${job.agentId}`, () => AiReporterApi.deleteAiQueueJob(`execution-queues/${encodeURIComponent(qs.target)}/jobs/${encodeURIComponent(job.id)}`, getAccessTokenSilently, getAccessTokenWithPopup))}>Remove</Button></HStack></Td></Tr>)}</Tbody></Table></Box>}</Box>)}</VStack>
           </Box>
 
           <Box>
             <HStack justify="space-between" mb={2}><Heading size="md">Community media queue</Heading><Button size="xs" colorScheme="red" variant="outline" isDisabled={!mediaQueue.jobs?.length || saving} onClick={() => clearPrompt('media queue', mediaQueue.jobs?.length || 0, () => AiReporterApi.clearAiQueue('media-queue/jobs', getAccessTokenSilently, getAccessTokenWithPopup))}>Clear queue</Button></HStack>
             <Text fontSize="sm" color="gray.500">queued {mediaQueue.queued ?? 0} · running {mediaQueue.running ?? 0} · succeeded {mediaQueue.succeeded ?? 0} · failed {mediaQueue.failed ?? 0} · completed 1h/24h {mediaQueue.completedLastHour ?? 0}/{mediaQueue.completedLast24Hours ?? 0} · resume {mediaQueue.providerConfigured === false ? 'provider not configured' : (mediaQueue.resumeAt ? when(mediaQueue.resumeAt) : 'now')} · ETA {duration(mediaQueue.estimatedClearSeconds)}</Text>
+            {mediaQueue.blockedUntil && (
+              <Box mt={2} borderWidth="1px" borderRadius="md" p={3}>
+                <Text fontSize="xs" color="gray.500">Provider cooldown</Text>
+                <Text fontSize="2xl" fontWeight="700" color="yellow.300">
+                  {countdown(mediaQueue.blockedUntil, nowMs)}
+                </Text>
+                <Text fontSize="xs" color="gray.500">
+                  Next provider attempt {when(mediaQueue.blockedUntil)}
+                  {mediaQueue.blockReason ? ` · ${mediaQueue.blockReason}` : ''}
+                </Text>
+              </Box>
+            )}
             {mediaQueue.jobs?.length > 0 && <Box mt={2} borderWidth="1px" borderRadius="lg" overflowX="auto"><Table size="sm"><Thead><Tr><Th>Job</Th><Th>Type</Th><Th isNumeric>Priority</Th><Th>Attempts</Th><Th>Next</Th><Th>Error</Th><Th>Actions</Th></Tr></Thead><Tbody>{mediaQueue.jobs.map((job, index) => <Tr key={job.id}><Td fontSize="xs">{job.id}</Td><Td>{job.target}</Td><Td isNumeric>{job.priority ?? 0}</Td><Td>{job.attempts ?? 0}</Td><Td>{job.nextAttemptAt ? new Date(job.nextAttemptAt).toLocaleString() : '—'}</Td><Td fontSize="xs">{job.error || '—'}</Td><Td><HStack><Button size="xs" isDisabled={index===0||saving} onClick={() => movePriority(mediaQueue.jobs,index,-1,j=>j.priority??0,100,(priority)=>AiReporterApi.reprioritizeAiQueueJob(`media-queue/jobs/${encodeURIComponent(job.id)}`,priority,getAccessTokenSilently,getAccessTokenWithPopup))}>↑</Button><Button size="xs" isDisabled={index===mediaQueue.jobs.length-1||saving} onClick={() => movePriority(mediaQueue.jobs,index,1,j=>j.priority??0,100,(priority)=>AiReporterApi.reprioritizeAiQueueJob(`media-queue/jobs/${encodeURIComponent(job.id)}`,priority,getAccessTokenSilently,getAccessTokenWithPopup))}>↓</Button><Button size="xs" onClick={() => priorityPrompt(job.id, job.priority ?? 0, (priority) => AiReporterApi.reprioritizeAiQueueJob(`media-queue/jobs/${encodeURIComponent(job.id)}`, priority, getAccessTokenSilently, getAccessTokenWithPopup))}>Priority</Button><Button size="xs" colorScheme="red" variant="outline" onClick={() => removePrompt(job.id, () => AiReporterApi.deleteAiQueueJob(`media-queue/jobs/${encodeURIComponent(job.id)}`, getAccessTokenSilently, getAccessTokenWithPopup))}>Remove</Button></HStack></Td></Tr>)}</Tbody></Table></Box>}
           </Box>
 

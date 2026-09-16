@@ -116,6 +116,7 @@ public class CloudflareCommunityImageRenderer implements AiCommunityImageRendere
             String body,
             String retryAfter) {
         String internalCode = extractCloudflareCode(body);
+        boolean quotaExhausted = statusCode == 429 && "4006".equals(internalCode);
         boolean retryable =
                 statusCode == 408
                         || statusCode >= 500
@@ -134,7 +135,8 @@ public class CloudflareCommunityImageRenderer implements AiCommunityImageRendere
                         + truncate(body, 700),
                 retryable,
                 statusCode,
-                RetryAfter.parse(retryAfter, java.time.Instant.now()));
+                RetryAfter.parse(retryAfter, java.time.Instant.now()),
+                quotaExhausted);
     }
 
     private String extractCloudflareCode(String body) {
