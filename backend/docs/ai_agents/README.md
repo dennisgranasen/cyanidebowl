@@ -1,51 +1,27 @@
-# AI reporters
+# AI reporter profiles
 
-AI reporter profiles are canonical Markdown files in `backend/docs/ai_agents/reporters/`.
-Maven copies that directory to the backend classpath and `AiReporterProfileLoader` loads
-the profiles on startup.
+Canonical AI reporter profiles live in `backend/docs/ai_agents/reporters/`. These files
+are application data loaded by the backend, not merely developer documentation.
 
-Each profile contains YAML frontmatter for machine-readable behaviour and a Markdown body
-for persona/background text. Portrait assets live in `frontend/public/img/portraits/`.
+Each profile contains YAML frontmatter for machine-readable defaults and Markdown for
+persona/background/public-profile context. Portrait assets live under
+`frontend/public/img/portraits/`.
 
-Minimal portrait configuration:
+Static profile data includes identity, editorial role, public biography, voice/defaults
+and portrait metadata. Runtime relationships, grievances, memories, queue state,
+assignments, generated content and provider/model provenance belong in persistence.
 
-```yaml
-portrait:
-  image: /img/portraits/example_full.png
-  avatar: /img/portraits/example_small.png
-  prompt_key: example
-```
+Site Admin runtime overrides may enable/disable reporter capabilities and generation
+behavior without editing the canonical profile files.
 
-`image` is used on the full staff profile. `avatar` is used in staff/admin lists and falls
-back to `image` when omitted.
+Public Staff profiles must not expose provider/model/prompt/runtime configuration or
+private relationship/memory state.
 
-## Runtime overrides
+AI reporter ratings use the application-wide rating scale. Direct mentions/tags are
+handled through the canonical interaction path when the reporter/capability is enabled;
+global/admin disables still take precedence.
 
-Profile files define defaults. Site admins can override these at runtime without editing
-the Markdown files:
+Match/replay/domain facts are authoritative input. Persona affects selection, emphasis
+and tone but must not invent events.
 
-- enabled
-- report generation
-- interactions
-- player ratings
-- writing weight
-
-Bulk overrides are available under `/admin/ai-reporters`. On `/staff/:reporterId`, a
-site admin gets a settings gear for the same per-reporter controls.
-
-## Public versus internal text
-
-The public staff profile renders the Markdown body but excludes `## LLM guidance` and
-`## Portrait brief`. Those sections remain part of the canonical agent definition.
-
-## Ratings and interaction rules
-
-AI reporter player ratings use integer values from **-3 to +3**. The scale is global;
-legacy per-profile `scale_min`, `scale_max` and `step` values are ignored by the loader.
-
-Interactions with human-authored articles/comments use deliberately low probabilities.
-A direct tag/mention is handled as mandatory textual work when the reporter and relevant
-capability are enabled; hard admin/global disables still take precedence.
-
-Match/replay facts are authoritative input. Persona bias may change selection, emphasis,
-tone and rating, but must not invent match events.
+For the broader identity/context/provenance model, see `../AI_ARCHITECTURE.md`.

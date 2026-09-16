@@ -2,11 +2,16 @@
 
 ## Unreleased
 
+- Separated deterministic replay reanalysis from AI work queues, with parser-version-aware
+  retry protection, manual reanalysis requests and Site Admin queue diagnostics.
+- Consolidated project documentation around a smaller set of canonical documents and
+  removed redundant subsystem roadmaps/AI-agent notes.
+
 - Added OpenAI-rendered community images with local asset serving, a full Site Admin
   Community editor, and team-page supporter cards linked to public fan profiles.
 
 - Added a public Community directory/profile view, durable fan avatar/profile-media requests,
-  and configurable periodic Dedicated Fans reconciliation for purchases between matches.
+  and explicit Site Admin queued Dedicated Fans reconciliation outside match-driven updates.
 
 - Added fan visual profile briefs and avatar/profile-photo metadata, including broad
   supporter archetypes and team-colour hints for future image generation.

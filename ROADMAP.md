@@ -1,166 +1,77 @@
-# BlaskScore project roadmap
+# BlaskScore roadmap
 
 > Working branch: `dev`  
-> Reviewed: 2026-09-13  
-> Detailed work items: `BACKLOG.md`  
-> AI-specific roadmap: `backend/docs/AI_ROADMAP.md`
+> Reviewed: 2026-09-16
 
-This roadmap contains **remaining product work only**. Implemented foundations belong
-in architecture/reference documentation and `CHANGELOG.md`, not in the execution queue.
+This file contains broad remaining direction only. Detailed implementation tasks belong
+in `BACKLOG.md`. Completed work belongs in `CHANGELOG.md`.
 
-## Implemented baseline
+## Current baseline
 
-The following capabilities are already present on `dev` and should not be recreated as
-future roadmap work:
+BlaskScore already has the foundations required for continued product work:
 
-- `LeagueSystem -> Season -> Phase -> Stage -> StageSource` domain model, read APIs and admin CRUD;
-- LeagueSystem-first public navigation with season/phase/stage selection;
-- deterministic round/group presentation with match-day reconstruction and independent
-  group progress;
-- standings and playoff bracket rendering, including play-in/QF/SF/final/bronze,
-  replay/rematch series and historical-topology regression coverage;
-- interactive Cyanide league/competition discovery, LeagueSystem alias-based candidate
-  discovery and explicit source registration;
-- historical match-detail backfill with retryable availability classification and
-  canonical race presentation;
-- canonical game-aware `coachClaims`, `siteAdmin`, scoped LeagueSystem administration
-  and scoped editorial permissions;
-- articles, comments, reactions, player ratings and match-article review flows;
-- canonical HUMAN/AI users and generation provenance;
-- canonical AI context planning/assembly with social and memory persistence;
-- Gemini and OpenAI-compatible provider execution with fallback;
-- AI match-article generation, interaction policy, semantic POW/SKULL reactions and
-  bounded generation traces;
-- ARM64 image builds, Raspberry Pi compose deployment and Cloudflare Tunnel deployment
-  topology;
-- authenticated `pybb3-service` boundary to the separately versioned pybb3 client;
-- primary-navigation LeagueSystem switching with URL-addressable selection on the
-  LeagueSystem landing page;
-- retired the legacy Circuit/CircuitLeg hierarchy in favor of the canonical
-  LeagueSystem/Season/Phase/Stage/StageSource structure;
-- the canonical public `Staff` surface for both HUMAN editors and AI reporters, with
-  mutable human public profile fields kept separate from authentication identity;
-- public AI reporter DTOs that expose public identity fields without leaking
-  provider/prompt/runtime configuration;
-- initial Staff-profile breadcrumb hierarchy and react-intl coverage for the match-card
-  and immediate match-modal surface.
+- canonical `LeagueSystem -> Season -> Phase -> Stage -> StageSource` competition model;
+- LeagueSystem-first public navigation, standings, group rounds and playoff brackets;
+- Cyanide discovery/source registration and historical match enrichment;
+- articles, comments, reactions, ratings and public Staff/community surfaces;
+- canonical HUMAN/AI identity, AI context/provenance and provider abstraction;
+- durable autonomous AI work and community-media queues;
+- deterministic replay download/storage/reanalysis separated from LLM execution;
+- authenticated `pybb3-service` boundary and versioned replay-analysis contract;
+- ARM64/Raspberry Pi Compose deployment behind Cloudflare Tunnel.
 
-Completed capability may remain documented in `BACKLOG.md` as history, but it is not
-active roadmap work.
+Do not reopen those foundations as green-field roadmap items.
 
-## Active roadmap
+## R1 — Replay correctness and visualization
 
-### R1 — Replay platform
+The immediate replay priority is correctness rather than more presentation features.
 
-- Consume a versioned pybb3 timeline contract through `pybb3-service`.
-- Render a roll only when an actual test occurred and expose the semantic reason for
-  that test.
-- Consume upstream `skill_rerolls` separately from team/generic rerolls while retaining
-  compatibility with older payloads.
-- Preserve explicit unknown-event provenance and replay IP redaction.
-- Stabilize replay parsing around regression fixtures for every known odd/misleading
-  interpretation.
-- Add BB1 and BB2 edition-specific parsing/adapters behind the same normalized consumer
-  contract used for BB3.
-- Build a deterministic replay state engine, then an interactive visualization on top
-  of that engine.
+- Keep the cyanidebowl/pybb3 contract versioned and covered by fixtures.
+- Stabilize semantic timeline output: rolls appear only for actual tests and include the
+  reason for the test.
+- Consume skill rerolls separately from team/generic rerolls while remaining compatible
+  with older replay payloads where required.
+- Preserve unknown-event provenance and replay IP redaction.
+- Add BB1/BB2 adapters behind the same normalized consumer model when upstream support is
+  ready.
+- Build deterministic replay state reconstruction before interactive visualization.
 
-Detailed replay parsing belongs in the separate `pybb3` repository. Cyanidebowl owns
-the service contract, validation, compatibility, state reconstruction and presentation.
+The backend owns orchestration, compatibility and presentation. `pybb3` owns raw BB3
+replay decoding/parsing.
 
-Exit condition: representative BB1, BB2 and BB3 replays produce stable normalized
-events; known parser defects have regression fixtures; and the normalized stream can
-drive deterministic replay visualization without reparsing raw payloads.
+## R2 — Production hardening
 
-### R2 — UI, navigation and Staff
+Reduce operational knowledge that currently lives only with the maintainer.
 
-**Status: Done**
+- Keep build/test paths hermetic enough that normal verification does not require live
+  external services.
+- Document and verify upgrade/rollback for ARM64 images and Compose.
+- Make persistent-volume ownership and backup expectations explicit.
+- Improve startup/health diagnostics for backend, pybb3 and Cloudflare Tunnel.
+- Replace ambiguous integration null/error handling with typed outcomes where practical.
+- Keep queue diagnostics useful: backlog size, retry/resume state, throughput and failures.
 
-Completed:
+## R3 — Editorial/community evolution
 
-- canonical primary-navigation LeagueSystem switching;
-- retirement of the legacy Circuit/CircuitLeg hierarchy;
-- match-card and immediate match-modal i18n with regression coverage;
-- shared HUMAN/AI Staff surface using `Staff` as the code/API/route domain;
-- editable HUMAN public profiles with explicit lifecycle, validation and fallback policy;
-- normalized AI public identity with structured role/category, public-summary and image
-  fallbacks while keeping provider/prompt/runtime configuration private.
+Continue editorial and community work through the existing primitives rather than adding
+parallel systems.
 
-New defects in these areas should be tracked as focused deltas rather than reopening R2.
-
-### R3 — AI/community follow-up
-
-The original B-019/B-020 sequencing is complete and the broad B-016 operational
-foundation is implemented. Do not reopen those cards as green-field work.
-
-Current AI/community follow-up is limited to focused deltas:
-
-- Dedicated Fan profile generation is AI-only: provider failure leaves the reconciliation
-  job queued rather than creating a deterministic fallback identity;
-- human-facing Dedicated Fan profile text follows the Site Admin default locale;
-- Dedicated Fan population rebuilds are explicitly admin-queued rather than automatically
-  scanned at startup;
-- Cloudflare Workers AI is the default community image renderer, with OpenAI available as
-  an explicit alternate provider;
-- the current Dedicated Fan `RATE_LIMIT` protection is a fixed global worker cooldown.
-  Replace it later with provider-aware exponential backoff/jitter and quota-exhaustion
-  handling rather than tuning a permanent magic interval;
-- add further B-016 autonomous candidate producers only for concrete domain events where
-  the product explicitly wants autonomous activity;
-- monetary cost accounting remains deferred until provider/model pricing metadata is
-  explicit and versioned.
-
-The next broad product sequence is therefore R1 replay work and R4 production hardening,
-not reconstruction of the completed AI foundations.
-
-### R4 — Production hardening
-
-- Finish hermetic server-profile/CI verification where external coupling remains.
-- Resolve B-012's typed failure-contract decision before replacing ambiguous
-  Cyanide-client null/error behavior.
-- Document the operational gaps that still require tribal knowledge: image
-  load/versioning, secret ownership, persistent volumes, startup/health ordering,
-  Cloudflare Tunnel diagnosis, upgrade/rollback and local tar cleanup.
-
-ARM64 builds and the Raspberry Pi compose topology are baseline capabilities, not an
-unimplemented deployment milestone.
+- General articles, match reports and AI-authored material should share the same
+  publication/review/provenance model where their semantics overlap.
+- AI-generated content must remain reviewable or explicitly configured for automatic
+  acceptance.
+- Community/Fan generation should remain durable and recoverable across restarts.
+- Add autonomous candidate producers only for concrete product events; avoid generic
+  background content polling.
 
 ## Cross-cutting invariants
 
-- `dev` is the integration branch; do not infer current behavior from stale `main`.
-- No secret, Steam credential, API key, Auth0 token, MongoDB URI or replay IP address is
-  committed or emitted in diagnostics.
-- Discovery never enables collection implicitly. The existing discovery flow is
-  considered complete; do not add autonomous external polling unless it becomes a
-  concrete product requirement.
-- Competition behavior is metadata/configuration-driven, not tournament-name hardcoded.
-- B-021 through B-024 are completed foundations. If a historical season, bracket,
-  discovery candidate or match-detail record is wrong, create a focused regression/data
-  defect rather than reopening those broad cards.
-- `Phase` is implemented foundation between `Season` and `Stage`. Preserve the
-  phase-aware hierarchy; phase-less stages exist only as legacy/compatibility data and
-  are not evidence that the Phase model still needs to be designed.
-- AI-backed authors are canonical users; provider/model is provenance, not identity.
-- `Staff` is the canonical domain/API/route term for public editorial identities.
-  `Redaktion` is a Swedish UI translation only and must not be introduced as a parallel
-  controller, API namespace, model or persistence concept.
-- AI narrative receives in-universe sporting facts rather than replay/parser/dice/RNG
-  implementation terminology.
-- New behavior gets regression coverage and completed backlog/roadmap work is marked
-  complete in the same change.
-
-## Documentation ownership
-
-| Document | Purpose |
-| --- | --- |
-| `ROADMAP.md` | Remaining work and execution order only |
-| `BACKLOG.md` | Detailed active cards plus compact completed history |
-| `CHANGELOG.md` | User/developer-visible work already implemented |
-| `backend/docs/AI_ROADMAP.md` | Remaining AI execution order |
-| `backend/docs/AI_ARCHITECTURE.md` | Canonical AI design contract/invariants |
-| `backend/docs/MATCH_ARTICLES.md` | Match-article authorization/lifecycle/API |
-| `backend/docs/AI_REPORT_GENERATION.md` | Current vs target AI report-generation behavior |
-| `pybb3-service/README.md` | Cyanidebowl-to-pybb3 boundary and version pinning |
-
-If implementation invalidates a documented contract, update the owning document rather
-than adding a competing roadmap.
+- `dev` is the integration branch.
+- Competition behavior is metadata/configuration driven, never tournament-name hardcoded.
+- `Staff` is the canonical editorial identity term in code/API/routes.
+- HUMAN/AI is identity; provider/model is provenance.
+- Replay analysis is deterministic and independent of LLM quotas.
+- Successful replay parser version and latest attempted parser version are distinct facts.
+- Secrets, Steam credentials, Auth0 tokens, MongoDB URIs and replay IP addresses must not
+  be committed or emitted in diagnostics.
+- New behavior receives regression coverage.

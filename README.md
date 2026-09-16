@@ -1,47 +1,36 @@
 # cyanidebowl / BlaskScore
 
-BlaskScore is a Blood Bowl results, statistics and editorial site built on the original
-warp-scores/cyanidebowl codebase. Development happens on the `dev` branch.
+BlaskScore is a Blood Bowl results, statistics, replay and editorial/community site built
+on the original warp-scores/cyanidebowl codebase. Active development happens on `dev`.
 
-The application consists primarily of:
+## Repository structure
 
-- `backend` — Spring Boot application and persistence/API layer
-- `frontend` — React/Chakra UI
-- `api` and `cyanide-api` — shared/Cyanide API modules
-- `pybb3-service` — BB3 client/replay integration used by the Docker deployment
+- `backend` — Spring Boot API, MongoDB persistence, scheduling, replay orchestration and AI/community services.
+- `frontend` — React/Chakra UI.
+- `api` and `cyanide-api` — shared model/API modules and Cyanide integration.
+- `pybb3-service` — authenticated internal bridge to the separately versioned `pybb3` client.
+- `compose.yaml` — production-style service topology for backend, frontend, pybb3 and Cloudflare Tunnel.
+
+The canonical competition hierarchy is:
+
+```text
+LeagueSystem -> Season -> Phase -> Stage -> StageSource
+```
+
+Legacy Circuit/CircuitLeg terminology is retired.
 
 ## Development
 
-Safe local development uses the `dev` Spring profile and keeps external collection jobs
-disabled unless they are explicitly needed.
+Use `.env.example` as the configuration reference. Do not copy secrets into documentation.
 
-Backend:
-
-```bash
-mvn spring-boot:run -Pserver -pl backend -Dspring-boot.run.profiles=dev
-```
-
-Frontend:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-For the current local configuration variables, use `.env.example` as the reference.
-Do not commit `.env`, credentials, API keys, Auth0 tokens or database dumps.
-
-## Verification
-
-Backend:
+Backend verification:
 
 ```bash
 mvn clean test -Pserver -DskipDocker -pl api,cyanide-api,backend -am
 mvn clean package -Pserver -DskipDocker -pl api,cyanide-api,backend -am
 ```
 
-Frontend:
+Frontend verification:
 
 ```bash
 cd frontend
@@ -50,36 +39,72 @@ npm test -- --runInBand
 npm run build
 ```
 
-GitHub Actions validates `dev`/pull requests and builds the ARM64 deployment artifact
-after the test jobs pass.
+Local frontend development:
 
-## AI reporters
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-Canonical reporter profiles live in `backend/docs/ai_agents/reporters/`; their short
-technical documentation is in `backend/docs/ai_agents/README.md`. Portraits/avatars are
-served from `frontend/public/img/portraits/`.
+## Runtime architecture
 
-## Staff and public identity
+The normal deployment contains four services:
 
-`/staff` is the canonical public editorial/staff surface for both HUMAN editors and AI
-reporters. In code, APIs, routes and persistence the domain term is **Staff**.
-**Redaktion** is only the Swedish UI translation.
+```text
+browser
+  -> frontend/nginx
+      -> backend
+          -> MongoDB Atlas
+          -> pybb3-service -> pybb3 / Steam
+          -> external AI providers
 
-Human Staff public fields (displayed name, avatar, portrait and bio) are deliberately
-separate from authentication identity and authorization. AI reporter public identity is
-likewise separate from provider, prompt and runtime configuration.
+Cloudflare Tunnel -> frontend/nginx
+```
 
-## Roadmap and backlog
+Replay files and generated community media use persistent Docker volumes. `pybb3-service`
+is internal-only and must not be exposed directly to browsers.
 
-Start with `ROADMAP.md` for the current execution order and cross-project dependencies.
-`BACKLOG.md` contains the detailed implementation cards and acceptance criteria.
+## AI and deterministic work
 
-AI-specific architecture and sequencing live under `backend/docs/`, especially
-`AI_ARCHITECTURE.md` and `AI_ROADMAP.md`. The pybb3 integration boundary is documented
-in `pybb3-service/README.md`.
+AI-backed work and deterministic replay work are intentionally separate.
 
-Temporary implementation notes and one-off patch artifacts should not be committed at
-repository root.
+AI work includes autonomous content jobs, provider/model execution queues and generated
+community media. These may be limited by concurrency, provider quotas or retries.
+
+Replay analysis is deterministic. It does not consume LLM quota. Replays are queued when
+newly downloaded, explicitly requested for reanalysis, or produced by an older parser
+version. Successful parser version and latest attempted parser version are tracked
+separately so a failed current-version parse does not retry forever.
+
+The parser version declared by the backend must match the normalized analysis version
+returned by the pinned pybb3 integration. The code and contract tests are authoritative
+for the actual version number; do not duplicate it in documentation.
+
+## Identity and editorial model
+
+Humans and AI-backed actors use the same canonical `User` identity model. Provider/model
+information is generation provenance, not identity.
+
+`Staff` is the canonical code/API/route term for public editorial identities. `Redaktion`
+is only a Swedish UI translation.
+
+Canonical AI reporter profiles live in `backend/docs/ai_agents/reporters/`. Runtime
+relationships, memories, queue state and generation provenance are persisted data, not
+profile-file content.
+
+## Documentation
+
+Read `DOCUMENTATION.md` before adding new documentation. The project deliberately keeps
+the documentation surface small and avoids duplicating code/configuration details.
+
+- `ROADMAP.md` — broad remaining direction.
+- `BACKLOG.md` — active actionable work only.
+- `CHANGELOG.md` — implemented user/developer-visible changes.
+- `backend/README.md` — backend/runtime architecture and operational boundaries.
+- `backend/docs/AI_ARCHITECTURE.md` — canonical AI identity/context/provenance contract.
+- `backend/docs/ai_agents/README.md` — reporter profile format and runtime overrides.
+- `pybb3-service/README.md` — backend-to-pybb3 boundary.
 
 ## Disclaimer
 
