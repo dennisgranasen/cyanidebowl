@@ -100,6 +100,7 @@ warpscores:
         api-key: ${AI_API_KEY_GEMINI:}
         base-url: https://generativelanguage.googleapis.com/v1beta
         timeout: 60s
+        image-model: ${GEMINI_IMAGE_MODEL:gemini-3.1-flash-image}
       openai-compatible:
         cloudflare:
           base-url: https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID:}/ai/v1
@@ -204,7 +205,7 @@ warpscores:
         queue: { concurrency: 1, max-attempts: 3, base-backoff: 15s, max-backoff: 15m, jitter: 0.20 }
       profile-image:
         provider: cloudflare
-        model: ${CLOUDFLARE_IMAGE_MODEL:@cf/black-forest-labs/flux-1-schnell}
+        model: ${CLOUDFLARE_IMAGE_MODEL:@cf/black-forest-labs/flux-2-klein-4b}
         modality: IMAGE
         quota-group: cloudflare-image
         queue: { concurrency: 1, max-attempts: 4, base-backoff: 30s, max-backoff: 15m, jitter: 0.20 }
@@ -261,6 +262,7 @@ warpscores:
 
     community-media:
       provider: ${COMMUNITY_MEDIA_PROVIDER:cloudflare}
+      reference-provider: ${COMMUNITY_MEDIA_REFERENCE_PROVIDER:${COMMUNITY_MEDIA_PROVIDER:cloudflare}}
       quality: ${COMMUNITY_MEDIA_QUALITY:low}
       storage-dir: ${COMMUNITY_MEDIA_STORAGE_DIR:/data/community-media}
       poll-ms: ${COMMUNITY_MEDIA_POLL_MS:30000}

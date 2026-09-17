@@ -121,12 +121,14 @@ function ArticleEditorPage() {
     if (editor.state.selection.empty) editor.chain().focus().insertContent({ type: 'text', text: text || value, marks: [{ type: 'link', attrs: { href: value } }] }).run();
     else editor.chain().focus().setLink({ href: value }).run();
   };
-  const insertImage = result => editor.chain().focus().setImage({ src: Api.assetUrl(result.url) }).run();
+  const insertImage = result => editor.chain().focus().setImage({
+    src: Api.assetUrl(result.url), editorialImageId: result.imageId || null,
+  }).run();
   const uploadImages = (files, position) => run(async () => {
     if (position != null) editor.chain().focus().setTextSelection(position).run();
     for (const file of files) {
       if (!validArticleImage(file)) throw new Error(t('news.imageSizeError'));
-      insertImage(await Api.uploadArticleImage(file, system, token));
+      insertImage(await Api.uploadArticleImage(file, system, token, links));
     }
   });
   uploadRef.current = uploadImages;
