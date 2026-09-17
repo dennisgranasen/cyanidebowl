@@ -42,8 +42,11 @@ const EditorialCommunityApi = {
     return (await axios.post(`${base}/articles/tools/image`, payload,
       { headers, signal, timeout: IMAGE_REQUEST_TIMEOUT_MS })).data;
   }),
-  uploadArticleImage: (file, system, token) => {
-    const data = new FormData(); data.append('file', file);
+  uploadArticleImage: (file, system, token, associations = []) => {
+    const data = new FormData();
+    data.append('file', file);
+    data.append('associations', JSON.stringify(
+      associations.map(({ type, id }) => ({ type, id }))));
     return authPost(`/articles/tools/upload${system ? `?leagueSystemId=${encodeURIComponent(system)}` : ''}`, data, token);
   },
   assetUrl: (url) => url?.startsWith('/community/media/assets/') ? `${base}${url}` : url,

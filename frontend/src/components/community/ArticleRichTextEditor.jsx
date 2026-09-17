@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Box, Button, FormControl, FormLabel, HStack, IconButton, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Select, Text, Tooltip, useColorModeValue, VStack } from '@chakra-ui/react';
 import { FaBold, FaItalic, FaUnderline, FaStrikethrough, FaListUl, FaListOl, FaQuoteRight, FaMinus, FaLink, FaUnlink, FaImage, FaFileImage, FaUndo, FaRedo, FaRemoveFormat, FaEye, FaEdit, FaAlignLeft, FaAlignCenter, FaAlignRight, FaAlignJustify } from 'react-icons/fa';
 import { EditorContent } from '@tiptap/react';
@@ -8,7 +8,9 @@ import { articleBodyStyles } from './articleBodyStyles';
 
 export const validArticleUrl = value => /^(https?:\/\/|\/(?!\/))/i.test(value);
 
-export default function ArticleRichTextEditor({ editor, disabled, onUpload, onError }) {
+export default function ArticleRichTextEditor({
+  editor, disabled, onUpload, onError, onMentionSearch, onMentionSelect,
+}) {
   const intl = useIntl();
   const t = id => intl.formatMessage({ id });
   const input = useRef(null);
@@ -18,6 +20,97 @@ export default function ArticleRichTextEditor({ editor, disabled, onUpload, onEr
   const [dialog, setDialog] = useState(null);
   const [url, setUrl] = useState('');
   const [alt, setAlt] = useState('');
+  const [mention, setMention] = useState(null);
+  const [mentionOptions, setMentionOptions] = useState([]);
+  const [mentionIndex, setMentionIndex] = useState(0);
+
+  useEffect(() => {
+    if (!editor || !onMentionSearch) return undefined;
+    const detectMention = () => {
+      const { selection } = editor.state;
+      if (!selection.empty) { setMention(null); return; }
+      const { $from } = selection;
+      const text = editor.state.doc.textBetween($from.start(), $from.pos, '\n', ' ');
+      const match = text.match(/(?:^|\s)@([^\s@]{0,80})$/u);
+      if (!match) { setMention(null); return; }
+      const leadingSpace = match[0].startsWith('@') ? 0 : 1;
+      setMention({
+        from: $from.pos - match[0].length + leadingSpace,
+        to: $from.pos,
+        query: match[1],
+      });
+    };
+    editor.on('transaction', detectMention);
+    editor.on('selectionUpdate', detectMention);
+    detectMention();
+    return () => {
+      editor.off('transaction', detectMention);
+      editor.off('selectionUpdate', detectMention);
+    };
+  }, [editor, onMentionSearch]);
+
+  useEffect(() => {
+    if (mention == null || !onMentionSearch || !mention.query) {
+      setMentionOptions([]);
+      setMentionIndex(0);
+      return undefined;
+    }
+    let active = true;
+    const timer = setTimeout(() => {
+      Promise.resolve(onMentionSearch(mention.query))
+        .then(rows => {
+          if (!active) return;
+          setMentionOptions(rows || []);
+          setMentionIndex(0);
+        })
+        .catch(error => { if (active) onError?.(error); });
+    }, 180);
+    return () => { active = false; clearTimeout(timer); };
+  }, [mention?.query, onMentionSearch, onError]);
+
+  const chooseMention = option => {
+    if (!editor || !mention || !option) return;
+    editor.chain().focus()
+      .deleteRange({ from: mention.from, to: mention.to })
+      .insertContent([
+        {
+          type: 'text',
+          text: `@${option.label}`,
+          marks: [{
+            type: 'link',
+            attrs: {
+              href: option.url || null,
+              editorialMentionType: option.type,
+              editorialMentionId: option.id,
+            },
+          }],
+        },
+        { type: 'text', text: ' ' },
+      ]).run();
+    onMentionSelect?.(option);
+    setMention(null);
+    setMentionOptions([]);
+    setMentionIndex(0);
+  };
+
+  const mentionKeyDown = event => {
+    if (!mention || !mentionOptions.length) return;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setMentionIndex(index => (index + 1) % mentionOptions.length);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setMentionIndex(index => (index - 1 + mentionOptions.length) % mentionOptions.length);
+    } else if (event.key === 'Enter' || event.key === 'Tab') {
+      event.preventDefault();
+      chooseMention(mentionOptions[mentionIndex]);
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      setMention(null);
+      setMentionOptions([]);
+    }
+  };
+
   const open = kind => {
     const attrs = editor?.getAttributes(kind === 'image' ? 'image' : 'link') || {};
     setUrl(attrs.src || attrs.href || ''); setAlt(attrs.alt || ''); setDialog(kind);
@@ -76,7 +169,26 @@ export default function ArticleRichTextEditor({ editor, disabled, onUpload, onEr
       const files = Array.from(e.target.files || []); e.target.value = ''; onUpload(files);
     }} aria-label={t('news.upload')} />
     {preview ? <Box p={4} minH="360px" sx={articleBodyStyles} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(editor?.getHTML() || '') }} />
-      : <Box p={{ base: 2, md: 4 }} maxH="640px" overflowY="auto" sx={{ '.tiptap': { ...articleBodyStyles, minHeight: '320px', padding: '.5em', outline: 'none' }, '.ProseMirror-selectednode': { outline: '3px solid #4299e1' } }}><EditorContent editor={editor} /></Box>}
+      : <Box onKeyDownCapture={mentionKeyDown}>
+          <Box p={{ base: 2, md: 4 }} maxH="640px" overflowY="auto"
+            sx={{
+              '.tiptap': { ...articleBodyStyles, minHeight: '320px', padding: '.5em', outline: 'none' },
+              '.ProseMirror-selectednode': { outline: '3px solid #4299e1' },
+              '.editorial-mention': { fontWeight: 600, textDecoration: 'underline', textDecorationStyle: 'dotted' },
+            }}>
+            <EditorContent editor={editor} />
+          </Box>
+          {mention && <Box borderTopWidth="1px" bg={toolbarBg} p={2}>
+            <Text fontSize="xs" opacity={0.7} mb={1}>@{mention.query}</Text>
+            {!mention.query && <Text fontSize="sm">Type a name to search teams, players, coaches, star players, fans and staff.</Text>}
+            {!!mention.query && !mentionOptions.length && <Text fontSize="sm">No matching subjects.</Text>}
+            {mentionOptions.map((option, index) => <Button key={`${option.type}:${option.id}`} size="sm" mr={1} mb={1}
+              variant={index === mentionIndex ? 'solid' : 'ghost'} colorScheme={index === mentionIndex ? 'blue' : 'gray'}
+              onMouseDown={event => event.preventDefault()} onClick={() => chooseMention(option)}>
+              {option.label} · {option.type.replaceAll('_', ' ').toLowerCase()}
+            </Button>)}
+          </Box>}
+        </Box>}
     <Text fontSize="sm" p={3} opacity={0.75} borderTopWidth="1px">{t('news.imageDropHelp')}</Text>
     <Modal isOpen={!!dialog} onClose={() => setDialog(null)}><ModalOverlay /><ModalContent>
       <ModalHeader>{t(dialog === 'image' ? 'news.imageUrl' : 'news.insertLink')}</ModalHeader><ModalCloseButton />

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Box, Button, Checkbox, FormControl, FormLabel, Heading, HStack, Input, Select, Text, Textarea, VStack } from '@chakra-ui/react';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 import { useEditor } from '@tiptap/react';
@@ -37,6 +37,28 @@ function ArticleEditorPage() {
   const [queue, setQueue] = useState([]);
   const [autoAccept, setAutoAccept] = useState(false);
   const system = links.find(l => l.type === 'LEAGUE_SYSTEM')?.id;
+  const mentionTypes = ['TEAM', 'PLAYER', 'COACH', 'STAR_PLAYER', 'FAN', 'STAFF'];
+  const searchMentions = useCallback(async query => {
+    if (!query?.trim()) return [];
+    const groups = await Promise.all(mentionTypes.map(async type => {
+      const rows = await Api.associationOptions(type, query.trim());
+      return rows.map(option => ({ ...option, type }));
+    }));
+    const normalized = query.trim().toLocaleLowerCase();
+    return groups.flat()
+      .sort((a, b) => {
+        const aLabel = (a.label || '').toLocaleLowerCase();
+        const bLabel = (b.label || '').toLocaleLowerCase();
+        const aStarts = aLabel.startsWith(normalized) ? 0 : 1;
+        const bStarts = bLabel.startsWith(normalized) ? 0 : 1;
+        return aStarts - bStarts || aLabel.localeCompare(bLabel);
+      })
+      .slice(0, 24);
+  }, []);
+  const addMentionAssociation = useCallback(option => {
+    setLinks(old => old.some(link => link.type === option.type && link.id === option.id)
+      ? old : [...old, { type: option.type, id: option.id, label: option.label }]);
+  }, []);
   const editor = useEditor({
     extensions: articleEditorExtensions(),
     content: '',
@@ -163,7 +185,8 @@ function ArticleEditorPage() {
           <ArticleSubjectPicker value={links} onChange={setLinks} disabled={busy || loading} onError={showError} onInsertLink={insertUrl} />
         </Box>
         {articleIsGlobal(links) && <Alert status="warning">{t('news.globalWarning')}</Alert>}
-        <ArticleRichTextEditor editor={editor} disabled={busy || loading} onUpload={uploadImages} onError={showError} />
+        <ArticleRichTextEditor editor={editor} disabled={busy || loading} onUpload={uploadImages} onError={showError}
+          onMentionSearch={searchMentions} onMentionSelect={addMentionAssociation} />
         <ArticleImageGenerator key={articleId || location.search} editor={editor} title={form.title} associations={payload().associations}
           disabled={busy || loading} onError={showError} onBusyChange={setBusy} />
         <Text fontSize="sm">{t(`news.status.${form.status}`)}</Text>

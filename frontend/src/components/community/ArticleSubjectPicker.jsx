@@ -8,6 +8,9 @@ import { articleTypes } from '../../util/articleContext';
 export default function ArticleSubjectPicker({ value, onChange, disabled, onError, onInsertLink }) {
   const intl = useIntl();
   const t = id => intl.formatMessage({ id });
+  const typeLabel = value => value === 'COACH'
+    ? intl.formatMessage({ id: 'news.type.COACH', defaultMessage: 'Coach' })
+    : t(`news.type.${value}`);
   const [type, setType] = useState('SEASON');
   const [query, setQuery] = useState('');
   const [options, setOptions] = useState([]);
@@ -41,12 +44,12 @@ export default function ArticleSubjectPicker({ value, onChange, disabled, onErro
   };
   return <Box>
     {value.map((link, i) => <HStack key={`${link.type}:${link.id}`} mb={1}>
-      <Text>{t(`news.type.${link.type}`)}: {link.label || labels[`${link.type}:${link.id}`] || link.id}</Text>
+      <Text>{typeLabel(link.type)}: {link.label || labels[`${link.type}:${link.id}`] || link.id}</Text>
       <Button size="xs" isDisabled={disabled} onClick={() => onChange(value.filter((_, n) => n !== i))}>{t('news.remove')}</Button>
     </HStack>)}
     <HStack mt={2}>
       <Select value={type} isDisabled={disabled} onChange={e => setType(e.target.value)} aria-label={t('news.associations')}>
-        {articleTypes.map(type => <option key={type} value={type}>{t(`news.type.${type}`)}</option>)}
+        {articleTypes.map(optionType => <option key={optionType} value={optionType}>{typeLabel(optionType)}</option>)}
       </Select>
       <Input value={query} isDisabled={disabled} onChange={e => setQuery(e.target.value)} placeholder={t('news.search')} aria-label={t('news.search')} />
     </HStack>

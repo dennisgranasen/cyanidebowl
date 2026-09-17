@@ -73,6 +73,13 @@ public class EditorialSubjectContext {
                             .append(team.getMotto()).append("; stadium: ").append(team.getStadiumName());
                     subjects.add(new SubjectRef(SubjectType.TEAM, link.id()));
                 }
+                case COACH -> {
+                    var coach = required(mongo.findById(IdentityUtil.fromId(link.id()), Coach.class), link);
+                    text.append(coach.getName());
+                    if (coach.getCountry() != null && !coach.getCountry().isBlank())
+                        text.append("; country: ").append(coach.getCountry());
+                    subjects.add(new SubjectRef(SubjectType.TOPIC, "coach:" + link.id()));
+                }
                 case SEASON -> {
                     var season = required(mongo.findById(link.id(), Season.class), link);
                     text.append(season.getName()).append("; season number: ").append(season.getNumber());

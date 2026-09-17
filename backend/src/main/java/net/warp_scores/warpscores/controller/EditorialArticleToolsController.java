@@ -90,9 +90,17 @@ public class EditorialArticleToolsController {
     }
     @PostMapping("/upload")
     public Map<String, String> upload(Authentication auth, @RequestParam(required = false) String leagueSystemId,
+                                      @RequestParam(required = false) String associations,
                                       @RequestParam("file") MultipartFile file) throws Exception {
         requireWriter(auth);
-        return Map.of("url", store(file.getBytes()));
+        List<Article.Association> links = associations == null || associations.isBlank()
+                ? List.of()
+                : json.readValue(associations,
+                    json.getTypeFactory().constructCollectionType(List.class, Article.Association.class));
+        var subjects = subjectContext.resolve(links);
+        String url = store(file.getBytes());
+        String imageId = imageSubjects.save(url, subjects.associations(), "Uploaded editorial image");
+        return Map.of("url", url, "imageId", imageId);
     }
     static String imagePrompt(ImageInput input) {
         String direction = input.prompt() == null || input.prompt().isBlank()

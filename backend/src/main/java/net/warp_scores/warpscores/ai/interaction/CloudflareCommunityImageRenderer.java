@@ -9,6 +9,7 @@ import net.warp_scores.warpscores.ai.provider.RetryAfter;
 import net.warp_scores.warpscores.model.AiCommunityMediaGenerationRequest;
 import org.springframework.util.StringUtils;
 
+import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -19,6 +20,7 @@ import java.time.Duration;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class CloudflareCommunityImageRenderer implements AiCommunityImageRenderer {
     private static final String API_ROOT = "https://api.cloudflare.com/client/v4/accounts/";
@@ -69,17 +71,28 @@ public class CloudflareCommunityImageRenderer implements AiCommunityImageRendere
         URI endpoint = URI.create(
                 API_ROOT + properties.getAccountId() + "/ai/run/" + encodedModel);
 
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("prompt", prompt);
-        body.put("steps", Math.max(1, Math.min(8, properties.getImageSteps())));
-
-        HttpRequest request = HttpRequest.newBuilder(endpoint)
-                .timeout(properties.getTimeout())
-                .header("Authorization", "Bearer " + properties.getApiKey())
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(
-                        objectMapper.writeValueAsString(body)))
-                .build();
+        HttpRequest request;
+        if (requiresMultipart(selectedModel)) {
+            String boundary = "----cyanidebowl-" + UUID.randomUUID();
+            byte[] multipart = multipartBody(boundary, prompt, target);
+            request = HttpRequest.newBuilder(endpoint)
+                    .timeout(properties.getTimeout())
+                    .header("Authorization", "Bearer " + properties.getApiKey())
+                    .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                    .POST(HttpRequest.BodyPublishers.ofByteArray(multipart))
+                    .build();
+        } else {
+            Map<String, Object> body = new LinkedHashMap<>();
+            body.put("prompt", prompt);
+            body.put("steps", Math.max(1, Math.min(8, properties.getImageSteps())));
+            request = HttpRequest.newBuilder(endpoint)
+                    .timeout(properties.getTimeout())
+                    .header("Authorization", "Bearer " + properties.getApiKey())
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(
+                            objectMapper.writeValueAsString(body)))
+                    .build();
+        }
 
         HttpResponse<String> response =
                 httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -102,6 +115,28 @@ public class CloudflareCommunityImageRenderer implements AiCommunityImageRendere
                 "jpg",
                 "cloudflare",
                 selectedModel);
+    }
+
+    private boolean requiresMultipart(String model) {
+        return model != null && (model.contains("/flux-2-dev") || model.contains("/flux-2-klein-"));
+    }
+
+    private byte[] multipartBody(String boundary, String prompt,
+                                 AiCommunityMediaGenerationRequest.Target target) throws Exception {
+        var out = new ByteArrayOutputStream();
+        writeMultipartField(out, boundary, "prompt", prompt);
+        writeMultipartField(out, boundary, "width",
+                target == AiCommunityMediaGenerationRequest.Target.AVATAR ? "1024" : "1536");
+        writeMultipartField(out, boundary, "height", "1024");
+        out.write(("--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8));
+        return out.toByteArray();
+    }
+
+    private void writeMultipartField(ByteArrayOutputStream out, String boundary,
+                                     String name, String value) throws Exception {
+        out.write(("--" + boundary + "\r\n"
+                + "Content-Disposition: form-data; name=\"" + name + "\"\r\n\r\n"
+                + value + "\r\n").getBytes(StandardCharsets.UTF_8));
     }
 
     private AiCommunityImageProviderException providerFailure(

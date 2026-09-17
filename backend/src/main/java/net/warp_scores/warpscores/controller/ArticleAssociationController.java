@@ -36,6 +36,10 @@ public class ArticleAssociationController {
                 var v = mongo.findById(net.warp_scores.warpscores.identity.IdentityUtil.fromId(id), Team.class);
                 yield new Option(id, v == null ? id : v.getName(), "/team/" + id, null);
             }
+            case COACH -> {
+                var v = mongo.findById(net.warp_scores.warpscores.identity.IdentityUtil.fromId(id), Coach.class);
+                yield new Option(id, v == null ? id : v.getName(), null, null);
+            }
             case PLAYER -> {
                 var rows = mongo.find(Query.query(Criteria.where("playerId").is(id)).limit(1), MatchPlayerParticipation.class);
                 yield new Option(id, rows.isEmpty() ? id : rows.getFirst().getPlayerName(), null, null);
@@ -66,6 +70,10 @@ public class ArticleAssociationController {
             case LEAGUE_SYSTEM -> mongo.find(query, LeagueSystem.class).stream().map(v -> new Option(v.getId(), v.getName(), "/?leagueSystem=" + v.getId(), v.getId())).toList();
             case SEASON -> mongo.find(query, Season.class).stream().map(v -> new Option(v.getId(), v.getName(), "/?leagueSystem=" + v.getLeagueSystemId() + "&season=" + v.getId(), v.getLeagueSystemId())).toList();
             case TEAM -> mongo.find(query, Team.class).stream().map(v -> new Option(v.getId().asMongoKey(), v.getName(), "/team/" + v.getId().asMongoKey(), null)).toList();
+            case COACH -> mongo.find(query, Coach.class).stream()
+                    .filter(v -> v.getId() != null && v.getName() != null)
+                    .map(v -> new Option(v.getId().asMongoKey(), v.getName(), null, null))
+                    .toList();
             case PLAYER -> {
                 var pattern = Pattern.compile(Pattern.quote(q), Pattern.CASE_INSENSITIVE);
                 var teams = mongo.find(Query.query(Criteria.where("players.name").regex(pattern)).limit(30), Team.class);

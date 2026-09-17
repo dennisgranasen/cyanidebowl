@@ -1,4 +1,4 @@
-export const articleTypes = ['LEAGUE_SYSTEM', 'SEASON', 'TEAM', 'PLAYER', 'FAN', 'STAFF', 'STAR_PLAYER'];
+export const articleTypes = ['LEAGUE_SYSTEM', 'SEASON', 'TEAM', 'PLAYER', 'COACH', 'FAN', 'STAFF', 'STAR_PLAYER'];
 export const articleIsGlobal = (links) => !links.some(({ type }) => ['LEAGUE_SYSTEM', 'SEASON', 'TEAM', 'PLAYER'].includes(type));
 export function articleContext(location, system, season) {
   const query = new URLSearchParams(location.search);
