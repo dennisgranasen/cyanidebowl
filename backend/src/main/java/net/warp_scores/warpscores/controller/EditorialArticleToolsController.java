@@ -26,6 +26,8 @@ public class EditorialArticleToolsController {
     private final ObjectProvider<AiCommunityImageRenderer> renderers;
     private final net.warp_scores.warpscores.ai.agents.EditorialPhotographerRegistry photographers;
     private final ArticleImagePromptService imagePrompts;
+    private final EditorialSubjectContext subjectContext;
+    private final ArticleImageSubjects imageSubjects;
 
     @GetMapping("/photographers")
     public List<net.warp_scores.warpscores.ai.agents.EditorialPhotographerRegistry.Photographer> photographers() {
@@ -60,7 +62,9 @@ public class EditorialArticleToolsController {
         var photographer = photographers.require(input.photographerId());
         var renderer = renderers.orderedStream().filter(AiCommunityImageRenderer::isConfigured).findFirst()
                 .orElseThrow(() -> new IllegalStateException("Image generation is not configured"));
-        String prompt = imagePrompt(input);
+        var subjects = subjectContext.resolve(input.associations());
+        if (subjects.referenceImages().size() > 16) throw new IllegalArgumentException("At most 16 star player portraits per image");
+        String prompt = imagePrompt(input) + "\nTAGGED SUBJECT CONTEXT:\n" + subjects.text();
         net.warp_scores.warpscores.ai.context.AssembledContext assembled = null;
         if (input.matchId() != null && !input.matchId().isBlank()) {
             var context = matchArticles.imageContext(auth, input.matchId(), input.reporterId());
@@ -69,9 +73,20 @@ public class EditorialArticleToolsController {
             prompt += "\nAUTHORITATIVE MATCH EVIDENCE:\n" + context.evidence().json()
                     + "\nHISTORICAL COMPETITION CONTEXT:\n" + context.history().json();
         }
-        var image = renderer.render(imagePrompts.prepare(prompt, photographer, assembled), AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE);
-        return Map.of("url", store(image.bytes()), "prompt", imagePrompt(input),
-                "photographerId", photographer.id(), "photographerName", photographer.alias());
+        String brief = imagePrompts.prepare(prompt, photographer, assembled, !subjects.associations().isEmpty());
+        boolean useReferences = !subjects.referenceImages().isEmpty() && renderer.supportsReferenceImages();
+        var image = !useReferences
+                ? renderer.render(brief, AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE)
+                : renderer.renderWithReferences(brief + "\nReference portraits in order: "
+                    + subjects.associations().stream().filter(a -> a.type() == Article.LinkType.STAR_PLAYER)
+                        .map(a -> a.id().replace('_', ' ')).collect(java.util.stream.Collectors.joining("; ")),
+                    AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE, subjects.referenceImages());
+        String url = store(image.bytes());
+        String imageId = imageSubjects.save(url, subjects.associations(), brief);
+        return Map.of("url", url, "imageId", imageId, "prompt", imagePrompt(input),
+                "photographerId", photographer.id(), "photographerName", photographer.alias(),
+                "referenceImagesUsed", Boolean.toString(useReferences),
+                "referenceImagesAvailable", Boolean.toString(!subjects.referenceImages().isEmpty()));
     }
     @PostMapping("/upload")
     public Map<String, String> upload(Authentication auth, @RequestParam(required = false) String leagueSystemId,

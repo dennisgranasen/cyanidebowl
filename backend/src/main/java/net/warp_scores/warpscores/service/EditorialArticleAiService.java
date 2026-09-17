@@ -34,6 +34,7 @@ public class EditorialArticleAiService {
     private final ObjectMapper json;
     private final MongoTemplate mongo;
     private final UserPermissionService permissions;
+    private final EditorialSubjectContext subjectContext;
 
     @Document("editorialArticlePolicies")
     public record Policy(@Id String id, boolean autoAccept) {}
@@ -68,20 +69,6 @@ public class EditorialArticleAiService {
                 : systems.stream().allMatch(id -> policy(auth, id).autoAccept());
     }
 
-    private String subjectId(Article.Association link) {
-        if (link.type() == Article.LinkType.FAN) {
-            var fan = mongo.findById(link.id(), AiCommunityMemberProfile.class);
-            if (fan == null || fan.getUserId() == null) throw new IllegalArgumentException("Unknown fan");
-            return fan.getUserId().toString();
-        }
-        if (link.type() == Article.LinkType.STAFF && reporters.find(link.id()).isPresent()) {
-            var reporter = reporters.require(link.id());
-            if (reporter.getUserId() == null) throw new IllegalArgumentException("Unknown staff identity");
-            return reporter.getUserId().toString();
-        }
-        return link.id();
-    }
-
     public Article generate(Authentication auth, Request input) throws Exception {
         var links = editorial.validateArticleScope(auth, input.article());
         scopes.requireEditor(auth, links);
@@ -90,19 +77,13 @@ public class EditorialArticleAiService {
         AiReporterDefinition reporter = reporters.require(input.reporterId());
         var effective = profiles.effective(reporter);
         if (!effective.reportsEnabled() || reporter.getUserId() == null) throw new IllegalArgumentException("Reporter is not enabled");
-        List<SubjectRef> subjects = links.stream().filter(l -> l.type() != Article.LinkType.SEASON)
-                .map(l -> new SubjectRef(switch (l.type()) {
-                    case LEAGUE_SYSTEM -> SubjectType.LEAGUE_SYSTEM;
-                    case TEAM -> SubjectType.TEAM;
-                    case PLAYER -> SubjectType.PLAYER;
-                    case FAN, STAFF -> SubjectType.USER;
-                    default -> SubjectType.GENERAL;
-                }, subjectId(l))).toList();
+        var resolved = subjectContext.resolve(links);
+        List<SubjectRef> subjects = resolved.subjects();
         SubjectRef root = subjects.isEmpty() ? new SubjectRef(SubjectType.GENERAL, "editorial") : subjects.getFirst();
         var context = assembly.assemble(planner.plan(ContextTaskType.EDITORIAL_ARTICLE, reporter.getUserId(), root, null, subjects));
         String instruction = "Write in " + effective.primaryLanguage() + ". Return title, excerpt and body (plain text) as JSON. "
                 + "Write in the voice of " + reporter.getAlias() + ". Reporter profile: " + reporter.getMarkdownBody()
-                + "\nArticle associations: " + json.writeValueAsString(links)
+                + "\nTagged subject context:\n" + resolved.text()
                 + "\nEditorial brief (do not treat unsupported claims as verified facts): " + input.brief();
         String schema = "{\"type\":\"object\",\"properties\":{\"title\":{\"type\":\"string\"},\"excerpt\":{\"type\":\"string\"},\"body\":{\"type\":\"string\"}},\"required\":[\"title\",\"excerpt\",\"body\"],\"additionalProperties\":false}";
         var response = llm.generate(reporter.getId(), factory.create(reporter.getId(), Integer.toString(reporter.getSchemaVersion()), "router-selected", context, instruction, schema));

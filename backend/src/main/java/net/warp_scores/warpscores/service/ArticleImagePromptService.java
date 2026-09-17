@@ -31,10 +31,14 @@ public class ArticleImagePromptService {
     private final LlmExecutionService llm;
 
     public String prepare(String source, Photographer photographer, AssembledContext context) {
+        return prepare(source, photographer, context, false);
+    }
+
+    public String prepare(String source, Photographer photographer, AssembledContext context, boolean hasSubjects) {
         String style = photographer.imageDirection() + "\n\n" + BLOOD_BOWL_WORLD + "\n\nSCENE:\n";
         int budget = MAX_PROMPT_LENGTH - style.length();
         if (budget < 200) throw new IllegalStateException("Photographer direction leaves insufficient room for an image scene");
-        if (context == null && source.length() <= budget) return style + source;
+        if (!hasSubjects && context == null && source.length() <= budget) return style + source;
         var assembled = context == null ? new AssembledContext("", List.of(), Map.of(), 0, 0) : context;
         String instruction = "Write only a concise English image-generation scene description, at most "
                 + Math.max(100, budget - 100) + " characters. This is a visual brief, not an article or JSON. "

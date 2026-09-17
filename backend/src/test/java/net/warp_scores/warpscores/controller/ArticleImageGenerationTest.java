@@ -20,6 +20,14 @@ import static org.mockito.Mockito.*;
 import static org.mockito.ArgumentMatchers.*;
 
 class ArticleImageGenerationTest {
+    private EditorialSubjectContext subjects() throws Exception {
+        return new EditorialSubjectContext(mock(org.springframework.data.mongodb.core.MongoTemplate.class),
+                mock(net.warp_scores.warpscores.ai.agents.AiReporterRegistry.class), new StarPlayerCatalog(new ObjectMapper()), new net.warp_scores.warpscores.ai.agents.EditorialPhotographerRegistry(new ObjectMapper()));
+    }
+    private ArticleImageSubjects imageSubjects() {
+        return new ArticleImageSubjects(mock(org.springframework.data.mongodb.core.MongoTemplate.class));
+    }
+
     @Test void repeatedRequestsPreserveMatchContextAndWrittenText() throws Exception {
         var ai = mock(EditorialArticleAiService.class);
         var matches = mock(MatchArticleService.class);
@@ -43,7 +51,7 @@ class ArticleImageGenerationTest {
         var llm = mock(LlmExecutionService.class);
         when(llm.generate(anyString(), any(CanonicalLlmRequest.class))).thenReturn(
                 new CanonicalLlmResponse("test", "model", null, "A player passing the ball.", null, "stop"));
-        var controller = new EditorialArticleToolsController(ai, matches, new ObjectMapper(), assets, providers, photographers, new ArticleImagePromptService(llm));
+        var controller = new EditorialArticleToolsController(ai, matches, new ObjectMapper(), assets, providers, photographers, new ArticleImagePromptService(llm), subjects(), imageSubjects());
         var input = new EditorialArticleToolsController.ImageInput(List.of(), "A newspaper illustration", "Title", "The coach's written text", "match", "reporter", "selma-vattenfarg");
         var first = controller.image(auth, input);
         controller.image(auth, input);
@@ -74,7 +82,7 @@ class ArticleImageGenerationTest {
         when(renderer.render(anyString(), any())).thenReturn(new AiCommunityImageRenderer.RenderedImage(bytes.toByteArray(), "image/png", "png", "test", "model"));
         when(assets.save(anyString(), anyString(), anyString(), any())).thenReturn(new AiCommunityMediaAssetStore.StoredAsset("image.png", "/image.png"));
         var controller = new EditorialArticleToolsController(mock(EditorialArticleAiService.class), matches,
-                new ObjectMapper(), assets, providers, photographers, new ArticleImagePromptService(mock(LlmExecutionService.class)));
+                new ObjectMapper(), assets, providers, photographers, new ArticleImagePromptService(mock(LlmExecutionService.class)), subjects(), imageSubjects());
         for (var id : List.of("pip-kritsmula", "siv-slutartid")) {
             var result = controller.image(auth, new EditorialArticleToolsController.ImageInput(List.of(), "A library opening", "Community news", "Fans meet the librarian", null, null, id));
             assertEquals(id, result.get("photographerId"));
@@ -85,6 +93,34 @@ class ArticleImageGenerationTest {
         assertThrows(org.springframework.web.server.ResponseStatusException.class, () -> controller.image(auth,
                 new EditorialArticleToolsController.ImageInput(List.of(), "News", "Title", "", null, null, "missing")));
         verify(renderer, times(2)).render(anyString(), any());
+    }
+
+    @Test void starTagsReachSceneBriefAndPortraitRendererAndPersistWithImage() throws Exception {
+        var photographers = new EditorialPhotographerRegistry(new ObjectMapper());
+        var llm = mock(LlmExecutionService.class);
+        when(llm.generate(anyString(), any(CanonicalLlmRequest.class))).thenReturn(
+                new CanonicalLlmResponse("test", "model", null, "Morg the ogre in a fountain.", null, "stop"));
+        var renderer = mock(AiCommunityImageRenderer.class);
+        when(renderer.isConfigured()).thenReturn(true); when(renderer.supportsReferenceImages()).thenReturn(true);
+        @SuppressWarnings("unchecked") ObjectProvider<AiCommunityImageRenderer> providers = mock(ObjectProvider.class);
+        when(providers.orderedStream()).thenAnswer(i -> java.util.stream.Stream.of(renderer));
+        var bytes = new ByteArrayOutputStream(); ImageIO.write(new BufferedImage(2, 2, BufferedImage.TYPE_INT_RGB), "png", bytes);
+        when(renderer.renderWithReferences(anyString(), any(), anyList())).thenReturn(
+                new AiCommunityImageRenderer.RenderedImage(bytes.toByteArray(), "image/png", "png", "test", "model"));
+        var assets = mock(AiCommunityMediaAssetStore.class);
+        when(assets.save(anyString(), anyString(), anyString(), any())).thenReturn(new AiCommunityMediaAssetStore.StoredAsset("image.png", "/image.png"));
+        var metadata = mock(ArticleImageSubjects.class);
+        when(metadata.save(anyString(), anyList(), anyString())).thenReturn("image-id");
+        var auth = mock(Authentication.class); when(auth.isAuthenticated()).thenReturn(true);
+        var controller = new EditorialArticleToolsController(mock(EditorialArticleAiService.class), mock(MatchArticleService.class),
+                new ObjectMapper(), assets, providers, photographers, new ArticleImagePromptService(llm), subjects(), metadata);
+        var links = List.of(new net.warp_scores.warpscores.model.Article.Association(net.warp_scores.warpscores.model.Article.LinkType.STAR_PLAYER, "Morg_'n'_Thorg"));
+        var result = controller.image(auth, new EditorialArticleToolsController.ImageInput(links, "Bathing in a fountain", "", "", null, null, "pip-kritsmula"));
+        verify(llm).generate(anyString(), argThat(request -> request.taskInstruction().contains("Ogre") && request.taskInstruction().contains("Bathing in a fountain")));
+        verify(renderer).renderWithReferences(argThat(prompt -> prompt.contains("Blood Bowl") && prompt.contains("Morg")), any(),
+                argThat(urls -> urls.size() == 1 && urls.getFirst().contains("/media/starplayers/")));
+        verify(metadata).save(eq("/image.png"), eq(links), contains("Morg the ogre"));
+        assertEquals("true", result.get("referenceImagesUsed")); assertEquals("image-id", result.get("imageId"));
     }
 
     @Test void titleOrCustomPromptDoesNotDependOnAnExistingImageOrBody() {

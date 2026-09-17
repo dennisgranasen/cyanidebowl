@@ -41,6 +41,13 @@ public class CommunityImageProviders implements AiCommunityImageRenderer {
     @Override public RenderedImage render(String prompt, Target target) throws Exception {
         return render(prompt, target, defaultProvider);
     }
+    @Override public boolean supportsReferenceImages() { return providers.get("openai").isConfigured(); }
+    @Override public RenderedImage renderWithReferences(String prompt, Target target, List<String> images) throws Exception {
+        if (images.isEmpty()) return render(prompt, target);
+        // The configured Cloudflare text-to-image model cannot consume portrait references.
+        requireConfigured("openai");
+        return providers.get("openai").renderWithReferences(prompt, target, images);
+    }
     @Override public RenderedImage render(String prompt, Target target, String provider) throws Exception {
         String selected = provider == null || provider.isBlank() ? defaultProvider : provider;
         requireConfigured(selected);

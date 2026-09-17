@@ -28,15 +28,21 @@ public class OpenAiCommunityImageRenderer implements AiCommunityImageRenderer {
             ObjectMapper objectMapper,
             OpenAiNativeProviderProperties providerProperties,
             org.springframework.core.env.Environment environment) {
+        this(objectMapper, providerProperties, environment,
+                HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20)).build());
+    }
+
+    OpenAiCommunityImageRenderer(ObjectMapper objectMapper, OpenAiNativeProviderProperties providerProperties,
+                                 org.springframework.core.env.Environment environment, HttpClient httpClient) {
         this.objectMapper = objectMapper;
         this.providerProperties = providerProperties;
         this.quality = environment.getProperty(
                 "warpscores.ai.community-media.quality",
                 "low");
-        this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(20))
-                .build();
+        this.httpClient = httpClient;
     }
+
+    @Override public boolean supportsReferenceImages() { return isConfigured(); }
 
     @Override
     public boolean isConfigured() {
@@ -47,6 +53,13 @@ public class OpenAiCommunityImageRenderer implements AiCommunityImageRenderer {
     public RenderedImage render(
             String prompt,
             AiCommunityMediaGenerationRequest.Target target) throws Exception {
+        return renderWithReferences(prompt, target, java.util.List.of());
+    }
+
+    @Override
+    public RenderedImage renderWithReferences(String prompt, AiCommunityMediaGenerationRequest.Target target,
+                                              java.util.List<String> imageUrls) throws Exception {
+        if (imageUrls.size() > 16) throw new IllegalArgumentException("At most 16 portrait references per image");
         if (!isConfigured()) {
             throw new IllegalStateException("warpscores.ai.providers.openai.api-key is not configured");
         }
@@ -62,7 +75,11 @@ public class OpenAiCommunityImageRenderer implements AiCommunityImageRenderer {
         body.put("quality", quality);
         body.put("output_format", "png");
 
-        HttpRequest request = HttpRequest.newBuilder(ENDPOINT)
+        if (!imageUrls.isEmpty()) {
+            body.put("images", imageUrls.stream().map(url -> Map.of("image_url", url)).toList());
+            body.put("prompt", prompt + "\nUse the supplied portraits to preserve the named characters’ appearance. Create the requested scene; do not reproduce miniature bases, product photography backgrounds or lettering.");
+        }
+        HttpRequest request = HttpRequest.newBuilder(imageUrls.isEmpty() ? ENDPOINT : URI.create("https://api.openai.com/v1/images/edits"))
                 .timeout(providerProperties.getTimeout())
                 .header("Authorization", "Bearer " + providerProperties.getApiKey())
                 .header("Content-Type", "application/json")

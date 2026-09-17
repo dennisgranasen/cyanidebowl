@@ -21,3 +21,9 @@ test('malformed or unsupported context cannot break the editor', () => {
   expect(initialArticleContext('?context=oops')).toEqual([]);
   expect(initialArticleContext('?context=%7B%7D')).toEqual([]);
 });
+
+test('star players round trip through shared editorial context without changing distribution', () => {
+  const links = [{ type: 'STAR_PLAYER', id: "Morg_'n'_Thorg" }];
+  expect(initialArticleContext(articleEditorUrl(links).split('?')[1])).toEqual(links);
+  expect(articleIsGlobal(links)).toBe(true);
+});

@@ -232,11 +232,11 @@ public class LlmPlayerRatingGenerator
             }
 
             AiPlayerMatchRating entity = new AiPlayerMatchRating();
-            entity.setId(facts.getMatchId() + ":" + playerId + ":" + reporter.getId());
+            entity.setId(facts.getMatchId() + ":" + canonicalPlayerId + ":" + reporter.getId());
             entity.setMatchId(facts.getMatchId());
             Object seasonId = facts.getMatchSummary().get("seasonId");
             entity.setSeasonId(seasonId == null ? null : String.valueOf(seasonId));
-            entity.setPlayerId(playerId);
+            entity.setPlayerId(canonicalPlayerId);
             entity.setTeamId(player.getTeamId());
             entity.setPlayerRace(player.getRace());
             entity.setReporterId(reporter.getId());
@@ -252,8 +252,9 @@ public class LlmPlayerRatingGenerator
             pending.add(entity);
         }
 
-        if (!seen.equals(allowed.keySet())) {
-            Set<String> missing = new HashSet<>(allowed.keySet());
+        Set<String> expected = new HashSet<>(canonicalPlayerIds.values());
+        if (!seen.equals(expected)) {
+            Set<String> missing = new HashSet<>(expected);
             missing.removeAll(seen);
             throw new IllegalArgumentException(
                     "Player rating response omitted players: " + missing);

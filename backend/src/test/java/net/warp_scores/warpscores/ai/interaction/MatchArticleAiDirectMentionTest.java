@@ -67,7 +67,7 @@ class MatchArticleAiDirectMentionTest {
                     continuity,
                     autonomousActivity,
                     initiativePolicy,
-                    fanInteractions);
+                    fanInteractions, mock(net.warp_scores.warpscores.service.ArticleImageSubjects.class));
 
     @Test
     void exactAliasAndReporterIdTagsAreRecognized() {

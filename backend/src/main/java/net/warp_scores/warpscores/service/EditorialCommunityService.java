@@ -257,6 +257,8 @@ public class EditorialCommunityService {
         if (!wasPublished && saved.getStatus() == Article.Status.PUBLISHED) {
             fanInteractions.onArticlePublished(saved);
             staffArticleWork.onArticlePublished(saved);
+        } else if (saved.getStatus() == Article.Status.PUBLISHED) {
+            fanInteractions.onArticleImagesPublished(saved);
         }
         return saved;
     }

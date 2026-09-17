@@ -50,7 +50,7 @@ class LlmPlayerRatingGeneratorTest {
         PlayerRatingFacts facts = facts();
 
         when(assembly.assemble(isNull())).thenReturn(emptyContext());
-        when(llm.generate(eq("r1"), any())).thenReturn(response("""
+        when(llm.generate(eq("r1"), any(), isNull(Integer.class))).thenReturn(response("""
                 {"ratings":[
                   {"playerId":"p1","rating":2,"verdict":"Bra"},
                   {"playerId":"p2","rating":4,"verdict":"Ogiltig"}
@@ -61,7 +61,7 @@ class LlmPlayerRatingGeneratorTest {
                 () -> generator.generateAndPersist(reporter, facts, null));
 
         verify(ratings, never()).saveAll(any());
-        verify(llm, times(1)).generate(eq("r1"), any());
+        verify(llm, times(1)).generate(eq("r1"), any(), isNull(Integer.class));
     }
 
     @Test
@@ -70,7 +70,7 @@ class LlmPlayerRatingGeneratorTest {
         PlayerRatingFacts facts = facts();
 
         when(assembly.assemble(isNull())).thenReturn(emptyContext());
-        when(llm.generate(eq("r1"), any())).thenReturn(response("""
+        when(llm.generate(eq("r1"), any(), isNull(Integer.class))).thenReturn(response("""
                 {"ratings":[
                   {"playerId":"p1","rating":-3,"verdict":"Katastrof"},
                   {"playerId":"p2","rating":3,"verdict":"Matchvinnare"}
@@ -102,13 +102,13 @@ class LlmPlayerRatingGeneratorTest {
                         .map(AiPlayerMatchRating::getId)
                         .distinct()
                         .count());
-        verify(llm, times(1)).generate(eq("r1"), any());
+        verify(llm, times(1)).generate(eq("r1"), any(), isNull(Integer.class));
     }
 
     @Test
     void rejectsResponseThatOmitsAPlayerWithoutOverwritingExistingRows() {
         when(assembly.assemble(isNull())).thenReturn(emptyContext());
-        when(llm.generate(eq("r1"), any())).thenReturn(response("""
+        when(llm.generate(eq("r1"), any(), isNull(Integer.class))).thenReturn(response("""
                 {"ratings":[
                   {"playerId":"p1","rating":1,"verdict":"Bra"}
                 ]}
@@ -121,6 +121,29 @@ class LlmPlayerRatingGeneratorTest {
         verify(ratings, never()).saveAll(any());
     }
 
+    @Test
+    void acceptsAliasesButPersistsCanonicalIdsAndRejectsAliasDuplicates() {
+        var facts = facts("3_");
+        when(assembly.assemble(isNull())).thenReturn(emptyContext());
+        when(llm.generate(eq("r1"), any(), isNull(Integer.class))).thenReturn(response("""
+                {"ratings":[{"playerId":"p1","rating":1,"verdict":"Bra"},
+                            {"playerId":"3_p2","rating":0,"verdict":"Okej"}]}
+                """));
+        generator.generateAndPersist(reporter(), facts, null);
+        @SuppressWarnings("unchecked") ArgumentCaptor<Iterable<AiPlayerMatchRating>> saved = ArgumentCaptor.forClass(Iterable.class);
+        verify(ratings).saveAll(saved.capture());
+        saved.getValue().forEach(row -> {
+            assertTrue(row.getPlayerId().startsWith("3_"));
+            assertTrue(row.getId().contains(":" + row.getPlayerId() + ":"));
+        });
+        when(llm.generate(eq("r1"), any(), isNull(Integer.class))).thenReturn(response("""
+                {"ratings":[{"playerId":"p1","rating":1,"verdict":"Bra"},
+                            {"playerId":"3_p1","rating":1,"verdict":"Duplicated"}]}
+                """));
+        assertThrows(IllegalArgumentException.class, () -> generator.generateAndPersist(reporter(), facts, null));
+        verify(ratings, times(1)).saveAll(any());
+    }
+
     private static AiReporterDefinition reporter() {
         AiReporterDefinition reporter = new AiReporterDefinition();
         reporter.setId("r1");
@@ -129,20 +152,22 @@ class LlmPlayerRatingGeneratorTest {
         return reporter;
     }
 
-    private static PlayerRatingFacts facts() {
+    private static PlayerRatingFacts facts() { return facts(""); }
+
+    private static PlayerRatingFacts facts(String prefix) {
         return PlayerRatingFacts.builder()
                 .schemaVersion("facts-v1")
                 .matchId("match-1")
                 .matchSummary(Map.of())
                 .players(List.of(
                         PlayerRatingFacts.Player.builder()
-                                .playerId("p1")
+                                .playerId(prefix + "p1")
                                 .playerName("One")
                                 .teamId("t1")
                                 .race("HUMAN")
                                 .build(),
                         PlayerRatingFacts.Player.builder()
-                                .playerId("p2")
+                                .playerId(prefix + "p2")
                                 .playerName("Two")
                                 .teamId("t2")
                                 .race("ORC")

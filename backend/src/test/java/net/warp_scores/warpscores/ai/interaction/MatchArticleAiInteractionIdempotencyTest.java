@@ -38,7 +38,7 @@ class MatchArticleAiInteractionIdempotencyTest {
 
     private final MatchArticleAiInteractionService service = new MatchArticleAiInteractionService(
             profiles, policy, reactionDecisions, planner, assembly, llm,
-            comments, reactions, matchArticles, continuity, autonomousActivity, initiativePolicy, fanInteractions);
+            comments, reactions, matchArticles, continuity, autonomousActivity, initiativePolicy, fanInteractions, mock(net.warp_scores.warpscores.service.ArticleImageSubjects.class));
 
     @Test
     void existingReplySourceRevisionPreventsDuplicateLlmGeneration() {

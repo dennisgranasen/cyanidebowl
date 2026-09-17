@@ -5,12 +5,13 @@ import { useEditor } from '@tiptap/react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import Navigation from '../components/misc/Navigation';
 import Api from '../EditorialCommunityApi';
+import ArticleSubjectPicker from '../components/community/ArticleSubjectPicker';
 import ArticleImageGenerator from '../components/community/ArticleImageGenerator';
 import { articleEditorExtensions } from '../components/community/articleEditorExtensions';
 import ArticleRichTextEditor from '../components/community/ArticleRichTextEditor';
 import { useIntl } from 'react-intl';
 import { pasteArticleImages, dropArticleImages, validArticleImage } from '../util/articleImages';
-import { articleTypes, articleIsGlobal, initialArticleContext } from '../util/articleContext';
+import { articleIsGlobal, initialArticleContext } from '../util/articleContext';
 
 const blank = { title: '', slug: '', excerpt: '', coverImageUrl: '', status: 'DRAFT', featured: false };
 const validUrl = value => /^(https?:\/\/|\/(?!\/))/i.test(value);
@@ -23,9 +24,6 @@ function ArticleEditorPage() {
   const { articleId } = useParams();
   const [form, setForm] = useState(blank);
   const [links, setLinks] = useState(() => initialArticleContext(location.search));
-  const [type, setType] = useState('SEASON');
-  const [query, setQuery] = useState('');
-  const [options, setOptions] = useState([]);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
@@ -70,25 +68,6 @@ function ArticleEditorPage() {
     return () => { active = false; };
   }, [articleId, editor, location.search]);
   const associationKey = JSON.stringify(links.map(({ type, id }) => ({ type, id })));
-  useEffect(() => {
-    let active = true;
-    Promise.all(links.filter(l => !l.label).map(async link => {
-      try { return { ...link, ...(await Api.resolveAssociation(link.type, link.id)) }; }
-      catch { return link; }
-    })).then(resolved => {
-      if (active && resolved.length) setLinks(old => old.map(link => {
-        const match = resolved.find(r => r.type === link.type && r.id === link.id);
-        return match ? { ...link, label: match.label } : link;
-      }));
-    });
-    return () => { active = false; };
-  }, [associationKey]);
-  useEffect(() => {
-    let active = true;
-    const timer = setTimeout(() => Api.associationOptions(type, query, type === 'SEASON' ? system : null)
-      .then(data => { if (active) setOptions(data); }).catch(e => { if (active) showError(e); }), 250);
-    return () => { active = false; clearTimeout(timer); };
-  }, [type, query, system]);
   useEffect(() => {
     let active = true;
     setCapabilities(null); setQueue([]); setReporters([]);
@@ -137,13 +116,6 @@ function ArticleEditorPage() {
       else { navigate(`/editor/articles/${article.id}`); setNotice(t(article.status === 'PENDING_REVIEW' ? 'news.submitted' : 'news.saved')); }
     });
   };
-  const addAssociation = option => setLinks(old => {
-    const next = [...old];
-    const add = (type, id, label) => { if (id && !next.some(l => l.type === type && l.id === id)) next.push({ type, id, label }); };
-    add(type, option.id, option.label);
-    if (type === 'SEASON') add('LEAGUE_SYSTEM', option.leagueSystemId);
-    return next;
-  });
   const insertUrl = (value, text) => {
     if (!validUrl(value)) { setError(t('news.invalidUrl')); return; }
     if (editor.state.selection.empty) editor.chain().focus().insertContent({ type: 'text', text: text || value, marks: [{ type: 'link', attrs: { href: value } }] }).run();
@@ -186,18 +158,11 @@ function ArticleEditorPage() {
         <Box borderWidth="1px" p={3} borderRadius="md">
           <Heading size="sm" mb={2}>{t('news.associations')}</Heading>
           <Text fontSize="sm" mb={2}>{t('news.scopeHelp')}</Text>
-          {links.map((l, i) => <HStack key={`${l.type}:${l.id}`} mb={1}><Text>{t(`news.type.${l.type}`)}: {l.label || l.id}</Text><Button size="xs" onClick={() => setLinks(old => old.filter((_, n) => n !== i))}>{t('news.remove')}</Button></HStack>)}
-          <HStack mt={3}><Select value={type} onChange={e => setType(e.target.value)} aria-label={t('news.associations')}>
-            {articleTypes.map(type => <option key={type} value={type}>{t(`news.type.${type}`)}</option>)}
-          </Select><Input value={query} onChange={e => setQuery(e.target.value)} placeholder={t('news.search')} aria-label={t('news.search')} /></HStack>
-          <Box maxH="200px" overflowY="auto">{options.map(option => <HStack key={option.id} justify="space-between" mt={2}>
-            <Text>{option.label || option.id}</Text><HStack><Button size="xs" onClick={() => addAssociation(option)}>{t('news.add')}</Button>
-              {option.url && <Button size="xs" onClick={() => insertUrl(option.url, option.label)}>{t('news.insertLink')}</Button>}</HStack>
-          </HStack>)}</Box>
+          <ArticleSubjectPicker value={links} onChange={setLinks} disabled={busy || loading} onError={showError} onInsertLink={insertUrl} />
         </Box>
         {articleIsGlobal(links) && <Alert status="warning">{t('news.globalWarning')}</Alert>}
         <ArticleRichTextEditor editor={editor} disabled={busy || loading} onUpload={uploadImages} onError={showError} />
-        <ArticleImageGenerator editor={editor} title={form.title} associations={payload().associations}
+        <ArticleImageGenerator key={articleId || location.search} editor={editor} title={form.title} associations={payload().associations}
           disabled={busy || loading} onError={showError} onBusyChange={setBusy} />
         <Text fontSize="sm">{t(`news.status.${form.status}`)}</Text>
         <Alert status="info">{t(capabilities?.canPublishDirect ? 'news.directPublication' : 'news.reviewRequired')}</Alert>

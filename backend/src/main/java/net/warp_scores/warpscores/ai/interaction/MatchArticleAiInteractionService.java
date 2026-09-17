@@ -52,6 +52,7 @@ public class MatchArticleAiInteractionService {
     private final ReporterAutonomousActivityGate autonomousActivity;
     private final AiInitiativePolicyService initiativePolicy;
     private final AiCommunityFanInteractionService fanInteractions;
+    private final net.warp_scores.warpscores.service.ArticleImageSubjects imageSubjects;
 
     @Async
     public void onPublished(MatchArticle article) {
@@ -76,9 +77,11 @@ public class MatchArticleAiInteractionService {
                 boolean react = userAuthored
                         ? policy.shouldReactToUserArticle(reporter, 0.0, rng)
                         : policy.shouldReact(reporter, 0.0, rng);
+                double modifier = imageSubjects.tagged(article.getBodyHtml(), net.warp_scores.warpscores.model.Article.LinkType.STAFF)
+                        .contains(reporter.getId()) ? reporter.getBehaviour().getNamedMentionReplyBonus() : 0.0;
                 boolean comment = userAuthored
-                        ? policy.shouldCommentOnUserArticle(reporter, false, 0.0, rng)
-                        : policy.shouldComment(reporter, 0.0, rng);
+                        ? policy.shouldCommentOnUserArticle(reporter, false, modifier, rng)
+                        : policy.shouldComment(reporter, modifier, rng);
                 if (react) reactToArticleOnce(article, reporter);
                 if (comment) commentOnArticleOnce(article, reporter);
             } catch (Exception e) {
@@ -248,7 +251,7 @@ public class MatchArticleAiInteractionService {
                 Return only the comment text.
 
                 MATCH REPORT TITLE:
-                """ + article.getTitle() + "\n\nMATCH REPORT BODY:\n" + article.getBody();
+                """ + article.getTitle() + "\n\nMATCH REPORT BODY:\n" + article.getBody() + "\nILLUSTRATIONS (you may be depicted):\n" + imageSubjects.descriptions(article.getBodyHtml());
 
         CanonicalLlmResponse response = generate(
                 reporter, ContextTaskType.ARTICLE_COMMENT, context, task, 900);

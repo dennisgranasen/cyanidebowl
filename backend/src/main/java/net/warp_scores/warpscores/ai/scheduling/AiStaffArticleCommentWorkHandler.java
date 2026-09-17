@@ -23,6 +23,7 @@ public class AiStaffArticleCommentWorkHandler implements AiAutonomousWorkHandler
     private final AiInitiativePolicyService initiativePolicy;
     private final ReporterInteractionPolicy interactionPolicy;
     private final GeneralArticleAiInteractionService interactions;
+    private final net.warp_scores.warpscores.service.ArticleImageSubjects imageSubjects;
 
     @Override
     public String handlerKey() {
@@ -35,8 +36,7 @@ public class AiStaffArticleCommentWorkHandler implements AiAutonomousWorkHandler
                 || item.getKind() != AiAutonomousWorkItem.WorkKind.ARTICLE_COMMENT
                 || !"ARTICLE".equals(item.getTargetType())
                 || !StringUtils.hasText(item.getActorId())
-                || !StringUtils.hasText(item.getTargetId())
-                || !StringUtils.hasText(item.getLeagueSystemId())) {
+                || !StringUtils.hasText(item.getTargetId())) {
             throw new IllegalArgumentException("Invalid staff article-comment work item");
         }
 
@@ -60,11 +60,13 @@ public class AiStaffArticleCommentWorkHandler implements AiAutonomousWorkHandler
         boolean userAuthored = article.getGeneration() == null
                 || !article.getGeneration().hasAiGeneration();
 
+        boolean imageTag = imageSubjects.tagged(article.getBodyHtml(), Article.LinkType.STAFF).contains(definition.getId());
+        double modifier = imageTag ? definition.getBehaviour().getNamedMentionReplyBonus() : 0.0;
         boolean shouldComment = userAuthored
                 ? interactionPolicy.shouldCommentOnUserArticle(
-                        definition, false, 0.0, RandomGenerator.getDefault())
+                        definition, false, modifier, RandomGenerator.getDefault())
                 : interactionPolicy.shouldComment(
-                        definition, 0.0, RandomGenerator.getDefault());
+                        definition, modifier, RandomGenerator.getDefault());
 
         if (!shouldComment) return;
 

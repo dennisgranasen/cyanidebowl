@@ -21,8 +21,7 @@ public class AiPublishedArticleStaffWorkProducer {
     public void onArticlePublished(Article article) {
         if (article == null
                 || article.getStatus() != Article.Status.PUBLISHED
-                || !StringUtils.hasText(article.getId())
-                || !StringUtils.hasText(article.getLeagueSystemId())) {
+                || !StringUtils.hasText(article.getId())) {
             return;
         }
 

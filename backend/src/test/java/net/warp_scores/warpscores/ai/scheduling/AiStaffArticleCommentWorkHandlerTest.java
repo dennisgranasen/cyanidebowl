@@ -30,7 +30,7 @@ class AiStaffArticleCommentWorkHandlerTest {
 
         AiStaffArticleCommentWorkHandler handler =
                 new AiStaffArticleCommentWorkHandler(
-                        articles, registry, profiles, initiative, policy, interactions);
+                        articles, registry, profiles, initiative, policy, interactions, mock(net.warp_scores.warpscores.service.ArticleImageSubjects.class));
 
         Article article = article();
         AiReporterDefinition reporter = mock(AiReporterDefinition.class);
@@ -61,7 +61,7 @@ class AiStaffArticleCommentWorkHandlerTest {
 
         AiStaffArticleCommentWorkHandler handler =
                 new AiStaffArticleCommentWorkHandler(
-                        articles, registry, profiles, initiative, policy, interactions);
+                        articles, registry, profiles, initiative, policy, interactions, mock(net.warp_scores.warpscores.service.ArticleImageSubjects.class));
 
         Article article = article();
         AiReporterDefinition reporter = mock(AiReporterDefinition.class);
@@ -79,6 +79,34 @@ class AiStaffArticleCommentWorkHandlerTest {
 
         handler.execute(item());
         verifyNoInteractions(interactions);
+    }
+
+    @Test
+    void taggedReporterStillMayDeclineAndGlobalArticlesAreSupported() {
+        var articles = mock(ArticleRepository.class);
+        var registry = mock(AiReporterRegistry.class);
+        var profiles = mock(AiReporterEffectiveProfileService.class);
+        var initiative = mock(AiInitiativePolicyService.class);
+        var interactions = mock(GeneralArticleAiInteractionService.class);
+        var images = mock(net.warp_scores.warpscores.service.ArticleImageSubjects.class);
+        var handler = new AiStaffArticleCommentWorkHandler(articles, registry, profiles, initiative,
+                new ReporterInteractionPolicy(), interactions, images);
+        var article = article(); article.setLeagueSystemId(null); article.setBodyHtml("tagged illustration");
+        var reporter = new AiReporterDefinition(); reporter.setId("reporter");
+        reporter.getBehaviour().setUserArticleCommentProbability(0.0);
+        reporter.getBehaviour().setNamedMentionReplyBonus(0.0);
+        when(articles.findById("article")).thenReturn(Optional.of(article));
+        when(registry.find("reporter")).thenReturn(Optional.of(reporter));
+        when(profiles.effective(reporter)).thenReturn(new AiReporterEffectiveProfileService.EffectiveReporter(
+                reporter, true, false, true, false, 1.0, "sv"));
+        when(initiative.staffMayRunAutonomously(null, AiInitiativePolicyService.StaffActivity.ARTICLE_COMMENT)).thenReturn(true);
+        when(images.tagged("tagged illustration", Article.LinkType.STAFF)).thenReturn(java.util.Set.of("reporter"));
+        var work = item(); work.setLeagueSystemId(null);
+        handler.execute(work);
+        verifyNoInteractions(interactions);
+        reporter.getBehaviour().setUserArticleCommentProbability(1.0);
+        handler.execute(work);
+        verify(interactions).commentOnArticleOnce("article", "reporter");
     }
 
     private static Article article() {

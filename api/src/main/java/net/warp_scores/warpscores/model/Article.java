@@ -19,7 +19,7 @@ import java.util.List;
 @CompoundIndex(name = "article_slug_unique", def = "{'slug': 1}", unique = true)
 public class Article {
     public enum Status { DRAFT, PENDING_REVIEW, PUBLISHED, REJECTED, ARCHIVED }
-    public enum LinkType { LEAGUE_SYSTEM, SEASON, TEAM, PLAYER, FAN, STAFF }
+    public enum LinkType { LEAGUE_SYSTEM, SEASON, TEAM, PLAYER, FAN, STAFF, STAR_PLAYER }
     public record Association(LinkType type, String id) {}
     public enum AuthorType { HUMAN, AI_REPORTER }
 

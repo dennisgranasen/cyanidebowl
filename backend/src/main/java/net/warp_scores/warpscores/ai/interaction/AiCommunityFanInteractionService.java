@@ -29,6 +29,8 @@ public class AiCommunityFanInteractionService {
     private final ContextPlanner contextPlanner;
     private final ContextAssemblyService contextAssembly;
     private final LlmExecutionService llm;
+    private final net.warp_scores.warpscores.service.ArticleImageSubjects imageSubjects;
+    private final net.warp_scores.warpscores.ai.scheduling.AiAutonomousWorkQueue workQueue;
 
     @Async
     public void onArticlePublished(Article article) {
@@ -36,8 +38,11 @@ public class AiCommunityFanInteractionService {
                 || article.getStatus() != Article.Status.PUBLISHED
                 || !StringUtils.hasText(article.getId())) return;
 
+        var tagged = imageSubjects.tagged(article.getBodyHtml(), Article.LinkType.FAN);
+        enqueueTaggedFans("ARTICLE", article.getId(), article.getLeagueSystemId(), article.getBodyHtml());
         RandomGenerator rng = RandomGenerator.getDefault();
         for (AiCommunityMemberProfile fan : activeFans()) {
+            if (tagged.contains(fan.getId())) continue;
             boolean ownTeam = article.getTeamIds() != null
                     && article.getTeamIds().contains(fan.getTeamId());
             var target = ownTeam
@@ -65,11 +70,13 @@ public class AiCommunityFanInteractionService {
                 || !StringUtils.hasText(article.getId())
                 || !StringUtils.hasText(article.getMatchId())) return;
 
+        var tagged = imageSubjects.tagged(article.getBodyHtml(), Article.LinkType.FAN);
+        enqueueTaggedFans("MATCH_ARTICLE", article.getId(), article.getLeagueSystemId(), article.getBodyHtml());
         Match match = matchById(article.getMatchId());
         RandomGenerator rng = RandomGenerator.getDefault();
 
         for (AiCommunityMemberProfile fan : activeFans()) {
-            if (teamIndex(match, fan.getTeamId()) < 0) continue;
+            if (tagged.contains(fan.getId()) || teamIndex(match, fan.getTeamId()) < 0) continue;
 
             if (initiativePolicy.fanShouldComment(
                     article.getLeagueSystemId(),
@@ -86,6 +93,46 @@ public class AiCommunityFanInteractionService {
                 }
             }
         }
+    }
+
+    private void enqueueTaggedFans(String type, String id, String league, String html) {
+        for (var image : imageSubjects.images(html)) {
+            var fans = net.warp_scores.warpscores.service.ArticleScopeService.ids(image.associations(), Article.LinkType.FAN);
+            for (String fanId : fans) workQueue.enqueue(new net.warp_scores.warpscores.ai.scheduling.AiAutonomousWorkQueue.EnqueueRequest(
+                    "image-fan:" + type + ":" + id + ":" + image.id() + ":" + fanId,
+                    net.warp_scores.warpscores.ai.scheduling.AiTaggedImageFanWorkHandler.KEY,
+                    AiAutonomousWorkItem.WorkKind.ARTICLE_COMMENT, AiAutonomousWorkItem.Priority.AUTONOMOUS,
+                    league, fanId, type, id, java.util.Map.of("imageId", image.id()), 5));
+        }
+    }
+
+    @Async
+    public void onArticleImagesPublished(Article article) {
+        if (article == null || article.getStatus() != Article.Status.PUBLISHED || !StringUtils.hasText(article.getId())) return;
+        enqueueTaggedFans("ARTICLE", article.getId(), article.getLeagueSystemId(),
+                article.getBodyHtml());
+    }
+
+    /** Explicit image tags bypass probability and team-affinity gates; provider failures are retried by the queue. */
+    public void commentOnTaggedImageOnce(String type, String articleId, String fanId, String imageId) {
+        var fan = profiles.findById(fanId).filter(AiCommunityMemberProfile::isActive)
+                .filter(f -> f.getUserId() != null && StringUtils.hasText(f.getUserSubject())).orElse(null);
+        if (fan == null) return;
+        String revision = "fan-image:" + articleId + ":" + imageId;
+        if ("ARTICLE".equals(type)) {
+            var article = articles.findById(articleId).filter(a -> a.getStatus() == Article.Status.PUBLISHED).orElse(null);
+            if (article == null || !retainsTag(article.getBodyHtml(), imageId, fanId)) return;
+            commentOnGeneralArticleOnce(article, fan, article.getTeamIds() != null && article.getTeamIds().contains(fan.getTeamId()), revision);
+        } else if ("MATCH_ARTICLE".equals(type)) {
+            var article = matchArticles.findById(articleId).filter(a -> a.getStatus() == MatchArticle.Status.PUBLISHED).orElse(null);
+            if (article == null || !retainsTag(article.getBodyHtml(), imageId, fanId)) return;
+            commentOnMatchArticleOnce(article, fan, revision);
+        } else throw new IllegalArgumentException("Unknown image comment target");
+    }
+
+    private boolean retainsTag(String html, String imageId, String fanId) {
+        return imageSubjects.images(html).stream().anyMatch(image -> image.id().equals(imageId)
+                && image.associations().contains(new Article.Association(Article.LinkType.FAN, fanId)));
     }
 
     @Async
@@ -199,7 +246,10 @@ public class AiCommunityFanInteractionService {
             Article article,
             AiCommunityMemberProfile fan,
             boolean ownTeam) {
-        String revision = "fan-article:" + article.getId();
+        commentOnGeneralArticleOnce(article, fan, ownTeam, "fan-article:" + article.getId());
+    }
+
+    private void commentOnGeneralArticleOnce(Article article, AiCommunityMemberProfile fan, boolean ownTeam, String revision) {
         if (alreadyGenerated(
                 CommunityComment.TargetType.ARTICLE,
                 article.getId(),
@@ -224,7 +274,8 @@ public class AiCommunityFanInteractionService {
                 + "\nReact as a supporter would, in at most two short paragraphs."
                 + "\nReturn only the comment text."
                 + "\n\nARTICLE:\n" + article.getTitle()
-                + "\n\n" + article.getBodyHtml();
+                + "\n\n" + article.getBodyHtml()
+                + "\nILLUSTRATIONS (you may be depicted):\n" + imageSubjects.descriptions(article.getBodyHtml());
 
         CanonicalLlmResponse response =
                 generate(fan, context, task, ContextTaskType.ARTICLE_COMMENT);
@@ -296,7 +347,10 @@ public class AiCommunityFanInteractionService {
     private void commentOnMatchArticleOnce(
             MatchArticle article,
             AiCommunityMemberProfile fan) {
-        String revision = "fan-match-article:" + article.getId();
+        commentOnMatchArticleOnce(article, fan, "fan-match-article:" + article.getId());
+    }
+
+    private void commentOnMatchArticleOnce(MatchArticle article, AiCommunityMemberProfile fan, String revision) {
         if (alreadyGenerated(
                 CommunityComment.TargetType.MATCH_ARTICLE,
                 article.getId(),
@@ -313,11 +367,12 @@ public class AiCommunityFanInteractionService {
 
         String task = fanVoice(fan)
                 + "\nWrite a short public supporter comment on this match article."
-                + "\nYour supported team played in the match."
+                + "\nDo not assume your supported team played; you may instead be tagged in an illustration."
                 + "\nDo not invent match facts and do not claim to be the coach."
                 + "\nKeep it to at most two short paragraphs. Return only the comment text."
                 + "\n\nMATCH ARTICLE:\n" + article.getTitle()
-                + "\n\n" + article.getBody();
+                + "\n\n" + article.getBody()
+                + "\nILLUSTRATIONS (you may be depicted):\n" + imageSubjects.descriptions(article.getBodyHtml());
 
         CanonicalLlmResponse response =
                 generate(fan, context, task, ContextTaskType.ARTICLE_COMMENT);
@@ -410,7 +465,7 @@ public class AiCommunityFanInteractionService {
             String revision,
             String replyToCommentId) {
         String body = response.content() == null ? "" : response.content().trim();
-        if (body.isBlank()) return;
+        if (body.isBlank()) throw new IllegalStateException("Fan comment generation returned an empty response");
         if (body.length() > 10_000) body = body.substring(0, 10_000);
 
         Instant now = Instant.now();

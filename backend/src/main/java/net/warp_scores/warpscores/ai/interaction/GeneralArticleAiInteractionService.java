@@ -37,6 +37,7 @@ public class GeneralArticleAiInteractionService {
     private final ContextPlanner contextPlanner;
     private final ContextAssemblyService contextAssembly;
     private final LlmExecutionService llm;
+    private final net.warp_scores.warpscores.service.ArticleImageSubjects imageSubjects;
 
     public void commentOnArticleOnce(String articleId, String reporterId) {
         if (!StringUtils.hasText(articleId) || !StringUtils.hasText(reporterId)) return;
@@ -82,7 +83,8 @@ public class GeneralArticleAiInteractionService {
                 + "\n"
                 + "ARTICLE TITLE:\n"
                 + article.getTitle()
-                + "\n\nARTICLE BODY:\n" + article.getBodyHtml();
+                + "\n\nARTICLE BODY:\n" + article.getBodyHtml()
+                + "\nILLUSTRATIONS (you may be depicted):\n" + imageSubjects.descriptions(article.getBodyHtml());
 
         CanonicalLlmResponse response = llm.generate(
                 reporter.getId(),
