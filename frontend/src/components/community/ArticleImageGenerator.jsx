@@ -24,6 +24,9 @@ export default function ArticleImageGenerator({ editor, title, associations = []
   const [attempt, setAttempt] = useState(0);
   const [queue, setQueue] = useState(null);
   const [queueError, setQueueError] = useState(false);
+  const [providerStatus, setProviderStatus] = useState(null);
+  const [providerStatusError, setProviderStatusError] = useState(false);
+  const [referenceRejected, setReferenceRejected] = useState(false);
   useEffect(() => {
     if (!photographerId) return undefined;
     let active = true;
@@ -39,6 +42,28 @@ export default function ArticleImageGenerator({ editor, title, associations = []
     refresh();
     return () => { active = false; clearTimeout(timer); };
   }, [photographerId, getAccessTokenSilently]);
+  const subjectKey = JSON.stringify(selectedLinks.map(({ type, id }) => ({ type, id })));
+  useEffect(() => {
+    setReferenceRejected(false);
+  }, [subjectKey, prompt]);
+
+  useEffect(() => {
+    let active = true;
+    let timer;
+    const refresh = async () => {
+      try {
+        const status = await Api.imageStatus(JSON.parse(subjectKey), getAccessTokenSilently);
+        if (active) { setProviderStatus(status); setProviderStatusError(false); }
+      } catch (_) {
+        if (active) setProviderStatusError(true);
+      } finally {
+        if (active) timer = setTimeout(refresh, 15000);
+      }
+    };
+    refresh();
+    return () => { active = false; clearTimeout(timer); };
+  }, [subjectKey, getAccessTokenSilently]);
+
   useEffect(() => {
     let active = true;
     setLoadError(false);
@@ -52,20 +77,30 @@ export default function ArticleImageGenerator({ editor, title, associations = []
   const photographer = photographers.find(p => p.id === photographerId);
   const description = photographer?.descriptions?.[intl.locale.split('-')[0]] || photographer?.descriptions?.en;
   const inFlight = useRef(false);
-  const available = !!photographer && contextAvailable && (selectedLinks.length > 0 || canGenerateArticleImage({ title, body: editor?.getText(), prompt, matchId }));
-  const generate = async () => {
+  const providerBlocked = providerStatus?.blocked === true;
+  const available = !!photographer && contextAvailable && !providerBlocked
+    && (selectedLinks.length > 0 || canGenerateArticleImage({ title, body: editor?.getText(), prompt, matchId }));
+  const generate = async (ignoreReferences = false) => {
     if (inFlight.current || disabled || !editor || !available) return;
     inFlight.current = true; setPending(true); onBusyChange?.(true);
     try {
       const image = await Api.generateArticleImage({ title, body: editor.getText(), prompt,
-        associations: selectedLinks.map(({ type, id }) => ({ type, id })), matchId, reporterId, photographerId }, getAccessTokenSilently);
+        associations: selectedLinks.map(({ type, id }) => ({ type, id })),
+        matchId, reporterId, photographerId, ignoreReferences }, getAccessTokenSilently);
       if (!editor.isDestroyed) editor.chain().focus().setImage({ src: Api.assetUrl(image.url), editorialImageId: image.imageId,
         title: intl.formatMessage({ id: 'news.imageCredit' }, { name: image.photographerName || photographer.alias }) }).run();
       setGenerated(true);
+      setReferenceRejected(false);
       setReferenceNotice(image.referenceImagesAvailable === 'true' && image.referenceImagesUsed !== 'true');
     } catch (error) {
-      const timedOut = ['IMAGE_TIMEOUT', 'ECONNABORTED', 'ETIMEDOUT'].includes(error.code) || error.response?.status === 504;
-      onError(timedOut ? new Error(t('news.imageTimeout')) : error);
+      const providerCode = error.response?.data?.code;
+      if (providerCode === 'IMAGE_SAFETY_REJECTED') {
+        setReferenceRejected(true);
+        setReferenceNotice(false);
+      } else {
+        const timedOut = ['IMAGE_TIMEOUT', 'ECONNABORTED', 'ETIMEDOUT'].includes(error.code) || error.response?.status === 504;
+        onError(timedOut ? new Error(t('news.imageTimeout')) : error);
+      }
     }
     finally { inFlight.current = false; setPending(false); onBusyChange?.(false); }
   };
@@ -95,8 +130,31 @@ export default function ArticleImageGenerator({ editor, title, associations = []
       <Textarea size="sm" rows={2} value={prompt} onChange={e => setPrompt(e.target.value)} placeholder={t('news.imagePromptHelp')} isDisabled={pending} />
     </FormControl>
     {referenceNotice && <Text mt={2} fontSize="sm">{t('news.imageTextReferencesOnly')}</Text>}
+    {referenceRejected && <Box mt={2} p={2} borderWidth="1px" borderRadius="md">
+      <Text color="orange.400" fontWeight="semibold">
+        Cloudflare rejected this prompt/reference-image combination.
+      </Text>
+      <Text fontSize="sm">
+        You can change the prompt or retry without the portrait references. Tagged subjects will still be included as text context.
+      </Text>
+      <Button size="sm" mt={2} variant="outline" isLoading={pending}
+        isDisabled={disabled || !available || !editor}
+        onClick={() => generate(true)}>
+        Generate without reference images
+      </Button>
+    </Box>}
+    {providerStatus?.blocked && <Box mt={2} p={2} borderWidth="1px" borderRadius="md">
+      <Text color="orange.400" fontWeight="semibold">
+        {providerStatus.quotaExhausted ? 'Image quota/credits are exhausted.' : 'Image generation is temporarily unavailable.'}
+      </Text>
+      <Text fontSize="sm">{providerStatus.message}</Text>
+      {providerStatus.retryAt && <Text fontSize="sm">
+        Retry after {intl.formatDate(providerStatus.retryAt, { dateStyle: 'medium', timeStyle: 'short' })}
+      </Text>}
+    </Box>}
+    {providerStatusError && <Text mt={2} fontSize="sm">Image provider status could not be checked.</Text>}
     <HStack mt={2} flexWrap="wrap">
-      <Button size="sm" leftIcon={<RepeatIcon />} isLoading={pending} isDisabled={disabled || !available || !editor} onClick={generate}>
+      <Button size="sm" leftIcon={<RepeatIcon />} isLoading={pending} isDisabled={disabled || !available || !editor} onClick={() => generate(false)}>
         {t(generated ? 'news.generateAnotherImage' : 'news.generateImage')}
       </Button>
       <Text fontSize="xs" opacity={0.75}>{t(matchId ? 'news.matchImageContext' : 'news.imageRegenerateHelp')}</Text>

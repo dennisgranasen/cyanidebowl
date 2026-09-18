@@ -37,23 +37,9 @@ function ArticleEditorPage() {
   const [queue, setQueue] = useState([]);
   const [autoAccept, setAutoAccept] = useState(false);
   const system = links.find(l => l.type === 'LEAGUE_SYSTEM')?.id;
-  const mentionTypes = ['TEAM', 'PLAYER', 'COACH', 'STAR_PLAYER', 'FAN', 'STAFF'];
   const searchMentions = useCallback(async query => {
     if (!query?.trim()) return [];
-    const groups = await Promise.all(mentionTypes.map(async type => {
-      const rows = await Api.associationOptions(type, query.trim());
-      return rows.map(option => ({ ...option, type }));
-    }));
-    const normalized = query.trim().toLocaleLowerCase();
-    return groups.flat()
-      .sort((a, b) => {
-        const aLabel = (a.label || '').toLocaleLowerCase();
-        const bLabel = (b.label || '').toLocaleLowerCase();
-        const aStarts = aLabel.startsWith(normalized) ? 0 : 1;
-        const bStarts = bLabel.startsWith(normalized) ? 0 : 1;
-        return aStarts - bStarts || aLabel.localeCompare(bLabel);
-      })
-      .slice(0, 24);
+    return Api.mentionOptions(query.trim());
   }, []);
   const addMentionAssociation = useCallback(option => {
     setLinks(old => old.some(link => link.type === option.type && link.id === option.id)

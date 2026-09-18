@@ -40,11 +40,11 @@ export default function ArticleRichTextEditor({
         query: match[1],
       });
     };
-    editor.on('transaction', detectMention);
+    editor.on('update', detectMention);
     editor.on('selectionUpdate', detectMention);
     detectMention();
     return () => {
-      editor.off('transaction', detectMention);
+      editor.off('update', detectMention);
       editor.off('selectionUpdate', detectMention);
     };
   }, [editor, onMentionSearch]);
@@ -79,7 +79,7 @@ export default function ArticleRichTextEditor({
           marks: [{
             type: 'link',
             attrs: {
-              href: option.url || null,
+              href: option.url || '#',
               editorialMentionType: option.type,
               editorialMentionId: option.id,
             },

@@ -104,7 +104,10 @@ public class OpenAiCommunityImageRenderer implements AiCommunityImageRenderer {
                     "OpenAI image generation failed with HTTP "
                             + response.statusCode() + ": "
                             + truncate(bodyText, 500),
-                    retryable);
+                    retryable,
+                    response.statusCode(),
+                    null,
+                    quotaExhausted);
         }
 
         JsonNode root = objectMapper.readTree(response.body());

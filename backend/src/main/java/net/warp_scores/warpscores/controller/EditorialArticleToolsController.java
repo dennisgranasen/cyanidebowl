@@ -29,6 +29,44 @@ public class EditorialArticleToolsController {
     private final EditorialSubjectContext subjectContext;
     private final ArticleImageSubjects imageSubjects;
 
+    public record ImageStatusInput(List<Article.Association> associations) {}
+    public record ImageStatus(String provider, boolean blocked, boolean quotaExhausted,
+                              java.time.Instant retryAt, String message,
+                              int referenceImagesAvailable) {}
+
+    @PostMapping("/image-status")
+    public ImageStatus imageStatus(Authentication auth, @RequestBody ImageStatusInput input) {
+        requireWriter(auth);
+        var subjects = subjectContext.resolve(input.associations());
+        var status = imageProviders().status(!subjects.referenceImages().isEmpty());
+        return new ImageStatus(status.provider(), status.blocked(), status.quotaExhausted(),
+                status.retryAt(), status.message(), subjects.referenceImages().size());
+    }
+
+    @ExceptionHandler(AiCommunityImageProviderException.class)
+    public org.springframework.http.ResponseEntity<Map<String, Object>> imageProviderFailure(
+            AiCommunityImageProviderException error) {
+        int status = error.statusCode() == null ? 503 : error.statusCode();
+        if (error.quotaExhausted() || status == 429) status = 429;
+        var body = new java.util.LinkedHashMap<String, Object>();
+        boolean safetyRejected = error.statusCode() != null
+                && error.statusCode() == 400
+                && error.getMessage() != null
+                && error.getMessage().contains("/ code 3030");
+        body.put("code", safetyRejected ? "IMAGE_SAFETY_REJECTED"
+                : error.quotaExhausted() ? "IMAGE_QUOTA_EXHAUSTED"
+                : "IMAGE_PROVIDER_ERROR");
+        body.put("message", safetyRejected
+                ? "Cloudflare rejected this prompt/reference-image combination."
+                : error.quotaExhausted()
+                    ? "Image provider quota or credits are exhausted"
+                    : error.getMessage());
+        body.put("quotaExhausted", error.quotaExhausted());
+        body.put("retryable", error.isRetryable());
+        if (error.retryAt() != null) body.put("retryAt", error.retryAt().toString());
+        return org.springframework.http.ResponseEntity.status(status).body(body);
+    }
+
     @GetMapping("/photographers")
     public List<net.warp_scores.warpscores.ai.agents.EditorialPhotographerRegistry.Photographer> photographers() {
         return photographers.all();
@@ -51,9 +89,21 @@ public class EditorialArticleToolsController {
     public Article generate(Authentication auth, @RequestBody EditorialArticleAiService.Request input) throws Exception {
         return ai.generate(auth, input);
     }
-    public record ImageInput(List<Article.Association> associations, String prompt, String title, String body, String matchId, String reporterId, String photographerId) {
-        public ImageInput(List<Article.Association> associations, String prompt, String title, String body, String matchId, String reporterId) {
-            this(associations, prompt, title, body, matchId, reporterId, null);
+    public record ImageInput(List<Article.Association> associations, String prompt, String title, String body,
+                             String matchId, String reporterId, String photographerId,
+                             Boolean ignoreReferences) {
+        public ImageInput(List<Article.Association> associations, String prompt, String title, String body,
+                          String matchId, String reporterId, String photographerId) {
+            this(associations, prompt, title, body, matchId, reporterId, photographerId, false);
+        }
+
+        public ImageInput(List<Article.Association> associations, String prompt, String title, String body,
+                          String matchId, String reporterId) {
+            this(associations, prompt, title, body, matchId, reporterId, null, false);
+        }
+
+        public boolean referencesDisabled() {
+            return Boolean.TRUE.equals(ignoreReferences);
         }
     }
     @PostMapping("/image")
@@ -74,7 +124,9 @@ public class EditorialArticleToolsController {
                     + "\nHISTORICAL COMPETITION CONTEXT:\n" + context.history().json();
         }
         String brief = imagePrompts.prepare(prompt, photographer, assembled, !subjects.associations().isEmpty());
-        boolean useReferences = !subjects.referenceImages().isEmpty() && renderer.supportsReferenceImages();
+        boolean useReferences = !input.referencesDisabled()
+                && !subjects.referenceImages().isEmpty()
+                && renderer.supportsReferenceImages();
         var image = !useReferences
                 ? renderer.render(brief, AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE)
                 : renderer.renderWithReferences(brief + "\nReference portraits in order: "
@@ -131,4 +183,13 @@ public class EditorialArticleToolsController {
             } finally { reader.dispose(); }
         }
     }
+
+    private CommunityImageProviders imageProviders() {
+    return renderers.orderedStream()
+            .filter(CommunityImageProviders.class::isInstance)
+            .map(CommunityImageProviders.class::cast)
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException(
+                    "Community image provider status is not available"));
+}
 }

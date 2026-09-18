@@ -69,3 +69,6 @@ backend/test.data
 backend/data
 apply-*.py
 cyanidebowl-*.py
+
+# Generated editorial star-player assets
+/data/starplayers/

@@ -27,6 +27,10 @@ const EditorialCommunityApi = {
     get(`/articles?limit=${limit}${leagueSystemId ? `&leagueSystemId=${encodeURIComponent(leagueSystemId)}` : ''}${seasonId ? `&seasonId=${encodeURIComponent(seasonId)}` : ''}${type && subjectId ? `&type=${encodeURIComponent(type)}&subjectId=${encodeURIComponent(subjectId)}` : ''}`),
   resolveAssociation: (type, id) => get(`/articles/associations/resolve?${new URLSearchParams({ type, id })}`),
   associationOptions: (type, q, leagueSystemId) => get(`/articles/associations?${new URLSearchParams({ type, q, ...(leagueSystemId ? { leagueSystemId } : {}) })}`),
+  mentionOptions: q => get(`/articles/associations/mentions?${new URLSearchParams({ q })}`),
+  imageStatus: (associations, token) => authPost('/articles/tools/image-status', {
+    associations: associations.map(({ type, id }) => ({ type, id })),
+  }, token),
   myArticles: token => authGet('/articles/mine', token),
   articleCapabilities: (id, payload, token) => authPost(`/articles/capabilities${id ? `?id=${encodeURIComponent(id)}` : ''}`, payload, token),
   editorArticle: (id, token) => authGet(`/articles/editor/${encodeURIComponent(id)}`, token),

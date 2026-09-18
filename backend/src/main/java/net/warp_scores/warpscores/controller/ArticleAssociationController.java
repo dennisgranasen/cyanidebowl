@@ -59,6 +59,31 @@ public class ArticleAssociationController {
         };
     }
 
+    public record MentionOption(Article.LinkType type, String id, String label, String url, String leagueSystemId) {}
+
+    @GetMapping("/mentions")
+    public List<MentionOption> mentions(@RequestParam(defaultValue = "") String q) {
+        var result = new java.util.ArrayList<MentionOption>();
+        var types = List.of(Article.LinkType.TEAM, Article.LinkType.PLAYER, Article.LinkType.COACH,
+                Article.LinkType.STAR_PLAYER, Article.LinkType.FAN, Article.LinkType.STAFF);
+        for (var type : types) {
+            try {
+                for (var option : search(type, q, null)) {
+                    result.add(new MentionOption(type, option.id(), option.label(), option.url(), option.leagueSystemId()));
+                }
+            } catch (RuntimeException ignored) {
+                // A broken source must not disable all mention results.
+            }
+        }
+        String needle = q == null ? "" : q.toLowerCase(java.util.Locale.ROOT);
+        return result.stream()
+                .sorted(java.util.Comparator
+                        .comparing((MentionOption o) -> !o.label().toLowerCase(java.util.Locale.ROOT).startsWith(needle))
+                        .thenComparing(MentionOption::label, String.CASE_INSENSITIVE_ORDER))
+                .limit(24)
+                .toList();
+    }
+
     @GetMapping
     public List<Option> search(@RequestParam Article.LinkType type, @RequestParam(defaultValue = "") String q,
                                @RequestParam(required = false) String leagueSystemId) {

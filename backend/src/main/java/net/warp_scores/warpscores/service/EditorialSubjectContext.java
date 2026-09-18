@@ -40,10 +40,10 @@ public class EditorialSubjectContext {
                     var star = stars.require(link.id());
                     text.append(star.markdown()).append("\nSource: ").append(star.sourceUrl());
                     subjects.add(new SubjectRef(SubjectType.TOPIC, "star-player:" + star.id()));
-                    if (star.imageUrl() != null) {
-                        images.add(star.imageUrl());
+                    stars.referenceImage(star.id()).ifPresent(reference -> {
+                        images.add(reference);
                         text.append("\nReference image ").append(images.size()).append(" depicts ").append(star.name());
-                    }
+                    });
                 }
                 case FAN -> {
                     var fan = required(mongo.findById(link.id(), AiCommunityMemberProfile.class), link);
