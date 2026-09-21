@@ -47,7 +47,7 @@ const opusSpecificRaces = {
 const localRaceLogo = (raceId, opus) => {
   if (typeof raceId === 'number') {
     if (raceId === 16 && opus < 3) return '/img/raceLogos/khemri.png';
-    if (raceId === 1001) return '/img/raceLogos/chaosRenegades.jpg';
+    if (raceId === 1001) return '/img/raceLogos/chaosRenegades.png';
     if (raceId === 1002) return '/img/raceLogos/owa.png';
     return null;
   }
@@ -59,9 +59,12 @@ const localRaceLogo = (raceId, opus) => {
       return '/img/raceLogos/khemri.png';
     case 'chaosrenegade':
     case 'chaosrenegades':
-      return '/img/raceLogos/chaosRenegades.jpg';
+      return '/img/raceLogos/chaosRenegades.png';
     case 'oldworldalliance':
       return '/img/raceLogos/owa.png';
+    case 'nightgoblins':
+    case 'nightgoblin':
+      return '/img/raceLogos/night_gobbos.png';
     default:
       return null;
   }

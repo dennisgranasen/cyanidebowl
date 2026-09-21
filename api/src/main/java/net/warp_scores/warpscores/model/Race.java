@@ -44,7 +44,7 @@ public enum Race {
     khorne(23, null, "Khorne", "Khorne", "Khorne"),
     bretonnia(24, 2, "Bretonnia", "Imperial Nobility", "Bretonnia"),
     imperialNobility(24, 3, "Imperial Nobility", "Imperial Nobility", "ImperialNobility"),
-    slann(25, null, "Slann", "Slann", "Slann", "Kislev Circus"),
+    kislevCircus(25, null, "Kislev Circus", "Slann", "Kislev Circus", "Kislev Circus"),
     blackOrc(1000, null, "Black Orc", "Black Orc", "BlackOrc"),
     chaosRenegade(1001, null,"Chaos Renegade", "Chaos Renegade", "ChaosRenegade", "Chaos Pact"),
     oldWorldAlliance(1002, null, "Old World Alliance", "Old World Alliance", "OldWorldAlliance");
