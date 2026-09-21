@@ -172,6 +172,15 @@ public class AiCommunityMediaWorker {
         Instant now=Instant.now();
         var pending = requests.findByStatusInOrderByPriorityDescCreatedAtAsc(java.util.List.of(AiCommunityMediaGenerationRequest.Status.QUEUED));
         var all=requests.findAll();
+        var failures = all.stream()
+                .filter(job -> job.getStatus() == AiCommunityMediaGenerationRequest.Status.FAILED)
+                .sorted(java.util.Comparator.comparing(AiCommunityMediaGenerationRequest::getCompletedAt,
+                        java.util.Comparator.nullsLast(java.util.Comparator.reverseOrder()))
+                        .thenComparing(AiCommunityMediaGenerationRequest::getCreatedAt,
+                                java.util.Comparator.nullsLast(java.util.Comparator.reverseOrder())))
+                .limit(25)
+                .toList();
+        var profilesById = profilesById(pending, failures);
         long completedHour=all.stream().filter(r->r.getCompletedAt()!=null&&!r.getCompletedAt().isBefore(now.minus(Duration.ofHours(1)))).count();
         long completedDay=all.stream().filter(r->r.getCompletedAt()!=null&&!r.getCompletedAt().isBefore(now.minus(Duration.ofHours(24)))).count();
         long queued=requests.countByStatus(AiCommunityMediaGenerationRequest.Status.QUEUED);
@@ -195,21 +204,28 @@ public class AiCommunityMediaWorker {
                 requests.countByStatus(AiCommunityMediaGenerationRequest.Status.COMPLETED),
                 requests.countByStatus(AiCommunityMediaGenerationRequest.Status.FAILED),
                 renderer.isConfigured(), blockedUntil, blockedUntil == null ? null : providerBlockReason,
-                resume, completedHour, completedDay, eta, mediaJobs(pending),
-                mediaJobs(all.stream()
-                        .filter(job -> job.getStatus() == AiCommunityMediaGenerationRequest.Status.FAILED)
-                        .sorted(java.util.Comparator.comparing(AiCommunityMediaGenerationRequest::getCompletedAt,
-                                java.util.Comparator.nullsLast(java.util.Comparator.reverseOrder()))
-                                .thenComparing(AiCommunityMediaGenerationRequest::getCreatedAt,
-                                        java.util.Comparator.nullsLast(java.util.Comparator.reverseOrder())))
-                        .limit(25)
-                        .toList()));
+                resume, completedHour, completedDay, eta, mediaJobs(pending, profilesById),
+                mediaJobs(failures, profilesById));
+    }
+
+    private java.util.Map<String, AiCommunityMemberProfile> profilesById(
+            java.util.List<AiCommunityMediaGenerationRequest> pending,
+            java.util.List<AiCommunityMediaGenerationRequest> failures) {
+        var ids = java.util.stream.Stream.concat(pending.stream(), failures.stream())
+                .map(AiCommunityMediaGenerationRequest::getFanProfileId)
+                .filter(org.springframework.util.StringUtils::hasText)
+                .collect(java.util.stream.Collectors.toSet());
+        var result = new java.util.HashMap<String, AiCommunityMemberProfile>();
+        if (ids.isEmpty()) return result;
+        for (var profile : profiles.findAllById(ids)) result.put(profile.getId(), profile);
+        return result;
     }
 
     private java.util.List<MediaQueueJob> mediaJobs(
-            java.util.List<AiCommunityMediaGenerationRequest> requests) {
+            java.util.List<AiCommunityMediaGenerationRequest> requests,
+            java.util.Map<String, AiCommunityMemberProfile> profilesById) {
         return requests.stream().map(job -> {
-            var profile = profiles.findById(job.getFanProfileId()).orElse(null);
+            var profile = profilesById.get(job.getFanProfileId());
             return new MediaQueueJob(job.getId(), job.getFanProfileId(),
                     profile == null ? null : profile.getDisplayName(), job.getTarget(), job.getStatus(),
                     job.getPriority(), job.getAttempts(), job.getRequestedProvider(), job.getProvider(), job.getModel(),

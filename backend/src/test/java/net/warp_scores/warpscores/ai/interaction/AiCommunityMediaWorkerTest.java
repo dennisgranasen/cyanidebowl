@@ -150,6 +150,32 @@ class AiCommunityMediaWorkerTest {
     }
 
     @Test
+    void queueSnapshotLoadsCharacterNamesInOneBatch() {
+        var requests = mock(AiCommunityMediaGenerationRequestRepository.class);
+        var profiles = mock(AiCommunityMemberProfileRepository.class);
+        var renderer = mock(AiCommunityImageRenderer.class);
+        var assets = mock(AiCommunityMediaAssetStore.class);
+        var first = request();
+        var second = request(); second.setId("second"); second.setFanProfileId("fan-2");
+        var fan = new AiCommunityMemberProfile(); fan.setId("fan"); fan.setDisplayName("Morg");
+        var fan2 = new AiCommunityMemberProfile(); fan2.setId("fan-2"); fan2.setDisplayName("Nella");
+        when(requests.findByStatusInOrderByPriorityDescCreatedAtAsc(any())).thenReturn(List.of(first, second));
+        when(requests.findAll()).thenReturn(List.of(first, second));
+        when(requests.countByStatus(any())).thenReturn(0L);
+        when(profiles.findAllById(argThat(ids -> ids.iterator().hasNext()))).thenReturn(List.of(fan, fan2));
+
+        var worker = new AiCommunityMediaWorker(requests, profiles, renderer, assets);
+        configure(worker);
+        var snapshot = worker.snapshot();
+
+        org.assertj.core.api.Assertions.assertThat(snapshot.jobs())
+                .extracting(AiCommunityMediaWorker.MediaQueueJob::fanName)
+                .containsExactly("Morg", "Nella");
+        verify(profiles, times(1)).findAllById(any());
+        verify(profiles, never()).findById(any());
+    }
+
+    @Test
     void staleRunningJobIsRecoveredToQueue() {
         var requests = mock(AiCommunityMediaGenerationRequestRepository.class);
         var profiles = mock(AiCommunityMemberProfileRepository.class);

@@ -72,3 +72,4 @@ cyanidebowl-*.py
 
 # Generated editorial star-player assets
 /data/starplayers/
+.mvn-test-settings.xml
