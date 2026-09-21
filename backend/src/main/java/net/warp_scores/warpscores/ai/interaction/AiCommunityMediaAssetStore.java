@@ -68,6 +68,23 @@ public class AiCommunityMediaAssetStore {
         }
     }
 
+    /**
+     * Returns a local, safe-to-read URI for a media asset owned by this store.
+     * External URLs are deliberately not accepted as generation references.
+     */
+    public String localReferenceUri(String publicUrl) {
+        if (!StringUtils.hasText(publicUrl)) return null;
+        String prefix = "/community/media/assets/";
+        if (!publicUrl.startsWith(prefix)) return null;
+
+        String filename = publicUrl.substring(prefix.length());
+        if (!filename.matches("[A-Za-z0-9._-]+")) return null;
+
+        Path file = storageDir.resolve(filename).normalize();
+        if (!file.startsWith(storageDir) || !Files.isRegularFile(file)) return null;
+        return file.toUri().toString();
+    }
+
     public Resource resource(String filename) {
         if (!StringUtils.hasText(filename)
                 || !filename.matches("[A-Za-z0-9._-]+")) {

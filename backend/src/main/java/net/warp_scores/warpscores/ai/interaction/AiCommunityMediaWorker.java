@@ -69,9 +69,7 @@ public class AiCommunityMediaWorker {
         requests.save(request);
 
         try {
-            var rendered = request.getRequestedProvider() == null
-                    ? renderer.render(request.getPrompt(), request.getTarget())
-                    : renderer.render(request.getPrompt(), request.getTarget(), request.getRequestedProvider());
+            var rendered = render(request, profile);
             var stored = assets.save(
                     profile.getId(),
                     request.getTarget().name(),
@@ -150,6 +148,26 @@ public class AiCommunityMediaWorker {
         }
     }
 
+    private AiCommunityImageRenderer.RenderedImage render(
+            AiCommunityMediaGenerationRequest request, AiCommunityMemberProfile profile) throws Exception {
+        if (request.getRequestedProvider() != null) {
+            return renderer.render(request.getPrompt(), request.getTarget(), request.getRequestedProvider());
+        }
+
+        // Standard generation uses the other local image as a visual identity reference.
+        // New jobs give AVATAR a higher priority than PROFILE_IMAGE, so a newly-created
+        // profile picture normally inherits the newly-created avatar's identity.
+        String otherImage = request.getTarget() == AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE
+                ? profile.getAvatarImageUrl() : profile.getProfileImageUrl();
+        String reference = renderer.supportsReferenceImages()
+                ? assets.localReferenceUri(otherImage) : null;
+        if (reference != null) {
+            return renderer.renderWithReferences(
+                    request.getPrompt(), request.getTarget(), java.util.List.of(reference));
+        }
+        return renderer.render(request.getPrompt(), request.getTarget());
+    }
+
     public MediaQueueSnapshot snapshot() {
         Instant now=Instant.now();
         var pending = requests.findByStatusInOrderByPriorityDescCreatedAtAsc(java.util.List.of(AiCommunityMediaGenerationRequest.Status.QUEUED));
@@ -177,7 +195,26 @@ public class AiCommunityMediaWorker {
                 requests.countByStatus(AiCommunityMediaGenerationRequest.Status.COMPLETED),
                 requests.countByStatus(AiCommunityMediaGenerationRequest.Status.FAILED),
                 renderer.isConfigured(), blockedUntil, blockedUntil == null ? null : providerBlockReason,
-                resume, completedHour, completedDay, eta, pending);
+                resume, completedHour, completedDay, eta, mediaJobs(pending),
+                mediaJobs(all.stream()
+                        .filter(job -> job.getStatus() == AiCommunityMediaGenerationRequest.Status.FAILED)
+                        .sorted(java.util.Comparator.comparing(AiCommunityMediaGenerationRequest::getCompletedAt,
+                                java.util.Comparator.nullsLast(java.util.Comparator.reverseOrder()))
+                                .thenComparing(AiCommunityMediaGenerationRequest::getCreatedAt,
+                                        java.util.Comparator.nullsLast(java.util.Comparator.reverseOrder())))
+                        .limit(25)
+                        .toList()));
+    }
+
+    private java.util.List<MediaQueueJob> mediaJobs(
+            java.util.List<AiCommunityMediaGenerationRequest> requests) {
+        return requests.stream().map(job -> {
+            var profile = profiles.findById(job.getFanProfileId()).orElse(null);
+            return new MediaQueueJob(job.getId(), job.getFanProfileId(),
+                    profile == null ? null : profile.getDisplayName(), job.getTarget(), job.getStatus(),
+                    job.getPriority(), job.getAttempts(), job.getRequestedProvider(), job.getProvider(), job.getModel(),
+                    job.getCreatedAt(), job.getStartedAt(), job.getNextAttemptAt(), job.getCompletedAt(), job.getError());
+        }).toList();
     }
     public boolean reprioritize(String id,int priority){if(priority<0||priority>100)throw new IllegalArgumentException("priority must be 0..100");var r=requests.findById(id).orElse(null);if(r==null||r.getStatus()!=AiCommunityMediaGenerationRequest.Status.QUEUED)return false;r.setPriority(priority);requests.save(r);return true;}
     public boolean removePending(String id){var r=requests.findById(id).orElse(null);if(r==null||r.getStatus()!=AiCommunityMediaGenerationRequest.Status.QUEUED)return false;requests.delete(r);return true;}
@@ -185,7 +222,15 @@ public class AiCommunityMediaWorker {
     public record MediaQueueSnapshot(long queued,long running,long succeeded,long failed,
                                      boolean providerConfigured,Instant blockedUntil,String blockReason,Instant resumeAt,long completedLastHour,
                                      long completedLast24Hours,Long estimatedClearSeconds,
-                                     java.util.List<AiCommunityMediaGenerationRequest> jobs) {}
+                                      java.util.List<MediaQueueJob> jobs,
+                                      java.util.List<MediaQueueJob> recentFailures) {}
+
+    public record MediaQueueJob(String id, String fanProfileId, String fanName,
+                                AiCommunityMediaGenerationRequest.Target target,
+                                AiCommunityMediaGenerationRequest.Status status, Integer priority, int attempts,
+                                String requestedProvider, String provider, String model,
+                                Instant createdAt, Instant startedAt, Instant nextAttemptAt,
+                                Instant completedAt, String error) {}
 
     private void recoverStaleRunning(Instant now) {
         Instant staleBefore = now.minus(runningTimeout);

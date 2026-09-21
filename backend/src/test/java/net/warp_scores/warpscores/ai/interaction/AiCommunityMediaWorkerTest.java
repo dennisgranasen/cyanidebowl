@@ -120,6 +120,36 @@ class AiCommunityMediaWorkerTest {
     }
 
     @Test
+    void usesOtherLocalImageAsReferenceWhenRendererSupportsIt() throws Exception {
+        var requests = mock(AiCommunityMediaGenerationRequestRepository.class);
+        var profiles = mock(AiCommunityMemberProfileRepository.class);
+        var renderer = mock(AiCommunityImageRenderer.class);
+        var assets = mock(AiCommunityMediaAssetStore.class);
+        var profile = new AiCommunityMemberProfile();
+        profile.setId("fan");
+        profile.setAvatarImageUrl("/community/media/assets/avatar.png");
+        when(profiles.findById("fan")).thenReturn(Optional.of(profile));
+        when(renderer.supportsReferenceImages()).thenReturn(true);
+        when(assets.localReferenceUri("/community/media/assets/avatar.png"))
+                .thenReturn("file:///data/community-media/avatar.png");
+        var request = request();
+        request.setTarget(AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE);
+        when(renderer.renderWithReferences("prompt", AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE,
+                List.of("file:///data/community-media/avatar.png"))).thenReturn(
+                new AiCommunityImageRenderer.RenderedImage(new byte[]{1}, "image/png", "png", "cloudflare", "flux-2"));
+        when(assets.save(eq("fan"), eq("PROFILE_IMAGE"), eq("png"), any())).thenReturn(
+                new AiCommunityMediaAssetStore.StoredAsset("profile.png", "/community/media/assets/profile.png"));
+
+        var worker = new AiCommunityMediaWorker(requests, profiles, renderer, assets);
+        configure(worker);
+        worker.process(request);
+
+        verify(renderer).renderWithReferences("prompt", AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE,
+                List.of("file:///data/community-media/avatar.png"));
+        verify(renderer, never()).render("prompt", AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE);
+    }
+
+    @Test
     void staleRunningJobIsRecoveredToQueue() {
         var requests = mock(AiCommunityMediaGenerationRequestRepository.class);
         var profiles = mock(AiCommunityMemberProfileRepository.class);
