@@ -25,21 +25,21 @@ public class AiGenerationTraceIndexConfiguration implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         IndexOperations indexes = mongoTemplate.indexOps(AiGenerationTrace.class);
 
-        indexes.ensureIndex(new Index()
+        indexes.createIndex(new Index()
                 .on("reporterId", Sort.Direction.ASC)
                 .on("createdAt", Sort.Direction.DESC)
                 .named("trace_reporter_created"));
 
-        indexes.ensureIndex(new Index()
+        indexes.createIndex(new Index()
                 .on("createdAt", Sort.Direction.DESC)
                 .named("trace_created"));
 
-        indexes.ensureIndex(new Index()
+        indexes.createIndex(new Index()
                 .on("status", Sort.Direction.ASC)
                 .on("createdAt", Sort.Direction.DESC)
                 .named("trace_status_created"));
 
-        indexes.ensureIndex(new Index()
+        indexes.createIndex(new Index()
                 .on("expiresAt", Sort.Direction.ASC)
                 .expire(Duration.ZERO)
                 .named("trace_expires_ttl"));
