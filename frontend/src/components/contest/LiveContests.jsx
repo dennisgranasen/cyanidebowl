@@ -6,8 +6,10 @@ import WarpScoresApiService from '../../WarpScoresApiService';
 import comparators from '../../util/comparators';
 import ContestMatchCards from './ContestMatchCards';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
+import { useIntl } from 'react-intl';
 
 function LiveContests({ league, competition, embeddable, limit }) {
+  const intl = useIntl();
   const [contests, setContests] = useState();
   const [loading, setLoading] = useState();
   const [error, setError] = useState();
@@ -46,14 +48,14 @@ function LiveContests({ league, competition, embeddable, limit }) {
 
   return (
     <>
-      {!embeddable && <Heading size="md">Live matches</Heading>}
+      {!embeddable && <Heading size="md">{intl.formatMessage({ id: 'matches.live' })}</Heading>}
       <LoadingOrErrorWrapper loading={loading} error={error}>
         <ContestMatchCards
           embeddable={embeddable ? 'embeddable' : null}
           contests={contests}
           noContentIcon={FaRegMoon}
-          noContentHeading="No matches live currently..."
-          noContentText={league ? `Last match was ${formatter.formatAsDate(league.dateLastMatch, '-')}` : null}
+          noContentHeading={intl.formatMessage({ id: 'matches.noneLive' })}
+          noContentText={league ? intl.formatMessage({ id: 'matches.lastWas' }, { date: formatter.formatAsDate(league.dateLastMatch, '-') }) : null}
         />
       </LoadingOrErrorWrapper>
     </>

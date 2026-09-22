@@ -33,13 +33,41 @@ const opusSpecificRaces = {
   "1_12": "Norse",    // Amazon for BB3
   "1_13": "Amazon",    // Amazon for BB2
   "2_13": "Amazon",    // Amazon for BB2
+  "3_13": "Vampire",
   "1_14": "Elf",       // Just Elf in BB1 and 2
   "2_14": "Elf",   
   "1_15": "High Elf",
   "2_15": "High Elf",
   "1_16": "Khemri",
   "2_16": "Khemri",
+  "3_16": "Chaos Dwarf",
   "2_24": "Bretonnia", // Bretonnia for BB3
+};
+
+const localRaceLogo = (raceId, opus) => {
+  if (typeof raceId === 'number') {
+    if (raceId === 16 && opus < 3) return '/img/raceLogos/khemri.png';
+    if (raceId === 1001) return '/img/raceLogos/chaosRenegades.png';
+    if (raceId === 1002) return '/img/raceLogos/owa.png';
+    return null;
+  }
+
+  const normalized = String(raceId).trim().toLowerCase().replace(/[\s_-]+/g, '');
+  switch (normalized) {
+    case 'khemri':
+    case 'tombkings':
+      return '/img/raceLogos/khemri.png';
+    case 'chaosrenegade':
+    case 'chaosrenegades':
+      return '/img/raceLogos/chaosRenegades.png';
+    case 'oldworldalliance':
+      return '/img/raceLogos/owa.png';
+    case 'nightgoblins':
+    case 'nightgoblin':
+      return '/img/raceLogos/night_gobbos.png';
+    default:
+      return null;
+  }
 };
 
 const _getRaceLogo = (raceId, opus) => {
@@ -60,6 +88,9 @@ const _getRaceLogo = (raceId, opus) => {
 const getRaceLogo = (raceId, opus) => {
   if (!raceId)
     return null;
+  const localLogo = localRaceLogo(raceId, opus);
+  if (localLogo)
+    return localLogo;
   if (typeof raceId === 'string') {
     return raceId.replace(/\s+/g, '') + "_01"; // Assuming raceId is a string like "Human", "Dwarf", etc.
   }
@@ -76,7 +107,18 @@ const toRace = (raceId, opus) => {
   return raceTable[raceId] || "Unknown Race";
 }
 
+// Cyanide responses and older stored matches can contain a stale textual race
+// alongside the numeric id. The id is the stable source of truth; the text is
+// only a fallback for records where no id was imported.
+const resolveRace = (team, opus) => {
+  if (team?.raceId !== null && team?.raceId !== undefined) {
+    return toRace(team.raceId, opus);
+  }
+  return team?.race || "Unknown Race";
+};
+
 export {
   getRaceLogo,
+  resolveRace,
   toRace
 };

@@ -36,4 +36,7 @@ public class DataCollection implements Identifiable {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date dateLastCollectedMatches;
 
+    /** Cursor used when BB3 TCP discovery is the fallback for the Cyanide web API. */
+    private String lastPyBb3GameId;
+
 }

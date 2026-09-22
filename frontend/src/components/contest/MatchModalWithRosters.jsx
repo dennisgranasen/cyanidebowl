@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box,
+  Alert,
+  AlertIcon,
+  Badge,
+  Button,
+  HStack,
   Heading,
   Modal,
   ModalBody,
@@ -21,10 +26,22 @@ import {
   Text,
   Thead,
   Th,
+  SimpleGrid,
+  Spinner,
+  Stat,
+  StatLabel,
+  StatNumber,
+  VStack,
 } from '@chakra-ui/react';
 import ContestMatchCard from './ContestMatchCard';
 import WarpScoresApiService from '../../WarpScoresApiService';
+import ReplayAnalysisPanel from './ReplayAnalysisPanel';
 import { getStarPlayerDisplayName, isStarPlayer } from '../../util/starplayerUtil';
+import ReactionBar from '../community/ReactionBar';
+import CommentThread from '../community/CommentThread';
+import MatchPlayerRatings from '../community/MatchPlayerRatings';
+import MatchArticlesPanel from '../community/MatchArticlesPanel';
+import { useIntl } from 'react-intl';
 
 const PlayerNameCell = ({ player }) => {
   const playerIsStarPlayer = isStarPlayer(player.name);
@@ -54,16 +71,67 @@ const PlayerNameCell = ({ player }) => {
   );
 };
 
+const formatBytes = (value) => value == null ? '—' : value < 1024 * 1024
+  ? `${Math.round(value / 1024)} KiB` : `${(value / 1024 / 1024).toFixed(1)} MiB`;
+
+const eventSummary = (events = [], unknownEventLabel = 'Unknown event') => Object.entries(events.reduce((result, event) => {
+  const key = event.eventType || unknownEventLabel;
+  result[key] = (result[key] || 0) + 1;
+  return result;
+}, {})).sort((a, b) => b[1] - a[1]);
+
+function ReplayPanel({ replay, loading, error, onDownload }) {
+  const intl = useIntl();
+  if (loading) return <HStack><Spinner size="sm"/><Text>{intl.formatMessage({ id: 'matchModal.replay.loading' })}</Text></HStack>;
+  if (error) return <Text color="red.500">{error}</Text>;
+  if (!replay?.available) return <Text color="gray.500">{intl.formatMessage({ id: 'matchModal.replay.unavailable' })}</Text>;
+  const analysis = replay.analysis;
+  const unknownEventLabel = intl.formatMessage({ id: 'matchModal.replay.unknownEvent' });
+  const specialEvents = eventSummary(analysis?.specialEvents, unknownEventLabel);
+  const resourceEvents = eventSummary(analysis?.resourceEvents, unknownEventLabel);
+  return <VStack align="stretch" spacing={4}>
+    <HStack justify="space-between" align="start" flexWrap="wrap">
+      <Box><HStack><Badge colorScheme="green">{intl.formatMessage({ id: 'matchModal.replay.available' })}</Badge><Badge colorScheme={replay.analysisStatus === 'PROCESSED' ? 'blue' : replay.analysisStatus === 'FAILED' ? 'red' : 'orange'}>{replay.analysisStatus || 'PENDING'}</Badge></HStack><Text mt={1} fontSize="sm" color="gray.500">{intl.formatMessage({ id: 'matchModal.replay.sizes' }, { original: formatBytes(replay.originalSize), compact: formatBytes(replay.compactSize) })}</Text></Box>
+      <Button size="sm" colorScheme="blue" onClick={onDownload}>{intl.formatMessage({ id: replay.originalFormat === 'BBR' ? 'matchModal.replay.downloadOriginal' : 'matchModal.replay.downloadStored' })}</Button>
+    </HStack>
+    {!analysis && <Text color="gray.500">{intl.formatMessage({ id: 'matchModal.replay.pending' })}</Text>}
+    {analysis && <>
+      {analysis.analysisConfidence === 'RAW_UNMAPPED' && <Alert status="warning"><AlertIcon/>{intl.formatMessage({ id: 'matchModal.replay.rawWarning' })}</Alert>}
+      <SimpleGrid columns={{base:2,md:4}} spacing={3}>
+        <Stat borderWidth="1px" borderRadius="md" p={3}><StatLabel>{intl.formatMessage({ id: 'matchModal.replay.turns' })}</StatLabel><StatNumber>{analysis.checkpointCount || 0}</StatNumber></Stat>
+        <Stat borderWidth="1px" borderRadius="md" p={3}><StatLabel>{intl.formatMessage({ id: 'matchModal.replay.events' })}</StatLabel><StatNumber>{analysis.eventCount || 0}</StatNumber></Stat>
+        <Stat borderWidth="1px" borderRadius="md" p={3}><StatLabel>{intl.formatMessage({ id: 'matchModal.replay.diceRolls' })}</StatLabel><StatNumber>{analysis.diceRolls?.length || 0}</StatNumber></Stat>
+        <Stat borderWidth="1px" borderRadius="md" p={3}><StatLabel>{intl.formatMessage({ id: 'matchModal.replay.steps' })}</StatLabel><StatNumber>{analysis.stepCount || 0}</StatNumber></Stat>
+      </SimpleGrid>
+      <Box><Heading size="sm" mb={2}>{intl.formatMessage({ id: 'matchModal.replay.diceResults' })}</Heading><TableContainer><Table size="sm"><Thead><Tr><Th>{intl.formatMessage({ id: 'matchModal.replay.dieResult' })}</Th><Th isNumeric>{intl.formatMessage({ id: 'matchModal.replay.count' })}</Th></Tr></Thead><Tbody>{Object.entries(analysis.dieValueCounts || {}).sort((a,b)=>b[1]-a[1]).map(([key,count])=><Tr key={key}><Td>{key}</Td><Td isNumeric>{count}</Td></Tr>)}</Tbody></Table></TableContainer></Box>
+      <SimpleGrid columns={{base:1,md:2}} spacing={4}>
+        <Box><Heading size="sm" mb={2}>{intl.formatMessage({ id: 'matchModal.replay.resources' })}</Heading>{resourceEvents.length ? <Table size="sm"><Tbody>{resourceEvents.map(([name,count])=><Tr key={name}><Td>{name}</Td><Td isNumeric>{count}</Td></Tr>)}</Tbody></Table> : <Text color="gray.500">{intl.formatMessage({ id: 'matchModal.replay.noResources' })}</Text>}</Box>
+        <Box><Heading size="sm" mb={2}>{intl.formatMessage({ id: 'matchModal.replay.specialEvents' })}</Heading>{specialEvents.length ? <Table size="sm"><Tbody>{specialEvents.map(([name,count])=><Tr key={name}><Td>{name}</Td><Td isNumeric>{count}</Td></Tr>)}</Tbody></Table> : <Text color="gray.500">{intl.formatMessage({ id: 'matchModal.replay.noSpecialEvents' })}</Text>}</Box>
+      </SimpleGrid>
+    </>}
+  </VStack>;
+}
+
+function ReplayAnalysisAwarePanel({ replay, match, loading, error, onDownload }) {
+  if (replay?.analysis?.actionStatistics || replay?.analysis?.sourceFormat ||
+      ['CANONICAL_ACTIONS', 'RAW_BB2'].includes(replay?.analysis?.analysisConfidence)) {
+    return <ReplayAnalysisPanel replay={replay} match={match} loading={loading} error={error} onDownload={onDownload}/>;
+  }
+  return <ReplayPanel replay={replay} loading={loading} error={error} onDownload={onDownload}/>;
+}
+
 function MatchModal({ isOpen, onClose, match, contest }) {
+  const intl = useIntl();
   const [matchData, setMatch] = useState(null);
+  const [replay, setReplay] = useState(null);
+  const [replayLoading, setReplayLoading] = useState(false);
+  const [replayError, setReplayError] = useState('');
   
   useEffect(() => {
-    setMatch(match || contest.match);
-
-    if (matchData && matchData.teams && matchData.teams.length > 0) {
-      let sortedTeams = [];
-      matchData.teams.forEach((team) => {
-        let sortedPlayers = team.players.sort((a, b) => {
+    const value = match || contest?.match;
+    if (value && value.teams && value.teams.length > 0) {
+      const sortedTeams = value.teams.map((team) => {
+        const sortedPlayers = [...(team.players || [])].sort((a, b) => {
           if (a.number && b.number) {
             return a.number - b.number;
           } else if (a.number) {
@@ -74,16 +142,22 @@ function MatchModal({ isOpen, onClose, match, contest }) {
             return a.name.localeCompare(b.name);
           }
         });
-        team.players = sortedPlayers;
-        sortedTeams.push(team);
+        return { ...team, players: sortedPlayers };
       });
-      matchData.teams = sortedTeams;
+      setMatch({ ...value, teams: sortedTeams });
+    } else {
+      setMatch(value || null);
     }
-
-    if (matchData && matchData.teams) 
-      console.log(matchData.teams);
-
   }, [match, contest]);
+
+  const replayMatchId = matchData?.id?.key || matchData?.id;
+  useEffect(() => {
+    if (!isOpen || !replayMatchId) return;
+    setReplay(null); setReplayError(''); setReplayLoading(true);
+    WarpScoresApiService.replay(replayMatchId).then(setReplay)
+      .catch(() => setReplayError(intl.formatMessage({ id: 'matchModal.replay.fetchError' })))
+      .finally(() => setReplayLoading(false));
+  }, [isOpen, replayMatchId]);
 
   // Always render the Modal, but only show it when conditions are met
   const shouldShowModal = matchData && (!contest || contest.status === 'Validated') && isOpen;
@@ -93,18 +167,28 @@ function MatchModal({ isOpen, onClose, match, contest }) {
       <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(5px)" />
       <ModalContent backgroundColor="warpScoresBackgroundColor">
         <ModalCloseButton />
-        <ModalHeader>{([matchData?.leagueName, matchData?.competitionName].join(".")) ||  contest?.competitionName}</ModalHeader>
+        <ModalHeader>{[matchData?.leagueName, matchData?.competitionName].filter(Boolean).join(' · ') || contest?.competitionName || intl.formatMessage({ id: 'matchModal.title' })}</ModalHeader>
         <ModalBody>
           {matchData && (!contest || contest.status === 'Validated') && (
             <>
               <Box w="100%">
                 <ContestMatchCard contestOrMatch={contest || matchData} contestHeader={null} variant="filled" clickable={false}/>
               </Box>
+
+              {replayMatchId && (
+                <Box mt={3} mb={3}>
+                  <ReactionBar targetType="MATCH" targetId={replayMatchId} />
+                </Box>
+              )}
               
               <Tabs>
                 <TabList>
-                  <Tab>Team Stats</Tab>
-                  <Tab>Player Rosters</Tab>
+                  <Tab>{intl.formatMessage({ id: 'matchModal.tabs.teamStats' })}</Tab>
+                  <Tab>{intl.formatMessage({ id: 'matchModal.tabs.rosters' })}</Tab>
+                  <Tab>{intl.formatMessage({ id: 'matchModal.tabs.ratings' })}</Tab>
+                  <Tab>{intl.formatMessage({ id: 'matchModal.tabs.articles' })}</Tab>
+                  <Tab>{intl.formatMessage({ id: 'matchModal.tabs.comments' })}</Tab>
+                  <Tab>{intl.formatMessage({ id: 'matchModal.tabs.summary' })} {replay?.available && <Badge ml={1} colorScheme="green">✓</Badge>}</Tab>
                 </TabList>
                 <TabPanels>
                   <TabPanel>
@@ -115,82 +199,82 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                           <Tbody>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedtackles}</Td>
-                              <Td textAlign="center">Inflicted Tackles</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.inflictedTackles' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedtackles}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedinjuries}</Td>
-                              <Td textAlign="center">Inflicted Injuries</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.inflictedArmorBreaks' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedinjuries}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedko}</Td>
-                              <Td textAlign="center">Inflicted K.O.s</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.inflictedKos' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedko}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedcasualties}</Td>
-                              <Td textAlign="center">Inflicted Casualties</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.inflictedCasualties' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedcasualties}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflicteddead}</Td>
-                              <Td textAlign="center">Inflicted Deaths</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.inflictedDeaths' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].inflicteddead}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedpushouts}</Td>
-                              <Td textAlign="center">Inflicted Pushouts</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.inflictedPushouts' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedpushouts}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedinterceptions}</Td>
-                              <Td textAlign="center">Inflicted Interceptions</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.interceptions' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedinterceptions}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].sustainedinjuries}</Td>
-                              <Td textAlign="center">Sustained injuries</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.sustainedTackles' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].sustainedinjuries}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].sustainedko}</Td>
-                              <Td textAlign="center">Sustained K.O.s</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.sustainedKos' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].sustainedko}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].sustainedcasualties}</Td>
-                              <Td textAlign="center">Sustained casualties</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.sustainedCasualties' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].sustainedcasualties}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].sustaineddead}</Td>
-                              <Td textAlign="center">Sustained dead</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.sustainedDeaths' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].sustaineddead}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].sustainedexpulsions}</Td>
-                              <Td textAlign="center">Sustained expulsions</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.ejections' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].sustainedexpulsions}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedpasses}</Td>
-                              <Td textAlign="center">Inflicted Passes</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.passes' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedpasses}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedcatches}</Td>
-                              <Td textAlign="center">Inflicted Catches</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.catches' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedcatches}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedmetersrunning}</Td>
-                              <Td textAlign="center">Inflicted meters Running</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.runningMeters' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedmetersrunning}</Td>
                             </Tr>
                             <Tr>
                               <Td textAlign="center">{matchData.teams[0].inflictedmeterspassing}</Td>
-                              <Td textAlign="center">Inflicted meters Passing</Td>
+                              <Td textAlign="center">{intl.formatMessage({ id: 'matchModal.stats.passingMeters' })}</Td>
                               <Td textAlign="center">{matchData.teams[1].inflictedmeterspassing}</Td>
                             </Tr>
                           </Tbody>
@@ -203,16 +287,24 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                     {/* Player roster tables with sub-tabs */}
                     {matchData && matchData.teams && matchData.teams.length > 1 && (
                       <Box>
+                        {!matchData.teams.some((team) => team.players?.length > 0) && (
+                          <Text color="gray.500">
+                            {matchData.detailsStatus === 'PLAYER_DATA_UNAVAILABLE'
+                              ? intl.formatMessage({ id: 'matchModal.roster.unavailable' })
+                              : intl.formatMessage({ id: 'matchModal.roster.pending' })}
+                          </Text>
+                        )}
                         {matchData.teams.map((team, teamIndex) => (
                           <Box key={teamIndex} mb={6}>
                             <Heading size="md" mb={3}>{team.name}</Heading>
+                            {!team.players?.length ? <Text color="gray.500">{intl.formatMessage({ id: 'matchModal.roster.empty' })}</Text> : (
                             
                             <Tabs variant="enclosed" size="sm">
                               <TabList>
-                                <Tab>Overview</Tab>
-                                <Tab>Core Stats</Tab>
-                                <Tab>Combat Stats</Tab>
-                                <Tab>Foul Play</Tab>
+                                <Tab>{intl.formatMessage({ id: 'matchModal.roster.overview' })}</Tab>
+                                <Tab>{intl.formatMessage({ id: 'matchModal.roster.coreStats' })}</Tab>
+                                <Tab>{intl.formatMessage({ id: 'matchModal.roster.combatStats' })}</Tab>
+                                <Tab>{intl.formatMessage({ id: 'matchModal.roster.foulPlay' })}</Tab>
                               </TabList>
 
                               <TabPanels>
@@ -222,14 +314,14 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                                     <Table size="sm">
                                       <Thead>
                                         <Tr>
-                                          <Th>Player</Th>
-                                          <Th>Level</Th>
+                                          <Th>{intl.formatMessage({ id: 'common.player' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'common.level' })}</Th>
                                           <Th>SPP</Th>
                                           <Th>TD</Th>
-                                          <Th>Blocks</Th>
-                                          <Th>Injuries</Th>
-                                          <Th>Casualties</Th>
-                                          <Th>Yards</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.knockdowns' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.armorBreaks' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'common.injuries' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.metres' })}</Th>
                                         </Tr>
                                       </Thead>
                                       <Tbody>
@@ -262,15 +354,15 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                                     <Table size="sm">
                                       <Thead>
                                         <Tr>
-                                          <Th>Player</Th>
-                                          <Th>Rush</Th>
-                                          <Th>Dodge</Th>
-                                          <Th>Pickup</Th>
-                                          <Th>Catch</Th>
-                                          <Th>Passes</Th>
-                                          <Th>Interceptions</Th>
-                                          <Th>Yards Running</Th>
-                                          <Th>Yards Passing</Th>
+                                          <Th>{intl.formatMessage({ id: 'common.player' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.rush' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.dodge' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.pickup' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.catch' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.pass' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.interception' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.stats.runningMeters' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.stats.passingMeters' })}</Th>
                                         </Tr>
                                       </Thead>
                                       <Tbody>
@@ -310,18 +402,18 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                                     <Table size="sm">
                                       <Thead>
                                         <Tr>
-                                          <Th>Player</Th>
-                                          <Th>Blocks Made</Th>
-                                          <Th>Blitz</Th>
-                                          <Th>Armor Breaks</Th>
-                                          <Th>Stuns</Th>
-                                          <Th>KOs</Th>
-                                          <Th>Casualties</Th>
-                                          <Th>Blocks Taken</Th>
-                                          <Th>Injuries Taken</Th>
-                                          <Th>Stuns Taken</Th>
-                                          <Th>KOs Taken</Th>
-                                          <Th>Casualties Taken</Th>
+                                          <Th>{intl.formatMessage({ id: 'common.player' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.knockdownsInflicted' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.blitzes' })}</Th>
+                                          <Th>Rustbryt</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.stuns' })}</Th>
+                                          <Th>KO</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.casualties' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.knockdownsSustained' })}</Th>
+                                          <Th>Rustbryt</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.stuns' })}</Th>
+                                          <Th>KO</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.casualties' })}</Th>
                                         </Tr>
                                       </Thead>
                                       <Tbody>
@@ -362,12 +454,12 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                                     <Table size="sm">
                                       <Thead>
                                         <Tr>
-                                          <Th>Player</Th>
-                                          <Th>Fouls Made</Th>
-                                          <Th>Fouls Taken</Th>
-                                          <Th>Ejections</Th>
-                                          <Th>Secret Weapons</Th>
-                                          <Th>Referee Bribes</Th>
+                                          <Th>{intl.formatMessage({ id: 'common.player' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.foulsInflicted' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.foulsSustained' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.ejections' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.secretWeapons' })}</Th>
+                                          <Th>{intl.formatMessage({ id: 'matchModal.roster.bribes' })}</Th>
                                         </Tr>
                                       </Thead>
                                       <Tbody>
@@ -393,10 +485,33 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                                 </TabPanel>
                               </TabPanels>
                             </Tabs>
+                            )}
                           </Box>
                         ))}
                       </Box>
                     )}
+                  </TabPanel>
+                  <TabPanel>
+                    {replayMatchId
+                      ? <MatchPlayerRatings
+                          matchId={replayMatchId}
+                          replayReady={Boolean(replay?.available && replay?.analysis)}
+                        />
+                      : <Text color="gray.500">{intl.formatMessage({ id: 'matchModal.missingId.ratings' })}</Text>}
+                  </TabPanel>
+                  <TabPanel>
+                    {replayMatchId
+                      ? <MatchArticlesPanel matchId={replayMatchId} />
+                      : <Text color="gray.500">{intl.formatMessage({ id: 'matchModal.missingId.articles' })}</Text>}
+                  </TabPanel>
+                  <TabPanel>
+                    {replayMatchId
+                      ? <CommentThread targetType="MATCH" targetId={replayMatchId} />
+                      : <Text color="gray.500">{intl.formatMessage({ id: 'matchModal.missingId.comments' })}</Text>}
+                  </TabPanel>
+                  <TabPanel>
+                    <ReplayAnalysisAwarePanel replay={replay} match={matchData} loading={replayLoading} error={replayError}
+                      onDownload={() => WarpScoresApiService.downloadOriginalReplay(replayMatchId).catch(() => setReplayError(intl.formatMessage({ id: 'matchModal.replay.downloadError' })))}/>
                   </TabPanel>
                 </TabPanels>
               </Tabs>

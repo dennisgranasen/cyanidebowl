@@ -5,4 +5,5 @@ public interface Permissions {
     String WRITE_LEAGUE_ADMIN = "write:league_admin";
     String WRITE_REGISTER_LEAGUE= "write:register_league";
     String WRITE_SITE_ADMIN = "write:site_admin";
+    String WRITE_EDITOR = "write:editor";
 }

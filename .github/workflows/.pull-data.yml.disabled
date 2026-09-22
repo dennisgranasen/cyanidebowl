@@ -23,7 +23,7 @@ jobs:
 
       - name: Fetch Competitions
         env:
-          SPRING_DATA_MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          SPRING_MONGODB_URI: ${{ secrets.MONGODB_URI }}
           CYANIDE_API_KEY: ${{ secrets.CYANIDE_API_KEY }}
         run: java -jar ./backend/target/backend.jar
 

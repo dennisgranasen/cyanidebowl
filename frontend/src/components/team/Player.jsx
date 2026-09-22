@@ -144,7 +144,7 @@ function Player({ player, opus }) {
   const malus = player.extendedAttributes ? player.extendedAttributes.malus : [];
   const isStarplayer = player.type.endsWith('Star');
   return (
-    <Tr>
+    <Tr id={`player-${player.id?.key}`}>
       <Td>{player.number}</Td>
       <Td>{isStarplayer ? lookupStarPlayerName(player.name) : player.name}</Td>
       <Td>{prettyPrint(player.type, '_')}</Td>

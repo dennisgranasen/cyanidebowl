@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class IdentityWriteConverter implements Converter<Identity, Document> {
     @Override
-    public Document convert(@org.springframework.lang.NonNull Identity source) {
+    public Document convert(Identity source) {
         Document doc = new Document();
         doc.put("type", source.getClass().getSimpleName());
         doc.put("value", source.asMongoKey());

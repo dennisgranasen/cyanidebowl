@@ -14,16 +14,37 @@ import java.util.List;
 public class WarpScoresUser {
     @Id
     private Long id;
-
-    private String[] coachIds;
-
     private String username;
-
     private String email;
-
     private String provider;
+    /** Missing in legacy documents means HUMAN. */
+    private AccountType accountType = AccountType.HUMAN;
+    /** Stable external identity (normally the Auth0 subject), never an email address. */
+    private String authSubject;
+    /** Convenience login name only; Steam secrets are deliberately never persisted. */
+    private String steamUsername;
+    private String steamId;
+    private Boolean siteAdmin = false;
+    private Boolean leagueAdmin = false;
+    private Boolean registerLeague = false;
+    private List<String> adminForLeagueSystems = new ArrayList<>();
+    private Boolean siteEditor = false;
+    private List<String> editorForLeagueSystems = new ArrayList<>();
 
-    private List<Long> adminForCircuits = new ArrayList<>();
-    private List<String> adminForLeagues = new ArrayList<>();
-    private List<String> adminForCompetitions = new ArrayList<>();
+    /** Public Staff identity; deliberately separate from auth/login identity. */
+    private Boolean staffProfileInitialized = false;
+    private String publicDisplayName;
+    private String publicAvatarUrl;
+    private String publicPortraitUrl;
+    private String publicBio;
+
+    /** Presentation preference only. Ratings are generated independently of this setting. */
+    private Boolean showAiPlayerRatings = true;
+
+    /** Nullable UI locale. null means: follow the site default locale. */
+    private String locale;
+
+    public AccountType effectiveAccountType() {
+        return accountType == null ? AccountType.HUMAN : accountType;
+    }
 }

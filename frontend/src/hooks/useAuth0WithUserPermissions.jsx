@@ -5,54 +5,75 @@ import logger from '../util/logger';
 import config from '../config';
 
 const { isProduction } = config;
+const noPermissions = {
+  readCurrentUser: false,
+  writeLeagueAdmin: false,
+  writeSiteAdmin: false,
+  writeRegisterLeague: false,
+};
 
 let useAuth0WithUserPermissions;
 
 if (isProduction)  {
   useAuth0WithUserPermissions = function useAuth0WithUserPermissions() {
-    const { user, isAuthenticated, isLoading, loginWithPopup, logout, getAccessTokenSilently, getAccessTokenWithPopup } =
+    const { user, isAuthenticated, isLoading,
+        loginWithPopup, loginWithRedirect, logout,
+        getAccessTokenSilently, getAccessTokenWithPopup } =
       useAuth0();
-    const [userPermissions, setUserPermissions] = useState({
-      readCurrentUser: false,
-      writeLeagueAdmin: false,
-      writeSiteAdmin: false,
-      writeRegisterLeague: false,
-    });
-    const [permissionsLoading, setPermissionsLoading] = useState(true);
-    const [authenticationReady, setAuthenticationReady] = useState(false);
-    const [loadUserPermissions, setLoadUserPermissions] = useState(false);
-    const [checkPermissions, setCheckPermissions] = useState(false);
+      const [userPermissions, setUserPermissions] = useState(noPermissions);
+      const [permissionsLoading, setPermissionsLoading] = useState(true);
+      const [permissionsError, setPermissionsError] = useState(null);
 
     useEffect(() => {
-      const fetchUserPermissions = () => {
+        let active = true;
+
+        if (isLoading) {
+          setPermissionsLoading(true);
+          return () => {
+            active = false;
+          };
+      }
+
+        if (!isAuthenticated) {
+          setUserPermissions(noPermissions);
+          setPermissionsError(null);
+          setPermissionsLoading(false);
+          return () => {
+            active = false;
+          };
+        }
+
         setPermissionsLoading(true);
-        WarpScoresApiService.userPermissions(
-          getAccessTokenSilently,
-          getAccessTokenWithPopup,
-          !isLoading && isAuthenticated
-        )
+        setPermissionsError(null);
+        WarpScoresApiService.userPermissions(getAccessTokenSilently, getAccessTokenWithPopup, true)
+          .then((permissions) => {
+            if (active) {
+              setUserPermissions(permissions || noPermissions);
+            }
+          })
           .catch((reason) => {
             logger.error('Unable to get permissions from backend.', reason);
+            if (active) {
+              setUserPermissions(noPermissions);
+              setPermissionsError(reason);
+            }
           })
-          .finally(() => setPermissionsLoading(false))
-          .then(setUserPermissions);
-      };
-      if (loadUserPermissions) {
-        fetchUserPermissions();
-      }
-    }, [loadUserPermissions]);
+          .finally(() => {
+            if (active) {
+              setPermissionsLoading(false);
+            }
+          });
 
-    useEffect(() => {
-      setLoadUserPermissions(checkPermissions);
-    }, [checkPermissions]);
+        return () => {
+          active = false;
+        };
+      }, [getAccessTokenSilently, getAccessTokenWithPopup, isAuthenticated, isLoading]);
 
-    useEffect(() => {
-      setCheckPermissions(!isProduction || !isLoading);
-    }, [isLoading]);
-
-    useEffect(() => {
-      setAuthenticationReady(!isLoading && !permissionsLoading);
-    }, [userPermissions]);
+      const checkPermissions = !isLoading;
+      const loadUserPermissions = checkPermissions && isAuthenticated;
+      const authenticationReady =
+        !isLoading &&
+        (!isAuthenticated || !permissionsLoading);
 
     return {
       user,
@@ -60,8 +81,10 @@ if (isProduction)  {
       checkPermissions,
       loadUserPermissions,
       userPermissions,
+      permissionsError,
       isAuthenticated,
       loginWithPopup,
+      loginWithRedirect,
       logout,
       getAccessTokenSilently,
       getAccessTokenWithPopup,

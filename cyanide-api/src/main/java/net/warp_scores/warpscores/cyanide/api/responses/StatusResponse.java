@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -211,10 +212,11 @@ public class StatusResponse extends ApiResponse {
 
     @Getter
     @Setter
-    private static class Region {
+    public static class Region {
         private String codename;
         private String title;
         private boolean ok;
+        private Map<String, Boolean> services;
     }
 
     @Getter
@@ -227,9 +229,9 @@ public class StatusResponse extends ApiResponse {
     @Getter
     @Setter
     public static class Maintenance {
-        private Object pc;
-        private Object microsoft;
-        private Object sony;
+        private List<Object> pc;
+        private List<Object> microsoft;
+        private List<Object> sony;
     }
 
     @Override

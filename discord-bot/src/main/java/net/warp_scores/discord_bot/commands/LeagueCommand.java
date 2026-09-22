@@ -83,7 +83,7 @@ public class LeagueCommand implements SlashCommand {
             ChannelLeagueRegistration channelLeagueRegistration = entry.getKey();
             Optional<League> league = entry.getValue();
             builder = builder.addField("League", league.map(League::getName).orElse("n/a"), false);
-            builder = builder.addField("League UUID", league.map(l -> l.getUuid().toString()).orElse("n/a"), false);
+            builder = builder.addField("League UUID", league.map(League::getLeagueId).orElse("n/a"), false);
             builder = builder.addField("Spoiler",
                     channelLeagueRegistration.getSpoiler() ? ":white_check_mark:" : ":x:",
                     true);

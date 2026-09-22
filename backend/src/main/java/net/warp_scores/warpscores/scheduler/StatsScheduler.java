@@ -52,14 +52,14 @@ public class StatsScheduler {
     @Scheduled(initialDelay = TWENTY_SECONDS, fixedDelay = THIRTY_MINUTES)
     public void updateCompetitionStats() {
         List<Identity> allCompetitionIds = competitionRepository
-                .findAll()
-                .stream()
-                .map(Competition::getId)
-                .toList();
+            .findAll()
+            .stream()
+            .map(Competition::getId)
+            .toList();
         Map<Identity, Optional<Date>> lastMatchDatesForCompetitions = matchDomainService.getLastMatchDatesForCompetitions(
-                allCompetitionIds);
+            allCompetitionIds);
         Map<Identity, Optional<Date>> lastUpdatedDatesForCompetitions = competitionStatsDomainService.getLastUpdatedDatesForCompetitions(
-                allCompetitionIds);
+            allCompetitionIds);
 
         updateCompetitionStatsFor(allCompetitionIds, lastMatchDatesForCompetitions, lastUpdatedDatesForCompetitions);
     }
@@ -79,7 +79,7 @@ public class StatsScheduler {
     private void updateCompetitionStatsFor(Identity competitionId, Optional<Date> lastMatchDate, Optional<Date> lastUpdatedDate) {
         if ( lastMatchDate.isEmpty() )
         {
-            log.info("No match date yet for competition id {} skipping stats creation.", competitionId);
+            log.debug("No match date yet for competition id {} skipping stats creation.", competitionId);
             return;
         }
         if ( lastUpdatedDate.isEmpty() || lastUpdatedDate.get().before(lastMatchDate.get()) )
@@ -95,7 +95,7 @@ public class StatsScheduler {
 
             competitionStatsRepository.save(competitionStats);
         } else {
-            log.info("No match date after last update date yet for competition id {} skipping stats creation.", competitionId);
+            log.debug("Competition {} already up to date.", competitionId);
         }
     }
 }

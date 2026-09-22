@@ -1,0 +1,44 @@
+# Version control
+.git
+.gitignore
+.github
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Build output
+**/target
+**/build
+**/dist
+**/coverage
+**/node_modules
+
+# IDE/editor files
+.idea
+.vscode
+*.iml
+*.swp
+
+# Runtime data
+data
+backend/data
+replays
+*.bbr
+*.zip
+*.gz
+
+# Logs and temporary files
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Local archives
+warpscores-*.tar
+*.tar

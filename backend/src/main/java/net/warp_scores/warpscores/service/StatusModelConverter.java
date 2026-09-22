@@ -9,6 +9,9 @@ import net.warp_scores.warpscores.utils.FieldHandler;
 import java.lang.reflect.Field;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -133,21 +136,45 @@ public class StatusModelConverter {
         );        
     }
 
+
+
     public Status toStatus(StatusResponse.Game game) {
         Status status = new Status();
-        PopulatorUtil.copyNonNullProperties(game, status);
-        /*
+
         status.setGameName(game.getName());
-        status.setOverall(game.getStatus().isOk());
-        status.setServiceStatuses(game.getService_statuses());
+        status.setCodename(game.getCodename());
+        status.setTitle(game.getTitle());
+
+        if (game.getStatus() != null) {
+            status.setOverall(game.getStatus().isOk());
+        }
+
+        if (game.getService_statuses() != null) {
+            ServiceStatus[] serviceStatuses = game.getService_statuses()
+                    .entrySet()
+                    .stream()
+                    .map(entry -> {
+                        ServiceStatus serviceStatus = new ServiceStatus();
+                        serviceStatus.setServiceName(entry.getKey());
+                        serviceStatus.setIsOk(entry.getValue());
+                        return serviceStatus;
+                    })
+                    .toArray(ServiceStatus[]::new);
+
+            status.setServiceStatuses(serviceStatuses);
+        }
+
         status.setMaintenance(toMaintenance(game.getMaintenance()));
         status.setSocialLinks(game.getSocial_links());
-        status.setPlatforms(toPlatforms(game.getStatus().getPlatforms()));
-        status.setNews(toNews(game.getNews()));*/
+        status.setPlatforms(toPlatforms(
+                game.getStatus() != null
+                        ? game.getStatus().getPlatforms()
+                        : null));
+        status.setNews(toNews(game.getNews()));
+
         return status;
     }
 
-    /* 
     private Status.Platform[] toPlatforms(StatusResponse.Platform[] responsePlatforms) {
         return Arrays.stream(responsePlatforms)
                 .map(this::toPlatform)
@@ -155,18 +182,33 @@ public class StatusModelConverter {
                 .toArray(new Status.Platform[0]);
     }
 
-    private Status.Platform toPlatform(StatusResponse.Platform responsePlatform) {
-        Status.Platform platform = new Status.Platform();
-        PopulatorUtil.copyNonNullProperties(responsePlatform, platform);
-        return platform;
+    private Status.Platform toPlatform(StatusResponse.Platform source) {
+        Status.Platform target = new Status.Platform();
+
+        target.setCodename(source.getCodename());
+        target.setTitle(source.getTitle());
+        target.setOk(source.isOk());
+        target.setRegions(toRegions(source.getRegions()));
+        target.setServices(toServiceStatuses(source.getServices()));
+
+        return target;
     }
 
-    private Status.Maintenance toMaintenance(StatusResponse.Maintenance responseMaintenance) {
-        Status.Maintenance maintenance = new Status.Maintenance();
-        PopulatorUtil.copyNonNullProperties(responseMaintenance, maintenance);
-        return maintenance;
-    }
+    private Status.Maintenance toMaintenance(
+            StatusResponse.Maintenance source) {
 
+        if (source == null) {
+            return null;
+        }
+
+        Status.Maintenance target = new Status.Maintenance();
+        target.setPc(source.getPc());
+        target.setMicrosoft(source.getMicrosoft());
+        target.setSony(source.getSony());
+
+        return target;
+    }
+    
     private Status.News[] toNews(StatusResponse.News[] responseNews) {
         return Arrays.stream(responseNews).map(this::toNews).toList().toArray(new Status.News[0]);
     }
@@ -174,6 +216,41 @@ public class StatusModelConverter {
     private Status.News toNews(StatusResponse.News responseNews) {
         Status.News news = new Status.News();
         PopulatorUtil.copyNonNullProperties(responseNews, news);
+
+        
         return news;
-    }*/
+    }
+
+    private ServiceStatus[] toServiceStatuses(Map<String, Boolean> services) {
+        if (services == null) {
+            return null;
+        }
+
+        return services.entrySet().stream()
+                .map(entry -> {
+                    ServiceStatus status = new ServiceStatus();
+                    status.setServiceName(entry.getKey());
+                    status.setIsOk(entry.getValue());
+                    return status;
+                })
+                .toArray(ServiceStatus[]::new);
+    }
+
+    private Status.Region[] toRegions(StatusResponse.Region[] regions) {
+        if (regions == null) {
+            return null;
+        }
+
+        return Arrays.stream(regions)
+                .map(region -> {
+                    Status.Region target = new Status.Region();
+                    target.setCodename(region.getCodename());
+                    target.setTitle(region.getTitle());
+                    target.setOk(region.isOk());
+                    target.setServices(
+                            toServiceStatuses(region.getServices()));
+                    return target;
+                })
+                .toArray(Status.Region[]::new);
+    }
 }

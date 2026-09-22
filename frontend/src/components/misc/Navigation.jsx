@@ -1,5 +1,6 @@
 import React from 'react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, Flex, Spacer } from '@chakra-ui/react';
+import { useIntl } from 'react-intl';
 import { Link as RouteLink } from 'react-router-dom';
 import Menu from './Menu';
 import AuthButton from './AuthButton';
@@ -9,57 +10,51 @@ import prettyPrint from '../../util/prettyPrint';
 
 const { isProduction } = config;
 
-function Navigation({ currentPage, parentPage, league, competition, circuit, team, race, coach, circuitLeg, circuitLegEntity }) {
+function Navigation({ currentPage, parentPage, currentLabel, league, competition, team, race, coach, leagueSystems, selectedLeagueSystemId, selectedSeasonId, onSelectLeagueSystem }) {
+  const intl = useIntl();
   const isPage = (pageName, currentPageName) => {
     return pageName === currentPageName;
   };
   const leagueLink = league && league.length > 0 && league[0] ? `/league/${league[0]}` : '/';
   const competitionLink = competition && competition.length > 0 && competition[0] ? `/competition/${competition[0]}` : '';
   const teamLink = team ? `${competitionLink}/team/${team[0]}` : '';
-  //console.log("Circuit:",circuit," CircuitLeg:",circuitLeg,"CircuitLegEntity:",circuitLegEntity);
-  
-  const circuitLink = circuit ? `${isPage('admin', parentPage) ? '/admin' : ''}/circuit/${circuit[0]}` :
-  circuitLeg ? `${isPage('admin', parentPage) ? '/admin' : ''}/circuit/${circuitLeg[0].parts[0]}` : 
-  circuitLegEntity ? `${isPage('admin', parentPage) ? '/admin' : ''}/circuit/${circuitLegEntity[0].parts[0]}` : ''
-
-  ;
-  const circuitLegLink = circuitLeg ? `${circuitLink}/leg/${circuitLeg[0]}` : '';
-  const circuitLegEntityLink = circuitLegEntity ? `${circuitLegLink}/entity/${circuitLegEntity[0]}` : '';
-
   return (
     <Flex>
       <Breadcrumb fontFamily="bigStar" spacing={1}>
         <BreadcrumbItem isCurrentPage={isPage('home', currentPage)}>
           <BreadcrumbLink variant="menu" as={RouteLink} to="/">
-            Home
+            {intl.formatMessage({ id: 'nav.home' })}
           </BreadcrumbLink>
         </BreadcrumbItem>
         {(isPage('admin', currentPage) || isPage('admin', parentPage)) && (
           <BreadcrumbItem isCurrentPage={isPage('admin', currentPage)} flexWrap>
             <BreadcrumbLink variant="menu" as={RouteLink} to="/admin">
-              Admin
+              {intl.formatMessage({ id: 'nav.admin' })}
             </BreadcrumbLink>
           </BreadcrumbItem>
         )}
-        {circuit && (
-          <BreadcrumbItem isCurrentPage={isPage('circuits', currentPage)} flexWrap>
-            <BreadcrumbLink variant="menu" as={RouteLink} to={circuitLink}>
-              {circuit[1]}
+        {(isPage('staff', currentPage) || isPage('staff', parentPage) || isPage('staffProfile', currentPage)) && (
+          <BreadcrumbItem isCurrentPage={isPage('staff', currentPage)} flexWrap>
+            <BreadcrumbLink variant="menu" as={RouteLink} to="/staff">
+              {intl.formatMessage({ id: 'nav.staff' })}
             </BreadcrumbLink>
           </BreadcrumbItem>
         )}
-        {circuitLeg && (
-          <BreadcrumbItem isCurrentPage={isPage('circuits', currentPage)} flexWrap>
-            <BreadcrumbLink variant="menu" as={RouteLink} to={circuitLegLink}>
-              {circuitLeg[1]}
+        {(isPage('community', currentPage) || isPage('community', parentPage) || isPage('communityProfile', currentPage)) && (
+          <BreadcrumbItem isCurrentPage={isPage('community', currentPage)} flexWrap>
+            <BreadcrumbLink variant="menu" as={RouteLink} to="/community">
+              Community
             </BreadcrumbLink>
           </BreadcrumbItem>
         )}
-        {circuitLegEntity && (
-          <BreadcrumbItem isCurrentPage={isPage('circuits', currentPage)} flexWrap>
-            <BreadcrumbLink variant="menu" as={RouteLink} to={circuitLink}>
-              {circuitLegEntity[1]}
-            </BreadcrumbLink>
+        {isPage('communityProfile', currentPage) && currentLabel && (
+          <BreadcrumbItem isCurrentPage flexWrap>
+            <BreadcrumbLink variant="menu">{currentLabel}</BreadcrumbLink>
+          </BreadcrumbItem>
+        )}
+        {isPage('staffProfile', currentPage) && currentLabel && (
+          <BreadcrumbItem isCurrentPage flexWrap>
+            <BreadcrumbLink variant="menu">{currentLabel}</BreadcrumbLink>
           </BreadcrumbItem>
         )}
         {league && (
@@ -97,7 +92,7 @@ function Navigation({ currentPage, parentPage, league, competition, circuit, tea
       <Spacer />
       <ToggleColorModeButton />
       {isProduction && <AuthButton mr="0.5rem" />}
-      <Menu />
+      <Menu selectedSeasonId={selectedSeasonId} leagueSystems={leagueSystems} selectedLeagueSystemId={selectedLeagueSystemId} onSelectLeagueSystem={onSelectLeagueSystem} />
     </Flex>
   );
 }

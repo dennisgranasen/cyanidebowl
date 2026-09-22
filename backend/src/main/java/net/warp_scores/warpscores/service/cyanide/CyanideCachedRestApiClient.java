@@ -75,8 +75,8 @@ public class CyanideCachedRestApiClient {
         return responseConverter.convertRawResponseToResponseObject(rawResponse, apiRequest.getResponseClass());
     }
 
-    private void cacheRawResponse(ApiRequestKey apiRequestKey, ApiRequest apiRequest,
-            Object response) {
+    private void cacheRawResponse(ApiRequestKey apiRequestKey, ApiRequest<?, ?> apiRequest,
+        Object response) {
         try {
             response = obfuscateApiKeyService.obfuscateKey(response);
             RestApiResponseCache restApiResponseCache = new RestApiResponseCache();
@@ -97,7 +97,7 @@ public class CyanideCachedRestApiClient {
         }
     }
 
-    private static String getResponseClassName(ApiRequest apiRequest) {
+    private static String getResponseClassName(ApiRequest<?, ?> apiRequest) {
         return apiRequest.getResponseClass().getCanonicalName();
     }
 

@@ -3,9 +3,15 @@ package net.warp_scores.warpscores;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import net.warp_scores.warpscores.config.RequestTimingFilter;
+import org.apache.catalina.connector.ClientAbortException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import net.warp_scores.warpscores.service.PyBb3ServiceException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -19,7 +25,27 @@ import java.io.IOException;
 @RestControllerAdvice
 public class GlobalErrorHandler {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalErrorHandler.class);
     private final ObjectMapper mapper = new ObjectMapper();
+
+    @ExceptionHandler(ClientAbortException.class)
+    public void handleClientAbort(
+            final HttpServletRequest request,
+            final ClientAbortException error) {
+        final Object startedAt = request.getAttribute(RequestTimingFilter.REQUEST_START_NANOS);
+        final long durationMs = startedAt instanceof Long startNanos
+                ? (System.nanoTime() - startNanos) / 1_000_000L
+                : -1L;
+
+        LOGGER.warn(
+                "Client disconnected: {} {} duration={}ms ({})",
+                request.getMethod(), request.getRequestURI(), durationMs, error.getMessage());
+    }
+
+    @ExceptionHandler(PyBb3ServiceException.class)
+    public ResponseEntity<ErrorMessage> handlePyBb3Error(PyBb3ServiceException error) {
+        return ResponseEntity.status(error.getStatusCode()).body(ErrorMessage.from(error.getMessage()));
+    }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler(NoHandlerFoundException.class)

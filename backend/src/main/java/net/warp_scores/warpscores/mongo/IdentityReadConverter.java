@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class IdentityReadConverter implements Converter<Document, Identity> {
     @Override
-    public Identity convert(@org.springframework.lang.NonNull Document source) {
+    public Identity convert(Document source) {
         String type = source.getString("type");
         String value = source.getString("value");
         if ("SimpleIdentity".equals(type)) {

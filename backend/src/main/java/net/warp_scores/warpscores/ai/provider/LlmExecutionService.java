@@ -1,0 +1,16 @@
+package net.warp_scores.warpscores.ai.provider;
+import net.warp_scores.warpscores.ai.provider.trace.AiGenerationTraceStore;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import java.util.List;
+@Service
+public class LlmExecutionService {
+    private final LlmProviderRouter router; private final LlmProviderRegistry registry; private final AiGenerationTraceStore traceStore; private final AiGenerationAdmissionService admission; private final AiTargetExecutionQueueManager queues;
+    public LlmExecutionService(LlmProviderRouter router,LlmProviderRegistry registry,AiGenerationTraceStore traceStore,AiGenerationAdmissionService admission){this(router,registry,traceStore,admission,null);}
+    @Autowired public LlmExecutionService(LlmProviderRouter router,LlmProviderRegistry registry,AiGenerationTraceStore traceStore,AiGenerationAdmissionService admission,AiTargetExecutionQueueManager queues){this.router=router;this.registry=registry;this.traceStore=traceStore;this.admission=admission;this.queues=queues;}
+    public CanonicalLlmResponse generate(String agent,CanonicalLlmRequest request){return generate(agent,request,LlmProviderRouter.ExecutionOverrides.none());}
+    public CanonicalLlmResponse generate(String agent,CanonicalLlmRequest request,Integer priority){return generate(agent,request,new LlmProviderRouter.ExecutionOverrides(null,priority));}
+    public CanonicalLlmResponse generate(String agent,CanonicalLlmRequest request,LlmProviderRouter.ExecutionOverrides overrides){LlmProviderRouter.ExecutionPlan plan=router.planForTask(agent,request.taskType(),overrides);if(queues==null||plan.primary().targetId()==null)return legacy(agent,request,plan.allTargets());LlmProviderException last=null;for(var target:plan.allTargets()){try{return queues.execute(target,agent,withModel(request,target.model()),plan.priority());}catch(LlmProviderException e){if(e.kind()==LlmProviderException.Kind.RATE_LIMIT)throw e;if(!e.retryable())throw e;last=e;}}if(last!=null)throw last;throw new IllegalStateException("No configured LLM target could execute for "+agent);}
+    private CanonicalLlmResponse legacy(String agent,CanonicalLlmRequest request,List<LlmProviderRouter.ModelTarget> targets){admission.acquire(agent,request);try{LlmProviderException last=null;for(var target:targets){LlmProvider p=registry.require(target.providerId());if(!p.isConfigured())continue;CanonicalLlmRequest t=withModel(request,target.model());long start=System.nanoTime();try{CanonicalLlmResponse r=p.generate(t);traceStore.recordSuccess(agent,target.providerId(),t,r,elapsed(start));return r;}catch(LlmProviderException e){traceStore.recordFailure(agent,target.providerId(),t,e,elapsed(start));if(!e.retryable())throw e;last=e;}catch(RuntimeException e){traceStore.recordUnexpectedFailure(agent,target.providerId(),t,e,elapsed(start));throw e;}}if(last!=null)throw last;throw new IllegalStateException("No configured LLM target could execute for "+agent);}finally{admission.release();}}
+    private static long elapsed(long n){return Math.max(0,(System.nanoTime()-n)/1_000_000L);} private static CanonicalLlmRequest withModel(CanonicalLlmRequest r,String m){return new CanonicalLlmRequest(r.agentId(),r.agentVersion(),r.taskType(),m,r.context(),r.taskInstruction(),r.outputContract(),r.options());}
+}

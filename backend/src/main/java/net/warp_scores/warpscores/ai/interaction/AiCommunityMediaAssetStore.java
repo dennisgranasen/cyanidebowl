@@ -1,0 +1,107 @@
+package net.warp_scores.warpscores.ai.interaction;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.UUID;
+
+@Service
+public class AiCommunityMediaAssetStore {
+    private final Path storageDir;
+
+    public AiCommunityMediaAssetStore(
+            @Value("${warpscores.ai.community-media.storage-dir:./data/community-media}")
+            String storageDir) {
+        this.storageDir = Path.of(storageDir).toAbsolutePath().normalize();
+    }
+
+    public StoredAsset save(
+            String fanProfileId,
+            String target,
+            String extension,
+            byte[] bytes) throws IOException {
+        Files.createDirectories(storageDir);
+
+        String filename = sanitize(fanProfileId)
+                + "-" + sanitize(target.toLowerCase())
+                + "-" + UUID.randomUUID()
+                + "." + sanitize(extension);
+
+        Path file = storageDir.resolve(filename).normalize();
+        if (!file.startsWith(storageDir)) {
+            throw new IllegalArgumentException("Invalid media filename");
+        }
+
+        Files.write(
+                file,
+                bytes,
+                StandardOpenOption.CREATE_NEW,
+                StandardOpenOption.WRITE);
+
+        return new StoredAsset(
+                filename,
+                "/community/media/assets/" + filename);
+    }
+
+    public void deletePublicUrl(String publicUrl) {
+        if (!StringUtils.hasText(publicUrl)) return;
+        String prefix = "/community/media/assets/";
+        if (!publicUrl.startsWith(prefix)) return;
+
+        String filename = publicUrl.substring(prefix.length());
+        if (!filename.matches("[A-Za-z0-9._-]+")) return;
+
+        Path file = storageDir.resolve(filename).normalize();
+        if (!file.startsWith(storageDir)) return;
+
+        try {
+            Files.deleteIfExists(file);
+        } catch (IOException ignored) {
+            // Cleanup failure must not invalidate a successfully stored replacement.
+        }
+    }
+
+    /**
+     * Returns a local, safe-to-read URI for a media asset owned by this store.
+     * External URLs are deliberately not accepted as generation references.
+     */
+    public String localReferenceUri(String publicUrl) {
+        if (!StringUtils.hasText(publicUrl)) return null;
+        String prefix = "/community/media/assets/";
+        if (!publicUrl.startsWith(prefix)) return null;
+
+        String filename = publicUrl.substring(prefix.length());
+        if (!filename.matches("[A-Za-z0-9._-]+")) return null;
+
+        Path file = storageDir.resolve(filename).normalize();
+        if (!file.startsWith(storageDir) || !Files.isRegularFile(file)) return null;
+        return file.toUri().toString();
+    }
+
+    public Resource resource(String filename) {
+        if (!StringUtils.hasText(filename)
+                || !filename.matches("[A-Za-z0-9._-]+")) {
+            throw new IllegalArgumentException("Invalid media filename");
+        }
+
+        Path file = storageDir.resolve(filename).normalize();
+        if (!file.startsWith(storageDir) || !Files.isRegularFile(file)) {
+            return null;
+        }
+        return new FileSystemResource(file);
+    }
+
+    private static String sanitize(String value) {
+        if (!StringUtils.hasText(value)) return "asset";
+        return value.replaceAll("[^A-Za-z0-9_-]", "_");
+    }
+
+    public record StoredAsset(String filename, String publicUrl) {}
+}

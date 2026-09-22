@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Heading, Spinner, VStack } from '@chakra-ui/react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import WarpScoresApiService from '../WarpScoresApiService';
 import Roster from '../components/team/Roster';
+import TeamSupporters from '../components/team/TeamSupporters';
+import CommentThread from '../components/community/CommentThread';
 import prettyPrint from '../util/prettyPrint';
 import Navigation from '../components/misc/Navigation';
 import formatter from '../util/formatter';
@@ -13,6 +15,7 @@ import Matches from '../components/contest/Matches';
 import HeaderCard from '../components/common/HeaderCard';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import { identityUtils } from '../util/identityUtil';
+import { useIntl } from 'react-intl';
 
 function MatchesCount({ matches, teamId }) {
   if (!matches) return <Spinner />;
@@ -32,10 +35,16 @@ function MatchesCount({ matches, teamId }) {
 }
 
 function TeamPage() {
+  const intl = useIntl();
   const { competitionId, teamId } = useParams();
+  const [searchParams] = useSearchParams();
   const [team, setTeam] = useState();
   const [matches, setMatches] = useState();
   const [players, setPlayers] = useState();
+  useEffect(() => {
+    const id = searchParams.get('player');
+    if (id && players?.length) document.getElementById(`player-${id}`)?.scrollIntoView({ block: 'center' });
+  }, [players, searchParams]);
   const [loadingTeam, setLoadingTeam] = useState(false);
   const [teamError, setTeamError] = useState(undefined);
   const [loadingMatches, setLoadingMatches] = useState(false);
@@ -97,36 +106,41 @@ function TeamPage() {
             <>
               <HeaderCard
                 heading={team?.name}
-                subHeading={`Coach: ${team?.coachName}`}
-                detailsHeading="Team details"
+                subHeading={intl.formatMessage({ id: 'team.coach' }, { name: team?.coachName })}
+                detailsHeading={intl.formatMessage({ id: 'team.details' })}
                 mainImageSrc={imageUrls.logo(team?.logo, identityUtils.opus(teamId))}
                 additionalImageSrc={imageUrls.race(team?.race, identityUtils.opus(teamId))}
               >
                 <InfoArea>
-                  <InfoItem key="race" label="Race" info={prettyPrint(team.race)} />
-                  <InfoItem key="players" label="Players" info={players !== null ? players.length : '-'} />
-                  <InfoItem key="rerolls" label="Rerolls" info={team.rerolls} />
-                  <InfoItem key="dedicatedFans" label="Dedicated Fans" info={team.dedicatedFans} />
-                  <InfoItem key="cheerleaders" label="Cheerleaders" info={team.cheerleaders} />
-                  <InfoItem key="assistantCoaches" label="Assistant coaches" info={team.coachAssistants} />
-                  <InfoItem key="apothecary" label="Apothecary" info={team.apothecary} />
-                  <InfoItem key="cash" label="Cash" info={formatter.formatAsNumber(team.cash)} />
-                  <InfoItem key="value" label="Value" info={formatter.formatAsNumber(team.value)} />
-                  <InfoItem key="matches" label="Matches"
+                  <InfoItem key="race" label={intl.formatMessage({ id: 'team.race' })} info={prettyPrint(team.race)} />
+                  <InfoItem key="players" label={intl.formatMessage({ id: 'common.players' })} info={players !== null ? players.length : '-'} />
+                  <InfoItem key="rerolls" label={intl.formatMessage({ id: 'team.rerolls' })} info={team.rerolls} />
+                  <InfoItem key="dedicatedFans" label={intl.formatMessage({ id: 'team.dedicatedFans' })} info={team.dedicatedFans} />
+                  <InfoItem key="cheerleaders" label={intl.formatMessage({ id: 'team.cheerleaders' })} info={team.cheerleaders} />
+                  <InfoItem key="assistantCoaches" label={intl.formatMessage({ id: 'team.assistantCoaches' })} info={team.coachAssistants} />
+                  <InfoItem key="apothecary" label={intl.formatMessage({ id: 'team.apothecary' })} info={team.apothecary} />
+                  <InfoItem key="cash" label={intl.formatMessage({ id: 'team.cash' })} info={formatter.formatAsNumber(team.cash)} />
+                  <InfoItem key="value" label={intl.formatMessage({ id: 'common.value' })} info={formatter.formatAsNumber(team.value)} />
+                  <InfoItem key="matches" label={intl.formatMessage({ id: 'common.matches' })}
                     info={<MatchesCount matches={matches} teamId={teamId} />}
                   />
                 </InfoArea>
               </HeaderCard>
               <Roster players={players} />
+              <TeamSupporters teamId={teamId} dedicatedFans={team.dedicatedFans} />
             </>
           )}
         </LoadingOrErrorWrapper>
       </Box>
       <Box>
-        <Heading size="md">Matches</Heading>
+        <Heading size="md">{intl.formatMessage({ id: 'common.matches' })}</Heading>
         <LoadingOrErrorWrapper loading={loadingMatches} error={matchesError}>
           <Matches matches={matches} />
         </LoadingOrErrorWrapper>
+      </Box>
+      <Box w="full">
+        <Heading size="md" mb={3}>Kommentarer</Heading>
+        <CommentThread targetType="TEAM" targetId={teamId} />
       </Box>
     </VStack>
   );

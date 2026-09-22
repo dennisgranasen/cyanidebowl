@@ -539,6 +539,7 @@ public class TeamResponse extends ApiResponse {
             private List<LinkedHashMap<String, Integer>> bonus = new ArrayList<>();
             private List<LinkedHashMap<String, Integer>> malus = new ArrayList<>();
 
+            @SuppressWarnings({"unchecked", "rawtypes"})
             @JsonAnySetter
             public void setBonus(Object bonus) {
                 if (bonus instanceof ArrayList) {
@@ -548,6 +549,7 @@ public class TeamResponse extends ApiResponse {
                 }
             }
 
+            @SuppressWarnings({"unchecked", "rawtypes"})
             @JsonAnySetter
             public void setMalus(Object malus) {
                 if (malus instanceof ArrayList) {

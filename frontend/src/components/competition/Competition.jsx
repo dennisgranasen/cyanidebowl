@@ -7,10 +7,12 @@ import prettyPrint from '../../util/prettyPrint';
 import abbreviators from '../../util/abbreviators';
 import config from '../../config';
 import ImageUrls from '../../imageUrls';
+import { useIntl } from 'react-intl';
 
 const { boxSize, smallScreenBreakpointValues } = config;
 
 function Competition({ competition, league }) {
+  const intl = useIntl();
   const navigate = useNavigate();
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
 
@@ -33,7 +35,7 @@ function Competition({ competition, league }) {
         </HStack>
       </Td>
       <Td isNumeric>{competition.teamsMax}</Td>
-      <Td>{isSmallScreen ? abbreviators.makeInitials(competition.format) : prettyPrint(competition.format)}</Td>
+      <Td>{isSmallScreen ? abbreviators.makeInitials(competition.format) : intl.formatMessage({ id: `format.${competition.format}`, defaultMessage: prettyPrint(competition.format) })}</Td>
       {!isSmallScreen && (
         <Td>
           <CompetitionProgress

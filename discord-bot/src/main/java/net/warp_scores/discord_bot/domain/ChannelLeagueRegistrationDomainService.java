@@ -34,10 +34,10 @@ public class ChannelLeagueRegistrationDomainService {
             League league,
             boolean spoiler) {
         Optional<ChannelLeagueRegistration> optionalDbValue = channelLeagueRegistrationRepository.findByChannelIdAndLeagueUuid(
-                channelId.asLong(), league.getUuid().toString());
+                channelId.asLong(), league.getLeagueId());
         ChannelLeagueRegistration channelLeagueRegistration = optionalDbValue.orElse(
                 this.newChannelLeagueRegistration());
-        channelLeagueRegistration.setLeagueUuid(league.getUuid().toString());
+        channelLeagueRegistration.setLeagueUuid(league.getLeagueId());
         channelLeagueRegistration.setChannelId(channelId.asLong());
         channelLeagueRegistration.setSpoiler(spoiler);
         return channelLeagueRegistrationRepository.save(channelLeagueRegistration);

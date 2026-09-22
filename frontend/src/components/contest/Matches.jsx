@@ -24,6 +24,7 @@ import ScoreOrIcon from './ScoreOrIcon';
 import prettyPrint from '../../util/prettyPrint';
 import { identityUtils } from '../../util/identityUtil';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
+import { useIntl } from 'react-intl';
 
 const { smallScreenBreakpointValues, smallBoxSize } = config;
 
@@ -112,13 +113,14 @@ function Match({ match }) {
 
 function TableColumns() {
   const isSmallScreen = useBreakpointValue(smallScreenBreakpointValues);
+  const intl = useIntl();
   return (
     <Tr>
-      {!isSmallScreen && <Th>Date</Th>}
-      {!isSmallScreen && <Th>Competition</Th>}
-      <Th textAlign="center">Home</Th>
-      <Th textAlign="center">Result</Th>
-      <Th textAlign="center">Away</Th>
+      {!isSmallScreen && <Th>{intl.formatMessage({ id: 'common.date' })}</Th>}
+      {!isSmallScreen && <Th>{intl.formatMessage({ id: 'common.competition' })}</Th>}
+      <Th textAlign="center">{intl.formatMessage({ id: 'common.home' })}</Th>
+      <Th textAlign="center">{intl.formatMessage({ id: 'common.result' })}</Th>
+      <Th textAlign="center">{intl.formatMessage({ id: 'common.away' })}</Th>
     </Tr>
   );
 }

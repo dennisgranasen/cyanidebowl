@@ -1,0 +1,446 @@
+{
+  "sourceCommit": "abd69e2b68635665f7e2c94bdc69a0819bcfd962",
+  "players": [
+    {
+      "id": "Akhorne_The_Squirrel",
+      "name": "Akhorne The Squirrel",
+      "markdown": "# Akhorne The Squirrel\n\n![](../media/starplayers/AkhorneTheSquirrel.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **80K** | 7  | 1  | 2+ | -  | 6+ |\n\n*(Blitzer, Squirrel)*\n\n* [Claws]\n* [Dauntless]\n* [Dodge]\n* [Frenzy]\n* [Jump Up]\n* [Loner] (4+)\n* [No Ball]\n* [Sidestep]\n* [Stunty]\n* [Titchy]\n* **Blind Rage**\n\nAkhorne may choose to re-roll the D6 when rolling for the Dauntless Skill.\n\n### Plays For\n\n* Any team\n\n### Accept to play for...\n\n* [Amazon]\n* [Black Orc]\n* [Bretonnian]\n* [Chaos Chosen]\n* [Chaos Dwarf]\n* [Chaos Renegades]\n* [Dark Elf]\n* [Dwarf]\n* [Elven Union]\n* [Gnome]\n* [Goblin]\n* [Halfling]\n* [High Elf]\n* [Human]\n* [Imperial Nobility]\n* [Khorne]\n* [Lizardmen]\n* [Necromantic Horror]\n* [Norse]\n* [Nurgle]\n* [Ogre]\n* [Old World Alliance]\n* [Orc]\n* [Shambling Undead]\n* [Skaven]\n* [Snotling]\n* [Tomb Kings]\n* [Underworld Denizens]\n* [Vampire]\n* [Wood Elf]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Akhorne_The_Squirrel.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/AkhorneTheSquirrel.jpg"
+    },
+    {
+      "id": "Anqi_Panqi",
+      "name": "Anqi Panqi",
+      "markdown": "# Anqi Panqi\n\n![](../media/starplayers/BBAnqiPanqi.jpg){ width=620 height=600 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **190K** | 7  | 4  | 5+ | 6+ | 10+ |\n\n*(Blocker, Lizardman)*\n\n* [Block]\n* [Grab]\n* [Loner] (4+)\n* [Stand Firm]\n* [Unsteady]\n* **Savage Blow**\n\nOnce per game, when Anqi performs a Block Action against an opposition player he may choose to re-roll any number of the Block Dice.\n\n### Plays For\n\n* [Lustrian Superleague]\n\n### Accept to play for...\n\n* [Amazon]\n* [Lizardmen]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Anqi_Panqi.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BBAnqiPanqi.jpg"
+    },
+    {
+      "id": "Barik_Farblast",
+      "name": "Barik Farblast",
+      "markdown": "# Barik Farblast\n\n![](../media/starplayers/BBBarikFarblastLead.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **80K** | 6  | 3  | 4+ | 3+ | 9+ |\n\n*(Dwarf, Thrower)*\n\n* [Cannoneer]\n* [Hail Mary Pass]\n* [Loner] (4+)\n* [Pass]\n* [Secret Weapon]\n* [Sure Hands]\n* [Thick Skull]\n* **Blast It!**\n\nWhenever Barik makes a Hail Mary Pass, he may re-roll any Scatter results for determining where the ball lands, and any team-mate attempting to catch the ball applies a +1 modifier to the roll.\n\n### Plays For\n\n* [Old World Classic]\n* [Worlds Edge Superleague]\n\n### Accept to play for...\n\n* [Bretonnian]\n* [Dwarf]\n* [Human]\n* [Imperial Nobility]\n* [Norse]\n* [Ogre]\n* [Old World Alliance]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Barik_Farblast.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BBBarikFarblastLead.jpg"
+    },
+    {
+      "id": "Bilerot_Vomitflesh",
+      "name": "Bilerot Vomitflesh",
+      "markdown": "# Bilerot Vomitflesh\n\n![](../media/starplayers/Bilerot1.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **180K** | 4  | 5  | 4+ | 6+ | 10+ |\n\n*(Blocker, Human)*\n\n* [Dirty Player]\n* [Disturbing Presence]\n* [Foul Appearance]\n* [Lone Fouler]\n* [Loner] (4+)\n* [Regeneration]\n* [Unsteady]\n* **Putrid Regurgitation**\n\nOnce per half, Bilerot may use the Projectile Vomit Special Action. This may still be used even if Bilerot has already performed a Block Action this Turn.\n\n### Plays For\n\n* [Favoured of Nurgle][Favoured of...]\n\n### Accept to play for...\n\n* [Chaos Chosen]\n* [Chaos Renegades]\n* [Nurgle]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Bilerot_Vomitflesh.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/Bilerot1.jpg"
+    },
+    {
+      "id": "Boa_Kon'ssstriktr",
+      "name": "Boa Kon'ssstriktr",
+      "markdown": "# Boa Kon'ssstriktr\n\n![](../media/starplayers/BBBoaKonssstriktrLead.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **180K** | 6  | 3  | 3+ | 4+ | 9+ |\n\n*(Runner, Snakeman)*\n\n* [Dodge]\n* [Fend]\n* [Hypnotic Gaze]\n* [Loner] (4+)\n* [Prehensile Tail]\n* [Safe Pair of Hands]\n* [Sidestep]\n* **Look Into My Eyes**\n\nOnce per game, if Boa begins his activation Marking an opposition player in possession of the ball, he may roll a D6. On a 1, nothing happens. On a 2+, the opposition player loses possession of the ball, Boa immediately gains possession of the ball, and Boa's activation immediately ends.\n\n### Plays For\n\n* [Lustrian Superleague]\n\n### Accept to play for...\n\n* [Amazon]\n* [Lizardmen]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Boa_Kon%27ssstriktr.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BBBoaKonssstriktrLead.jpg"
+    },
+    {
+      "id": "Bomber_Dribblesnot",
+      "name": "Bomber Dribblesnot",
+      "markdown": "# Bomber Dribblesnot\n\n![](../media/starplayers/BomberDribblesnotLead.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **80K** | 6  | 2  | 3+ | 3+ | 8+ |\n\n*(Goblin, Special)*\n\n* [Accurate]\n* [Bombardier]\n* [Dodge]\n* [Loner] (4+)\n* [Right Stuff]\n* [Secret Weapon]\n* [Stunty]\n* **Kaboom!**\nOnce per game, if an opposition player catches a bomb thrown by Bomber, you can choose to have it explode rather than the opposition player immediately attempting to throw it again.\n\n### Plays For\n\n* [Badlands Brawl]\n* [Underworld Challenge]\n\n### Accept to play for...\n\n* [Black Orc]\n* [Chaos Dwarf]\n* [Goblin]\n* [Ogre]\n* [Orc]\n* [Skaven]\n* [Snotling]\n* [Underworld Denizens]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Bomber_Dribblesnot.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BomberDribblesnotLead.jpg"
+    },
+    {
+      "id": "Captain_Karina_von_Riesz",
+      "name": "Captain Karina von Riesz",
+      "markdown": "# Captain Karina von Riesz\n\n![](../media/starplayers/CptKarinaVonRiesz1.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **230K** | 7  | 4  | 2+ | 3+ | 9+ |\n\n*(Runner, Vampire)*\n\n* [Bloodlust] (2+)\n* [Dodge]\n* [Hypnotic Gaze]\n* [Jump Up]\n* [Loner] (4+)\n* [Regeneration]\n* **Tasty Morsel**\n\nOnce per game, when Karina fails a Bloodlust roll, she may choose to bite an opposition player with a ST of 3 or lower as if they were a Thrall Lineman team-mate. Karina may not bite Star Players with this special rule.\n\n### Plays For\n\n* [Sylvanian Spotlight]\n\n### Accept to play for...\n\n* [Necromantic Horror]\n* [Tomb Kings]\n* [Shambling Undead]\n* [Vampire]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Captain_Karina_von_Riesz.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/CptKarinaVonRiesz1.jpg"
+    },
+    {
+      "id": "Cindy_Piewhistle",
+      "name": "Cindy Piewhistle",
+      "markdown": "# Cindy Piewhistle\n\n![](../media/starplayers/CindyPiewhistle01.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **100K** | 5  | 2  | 3+ | 3+ | 7+ |\n\n*(Halfling, Special)*\n\n* [Accurate]\n* [Bombardier]\n* [Dodge]\n* [Loner] (4+)\n* [Secret Weapon]\n* [Stunty]\n* **All You Can Eat**\n\nOnce per game, Cindy may perform two Throw Bomb Special Actions rather than one; though she must commit to doing so before making the first Action. If she does, immediately after performing the second Throw Bomb Special Action, roll a D6. On a 1-3, Cindy is immediately Sent-off.\n\n### Plays For\n\n* [Halfling Thimble Cup]\n* [Old World Classic]\n\n### Accept to play for...\n\n* [Bretonnian]\n* [Gnome]\n* [Halfling]\n* [Human]\n* [Imperial Nobility]\n* [Norse]\n* [Old World Alliance]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Cindy_Piewhistle.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/CindyPiewhistle01.jpg"
+    },
+    {
+      "id": "Count_Luthor_von_Drakenborg",
+      "name": "Count Luthor von Drakenborg",
+      "markdown": "# Count Luthor von Drakenborg\n\n![](../media/starplayers/LuthorVonDrakenborg1.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **300K** | 6  | 5  | 2+ | 3+ | 10+ |\n\n*(Blocker, Vampire)*\n\n* [Block]\n* [Hypnotic Gaze]\n* [Loner] (4+)\n* [Regeneration]\n* [Sidestep]\n* **Star of the Show**\n\nOnce per game, when Count Luthor scores a Touchdown, his controlling coach gains one Team Re-roll until the end of the following Drive. If this Team Re-roll has not been used by the end of the next Drive, it is lost.\n\n### Plays For\n\n* [Sylvanian Spotlight]\n\n### Accept to play for...\n\n* [Necromantic Horror]\n* [Tomb Kings]\n* [Shambling Undead]\n* [Vampire]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Count_Luthor_von_Drakenborg.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/LuthorVonDrakenborg1.jpg"
+    },
+    {
+      "id": "Deeproot_Strongbranch",
+      "name": "Deeproot Strongbranch",
+      "markdown": "# Deeproot Strongbranch\n\n![](../media/starplayers/DeeprootStrongbranch01.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **280K** | 2  | 7  | 5+ | 4+ | 11+ |\n\n*(Big Guy, Treeman)*\n\n* [Block]\n* [Bullseye]\n* [Loner] (4+)\n* [Mighty Blow]\n* [Stand Firm]\n* [Strong Arm]\n* [Thick Skull]\n* [Throw Team-mate]\n* [Timmm-ber!]\n* **Reliable**\n\nIf Deeproot makes a Fumbled Throw when performing a Throw Team-mate Action, the player that was being thrown will Bounce as normal but will automatically land safely.\n\n### Plays For\n\n* [Woodland League]\n\n### Accept to play for...\n\n* [Gnome]\n* [Halfling]\n* [Wood Elf]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Deeproot_Strongbranch.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/DeeprootStrongbranch01.jpg"
+    },
+    {
+      "id": "Dribl_and_Drull",
+      "name": "Dribl and Drull",
+      "markdown": "# Dribl and Drull\n\n![](../media/starplayers/DrullDrible2.jpg){ width=600 height=620 }\n\n**230K**\n\n### Dribl\n\n| MA | ST | AG | PA | AV |\n| -- | -- | -- | -- | --- |\n| 8  | 2  | 3+ | 4+ | 8+ |\n\n*(Skink, Special)*\n\n* [Dirty Player]\n* [Dodge]\n* [Loner] (4+)\n* [Quick Foul]\n* [Sidestep]\n* [Sneaky Git]\n* [Stunty]\n* **A Sneaky Pair**\n\nDribl & Drull must be hired as a pair. Additionally, whenever Dribl or Drull perform either a Foul Action or a Stab Special Action against an opposition player Marked by both Dribl & Drull, they may apply a +1 modifier to the roll.\n\n#### Drull\n\n| MA | ST | AG | PA | AV |\n| -- | -- | -- | -- | --- |\n| 8  | 2  | 3+ | 4+ | 8+ |\n\n*(Skink, Special)*\n\n* [Dodge]\n* [Loner] (4+)\n* [Sidestep]\n* [Stab]\n* [Stunty]\n* **A Sneaky Pair**\n\nDribl & Drull must be hired as a pair. Additionally, whenever Dribl or Drull perform either a Foul Action or a Stab Special Action against an opposition player Marked by both Dribl & Drull, they may apply a +1 modifier to the roll.\n\n### Plays For\n\n* [Lustrian Superleague]\n\n### Accept to play for...\n\n* [Amazon]\n* [Lizardmen]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Dribl_and_Drull.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/DrullDrible2.jpg"
+    },
+    {
+      "id": "Eldril_Sidewinder",
+      "name": "Eldril Sidewinder",
+      "markdown": "# Eldril Sidewinder\n\n![](../media/starplayers/BBEldrilSidewinder01.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **220K** | 8  | 3  | 2+ | 3+ | 8+ |\n\n*(Catcher, Elf)*\n\n* [Catch]\n* [Dodge]\n* [Hypnotic Gaze]\n* [Loner] (4+)\n* [Nerves of Steel]\n* [On the Ball]\n* **Mesmerising Dance**\n\nOnce per half, Eldril may re-roll the dice when performing a Hypnotic Gaze Special Action.\n\n### Plays For\n\n* [Elven Kingdoms League]\n\n### Accept to play for...\n\n* [Dark Elf]\n* [Elven Union]\n* [High Elf]\n* [Wood Elf]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Eldril_Sidewinder.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BBEldrilSidewinder01.jpg"
+    },
+    {
+      "id": "Estelle_la_Veneaux",
+      "name": "Estelle la Veneaux",
+      "markdown": "# Estelle la Veneaux\n\n![](../media/starplayers/BBEstellelaVeneauxLead.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **190K** | 6  | 3  | 3+ | 4+ | 8+ |\n\n*(Human, Lineman)*\n\n* [Disturbing Presence]\n* [Dodge]\n* [Guard]\n* [Loner] (4+)\n* [Sidestep]\n* **Baleful Hex**\n\nOnce per game, at the beginning of Estelle's activation, she may select an opposition player within 5 squares and roll a D6. On a 2+, the selected player becomes Distracted and cannot be activated during their team's next Turn.\n\n### Plays For\n\n* [Lustrian Superleague]\n\n### Accept to play for...\n\n* [Amazon]\n* [Lizardmen]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Estelle_la_Veneaux.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BBEstellelaVeneauxLead.jpg"
+    },
+    {
+      "id": "Fungus_the_Loon",
+      "name": "Fungus the Loon",
+      "markdown": "# Fungus the Loon\n\n![](../media/starplayers/FungusTheLoon.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **80K** | 4  | 7  | 3+ | - | 8+ |\n\n*(Goblin, Special)*\n\n* [Ball & Chain]\n* [Loner] (4+)\n* [Mighty Blow]\n* [No Ball]\n* [Secret Weapon]\n* [Stunty]\n* **Whirling Dervish**\n\nOnce per Activation, Fungus may re-roll the D6 when determining which direction he moves in.\n\n### Plays For\n\n* [Badlands Brawl]\n* [Underworld Challenge]\n\n### Accept to play for...\n\n* [Black Orc]\n* [Chaos Dwarf]\n* [Goblin]\n* [Ogre]\n* [Orc]\n* [Skaven]\n* [Snotling]\n* [Underworld Denizens]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Fungus_the_Loon.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/FungusTheLoon.jpg"
+    },
+    {
+      "id": "Glart_Smashrip",
+      "name": "Glart Smashrip",
+      "markdown": "# Glart Smashrip\n\n![](../media/starplayers/GlartSmashrip01.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **175K** | 5  | 4  | 4+ | 6+ | 9+ |\n\n*(Blocker, Skaven)*\n\n* [Block]\n* [Claws]\n* [Grab]\n* [Juggernaut]\n* [Loner] (4+)\n* [Stand Firm]\n* **Frenzied Rush**\n\nOnce per half, when Glart declares a Blitz Action he may gain the Frenzy Skill until the end of his activation. Glart may not use the Grab Skill during a Turn in which he uses this special rule.\n\n### Plays For\n\n* [Underworld Challenge]\n\n### Accept to play for...\n\n* [Goblin]\n* [Skaven]\n* [Snotling]\n* [Underworld Denizens]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Glart_Smashrip.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/GlartSmashrip01.jpg"
+    },
+    {
+      "id": "Gloriel_Summerbloom",
+      "name": "Gloriel Summerbloom",
+      "markdown": "# Gloriel Summerbloom\n\n![](../media/starplayers/GSummerbloom01.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **150K** | 7  | 2  | 2+ | 2+ | 8+ |\n\n*(Elf, Thrower)*\n\n* [Accurate]\n* [Dodge]\n* [Loner] (3+)\n* [Pass]\n* [Sidestep]\n* [Sure Hands]\n* **Shot to Nothing**\n\nOnce per game, when Gloriel is activated she may use this special rule. If she does, Gloriel gains the Hail Mary Pass Skill until the end of her activation.\n\n### Plays For\n\n* [Elven Kingdoms League]\n\n### Accept to play for...\n\n* [Dark Elf]\n* [Elven Union]\n* [High Elf]\n* [Wood Elf]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Gloriel_Summerbloom.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/GSummerbloom01.jpg"
+    },
+    {
+      "id": "Glotl_Stop",
+      "name": "Glotl Stop",
+      "markdown": "# Glotl Stop\n\n![](../media/starplayers/BBGlotlStopLead.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **260K** | 6  | 6  | 5+ | 6+ | 10+ |\n\n*(Big Guy, Lizardman)*\n\n* [Animal Savagery]\n* [Frenzy]\n* [Loner] (4+)\n* [Mighty Blow]\n* [Prehensile Tail]\n* [Stand Firm]\n* [Thick Skull]\n* **Primal Savagery**\n\nOnce per game, when Glotl fails an Animal Savagery roll, it may lash out at an opposition player rather than a team-mate.\n\n### Plays For\n\n* [Lustrian Superleague]\n\n### Accept to play for...\n\n* [Amazon]\n* [Lizardmen]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Glotl_Stop.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BBGlotlStopLead.jpg"
+    },
+    {
+      "id": "Grak_and_Crumbleberry",
+      "name": "Grak and Crumbleberry",
+      "markdown": "# Grak and Crumbleberry\n\n![](../media/starplayers/GrakCrumbleberry11hw.jpg){ width=600 height=620 }\n\n**250K**\n\n### Grak\n\n| MA | ST | AG | PA | AV |\n| -- | -- | -- | -- | --- |\n| 5  | 5  | 4+ | 4+ | 10+ |\n\n*(Big Guy, Ogre)*\n\n* [Bone Head]\n* [Kick Team-mate]\n* [Loner] (4+)\n* [Mighty Blow]\n* [Thick Skull]\n* **I'll Carry You**\n\nGrak & Crumbleberry must be hired as a pair. Additionally, once per half, if Grak begins his activation adjacent to Crumbleberry he may pick up Crumbleberry; temporarily remove Crumbleberry from the pitch. At the end of Grak's activation, place Crumbleberry in an unoccupied square adjacent to Grak.\n\n### Crumbleberry\n\n| MA | ST | AG | PA | AV |\n| -- | -- | -- | -- | --- |\n| 5  | 2  | 3+ | 5+ | 7+ |\n\n*(Halfling, Lineman)*\n\n* [Dodge]\n* [Lethal Flight]\n* [Loner] (4+)\n* [Right Stuff]\n* [Stunty]\n* [Sure Hands]\n* **I'll Carry You**\n\nGrak & Crumbleberry must be hired as a pair. Additionally, while Crumbleberry is being carried by Grak, Grak gains the Break Tackle and Dodge Skills.\n\n### Plays For\n\n* Any Team\n\n### Accept to play for...\n\n* [Amazon]\n* [Black Orc]\n* [Bretonnian]\n* [Chaos Chosen]\n* [Chaos Dwarf]\n* [Chaos Renegades]\n* [Dark Elf]\n* [Dwarf]\n* [Elven Union]\n* [Gnome]\n* [Goblin]\n* [Halfling]\n* [High Elf]\n* [Human]\n* [Imperial Nobility]\n* [Khorne]\n* [Lizardmen]\n* [Necromantic Horror]\n* [Norse]\n* [Nurgle]\n* [Ogre]\n* [Old World Alliance]\n* [Orc]\n* [Skaven]\n* [Snotling]\n* [Tomb Kings]\n* [Shambling Undead]\n* [Underworld Denizens]\n* [Vampire]\n* [Wood Elf]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Grak_and_Crumbleberry.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/GrakCrumbleberry11hw.jpg"
+    },
+    {
+      "id": "Grashnak_Blackhoof",
+      "name": "Grashnak Blackhoof",
+      "markdown": "# Grashnak Blackhoof\n\n![](../media/starplayers/GrashnakBlackhoof.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **240K** | 6  | 6  | 4+ | 6+ | 9+ |\n\n*(Big Guy, Minotaur)*\n\n* [Frenzy]\n* [Horns]\n* [Loner] (4+)\n* [Mighty Blow]\n* [Thick Skull]\n* [Unchannelled Fury]\n* **Gored by the Bull**\n\nOnce per game, when Grashnak performs a Block Action as part of a Blitz Action, he may roll one additional Block Dice against the opposition player regardless of their ST, to a maximum of three Block Dice. If Grashnak performs a second Block Action due to the Frenzy Skill, the second Block Action will also benefit from this rule.\n\n### Plays For\n\n* [Chaos Clash]\n\n### Accept to play for...\n\n* [Chaos Chosen]\n* [Chaos Dwarf]\n* [Chaos Renegades]\n* [Khorne]\n* [Norse]\n* [Nurgle]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Grashnak_Blackhoof.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/GrashnakBlackhoof.jpg"
+    },
+    {
+      "id": "Gretchen_Wächter",
+      "name": "Gretchen Wächter",
+      "markdown": "# Gretchen Wächter\n\n![](../media/starplayers/BBS2GretchenWachterLead.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **180K** | 7  | 3  | 2+ | - | 9+ |\n\n*(Special, Undead, Wraith)*\n\n* [Disturbing Presence]\n* [Dodge]\n* [Foul Appearance]\n* [Jump Up]\n* [Loner] (4+)\n* [No Ball]\n* [Regeneration]\n* [Shadowing]\n* [Sidestep]\n* **Incorporeal**\n\nOnce per game, when Gretchen is activated she may use this special rule. Until the end of her activation, Gretchen does not have to make Dodge rolls for leaving a square within an opposition player's Tackle Zone.\n\n### Plays For\n\n* [Sylvanian Spotlight]\n\n### Accept to play for...\n\n* [Necromantic Horror]\n* [Tomb Kings]\n* [Shambling Undead]\n* [Vampire]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Gretchen_W%C3%A4chter.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BBS2GretchenWachterLead.jpg"
+    },
+    {
+      "id": "Griff_Oberwald",
+      "name": "Griff Oberwald",
+      "markdown": "# Griff Oberwald\n\n![](../media/starplayers/BBGriffOberwaldLead.jpg){ width=600 height=620 }\n\n**MEGA-STAR**\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **300K** | 7  | 4  | 2+ | 3+ | 9+ |\n\n*(Blitzer, Human)*\n\n* [Block]\n* [Dodge]\n* [Fend]\n* [Loner] (3+)\n* [Sprint]\n* [Sure Feet]\n* **Consummate Professional**\n\nOnce per game, Griff may apply a +1 modifier to an Agility Test he has made. This modifier may be applied after the roll has been made.\n\n### Plays For\n\n* [Old World Classic]\n\n### Accept to play for...\n\n* [Bretonnian]\n* [Human]\n* [Imperial Nobility]\n* [Norse]\n* [Old World Alliance]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Griff_Oberwald.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BBGriffOberwaldLead.jpg"
+    },
+    {
+      "id": "Grim_Ironjaw",
+      "name": "Grim Ironjaw",
+      "markdown": "# Grim Ironjaw\n\n![](../media/starplayers/GrimIronjaw01.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **190K** | 5  | 4  | 3+ | 6+ | 9+ |\n\n*(Dwarf, Special)*\n\n* [Block]\n* [Dauntless]\n* [Frenzy]\n* [Hatred] (Big Guy)\n* [Loner] (4+)\n* [Multiple Block]\n* [Thick Skull]\n* **Slayer**\n\nOnce per game, when an opposition Big Guy is Knocked Down as a result of a Block Action performed by Grim, you may apply an additional +1 modifier to either the Armour Roll or the Injury Roll. This modifier may be applied after the roll has been made.\n\n### Plays For\n\n* [Worlds Edge Superleague]\n\n### Accept to play for...\n\n* [Dwarf]\n* [Ogre]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Grim_Ironjaw.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/GrimIronjaw01.jpg"
+    },
+    {
+      "id": "Grombrindal",
+      "name": "Grombrindal",
+      "markdown": "# Grombrindal\n\n![](../media/starplayers/Grombrindal.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **170K** | 5  | 3  | 3+ | 4+ | 10+ |\n\n*(Blocker, Dwarf)*\n\n* [Block]\n* [Break Tackle]\n* [Dauntless]\n* [Loner] (4+)\n* [Mighty Blow]\n* [Stand Firm]\n* [Sure Feet]\n* [Thick Skull]\n* **Wisdom of the White Dwarf**\n\nOnce per game, when Grombrindal is activated he may select one team-mate within 2 squares. The selected team-mate gains one of the following Skills until the end of turn: [Break Tackle], [Dauntless], [Mighty Blow], [Sure Feet].\n\n### Plays For\n\n* [Halfling Thimble Cup]\n* [Old World Classic]\n* [Worlds Edge Superleague]\n\n### Special Rules\n\n* [Halfling Thimble Cup]\n* [Lustrian Superleague]\n* [Old World Classic]\n* [Worlds Edge Superleague]\n\n### Accept to play for...\n\n* [Bretonnian]\n* [Dwarf]\n* [Gnome]\n* [Halfling]\n* [Human]\n* [Imperial Nobility]\n* [Norse]\n* [Ogre]\n* [Old World Alliance]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Grombrindal.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/Grombrindal.jpg"
+    },
+    {
+      "id": "Guffle_Pusmaw",
+      "name": "Guffle Pusmaw",
+      "markdown": "# Guffle Pusmaw\n\n![](../media/starplayers/BBGuffle.jpg){ width=620 height=600 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **150K** | 5  | 4  | 4+ | 6+ | 10+ |\n\n*(Blocker, Human)*\n\n* [Foul Appearance]\n* [Loner] (4+)\n* [Monstrous Mouth]\n* [Nerves of Steel]\n* [On the Ball]\n* [Plague Ridden]\n* **Quick Bite**\n\nOnce per game, if Guffle is Marking an opposition player who catches the ball, he may immediately make an Armour Roll against that player. If the target's Armour is broken, Guffle immediately gains possession of the ball. No Turnover is caused as a result of using this special rule.\n\n### Plays For\n\n* [Favoured of Nurgle][Favoured of...]\n\n### Accept to play for...\n\n* [Chaos Chosen]\n* [Chaos Renegades]\n* [Nurgle]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Guffle_Pusmaw.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BBGuffle.jpg"
+    },
+    {
+      "id": "H'thark_the_Unstoppable",
+      "name": "H'thark the Unstoppable",
+      "markdown": "# H'thark the Unstoppable\n\n![](../media/starplayers/BBHtharkTheUnstoppable01.jpg){ width=600 height=620 }\n\n**MEGA-STAR**\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **300K** | 6  | 6  | 4+ | 6+ | 10+ |\n\n*(Blitzer, Dwarf)*\n\n* [Block]\n* [Break Tackle]\n* [Defensive]\n* [Juggernaut]\n* [Loner] (4+)\n* [Sprint]\n* [Sure Feet]\n* [Thick Skull]\n* [Unsteady]\n* **Unstoppable Momentum**\n\nWhenever H'thark performs a Block Action as part of a Blitz Action, he may re-roll a single Block Dice.\n\n### Plays For\n\n* [Badlands Brawl]\n* [Favoured of Hashut][Favoured of...]\n\n### Accept to play for...\n\n* [Black Orc]\n* [Chaos Chosen]\n* [Chaos Dwarf]\n* [Goblin]\n* [Ogre]\n* [Orc]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/H%27thark_the_Unstoppable.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BBHtharkTheUnstoppable01.jpg"
+    },
+    {
+      "id": "Hakflem_Skuttlespike",
+      "name": "Hakflem Skuttlespike",
+      "markdown": "# Hakflem Skuttlespike\n\n![](../media/starplayers/HakflemSkuttlespike01.jpg){ width=600 height=620 }\n\n**MEGA-STAR**\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **200K** | 8  | 3  | 2+ | 3+ | 8+ |\n\n*(Runner, Skaven)*\n\n* [Dodge]\n* [Extra Arms]\n* [Loner] (4+)\n* [Prehensile Tail]\n* [Two Heads]\n* **Treacherous**\n\nOnce per game, if Hakflem is adjacent to a team-mate who is in possession of the ball when he is activated, then Hakflem can choose to gain possession of the ball. If he does, then the team-mate will immediately be Knocked Down. This will not cause a Turnover even if the team-mate suffers a Casualty.\n\n### Plays For\n\n* [Underworld Challenge]\n\n### Accept to play for...\n\n* [Goblin]\n* [Skaven]\n* [Snotling]\n* [Underworld Denizens]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Hakflem_Skuttlespike.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/HakflemSkuttlespike01.jpg"
+    },
+    {
+      "id": "Helmut_Wulf",
+      "name": "Helmut Wulf",
+      "markdown": "# Helmut Wulf\n\n![](../media/starplayers/HelmutWulf01.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **140K** | 6  | 3  | 3+ | - | 9+ |\n\n*(Human, Special)*\n\n* [Chainsaw]\n* [Loner] (4+)\n* [No Ball]\n* [Pro]\n* [Secret Weapon]\n* [Stand Firm]\n* **Old Pro**\n\nOnce per game, Helmut may use his Pro Skill to re-roll a single dice rolled as part of an Armour Roll.\n\n### Plays For\n\n* [Old World Classic]\n\n### Accept to play for...\n\n* [Bretonnian]\n* [Human]\n* [Imperial Nobility]\n* [Norse]\n* [Old World Alliance]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Helmut_Wulf.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/HelmutWulf01.jpg"
+    },
+    {
+      "id": "Ivan_'the_Animal'_Deathshroud",
+      "name": "Ivan 'the Animal' Deathshroud",
+      "markdown": "# Ivan 'the Animal' Deathshroud\n\n![](../media/starplayers/IvanAnimal1.jpg){ width=600 height=620 }\n\n**MEGA-STAR**\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **210K** | 6  | 4  | 4+ | 5+ | 9+ |\n\n*(Blitzer, Human, Skeleton, Undead)*\n\n* [Block]\n* [Disturbing Presence]\n* [Hatred] (Dwarf)\n* [Juggernaut]\n* [Loner] (4+)\n* [Regeneration]\n* [Strip Ball]\n* [Tackle]\n* **Dwarven Scourge**\n\nOnce per game, when an opposition player is Knocked Down as a result of a Block Action performed by Ivan, you may apply an additional +1 modifier to the Armour Roll or Injury roll. If this is against a Dwarf player this may instead be a +2 modifier.\n\n### Plays For\n\n* [Sylvanian Spotlight]\n\n### Accept to play for...\n\n* [Necromantic Horror]\n* [Tomb Kings]\n* [Shambling Undead]\n* [Vampire]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Ivan_%27the_Animal%27_Deathshroud.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/IvanAnimal1.jpg"
+    },
+    {
+      "id": "Ivar_Eriksson",
+      "name": "Ivar Eriksson",
+      "markdown": "# Ivar Eriksson\n\n![](../media/starplayers/BBIvarErikssonLead.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **215K** | 6  | 4  | 3+ | 4+ | 9+ |\n\n*(Blitzer, Human)*\n\n* [Block]\n* [Guard]\n* [Loner] (4+)\n* [Tackle]\n* **Raiding Party**\n\nOnce per Drive, when Ivar begins his activation he may select one Open team-mate within 5 squares. The selected player may immediately move 1 square, though they must end this move Marking an opposition player.\n\n### Plays For\n\n* [Old World Classic]\n\n### Accept to play for...\n\n* [Bretonnian]\n* [Human]\n* [Imperial Nobility]\n* [Norse]\n* [Old World Alliance]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Ivar_Eriksson.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BBIvarErikssonLead.jpg"
+    },
+    {
+      "id": "Jeremiah_Kool",
+      "name": "Jeremiah Kool",
+      "markdown": "# Jeremiah Kool\n\n![](../media/starplayers/BBJeremiahKool.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **300K** | 8  | 3  | 1+ | 2+ | 9+ |\n\n*(Elf, Runner)*\n\n* [Block]\n* [Dodge]\n* [Diving Catch]\n* [Dump-off]\n* [Loner] (4+)\n* [Nerves of Steel]\n* [On the Ball]\n* [Pass]\n* [Sidestep]\n* **The Flashing Blade**\n\nOnce per game, at the start of his activation, Jeremiah may declare a Stab Special Action against an opposition player he is Marking. After performing the Stab Special Action, Jeremiah may then perform a Move Action before his activation ends.\n\n### Plays For\n\n* [Elven Kingdoms League]\n\n### Accepts to play for...\n\n* [Dark Elf]\n* [Elven Union]\n* [High Elf]\n* [Wood Elf]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Jeremiah_Kool.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BBJeremiahKool.jpg"
+    },
+    {
+      "id": "Jordell_Freshbreeze",
+      "name": "Jordell Freshbreeze",
+      "markdown": "# Jordell Freshbreeze\n\n![](../media/starplayers/BBJordellFreshbreeze01.jpg){ width=606 height=626 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **280K** | 8  | 3  | 1+ | 3+ | 8+ |\n\n*(Blitzer, Elf)*\n\n* [Block]\n* [Diving Catch]\n* [Dodge]\n* [Leap]\n* [Loner] (4+)\n* [Sidestep]\n* [Steady Footing]\n* **Swift as the Breeze**\n\nOnce per game, Jordell can choose to pass a single Dodge, Leap or Rush Test on a 2+, regardless of any modifiers.\n\n### Plays For\n\n* [Elven Kingdoms League]\n* [Woodland League]\n\n### Accept to play for...\n\n* [Dark Elf]\n* [Elven Union]\n* [Gnome]\n* [Halfling]\n* [High Elf]\n* [Wood Elf]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Jordell_Freshbreeze.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BBJordellFreshbreeze01.jpg"
+    },
+    {
+      "id": "Josef_Bugman",
+      "name": "Josef Bugman",
+      "markdown": "# Josef Bugman\n\n![](../media/starplayers/BBJosephBugman01.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **180K** | 5  | 3  | 3+ | 4+ | 9+ |\n\n*(Blocker, Dwarf)*\n\n* [Block]\n* [Drunkard]\n* [Fend]\n* [Loner] (3+)\n* [Tackle]\n* [Taunt]\n* [Thick Skull]\n* **Dwarfen Grit**\n\nOnce per game, when Josef's armour is broken as the result of an Armour Roll, you may choose to have the Armour Roll re-rolled.\n\n### Plays For\n\n* [Old World Classic]\n* [Worlds Edge Superleague]\n\n### Accept to play for...\n\n* [Bretonnian]\n* [Dwarf]\n* [Human]\n* [Imperial Nobility]\n* [Norse]\n* [Ogre]\n* [Old World Alliance]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Josef_Bugman.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BBJosephBugman01.jpg"
+    },
+    {
+      "id": "Karla_von_Kill",
+      "name": "Karla von Kill",
+      "markdown": "# Karla von Kill\n\n![](../media/starplayers/KarlaVonKill01.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **210K** | 6  | 4  | 3+ | 3+ | 9+ |\n\n*(Blitzer, Human)*\n\n* [Block]\n* [Dauntless]\n* [Dodge]\n* [Jump Up]\n* [Loner] (4+)\n* **Indomitable**\n\nOnce per game, when Karla successfully rolls to use her Dauntless Skill, she may increase her ST characteristic to double that of the target of the Block Action.\n\n### Plays For\n\n* [Lustrian Superleague]\n* [Old World Classic]\n\n### Accept to play for...\n\n* [Amazon]\n* [Bretonnian]\n* [Human]\n* [Imperial Nobility]\n* [Lizardmen]\n* [Norse]\n* [Old World Alliance]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Karla_von_Kill.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/KarlaVonKill01.jpg"
+    },
+    {
+      "id": "Kiroth_Krakeneye",
+      "name": "Kiroth Krakeneye",
+      "markdown": "# Kiroth Krakeneye\n\n![](../media/starplayers/KirothKrakeneye1.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **160K** | 7  | 3  | 2+ | 3+ | 8+ |\n\n*(Elf, Runner)*\n\n* [Disturbing Presence]\n* [Foul Appearance]\n* [Loner] (4+)\n* [On the Ball]\n* [Tackle]\n* [Tentacles]\n* **Black Ink**\n\nOnce per game, at the start of any of his activations, Kiroth can select an opposition player he is Marking. The selected player becomes Distracted until they are next activated.\n\n### Plays For\n\n* [Elven Kingdoms League]\n\n### Accept to play for...\n\n* [Dark Elf]\n* [Elven Union]\n* [High Elf]\n* [Wood Elf]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Kiroth_Krakeneye.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/KirothKrakeneye1.jpg"
+    },
+    {
+      "id": "Kreek_Rustgouger",
+      "name": "Kreek Rustgouger",
+      "markdown": "# Kreek Rustgouger\n\n![](../media/starplayers/BBKreekTheVerminatorRustgougerLead.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **180K** | 4  | 7  | 4+ | - | 10+ |\n\n*(Big Guy, Skaven, Special)*\n\n* [Ball & Chain]\n* [Loner] (4+)\n* [Mighty Blow]\n* [No Ball]\n* [Prehensile Tail]\n* [Secret Weapon]\n* **I'll Be Back!**\n\nThe first time in a game that Kreek would be Sent-off as per the Secret Weapon Trait, he is not Sent-off and may instead continue as part of the game. Kreek's coach may not Argue the Call when Kreek uses this special rule.\n\n### Plays For\n\n* [Underworld Challenge]\n\n### Accept to play for...\n\n* [Goblin]\n* [Skaven]\n* [Snotling]\n* [Underworld Denizens]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Kreek_Rustgouger.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BBKreekTheVerminatorRustgougerLead.jpg"
+    },
+    {
+      "id": "Lord_Borak_the_Despoiler",
+      "name": "Lord Borak the Despoiler",
+      "markdown": "# Lord Borak the Despoiler\n\n![](../media/starplayers/LordBoraktheDespoiler01.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **270K** | 5  | 5  | 3+ | 5+ | 10+ |\n\n*(Blocker, Human)*\n\n* [Block]\n* [Dirty Player]\n* [Leader]\n* [Loner] (3+)\n* [Mighty Blow]\n* [Put the Boot In]\n* [Sneaky Git]\n* **Lord of Chaos**\n\nOnce per game, when Lord Borak performs a Block Action he may re-roll a single Block Dice.\n\n### Plays For\n\n* [Chaos Clash]\n\n### Accept to play for...\n\n* [Chaos Chosen]\n* [Chaos Dwarf]\n* [Chaos Renegades]\n* [Khorne]\n* [Norse]\n* [Nurgle]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Lord_Borak_the_Despoiler.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/LordBoraktheDespoiler01.jpg"
+    },
+    {
+      "id": "Maple_Highgrove",
+      "name": "Maple Highgrove",
+      "markdown": "# Maple Highgrove\n\n![](../media/starplayers/MapleHighgrove.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **210K** | 3  | 5  | 5+ | 5+  | 11+ |\n\n*(Big Guy, Treeman)*\n\n* [Brawler]\n* [Grab]\n* [Loner] (4+)\n* [Mighty Blow]\n* [Stand Firm]\n* [Tentacles]\n* [Thick Skull]\n* **Vicious Vines**\n\nOnce per half, when Maple declares a Block Action he may do so against an opposition player who is 2 squares away following all the normal rules for performing a Block Action, though he may not follow-up.\n\n### Plays For\n\n* [Woodland League]\n\n### Accept to play for...\n\n* [Gnome]\n* [Halfling]\n* [Wood Elf]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Maple_Highgrove.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/MapleHighgrove.jpg"
+    },
+    {
+      "id": "Max_Spleenripper",
+      "name": "Max Spleenripper",
+      "markdown": "# Max Spleenripper\n\n![](../media/starplayers/BBMaxSpleenripperLead.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **130K** | 5  | 4  | 4+ | -  | 9+ |\n\n*(Human, Special)*\n\n* [Chainsaw]\n* [Loner] (4+)\n* [No Ball]\n* [Secret Weapon]\n* **Maximum Carnage**\n\nOnce per game, after Max performs a Chainsaw Attack Special Action he may immediately perform another Chainsaw Attack Special Action that targets a different opposition player.\n\n### Plays For\n\n* [Favoured of Khorne][Favoured of...]\n\n### Accept to play for...\n\n* [Chaos Chosen]\n* [Chaos Renegades]\n* [Khorne]\n* [Norse]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Max_Spleenripper.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BBMaxSpleenripperLead.jpg"
+    },
+    {
+      "id": "Morg_'n'_Thorg",
+      "name": "Morg 'n' Thorg",
+      "markdown": "# Morg 'n' Thorg\n\n![](../media/starplayers/MorgnThorg01.jpg){ width=600 height=620 }\n\n**MEGA-STAR**\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **340K** | 6  | 6  | 3+ | 4+ | 11+ |\n\n*(Big Guy, Ogre)*\n\n* [Block]\n* [Bullseye]\n* [Hatred] (Undead)\n* [Loner] (4+)\n* [Mighty Blow]\n* [Thick Skull]\n* [Throw Team-mate]\n* **The Ballista**\n\nOnce per game, when Morg performs a Throw Team-mate Action, he may re-roll the Passing Ability Test.\n\n### Plays For\n\n* Any team except those from [Sylvanian Spotlight]\n\n### Accept to play for...\n\n* [Amazon]\n* [Black Orc]\n* [Bretonnian]\n* [Chaos Chosen]\n* [Chaos Dwarf]\n* [Chaos Renegades]\n* [Dark Elf]\n* [Dwarf]\n* [Elven Union]\n* [Goblin]\n* [Halfling]\n* [High Elf]\n* [Human]\n* [Imperial Nobility]\n* [Khorne]\n* [Lizardmen]\n* [Norse]\n* [Nurgle]\n* [Ogre]\n* [Old World Alliance]\n* [Orc]\n* [Skaven]\n* [Snotling]\n* [Underworld Denizens]\n* [Wood Elf]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Morg_%27n%27_Thorg.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/MorgnThorg01.jpg"
+    },
+    {
+      "id": "Nobbla_Blackwart",
+      "name": "Nobbla Blackwart",
+      "markdown": "# Nobbla Blackwart\n\n![](../media/starplayers/NobblaBlackwart.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **120K** | 6  | 2  | 3+ | - | 8+ |\n\n*(Goblin, Special)*\n\n* [Block]\n* [Chainsaw]\n* [Dodge]\n* [Loner] (4+)\n* [No Ball]\n* [Saboteur]\n* [Secret Weapon]\n* [Stunty]\n* **Kick 'em While They're Down!**\n\nOnce per game, Nobbla may use the Chainsaw Attack Special Action against a Prone or Stunned opposition player. This does not count as a Foul Action and so Nobbla cannot be Sent-off when using this special rule.\n\n### Plays For\n\n* [Badlands Brawl]\n* [Underworld Challenge]\n\n### Accept to play for...\n\n* [Black Orc]\n* [Chaos Dwarf]\n* [Goblin]\n* [Ogre]\n* [Orc]\n* [Skaven]\n* [Snotling]\n* [Underworld Denizens]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Nobbla_Blackwart.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/NobblaBlackwart.jpg"
+    },
+    {
+      "id": "Puggy_Baconbreath",
+      "name": "Puggy Baconbreath",
+      "markdown": "# Puggy Baconbreath\n\n![](../media/starplayers/PuggyBaconbreath.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **130K** | 5  | 3  | 3+ | 3+ | 8+ |\n\n*(Blitzer, Halfling)*\n\n* [Block]\n* [Dodge]\n* [Loner] (3+)\n* [Nerves of Steel]\n* [Right Stuff]\n* [Stunty]\n* **Halfling Luck**\n\nOnce per game, Puggy may re-roll a single dice that was rolled either as a single dice roll, a multiple dice roll, or a dice pool, though this cannot be a dice that was rolled as part of an Armour Roll, Injury Roll or Casualty Roll.\n\n### Plays For\n\n* [Halfling Thimble Cup]\n* [Old World Classic]\n\n### Accept to play for...\n\n* [Bretonnian]\n* [Gnome]\n* [Halfling]\n* [Human]\n* [Imperial Nobility]\n* [Norse]\n* [Old World Alliance]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Puggy_Baconbreath.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/PuggyBaconbreath.jpg"
+    },
+    {
+      "id": "Rashnak_Backstabber",
+      "name": "Rashnak Backstabber",
+      "markdown": "# Rashnak Backstabber\n\n![](../media/starplayers/BBRashnakBackstabber.jpg){ width=620 height=600 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **130K** | 7  | 3  | 3+ | 5+ | 8+ |\n\n*(Goblin, Special)*\n\n* [Loner] (4+)\n* [Shadowing]\n* [Sidestep]\n* [Sneaky Git]\n* [Stab]\n* **Toxin Connoisseur**\n\nOnce per game, when Rashnak successfully breaks an opposition player's armour as a result of a Stab Special Action, you may apply an additional +1 modifier to the Injury Roll. This modifier may be applied after the roll has been made.\n\n### Plays For\n\n* [Badlands Brawl]\n\n### Accept to play for...\n\n* [Black Orc]\n* [Chaos Dwarf]\n* [Goblin]\n* [Ogre]\n* [Orc]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Rashnak_Backstabber.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BBRashnakBackstabber.jpg"
+    },
+    {
+      "id": "Ripper_Bolgrot",
+      "name": "Ripper Bolgrot",
+      "markdown": "# Ripper Bolgrot\n\n![](../media/starplayers/RipperBolgrot1.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **250K** | 5  | 6  | 5+ | 4+ | 10+ |\n\n*(Big Guy, Troll)*\n\n* [Bullseye]\n* [Grab]\n* [Loner] (4+)\n* [Mighty Blow]\n* [Regeneration]\n* [Throw Team-mate]\n* **Thinking Man's Troll**\n\nOnce per half, Ripper may re-roll a single dice that was rolled either as a single dice roll, a multiple dice roll, or a dice pool, though this cannot be a dice that was rolled as part of an Armour Roll, Injury Roll or Casualty Roll.\n\n### Plays For\n\n* [Badlands Brawl]\n* [Underworld Challenge]\n\n### Accept to play for...\n\n* [Black Orc]\n* [Chaos Dwarf]\n* [Goblin]\n* [Ogre]\n* [Orc]\n* [Skaven]\n* [Snotling]\n* [Underworld Denizens]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Ripper_Bolgrot.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/RipperBolgrot1.jpg"
+    },
+    {
+      "id": "Rodney_Roachbait",
+      "name": "Rodney Roachbait",
+      "markdown": "# Rodney Roachbait\n\n![](../media/starplayers/BBRodneyRoachbait01.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **70K** | 6  | 2  | 3+ | 4+ | 7+ |\n\n*(Gnome, Special)*\n\n* [Catch]\n* [Diving Catch]\n* [Jump Up]\n* [Loner] (4+)\n* [On the Ball]\n* [Sidestep]\n* [Stunty]\n* [Wrestle]\n* **Catch of the Day**\n\nOnce per half, if Rodney is Standing and begins his activation within 3 squares of a ball which is on the ground he may roll a D6. On a 1-2, nothing happens. On a 3+, Rodney immediately gains possession of the ball.\n\n### Plays For\n\n* [Woodland League]\n\n### Accept to play for...\n\n* [Gnome]\n* [Halfling]\n* [Wood Elf]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Rodney_Roachbait.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BBRodneyRoachbait01.jpg"
+    },
+    {
+      "id": "Rowana_Forestfoot",
+      "name": "Rowana Forestfoot",
+      "markdown": "# Rowana Forestfoot\n\n![](../media/starplayers/RowanaForestfoot.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **160K** | 6  | 3  | 3+ | 4+ | 8+ |\n\n*(Blocker, Gnome)*\n\n* [Dodge]\n* [Dump-off]\n* [Guard]\n* [Horns]\n* [Jump Up]\n* [Leap]\n* [Loner] (4+)\n* **Bounding Leap**\n\nOnce per game, after declaring that she will Leap but before rolling any dice, Rowana may choose to use this special rule. If she does, Rowana suffers no negative modifiers for the Agility Test to Leap and may choose to re-roll the result.\n\n### Plays For\n\n* [Woodland League]\n\n### Accept to play for...\n\n* [Gnome]\n* [Halfling]\n* [Wood Elf]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Rowana_Forestfoot.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/RowanaForestfoot.jpg"
+    },
+    {
+      "id": "Roxanna_Darknail",
+      "name": "Roxanna Darknail",
+      "markdown": "# Roxanna Darknail\n\n![](../media/starplayers/RoxannaDarknail01.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **270K** | 8  | 3  | 1+ | 3+ | 8+ |\n\n*(Elf, Special)*\n\n* [Dodge]\n* [Frenzy]\n* [Jump Up]\n* [Juggernaut]\n* [Leap]\n* [Loner] (4+)\n* **Slashing Nails**\n\nOnce per half, when Roxanna declares a Blitz Action, she gains the [Claws] Skill until the end of her activation.\n\n### Plays For\n\n* [Elven Kingdoms League]\n\n### Accept to play for...\n\n* [Dark Elf]\n* [Elven Union]\n* [High Elf]\n* [Wood Elf]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Roxanna_Darknail.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/RoxannaDarknail01.jpg"
+    },
+    {
+      "id": "Rumbelow_Sheepskin",
+      "name": "Rumbelow Sheepskin",
+      "markdown": "# Rumbelow Sheepskin\n\n![](../media/starplayers/RumbelowSheepskinLead.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **170K** | 6  | 3  | 3+ | 5+ | 8+ |\n\n*(Blitzer, Halfling)*\n\n* [Block]\n* [Horns]\n* [Juggernaut]\n* [Loner] (4+)\n* [Tackle]\n* [Thick Skull]\n* **Ram**\n\nOnce per game, when an opposition player is Knocked Down as a result of a Block Action performed by Rumbelow, you may apply an additional +1 modifier to either the Armour Roll or the Injury Roll. This modifier may be applied after the roll has been made.\n\n### Plays For\n\n* [Halfling Thimble Cup]\n\n### Accept to play for...\n\n* [Gnome]\n* [Halfling]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Rumbelow_Sheepskin.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/RumbelowSheepskinLead.jpg"
+    },
+    {
+      "id": "Scrappa_Sorehead",
+      "name": "Scrappa Sorehead",
+      "markdown": "# Scrappa Sorehead\n\n![](../media/starplayers/ScrappaSorehead01.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **120K** | 7  | 2  | 3+ | 4+ | 8+ |\n\n*(Goblin, Special)*\n\n* [Dirty Player]\n* [Dodge]\n* [Loner] (4+)\n* [Pogo]\n* [Right Stuff]\n* [Sprint]\n* [Stunty]\n* [Sure Feet]\n* **Yoink!**\n\nOnce per game, when Scrappa attempts to Intercept a Pass Action he may roll a D6. On a 2+, Scrappa doesn't need to Intercept; instead, he will automatically Intercept the Pass Action and gains control of the ball.\n\n### Plays For\n\n* [Badlands Brawl]\n* [Underworld Challenge]\n\n### Accept to play for...\n\n* [Black Orc]\n* [Chaos Dwarf]\n* [Goblin]\n* [Ogre]\n* [Orc]\n* [Skaven]\n* [Snotling]\n* [Underworld Denizens]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Scrappa_Sorehead.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/ScrappaSorehead01.jpg"
+    },
+    {
+      "id": "Scyla_Anfingrimm",
+      "name": "Scyla Anfingrimm",
+      "markdown": "# Scyla Anfingrimm\n\n![](../media/starplayers/BBScylaAnfinngrimmLead.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **200K** | 5  | 5  | 4+ | 6+ | 10+ |\n\n*(Big Guy, Spawn)*\n\n* [Claws]\n* [Frenzy]\n* [Loner] (4+)\n* [Mighty Blow]\n* [Prehensile Tail]\n* [Thick Skull]\n* [Unchannelled Fury]\n* **Fury of the Blood God**\n\nOnce per game, if Scyla rolls a 1 for his Unchannelled Fury roll after declaring a Block Action then, instead of applying the usual effects of Unchannelled Fury, Scyla may perform two Block Actions instead. The first Block Action must be fully resolved, including the use of the Frenzy Skill, before the second one is performed.\n\n### Plays For\n\n* [Favoured of Khorne][Favoured of...]\n\n### Accept to play for...\n\n* [Chaos Chosen]\n* [Chaos Renegades]\n* [Khorne]\n* [Norse]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Scyla_Anfingrimm.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BBScylaAnfinngrimmLead.jpg"
+    },
+    {
+      "id": "Skitter_Stab-stab",
+      "name": "Skitter Stab-Stab",
+      "markdown": "# Skitter Stab-Stab\n\n![](../media/starplayers/SkitterStabStab1.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **170K** | 9  | 2  | 2+ | 4+ | 8+ |\n\n*(Runner, Skaven)*\n\n* [Dodge]\n* [Loner] (4+)\n* [Prehensile Tail]\n* [Shadowing]\n* [Stab]\n* **Master Assassin**\n\nOnce per game, when Skitter performs a Stab Special Action, he may choose to re-roll the Armour Roll.\n\n### Plays For\n\n* [Underworld Challenge]\n\n### Accept to play for...\n\n* [Goblin]\n* [Skaven]\n* [Snotling]\n* [Underworld Denizens]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Skitter_Stab-stab.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/SkitterStabStab1.jpg"
+    },
+    {
+      "id": "Skrorg_Snowpelt",
+      "name": "Skrorg Snowpelt",
+      "markdown": "# Skrorg Snowpelt\n\n![](../media/starplayers/SkrorgSnowpeltLead.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **240K** | 5  | 5  | 4+ | 6+ | 9+ |\n\n*(Big Guy, Yhetee)*\n\n* [Block]\n* [Claws]\n* [Disturbing Presence]\n* [Juggernaut]\n* [Loner] (4+)\n* [Mighty Blow]\n* **Pump Up the Crowd**\n\nOnce per game, when Skrorg causes an opposition player to be removed as a Casualty as the result of a Block Action, Skorgr's controlling coach gains one Team Re-roll until the end of the current Drive. If the Re-roll has not been used by the end of the Drive, it is lost.\n\n### Plays For\n\n* [Old World Classic]\n* [Worlds Edge Superleague]\n\n### Accept to play for...\n\n* [Bretonnian]\n* [Dwarf]\n* [Halfling]\n* [Human]\n* [Imperial Nobility]\n* [Norse]\n* [Ogre]\n* [Old World Alliance]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Skrorg_Snowpelt.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/SkrorgSnowpeltLead.jpg"
+    },
+    {
+      "id": "Skrull_Halfheight",
+      "name": "Skrull Halfheight",
+      "markdown": "# Skrull Halfheight\n\n![](../media/starplayers/BBSkrullHalfheightLead.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **150K** | 6  | 3  | 4+ | 3+ | 9+ |\n\n*(Dwarf, Skeleton, Thrower, Undead)*\n\n* [Accurate]\n* [Loner] (4+)\n* [Nerves of Steel]\n* [Pass]\n* [Regeneration]\n* [Sure Hands]\n* [Thick Skull]\n* **Strong Passing Game**\n\nOnce per game, when Skrull performs a Pass Action he may modify the result of the Passing Ability Test by the value of his ST characteristic, to a maximum of 6.\n\n### Plays For\n\n* [Sylvanian Spotlight]\n* [Worlds Edge Superleague]\n\n### Accept to play for...\n\n* [Dwarf]\n* [Necromantic Horror]\n* [Ogre]\n* [Shambling Undead]\n* [Tomb Kings]\n* [Vampire]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Skrull_Halfheight.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BBSkrullHalfheightLead.jpg"
+    },
+    {
+      "id": "Swiftvine_Glimmershard",
+      "name": "Swiftvine Glimmershard",
+      "markdown": "# Swiftvine Glimmershard\n\n![](../media/starplayers/SwiftvineGlimmershard.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **110K** | 7  | 2  | 3+ | 5+ | 7+ |\n\n*(Special, Spite)*\n\n* [Disturbing Presence]\n* [Fend]\n* [Loner] (4+)\n* [Sidestep]\n* [Stab]\n* [Stunty]\n* **Furious Outburst**\n\nOnce per half, so long as she is Standing at the start of her activation, Swiftvine can place herself adjacent to a Standing opposition player within 3 squares of her and immediately make a Stab Special Action against them. She may then place herself in an unoccupied square within 3 squares of her new position. Her activation then immediately ends. This counts as the team's Blitz Action for the turn.\n\n### Plays For\n\n* [Woodland League]\n\n### Accept to play for...\n\n* [Gnome]\n* [Halfling]\n* [Wood Elf]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Swiftvine_Glimmershard.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/SwiftvineGlimmershard.jpg"
+    },
+    {
+      "id": "The_Black_Gobbo",
+      "name": "The Black Gobbo",
+      "markdown": "# The Black Gobbo\n\n![](../media/starplayers/BlackGobbo01.jpg){ width=620 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **210K** | 6  | 2  | 3+ | 3+ | 8+ |\n\n*(Goblin, Special)*\n\n* [Bombardier]\n* [Disturbing Presence]\n* [Dodge]\n* [Loner] (3+)\n* [Sidestep]\n* [Sneaky Git]\n* [Stab]\n* **Sneakiest of the Lot**\n\nIf your team includes the Black Gobbo, then you may declare two Foul Actions per Turn rather than the usual one. However, one of these Foul Actions must be declared by the Black Gobbo himself.\n\n### Plays For\n\n* [Badlands Brawl]\n* [Underworld Challenge]\n\n### Accept to play for...\n\n* [Black Orc]\n* [Chaos Dwarf]\n* [Goblin]\n* [Ogre]\n* [Orc]\n* [Skaven]\n* [Snotling]\n* [Underworld Denizens]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/The_Black_Gobbo.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BlackGobbo01.jpg"
+    },
+    {
+      "id": "The_Mighty_Zug",
+      "name": "The Mighty Zug",
+      "markdown": "# The Mighty Zug\n\n![](../media/starplayers/MightyZug01.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **220K** | 5  | 5  | 4+ | 6+ | 10+ |\n\n*(Blocker, Human)*\n\n* [Block]\n* [Loner] (4+)\n* [Mighty Blow]\n* [Unsteady]\n* **Crushing Blow**\n\nOnce per game, when an opposition player is Knocked Down as the result of a Block Action performed by Zug, you may apply an additional +1 modifier to the Armour Roll. This modifier may be applied after the Armour Roll has been made.\n\n### Plays For\n\n* [Old World Classic]\n* [Worlds Edge Superleague]\n\n### Accept to play for...\n\n* [Amazon]\n* [Bretonnian]\n* [Human]\n* [Imperial Nobility]\n* [Lizardmen]\n* [Norse]\n* [Old World Alliance]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/The_Mighty_Zug.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/MightyZug01.jpg"
+    },
+    {
+      "id": "The_Swift_Twins",
+      "name": "The Swift Twins",
+      "markdown": "# The Swift Twins\n\n![](../media/starplayers/TheSwiftTwins01.jpg){ width=600 height=620 }\n\n**300K**\n\n### Lucien Swift\n\n| MA | ST | AG | PA | AV |\n| -- | -- | -- | -- | -- |\n| 7  | 3  | 2+ | 3+ | 9+ |\n\n*(Blitzer, Elf)*\n\n* [Block]\n* [Loner] (4+)\n* [Mighty Blow]\n* [Tackle]\n* **Working In Tandem**\n\nThe Swift Twins must be hired as a pair. Additionally, if Lucien performs a Block Action against an opposition player who is also Marked by Valen, Lucien may re-roll a single Block Dice.\n\n### Valen Swift\n\n| MA | ST | AG | PA | AV |\n| -- | -- | -- | -- | -- |\n| 7  | 3  | 2+ | 2+ | 9+ |\n\n*(Elf, Thrower)*\n\n* [Accurate]\n* [Loner] (4+)\n* [Nerves of Steel]\n* [Pass]\n* [Safe Pass]\n* [Sure Hands]\n* **Working In Tandem**\n\nThe Swift Twins must be hired as a pair. Additionally, if Valen performs a Pass Action that targets a square containing Lucien, then Valen suffers no modifiers to the PA test for the range of the Pass Action.\n\n### Plays For\n\n* [Elven Kingdoms League]\n\n### Accept to play for...\n\n* [Dark Elf]\n* [Elven Union]\n* [High Elf]\n* [Wood Elf]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/The_Swift_Twins.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/TheSwiftTwins01.jpg"
+    },
+    {
+      "id": "Thorsson_Stoutmead",
+      "name": "Thorsson Stoutmead",
+      "markdown": "# Thorsson Stoutmead\n\n![](../media/starplayers/ThorssonStoutmeadLead.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **170K** | 6  | 3  | 4+ | 3+ | 8+ |\n\n*(Human, Lineman)*\n\n* [Block]\n* [Drunkard]\n* [Loner] (4+)\n* [Thick Skull]\n* **Beer Barrel Bash**\n\nOnce per Drive, at the start of his activation, Thorsson may select an opposition player within three squares and roll a D6. On a 3+, the selected player is immediately Knocked Down. On a 2, nothing happens. On a 1, Thorsson Falls Over. After using this special rule, Thorsson's activation immediately ends.\n\n### Plays For\n\n* [Old World Classic]\n* [Worlds Edge Superleague]\n\n### Accept to play for...\n\n* [Bretonnian]\n* [Dwarf]\n* [Human]\n* [Imperial Nobility]\n* [Norse]\n* [Ogre]\n* [Old World Alliance]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Thorsson_Stoutmead.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/ThorssonStoutmeadLead.jpg"
+    },
+    {
+      "id": "Varag_Ghoul-Chewer",
+      "name": "Varag Ghoul-Chewer",
+      "markdown": "# Varag Ghoul-Chewer\n\n![](../media/starplayers/VaragGhoulchewerUpdateLead.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | --- |\n| **260K** | 6  | 5  | 3+ | 5+ | 10+ |\n\n*(Blocker, Orc)*\n\n* [Block]\n* [Hatred] (Undead)\n* [Jump Up]\n* [Loner] (4+)\n* [Mighty Blow]\n* [Thick Skull]\n* [Unsteady]\n* **Krump and Smash**\n\nOnce per game, when an opposition player is Knocked Down as a result of a Block Action performed by Varag, he may re-roll the Armour Roll.\n\n### Plays For\n\n* [Badlands Brawl]\n\n### Accept to play for...\n\n* [Black Orc]\n* [Chaos Dwarf]\n* [Goblin]\n* [Ogre]\n* [Orc]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Varag_Ghoul-Chewer.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/VaragGhoulchewerUpdateLead.jpg"
+    },
+    {
+      "id": "Wilhelm_Chaney",
+      "name": "Wilhelm Chaney",
+      "markdown": "# Wilhelm Chaney\n\n![](../media/starplayers/BBWilhelmChaneyLead.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **220K** | 8  | 4  | 3+ | 4+ | 9+ |\n\n*(Blitzer, Undead, Werewolf)*\n\n* [Catch]\n* [Claws]\n* [Frenzy]\n* [Loner] (4+)\n* [Regeneration]\n* [Wrestle]\n* **Savage Mauling**\n\nOnce per game, when Wilhelm makes an Injury Roll against an opposition player, he may choose to re-roll the result.\n\n### Plays For\n\n* [Sylvanian Spotlight]\n\n### Accept to play for...\n\n* [Necromantic Horror]\n* [Tomb Kings]\n* [Shambling Undead]\n* [Vampire]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Wilhelm_Chaney.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BBWilhelmChaneyLead.jpg"
+    },
+    {
+      "id": "Willow_Rosebark",
+      "name": "Willow Rosebark",
+      "markdown": "# Willow Rosebark\n\n![](../media/starplayers/BBWillowRosebark01.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **160K** | 6  | 4  | 3+ | 5+ | 9+ |\n\n*(Blitzer, Dryad)*\n\n* [Dauntless]\n* [Loner] (4+)\n* [Sidestep]\n* [Thick Skull]\n* **Woodland Fury**\n\nOnce per game, when Willow performs a Block Action that would result in her being Knocked Down, she can choose to re-roll a single Block Dice.\n\n### Plays For\n\n* [Woodland League]\n\n### Accept to play for...\n\n* [Gnome]\n* [Halfling]\n* [Wood Elf]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Willow_Rosebark.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BBWillowRosebark01.jpg"
+    },
+    {
+      "id": "Withergrasp_Doubledrool",
+      "name": "Withergrasp Doubledrool",
+      "markdown": "# Withergrasp Doubledrool\n\n![](../media/starplayers/WithergraspDoubledrool1.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **170K** | 6  | 3  | 3+ | 4+ | 9+ |\n\n*(Beastman, Blocker)*\n\n* [Foul Appearance]\n* [Loner] (4+)\n* [Prehensile Tail]\n* [Tackle]\n* [Tentacles]\n* [Two Heads]\n* [Wrestle]\n* **Watch Out!**\n\nThe first time each Drive that Withergrasp is the target of a Block Action performed by an opposition player, he counts as having the Dodge Skill.\n\n### Plays For\n\n* [Favoured of Nurgle][Favoured of...]\n\n### Accept to play for...\n\n* [Chaos Chosen]\n* [Chaos Renegades]\n* [Nurgle]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Withergrasp_Doubledrool.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/WithergraspDoubledrool1.jpg"
+    },
+    {
+      "id": "Zolcath_the_Zoat",
+      "name": "Zolcath the Zoat",
+      "markdown": "# Zolcath the Zoat\n\n![](../media/starplayers/ZolcathZoatLead.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **220K** | 5  | 5  | 4+ | 5+ | 10+ |\n\n*(Big Guy, Zoat)*\n\n* [Disturbing Presence]\n* [Juggernaut]\n* [Loner] (4+)\n* [Mighty Blow]\n* [Prehensile Tail]\n* [Regeneration]\n* [Sure Feet]\n* **\"Excuse me, are you a Zoat?\"**\n\nOnce per game, when Zolcath is activated he may select an opposition player within 3 squares. The selected player immediately becomes Distracted.\n\n### Plays For\n\n* [Elven Kingdoms League]\n* [Lustrian Superleague]\n\n### Accept to play for...\n\n* [Amazon]\n* [Dark Elf]\n* [Elven Union]\n* [High Elf]\n* [Lizardmen]\n* [Wood Elf]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Zolcath_the_Zoat.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/ZolcathZoatLead.jpg"
+    },
+    {
+      "id": "Zzharg_Madeye",
+      "name": "Zzharg Madeye",
+      "markdown": "# Zzharg Madeye\n\n![](../media/starplayers/BBZzhargMadeye01.jpg){ width=600 height=620 }\n\n| Cost | MA | ST | AG | PA | AV |\n| ---- | -- | -- | -- | -- | -- |\n| **130K** | 4  | 4  | 4+ | 3+ | 10+ |\n\n*(Dwarf, Special)*\n\n* [Cannoneer]\n* [Hail Mary Pass]\n* [Loner] (4+)\n* [Nerves of Steel]\n* [Secret Weapon]\n* [Thick Skull]\n* **\"Blastin' Solves Everything\"**\n\nOnce per half, at the start of his activation, Zzharg may select a Standing opposition player within 3 squares and roll a D6. On a 3+, the selected player is hit. On a 2, the opposing coach selects a player (from either team, but not Zzharg) within 3 squares of the originally selected player to be hit instead. On a 1, Zzharg is hit instead. Make an Armour Roll for whichever player is hit. Zzharg's activation then immediately ends.\n\n### Plays For\n\n* [Favoured of Hashut][Favoured of...]\n\n### Accept to play for...\n\n* [Chaos Chosen]\n* [Chaos Dwarf]\n",
+      "sourceUrl": "https://github.com/BBBase-EHeresy-PPPub/BBBase/blob/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/starplayers/Zzharg_Madeye.md",
+      "imageUrl": "https://raw.githubusercontent.com/BBBase-EHeresy-PPPub/BBBase/abd69e2b68635665f7e2c94bdc69a0819bcfd962/docs/bb2025/media/starplayers/BBZzhargMadeye01.jpg"
+    }
+  ]
+}
