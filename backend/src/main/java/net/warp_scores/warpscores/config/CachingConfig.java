@@ -22,6 +22,7 @@ import static net.warp_scores.warpscores.CacheNames.DOMAIN_NAF_COACH;
 import static net.warp_scores.warpscores.CacheNames.REST_NAF_COACH;
 import static net.warp_scores.warpscores.CacheNames.SEASON_STATISTICS;
 import static net.warp_scores.warpscores.CacheNames.MARATHON_STATISTICS;
+import static net.warp_scores.warpscores.CacheNames.MARATHON_DATASET;
 import static net.warp_scores.warpscores.CacheNames.COMPETITION_RANKINGS;
 import static net.warp_scores.warpscores.CacheNames.LEAGUE_RANKINGS;
 
@@ -40,6 +41,7 @@ public class CachingConfig {
             @Qualifier(DOMAIN_NAF_COACH) final Cache<Object, Object> domainNafCoachCache,
             @Qualifier(SEASON_STATISTICS) final Cache<Object, Object> seasonStatisticsCache,
             @Qualifier(MARATHON_STATISTICS) final Cache<Object, Object> marathonStatisticsCache,
+            @Qualifier(MARATHON_DATASET) final Cache<Object, Object> marathonDatasetCache,
             @Qualifier(COMPETITION_RANKINGS) final Cache<Object, Object> competitionRankingsCache,
             @Qualifier(LEAGUE_RANKINGS) final Cache<Object, Object> leagueRankingsCache
     ) {
@@ -54,6 +56,7 @@ public class CachingConfig {
                 new CaffeineCache(DOMAIN_NAF_COACH, domainNafCoachCache),
                 new CaffeineCache(SEASON_STATISTICS, seasonStatisticsCache),
                 new CaffeineCache(MARATHON_STATISTICS, marathonStatisticsCache),
+                new CaffeineCache(MARATHON_DATASET, marathonDatasetCache),
                 new CaffeineCache(COMPETITION_RANKINGS, competitionRankingsCache),
                 new CaffeineCache(LEAGUE_RANKINGS, leagueRankingsCache)));
         return cacheManager;
@@ -139,6 +142,12 @@ public class CachingConfig {
     @Qualifier(MARATHON_STATISTICS)
     public Cache<Object, Object> marathonStatisticsCache() {
         return Caffeine.newBuilder().maximumSize(500).expireAfterAccess(1, TimeUnit.HOURS).recordStats().build();
+    }
+
+    @Bean
+    @Qualifier(MARATHON_DATASET)
+    public Cache<Object, Object> marathonDatasetCache() {
+        return Caffeine.newBuilder().maximumSize(50).expireAfterAccess(1, TimeUnit.HOURS).recordStats().build();
     }
 
     @Bean

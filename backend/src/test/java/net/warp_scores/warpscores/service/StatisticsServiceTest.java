@@ -8,10 +8,29 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 class StatisticsServiceTest {
+    @Test void marathonVariantsAndSeasonViewReuseOneLeagueDataset() {
+        var seasons = mock(SeasonRepository.class);
+        var stages = mock(StageRepository.class);
+        var matches = mock(StageMatchService.class);
+        var season = new Season(); season.setId("s1"); season.setLeagueSystemId("nst");
+        when(seasons.findByLeagueSystemIdOrderBySequenceAsc("nst")).thenReturn(List.of(season));
+        when(seasons.findById("s1")).thenReturn(java.util.Optional.of(season));
+        when(stages.findBySeasonIdInOrderBySequenceAsc(List.of("s1"))).thenReturn(List.of());
+        var service = new StatisticsService(seasons, stages, matches, Caffeine.newBuilder().build());
+
+        service.marathon("nst", "ALL", false, 0, 25, "points");
+        service.marathon("nst", "BB3", true, 1, 25, "wins");
+        service.season("nst", "s1");
+
+        verify(stages, times(1)).findBySeasonIdInOrderBySequenceAsc(List.of("s1"));
+    }
+
     @Test void batchedStagesStillFollowSeasonOrderAndTolerateUnavailableHistoricalResults() {
         var seasons = mock(SeasonRepository.class);
         var stages = mock(StageRepository.class);
@@ -25,7 +44,7 @@ class StatisticsServiceTest {
         when(matches.getMatchesForStage("stage1")).thenThrow(new IllegalArgumentException("Historical source"));
         when(matches.getMatchesForStage("stage2")).thenReturn(List.of());
 
-        var result = new StatisticsService(seasons, stages, matches).marathon("nst", "ALL", false, 0, 25, "points");
+        var result = new StatisticsService(seasons, stages, matches, Caffeine.newBuilder().build()).marathon("nst", "ALL", false, 0, 25, "points");
 
         assertThat(result.matches()).isZero();
         var order = inOrder(matches);

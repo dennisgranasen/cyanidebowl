@@ -29,6 +29,7 @@ public class StatisticsCacheCoordinator {
     private final SeasonRepository seasons;
     private final CacheManager cacheManager;
     private final StatisticsPrewarmer prewarmer;
+    private final StatisticsService statistics;
     private final Set<String> dirtySeasons = ConcurrentHashMap.newKeySet();
     private final Set<String> dirtySystems = ConcurrentHashMap.newKeySet();
     private final Set<net.warp_scores.warpscores.identity.Identity> dirtyCompetitions = ConcurrentHashMap.newKeySet();
@@ -114,6 +115,9 @@ public class StatisticsCacheCoordinator {
             for (String systemId : systems) {
                 evictMatching(marathonCache, key -> key.startsWith(systemId + ":"));
             }
+        }
+        for (String systemId : systems) {
+            statistics.evictMarathonDataset(systemId);
         }
     }
 

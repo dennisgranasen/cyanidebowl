@@ -25,6 +25,7 @@ class StatisticsCacheCoordinatorTest {
         var sources = mock(StageSourceRepository.class);
         var seasons = mock(SeasonRepository.class);
         var prewarmer = mock(StatisticsPrewarmer.class);
+        var statistics = mock(StatisticsService.class);
         var seasonCache = new CaffeineCache(SEASON_STATISTICS, Caffeine.newBuilder().build());
         var marathonCache = new CaffeineCache(MARATHON_STATISTICS, Caffeine.newBuilder().build());
         var competitionRankings = new CaffeineCache(COMPETITION_RANKINGS, Caffeine.newBuilder().build());
@@ -50,7 +51,7 @@ class StatisticsCacheCoordinatorTest {
         var match = new Match(new SimpleIdentity("match", 3));
         match.setCompetitionId(competition);
         match.setLeagueId(league);
-        var coordinator = new StatisticsCacheCoordinator(sources, seasons, cacheManager, prewarmer);
+        var coordinator = new StatisticsCacheCoordinator(sources, seasons, cacheManager, prewarmer, statistics);
         coordinator.matchSaved(match);
 
         org.junit.jupiter.api.Assertions.assertNull(seasonCache.get("system-a:season-a"));
@@ -59,6 +60,7 @@ class StatisticsCacheCoordinatorTest {
         org.junit.jupiter.api.Assertions.assertNotNull(marathonCache.get("system-b:ALL:false:0:25:points"));
         org.junit.jupiter.api.Assertions.assertNull(competitionRankings.get(competition));
         org.junit.jupiter.api.Assertions.assertNull(leagueRankings.get(league));
+        verify(statistics).evictMarathonDataset("system-a");
         coordinator.prewarmConfiguredStatistics();
         verify(prewarmer).prewarm(Set.of(), Set.of(), competition, null);
         verify(prewarmer).prewarm(Set.of(), Set.of(), null, league);

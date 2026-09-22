@@ -9,6 +9,8 @@ import net.warp_scores.warpscores.model.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.beans.factory.annotation.Qualifier;
+import com.github.benmanes.caffeine.cache.Cache;
 
 import java.text.Normalizer;
 import java.util.*;
@@ -21,12 +23,14 @@ public class StatisticsService {
     private final SeasonRepository seasons;
     private final StageRepository stages;
     private final StageMatchService stageMatches;
+    @Qualifier(net.warp_scores.warpscores.CacheNames.MARATHON_DATASET)
+    private final Cache<Object, Object> marathonDatasets;
 
     @Transactional(readOnly = true)
     @Cacheable(value = "seasonStatistics", key = "#leagueSystemId + ':' + #seasonId")
     public StatisticsResponse.Dashboard season(String leagueSystemId, String seasonId) {
         requireSeason(leagueSystemId, seasonId);
-        Dataset data = dataset(List.of(seasonId));
+        Dataset data = marathonDataset(leagueSystemId).forSeason(seasonId);
         return new StatisticsResponse.Dashboard(leagueSystemId, seasonId, data.all.size(), data.playerMatchCount,
                 data.editions(), playerCategories(data, false, TOP, null), teamCategories(data, TOP, false, null));
     }
@@ -35,8 +39,7 @@ public class StatisticsService {
     @Cacheable(value = "marathonStatistics", key = "#leagueSystemId + ':' + #edition + ':' + #merge + ':' + #page + ':' + #size + ':' + #sort")
     public StatisticsResponse.Marathon marathon(String leagueSystemId, String edition, boolean merge,
             int page, int size, String sort) {
-        List<String> seasonIds = seasons.findByLeagueSystemIdOrderBySequenceAsc(leagueSystemId).stream().map(Season::getId).toList();
-        Dataset all = dataset(seasonIds);
+        Dataset all = marathonDataset(leagueSystemId);
         Dataset filtered = edition == null || edition.equalsIgnoreCase("ALL") ? all : all.filterEdition(edition);
         boolean crossEdition = filtered.editions().size() > 1;
         List<TeamAggregate> teamRows = teamAggregates(filtered, merge, null);
@@ -59,7 +62,7 @@ public class StatisticsService {
         List<CoachClaim> ownedClaims = claims == null ? List.of() : List.copyOf(claims);
         Set<String> ids = ownedClaims.stream().map(CoachClaim::getCoachId)
                 .filter(Objects::nonNull).collect(java.util.stream.Collectors.toSet());
-        Dataset data = dataset(seasons.findByLeagueSystemIdOrderBySequenceAsc(leagueSystemId).stream().map(Season::getId).toList());
+        Dataset data = marathonDataset(leagueSystemId);
         Dataset own = data.filterCoaches(ids);
         return new StatisticsResponse.Personal(leagueSystemId, ownedClaims.stream()
                 .map(claim -> new StatisticsResponse.CoachRef(claim.getGame().name(), claim.getCoachId(), claim.getCoachName())).toList(), own.all.size(),
@@ -89,6 +92,16 @@ public class StatisticsService {
             } catch (IllegalArgumentException | IllegalStateException ignored) { }
         }
         return new Dataset(List.copyOf(unique.values()));
+    }
+
+    public void evictMarathonDataset(String leagueSystemId) {
+        marathonDatasets.invalidate(leagueSystemId);
+    }
+
+    private Dataset marathonDataset(String leagueSystemId) {
+        return (Dataset) marathonDatasets.get(leagueSystemId, ignored -> dataset(
+                seasons.findByLeagueSystemIdOrderBySequenceAsc(leagueSystemId).stream()
+                        .map(Season::getId).toList()));
     }
 
     /** StageMatchView already carries the canonical stored teams, coaches and player detail. */
@@ -187,7 +200,7 @@ public class StatisticsService {
 
     private record Metric<T>(String key,String label,ToIntFunction<T> value){}
     private record Selected(StageMatchView view,Match match,String seasonId){ Selected merge(StageMatchView other){ var c=new StageMatchView.CountingRules(view.countsFor().standings()||other.countsFor().standings(),view.countsFor().teamStats()||other.countsFor().teamStats(),view.countsFor().playerStats()||other.countsFor().playerStats(),view.countsFor().bracket()||other.countsFor().bracket()); return new Selected(new StageMatchView(view.stageId(),view.stageSourceId(),view.game(),view.platform(),view.sourceMatchId(),view.sourceMatchKey(),view.sourceCompetitionId(),view.startedAt(),view.finishedAt(),view.status(),view.round(),view.teams(),view.coaches(),view.sourceScore(),view.officialScore(),view.adminResult(),view.conceded(),view.overtime(),view.quality(),view.capabilities(),c,view.interpretation()),match,seasonId);}}
-    private static class Dataset { final List<Selected> all; final int playerMatchCount; Dataset(List<Selected>a){all=a;playerMatchCount=(int)a.stream().filter(s->s.view.countsFor().playerStats()&&s.match.getTeams()!=null&&Arrays.stream(s.match.getTeams()).filter(Objects::nonNull).anyMatch(t->t.getPlayers()!=null&&t.getPlayers().length>0)).count();} List<String> editions(){return all.stream().map(s->s.view.game()==null?"UNKNOWN":s.view.game().name()).distinct().sorted().toList();} Dataset filterEdition(String e){return new Dataset(all.stream().filter(s->s.view.game()!=null&&s.view.game().name().equalsIgnoreCase(e)).toList());} Dataset filterCoaches(Set<String> ids){return new Dataset(all.stream().filter(s->s.match.getTeams()!=null&&java.util.stream.IntStream.range(0,s.match.getTeams().length).anyMatch(i->{Team t=s.match.getTeams()[i];String id=t!=null&&t.getCoachId()!=null?t.getCoachId().getValue():s.match.getCoaches()!=null&&i<s.match.getCoaches().length&&s.match.getCoaches()[i]!=null?s.match.getCoaches()[i].getId():null;return ids.contains(id);})).toList());}}
+    private static class Dataset { final List<Selected> all; final int playerMatchCount; Dataset(List<Selected>a){all=a;playerMatchCount=(int)a.stream().filter(s->s.view.countsFor().playerStats()&&s.match.getTeams()!=null&&Arrays.stream(s.match.getTeams()).filter(Objects::nonNull).anyMatch(t->t.getPlayers()!=null&&t.getPlayers().length>0)).count();} List<String> editions(){return all.stream().map(s->s.view.game()==null?"UNKNOWN":s.view.game().name()).distinct().sorted().toList();} Dataset forSeason(String seasonId){return new Dataset(all.stream().filter(s->seasonId.equals(s.seasonId)).toList());} Dataset filterEdition(String e){return new Dataset(all.stream().filter(s->s.view.game()!=null&&s.view.game().name().equalsIgnoreCase(e)).toList());} Dataset filterCoaches(Set<String> ids){return new Dataset(all.stream().filter(s->s.match.getTeams()!=null&&java.util.stream.IntStream.range(0,s.match.getTeams().length).anyMatch(i->{Team t=s.match.getTeams()[i];String id=t!=null&&t.getCoachId()!=null?t.getCoachId().getValue():s.match.getCoaches()!=null&&i<s.match.getCoaches().length&&s.match.getCoaches()[i]!=null?s.match.getCoaches()[i].getId():null;return ids.contains(id);})).toList());}}
     private static class PlayerAggregate { final String id;String name,teamId,teamName,coachId,coachName,race,position;Integer raceId,opus,playerValue;Set<String>skills=new LinkedHashSet<>();Date latest;int games,spp,touchdowns,casualties,kills,interceptions,mvp,passes,catches,running,passing,blocks,knockouts,injuries,pushouts,fouls,armourBreaks;PlayerAggregate(String id){this.id=id;}void add(Player p,Team t,String cid,String cn,String edition,Date d){games++;Player.Stats s=p.getStats();spp+=s==null?val(p.getXpGain()):val(s.getSpp_gained()!=null?s.getSpp_gained():p.getXpGain());mvp+=Boolean.TRUE.equals(p.getMvp())?1:0;if(s!=null){touchdowns+=val(s.getTouchdowns_scored()!=null?s.getTouchdowns_scored():s.getInflictedtouchdowns());casualties+=val(s.getCasualties_inflicted()!=null?s.getCasualties_inflicted():s.getInflictedcasualties());kills+=val(s.getKills_inflicted()!=null?s.getKills_inflicted():s.getInflicteddead());interceptions+=val(s.getInflictedinterceptions());passes+=val(s.getInflictedpasses());catches+=val(s.getInflictedcatches());running+=val(s.getYards_running()!=null?s.getYards_running():s.getInflictedmetersrunning());passing+=val(s.getInflictedmeterspassing());blocks+=val(s.getBlocks_succeeded()!=null?s.getBlocks_succeeded():s.getInflictedtackles());knockouts+=val(s.getKo_inflicted()!=null?s.getKo_inflicted():s.getInflictedko());injuries+=val(s.getInjuries_inflicted()!=null?s.getInjuries_inflicted():s.getInflictedinjuries());pushouts+=val(s.getInflictedpushouts());fouls+=val(s.getFoul_done());armourBreaks+=val(s.getArmour_breaks());}if(latest==null||d==null||!d.before(latest)){latest=d;name=p.getName();teamId=t.getId()==null?null:t.getId().asMongoKey();teamName=t.getName();coachId=cid;coachName=cn;race=t.getRace();raceId=t.getRaceId();opus=t.getId()==null?null:t.getId().getOpus();position=p.getType();playerValue=p.getValue();skills.clear();if(p.getSkillStrings()!=null)skills.addAll(Arrays.asList(p.getSkillStrings()));if(p.getSkills()!=null){if(p.getSkills().getInnateSkills()!=null)skills.addAll(Arrays.asList(p.getSkills().getInnateSkills()));if(p.getSkills().getAcquiredSkills()!=null)skills.addAll(Arrays.asList(p.getSkills().getAcquiredSkills()));}skills.remove(null);}}StatisticsResponse.PlayerEntry entry(int v){return new StatisticsResponse.PlayerEntry(id,name,teamId,teamName,coachId,coachName,race,raceId,opus,position,playerValue,games,spp,List.copyOf(skills),v);}}
     private static class TeamAggregate {final String id;String name,coachId,coachName,race;Integer raceId;Set<String>editions=new TreeSet<>(),seasons=new HashSet<>();int games,wins,draws,losses,points,tdFor,tdAgainst,casFor,casAgainst;TeamAggregate(String id){this.id=id;}void add(Team t,String cid,String cn,String e,String season,int own,int opp,int cf,int ca){name=t.getName();coachId=cid;coachName=cn;race=t.getRace();raceId=t.getRaceId();editions.add(e);seasons.add(season);games++;tdFor+=own;tdAgainst+=opp;casFor+=cf;casAgainst+=ca;if(own>opp){wins++;points+=3;}else if(own==opp){draws++;points++;}else losses++;}StatisticsResponse.TeamEntry entry(int v){return new StatisticsResponse.TeamEntry(id,name,coachId,coachName,race,raceId,List.copyOf(editions),seasons.size(),games,wins,draws,losses,points,tdFor,tdAgainst,casFor,casAgainst,games==0?0:Math.round(1000.0*wins/games)/10.0,v);}}
     private static class VersusAggregate {final String id,name;int games,wins,draws,losses,tf,ta,cf,ca;VersusAggregate(String i,String n){id=i;name=n;}void add(int a,int b,int c,int d){games++;tf+=a;ta+=b;cf+=c;ca+=d;if(a>b)wins++;else if(a==b)draws++;else losses++;}StatisticsResponse.CoachVersus entry(){return new StatisticsResponse.CoachVersus(id,name,games,wins,draws,losses,tf,ta,cf,ca);}}
