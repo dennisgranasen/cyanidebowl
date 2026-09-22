@@ -3,7 +3,9 @@ package net.warp_scores.warpscores.service;
 import com.github.benmanes.caffeine.cache.Cache;
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.domain.persistence.StageSourceRepository;
+import net.warp_scores.warpscores.domain.persistence.SeasonRepository;
 import net.warp_scores.warpscores.model.Match;
+import net.warp_scores.warpscores.model.Season;
 import net.warp_scores.warpscores.model.StageSource;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.caffeine.CaffeineCache;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static net.warp_scores.warpscores.CacheNames.MARATHON_STATISTICS;
 import static net.warp_scores.warpscores.CacheNames.SEASON_STATISTICS;
@@ -23,8 +26,13 @@ import static net.warp_scores.warpscores.CacheNames.LEAGUE_RANKINGS;
 @RequiredArgsConstructor
 public class StatisticsCacheCoordinator {
     private final StageSourceRepository stageSources;
+    private final SeasonRepository seasons;
     private final CacheManager cacheManager;
     private final StatisticsPrewarmer prewarmer;
+    private final Set<String> dirtySeasons = ConcurrentHashMap.newKeySet();
+    private final Set<String> dirtySystems = ConcurrentHashMap.newKeySet();
+    private final Set<net.warp_scores.warpscores.identity.Identity> dirtyCompetitions = ConcurrentHashMap.newKeySet();
+    private final Set<net.warp_scores.warpscores.identity.Identity> dirtyLeagues = ConcurrentHashMap.newKeySet();
 
     public void matchSaved(Match match) {
         if (match == null) return;
@@ -35,8 +43,6 @@ public class StatisticsCacheCoordinator {
         if (match.getLeagueId() != null) {
             sources.addAll(stageSources.findBySourceEntityId(match.getLeagueId()));
         }
-        if (sources.isEmpty()) return;
-
         Set<String> seasons = new LinkedHashSet<>();
         Set<String> systems = new LinkedHashSet<>();
         for (StageSource source : sources) {
@@ -45,21 +51,54 @@ public class StatisticsCacheCoordinator {
         }
         evict(seasons, systems);
         evictRankings(match);
-        prewarmer.prewarm(seasons, systems, match.getCompetitionId(), match.getLeagueId());
+        dirtySeasons.addAll(seasons);
+        dirtySystems.addAll(systems);
+        if (match.getCompetitionId() != null) dirtyCompetitions.add(match.getCompetitionId());
+        if (match.getLeagueId() != null) dirtyLeagues.add(match.getLeagueId());
     }
 
-    /** Covers cold starts and newly configured sources before their first public request. */
-    @Scheduled(initialDelay = 20_000, fixedDelay = 30 * 60_000)
+    /** Batches imports so hundreds of saved matches produce one refresh per affected scope. */
+    @Scheduled(initialDelay = 20_000, fixedDelay = 15_000)
     public void prewarmConfiguredStatistics() {
-        Set<String> seasons = new LinkedHashSet<>();
-        Set<String> systems = new LinkedHashSet<>();
-        for (StageSource source : stageSources.findAll()) {
-            if (source.getSeasonId() != null) seasons.add(source.getSeasonId());
-            if (source.getLeagueSystemId() != null) systems.add(source.getLeagueSystemId());
+        Set<String> seasons = drain(dirtySeasons);
+        Set<String> systems = drain(dirtySystems);
+        Set<net.warp_scores.warpscores.identity.Identity> competitions = drain(dirtyCompetitions);
+        Set<net.warp_scores.warpscores.identity.Identity> leagues = drain(dirtyLeagues);
+        for (net.warp_scores.warpscores.identity.Identity competition : competitions) {
+            prewarmer.prewarm(Set.of(), Set.of(), competition, null);
+        }
+        for (net.warp_scores.warpscores.identity.Identity league : leagues) {
+            prewarmer.prewarm(Set.of(), Set.of(), null, league);
         }
         if (!seasons.isEmpty() || !systems.isEmpty()) {
             prewarmer.prewarm(seasons, systems, null, null);
         }
+    }
+
+    /** Initial warming is intentionally limited to the latest season per system. */
+    @Scheduled(initialDelay = 30_000, fixedDelay = 30 * 60_000)
+    public void prewarmCurrentStatistics() {
+        Set<String> systems = new LinkedHashSet<>();
+        for (StageSource source : stageSources.findAll()) {
+            if (source.getLeagueSystemId() != null) systems.add(source.getLeagueSystemId());
+        }
+        Set<String> currentSeasons = new LinkedHashSet<>();
+        for (String systemId : systems) {
+            seasons.findByLeagueSystemIdOrderBySequenceAsc(systemId).stream()
+                    .max(java.util.Comparator.comparing(
+                            season -> season.getSequence() == null ? Integer.MIN_VALUE : season.getSequence()))
+                    .map(Season::getId)
+                    .ifPresent(currentSeasons::add);
+        }
+        if (!currentSeasons.isEmpty() || !systems.isEmpty()) {
+            prewarmer.prewarm(currentSeasons, systems, null, null);
+        }
+    }
+
+    private static <T> Set<T> drain(Set<T> source) {
+        Set<T> result = new LinkedHashSet<>(source);
+        source.removeAll(result);
+        return result;
     }
 
     private void evict(Set<String> seasons, Set<String> systems) {

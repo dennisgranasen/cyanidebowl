@@ -1,4 +1,4 @@
-import React,{useEffect,useState} from 'react';
+import React,{useEffect,useRef,useState} from 'react';
 import { Button,Checkbox,Heading,HStack,Select,Spinner,Stack,Tab,TabList,TabPanel,TabPanels,Tabs,Text } from '@chakra-ui/react';
 import Navigation from '../components/misc/Navigation';
 import WarpScoresApiService from '../WarpScoresApiService';
@@ -6,11 +6,12 @@ import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 import {CategoryTabs,TeamTable,VersusTable} from '../components/statistics/StatisticsTables';
 import {useIntl} from 'react-intl';
 export default function StatisticsPage(){const intl=useIntl(),auth=useAuth0WithUserPermissions(),[systems,setSystems]=useState([]),[systemId,setSystemId]=useState(''),[overview,setOverview]=useState(null),[seasonId,setSeasonId]=useState(''),[season,setSeason]=useState(null),[marathon,setMarathon]=useState(null),[edition,setEdition]=useState('ALL'),[merge,setMerge]=useState(false),[page,setPage]=useState(0),[myTeamsOnly,setMyTeamsOnly]=useState(false),[myPlayersOnly,setMyPlayersOnly]=useState(false),[personal,setPersonal]=useState(null),[activeTab,setActiveTab]=useState(0),[loading,setLoading]=useState(true),[error,setError]=useState('');
+const seasonCache=useRef(new Map());
 useEffect(()=>{WarpScoresApiService.publicLeagueSystems().then(s=>{setSystems(s);setSystemId((s.find(x=>x.primary)||s[0])?.id||'')}).catch(e=>setError(e.message))},[]);
 useEffect(() => {
   if (!systemId) return undefined;
   let active = true;
-  setLoading(true); setError(''); setOverview(null); setSeason(null); setMarathon(null);
+  setLoading(true); setError(''); setOverview(null); setSeason(null); setMarathon(null); seasonCache.current.clear();
   WarpScoresApiService.leagueSystemOverview(systemId).then(o => {
     if (!active) return;
     setOverview(o);
@@ -30,9 +31,12 @@ useEffect(() => {
 }, [systemId,edition,merge,page,activeTab]);
 useEffect(() => {
   if (!systemId || !seasonId || activeTab !== 0) return undefined;
+  const cacheKey = `${systemId}:${seasonId}`;
+  const cached = seasonCache.current.get(cacheKey);
+  if (cached) { setSeason(cached); return undefined; }
   let active = true;
   setSeason(null);
-  WarpScoresApiService.seasonStatistics(systemId,seasonId).then(result => { if (active) setSeason(result); })
+  WarpScoresApiService.seasonStatistics(systemId,seasonId).then(result => { seasonCache.current.set(cacheKey, result); if (active) setSeason(result); })
     .catch(e => { if (active) setError(e.message); });
   return () => { active = false; };
 }, [systemId,seasonId,activeTab]);

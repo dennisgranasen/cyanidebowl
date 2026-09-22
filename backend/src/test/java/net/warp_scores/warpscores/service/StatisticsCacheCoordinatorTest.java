@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.service;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import net.warp_scores.warpscores.domain.persistence.StageSourceRepository;
+import net.warp_scores.warpscores.domain.persistence.SeasonRepository;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.StageSource;
@@ -22,6 +23,7 @@ class StatisticsCacheCoordinatorTest {
     @Test
     void matchSaveEvictsAffectedSeasonAndLeagueMarathonEntriesThenPrewarms() {
         var sources = mock(StageSourceRepository.class);
+        var seasons = mock(SeasonRepository.class);
         var prewarmer = mock(StatisticsPrewarmer.class);
         var seasonCache = new CaffeineCache(SEASON_STATISTICS, Caffeine.newBuilder().build());
         var marathonCache = new CaffeineCache(MARATHON_STATISTICS, Caffeine.newBuilder().build());
@@ -48,7 +50,8 @@ class StatisticsCacheCoordinatorTest {
         var match = new Match(new SimpleIdentity("match", 3));
         match.setCompetitionId(competition);
         match.setLeagueId(league);
-        new StatisticsCacheCoordinator(sources, cacheManager, prewarmer).matchSaved(match);
+        var coordinator = new StatisticsCacheCoordinator(sources, seasons, cacheManager, prewarmer);
+        coordinator.matchSaved(match);
 
         org.junit.jupiter.api.Assertions.assertNull(seasonCache.get("system-a:season-a"));
         org.junit.jupiter.api.Assertions.assertNotNull(seasonCache.get("system-b:season-b"));
@@ -56,6 +59,9 @@ class StatisticsCacheCoordinatorTest {
         org.junit.jupiter.api.Assertions.assertNotNull(marathonCache.get("system-b:ALL:false:0:25:points"));
         org.junit.jupiter.api.Assertions.assertNull(competitionRankings.get(competition));
         org.junit.jupiter.api.Assertions.assertNull(leagueRankings.get(league));
-        verify(prewarmer).prewarm(Set.of("season-a"), Set.of("system-a"), competition, league);
+        coordinator.prewarmConfiguredStatistics();
+        verify(prewarmer).prewarm(Set.of(), Set.of(), competition, null);
+        verify(prewarmer).prewarm(Set.of(), Set.of(), null, league);
+        verify(prewarmer).prewarm(Set.of("season-a"), Set.of("system-a"), null, null);
     }
 }
