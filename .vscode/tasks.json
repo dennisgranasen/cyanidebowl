@@ -2,6 +2,34 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Build and export Docker images",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "$pom = [xml](Get-Content -Raw 'pom.xml'); $versionNode = $pom.SelectSingleNode('/*[local-name()=\"project\"]/*[local-name()=\"version\"]'); if ($null -eq $versionNode) { throw 'Could not find the project version in pom.xml' }; $version = $versionNode.InnerText; docker compose -f compose.yaml build; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; docker compose -f compose.yaml pull cloudflared; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; docker image save --output \"cyanidebowl-$version.tar\" cyanidebowl-frontend:latest cyanidebowl-backend:latest cyanidebowl-pybb3-service:latest cloudflare/cloudflared:latest; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build and export Docker images (Raspberry Pi)",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "$pom = [xml](Get-Content -Raw 'pom.xml'); $versionNode = $pom.SelectSingleNode('/*[local-name()=\"project\"]/*[local-name()=\"version\"]'); if ($null -eq $versionNode) { throw 'Could not find the project version in pom.xml' }; $version = $versionNode.InnerText; docker compose -f compose.yaml -f compose.rpi.yaml build; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; docker compose -f compose.yaml -f compose.rpi.yaml pull cloudflared; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; docker image save --output \"cyanidebowl-$version-rpi.tar\" cyanidebowl-frontend:arm64 cyanidebowl-backend:arm64 cyanidebowl-pybb3:arm64 cloudflare/cloudflared:latest; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
       "label": "Start pybb3",
       "type": "process",
       "command": "docker",
