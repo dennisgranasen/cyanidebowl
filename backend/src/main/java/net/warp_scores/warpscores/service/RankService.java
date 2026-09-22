@@ -17,6 +17,7 @@ import net.warp_scores.warpscores.model.Rank;
 import net.warp_scores.warpscores.model.Team;
 
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.Cacheable;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -33,6 +34,8 @@ import static java.util.Objects.requireNonNullElse;
 import static java.util.Optional.empty;
 import static java.util.Optional.ofNullable;
 import static net.warp_scores.warpscores.model.MatchStatus.Validated;
+import static net.warp_scores.warpscores.CacheNames.COMPETITION_RANKINGS;
+import static net.warp_scores.warpscores.CacheNames.LEAGUE_RANKINGS;
 
 @Service
 @Slf4j
@@ -102,6 +105,7 @@ public class RankService {
     }
     */
     @DurationLogging
+    @Cacheable(value = LEAGUE_RANKINGS, key = "#leagueId")
     public List<TeamRankingRecord> getRanksForLeague(Identity leagueId, 
             Optional<List<RankComparisons>> rankComparisons,
             Optional<Integer> limit) {
@@ -112,6 +116,7 @@ public class RankService {
     }
 
     @DurationLogging
+    @Cacheable(value = COMPETITION_RANKINGS, key = "#competitionId")
     public List<TeamRankingRecord> getRanksForCompetition(Identity competitionId, 
             Optional<List<RankComparisons>> rankComparisons,
             Optional<Integer> limit) {

@@ -11,4 +11,6 @@ public interface CacheNames {
     String ARENA_INFOS = "ArenaInfos";
     String SEASON_STATISTICS = "seasonStatistics";
     String MARATHON_STATISTICS = "marathonStatistics";
+    String COMPETITION_RANKINGS = "competitionRankings";
+    String LEAGUE_RANKINGS = "leagueRankings";
 }

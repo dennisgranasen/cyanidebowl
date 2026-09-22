@@ -81,6 +81,13 @@ The parser version declared by the backend must match the normalized analysis ve
 returned by the pinned pybb3 integration. The code and contract tests are authoritative
 for the actual version number; do not duplicate it in documentation.
 
+## Statistics
+
+Season and marathon statistics are derived views. They are precomputed after startup and
+periodically thereafter, calculated on demand when a cache entry is missing, and invalidated
+immediately whenever a saved match belongs to a configured stage source. The import path is
+therefore the freshness boundary; do not add TTL-only statistics caches.
+
 ## Identity and editorial model
 
 Humans and AI-backed actors use the same canonical `User` identity model. Provider/model

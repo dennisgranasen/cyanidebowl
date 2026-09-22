@@ -98,4 +98,17 @@ public class StatsScheduler {
             log.debug("Competition {} already up to date.", competitionId);
         }
     }
+
+    /** Rebuilds immediately after a match mutation, including corrections with an unchanged finish date. */
+    public void rebuildCompetitionStats(Identity competitionId) {
+        if (competitionId == null) return;
+        List<Match> matches = matchService.findByCompetitionId(competitionId);
+        if (matches.isEmpty()) return;
+        TeamAndRaceStats teamAndRaceStats = statsService.collectStats(matches);
+        CompetitionStats competitionStats = new CompetitionStats();
+        competitionStats.setCompetitionId(competitionId);
+        competitionStats.setTeamAndRaceStats(teamAndRaceStats);
+        competitionStats.setLastUpdated(new Date());
+        competitionStatsRepository.save(competitionStats);
+    }
 }

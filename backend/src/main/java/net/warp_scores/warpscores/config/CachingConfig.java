@@ -9,7 +9,6 @@ import org.springframework.cache.caffeine.CaffeineCache;
 import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -23,6 +22,8 @@ import static net.warp_scores.warpscores.CacheNames.DOMAIN_NAF_COACH;
 import static net.warp_scores.warpscores.CacheNames.REST_NAF_COACH;
 import static net.warp_scores.warpscores.CacheNames.SEASON_STATISTICS;
 import static net.warp_scores.warpscores.CacheNames.MARATHON_STATISTICS;
+import static net.warp_scores.warpscores.CacheNames.COMPETITION_RANKINGS;
+import static net.warp_scores.warpscores.CacheNames.LEAGUE_RANKINGS;
 
 @Configuration
 @EnableCaching
@@ -38,7 +39,9 @@ public class CachingConfig {
             @Qualifier(REST_NAF_COACH) final Cache<Object, Object> restNafCoachCache,
             @Qualifier(DOMAIN_NAF_COACH) final Cache<Object, Object> domainNafCoachCache,
             @Qualifier(SEASON_STATISTICS) final Cache<Object, Object> seasonStatisticsCache,
-            @Qualifier(MARATHON_STATISTICS) final Cache<Object, Object> marathonStatisticsCache
+            @Qualifier(MARATHON_STATISTICS) final Cache<Object, Object> marathonStatisticsCache,
+            @Qualifier(COMPETITION_RANKINGS) final Cache<Object, Object> competitionRankingsCache,
+            @Qualifier(LEAGUE_RANKINGS) final Cache<Object, Object> leagueRankingsCache
     ) {
         SimpleCacheManager cacheManager = new SimpleCacheManager();
         cacheManager.setCaches(List.of(
@@ -50,7 +53,9 @@ public class CachingConfig {
                 new CaffeineCache(REST_NAF_COACH, restNafCoachCache),
                 new CaffeineCache(DOMAIN_NAF_COACH, domainNafCoachCache),
                 new CaffeineCache(SEASON_STATISTICS, seasonStatisticsCache),
-                new CaffeineCache(MARATHON_STATISTICS, marathonStatisticsCache)));
+                new CaffeineCache(MARATHON_STATISTICS, marathonStatisticsCache),
+                new CaffeineCache(COMPETITION_RANKINGS, competitionRankingsCache),
+                new CaffeineCache(LEAGUE_RANKINGS, leagueRankingsCache)));
         return cacheManager;
     }
 
@@ -127,13 +132,25 @@ public class CachingConfig {
     @Bean
     @Qualifier(SEASON_STATISTICS)
     public Cache<Object, Object> seasonStatisticsCache() {
-        return Caffeine.newBuilder().maximumSize(500).expireAfterWrite(10, TimeUnit.MINUTES).recordStats().build();
+        return Caffeine.newBuilder().maximumSize(500).expireAfterAccess(1, TimeUnit.HOURS).recordStats().build();
     }
 
     @Bean
     @Qualifier(MARATHON_STATISTICS)
     public Cache<Object, Object> marathonStatisticsCache() {
-        return Caffeine.newBuilder().maximumSize(500).expireAfterWrite(10, TimeUnit.MINUTES).recordStats().build();
+        return Caffeine.newBuilder().maximumSize(500).expireAfterAccess(1, TimeUnit.HOURS).recordStats().build();
+    }
+
+    @Bean
+    @Qualifier(COMPETITION_RANKINGS)
+    public Cache<Object, Object> competitionRankingsCache() {
+        return Caffeine.newBuilder().maximumSize(2_000).expireAfterAccess(1, TimeUnit.HOURS).recordStats().build();
+    }
+
+    @Bean
+    @Qualifier(LEAGUE_RANKINGS)
+    public Cache<Object, Object> leagueRankingsCache() {
+        return Caffeine.newBuilder().maximumSize(2_000).expireAfterAccess(1, TimeUnit.HOURS).recordStats().build();
     }
 
 }

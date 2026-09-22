@@ -13,6 +13,7 @@ import net.warp_scores.warpscores.identity.IdentityUtil;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Competition;
 import net.warp_scores.warpscores.model.CompetitionStats;
+import net.warp_scores.warpscores.scheduler.StatsScheduler;
 import net.warp_scores.warpscores.model.CompetitionStatus;
 import net.warp_scores.warpscores.model.League;
 import net.warp_scores.warpscores.model.Team;
@@ -60,6 +61,7 @@ public class CompetitionController {
     private final StatsService statsService;
     private final CompetitionStatsDomainService competitionStatsDomainService;
     private final CompetitionStatsRepository competitionStatsRepository;
+    private final StatsScheduler statsScheduler;
 
     @GetMapping("/competitions/league/{leagueId}")
     public ResponseEntity<List<Competition>> getCompetitionsForLeague(
@@ -143,8 +145,11 @@ public class CompetitionController {
         {
             Identity compId = IdentityUtil.fromId(competitionId);
 
-            Optional<CompetitionStats> competitionStats = 
-                competitionStatsRepository.findById(compId);
+            Optional<CompetitionStats> competitionStats = competitionStatsRepository.findById(compId);
+            if (competitionStats.isEmpty()) {
+                statsScheduler.rebuildCompetitionStats(compId);
+                competitionStats = competitionStatsRepository.findById(compId);
+            }
             return competitionStats.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
         } catch (Exception ex) {
             log.error("Unable to get stats for competition {}", competitionId, ex);
