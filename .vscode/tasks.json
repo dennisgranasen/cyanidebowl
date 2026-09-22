@@ -39,6 +39,49 @@
             "panel": "dedicated",
             "clear": true
         }
+        },
+        {
+          "label": "Run backend tests",
+          "type": "process",
+          "command": "mvn",
+          "args": [
+            "-Pdev",
+            "-pl",
+            "backend",
+            "-am",
+            "test",
+            "-DskipDocker=true"
+          ],
+          "options": {
+            "cwd": "${workspaceFolder}"
+          },
+          "problemMatcher": [
+            "$msCompile"
+          ],
+          "group": "test"
+        },
+        {
+          "label": "Run frontend tests",
+          "type": "process",
+          "command": "npm",
+          "args": [
+            "test"
+          ],
+          "options": {
+            "cwd": "${workspaceFolder}/frontend"
+          },
+          "problemMatcher": [],
+          "group": "test"
+        },
+        {
+          "label": "Run all tests",
+          "dependsOn": [
+            "Run backend tests",
+            "Run frontend tests"
+          ],
+          "dependsOrder": "parallel",
+          "problemMatcher": [],
+          "group": "test"
     }
   ]
 }

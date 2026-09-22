@@ -16,7 +16,7 @@ concurrency:
 jobs:
   backend-tests:
     name: Backend tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     env:
@@ -38,7 +38,7 @@ jobs:
 
   frontend-tests:
     name: Frontend tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
 
@@ -65,7 +65,7 @@ jobs:
 
   build-arm64:
     name: Build ARM64 image artifact
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs:
       - backend-tests
       - frontend-tests

@@ -13,7 +13,7 @@ class EditorialSubjectContextTest {
     @Test void starPlayersHaveCanonicalRulesAndPinnedPortraits() throws Exception {
         var catalog = new StarPlayerCatalog(new ObjectMapper());
         var service = new EditorialSubjectContext(mock(MongoTemplate.class), mock(AiReporterRegistry.class), catalog, new net.warp_scores.warpscores.ai.agents.EditorialPhotographerRegistry(new ObjectMapper()));
-        var morg = catalog.search("Morg").getFirst();
+        var morg = catalog.require("Morg_'n'_Thorg");
         var links = List.of(new Article.Association(Article.LinkType.STAR_PLAYER, morg.id()));
         var result = service.resolve(links);
         assertTrue(result.text().contains(morg.name()));

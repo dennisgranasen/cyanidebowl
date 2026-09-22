@@ -17,7 +17,7 @@ public class CommunityMediaIndexConfiguration implements ApplicationRunner {
     private final MongoTemplate mongo;
     @Override public void run(ApplicationArguments args) {
         // Legacy jobs have no activeKey; service checks still respect their status.
-        mongo.indexOps(AiCommunityMediaGenerationRequest.class).ensureIndex(new Index()
+        mongo.indexOps(AiCommunityMediaGenerationRequest.class).createIndex(new Index()
                 .on("activeKey", Sort.Direction.ASC).unique()
                 .partial(PartialIndexFilter.of(Criteria.where("activeKey").type(2)))
                 .named("community_media_active_key"));
