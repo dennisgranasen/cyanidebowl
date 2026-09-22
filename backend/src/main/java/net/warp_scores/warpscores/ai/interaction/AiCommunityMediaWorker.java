@@ -117,11 +117,12 @@ public class AiCommunityMediaWorker {
                     e.getMessage());
 
             boolean retryable =
-                    !(e instanceof AiCommunityImageProviderException providerFailure)
-                            || providerFailure.isRetryable();
-
+                    e instanceof AiCommunityImageProviderException providerFailure
+                            ? providerFailure.isRetryable()
+                            : !(e instanceof IllegalArgumentException);
+                            
             if (e instanceof AiCommunityImageProviderException providerFailure
-                    && providerFailure.quotaExhausted()) {
+                && providerFailure.quotaExhausted()) {
                 Instant blockedUntil = providerFailure.retryAt() != null
                         && providerFailure.retryAt().isAfter(Instant.now())
                         ? providerFailure.retryAt()

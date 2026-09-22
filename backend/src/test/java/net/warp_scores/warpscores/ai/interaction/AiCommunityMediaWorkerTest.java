@@ -88,6 +88,33 @@ class AiCommunityMediaWorkerTest {
                         && saved.getNextAttemptAt() != null));
     }
 
+    void invalidInputFailureIsTerminalAndIsNotRetried() throws Exception {
+        var requests = mock(AiCommunityMediaGenerationRequestRepository.class);
+        var profiles = mock(AiCommunityMemberProfileRepository.class);
+        var renderer = mock(AiCommunityImageRenderer.class);
+        var assets = mock(AiCommunityMediaAssetStore.class);
+
+        AiCommunityMemberProfile profile = new AiCommunityMemberProfile();
+        profile.setId("fan");
+        when(profiles.findById("fan")).thenReturn(Optional.of(profile));
+
+        AiCommunityMediaGenerationRequest request = request();
+        when(renderer.render("prompt", AiCommunityMediaGenerationRequest.Target.AVATAR))
+                .thenThrow(new IllegalArgumentException("/data"));
+
+        AiCommunityMediaWorker worker =
+                new AiCommunityMediaWorker(requests, profiles, renderer, assets);
+        configure(worker);
+        worker.process(request);
+
+        verify(requests, atLeastOnce()).save(argThat(saved ->
+                saved.getStatus() == AiCommunityMediaGenerationRequest.Status.FAILED
+                        && saved.getAttempts() == 1
+                        && saved.getNextAttemptAt() == null
+                        && "/data".equals(saved.getError())));
+    }
+
+
     @Test
     void successfulReplacementDeletesPreviousLocalAsset() throws Exception {
         var requests = mock(AiCommunityMediaGenerationRequestRepository.class);

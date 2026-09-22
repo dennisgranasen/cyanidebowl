@@ -19,7 +19,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-
+    env:
+      SPRING_MONGODB_URI: ${{ secrets.SPRING_MONGODB_URI }}
+      
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
