@@ -24,7 +24,7 @@ class AiGenerationTraceStoreTest {
             new AiGenerationTraceStore(repository);
 
     @Test
-    void successfulTraceGetsThirtyDayExpiryByDefault() {
+        void successfulTraceGetsThreeDayExpiryByDefault() {
         store.recordSuccess(
                 "reporter-1",
                 "provider-1",
@@ -41,7 +41,7 @@ class AiGenerationTraceStoreTest {
         AiGenerationTrace trace = captor.getValue();
         assertNotNull(trace.getCreatedAt());
         assertNotNull(trace.getExpiresAt());
-        assertEquals(30L, Duration.between(
+        assertEquals(3L, Duration.between(
                 trace.getCreatedAt(), trace.getExpiresAt()).toDays());
     }
 

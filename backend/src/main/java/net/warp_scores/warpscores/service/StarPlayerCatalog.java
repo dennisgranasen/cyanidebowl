@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.StandardEnvironment;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
@@ -52,16 +51,11 @@ public class StarPlayerCatalog {
 
     public Optional<String> referenceImage(String id) {
         Player player = require(id);
-        Path path = assetDir.resolve("references").resolve(safeId(player.id()) + ".png").normalize();
-        if (!path.startsWith(assetDir) || !Files.isRegularFile(path)) return Optional.empty();
-        return Optional.of(path.toUri().toString());
+        return Optional.ofNullable(player.imageUrl());
     }
 
     public Path assetDir() {
         return assetDir;
     }
 
-    private static String safeId(String value) {
-        return value.replaceAll("[^A-Za-z0-9._-]+", "_").replaceAll("^_+|_+$", "");
-    }
 }
