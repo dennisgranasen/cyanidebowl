@@ -45,7 +45,7 @@ public class UserController {
     @GetMapping("/user/preferences")
     public ResponseEntity<UserPreferences> preferences(JwtAuthenticationToken principal) {
         WarpScoresUser user = profiles.getOrCreate(principal.getToken());
-        return ResponseEntity.ok(new UserPreferences(user.getLocale()));
+        return ResponseEntity.ok(preferences(user));
     }
 
     @PutMapping("/user/preferences")
@@ -53,12 +53,31 @@ public class UserController {
             @RequestBody UserPreferences update) {
         try {
             String locale = localization.optionalSupported(update.locale());
-            WarpScoresUser user = profiles.updateLocale(principal.getToken(), locale);
-            return ResponseEntity.ok(new UserPreferences(user.getLocale()));
+            String label = replayPlayerLabel(update.replayPlayerLabel());
+            String visual = replayPlayerVisual(update.replayPlayerVisual());
+            WarpScoresUser user = profiles.updatePreferences(principal.getToken(), locale, label, visual);
+            return ResponseEntity.ok(preferences(user));
         } catch (IllegalArgumentException exception) {
             return ResponseEntity.badRequest().build();
         }
     }
 
-    public record UserPreferences(String locale) {}
+    private static UserPreferences preferences(WarpScoresUser user) {
+        return new UserPreferences(user.getLocale(), replayPlayerLabel(user.getReplayPlayerLabel()),
+                replayPlayerVisual(user.getReplayPlayerVisual()));
+    }
+
+    private static String replayPlayerLabel(String value) {
+        if (value == null || value.isBlank()) return "number";
+        if ("number".equals(value) || "position".equals(value)) return value;
+        throw new IllegalArgumentException("Invalid replay player label");
+    }
+
+    private static String replayPlayerVisual(String value) {
+        if (value == null || value.isBlank()) return "rings";
+        if ("rings".equals(value) || "avatars".equals(value)) return value;
+        throw new IllegalArgumentException("Invalid replay player visual");
+    }
+
+    public record UserPreferences(String locale, String replayPlayerLabel, String replayPlayerVisual) {}
 }

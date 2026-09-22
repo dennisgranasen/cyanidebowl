@@ -52,6 +52,15 @@ public class UserProfileService {
         return repository.save(user);
     }
 
+    public WarpScoresUser updatePreferences(Jwt jwt, String locale, String replayPlayerLabel,
+            String replayPlayerVisual) {
+        WarpScoresUser user = getOrCreate(jwt);
+        user.setLocale(locale);
+        user.setReplayPlayerLabel(replayPlayerLabel);
+        user.setReplayPlayerVisual(replayPlayerVisual);
+        return repository.save(user);
+    }
+
     public WarpScoresUser updateStaffProfile(Jwt jwt, String displayName, String avatarUrl, String portraitUrl, String bio) {
         WarpScoresUser user = getOrCreate(jwt);
         user.setStaffProfileInitialized(true);

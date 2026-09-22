@@ -112,10 +112,10 @@ function ReplayPanel({ replay, loading, error, onDownload }) {
   </VStack>;
 }
 
-function ReplayAnalysisAwarePanel({ replay, match, loading, error, onDownload }) {
+function ReplayAnalysisAwarePanel({ replay, match, matchId, loading, error, onDownload }) {
   if (replay?.analysis?.actionStatistics || replay?.analysis?.sourceFormat ||
       ['CANONICAL_ACTIONS', 'RAW_BB2'].includes(replay?.analysis?.analysisConfidence)) {
-    return <ReplayAnalysisPanel replay={replay} match={match} loading={loading} error={error} onDownload={onDownload}/>;
+    return <ReplayAnalysisPanel replay={replay} match={match} matchId={matchId} loading={loading} error={error} onDownload={onDownload}/>;
   }
   return <ReplayPanel replay={replay} loading={loading} error={error} onDownload={onDownload}/>;
 }
@@ -510,7 +510,7 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                       : <Text color="gray.500">{intl.formatMessage({ id: 'matchModal.missingId.comments' })}</Text>}
                   </TabPanel>
                   <TabPanel>
-                    <ReplayAnalysisAwarePanel replay={replay} match={matchData} loading={replayLoading} error={replayError}
+                    <ReplayAnalysisAwarePanel replay={replay} match={matchData} matchId={replayMatchId} loading={replayLoading} error={replayError}
                       onDownload={() => WarpScoresApiService.downloadOriginalReplay(replayMatchId).catch(() => setReplayError(intl.formatMessage({ id: 'matchModal.replay.downloadError' })))}/>
                   </TabPanel>
                 </TabPanels>

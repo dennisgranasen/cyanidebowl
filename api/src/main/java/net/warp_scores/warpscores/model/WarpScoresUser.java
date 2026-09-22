@@ -44,6 +44,12 @@ public class WarpScoresUser {
     /** Nullable UI locale. null means: follow the site default locale. */
     private String locale;
 
+    /** Preferred annotation in the tactical replay player. */
+    private String replayPlayerLabel = "number";
+
+    /** Preferred token style in the tactical replay player. Avatar falls back to rings when unavailable. */
+    private String replayPlayerVisual = "rings";
+
     public AccountType effectiveAccountType() {
         return accountType == null ? AccountType.HUMAN : accountType;
     }

@@ -416,6 +416,7 @@ def parse_replay(xml: bytes, source_format: str = "BB3") -> dict[str, Any]:
         if board is not None:
             source_board_count += 1
             final_board = _value(board)
+            step["frame"] = {"context": context, "boardState": final_board}
             if previous_signature is None or signature != previous_signature:
                 step["checkpoint"] = {"reason": "TURN_OR_PHASE_CHANGE", "context": context, "boardState": final_board}
             previous_signature = signature

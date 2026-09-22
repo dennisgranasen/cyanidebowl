@@ -6,6 +6,7 @@ import net.warp_scores.warpscores.domain.persistence.ReplayDownloadRepository;
 import net.warp_scores.warpscores.model.ReplayAnalysis;
 import net.warp_scores.warpscores.service.ReplayStatisticsService;
 import net.warp_scores.warpscores.service.ReplayArtifactService;
+import net.warp_scores.warpscores.service.ReplayFrameProjectionService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,7 @@ public class ReplayAnalysisController {
     private final ReplayDownloadRepository downloads;
     private final ReplayStatisticsService statistics;
     private final ReplayArtifactService artifacts;
+    private final ReplayFrameProjectionService frames;
 
     @GetMapping("/matches/{matchId}/replay")
     public Map<String, Object> replay(@PathVariable String matchId) {
@@ -61,6 +63,17 @@ public class ReplayAnalysisController {
     @GetMapping("/matches/{matchId}/replay-analysis")
     public ResponseEntity<ReplayAnalysis> match(@PathVariable String matchId) {
         return analyses.findById(matchId).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/matches/{matchId}/replay/frames")
+    public ResponseEntity<Map<String, Object>> frames(@PathVariable String matchId) {
+        try {
+            return ResponseEntity.ok(frames.frames(matchId));
+        } catch (IllegalArgumentException error) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception error) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     @GetMapping("/replay-statistics")

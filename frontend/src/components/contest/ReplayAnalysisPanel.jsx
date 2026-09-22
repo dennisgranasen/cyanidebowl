@@ -25,6 +25,7 @@ import {
 
 import MatchTimelineBar from './MatchTimelineBar';
 import TimelineIcon from './TimelineIcon';
+import ReplayPitchPlayer from './ReplayPitchPlayer';
 import NuffleDiceGlyph, {
   blockDieGlyph,
   canonicalWeatherName,
@@ -425,7 +426,7 @@ function MatchTimeline({ events, match }) {
 }
 
 
-export default function ReplayAnalysisPanel({ replay, match, loading, error, onDownload }) {
+export default function ReplayAnalysisPanel({ replay, match, matchId, loading, error, onDownload }) {
   if (loading) return <HStack><Spinner size="sm"/><Text>Hämtar replayinformation…</Text></HStack>;
   if (error) return <Text color="red.500">{error}</Text>;
   if (!replay?.available) return <Text color="gray.500">Ingen replay har laddats ned för den här matchen ännu.</Text>;
@@ -466,6 +467,7 @@ export default function ReplayAnalysisPanel({ replay, match, loading, error, onD
   const hasCanonical = stats.length > 0 || (analysis?.canonicalActions?.length || 0) > 0;
 
   return <VStack align="stretch" spacing={5}>
+    {matchId && <ReplayPitchPlayer matchId={matchId} match={match}/>} 
     <HStack justify="space-between" align="start" flexWrap="wrap">
       <Box>
         <HStack flexWrap="wrap">

@@ -430,6 +430,10 @@ export default {
     axios(`/matches/${encodeURIComponent(matchId.key || matchId)}/replay`)
       .then(returnData)
       .catch(handleError),
+  replayFrames: async (matchId) =>
+    axios(`/matches/${encodeURIComponent(matchId.key || matchId)}/replay/frames`)
+      .then(returnData)
+      .catch(handleError),
   downloadOriginalReplay: async (matchId) => {
     const key = matchId.key || matchId;
     const result = await axios(`/matches/${encodeURIComponent(key)}/replay/original`, { responseType: 'blob' });
