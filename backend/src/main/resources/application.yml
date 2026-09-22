@@ -1,14 +1,17 @@
 spring:
-  data:
-    mongodb:
-      uri: ${SPRING_DATA_MONGODB_URI:mongodb://${MONGO_USER:USER}:${MONGO_PASS:PASS}@localhost:32768/${MONGO_DB:cyanidebowl}?authSource=admin}
+  mongodb:
+    uri: ${SPRING_DATA_MONGODB_URI:${SPRING_MONGODB_URI:mongodb://localhost:27017/cyanidebowl}}
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 200MB
 
 logging:
   level:
     org.springframework.boot.autoconfigure.mongo: DEBUG
 
 cyanide:
-  check-api-status-cron: '0 */15 * * * ?'
+  check-api-status-cron: '0 */30 * * * ?'
   job-creation-scheduler-active: true
   job-execution-scheduler-active: true
   fetch-active: true
@@ -30,7 +33,7 @@ cyanide:
   request-limit:
     capacity: 30
     period-in-seconds: 30
-  defaults:  
+  defaults:
     opus: 3
     page-limit: 100
     fetch-match-max-age-limit: 10000
@@ -47,3 +50,225 @@ application:
 scheduler:
   enabled: true
 
+stage-match:
+  archive:
+    enabled: ${STAGE_MATCH_ARCHIVE_ENABLED:false}
+    database: ${STAGE_MATCH_ARCHIVE_DATABASE:}
+    collection: ${STAGE_MATCH_ARCHIVE_COLLECTION:match}
+
+match-details:
+  backfill:
+    enabled: ${MATCH_DETAILS_BACKFILL_ENABLED:true}
+    batch-size: ${MATCH_DETAILS_BACKFILL_BATCH_SIZE:20}
+    minimum-match-age-hours: ${MATCH_DETAILS_BACKFILL_MINIMUM_MATCH_AGE_HOURS:24}
+    initial-delay-ms: ${MATCH_DETAILS_BACKFILL_INITIAL_DELAY_MS:60000}
+    fixed-delay-ms: ${MATCH_DETAILS_BACKFILL_FIXED_DELAY_MS:600000}
+
+replay-sweeper:
+  scheduler-enabled: ${REPLAY_SWEEPER_SCHEDULER_ENABLED:true}
+  cron: '${REPLAY_SWEEPER_CRON:0 0 5 * * *}'
+  zone-id: ${REPLAY_SWEEPER_ZONE_ID:Europe/Stockholm}
+  batch-size: ${REPLAY_SWEEPER_BATCH_SIZE:10}
+  storage-directory: ${REPLAY_SWEEPER_STORAGE_DIRECTORY:./data/replays}
+  poll-delay-ms: ${REPLAY_SWEEPER_POLL_DELAY_MS:60000}
+  availability-window-days: ${REPLAY_SWEEPER_AVAILABILITY_WINDOW_DAYS:30}
+
+replay-analysis:
+  enabled: ${REPLAY_ANALYSIS_ENABLED:true}
+  initial-delay-ms: ${REPLAY_ANALYSIS_INITIAL_DELAY_MS:10000}
+  # One analysis at a time, with a short pause after completion.
+  fixed-delay-ms: ${REPLAY_ANALYSIS_FIXED_DELAY_MS:1000}
+
+league-system:
+  discovery:
+    notifications:
+      enabled: ${LEAGUE_SYSTEM_DISCOVERY_NOTIFICATIONS_ENABLED:false}
+      from: ${LEAGUE_SYSTEM_DISCOVERY_NOTIFICATIONS_FROM:}
+      cron: '${LEAGUE_SYSTEM_DISCOVERY_NOTIFICATIONS_CRON:0 0 8 * * *}'
+
+warpscores:
+  ai:
+    fans:
+      reconcile-poll-ms: ${FAN_RECONCILE_POLL_MS:3600000}
+      reconcile-initial-delay-ms: ${FAN_RECONCILE_INITIAL_DELAY_MS:60000}
+      reconcile-worker-delay-ms: ${FAN_RECONCILE_WORKER_DELAY_MS:3000}
+      reconcile-worker-initial-delay-ms: ${FAN_RECONCILE_WORKER_INITIAL_DELAY_MS:15000}
+      reconcile-job-timeout: ${FAN_RECONCILE_JOB_TIMEOUT:15m}
+      rate-limit-cooldown: ${FAN_RATE_LIMIT_COOLDOWN:2m}
+    providers:
+      gemini:
+        api-key: ${AI_API_KEY_GEMINI:}
+        base-url: https://generativelanguage.googleapis.com/v1beta
+        timeout: 60s
+        image-model: ${GEMINI_IMAGE_MODEL:gemini-3.1-flash-image}
+      openai-compatible:
+        cloudflare:
+          base-url: https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID:}/ai/v1
+          api-key: ${AI_API_KEY_CLOUDFLARE:}
+          timeout: ${CLOUDFLARE_TEXT_TIMEOUT:60s}
+          structured-output: true
+          context-window-tokens: 128000
+          max-output-tokens: 8192
+        groq:
+          base-url: https://api.groq.com/openai/v1
+          api-key: ${AI_API_KEY_GROQ:}
+          timeout: 60s
+          structured-output: true
+        openrouter:
+          base-url: https://openrouter.ai/api/v1
+          api-key: ${AI_API_KEY_OPENROUTER:}
+          timeout: 60s
+          structured-output: true
+        aion:
+          api-key: ${AI_API_KEY_AION:}
+          base-url: https://api.aionlabs.ai/v1
+          timeout: 60s
+          structured-output: true
+        mistral:
+          api-key: ${AI_API_KEY_MISTRAL:}
+          base-url: https://api.mistral.ai/v1
+          timeout: 60s
+          structured-output: true
+      openai:
+        api-key: ${AI_API_KEY_OPENAI:}
+        image-model: ${OPENAI_IMAGE_MODEL:gpt-image-2}
+        timeout: ${OPENAI_IMAGE_TIMEOUT:3m}
+      cloudflare:
+        account-id: ${CLOUDFLARE_ACCOUNT_ID:}
+        api-key: ${AI_API_KEY_CLOUDFLARE:}
+        timeout: ${CLOUDFLARE_IMAGE_TIMEOUT:3m}
+        image-steps: ${CLOUDFLARE_IMAGE_STEPS:4}
+        #local-llm:
+        #  base-url: http://localhost:8000/v1
+        #  api-key: ${AI_API_KEY_LOCAL:}
+        #  structured-output: false
+    # Execution queues are scoped to the actual provider quota resource.
+    # Multiple targets sharing a quota-group compete in one priority queue and
+    # share concurrency/backoff/cooldown.
+    quota-groups:
+      gemini-main:
+        concurrency: 1
+        base-backoff: 10s
+        max-backoff: 10m
+        jitter: 0.20
+      cloudflare-text:
+        concurrency: 2
+        base-backoff: 10s
+        max-backoff: 10m
+        jitter: 0.20
+      groq-main:
+        concurrency: 1
+        base-backoff: 10s
+        max-backoff: 10m
+        jitter: 0.20
+      openrouter-free:
+        concurrency: 1
+        base-backoff: 15s
+        max-backoff: 15m
+        jitter: 0.20
+      cloudflare-image:
+        concurrency: 1
+        base-backoff: 30s
+        max-backoff: 15m
+        jitter: 0.20
+      aion-main:
+        concurrency: 1
+        base-backoff: 10s
+        max-backoff: 10m
+        jitter: 0.20
+
+    # Named executable targets. Provider blocks above contain credentials/transport.
+    targets:
+      editorial:
+        provider: gemini
+        model: gemini-3.6-flash
+        modality: TEXT
+        quota-group: gemini-main
+        queue: { concurrency: 1, max-attempts: 4, base-backoff: 10s, max-backoff: 10m, jitter: 0.20 }
+      short-text:
+        provider: cloudflare
+        model: ${AI_MODEL_SHORT_TEXT:@cf/openai/gpt-oss-20b}
+        modality: TEXT
+        quota-group: cloudflare-text
+        queue: { concurrency: 2, max-attempts: 4, base-backoff: 10s, max-backoff: 10m, jitter: 0.20 }
+      groq-large:
+        provider: groq
+        model: openai/gpt-oss-120b
+        modality: TEXT
+        quota-group: groq-main
+        queue: { concurrency: 1, max-attempts: 3, base-backoff: 10s, max-backoff: 10m, jitter: 0.20 }
+      openrouter-free:
+        provider: openrouter
+        model: openrouter/free
+        modality: TEXT
+        quota-group: openrouter-free
+        queue: { concurrency: 1, max-attempts: 3, base-backoff: 15s, max-backoff: 15m, jitter: 0.20 }
+      profile-image:
+        provider: cloudflare
+        model: ${CLOUDFLARE_IMAGE_MODEL:@cf/black-forest-labs/flux-2-klein-4b}
+        modality: IMAGE
+        quota-group: cloudflare-image
+        queue: { concurrency: 1, max-attempts: 4, base-backoff: 30s, max-backoff: 15m, jitter: 0.20 }
+      # mistral-large:
+      #   provider: mistral
+      #   model: mistral/mistral-large-3-5
+      #   modality: TEXT
+      #   quota-group: mistral-main
+      #   queue: { concurrency: 1, max-attempts: 3, base-backoff: 10s, max-backoff: 10m, jitter: 0.20 }
+      # mistral-medium:
+      #   provider: mistral
+      #   model: mistral/mistral-medium-3-5
+      #   modality: TEXT
+      #   quota-group: mistral-main
+      #   queue: { concurrency: 1, max-attempts: 3, base-backoff: 10s, max-backoff: 10m, jitter: 0.20 }
+      # mistral-small:
+      #   provider: mistral
+      #   model: mistral/mistral-small-2603
+      #   modality: TEXT
+      #   quota-group: mistral-main
+      #   queue: { concurrency: 1, max-attempts: 3, base-backoff: 10s, max-backoff: 10m, jitter: 0.20 }
+      storytelling:
+        provider: aion
+        model: aion-labs/aion-3.0
+        modality: TEXT
+        quota-group: aion-main
+        queue: { concurrency: 1, max-attempts: 3, base-backoff: 10s, max-backoff: 10m, jitter: 0.20 }
+      chat:
+        provider: aion
+        model: aion-labs/aion-3.0-mini
+        modality: TEXT
+        quota-group: aion-main
+        queue: { concurrency: 1, max-attempts: 3, base-backoff: 10s, max-backoff: 10m, jitter: 0.20 }
+
+    tasks:
+      EDITORIAL_ARTICLE: { target: groq-large, priority: 80 }
+      MATCH_REPORT: { target: groq-large, priority: 90 }
+      FAN_PROFILE: { target: editorial, priority: 50 }
+      PLAYER_RATING: { target: openrouter-free, priority: 70 }
+      ARTICLE_COMMENT: { target: openrouter-free, priority: 60 }
+      SOCIAL_REPLY: { target: openrouter-free, priority: 75 }
+      MEMORY_CONSOLIDATION: { target: editorial, priority: 20 }
+      PROFILE_IMAGE: { target: profile-image, priority: 40 }
+      AVATAR_IMAGE: { target: profile-image, priority: 50 }
+
+    # Agent overrides are task-scoped; target and priority are independently optional.
+    agents: {}
+    # agents:
+    #   amenhotep-den-47e:
+    #     - task: EDITORIAL_ARTICLE
+    #       priority: 44
+    #     - task: SOCIAL_REPLY
+    #       target: short-text
+
+    community-media:
+      provider: ${COMMUNITY_MEDIA_PROVIDER:cloudflare}
+      reference-provider: ${COMMUNITY_MEDIA_REFERENCE_PROVIDER:${COMMUNITY_MEDIA_PROVIDER:cloudflare}}
+      quality: ${COMMUNITY_MEDIA_QUALITY:low}
+      storage-dir: ${COMMUNITY_MEDIA_STORAGE_DIR:/data/community-media}
+      poll-ms: ${COMMUNITY_MEDIA_POLL_MS:30000}
+      max-attempts: ${COMMUNITY_MEDIA_MAX_ATTEMPTS:4}
+      retry-base-delay: ${COMMUNITY_MEDIA_RETRY_BASE_DELAY:30s}
+      running-timeout: ${COMMUNITY_MEDIA_RUNNING_TIMEOUT:10m}
+
+  ai-reporting:
+    enabled: false # Set to true to enable AI reporting, must fix implementation first.

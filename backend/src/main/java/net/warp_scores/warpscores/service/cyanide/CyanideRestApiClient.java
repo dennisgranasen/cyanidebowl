@@ -14,8 +14,8 @@ import net.warp_scores.warpscores.cyanide.api.requests.ApiRequest;
 import net.warp_scores.warpscores.cyanide.api.requests.StatusRequest;
 import net.warp_scores.warpscores.domain.persistence.StatusRepository;
 import net.warp_scores.warpscores.model.Status;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
@@ -89,25 +89,39 @@ public class CyanideRestApiClient {
         }
 
         //log.info("Loading from real api (request: {}).", apiRequest);
-        RestTemplate restTemplate = new RestTemplateBuilder()
-                .setConnectTimeout(apiRequest.getConnectTimeout())
-                .setReadTimeout(apiRequest.getReadTimeout())
-                .build();
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        if (apiRequest.getConnectTimeout() != null) {
+            requestFactory.setConnectTimeout(apiRequest.getConnectTimeout());
+        }
+
+        if (apiRequest.getReadTimeout() != null) {
+            requestFactory.setReadTimeout(apiRequest.getReadTimeout());
+        }
+        RestTemplate restTemplate = new RestTemplate(requestFactory);
         URI uri = createUri(apiRequest, cyanideApiProperties.getApiConfig().getKey());
         ResponseEntity<Object> response;
         try {
-            log.info("Requesting URI: [{}].", uri);
+            log.info("Requesting URI: [{}].", sanitizeUri(uri));
             response = restTemplate.getForEntity(uri, Object.class);
-            log.debug("Got response: [{}].", objectMapper.writeValueAsString(response));
+            log.debug(
+                "Got response with status {} and body type {}.",
+                response.getStatusCode(),
+                response.getBody() != null
+                    ? response.getBody().getClass().getSimpleName()
+                    : "null"
+            );
+
             Object body = response.getBody();
             if (!response.getStatusCode().
                     is2xxSuccessful() || (body instanceof Boolean && !(Boolean) body)) {
+                markBb3Unavailable(apiRequest);
                 log.warn("Got no successful response. Response: [{}]. Returning null.", response);
                 return null;
             } else {
                 return body;
             }
-        } catch (RestClientException | JsonProcessingException ex) {
+        } catch (Exception ex) {
+            markBb3Unavailable(apiRequest);
             log.error("Unable to process response as json.", ex);
             return null;
         }
@@ -125,6 +139,25 @@ public class CyanideRestApiClient {
         UriComponents uriComponents = uriComponentsBuilder.build();
 
         return uriComponents.encode().toUri();
+    }
+
+    private URI sanitizeUri(URI uri) {
+        return UriComponentsBuilder.fromUri(uri)
+                .replaceQueryParam("key", "<redacted>")
+                .build()
+                .toUri();
+    }
+
+    private void markBb3Unavailable(ApiRequest<?, ?> apiRequest) {
+        MultiValueMap<String, String> params = apiRequest.toQueryParams();
+        if (!"3".equals(params.getFirst("opus")) && !"3".equals(params.getFirst("bb"))) return;
+        statusRepository.findById(BB3_GAME_NAME).ifPresent(status -> {
+            if (status.isOverall()) {
+                status.setOverall(false);
+                status.setLastCheck(new java.util.Date());
+                statusRepository.save(status);
+            }
+        });
     }
 
     private static void waitOneSecondIgnoringExceptions() {

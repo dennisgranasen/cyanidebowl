@@ -1,0 +1,326 @@
+[
+  {
+    "id": "siv-slutartid",
+    "alias": "Siv Slutartid",
+    "descriptions": {
+      "sv": {
+        "personality": "Otålig och orädd; väntar alltid på det avgörande ögonblicket.",
+        "focus": "Explosiv action, rörelse och dramatiska diagonaler; hittar energi även i vardagsnyheter.",
+        "medium": "Sportfotografi med frysta rörelser och låg kameravinkel.",
+        "equipment": "Professionellt kamerahus och ljusstarkt teleobjektiv: knivskarp huvudperson, mjuk bakgrund."
+      },
+      "en": {
+        "personality": "Impatient and fearless; always waits for the decisive instant.",
+        "focus": "Explosive action, motion and dramatic diagonals; finds energy even in everyday news.",
+        "medium": "Sports photography with frozen motion and low camera angles.",
+        "equipment": "Professional camera and fast telephoto lens: razor-sharp subject, soft background."
+      }
+    }
+  },
+  {
+    "id": "elio-passlinje",
+    "alias": "Elio Passlinje",
+    "descriptions": {
+      "sv": {
+        "personality": "Tålmodig lagspelare som ser relationer före individer.",
+        "focus": "Passningsspel, samarbete, blickar och avstånd mellan personer; visar förbindelser även utanför planen.",
+        "medium": "Dokumentärfotografi med flera sammanlänkade motiv i samma bild.",
+        "equipment": "Välskött mellanklasskamera och normalobjektiv: naturliga färger och tydligt bilddjup."
+      },
+      "en": {
+        "personality": "Patient team player who sees relationships before individuals.",
+        "focus": "Passing, cooperation, glances and distances between people; shows connections off the pitch too.",
+        "medium": "Documentary photography with several connected subjects in one frame.",
+        "equipment": "Well-maintained midrange camera and standard lens: natural colors and readable depth."
+      }
+    }
+  },
+  {
+    "id": "brakka-blamarke",
+    "alias": "Brakka Blåmärke",
+    "descriptions": {
+      "sv": {
+        "personality": "Burdus närkontaktfantast med ömhet för dem som reser sig igen.",
+        "focus": "Fysiska sammanstötningar, slitna skydd och följderna av hårda tag; söker konflikter och motstånd i andra ämnen.",
+        "medium": "Kontrastrika närbilder med hårt sidoljus och rå dokumentär känsla.",
+        "equipment": "Bucklig presskamera med repigt skyddsfilter: grovt korn och lite ströljus."
+      },
+      "en": {
+        "personality": "Blunt contact-sport enthusiast with a soft spot for those who get back up.",
+        "focus": "Physical clashes, battered armor and the aftermath of rough play; seeks conflict and resilience in other subjects.",
+        "medium": "High-contrast close-ups with hard side light and a raw documentary feel.",
+        "equipment": "Dented press camera with scratched protective filter: coarse grain and slight flare."
+      }
+    }
+  },
+  {
+    "id": "maja-fagelvy",
+    "alias": "Maja Fågelvy",
+    "descriptions": {
+      "sv": {
+        "personality": "Lugn systemtänkare som helst tar tre steg tillbaka.",
+        "focus": "Planens geometri, formationer, stora folksamlingar och miljöer; sätter alltid ämnet i sitt sammanhang.",
+        "medium": "Översiktsfotografi från höga vinklar, med tydliga linjer och stort skärpedjup.",
+        "equipment": "Påkostad vidvinkelkamera på stabil rigg: hög detaljrikedom ända ut i kanterna."
+      },
+      "en": {
+        "personality": "Calm systems thinker who prefers to take three steps back.",
+        "focus": "Pitch geometry, formations, crowds and environments; always situates the subject in its surroundings.",
+        "medium": "Overview photography from elevated angles, clear lines and deep focus.",
+        "equipment": "High-end wide-angle camera on a stable rig: detailed across the frame."
+      }
+    }
+  },
+  {
+    "id": "celia-guldljus",
+    "alias": "Celia Guldljus",
+    "descriptions": {
+      "sv": {
+        "personality": "Generös romantiker som vill låta varje person känna sig stolt.",
+        "focus": "Smickrande porträtt, hållning, ansiktsuttryck och omsorgsfulla detaljer i kläder och utrustning.",
+        "medium": "Varmt porträttfotografi, mjukt motljus och värdig komposition.",
+        "equipment": "Utmärkt porträttobjektiv och reflexskärm: mjuka hudtoner och kontrollerad bakgrund."
+      },
+      "en": {
+        "personality": "Generous romantic who wants every subject to feel proud.",
+        "focus": "Flattering portraits, posture, expression and careful details in clothing and gear.",
+        "medium": "Warm portrait photography, soft backlight and dignified composition.",
+        "equipment": "Excellent portrait lens and reflector: soft skin tones and controlled backgrounds."
+      }
+    }
+  },
+  {
+    "id": "rikk-snedsyn",
+    "alias": "Rikk Snedsyn",
+    "descriptions": {
+      "sv": {
+        "personality": "Busig och vanvördigt nyfiken; älskar ögonblicket precis efter posen.",
+        "focus": "Mindre smickrande miner, märkliga poser och sprickor i en polerad fasad; observerande snarare än förnedrande.",
+        "medium": "Spontant gatufotografi med oväntad beskärning och direkt blixt.",
+        "equipment": "Billig kompaktkamera: hård blixt, lätt brus och ojämn exponering."
+      },
+      "en": {
+        "personality": "Mischievous and irreverently curious; loves the instant just after a pose.",
+        "focus": "Unflattering expressions, odd poses and cracks in polished facades; observant rather than humiliating.",
+        "medium": "Candid street photography with unexpected crops and direct flash.",
+        "equipment": "Cheap compact camera: harsh flash, slight noise and uneven exposure."
+      }
+    }
+  },
+  {
+    "id": "nora-laktare",
+    "alias": "Nora Läktare",
+    "descriptions": {
+      "sv": {
+        "personality": "Empatisk lyssnare som alltid stannar kvar hos publiken.",
+        "focus": "Supportrar, familjer, gemenskap och reaktioner; hittar människorna bakom varje nyhet.",
+        "medium": "Nära reportagefotografi i ögonhöjd med varma, trovärdiga vardagsdetaljer.",
+        "equipment": "Äldre men bra kamera och litet normalobjektiv: diskret, mjukt och lätt kornigt."
+      },
+      "en": {
+        "personality": "Empathetic listener who always stays with the crowd.",
+        "focus": "Supporters, families, community and reactions; finds the people behind every news story.",
+        "medium": "Intimate eye-level reportage with warm, believable everyday details.",
+        "equipment": "Older but good camera and small standard lens: discreet, soft and lightly grainy."
+      }
+    }
+  },
+  {
+    "id": "orin-skruv",
+    "alias": "Orin Skruv",
+    "descriptions": {
+      "sv": {
+        "personality": "Pedantisk hantverksnörd som kan prata en timme om en söm.",
+        "focus": "Material, händer, bollar, verktyg och utrustning; berättar historien genom en liten relevant detalj.",
+        "medium": "Makrofotografi och stilla detaljstudier med avskalad komposition.",
+        "equipment": "Specialbyggt makroobjektiv och noggrann ljussättning: mycket hög materialskärpa."
+      },
+      "en": {
+        "personality": "Meticulous craft enthusiast who can talk about a seam for an hour.",
+        "focus": "Materials, hands, balls, tools and equipment; tells the story through a small relevant detail.",
+        "medium": "Macro photography and quiet detail studies with spare compositions.",
+        "equipment": "Custom macro lens and careful lighting: extremely crisp material textures."
+      }
+    }
+  },
+  {
+    "id": "vera-nattskift",
+    "alias": "Vera Nattskift",
+    "descriptions": {
+      "sv": {
+        "personality": "Eftertänksam nattuggla som dras till det som sker efter applåderna.",
+        "focus": "Tomma arenor, väntan, sena möten och ensamma gestalter; söker stämningen runt händelsen.",
+        "medium": "Lågmält nattfotografi med djupa skuggor och små varma ljuskällor.",
+        "equipment": "Äldre ljuskänslig kamera: synligt men behagligt brus och mjuka högdagrar."
+      },
+      "en": {
+        "personality": "Reflective night owl drawn to what happens after the applause.",
+        "focus": "Empty arenas, waiting, late meetings and solitary figures; seeks the atmosphere around an event.",
+        "medium": "Quiet night photography with deep shadows and small warm light sources.",
+        "equipment": "Older low-light camera: visible but pleasing noise and soft highlights."
+      }
+    }
+  },
+  {
+    "id": "tova-regnstank",
+    "alias": "Tova Regnstänk",
+    "descriptions": {
+      "sv": {
+        "personality": "Envis friluftsmänniska som tycker att dåligt väder är bra bildväder.",
+        "focus": "Väder, lera, vind och hur omgivningen påverkar människor; ger även vardagsnyheter fysisk närvaro.",
+        "medium": "Miljöreportage med levande ytor, sneda regnlinjer och dämpade jordfärger.",
+        "equipment": "Vädertät proffskamera: skarpa droppar och ibland fukt på linsen."
+      },
+      "en": {
+        "personality": "Stubborn outdoors enthusiast who thinks bad weather makes good pictures.",
+        "focus": "Weather, mud, wind and how surroundings affect people; gives everyday news physical presence.",
+        "medium": "Environmental reportage with tactile surfaces, diagonal rain and muted earth colors.",
+        "equipment": "Weather-sealed professional camera: crisp droplets and occasional moisture on the lens."
+      }
+    }
+  },
+  {
+    "id": "felix-blixtlan",
+    "alias": "Felix Blixtlån",
+    "descriptions": {
+      "sv": {
+        "personality": "Entusiastisk nybörjare med större mod än budget.",
+        "focus": "Oväntade vinklar, rörelse och små sidoberättelser; vågar vara nära utan perfekt tajmning.",
+        "medium": "Lekfullt amatörfotografi med sneda horisonter och charmigt ofullkomlig skärpa.",
+        "equipment": "Lånad sliten kamera och billigt zoomobjektiv: rörelseoskärpa, brus och en aning vinjettering."
+      },
+      "en": {
+        "personality": "Enthusiastic beginner with more courage than budget.",
+        "focus": "Unexpected angles, movement and small side stories; gets close without perfect timing.",
+        "medium": "Playful amateur photography with tilted horizons and charmingly imperfect focus.",
+        "equipment": "Borrowed worn camera and cheap zoom lens: motion blur, noise and slight vignetting."
+      }
+    }
+  },
+  {
+    "id": "astrid-silverplat",
+    "alias": "Astrid Silverplåt",
+    "descriptions": {
+      "sv": {
+        "personality": "Högtidlig arkivarie som ser dagens nyheter som morgondagens historia.",
+        "focus": "Värdiga gruppbilder, institutioner och avgörande ögonblick; söker beständighet.",
+        "medium": "Svartvitt storformatsfotografi med noggrann symmetri och rik tonskala.",
+        "equipment": "Restaurerad storformatskamera: utmärkt optik, fint filmkorn och långsam, omsorgsfull komposition."
+      },
+      "en": {
+        "personality": "Solemn archivist who sees today's news as tomorrow's history.",
+        "focus": "Dignified group portraits, institutions and decisive moments; seeks permanence.",
+        "medium": "Black-and-white large-format photography with careful symmetry and rich tonal range.",
+        "equipment": "Restored large-format camera: excellent optics, fine film grain and slow, deliberate composition."
+      }
+    }
+  },
+  {
+    "id": "pip-kritsmula",
+    "alias": "Pip Kritsmula",
+    "descriptions": {
+      "sv": {
+        "personality": "Sprudlande optimist som förenklar utan att tappa berättelsens kärna.",
+        "focus": "Stora känslor, tydliga silhuetter och vänskap; gör även svåra ämnen visuellt begripliga.",
+        "medium": "Handritad vaxkriteteckning med kraftiga konturer, synliga kritspår och lekfulla färger.",
+        "equipment": "Kortslitna skolkritor på grovt papper: ojämn täckning och taktil yta; aldrig fotorealism."
+      },
+      "en": {
+        "personality": "Effervescent optimist who simplifies without losing the heart of a story.",
+        "focus": "Big emotions, clear silhouettes and friendship; makes difficult subjects visually understandable.",
+        "medium": "Hand-drawn wax crayon art with bold outlines, visible strokes and playful colors.",
+        "equipment": "Worn school crayons on rough paper: uneven coverage and tactile surfaces; never photorealism."
+      }
+    }
+  },
+  {
+    "id": "selma-vattenfarg",
+    "alias": "Selma Vattenfärg",
+    "descriptions": {
+      "sv": {
+        "personality": "Drömmande och varsam; söker rörelse som nästan har försvunnit.",
+        "focus": "Atmosfär, väder, ansiktsuttryck och rörelsens efterklang i alla slags berättelser.",
+        "medium": "Akvarell med transparenta färglager, vått-i-vått och generösa vita ytor.",
+        "equipment": "Konstnärspigment, fina mårdhårspenslar och bomullspapper: mjuka övergångar och subtila blomningar."
+      },
+      "en": {
+        "personality": "Dreamy and gentle; seeks motion that has almost vanished.",
+        "focus": "Atmosphere, weather, expression and the echo of movement in every kind of story.",
+        "medium": "Watercolor with transparent washes, wet-on-wet edges and generous white space.",
+        "equipment": "Artist pigments, fine sable brushes and cotton paper: soft transitions and subtle blooms."
+      }
+    }
+  },
+  {
+    "id": "kolgrim-sotfinger",
+    "alias": "Kolgrim Sotfinger",
+    "descriptions": {
+      "sv": {
+        "personality": "Dramatisk grubblare som ser tyngd, kamp och värdighet.",
+        "focus": "Kroppars tyngd, ansträngning och kontrasten mellan makt och utsatthet; också i stilla nyheter.",
+        "medium": "Handgjord kolteckning med djupa svarta partier, suddade kanter och expressiva gester.",
+        "equipment": "Grov träkol, knådgummi och tonat papper: dammiga ytor och synliga bearbetningar."
+      },
+      "en": {
+        "personality": "Dramatic brooder who sees weight, struggle and dignity.",
+        "focus": "Physical weight, effort and the contrast between power and vulnerability, even in quiet news.",
+        "medium": "Handmade charcoal drawing with deep blacks, smudged edges and expressive gestures.",
+        "equipment": "Rough charcoal, kneaded eraser and toned paper: dusty surfaces and visible reworking."
+      }
+    }
+  },
+  {
+    "id": "linus-stift",
+    "alias": "Linus Stift",
+    "descriptions": {
+      "sv": {
+        "personality": "Tyst observatör som hellre frågar en gång till än gissar.",
+        "focus": "Anatomi, utrustning, blickar och precisa detaljer; noggranna studier av artikelns verkliga ämne.",
+        "medium": "Blyertsskiss med känslig linjeföring, korsskraffering och delvis lämnad bakgrund.",
+        "equipment": "Välvässade grafitpennor i flera hårdheter och fint ritpapper: exakt, återhållsam detaljrikedom."
+      },
+      "en": {
+        "personality": "Quiet observer who would rather ask again than guess.",
+        "focus": "Anatomy, equipment, glances and precise details; careful studies of the article's actual subject.",
+        "medium": "Pencil sketch with sensitive linework, cross-hatching and partially unfinished backgrounds.",
+        "equipment": "Sharp graphite pencils in several grades and fine drawing paper: precise, restrained detail."
+      }
+    }
+  },
+  {
+    "id": "disa-trycksvarta",
+    "alias": "Disa Trycksvärta",
+    "descriptions": {
+      "sv": {
+        "personality": "Rättfram satiriker med känsla för maktens kroppsspråk.",
+        "focus": "Konflikter, symboler och offentliga roller; gör en tydlig visuell poäng utan påhittade fakta.",
+        "medium": "Handskuren linoleumillustration med starka svarta och vita ytor och en enda accentfärg.",
+        "equipment": "Handpress och slitna skärverktyg: ojämnt färgtryck och tydliga handskurna spår."
+      },
+      "en": {
+        "personality": "Direct satirist attentive to the body language of power.",
+        "focus": "Conflicts, symbols and public roles; makes a clear visual point without invented facts.",
+        "medium": "Hand-cut linocut illustration with bold black and white shapes and a single accent color.",
+        "equipment": "Hand press and worn cutting tools: uneven ink coverage and visible carved marks."
+      }
+    }
+  },
+  {
+    "id": "mira-fargstorm",
+    "alias": "Mira Färgstorm",
+    "descriptions": {
+      "sv": {
+        "personality": "Temperamentsfull kolorist som upplever varje nyhet som ett känslolandskap.",
+        "focus": "Rytm, rivalitet och känslomässiga kontraster; behåller igenkännbara motiv även när färgerna överdriver.",
+        "medium": "Expressiv gouachemålning med täckande färgfält, synliga penseldrag och djärva kompositioner.",
+        "equipment": "Bra gouache men grova, slitna penslar: rik färg, kantiga drag och medvetet rå finish."
+      },
+      "en": {
+        "personality": "Temperamental colorist who experiences each story as an emotional landscape.",
+        "focus": "Rhythm, rivalry and emotional contrasts; keeps subjects recognizable even when colors exaggerate.",
+        "medium": "Expressive gouache painting with opaque color blocks, visible brushwork and bold compositions.",
+        "equipment": "Good gouache but coarse worn brushes: rich color, angular strokes and deliberately rough finish."
+      }
+    }
+  }
+]

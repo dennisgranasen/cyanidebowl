@@ -7,7 +7,7 @@ export default function useFetchTeams() {
   const [teams, setTeams] = useState([]);
 
   const fetchTeams = (id, circuitLegId, limit) => {
-    console.log('Fetching teams for circuit id:', id, "Circuit Leg ID:", circuitLegId, "Limit:", limit);
+    console.log('Fetching teams for source id:', id, "Stage ID:", circuitLegId, "Limit:", limit);
 
     WarpScoresApiService.circuitLegTeams(id, circuitLegId, limit)
       .then((data) => {

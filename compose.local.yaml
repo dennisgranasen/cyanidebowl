@@ -1,0 +1,13 @@
+services:
+  backend:
+    volumes:
+      - type: bind
+        source: ${REPLAY_SWEEPER_STORAGE_DIRECTORY:-./data/replays}
+        target: /app/replays
+  pybb3-service:
+    volumes:
+      - type: bind
+        source: ${REPLAY_SWEEPER_STORAGE_DIRECTORY:-./data/replays}
+        target: /app/replays
+    ports:
+      - "127.0.0.1:8000:8000"

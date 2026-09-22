@@ -6,16 +6,20 @@ import formatter from '../../util/formatter';
 import config from '../../config';
 import ScoreOrIcon from './ScoreOrIcon';
 import prettyPrint from '../../util/prettyPrint';
-import { toRace, getRaceLogo } from '../../util/raceUtil';
+import { resolveRace, getRaceLogo } from '../../util/raceUtil';
 import { identityUtils } from '../../util/identityUtil';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import MatchModal from './MatchModalWithRosters'; // Import the modal component
+import { useMyTeams } from '../../context/MyTeamsContext';
+import { useIntl } from 'react-intl';
 const { boxSize } = config;
 
-function TeamAndCoach({ teamName, coachName, race, reverse }) {
+function TeamAndCoach({ teamId, teamName, coachName, race, reverse }) {
+  const { isMyTeam } = useMyTeams();
+  const mine = isMyTeam(teamId);
   return (
     <Box>
-      <Heading size="sm">{teamName}</Heading>
+      <Heading size="sm">{teamName}{mine ? ' ★' : ''}</Heading>
       <Text color="grey">
         {reverse ? `(${coachName}) ${prettyPrint(race)}` : `${prettyPrint(race)} (${coachName})`}
       </Text>
@@ -24,6 +28,7 @@ function TeamAndCoach({ teamName, coachName, race, reverse }) {
 }
 
 function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noContentHeading, noContentText, variant, clickable }) {
+  const intl = useIntl();
   const [teams, setTeams] = useState([]);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [contest, setContest] = useState(contestOrMatch);
@@ -34,7 +39,10 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
 
   useEffect(() => {
       if (contestOrMatch) {
-        if (identityUtils.opus(contestOrMatch.id) > 1) {
+        if (contestOrMatch.matchId) {
+          setContest(contestOrMatch);
+          setTeams(contestOrMatch.teams || []);
+        } else if (identityUtils.opus(contestOrMatch.id) > 1) {
           setContest(contestOrMatch);
           setTeams(contestOrMatch.opponents);
         } else {
@@ -103,7 +111,13 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
     coaches = contestOrMatch.coaches;
   }
   
-  let opus = contestOrMatch?.id ? identityUtils.opus(contestOrMatch?.id) : 3;
+  const opusIdentity = contestOrMatch?.id
+    || contestOrMatch?.matchResourceId
+    || contestOrMatch?.matchId
+    || teams[0]?.id;
+  const opus = identityUtils.opus(opusIdentity);
+  const firstRace = resolveRace(teams[0], opus);
+  const secondRace = resolveRace(teams[1], opus);
   // Determine if the card should be clickable
   
   return (
@@ -136,16 +150,18 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
                 </GridItem>
                 <GridItem colSpan={4}>
                   <TeamAndCoach
+                    teamId={teams[0]?.id}
                     teamName={teams[0]?.name}
                     coachName={coaches[0].coachName || coaches[0].name}
-                    race={teams[0].race || toRace(teams[0].race || teams[0].raceId, opus)}
+                    race={firstRace}
                   />
                 </GridItem>
                 <GridItem colSpan={4} align="right">
                   <TeamAndCoach
+                    teamId={teams[1]?.id}
                     teamName={teams[1].name}
                     coachName={coaches[1].coachName || coaches[1].name}
-                    race={teams[1].race || toRace(teams[1].race || teams[1].raceId, opus)}
+                    race={secondRace}
                     reverse
                   />
                 </GridItem>
@@ -154,7 +170,7 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
                     <Image
                       objectFit="contain"
                       maxW="64px"
-                      src={imageUrls.logo(teams[0].logo, opus)}
+                      src={imageUrls.logo(teams[0].logo || getRaceLogo(teams[0].raceId ?? firstRace, opus), opus)}
                       fallback={<QuestionOutlineIcon boxSize={boxSize} />}
                     />
                   </Center>
@@ -167,23 +183,18 @@ function ContestMatchCard({ contestOrMatch, contestHeader, noContentIcon, noCont
                     <Image
                       objectFit="contain"
                       maxW="64px"
-                      src={imageUrls.logo(teams[1].logo || getRaceLogo(teams[1].race, opus), opus)}
+                      src={imageUrls.logo(teams[1].logo || getRaceLogo(teams[1].raceId ?? secondRace, opus), opus)}
                       fallback={<QuestionOutlineIcon boxSize={boxSize} />}
                     />
                   </Center>
                 </GridItem>
                 <GridItem colSpan={8}>
-                  <Center color="grey">{`Started: ${formatter.formatAsDate(started, '-')}`}</Center>
+                  <Center color="grey">{intl.formatMessage({ id: 'matchCard.started' }, { date: formatter.formatAsDate(started, '-') })}</Center>
                   <Center color="grey">
-                    {`${contestOrMatch.live ? 'Live since:' : 'Duration:'} ${formatter.formatAsDuration(
-                      started,
-                      finished
-                    )}`}
+                    {intl.formatMessage({ id: contestOrMatch.live ? 'matchCard.liveSince' : 'matchCard.duration' }, { duration: formatter.formatAsDuration(started, finished) })}
                   </Center>
                   {getIsClickable() && (
-                    <Center color="blue.500" fontSize="sm" mt={1}>
-                      Click for detailed stats
-                    </Center>
+                    <Center color="blue.500" fontSize="sm" mt={1}>{intl.formatMessage({ id: 'matchCard.details' })}</Center>
                   )}
                 </GridItem>
               </Grid>

@@ -51,29 +51,17 @@ public class MatchDomainService {
 
     
     @Transactional
-    public Map<Identity, Optional<Date>> getLastMatchDatesForCompetitions(
-            List<Competition> compData) {
-      
-        List<Identity> compIds = compData.stream()
-                .filter(competition -> competition.getId() != null)
-                .map(comp -> (Identity)new SimpleIdentity(
-                        ((CompositeIdentity)comp.getId()).getParts()[1],
-                        comp.getId().getOpus()
-                    ))
-                .distinct()
-                .toList();
-
-        if (!compIds.isEmpty()) {
-            return matchRepository
-                    .findLastMatchDateByCompetitionIds(compIds)
-                    .stream()
-                    .collect(Collectors.toMap(
-                        d -> d.id(),
-                        d -> Optional.ofNullable(d.date())
-                    ));                    
+    public Map<Identity, Optional<Date>> getLastMatchDatesForCompetitions(List<Identity> compIds) {
+        if (compIds == null || compIds.isEmpty()) {
+            return Map.of(); // Return an empty map if no competitions are provided
         }
-
-       return Map.of(); // Return an empty map if no competitions are provided
+        return matchRepository
+                .findLastMatchDateByCompetitionIds(compIds)
+                .stream()
+                .collect(Collectors.toMap(
+                    d -> d.id(),
+                    d -> Optional.ofNullable(d.date())
+                ));
     }
 
 

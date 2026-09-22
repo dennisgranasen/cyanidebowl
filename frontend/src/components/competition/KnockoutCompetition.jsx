@@ -28,6 +28,7 @@ import { FaRegFaceSadTear } from 'react-icons/fa6';
 import MatchModalWithRosters from '../contest/MatchModalWithRosters'; // Add this import
 import { useDisclosure } from '@chakra-ui/react';
 import { identityUtils } from '../../util/identityUtil';
+import { useMyTeams } from '../../context/MyTeamsContext';
 
 const { boxSize } = config;
 
@@ -71,20 +72,26 @@ function Participant({
   onMouseEnter,
   onMouseLeave,
   onMatchClick,
+  compact,
   //onPartyClick,
 }) {
-  const borderColor = hovered ? 'warpScoresHoverColor' : connectorColor;
+  const { isMyTeam } = useMyTeams();
+  const mine = isMyTeam(party?.id);
+  const borderColor = hovered ? 'warpScoresHoverColor' : mine ? 'green.400' : connectorColor;
   const backgroundColor = hovered ? 'warpScoresHoverColor' : null;
+  const details = [party.coachName, party.race ? prettyPrint(party.race) : null].filter(Boolean).join(', ');
   return (
     <Box
       m="0"
       p="2px"
+      h={compact ? '50%' : undefined}
       borderColor={borderColor}
       borderWidth="1px"
       borderTopRadius={borderTopRadius}
       borderBottomRadius={borderBottomRadius}
       overflow="hidden"
       backgroundColor={backgroundColor}
+      boxShadow={mine ? 'inset 3px 0 var(--chakra-colors-green-400)' : undefined}
       onMouseEnter={() => onMouseEnter(party.id)}
       onMouseLeave={() => onMouseLeave(party.id)}
       onClick={() => {
@@ -99,7 +106,8 @@ function Participant({
         w="100%"
         templateAreas={`"image team score"
                   "image coach score"`}
-        gridTemplateColumns="40px 1fr 32px"
+        gridTemplateColumns={compact ? `28px minmax(0, 1fr) ${match.seriesLength > 1 ? '58px' : '24px'}` : '40px minmax(0, 1fr) 32px'}
+        fontSize={compact ? 'xs' : 'md'}
       >
         <GridItem pl="4px" pr="4px" area="image" textAlign="center">
           <Center w="100%" h="100%">
@@ -116,12 +124,14 @@ function Participant({
           w="100%"
           textAlign="left"
           fontWeight={won ? 'bold' : null}
-          style={{ whiteSpace: 'nowrap' }}
+          overflow="hidden"
+          textOverflow="ellipsis"
+          whiteSpace="nowrap"
         >
-          <Box>{party.teamName || 'To be defined'}</Box>
+          <Box>{party.teamName || 'To be defined'}{mine ? ' ★' : ''}</Box>
         </GridItem>
-        <GridItem pl="4px" area="coach" textAlign="left" fontSize="sm" color="grey" style={{ whiteSpace: 'nowrap' }}>
-          {`${party.coachName || 'TBD'}, ${party.race ? prettyPrint(party.race) : 'unknown'}`}
+        <GridItem pl="4px" area="coach" textAlign="left" fontSize={compact ? '2xs' : 'sm'} color="grey" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+          {details}
         </GridItem>
         <GridItem area="score" textAlign="center" fontWeight={won ? 'bold' : null}>
           <Center w="100%" h="100%">
@@ -133,7 +143,7 @@ function Participant({
   );
 }
 
-function MatchComponent({
+export function MatchComponent({
   match,
   topParty,
   bottomParty,
@@ -149,13 +159,16 @@ function MatchComponent({
   onMatchClick,  
   onMouseEnter,
   onMouseLeave,
+  computedStyles,
 }) {
   return (
-    <DelayedIconTooltip label={match.state === 'DONE' ? `Played ${topText}` : 'Scheduled'}>
+    <DelayedIconTooltip label={`${match.replayAvailable ? 'Replay saved · ' : ''}${match.seriesLength > 1 ? `${match.seriesLength} matches (${match.replayCount} ${match.replayCount === 1 ? 'replay' : 'replays'})` : match.state === 'DONE' ? `Played ${topText}` : 'Scheduled'}`}>
       <div
         style={{
           cursor: 'pointer',
-          marginTop: '4px',
+          marginTop: match.compact ? 0 : '4px',
+          width: match.compact ? `${computedStyles?.width || 240}px` : undefined,
+          height: match.compact ? `${computedStyles?.boxHeight || 86}px` : undefined,
         }}
       >
         <Participant
@@ -171,6 +184,7 @@ function MatchComponent({
           onMouseLeave={onMouseLeave}
           onPartyClick={onPartyClick}
           onMatchClick={onMatchClick}
+          compact={match.compact}
         />
         <Participant
           match={match}
@@ -185,6 +199,7 @@ function MatchComponent({
           onMouseLeave={onMouseLeave}
           onPartyClick={onPartyClick}
           onMatchClick={onMatchClick}
+          compact={match.compact}
         />
       </div>
     </DelayedIconTooltip>

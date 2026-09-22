@@ -1,0 +1,36 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Backend",
+      "request": "launch",
+      "mainClass": "net.warp_scores.warpscores.WarpScoresApp",
+      "projectName": "backend",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": "--spring.profiles.active=dev --spring.config.import=file:./.env[.properties]",
+      "env": {
+        "FRONTEND_URI": "http://localhost:8022"
+      }
+    },
+    {
+    "type": "node-terminal",
+    "name": "Frontend",
+    "request": "launch",
+    "command": "$env:REACT_APP_BACKEND_URI='http://localhost:8080'; npm run dev",
+    "cwd": "${workspaceFolder}/frontend"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "CyanideBowl local",
+      "configurations": [
+        "Backend",
+        "Frontend"
+      ],
+      "preLaunchTask": "Prepare local services",
+      "stopAll": true
+    }
+  ]
+}

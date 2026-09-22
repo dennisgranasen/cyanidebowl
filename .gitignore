@@ -30,7 +30,9 @@ build/
 !**/src/test/**/build/
 
 ### VS Code ###
-.vscode/
+.vscode/*
+!.vscode/tasks.json
+!.vscode/launch.json
 
 node_modules
 node
@@ -43,26 +45,34 @@ frontend/public/*.md
 frontend/public/version.json
 
 backend/src/main/resources/img/bb3
+backend/maven-build.xml
+backend/maven-build.properties
+backend/test.data
+backend/data
+backend/build.xml
 
 /data
+*.patch
+*.tar
+*.tar.gz
 .env
 .env.*
 !.env.example
 sync.sh
 fetchMongoData.sh
-package-lock.json
-frontend/package-lock.json
 warpscores-*.tar
+
 cyanide-api/maven-build.xml
 cyanide-api/maven-build.properties
-backend/maven-build.xml
-backend/maven-build.properties
 cyanide-api/build.xml
-backend/build.xml
+
 docker-compose-production.yaml
 my-compose.yaml
-frontend/package-lock.json
-backend/test.data
 *playground*.js
 frontend/package-lock.json
-*.patch
+apply-*.py
+cyanidebowl-*.py
+
+# Generated editorial star-player assets
+/data/starplayers/
+.mvn-test-settings.xml

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Alert, AlertDescription, AlertIcon, Heading, HStack, Spinner, Text } from '@chakra-ui/react';
 import prettyPrint from '../../util/prettyPrint';
+import { useIntl } from 'react-intl';
 
 function ErrorIcon({ status }) {
   switch (status) {
@@ -22,13 +23,14 @@ function ErrorIcon({ status }) {
 }
 
 function LoadingOrErrorWrapper({ loading, error, children }) {
+  const intl = useIntl();
   if (error) {
     return (
       <Alert status={error.type}>
         <ErrorIcon status={error.type} />
         <AlertDescription>
           <HStack>
-            <Text fontWeight="bold">{`${prettyPrint(error.type)}:`}</Text>
+            <Text fontWeight="bold">{`${intl.formatMessage({ id: `error.${error.type}`, defaultMessage: prettyPrint(error.type) })}:`}</Text>
             <Text> {error.message}</Text>
           </HStack>
         </AlertDescription>

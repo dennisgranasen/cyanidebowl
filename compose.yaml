@@ -1,13 +1,155 @@
+networks:
+  internal_net:
+    driver: bridge
+
+volumes:
+  pybb3-credentials:
+  npm_data:
+  npm_letsencrypt:
+  replay_data:
+  community_media:
+
 services:
-  warpscores-db:
-    container_name: warpscores-db
-    hostname: warpscores-db
-    image: 'mongo:7.0.5'
+  # ========================================================
+  # 1. PyBB3 Service
+  # ========================================================
+  pybb3-service:
+    container_name: pybb3-service
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    build:
+      context: ./pybb3-service
+      args:
+        PYBB3_REF: ${PYBB3_REF:-b1a36cc73f97b76f6e1610402980311edf7c5b8b}
+    restart: unless-stopped
     environment:
-      - 'MONGO_INITDB_DATABASE=warpscores'
-      - 'MONGO_INITDB_ROOT_PASSWORD=some password'
-      - 'MONGO_INITDB_ROOT_USERNAME=root'
-    ports:
-      - '32769:27017'
+      - PYBB3_INTERNAL_API_KEY=${PYBB3_INTERNAL_API_KEY}
+      - PYBB3_CREDENTIAL_ENCRYPTION_KEY=${PYBB3_CREDENTIAL_ENCRYPTION_KEY}
     volumes:
-      - ./data:/data/db
+      - pybb3-credentials:/var/lib/pybb3/credentials
+      - replay_data:/app/replays
+    networks:
+      - internal_net
+
+  # ========================================================
+  # 2. Spring Boot Backend
+  # ========================================================
+  backend:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    container_name: cyanidebowl-backend
+    restart: unless-stopped
+    environment:
+      # Database
+      - SPRING_DATA_MONGODB_URI=${SPRING_MONGODB_URI}
+
+      # Server
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-server}
+      - SERVER_PORT=${SERVER_PORT:-8080}      
+      - SERVER_FORWARD_HEADERS_STRATEGY=framework
+
+      # Integrations & Keys
+      - PYBB3_SERVICE_URL=http://pybb3-service:8000
+      - PYBB3_INTERNAL_API_KEY=${PYBB3_INTERNAL_API_KEY}
+      - CYANIDE_API_KEY=${CYANIDE_API_KEY}
+      
+      # Auth & URLs
+      - AUTH0_URI=${AUTH0_URI}
+      - AUTH0_DOMAIN=${AUTH0_DOMAIN}
+      - AUTH0_AUDIENCE=${AUTH0_AUDIENCE}
+      - FRONTEND_URI=${FRONTEND_URI}
+      
+      # Replay Sweeper Configuration
+      - REPLAY_SWEEPER_STORAGE_DIRECTORY=/app/replays
+
+      # AI agents
+      - AI_API_KEY_GEMINI=${AI_API_KEY_GEMINI}
+      - AI_API_KEY_GROQ=${AI_API_KEY_GROQ}
+      - AI_API_KEY_OPENROUTER=${AI_API_KEY_OPENROUTER}
+      - AI_API_KEY_OPENAI=${AI_API_KEY_OPENAI}
+      - AI_API_KEY_CLOUDFLARE=${AI_API_KEY_CLOUDFLARE}
+      - CLOUDFLARE_ACCOUNT_ID=${CLOUDFLARE_ACCOUNT_ID}
+      - CLOUDFLARE_IMAGE_MODEL=${CLOUDFLARE_IMAGE_MODEL:-@cf/black-forest-labs/flux-2-klein-4b}
+      - CLOUDFLARE_IMAGE_TIMEOUT=${CLOUDFLARE_IMAGE_TIMEOUT:-3m}
+      - CLOUDFLARE_IMAGE_STEPS=${CLOUDFLARE_IMAGE_STEPS:-4}
+      - COMMUNITY_MEDIA_PROVIDER=${COMMUNITY_MEDIA_PROVIDER:-cloudflare}
+      - OPENAI_IMAGE_MODEL=${OPENAI_IMAGE_MODEL:-gpt-image-2}
+      - OPENAI_IMAGE_TIMEOUT=${OPENAI_IMAGE_TIMEOUT:-3m}
+      - COMMUNITY_MEDIA_QUALITY=${COMMUNITY_MEDIA_QUALITY:-low}
+      - COMMUNITY_MEDIA_STORAGE_DIR=/data/community-media
+      - COMMUNITY_MEDIA_POLL_MS=${COMMUNITY_MEDIA_POLL_MS:-30000}
+      - COMMUNITY_MEDIA_QUOTA_EXHAUSTED_COOLDOWN=${COMMUNITY_MEDIA_QUOTA_EXHAUSTED_COOLDOWN:-12h}
+      #- AI_API_KEY_LOCAL=${AI_API_KEY_LOCAL}
+
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - --fail
+        - --silent
+        - http://127.0.0.1:8080/actuator/health
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    depends_on:
+      pybb3-service:
+        condition: service_healthy
+    volumes:
+      - replay_data:/app/replays
+      - community_media:/data/community-media
+    networks:
+      - internal_net
+
+  # ========================================================
+  # 3. Frontend (React)
+  # ========================================================
+  frontend:
+      build:
+        context: ./frontend
+        dockerfile: Dockerfile
+        args:
+          NODE_ENV: ${NODE_ENV}
+          REACT_APP_BACKEND_URI: ${REACT_APP_BACKEND_URI}
+          REACT_APP_AUTH0_URI: ${AUTH0_URI}
+          REACT_APP_AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+          REACT_APP_AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
+          REACT_APP_AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
+      container_name: cyanidebowl-frontend
+      restart: unless-stopped
+      networks:
+        - internal_net
+
+      healthcheck:
+        test:
+          - CMD
+          - curl
+          - --fail
+          - --silent
+          - http://127.0.0.1/
+        interval: 30s
+        timeout: 5s
+        retries: 3
+        start_period: 15s
+
+  # ========================================================
+  # 5. Cloudflare Tunnel
+  # ========================================================
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cyanidebowl-cloudflared
+    restart: unless-stopped
+    command: tunnel run --url http://cyanidebowl-frontend:80
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    networks:
+      - internal_net

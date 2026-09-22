@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.config;
 
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.GlobalErrorHandler;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,10 +20,15 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.config.Customizer;
 import java.util.List;
+import java.net.URI;
 
+import static org.springframework.http.HttpMethod.DELETE;
 import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpMethod.POST;
+import static org.springframework.http.HttpMethod.PUT;
 
 @Configuration(proxyBeanMethods = false)
 @Profile("server")
@@ -32,31 +38,57 @@ public class SecurityConfiguration {
 
     private final GlobalErrorHandler errorHandler;
 
-    @Value("${AUTH_URI:https://nst-scores.eu.auth0.com/}")
+    @Value("${AUTH0_URI}")
     private String authUri;
 
-    @Value("${AUTH_AUDIENCE:bloodbowl-scores}")
+    @Value("${AUTH0_AUDIENCE}")
     private String authAudience;
+
+    @PostConstruct
+    void validateAuthConfiguration() {
+        URI issuer = URI.create(authUri);
+        if (!"https".equals(issuer.getScheme()) || issuer.getHost() == null || authAudience.isBlank()) {
+            throw new IllegalStateException("Server profile requires HTTPS AUTH0_URI and a non-empty AUTH0_AUDIENCE");
+        }
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(requests -> requests
                         // status/misc
-                        .requestMatchers(GET, "/version.json", "/status").permitAll()
+                        .requestMatchers(GET, "/version.json", "/status", "/localization").permitAll()
                         // user endpoint
                         .requestMatchers(GET, "/userPermissions").permitAll()
+                        .requestMatchers("/user/preferences").authenticated()
+                        .requestMatchers("/user/staff-profile").authenticated()
+                        .requestMatchers("/user/steam/**").authenticated()
+                        .requestMatchers("/user/statistics/**").authenticated()                        
+                        .requestMatchers("/user/coach-claims", "/user/coach-claims/**").authenticated()
                         // endpoints needing authentication
-                        //.requestMatchers(POST, "/circuits/**").authenticated()
-                        //.requestMatchers(POST, "/contests/**").authenticated()
+                            .requestMatchers("/admin/**").authenticated()
+                        .requestMatchers(POST, "/contests/**").authenticated()
                         .requestMatchers(POST, "/leagueCollection/**").authenticated()
                         .requestMatchers(POST, "/lookup").authenticated()
                         .requestMatchers(GET, "/competition/*/exportNafData").authenticated()
                         .requestMatchers(GET, "/competitions/*/exportNafData").authenticated()
+                        // Editorial drafts and tools require authentication in addition to service-level scope checks.
+                        .requestMatchers(GET, "/articles/tools/photographers").permitAll()
+                        .requestMatchers(GET, "/articles/editor/**", "/articles/review", "/articles/mine", "/articles/tools/**").authenticated()
+                        // editorial/community mutations
+                        .requestMatchers(POST, "/articles/**").authenticated()
+                        .requestMatchers(PUT, "/articles/**").authenticated()
+                        .requestMatchers(DELETE, "/articles/**").authenticated()
+                        .requestMatchers(POST, "/community/**").authenticated()
+                        .requestMatchers(PUT, "/community/**").authenticated()
+                        .requestMatchers(DELETE, "/community/**").authenticated()
                         // public api read only endpoints
+                        .requestMatchers(GET, "/ai-reporters", "/ai-reporters/**").permitAll()
+                        .requestMatchers(GET, "/staff/**").permitAll()
+                        .requestMatchers(GET, "/articles/**").permitAll()
+                        .requestMatchers(GET, "/community/**").permitAll()
                         .requestMatchers(GET, "/arena/**").permitAll()
-                        .requestMatchers(GET, "/circuit/**").permitAll()
-                        .requestMatchers(GET, "/circuits/**").permitAll()
                         .requestMatchers(GET, "/competition/**").permitAll()
                         .requestMatchers(GET, "/competitions/**").permitAll()
                         .requestMatchers(GET, "/contest/**").permitAll()
@@ -64,18 +96,23 @@ public class SecurityConfiguration {
                         .requestMatchers(GET, "/img/**").permitAll()
                         .requestMatchers(GET, "/knockout/**").permitAll()
                         .requestMatchers(GET, "/league/**").permitAll()
+                        .requestMatchers(GET, "/league-systems").permitAll()
+                        .requestMatchers(GET, "/league-systems/**").permitAll()
                         .requestMatchers(GET, "/leagues/**").permitAll()
                         .requestMatchers(GET, "/match/**").permitAll()
                         .requestMatchers(GET, "/matches/**").permitAll()
+                        .requestMatchers(GET, "/replay-statistics").permitAll()
                         .requestMatchers(GET, "/ranks/**").permitAll()
+                        .requestMatchers(GET, "/stages/**").permitAll()
                         .requestMatchers(GET, "/team/**").permitAll()
                         .requestMatchers(GET, "/teams/**").permitAll()
-                        .requestMatchers(GET, "/debug-headers").permitAll()
                         .requestMatchers(GET, "/actuator/health", "/actuator/info").permitAll()
                         // rest
                         .anyRequest().denyAll()
                 )
-                .oauth2ResourceServer(oauth2ResourceServer -> oauth2ResourceServer
+                    .csrf(csrf -> csrf.disable())
+                    .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                    .oauth2ResourceServer(oauth2ResourceServer -> oauth2ResourceServer
                         .authenticationEntryPoint(errorHandler::handleAuthenticationError)
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(makePermissionsConverter())));
         return http.build();

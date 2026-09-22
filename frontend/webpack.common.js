@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 
 module.exports = {
   entry: {
@@ -26,6 +27,14 @@ module.exports = {
       },
     ],
   },
+  plugins: [
+    new webpack.EnvironmentPlugin({
+      REACT_APP_BACKEND_URI: '',
+      REACT_APP_AUTH0_DOMAIN: '',
+      REACT_APP_AUTH0_CLIENT_ID: '',
+      REACT_APP_AUTH0_AUDIENCE: '',
+    }),
+  ],
   resolve: {
     extensions: ['.js', '.jsx'],
   },

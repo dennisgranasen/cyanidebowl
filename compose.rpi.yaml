@@ -1,0 +1,15 @@
+services:
+  pybb3-service:
+    platform: linux/arm64
+    image: cyanidebowl-pybb3:arm64
+
+  backend:
+    platform: linux/arm64
+    image: cyanidebowl-backend:arm64
+
+  frontend:
+    platform: linux/arm64
+    image: cyanidebowl-frontend:arm64
+
+  cloudflared:
+    platform: linux/arm64

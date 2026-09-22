@@ -8,10 +8,12 @@ import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.Race;
 import net.warp_scores.warpscores.model.Team;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 //import org.springframework.data.mongodb.core.aggregation.ArrayOperators.In;
 import org.springframework.data.mongodb.repository.Aggregation;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Repository;
 
 import java.util.Date;
@@ -21,10 +23,22 @@ import java.util.Optional;
 @Repository
 
 public interface MatchRepository extends MongoRepository<Match, Identity> {
+    Optional<Match> findFirstByMatchId(String matchId);
+    @Query("{ '$and': ["
+            + " { 'finished': { $ne: null, $lte: ?0 } },"
+            + " { '$or': [ { 'detailsStatus': { $exists: false } }, { 'detailsStatus': null } ] },"
+            + " { '$or': [ { 'teams.0.players.0': { $exists: false } }, { 'teams.1.players.0': { $exists: false } } ] }"
+            + "] }")
+    List<Match> findMatchesWithUncheckedDetails(Date finishedBefore, Pageable pageable);
+
     List<Match> findByCompetitionId(Identity competitionId);
     List<Match> findByCompetitionId(Identity competitionId, Pageable pageable);
 
     List<Match> findAllById(List<Identity> matchIds);
+
+    @Query("{ '_id.type': 'SimpleIdentity', '_id.value': { '$regex': '^3_' }, "
+            + "'finished': { '$ne': null }, 'matchId': { '$nin': [null, ''] } }")
+    Slice<Match> findReplayAdminMatches(Pageable pageable);
     //List<Match> findAllByFinishedNullOrNotFinished();
 
     @Aggregation(pipeline = {
@@ -35,6 +49,24 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
     List<Match> findByLeagueId(Identity leagueId);
 
     Integer countMatchesByCompetitionId(Identity competitionId);
+
+    @Aggregation(pipeline = {
+            "{ $match: { competitionId: { $ne: null }, leagueId: { $ne: null } } }",
+            "{ $sort: { finished: 1 } }",
+            "{ $group: { _id: '$competitionId', leagueId: { $last: '$leagueId' }, leagueName: { $last: '$leagueName' }, competitionName: { $last: '$competitionName' }, platform: { $last: '$platform' }, latestMatch: { $max: '$finished' }, matchCount: { $sum: 1 } } }",
+            "{ $project: { _id: 0, competitionId: '$_id', leagueId: 1, leagueName: 1, competitionName: 1, platform: 1, latestMatch: 1, matchCount: 1 } }"
+    })
+    List<SourceDiscoveryRecord> findSourceDiscoveryRecords();
+
+    record SourceDiscoveryRecord(
+            Identity competitionId,
+            Identity leagueId,
+            String competitionName,
+            String leagueName,
+            String platform,
+            Date latestMatch,
+            long matchCount) {
+    }
 
     Optional<Match> findTopByTeamsContainsOrderByStartedDesc(Team team);
 
@@ -412,5 +444,3 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
     ) {}
         */
 }
-
-

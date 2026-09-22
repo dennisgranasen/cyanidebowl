@@ -28,6 +28,7 @@ import WinRate from '../components/common/WinRate';
 import Race from '../components/common/Race';
 import prettyPrint from '../util/prettyPrint';
 import { identityUtils } from '../util/identityUtil';
+import { useIntl } from 'react-intl';
 
 function getAllArenaTeams(arenaCoachTeamsByRunType) {
   if (!arenaCoachTeamsByRunType) return [];
@@ -69,6 +70,7 @@ function WinRateCard({ race, winRate }) {
 }
 
 function ArenaCoachPage() {
+  const intl = useIntl();
   const { competitionId, coachId } = useParams();
   const { fetchCompetition, competition, competitionLoading, error: competitionError } = useFetchCompetition();
   const [arenaCoach, setArenaCoach] = useState(null);
@@ -119,25 +121,25 @@ function ArenaCoachPage() {
       </Box>
       <LoadingOrErrorWrapper loading={competitionLoading} error={competitionError}>
         <HeaderCard
-          heading={`Coach: ${coachName ? `${coachName}` : ''}`}
-          subHeading={<RouteLink to={`/competition/${competitionId}`}>Competition: {competition?.name}</RouteLink>}
-          detailsHeading="Arena Coach Details"
+          heading={intl.formatMessage({ id: 'team.coach' }, { name: coachName || '' })}
+          subHeading={<RouteLink to={`/competition/${competitionId}`}>{intl.formatMessage({ id: 'arena.competition' }, { name: competition?.name })}</RouteLink>}
+          detailsHeading={intl.formatMessage({ id: 'arena.coachDetails' })}
           mainImageSrc={competition?.logo ? imageUrls.logo(competition?.logo, competition?.id?.opus) : imageUrls.logo(competition?.leagueLogo, identityUtils.opus(competitionId))}
         >
           <LoadingOrErrorWrapper loading={arenaCoachTeamsLoading} error={arenaCoachTeamsError}>
             <InfoArea>
-              <InfoItem key="playedRaces" label="Played races" info={getDistinctRaces(arenaCoachTeams)} />
-              <InfoItem key="playedMatches" label="Played matches" info={getPlayedMatchesCount(arenaCoachTeams)} />
+              <InfoItem key="playedRaces" label={intl.formatMessage({ id: 'arena.playedRaces' })} info={getDistinctRaces(arenaCoachTeams)} />
+              <InfoItem key="playedMatches" label={intl.formatMessage({ id: 'arena.playedMatches' })} info={getPlayedMatchesCount(arenaCoachTeams)} />
               <InfoItem
                 key="completedRuns"
-                label="Completed"
-                info={`${completedTeamsCount} Teams, ${completedRacesCount} Races`}
+                label={intl.formatMessage({ id: 'arena.completed' })}
+                info={intl.formatMessage({ id: 'arena.teamsRaces' }, { teams: completedTeamsCount, races: completedRacesCount })}
               />
-              <InfoItem key="failedRuns" label="Failed" info={`${failedTeamsCount} Teams, ${failedRacesCount} Races`} />
-              <InfoItem key="activeRuns" label="Active" info={`${activeTeamsCount} Teams, ${activeRacesCount} Races`} />
+              <InfoItem key="failedRuns" label={intl.formatMessage({ id: 'arena.failed' })} info={intl.formatMessage({ id: 'arena.teamsRaces' }, { teams: failedTeamsCount, races: failedRacesCount })} />
+              <InfoItem key="activeRuns" label={intl.formatMessage({ id: 'arena.active' })} info={intl.formatMessage({ id: 'arena.teamsRaces' }, { teams: activeTeamsCount, races: activeRacesCount })} />
               <InfoItem
                 key="winRate"
-                label="Win rate (overall)"
+                label={intl.formatMessage({ id: 'arena.winRateOverall' })}
                 info={<WinRate winRate={arenaCoach?.overallWinRate} />}
               />
             </InfoArea>
@@ -150,7 +152,7 @@ function ArenaCoachPage() {
             <AccordionItem>
               <AccordionButton>
                 <Box as="span" flex="1" textAlign="left">
-                  <Heading size="md">Win Rates</Heading>
+                  <Heading size="md">{intl.formatMessage({ id: 'arena.winRates' })}</Heading>
                 </Box>
                 <AccordionIcon />
               </AccordionButton>
@@ -167,7 +169,7 @@ function ArenaCoachPage() {
           )}
           <ArenaRunAccordionItem
             key="completed"
-            label={`Completed teams (${completedTeamsCount})`}
+            label={intl.formatMessage({ id: 'arena.completedTeams' }, { count: completedTeamsCount })}
             competitionId={competitionId}
             loading={arenaCoachTeamsLoading}
             error={arenaCoachTeamsError}
@@ -176,7 +178,7 @@ function ArenaCoachPage() {
           />
           <ArenaRunAccordionItem
             key="active"
-            label={`Active teams (${activeTeamsCount})`}
+            label={intl.formatMessage({ id: 'arena.activeTeams' }, { count: activeTeamsCount })}
             competitionId={competitionId}
             loading={arenaCoachTeamsLoading}
             error={arenaCoachTeamsError}
@@ -185,7 +187,7 @@ function ArenaCoachPage() {
           />
           <ArenaRunAccordionItem
             key="failed"
-            label={`Failed teams (${failedTeamsCount})`}
+            label={intl.formatMessage({ id: 'arena.failedTeams' }, { count: failedTeamsCount })}
             competitionId={competitionId}
             loading={arenaCoachTeamsLoading}
             error={arenaCoachTeamsError}

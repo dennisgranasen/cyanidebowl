@@ -94,7 +94,7 @@ public class PopulatorUtil {
         @Override
         public void handle(CompetitionStatus sourceValue, Object target) throws Exception {
             if (sourceValue == null || !(sourceValue instanceof CompetitionStatus)) {
-                log.error("Invalid source value for CompetitionStatusNameHandler: {}", sourceValue);
+                log.error("Invalid source value for CompetitionStatusNameHandler: {}", (Object) sourceValue);
                 return; // No status name to process
             }
             Competition competition = (Competition) target;
@@ -106,7 +106,7 @@ public class PopulatorUtil {
         @Override
         public void handle(Integer sourceValue, Object target) throws Exception {
             if (sourceValue == null || !(sourceValue instanceof Integer)) {
-                log.error("Invalid source value for CompetitionStatusHandler: {}", sourceValue);
+                log.error("Invalid source value for CompetitionStatusHandler: {}", (Object) sourceValue);
                 return; // No status to process
             }
             Competition competition = (Competition) target;
@@ -118,7 +118,7 @@ public class PopulatorUtil {
         @Override
         public void handle(ApiLeague sourceValue, Object target) throws Exception {
             if (sourceValue == null || !(sourceValue instanceof ApiLeague)) {
-                log.error("Invalid source value for CompetitionLeagueHandler: {}", sourceValue);
+                log.error("Invalid source value for CompetitionLeagueHandler: {}", (Object) sourceValue);
                 return; // No league to process
             }
             Competition competition = (Competition) target;
@@ -131,9 +131,10 @@ public class PopulatorUtil {
 
     private static class ContestOpponentHandler implements FieldHandler<ApiContest.Opponent[]> {
         @Override
+        @SuppressWarnings("unchecked")
         public void handle(ApiContest.Opponent[] sourceValue, Object target) throws Exception {
             if (sourceValue == null || !(sourceValue instanceof ApiContest.Opponent[])) {
-                log.error("Invalid source value for ContestOpponentHandler: {}", sourceValue);
+                log.error("Invalid source value for ContestOpponentHandler: {}", (Object) sourceValue);
                 return; // No opponents to process
             }
             Contest contest = (Contest) target;
@@ -347,7 +348,9 @@ public class PopulatorUtil {
 
                         try {
                             Method setter = target.getClass().getMethod(setterName, tgtField.getType());
-                            setter.invoke(target, newValue);
+                            // Cast to Object to ensure the array (if any) is passed as a single argument
+                            // and to avoid varargs/heap-pollution compiler warnings.
+                            setter.invoke(target, (Object) newValue);
                             continue;
                         } catch (NoSuchMethodException e) {
                             tgtField.setAccessible(true);
@@ -369,4 +372,3 @@ public class PopulatorUtil {
         }
     }
 }
-

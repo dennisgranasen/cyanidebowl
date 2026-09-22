@@ -100,7 +100,7 @@ public class LatestMatchesCommand implements SlashCommand {
         }
 
         Optional<League> league = latestLeagueMatches.keySet().stream().findFirst();
-        Optional<UUID> leagueId = league.map(League::getUuid);
+        Optional<String> leagueId = league.map(League::getLeagueId);
         if (leagueId.isEmpty()) {
             return warpScoresDiscordMessageBuilder
                     .builder(league.map(League::getName).orElse("Latest matches."), "Showing latest matches.")
@@ -114,4 +114,3 @@ public class LatestMatchesCommand implements SlashCommand {
     }
 
 }
-

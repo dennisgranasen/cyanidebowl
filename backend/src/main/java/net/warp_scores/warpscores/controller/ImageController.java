@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -139,7 +140,7 @@ public class ImageController {
         Optional<String> imageUrl = 
             getImageUrlFor(cyanideApiProperties.getUrls().getImages().getRaces(), 
                 imageName, Optional.ofNullable(opus));
-        return loadImage(imageUrl, Optional.of(300));
+        return loadImage(imageUrl, Optional.of(300), List.of());
     }
 
     @GetMapping("/stadium/{name}")
@@ -149,7 +150,7 @@ public class ImageController {
         Optional<String> imageUrl = 
             getImageUrlFor(cyanideApiProperties.getUrls().getImages().getStadiums(),
                 name, Optional.ofNullable(opus));
-        return loadImage(imageUrl, Optional.of(128));
+        return loadImage(imageUrl, Optional.of(128), List.of());
     }
 
     @GetMapping("/portrait/{name}")
@@ -164,27 +165,38 @@ public class ImageController {
 
 
     private ResponseEntity<byte[]> loadImage(Optional<String> imageUrl) {
-        //log.info(imageUrl.orElse("null image URL"));
-        return loadImage(imageUrl, Optional.empty());
+        return loadImage(imageUrl, Optional.empty(), List.of());
     }
 
-    private ResponseEntity<byte[]> loadImage(Optional<String> imageUrl,
+    private ResponseEntity<byte[]> loadImage(
+            Optional<String> imageUrl,
             Optional<Integer> maxWidth,
-            Optional<String>... fallbackImageUrls) {
-        Optional<byte[]> imageData = imageUrl.flatMap(url -> imageService.loadImage(url, maxWidth));
-        for (int i = 0; i < fallbackImageUrls.length && imageData.isEmpty(); i++) {
-            Optional<String> fallbackImageUrl = fallbackImageUrls[i];
+            List<Optional<String>> fallbackImageUrls) {
+
+        Optional<byte[]> imageData =
+                imageUrl.flatMap(url -> imageService.loadImage(url, maxWidth));
+
+        for (int i = 0; i < fallbackImageUrls.size() && imageData.isEmpty(); i++) {
+            Optional<String> fallbackImageUrl = fallbackImageUrls.get(i);
+
             if (fallbackImageUrl.isPresent()) {
-                imageData = fallbackImageUrl.flatMap(url -> imageService.loadImage(url, maxWidth));
+                imageData =
+                        fallbackImageUrl.flatMap(
+                                url -> imageService.loadImage(url, maxWidth));
             }
         }
+
         return imageData
                 .map(ImageController::ok)
                 .orElse(noContent());
     }
+   
 
     private static ResponseEntity<byte[]> ok(byte[] data) {
-        return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(data);
+        return ResponseEntity.ok()
+                .cacheControl(org.springframework.http.CacheControl.maxAge(java.time.Duration.ofHours(12)).cachePublic())
+                .contentType(MediaType.IMAGE_PNG)
+                .body(data);
     }
 
     private static ResponseEntity<byte[]> noContent() {

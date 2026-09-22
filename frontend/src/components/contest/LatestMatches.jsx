@@ -7,8 +7,10 @@ import comparators from '../../util/comparators';
 import ContestMatchCards from './ContestMatchCards';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 import { identityUtils } from '../../util/identityUtil';
+import { useIntl } from 'react-intl';
 
 function LatestMatches({ league, competition, embeddable, limit }) {
+  const intl = useIntl();
   const [contests, setContests] = useState();
   const [loading, setLoading] = useState();
   const [error, setError] = useState();
@@ -74,14 +76,14 @@ function LatestMatches({ league, competition, embeddable, limit }) {
 
   return (
     <>
-      {!embeddable && <Heading size="md">Latest matches</Heading>}
+      {!embeddable && <Heading size="md">{intl.formatMessage({ id: 'matches.latest' })}</Heading>}
       <LoadingOrErrorWrapper loading={loading} error={error}>
         <ContestMatchCards
           embeddable={embeddable ? 'embeddable' : null}
           contests={contests}
           noContentIcon={FaRegFaceSadTear}
-          noContentHeading="No matches played (yet?)..."
-          noContentText={league ? `Last match was ${formatter.formatAsDate(league.dateLastMatch, '-')}` : null}
+          noContentHeading={intl.formatMessage({ id: 'matches.nonePlayed' })}
+          noContentText={league ? intl.formatMessage({ id: 'matches.lastWas' }, { date: formatter.formatAsDate(league.dateLastMatch, '-') }) : null}
         />
       </LoadingOrErrorWrapper>
     </>

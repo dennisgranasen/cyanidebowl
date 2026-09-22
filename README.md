@@ -1,150 +1,113 @@
-# cyanidebowl
+# cyanidebowl / BlaskScore
 
-Welcome to [cyanidebowl](https://bloodbowl.granasen.com), a Spike-like facade for Cyanide's BB3 API based on warp-scores (https://warp-scores.net)
+BlaskScore is a Blood Bowl results, statistics, replay and editorial/community site built
+on the original warp-scores/cyanidebowl codebase. Active development happens on `dev`.
 
-## Overview
+## Repository structure
 
-### Description
+- `backend` — Spring Boot API, MongoDB persistence, scheduling, replay orchestration and AI/community services.
+- `frontend` — React/Chakra UI.
+- `api` and `cyanide-api` — shared model/API modules and Cyanide integration.
+- `pybb3-service` — authenticated internal bridge to the separately versioned `pybb3` client.
+- `compose.yaml` — production-style service topology for backend, frontend, pybb3 and Cloudflare Tunnel.
 
-This is a Spike-like web page to show match results and data from BB3 obtained through Cyanide's API.
+The canonical competition hierarchy is:
 
-### Build Status
+```text
+LeagueSystem -> Season -> Phase -> Stage -> StageSource
+```
 
-[![dev](https://gitlab.com/warp-scores/warp-scores/badges/dev/pipeline.svg?key_text=dev&key_width=50)](https://gitlab.com/warp-scores/warp-scores/-/pipelines?page=1&scope=branches&ref=dev) [![main](https://gitlab.com/warp-scores/warp-scores/badges/main/pipeline.svg?key_text=main&key_width=50)](https://gitlab.com/warp-scores/warp-scores/-/pipelines?page=1&scope=branches&ref=main)
+Legacy Circuit/CircuitLeg terminology is retired.
 
-### Roadmap
+## Development
 
-- 🟢 Show last matches
-- 🟢 Show live matches
-- 🟢 Generate Round Robin Schedules
-- 🟢 Support Swiss (Wissen) Tournaments
-- 🟢 [Support Knockout Tournaments](https://gitlab.com/warp-scores/warp-scores/-/issues/4)
-- 🟢 [Increase Mobile UI/UX](https://gitlab.com/warp-scores/warp-scores/-/issues/3)
-- 🟡 [Match-Details](https://gitlab.com/warp-scores/warp-scores/-/issues/5)
-- 🟡 [Coach page](https://gitlab.com/warp-scores/warp-scores/-/issues/6)
-- [League-Statistics](https://gitlab.com/warp-scores/warp-scores/-/issues/7)
-- [Competition-Statistics](https://gitlab.com/warp-scores/warp-scores/-/issues/8)
-- 🟢 [Discord publishing of match results](https://gitlab.com/warp-scores/warp-scores/-/issues/9)
-- 🟢 [Authentication (🟢 Discord-,🟢 NAF-OAuth)](https://gitlab.com/warp-scores/warp-scores/-/issues/10)
-- 🟢 [NAF Data export for tournaments](https://gitlab.com/warp-scores/warp-scores/-/issues/11)
-- [Admin/Edit results? Win/Tiebreaker editor?](https://gitlab.com/warp-scores/warp-scores/-/issues/12)
-- Others: -> See [Issues on GitLab](https://gitlab.com/warp-scores/warp-scores/-/issues/)
+Use `.env.example` as the configuration reference. Do not copy secrets into documentation.
 
-### Legend
+Backend verification:
 
-- 🟢 Finished
-- 🟡 In Progress
-- 🔴 Obsolete/Canceled
+```bash
+mvn clean test -Pserver -DskipDocker -pl api,cyanide-api,backend -am
+mvn clean package -Pserver -DskipDocker -pl api,cyanide-api,backend -am
+```
 
-### Configuration
-The following variables need to be set.
+Frontend verification:
 
-## For development
-Set these variables in your .env file:
-FRONTEND_URI=http://localhost:8022
-BACKEND_URI=http://localhost:8080
-REACT_APP_BACKEND_URI=http://localhost:8080
-AUTH_URI="http://localhost:8080/"
-SPRING_PROFILES_ACTIVE="dev"
-SERVER_PORT=8080
-AUTH_AUDIENCE="nst-scores-backend"
+```bash
+cd frontend
+npm ci
+npm test -- --runInBand
+npm run build
+```
 
-## For production
-Set these variables in your deployment system, e.g. using fly.toml:
-FRONTEND_URI=<Your frontend URI>
-BACKEND_URI=<Your backend URI>
-REACT_APP_BACKEND_URI=<Same as BACKEND_URI>
-AUTH_URI=<Your Auth0 Prodiver URI>
-SPRING_PROFILES_ACTIVE="production"
-SERVER_PORT=8080
-AUTH_AUDIENCE="nst-scores-backend"
+Local frontend development:
 
-## Secrets
-The following secrets should be set, in production mode they should be set according to your host platform. For local development they can reside in your .env file, but don't share them with anyone.
-SPRING_DATA_MONGODB_URI=<Your MongoDb Connection String>
-CYANIDE_API_KEY=<Cyanide API Key>
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-### Building
-To build the server for running locally, run the command:
-mvn clean package -P server -DskipDocker -DskipTest -pl api,cyanide-api,backend -am
+## Runtime architecture
 
-If you have made changes to api or cyanide-api respectively, you may need to run mvn install in their respective folder.
+The normal deployment contains four services:
 
-### Testing
-To test the system, I recommend running the server on your development machine with all settings loaded from your .env file.
+```text
+browser
+  -> frontend/nginx
+      -> backend
+          -> MongoDB Atlas
+          -> pybb3-service -> pybb3 / Steam
+          -> external AI providers
 
-First, if you haven't already, install dotenv-cli to be able to load .env file into your environment:
-npm install dotenv-cli
+Cloudflare Tunnel -> frontend/nginx
+```
 
-Then, to run the server:
-npx dotenv --  mvn spring-boot:run -P server -pl backend
+Replay files and generated community media use persistent Docker volumes. `pybb3-service`
+is internal-only and must not be exposed directly to browsers.
 
-Or, to run the data-fetcher:
-npx dotenv --  mvn spring-boot:run -P fetcher -pl backend
+## AI and deterministic work
 
-To run the frontend:
-cd frontend; npm run dev
+AI-backed work and deterministic replay work are intentionally separate.
 
-### Discord Bot
+AI work includes autonomous content jobs, provider/model execution queues and generated
+community media. These may be limited by concurrency, provider quotas or retries.
 
-Please refer to the [Discord Bot documentation](discord-bot.md).
+Replay analysis is deterministic. It does not consume LLM quota. Replays are queued when
+newly downloaded, explicitly requested for reanalysis, or produced by an older parser
+version. Successful parser version and latest attempted parser version are tracked
+separately so a failed current-version parse does not retry forever.
 
-### Changelog
+The parser version declared by the backend must match the normalized analysis version
+returned by the pinned pybb3 integration. The code and contract tests are authoritative
+for the actual version number; do not duplicate it in documentation.
 
-See the [Changelog](CHANGELOG.md).
+## Identity and editorial model
 
-## Contribute / Get Involved
+Humans and AI-backed actors use the same canonical `User` identity model. Provider/model
+information is generation provenance, not identity.
 
-- [Join Discord](https://discord.gg/hZDU6ymyrj)
+`Staff` is the canonical code/API/route term for public editorial identities. `Redaktion`
+is only a Swedish UI translation.
 
-## Support & Donations
+Canonical AI reporter profiles live in `backend/docs/ai_agents/reporters/`. Runtime
+relationships, memories, queue state and generation provenance are persisted data, not
+profile-file content.
 
-If you appreciate my work, you can buy me a coffee in person or [online](https://buymeacoffee.com/naytsyrhc).
+## Documentation
 
-## Additional Projects
+Read `DOCUMENTATION.md` before adding new documentation. The project deliberately keeps
+the documentation surface small and avoids duplicating code/configuration details.
 
-- **Scoreboard and Clock for Blood Bowl**: [bbclock](https://bbclock.warp-scores.net)
-- **Blood Bowl Reference Sheet**: [YaRSfBB2020](https://gitlab.com/naytsyrhc/YaRSfBB2020)
-- **3D Models**: [Cults](https://cults3d.com/en/users/naytsyrhc)
+- `FEATURES.md` - concise product capabilities beyond the Warp Scores foundation.
+- `ROADMAP.md` — broad remaining direction.
+- `BACKLOG.md` — active actionable work only.
+- `CHANGELOG.md` — implemented user/developer-visible changes.
+- `backend/README.md` — backend/runtime architecture and operational boundaries.
+- `backend/docs/AI_ARCHITECTURE.md` — canonical AI identity/context/provenance contract.
+- `backend/docs/ai_agents/README.md` — reporter profile format and runtime overrides.
+- `pybb3-service/README.md` — backend-to-pybb3 boundary.
 
-## Similar / Related Projects
+## Disclaimer
 
-### Blood Bowl 3
-
-- [nuffle.xyz](https://nuffle.xyz) by galentio
-- [Nuffles Numbers](https://www.nufflesnumbers.net) by trev
-- [Bloodbowl 3 statistics](https://spike.bugeat.com/en/stats) by thierry
-- [rebbl.net](https://rebbl.net) by majorbyte
-- [bb3replay](https://bb3replay.com/) by TinTuna
-- [dicedornot](https://huggingface.co/spaces/mrMesmer/dicedornot) by mrMesmer (based on work by raspel and TinTuna)
-- [Ladder Result Predictor](https://huggingface.co/spaces/raspel/BB_predictions) by raspel
-
-### Blood Bowl (General)
-
-- [Dave's Action Calculator](https://www.bloodbowldave.com/) by dave
-- [Dadidimerda](https://www.dadidimerda.it/) by Gherardo/Steel
-
-### Disclaimer
-
-This site is completely unofficial and not affiliated
-with [Cyanide](https://cyanide-studio.com), [Nacon](https://www.nacongaming.com)
-or [Games Workshop](https://www.nacongaming.com).
-
-[Blood Bowl](https://start-warhammer.com/blood-bowl/), [BB3](https://www.bloodbowl-thegame.com/) and probably a lot more names are trademarks of their respective owners. Used without
-permission. No challenge to their status intended.
-
-#### Fonts used
-
-I used some free fonts on this web page and within the logo.
-
-##### Sports World
-- Designer: Sergiy S. Tkachenko
-- Designer URL: http://www.4thfebruary.com.ua
-
-##### Big Star
-- Designer: Henrik (HENRIavecunK)
-
-##### Nuffle
-- Designer: Neale Davidson, Pixel-Sagas
-- https://www.fontspace.com/pixel-sagas
-- https://www.pixelsagas.com/
+This project is unofficial and is not affiliated with Cyanide, Nacon or Games Workshop.
+Blood Bowl and related names are trademarks of their respective owners.

@@ -21,14 +21,9 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${AUTH_URI:http://localhost:8022}
-          jwk-set-uri: ${AUTH_URI:http://localhost:8022}/.well-known/jwks.json
-          jws-algorithms: RS256
-
-#okta:
-#  oauth2:
-#    issuer: ${AUTH_URI:http://localhost:8022}
-#    audience: ${AUTH_AUDIENCE:api://default}
+          issuer-uri: ${AUTH0_URI:http://localhost:8022}
+          #jwk-set-uri: ${AUTH0_URI:http://localhost:8022}/.well-known/jwks.json
+          #jws-algorithms: RS256
 
 management:
   endpoints:
@@ -38,3 +33,7 @@ management:
   endpoint:
     health:
       show-details: always
+pybb3:
+  base-url: ${PYBB3_SERVICE_URL:http://pybb3-service:8000}
+  internal-api-key: ${PYBB3_INTERNAL_API_KEY:}
+  cookie-secure: ${PYBB3_COOKIE_SECURE:true}

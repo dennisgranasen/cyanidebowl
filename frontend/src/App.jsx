@@ -1,16 +1,14 @@
 import React from 'react';
+import CommunityDiscussionPage from './pages/CommunityDiscussionPage';
 import { Box, ChakraProvider, CSSReset, DarkMode } from '@chakra-ui/react';
-import { HashRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
+import { HashRouter as Router, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { Auth0Provider, withAuthenticationRequired } from '@auth0/auth0-react';
 import WarpScores from './pages/WarpScores';
 import TeamPage from './pages/TeamPage';
-import AdminCircuitPage from './pages/AdminCircuitPage';
 import CompetitionPage from './pages/CompetitionPage';
 import AboutPage from './pages/AboutPage';
 import CoachPage from './pages/CoachPage';
 import AdminPage from './pages/AdminPage';
-import CircuitLegPage from './pages/CircuitLegPage';
-import CircuitLegEntityPage from './pages/CircuitLegEntityPage';
 import StatisticsPage from './pages/StatisticsPage';
 import LatestMatchesPage from './pages/LatestMatchesPage';
 import LiveMatchesPage from './pages/LiveMatchesPage';
@@ -18,12 +16,26 @@ import LeaguePage from './pages/LeaguePage';
 import config from './config';
 import MarkdownPage from './pages/MarkdownPage';
 import warpScoresTheme from './theme/WarpScoresTheme';
-import CircuitPage from './pages/CircuitPage';
-import AdminCircuitLegPage from './pages/AdminCircuitLegPage';
 import Fonts from './theme/Fonts';
 import ArenaPage from './pages/ArenaPage';
 import ArenaCoachPage from './pages/ArenaCoachPage';
 import CompetitionStatsPage from './pages/CompetitionStatsPage';
+import AccountPage from './pages/AccountPage';
+import MyStatisticsPage from './pages/MyStatisticsPage';
+import ArticlePage from './pages/ArticlePage';
+import ArticleEditorPage from './pages/ArticleEditorPage';
+import StaffPage from './pages/StaffPage';
+import ReporterProfilePage from './pages/ReporterProfilePage';
+import HumanStaffProfilePage from './pages/HumanStaffProfilePage';
+import AdminAiReportersPage from './pages/AdminAiReportersPage';
+import { MyTeamsProvider } from './context/MyTeamsContext';
+import I18nProvider from './i18n/I18nProvider';
+import LanguagePreferencesPage from './pages/LanguagePreferencesPage';
+import LocalizationAdminPage from './pages/LocalizationAdminPage';
+import CommunityPage from './pages/CommunityPage';
+import CommunityProfilePage from './pages/CommunityProfilePage';
+import AdminCommunityFansPage from './pages/AdminCommunityFansPage';
+import AdminAiAutonomousWorkPage from './pages/AdminAiAutonomousWorkPage';
 
 import { MockAuth0Provider } from './components/misc/MockAuthProvider';
 
@@ -36,15 +48,27 @@ const withoutAuthentication = (Component) => {
   };
 };
 
-function ProtectedRoute({ component, ...args }) {
-  const Component = isProduction ? withAuthenticationRequired(component, args) : withoutAuthentication(component);
-  return <Component />;
+function ProtectedRoute({ component: Component, ...args }) {
+  const location = useLocation();
+  if (!isProduction) {
+    return <Component />;
+  }
+  const ProtectedComponent = withAuthenticationRequired(Component, {
+    returnTo: `${location.pathname}${location.search}`,
+  });
+  return <ProtectedComponent />;
 }
 
 function Auth0ProviderWithRedirectCallback({ children, ...props }) {
   const navigate = useNavigate();
+  /*
   const onRedirectCallback = (appState) => {
     navigate((appState && appState.returnTo) || window.location.pathname);
+  };
+  */
+  const onRedirectCallback = (appState) => {
+    // Skicka användaren till sparad returnTo, eller fallback till startsidan
+    navigate(appState?.returnTo || '/');
   };
   return (
     <Auth0Provider onRedirectCallback={onRedirectCallback} {...props}>
@@ -55,6 +79,7 @@ function Auth0ProviderWithRedirectCallback({ children, ...props }) {
 
 function AppRoutes() {
   return (
+    <MyTeamsProvider>
       <Routes>
       {/* Public Routes */}
       <Route path="/" element={<WarpScores />} />
@@ -79,23 +104,40 @@ function AppRoutes() {
       <Route path="/latestMatches/:leagueId/:limit" element={<LatestMatchesPage />} />
       <Route path="/liveMatches/:leagueId" element={<LiveMatchesPage />} />
       <Route path="/team/:teamId" element={<TeamPage />} />
+      <Route path="/article/:slug" element={<ArticlePage />} />
+      <Route path="/staff" element={<StaffPage />} />
+      <Route path="/community" element={<CommunityPage />} />
+      <Route path="/community/discussion/:type/:targetId" element={<CommunityDiscussionPage />} />
+      <Route path="/community/:fanId" element={<CommunityProfilePage />} />
+      <Route path="/staff/user/:profileId" element={<HumanStaffProfilePage />} />
+      <Route path="/staff/:reporterId" element={<ReporterProfilePage />} />
       <Route path="/competition/:competitionId" element={<CompetitionPage />} />
       <Route path="/competition/:competitionId/stats" element={<CompetitionStatsPage />} />
       <Route path="/competition/:competitionId/arena/:race" element={<ArenaPage />} />
       <Route path="/competition/:competitionId/arena/coach/:coachId" element={<ArenaCoachPage />} />
       <Route path="/competition/:competitionId/team/:teamId" element={<TeamPage />} />
-      <Route path="/circuit/:circuitId/leg/:legId" element={<CircuitLegPage />} />
-      <Route path="/circuit/:circuitId/leg/:legId/:entityId" element={<CircuitLegEntityPage />} />
-      <Route path="/circuit/:circuitId" element={<CircuitPage />} />
       {/* Protected Routes/Needing authentication */}
       <Route path="/coachPage" element={<ProtectedRoute component={CoachPage} />} />
+      <Route path="/account" element={<ProtectedRoute component={AccountPage} />} />
+      <Route path="/language" element={<LanguagePreferencesPage />} />
+      <Route path="/admin/localization" element={<ProtectedRoute component={LocalizationAdminPage} />} />
+      <Route path="/my-statistics" element={<ProtectedRoute component={MyStatisticsPage} />} />
       <Route path="/admin" element={<ProtectedRoute component={AdminPage} />} />
-      <Route path="/admin/circuit/:circuitId" element={<ProtectedRoute component={AdminCircuitPage} />} />
-      <Route
-        path="/admin/circuit/:circuitId/leg/:legId"
-        element={<ProtectedRoute component={AdminCircuitLegPage} />}
-      />
-    </Routes>
+      <Route path="/admin/ai-reporters" element={<ProtectedRoute component={AdminAiReportersPage} />} />
+      <Route path="/admin/community-fans" element={<ProtectedRoute component={AdminCommunityFansPage} />} />
+      <Route path="/admin/ai-autonomous-work" element={<ProtectedRoute component={AdminAiAutonomousWorkPage} />} />
+      <Route path="/editor/articles/:articleId" element={<ProtectedRoute component={ArticleEditorPage} />} />
+      <Route path="/editor/articles/new" element={<ProtectedRoute component={ArticleEditorPage} />} />
+      </Routes>
+    </MyTeamsProvider>
+  );
+}
+
+function LocalizedAppRoutes() {
+  return (
+    <I18nProvider>
+      <AppRoutes />
+    </I18nProvider>
   );
 }
 
@@ -114,13 +156,14 @@ function App() {
                 clientId={config.auth0ClientId}
                 authorizationParams={{
                   redirect_uri: window.location.origin,
+                  audience: config.auth0Audience,
                 }}
               >
-                <AppRoutes />
+                <LocalizedAppRoutes />
               </Auth0ProviderWithRedirectCallback>
             ) : (
               <MockAuth0Provider>
-                <AppRoutes />
+                <LocalizedAppRoutes />
               </MockAuth0Provider>
             )}
           </Router>

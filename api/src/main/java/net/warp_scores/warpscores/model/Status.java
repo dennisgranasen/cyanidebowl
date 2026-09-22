@@ -14,6 +14,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -43,9 +44,9 @@ public class Status {
     @NoArgsConstructor
     @ToString
     public static class Maintenance {
-        private Object pc;
-        private Object microsoft;
-        private Object sony;
+        private List<Object> pc;
+        private List<Object> microsoft;
+        private List<Object> sony;
     }
 
     @Getter
@@ -56,7 +57,8 @@ public class Status {
         private String codename;
         private String title;
         private boolean ok;
-        private Object[] regions;
+        private Region[] regions;
+        private ServiceStatus[] services;
     }
 
     @Getter
@@ -84,5 +86,17 @@ public class Status {
         private String serviceName; 
         private Boolean isOk;
     }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @ToString
+    public static class Region {
+        private String codename;
+        private String title;
+        private boolean ok;
+        private ServiceStatus[] services;
+    }
+    
 }
 

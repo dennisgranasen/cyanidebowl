@@ -25,7 +25,6 @@ import net.warp_scores.warpscores.service.cyanide.CyanideApiService;
 import net.warp_scores.warpscores.service.TeamService;
 
 import org.springframework.stereotype.Service;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -72,7 +71,13 @@ public class FetchDataService {
     @Autowired
     private TeamDomainService teamDomainService;
     @Autowired
+    private net.warp_scores.warpscores.ai.interaction.DedicatedFansCommunityReconciliationService dedicatedFansCommunity;
+    @Autowired
+    private net.warp_scores.warpscores.ai.scheduling.AiCompletedMatchFanWorkProducer completedMatchFanWork;
+    @Autowired
     private MatchRepository matchRepository;
+    @Autowired
+    private PyBb3MatchDiscoveryService pyBb3MatchDiscoveryService;
 
     @Value("${cyanide.defaults.fetchMatchMaxAgeLimit:5000}")
     private int defaultFetchMatchMaxAgeLimit;
@@ -82,8 +87,12 @@ public class FetchDataService {
 
     public void fetchNewMatches() {
         if (!cyanideApiProperties.isJobCreationSchedulerActive()) {
-            log.info("Scheduler deactivated by configuration. Skipping checkForNewMatches().");
+            log.debug("Scheduler deactivated by configuration. Skipping checkForNewMatches().");
             return;
+        }
+
+        if (!cyanideApiService.isBb3ApiAvailable()) {
+            log.warn("Cyanide BB3 API is unavailable; BB3 sources will use pybb3 match discovery.");
         }
 
         Calendar calendar = Calendar.getInstance();
@@ -94,6 +103,8 @@ public class FetchDataService {
         dataCollectionRepository.findAll()
                 .stream()
                 .forEach(dc -> {
+                        if (dc.getId() != null && dc.getId().getOpus() == 3
+                                && !cyanideApiService.isBb3ApiAvailable()) return;
                         Date dateLimit;
                         Date maxAge = Date.from(Instant.now().minus(Duration.ofDays(defaultFetchMatchMaxAgeLimit)));
                         if (dc.getDateLastCollectedMatches() == null || dc.getDateLastCollectedMatches().before(maxAge))
@@ -101,7 +112,7 @@ public class FetchDataService {
                         else
                                 dateLimit = dc.getDateLastCollectedMatches();
 
-                        log.info("Checking for new matches for {} since {}.", dc.getId(), dateLimit);
+                        log.debug("Checking for new matches for {} since {}.", dc.getId(), dateLimit);
 
                         Date lastCollection = dc.getDateLastCollectedMatches();
                         if (lastCollection == null || lastCollection.before(ZERO))
@@ -127,11 +138,18 @@ public class FetchDataService {
                         dc.setDateLastCollectedMatches(new Date());
                         dataCollectionRepository.save(dc);
                 } else {
-                            log.info("No new matches found for {}.", dc.getId());
+                            log.debug("No new matches found for {}.", dc.getId());
                         }
                 });
+
+        if (!cyanideApiService.isBb3ApiAvailable()) {
+            log.warn("Cyanide BB3 API failed during match scan; falling back to pybb3 for active registered BB3 leagues.");
+            pyBb3MatchDiscoveryService.scanRegisteredLeagues();
+        }
+
         //matchRepository.findAll().stream().filter(m -> m.getId().getOpus() == 2)
         matchRepository.findNonFinalized().stream()
+                .filter(m -> m.getId() == null || m.getId().getOpus() != 3 || cyanideApiService.isBb3ApiAvailable())
                 .filter(m -> m.getFinished() != null && m.getFinished().after(ZERO))
                 //.filter(m -> m.getId().getOpus() > 1) 
                 .forEach(match -> {
@@ -142,9 +160,11 @@ public class FetchDataService {
                             matchRepository.save(match);
                             return;
                         }
-                        log.debug("Updating match {} with data from API and setting finalized True.", fullMatch.getId());
+                        log.info("Updating match {} with data from API and setting finalized True.", fullMatch.getId());
                         fullMatch.setIsFinalized(true);
-                        matchRepository.save(fullMatch);
+                        Match savedMatch = matchRepository.save(fullMatch);
+                        dedicatedFansCommunity.reconcileAfterMatch(savedMatch);
+                        completedMatchFanWork.onMatchFinalized(savedMatch);
                 });
         
 
@@ -171,7 +191,7 @@ public class FetchDataService {
 
     public void fetchLeagueData() {
         if (!cyanideApiProperties.isJobCreationSchedulerActive()) {
-            log.info("Scheduler deactivated by configuration. Skipping fetchLeagueData().");
+            log.debug("Scheduler deactivated by configuration. Skipping fetchLeagueData().");
             return;
         }
         List<DataCollection> leaguesToCollect = 
@@ -185,10 +205,15 @@ public class FetchDataService {
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .toList();
-        log.info("Loaded {} leagues for data collection.", leagues.size());
+                if (leagues.isEmpty()) {
+                        log.debug("No new leagues loaded for data collection.");
+                }
+                else {
+                        log.info("Loaded {} leagues for data collection.", leagues.size());
+                }       
 
         for (League league : leagues) {
-            log.info(" - Processed league: {}", league.getId());
+            log.debug(" - Processed league: {}", league.getId());
             dataCollectionRepository.findById(league.getId())
                     .ifPresent(dataCollection -> {
                         dataCollection.setDateLastCollectedInfo(new Date());
@@ -201,9 +226,9 @@ public class FetchDataService {
                 .map(DataCollection::getId)
                 .map(competitionService::loadForLeagueAndInitialize)
                 .flatMap(List::stream).toList();
-        log.info("Loaded {} leagues' competitions for data collection.", competitions.size());
+        log.debug("Loaded {} leagues' competitions for data collection.", competitions.size());
         for (Competition competition : competitions) {
-            log.info(" - Processed (league's) competition: {}", competition.getId());
+            log.debug(" - Processed (league's) competition: {}", competition.getId());
             dataCollectionRepository.findById(competition.getId())
                     .ifPresent(dataCollection -> {
                         dataCollection.setDateLastCollectedInfo(new Date());
@@ -214,7 +239,7 @@ public class FetchDataService {
 
     public void fetchCompetitionData() {
         if (!cyanideApiProperties.isJobCreationSchedulerActive()) {
-            log.info("Scheduler deactivated by configuration. Skipping fetchCompetitionData().");
+            log.debug("Scheduler deactivated by configuration. Skipping fetchCompetitionData().");
             return;
         }
         
@@ -228,9 +253,13 @@ public class FetchDataService {
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .toList();
-        log.info("Loaded {} competitions for data collection.", competitions.size());
+        if (competitions.isEmpty()) {
+                log.debug("No new competitions loaded for data collection.");
+        } else {
+                log.debug("Loaded {} competitions for data collection.", competitions.size());
+        }
         for (Competition competition : competitions) {
-            log.info(" - Processed competition: {}", competition.getId());
+            log.debug(" - Processed competition: {}", competition.getId());
             dataCollectionRepository.findById(competition.getId())
                     .ifPresent(dataCollection -> {
                         dataCollection.setDateLastCollectedInfo(new Date());
@@ -242,7 +271,7 @@ public class FetchDataService {
 
     public void fetchTeamData() {
         if (!cyanideApiProperties.isJobCreationSchedulerActive()) {
-            log.info("Scheduler deactivated by configuration. Skipping fetchTeamData().");
+            log.debug("Scheduler deactivated by configuration. Skipping fetchTeamData().");
             return;
         }
 
@@ -251,11 +280,11 @@ public class FetchDataService {
        
         toCollect.stream().
                 forEach(dc -> {
-                        log.info("Fetching team data for {}: {}", dc.getCollectionType(), dc.getId());
+                        log.debug("Fetching team data for {}: {}", dc.getCollectionType(), dc.getId());
                         cyanideApiService.loadTeams(dc.getId(), dc.getCollectionType());;
                         if (dc.getCollectionType() == EntityType.League) {
                                 for (Competition competition : competitionRepository.findByLeagueId(dc.getId())) {
-                                    log.info("Fetching teams for competition {} in league {}.", competition.getId(), dc.getId());
+                                    log.debug("Fetching teams for competition {} in league {}.", competition.getId(), dc.getId());
                                     cyanideApiService.loadTeams(competition.getId(), EntityType.Competition);
                                 }
                         }
@@ -267,7 +296,11 @@ public class FetchDataService {
                 toCollect.stream()
                         .map(DataCollection::getId)
                         .toList());
-        log.info("Will load teams for {} competitions with active team collection.", competitions.size());
+        if (competitions.isEmpty()) {
+                log.debug("No competitions found for active team collection.");
+        } else {
+                log.info("Will load teams for {} competitions with active team collection.", competitions.size());
+        }       
 
         competitions
                 .stream()
@@ -275,16 +308,20 @@ public class FetchDataService {
                 .forEach((c) -> cyanideApiService.loadTeams(c.getId(), EntityType.Competition));
 
         List<Team> teams = teamService.loadAll();
-        log.info("Updating {} teams from the repository.", teams.size());
+        log.debug("Updating {} teams from the repository.", teams.size());
         teams.stream()
                 .filter(Objects::nonNull)
-                .forEach(team -> 
+                .forEach(team ->
                         cyanideApiService.loadTeam(team.getId(), true, ofNullable(true)));
+
+        // Re-read persisted teams after refresh so Dedicated Fans uses the latest
+        // known team state. Reconciliation itself is deterministic and local-only.
+        dedicatedFansCommunity.reconcileAll();
     }
 
     public void fetchCompetitionContestData() {
         if (!cyanideApiProperties.isJobCreationSchedulerActive()) {
-            log.info("Scheduler deactivated by configuration. Skipping fetchLeagueContests().");
+            log.debug("Scheduler deactivated by configuration. Skipping fetchLeagueContests().");
             return;
         }
         List<DataCollection> dcCompetitions = dataCollectionRepository.findByCollectionType(EntityType.Competition);
@@ -300,7 +337,7 @@ public class FetchDataService {
                 .toList();
 
         Map<Identity, Optional<Date>> lastMatchDateByCompetitionId =
-                matchDomainService.getLastMatchDatesForCompetitions(competitionsNeedingContests);
+                matchDomainService.getLastMatchDatesForCompetitions(competitionsNeedingContests.stream().map(Competition::getId).toList());
 
         Stream<Competition> competitionsToCollect = 
                 competitionsNeedingContests.stream()
@@ -334,14 +371,14 @@ public class FetchDataService {
 
 
     public void fetchStatus() {        
-        log.info("Fetching status from Cyanide API.");
+        log.debug("Fetching status from Cyanide API.");
         cyanideApiService.checkApiStatus();
     }
     
 
     public void fetchLeagues() {
         if (!cyanideApiProperties.isJobCreationSchedulerActive()) {
-            log.info("Scheduler deactivated by configuration. Skipping fetchLeagues().");
+            log.debug("Scheduler deactivated by configuration. Skipping fetchLeagues().");
             return;
         }
         List<DataCollection> leaguesToCollect = 
@@ -351,8 +388,12 @@ public class FetchDataService {
                 matchDomainService.getLastMatchDatesForLeagues(
                         existingLeagues.stream().map(League::getId).toList());
 
-        log.info("Will load leagues for {} leagues with active league collection.",
-                leaguesToCollect.size());
+        if (leaguesToCollect.isEmpty()) {
+                log.debug("No leagues found for active league collection.");
+        } else {
+                log.info("Will load leagues for {} leagues with active league collection.",
+                        leaguesToCollect.size());
+        }
 
         List<League> leagues = loadLeaguesFor(leaguesToCollect);
 
@@ -369,14 +410,18 @@ public class FetchDataService {
 
     public void fetchCompetitions() {
         if (!cyanideApiProperties.isJobCreationSchedulerActive()) {
-            log.info("Scheduler deactivated by configuration. Skipping fetchCompetitions().");
+            log.debug("Scheduler deactivated by configuration. Skipping fetchCompetitions().");
             return;
         }
         List<DataCollection> leaguesToCollect = 
                 dataCollectionRepository.findByCollectionType(EntityType.Competition);
 
-        log.info("Will load competitions for {} leagues with active league collection.",
-                leaguesToCollect.size());
+        if (leaguesToCollect.size() == 0) {
+            log.debug("No competitions found for active competition collection.");
+        } else {
+            log.info("Will load competitions for {} leagues with active competition collection.",
+                    leaguesToCollect.size());
+        }
         List<Competition> competitions = loadCompetitionsFor(leaguesToCollect);
 
         competitions
@@ -388,7 +433,7 @@ public class FetchDataService {
                 teamDomainService.findByCompetitionId(competition.getId());
         if (!competition.getFormat().getCanonical()
                 .equals(CompetitionFormat.Ladder) && competition.getTeamsMax() != null && competition.getTeamsMax() > byCompetitionId.size()) {
-            log.info("Loading teams for competition {} as maxTeams ({}) > availableTeams ({}).", competition.getId(),
+            log.debug("Loading teams for competition {} as maxTeams ({}) > availableTeams ({}).", competition.getId(),
                     competition.getTeamsMax(), byCompetitionId.size());
             cyanideApiService.loadTeams(competition.getId(), EntityType.Competition);
         }
@@ -396,7 +441,7 @@ public class FetchDataService {
 
     public void fetchCompetitionContests() {
         if (!cyanideApiProperties.isJobCreationSchedulerActive()) {
-            log.info("Scheduler deactivated by configuration. Skipping fetchLeagueContests().");
+            log.debug("Scheduler deactivated by configuration. Skipping fetchLeagueContests().");
             return;
         }
         List<DataCollection> toCollect = dataCollectionRepository.findByCollectionType(EntityType.Competition);
@@ -410,14 +455,14 @@ public class FetchDataService {
                 .toList();
 
         Map<Identity, Optional<Date>> lastMatchDateByCompetitionId =
-                matchDomainService.getLastMatchDatesForCompetitions(competitionsNeedingContests);
+                matchDomainService.getLastMatchDatesForCompetitions(competitionsNeedingContests.stream().map(Competition::getId).toList());
 
-        List<Competition> competitionsToCollect = new ArrayList<>();
-        competitionsNeedingContests.stream()
-                .filter(c -> this.shouldLoadContests(c, lastMatchDateByCompetitionId));
+        List<Competition> competitionsToCollect = competitionsNeedingContests.stream()
+                .filter(c -> this.shouldLoadContests(c, lastMatchDateByCompetitionId))
+                .toList();
 
         long distinctLeagueCount = competitionsToCollect.stream().map(Competition::getLeagueId).distinct().count();
-        log.info("Will load contests for {} active competitions needing contests of {} different leagues.",
+        log.debug("Will load contests for {} active competitions needing contests of {} different leagues.",
                 competitionsToCollect.size(), distinctLeagueCount);
 
         loadContestsForCompetitions(competitionsToCollect);
@@ -445,7 +490,7 @@ public class FetchDataService {
 
     public void fetchMissingMatches() {
         if (!cyanideApiProperties.isJobCreationSchedulerActive()) {
-            log.info("Scheduler deactivated by configuration. Skipping fetchMissingMatches().");
+            log.debug("Scheduler deactivated by configuration. Skipping fetchMissingMatches().");
             return;
         }
 
@@ -457,8 +502,12 @@ public class FetchDataService {
                 .filter(contest -> nonNull(contest.getMatchId()))
                 .toList();
 
-        log.info("Found {} contests ({} played) with missing matches.", contests.size(),
-                playedContests.size());
+        if (playedContests.isEmpty()) {
+            log.debug("No played contests with missing matches found.");
+        } else {
+            log.info("Found {} contests ({} played) with missing matches.", contests.size(),
+                    playedContests.size());
+        }
 
         List<Identity> matchIds = playedContests
                 .stream()
@@ -470,7 +519,7 @@ public class FetchDataService {
     }
 
     private void fetchMatchesIfNecessary(List<League> leagues, Map<Identity, Optional<Date>> lastKnownMatchDateByLeagueId) {
-        log.info("Checking for new matches for {} leagues.", leagues.size());
+        log.debug("Checking for new matches for {} leagues.", leagues.size());
         Map<League, Optional<Date>> lastReportedMatchDateByLeagueId = leagues.stream()
                 .filter(Objects::nonNull)
                 .collect(toMap(league -> league, league -> ofNullable(league.getDateLastMatch())));
@@ -485,7 +534,11 @@ public class FetchDataService {
                 })
                 .map(Map.Entry::getKey)
                 .toList();
-        log.info("Found {} leagues with reported new matches.", leaguesWithReportedNewMatches.size());
+        if (leaguesWithReportedNewMatches.isEmpty()) {
+            log.debug("No leagues with reported new matches found.");
+        } else {
+            log.debug("Found {} leagues with reported new matches.", leaguesWithReportedNewMatches.size());
+        }
         if (!leaguesWithReportedNewMatches.isEmpty()) {
             fetchMatchesForLeagues(leaguesWithReportedNewMatches);
         }
@@ -504,19 +557,23 @@ public class FetchDataService {
                         lastMatchDateKnownByLeagueId.getOrDefault(league.getId(), Optional.empty())))
                 .toList();
 
-        log.info("Will load matches for {} leagues.", filteredLeagues.size());
+        if (filteredLeagues.isEmpty()) {
+            log.debug("No leagues with matches after the last known match date found.");
+        } else {
+            log.debug("Will load matches for {} leagues.", filteredLeagues.size());
+        }
         loadMatchesForLeagues(filteredLeagues, lastMatchDateKnownByLeagueId, earliestStartDateByLeagueId);
     }
 
     public void fetchTeams() {
         if (!cyanideApiProperties.isJobCreationSchedulerActive()) {
-            log.info("Scheduler deactivated by configuration. Skipping fetchTeams().");
+            log.debug("Scheduler deactivated by configuration. Skipping fetchTeams().");
             return;
         }
 
         List<Competition> competitions = competitionRepository.findByStatusInAndFormatIn(
                 List.of(InProgress), List.of(CompetitionFormat.RoundRobin));
-        log.info("Will load teams for {} round robin competitions in progress.", competitions.size());
+        log.debug("Will load teams for {} round robin competitions in progress.", competitions.size());
 
         List<Team> teams = competitions
                 .stream()
@@ -525,7 +582,11 @@ public class FetchDataService {
                 .flatMap(List::stream)
                 .toList();
 
-        log.info("Loaded {} teams.", teams.size());
+        if (teams.isEmpty()) {
+            log.debug("No teams loaded.");
+        } else {
+            log.info("Loaded {} teams.", teams.size());
+        }
 
         Map<Identity, Optional<Date>> lastMatchDateKnownByTeamId = matchDomainService.getLastMatchDatesForTeams(teams);
         Map<Identity, Optional<Date>> earliestStartDateByTeamId = teams
@@ -544,14 +605,18 @@ public class FetchDataService {
                         lastMatchDateKnownByTeamId.get(team.getId())))
                 .toList();
 
-        log.info("Will load matches for {} teams.", teams.size());
+        if (teams.isEmpty()) {
+            log.debug("No teams with matches after the last known match date.");
+        } else {
+            log.info("Will load matches for {} teams.", teams.size());
+        }
         loadMatchesForTeams(teams, lastMatchDateKnownByTeamId, earliestStartDateByTeamId);
     }
 
     private List<League> loadLeaguesFor(
             List<DataCollection> leaguesToCollect) {
         if (leaguesToCollect.isEmpty()) {
-            log.info("No leagues to collect. Skipping loadLeaguesFor().");
+            log.debug("No leagues to collect. Skipping loadLeaguesFor().");
             return List.of();
         }
 
@@ -561,14 +626,18 @@ public class FetchDataService {
                 .map(lc ->
                         cyanideApiService.loadLeague(lc.getId()))
                 .collect(Collectors.toList());
-        log.info("Loaded {} leagues.", leagues.size());
+        if (leagues.isEmpty()) {
+            log.debug("No leagues loaded.");
+        } else {
+            log.info("Loaded {} leagues.", leagues.size());
+        }
         return leagues;
     }
 
     private List<Competition> loadCompetitionsFor(List<DataCollection> competitionsToCollect) {
-        log.info("Loading competitions for data collection:");
+        log.debug("Loading competitions for data collection:");
         for (DataCollection dc : competitionsToCollect) {
-            log.info(" - {}", dc.getId());
+            log.debug(" - {}", dc.getId());
         };
         List<Competition> competitions = competitionsToCollect
                 .stream()
@@ -582,7 +651,11 @@ public class FetchDataService {
 
         //fetchMatchesIfNecessary(competitions);
 
-
+        if (competitions.isEmpty()) {
+            log.debug("No competitions loaded.");
+        } else {
+            log.info("Loaded {} competitions.", competitions.size());
+        }
         return competitions;
     }
 
@@ -598,7 +671,7 @@ public class FetchDataService {
                 .stream()
                 .map(c -> 
                 {
-                        log.info(null != c.getLeagueId()
+                        log.debug(null != c.getLeagueId()
                                 ? "Loading contests for competition {} in league {}."
                                 : "Loading contests for competition {}.",
                                 c.getId(), c.getLeagueId());
@@ -606,16 +679,25 @@ public class FetchDataService {
                 })
                 .flatMap(List::stream)
                 .toList();
-        log.info("Loaded {} contests.", contests.size());
+        if (contests.isEmpty()) {
+                log.debug("No contests loaded for competitions.");
+        }
+        else {
+                log.info("Loaded {} contests.", contests.size());
+        }
     }
 
     private void loadContestsForLeagues(List<League> leagues) {
         List<Contest> contests = leagues
                 .stream()
-                .map(cyanideApiService::loadContests)
-                .flatMap(List::stream)
+                .flatMap(league -> cyanideApiService.loadContests(league).stream())
                 .toList();
-        log.info("Loaded {} contests.", contests.size());
+        if (contests.isEmpty()) {
+                log.debug("No contests loaded for leagues.");
+        }
+        else {
+            log.info("Loaded {} contests.", contests.size());
+        }       
     }
 
     private void loadMatchesForLeagues(List<League> leagues, Map<Identity, Optional<Date>> lastMatchDateKnownByLeagueId,
@@ -635,7 +717,12 @@ public class FetchDataService {
                 .map(m -> (Identity)new SimpleIdentity(m.getMatchId(), m.getId().getOpus()))
                 .toList();
 
-        log.info("Got {} skeleton matches.", matchIds.size());
+        if (matchIds.isEmpty()) {
+                log.debug("No skeleton matches loaded for leagues.");
+        }
+        else {
+                log.info("Got {} skeleton matches.", matchIds.size());
+        }       
 
         loadMatches(matchIds);
     }
@@ -655,6 +742,7 @@ public class FetchDataService {
         matchesByTeam.forEach((id, currMatches) ->
                 latestTeamByTeam.putIfAbsent(id, getTeamFromLatestMatch(id, currMatches)));
 
+        
         log.info("Creating/Updating {} teams.", latestTeamByTeam.size());
         latestTeamByTeam
                 .values()
@@ -699,7 +787,7 @@ public class FetchDataService {
 
     private boolean teamHasMatchesAfterLastKnown(Team team, Optional<Date> lastMatchDateKnown) {
         Optional<Date> lastMatchDateReported = ofNullable(team.getDateLastMatch());
-        log.info(
+        log.debug(
                 "Checking team {} for having matches reported after last known date (lastMatchDateKnown: {}, lastMatchDateReported: {}).",
                 team.getId(), lastMatchDateKnown, lastMatchDateReported);
         return lastMatchDateReported.isPresent() && (lastMatchDateKnown.isEmpty() || lastMatchDateKnown.get()
@@ -708,7 +796,7 @@ public class FetchDataService {
 
     private boolean leagueHasMatchesAfterLastKnown(League league, Optional<Date> lastMatchDateKnown) {
         Optional<Date> lastMatchDateReported = ofNullable(league.getDateLastMatch());
-        log.info(
+        log.debug(
                 "Checking league {} for having matches reported after last known date (lastMatchDateKnown: {}, lastMatchDateReported: {}).",
                 league.getId(), lastMatchDateKnown, lastMatchDateReported);
         return lastMatchDateReported.isPresent() && (lastMatchDateKnown.isEmpty() || lastMatchDateKnown.get()
