@@ -1,10 +1,12 @@
 package net.warp_scores.warpscores.service;
 
+import net.warp_scores.warpscores.config.CachingConfig;
 import net.warp_scores.warpscores.domain.persistence.SeasonRepository;
 import net.warp_scores.warpscores.domain.persistence.StageRepository;
 import net.warp_scores.warpscores.model.Season;
 import net.warp_scores.warpscores.model.Stage;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import java.util.List;
 
@@ -14,6 +16,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 class StatisticsServiceTest {
+    @Test
+    void springCanCreateStatisticsServiceWhenMultipleCacheBeansExist() {
+        try (var context = new AnnotationConfigApplicationContext()) {
+            context.register(CachingConfig.class);
+            context.registerBean(SeasonRepository.class, () -> mock(SeasonRepository.class));
+            context.registerBean(StageRepository.class, () -> mock(StageRepository.class));
+            context.registerBean(StageMatchService.class, () -> mock(StageMatchService.class));
+            context.register(StatisticsService.class);
+
+            context.refresh();
+
+            assertThat(context.getBean(StatisticsService.class)).isNotNull();
+        }
+    }
+
     @Test void marathonVariantsAndSeasonViewReuseOneLeagueDataset() {
         var seasons = mock(SeasonRepository.class);
         var stages = mock(StageRepository.class);

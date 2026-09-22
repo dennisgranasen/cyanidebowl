@@ -1,6 +1,5 @@
 package net.warp_scores.warpscores.service;
 
-import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.controller.StatisticsResponse;
 import net.warp_scores.warpscores.domain.persistence.SeasonRepository;
 import net.warp_scores.warpscores.domain.persistence.StageRepository;
@@ -17,14 +16,23 @@ import java.util.*;
 import java.util.function.ToIntFunction;
 
 @Service
-@RequiredArgsConstructor
 public class StatisticsService {
     private static final int TOP = 10;
     private final SeasonRepository seasons;
     private final StageRepository stages;
     private final StageMatchService stageMatches;
-    @Qualifier(net.warp_scores.warpscores.CacheNames.MARATHON_DATASET)
     private final Cache<Object, Object> marathonDatasets;
+
+    public StatisticsService(
+            SeasonRepository seasons,
+            StageRepository stages,
+            StageMatchService stageMatches,
+            @Qualifier(net.warp_scores.warpscores.CacheNames.MARATHON_DATASET) Cache<Object, Object> marathonDatasets) {
+        this.seasons = seasons;
+        this.stages = stages;
+        this.stageMatches = stageMatches;
+        this.marathonDatasets = marathonDatasets;
+    }
 
     @Transactional(readOnly = true)
     @Cacheable(value = "seasonStatistics", key = "#leagueSystemId + ':' + #seasonId")
