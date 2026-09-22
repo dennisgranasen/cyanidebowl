@@ -35,9 +35,14 @@ public class AiGenerationTraceStore {
 
     private final AiGenerationTraceRepository repository;
 
-    /** Retention for generation traces; clamped to at least one day. */
-    @Value("${warpscores.ai-reporting.trace-retention-days:30}")
-    private int retentionDays = 30;
+    @Value("${warpscores.ai-reporting.trace-success-retention-days:3}")
+    private int successRetentionDays = 3;
+
+    @Value("${warpscores.ai-reporting.trace-failure-retention-days:14}")
+    private int failureRetentionDays = 14;
+
+    @Value("${warpscores.ai-reporting.trace-rate-limit-retention-days:1}")
+    private int rateLimitRetentionDays = 1;
 
     public void recordSuccess(
             String reporterId,
@@ -46,7 +51,8 @@ public class AiGenerationTraceStore {
             CanonicalLlmResponse response,
             long durationMs) {
         try {
-            AiGenerationTrace trace = baseTrace(reporterId, providerId, request, durationMs);
+                AiGenerationTrace trace = baseTrace(
+                    reporterId, providerId, request, durationMs, successRetentionDays);
             trace.setStatus(AiGenerationTrace.Status.SUCCESS);
             trace.setProviderRequestId(response.providerRequestId());
             trace.setInputTokens(response.usage().inputTokens());
@@ -65,7 +71,8 @@ public class AiGenerationTraceStore {
             LlmProviderException failure,
             long durationMs) {
         try {
-            AiGenerationTrace trace = baseTrace(reporterId, providerId, request, durationMs);
+                AiGenerationTrace trace = baseTrace(
+                    reporterId, providerId, request, durationMs, failureRetentionDays(failure));
             trace.setStatus(AiGenerationTrace.Status.FAILED);
             trace.setFailureKind(failure.kind().name());
             trace.setFailureStatusCode(failure.statusCode());
@@ -83,7 +90,8 @@ public class AiGenerationTraceStore {
             RuntimeException failure,
             long durationMs) {
         try {
-            AiGenerationTrace trace = baseTrace(reporterId, providerId, request, durationMs);
+                AiGenerationTrace trace = baseTrace(
+                    reporterId, providerId, request, durationMs, failureRetentionDays);
             trace.setStatus(AiGenerationTrace.Status.FAILED);
             trace.setFailureKind(failure.getClass().getSimpleName());
             trace.setFailureMessage(limit(failure.getMessage(), MAX_FAILURE_MESSAGE_CHARS));
@@ -97,7 +105,8 @@ public class AiGenerationTraceStore {
             String reporterId,
             String providerId,
             CanonicalLlmRequest request,
-            long durationMs) {
+            long durationMs,
+            int retentionDays) {
         AiGenerationTrace trace = new AiGenerationTrace();
         trace.setId(UUID.randomUUID().toString());
         trace.setReporterId(reporterId);
@@ -133,6 +142,13 @@ public class AiGenerationTraceStore {
         trace.setTaskInstructionPreview(
                 limit(instruction, MAX_INSTRUCTION_PREVIEW_CHARS));
         return trace;
+    }
+
+    private int failureRetentionDays(LlmProviderException failure) {
+        if (failure.kind() == LlmProviderException.Kind.RATE_LIMIT) {
+            return Math.min(failureRetentionDays, Math.max(1, rateLimitRetentionDays));
+        }
+        return failureRetentionDays;
     }
 
     private static AiGenerationTrace.ContextSnapshot snapshot(

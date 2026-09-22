@@ -27,4 +27,8 @@ public interface AiCommunityMediaGenerationRequestRepository
             findByStatusAndStartedAtBefore(
                     AiCommunityMediaGenerationRequest.Status status,
                     java.time.Instant startedAt);
+
+    long deleteByStatusInAndCompletedAtBefore(
+            java.util.List<AiCommunityMediaGenerationRequest.Status> statuses,
+            java.time.Instant completedAt);
 }

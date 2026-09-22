@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Instant;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 class AiGenerationTraceRetentionServiceTest {
@@ -17,20 +18,29 @@ class AiGenerationTraceRetentionServiceTest {
 
         service.cleanup();
 
-        verify(repository).deleteByCreatedAtBefore(any(Instant.class));
+        verify(repository).deleteByFailureKindAndCreatedAtBefore(
+                eq("RATE_LIMIT"), any(Instant.class));
+        verify(repository).deleteByStatusAndCreatedAtBefore(
+                eq(AiGenerationTrace.Status.SUCCESS), any(Instant.class));
+        verify(repository).deleteByStatusAndCreatedAtBefore(
+                eq(AiGenerationTrace.Status.FAILED), any(Instant.class));
     }
 
     @Test
     void cleanupFailureDoesNotEscape() {
         AiGenerationTraceRepository repository =
                 mock(AiGenerationTraceRepository.class);
-        when(repository.deleteByCreatedAtBefore(any(Instant.class)))
+        when(repository.deleteByStatusAndCreatedAtBefore(
+                any(AiGenerationTrace.Status.class), any(Instant.class)))
                 .thenThrow(new RuntimeException("mongo down"));
         AiGenerationTraceRetentionService service =
                 new AiGenerationTraceRetentionService(repository);
 
         service.cleanup();
 
-        verify(repository).deleteByCreatedAtBefore(any(Instant.class));
+        verify(repository).deleteByFailureKindAndCreatedAtBefore(
+                eq("RATE_LIMIT"), any(Instant.class));
+        verify(repository).deleteByStatusAndCreatedAtBefore(
+                eq(AiGenerationTrace.Status.SUCCESS), any(Instant.class));
     }
 }

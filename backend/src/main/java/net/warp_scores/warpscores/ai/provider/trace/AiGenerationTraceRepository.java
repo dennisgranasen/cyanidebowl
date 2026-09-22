@@ -26,4 +26,9 @@ public interface AiGenerationTraceRepository
             Instant createdAt);
 
     long deleteByCreatedAtBefore(Instant cutoff);
+
+    long deleteByStatusAndCreatedAtBefore(
+            AiGenerationTrace.Status status, Instant cutoff);
+
+        long deleteByFailureKindAndCreatedAtBefore(String failureKind, Instant cutoff);
 }

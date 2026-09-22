@@ -210,6 +210,15 @@ public class AiAutonomousWorkQueue {
         return mongoTemplate.remove(query, AiAutonomousWorkItem.class).getDeletedCount();
     }
 
+        public long deleteItemsByStatusCompletedBefore(
+                AiAutonomousWorkItem.Status status,
+                Instant cutoff) {
+            Criteria criteria = Criteria.where("status").is(status)
+                                .and("completedAt").lt(cutoff);
+                return mongoTemplate.remove(new Query(criteria), AiAutonomousWorkItem.class)
+                                .getDeletedCount();
+        }
+
     public QueueSnapshot snapshot() {
         long queued = count(AiAutonomousWorkItem.Status.QUEUED);
         long running = count(AiAutonomousWorkItem.Status.RUNNING);

@@ -272,3 +272,14 @@ warpscores:
 
   ai-reporting:
     enabled: false # Set to true to enable AI reporting, must fix implementation first.
+    trace-success-retention-days: ${AI_TRACE_SUCCESS_RETENTION_DAYS:3}
+    trace-rate-limit-retention-days: ${AI_TRACE_RATE_LIMIT_RETENTION_DAYS:1}
+    trace-failure-retention-days: ${AI_TRACE_FAILURE_RETENTION_DAYS:14}
+
+  ai-retention:
+    completed-work-days: ${AI_COMPLETED_WORK_RETENTION_DAYS:3}
+    failed-work-days: ${AI_FAILED_WORK_RETENTION_DAYS:30}
+
+  cache:
+    api-retention-days: ${API_CACHE_RETENTION_DAYS:7}
+    image-retention-days: ${IMAGE_CACHE_RETENTION_DAYS:30}
