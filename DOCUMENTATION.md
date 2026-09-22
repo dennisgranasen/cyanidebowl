@@ -13,6 +13,7 @@ directly from code or `.env.example`, it normally should not be copied into pros
 | Current behavior | Code and tests on `dev` |
 | Environment variables and defaults | `.env.example`, Spring configuration and Compose |
 | Container topology and volumes | `compose.yaml` plus platform overrides |
+| Product capabilities beyond Warp Scores | `FEATURES.md` |
 | Broad project direction | `ROADMAP.md` |
 | Actionable engineering work | `BACKLOG.md` |
 | Implemented changes | `CHANGELOG.md` |
@@ -36,6 +37,8 @@ directly from code or `.env.example`, it normally should not be copied into pros
    in the repository.
 7. When implementation and documentation disagree, fix the owning document in the same
    change rather than adding another explanatory document.
+8. Keep `FEATURES.md` short and capability-oriented. Do not turn it into a release log,
+   technical design or duplicate of the roadmap.
 
 ## Existing detailed documents
 

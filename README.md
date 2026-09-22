@@ -98,6 +98,7 @@ profile-file content.
 Read `DOCUMENTATION.md` before adding new documentation. The project deliberately keeps
 the documentation surface small and avoids duplicating code/configuration details.
 
+- `FEATURES.md` - concise product capabilities beyond the Warp Scores foundation.
 - `ROADMAP.md` — broad remaining direction.
 - `BACKLOG.md` — active actionable work only.
 - `CHANGELOG.md` — implemented user/developer-visible changes.

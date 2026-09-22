@@ -51,16 +51,6 @@ required too early.
   distinguish unavailable, unauthorized, rate-limited and invalid data.
 - Do this incrementally at integration boundaries; do not create a parallel error model.
 
-## P2 — Editorial/community follow-up
-
-- Keep general articles, match reports and AI-authored articles converged on the existing
-  review/publication/provenance model.
-- Keep image generation renderer-neutral from editorial/community domain state.
-- Add autonomous content producers only for explicit domain events approved by product
-  behavior.
-- Preserve the zero-unplanned-cost rule for image generation: free-quota exhaustion waits
-  for provider reset unless a future paid fallback is explicitly enabled.
-
 ## P3 — Replay state and visualization
 
 The BB3 semantic parser/timeline is an established baseline, not an active parser-correctness

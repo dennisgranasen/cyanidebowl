@@ -1,4 +1,7 @@
-# Changelog for [warp-scores](README.md) 
+# Changelog for BlaskScore
+
+Implemented user- and developer-visible changes. The concise product overview lives in
+`FEATURES.md`; planned work lives in `ROADMAP.md` and `BACKLOG.md`.
 
 ## Unreleased
 
@@ -107,15 +110,5 @@
 - Isolated server-profile tests from scheduled/background work and persistence where
   those dependencies are outside the behavior under test.
 
-### Description
+Add a dated release heading when a tagged release is published.
 
-Initial release after various SNAPSHOT releases in early phase of project
-
-### Features
-
-- Scheduled pulls from Cyanide API
-- UI representation for leagues, competitions, teams, ranks, contests and match details
-- Support for Wissen (Swiss), RoundRobin and Knockout competition formats
-- Check for API Status by Cyanide and pause scheduled pulls on status 'down'
-- Show latest and live matches of a league
-- OAuth (using Auth0) with existing discord accounts
