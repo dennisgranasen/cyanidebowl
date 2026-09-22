@@ -5,11 +5,13 @@ import net.warp_scores.warpscores.ai.agents.AiReporterDefinition;
 import net.warp_scores.warpscores.ai.agents.AiReporterEffectiveProfileService;
 import net.warp_scores.warpscores.ai.agents.AiReporterRegistry;
 import net.warp_scores.warpscores.ai.provider.AiGenerationAdmissionService;
+import net.warp_scores.warpscores.ai.interaction.EditorialImageRequestService;
 import net.warp_scores.warpscores.domain.persistence.AiSettingsRepository;
 import net.warp_scores.warpscores.domain.persistence.AiReporterRuntimeStateRepository;
 import net.warp_scores.warpscores.model.AiSettings;
 import net.warp_scores.warpscores.model.AiInitiativePolicy;
 import net.warp_scores.warpscores.model.AiReporterRuntimeState;
+import net.warp_scores.warpscores.model.EditorialImageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.util.StringUtils;
@@ -29,6 +31,7 @@ public class AiReporterAdminController {
     private final AiReporterRuntimeStateRepository runtimeRepository;
     private final AiSettingsRepository settingsRepository;
     private final AiGenerationAdmissionService generationAdmission;
+        private final EditorialImageRequestService imageRequests;
 
     @GetMapping
     public List<AdminReporter> list() {
@@ -81,6 +84,44 @@ public class AiReporterAdminController {
         settingsRepository.save(settings);
         return policy;
     }
+
+        @GetMapping("/image-approval-policy")
+        public EditorialImageRequest.ApprovalPolicy imageApprovalPolicy() {
+                return settingsRepository.findById(AiSettings.GLOBAL_ID)
+                                .map(AiSettings::getEditorialImageApprovalPolicy)
+                                .orElse(EditorialImageRequest.ApprovalPolicy.EDITORIAL);
+        }
+
+        public record ImageApprovalPolicyUpdate(EditorialImageRequest.ApprovalPolicy policy) {}
+
+        @PutMapping("/image-approval-policy")
+        public EditorialImageRequest.ApprovalPolicy updateImageApprovalPolicy(
+                        @RequestBody ImageApprovalPolicyUpdate update) {
+                if (update == null || update.policy() == null) {
+                        throw new IllegalArgumentException("image approval policy is required");
+                }
+                AiSettings settings = settingsRepository.findById(AiSettings.GLOBAL_ID)
+                                .orElseGet(AiSettings::new);
+                settings.setEditorialImageApprovalPolicy(update.policy());
+                settingsRepository.save(settings);
+                return update.policy();
+        }
+
+        @GetMapping("/editorial-image-requests")
+        public List<EditorialImageRequest> editorialImageRequests() {
+                return imageRequests.list();
+        }
+
+        public record ReviewImageRequest(boolean approve) {}
+
+        @PostMapping("/editorial-image-requests/{id}/review")
+        public EditorialImageRequest reviewEditorialImageRequest(
+                        @PathVariable String id,
+                        @RequestBody ReviewImageRequest review,
+                        java.security.Principal principal) {
+                if (review == null) throw new IllegalArgumentException("review is required");
+                return imageRequests.review(id, review.approve(), principal.getName(), true);
+        }
 
     @GetMapping("/limits")
     public AdminGenerationLimits generationLimits() {

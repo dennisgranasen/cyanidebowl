@@ -332,7 +332,9 @@ public class MatchArticleService {
     public ReportingContext imageContext(Authentication auth, String matchId, String reporterId) {
         requireAuthenticated(auth);
         MatchContext ctx = matchContext(auth, matchId);
-        if (!ctx.editor() && claimedCoachIds(auth).isEmpty()) throw new AccessDeniedException("Match author permission required");
+        if (!ctx.editor() && !ctx.participatingCoach()) {
+            throw new AccessDeniedException("Match author permission required");
+        }
         Long authorId;
         if (StringUtils.hasText(reporterId)) {
             authorId = reporterRegistry.require(reporterId).getUserId();

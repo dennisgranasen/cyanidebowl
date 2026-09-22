@@ -53,6 +53,7 @@ public class MatchArticleAiInteractionService {
     private final AiInitiativePolicyService initiativePolicy;
     private final AiCommunityFanInteractionService fanInteractions;
     private final net.warp_scores.warpscores.service.ArticleImageSubjects imageSubjects;
+    private final AiGenerationReservationService reservations;
 
     @Async
     public void onPublished(MatchArticle article) {
@@ -222,28 +223,31 @@ public class MatchArticleAiInteractionService {
             AiReporterDefinition reporter) {
         String sourceRevision = "article-comment:" + article.getId();
         if (alreadyGenerated(article.getId(), reporter.getId(), sourceRevision)) return;
+        AiGenerationReservationService.Reservation reservation =
+            reservations.reserve(reservationKey(article.getId(), reporter.getId(), sourceRevision));
+        if (reservation != null && !reservation.acquired()) return;
 
-        if (!initiativePolicy.staffMayRunAutonomously(
+        boolean completed = false;
+        try {
+            if (alreadyGenerated(article.getId(), reporter.getId(), sourceRevision)) return;
+            if (!initiativePolicy.staffMayRunAutonomously(
                 article.getLeagueSystemId(),
                 AiInitiativePolicyService.StaffActivity.ARTICLE_COMMENT)) {
             return;
-        }
-
-        if (!autonomousActivity.tryConsume(
+            }
+            if (!autonomousActivity.tryConsume(
                 reporter,
                 ReporterAutonomousActivityGate.Activity.COMMENT).allowed()) {
             return;
-        }
-
-        ContextPlan plan = contextPlanner.plan(
+            }
+            ContextPlan plan = contextPlanner.plan(
                 ContextTaskType.ARTICLE_COMMENT,
                 reporter.getUserId(),
                 new SubjectRef(SubjectType.MATCH, article.getMatchId()),
                 new SubjectRef(SubjectType.ARTICLE, article.getId()),
                 List.of());
-        AssembledContext context = contextAssembly.assemble(plan);
-
-        String task = """
+            AssembledContext context = contextAssembly.assemble(plan);
+            String task = """
                 Write a short public comment on the match report below.
                 Respond unmistakably in your own reporter voice. You may agree, mock, praise,
                 complain or challenge the author as your persona warrants.
@@ -252,10 +256,14 @@ public class MatchArticleAiInteractionService {
 
                 MATCH REPORT TITLE:
                 """ + article.getTitle() + "\n\nMATCH REPORT BODY:\n" + article.getBody() + "\nILLUSTRATIONS (you may be depicted):\n" + imageSubjects.descriptions(article.getBodyHtml());
-
-        CanonicalLlmResponse response = generate(
-                reporter, ContextTaskType.ARTICLE_COMMENT, context, task, 900);
-        saveGeneratedComment(article, reporter, response, sourceRevision, null);
+                CanonicalLlmResponse response = generate(
+                    reporter, ContextTaskType.ARTICLE_COMMENT, context, task, 900);
+                saveGeneratedComment(article, reporter, response, sourceRevision, null);
+                complete(reservation, article.getId(), reporter.getId(), sourceRevision, sourceRevision);
+                completed = true;
+            } finally {
+                if (!completed) release(reservation, article.getId(), reporter.getId(), sourceRevision);
+            }
     }
 
     private void replyToCommentOnce(
@@ -265,23 +273,27 @@ public class MatchArticleAiInteractionService {
             boolean autonomous) {
         String sourceRevision = "reply-to:" + source.getId();
         if (alreadyGenerated(article.getId(), reporter.getId(), sourceRevision)) return;
+        AiGenerationReservationService.Reservation reservation =
+            reservations.reserve(reservationKey(article.getId(), reporter.getId(), sourceRevision));
+        if (reservation != null && !reservation.acquired()) return;
 
-        if (autonomous
+        boolean completed = false;
+        try {
+            if (alreadyGenerated(article.getId(), reporter.getId(), sourceRevision)) return;
+            if (autonomous
                 && !autonomousActivity.tryConsume(
-                        reporter,
-                        ReporterAutonomousActivityGate.Activity.COMMENT).allowed()) {
+                    reporter,
+                    ReporterAutonomousActivityGate.Activity.COMMENT).allowed()) {
             return;
-        }
-
-        ContextPlan plan = contextPlanner.plan(
+            }
+            ContextPlan plan = contextPlanner.plan(
                 ContextTaskType.SOCIAL_REPLY,
                 reporter.getUserId(),
                 new SubjectRef(SubjectType.MATCH, article.getMatchId()),
                 new SubjectRef(SubjectType.ARTICLE, article.getId()),
                 List.of());
-        AssembledContext context = contextAssembly.assemble(plan);
-
-        String task = """
+            AssembledContext context = contextAssembly.assemble(plan);
+            String task = """
                 Reply publicly to the user comment below in your own reporter voice.
                 The conversation is attached to a match report. You may disagree, tease,
                 praise, rebut or defend an earlier take, but do not invent match facts.
@@ -294,10 +306,14 @@ public class MatchArticleAiInteractionService {
                 + (source.getAuthorDisplayName() == null
                         ? "a user" : source.getAuthorDisplayName())
                 + ":\n" + source.getBody();
-
-        CanonicalLlmResponse response = generate(
-                reporter, ContextTaskType.SOCIAL_REPLY, context, task, 800);
-        saveGeneratedComment(article, reporter, response, sourceRevision, source.getId());
+                CanonicalLlmResponse response = generate(
+                    reporter, ContextTaskType.SOCIAL_REPLY, context, task, 800);
+                saveGeneratedComment(article, reporter, response, sourceRevision, source.getId());
+                complete(reservation, article.getId(), reporter.getId(), sourceRevision, sourceRevision);
+                completed = true;
+            } finally {
+                if (!completed) release(reservation, article.getId(), reporter.getId(), sourceRevision);
+            }
     }
 
     private CanonicalLlmResponse generate(
@@ -372,6 +388,32 @@ public class MatchArticleAiInteractionService {
                 .anyMatch(comment -> comment.getGeneration() != null
                         && reporterId.equals(comment.getGeneration().getAgentId())
                         && sourceRevision.equals(comment.getGeneration().getSourceRevision()));
+    }
+
+    private static String reservationKey(String articleId, String reporterId, String sourceRevision) {
+        return "comment:" + articleId + ":" + reporterId + ":" + sourceRevision;
+    }
+
+    private void complete(
+            AiGenerationReservationService.Reservation reservation,
+            String articleId,
+            String reporterId,
+            String sourceRevision,
+            String resultId) {
+        if (reservation != null) {
+            reservations.complete(reservationKey(articleId, reporterId, sourceRevision),
+                    reservation.owner(), resultId);
+        }
+    }
+
+    private void release(
+            AiGenerationReservationService.Reservation reservation,
+            String articleId,
+            String reporterId,
+            String sourceRevision) {
+        if (reservation != null) {
+            reservations.release(reservationKey(articleId, reporterId, sourceRevision), reservation.owner());
+        }
     }
 
     static boolean isExplicitDirectMention(

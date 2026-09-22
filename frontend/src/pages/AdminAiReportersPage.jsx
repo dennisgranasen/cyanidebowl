@@ -36,6 +36,8 @@ function AdminAiReportersPage() {
   const navigate = useNavigate();
   const [reporters, setReporters] = useState(null);
   const [settings, setSettings] = useState(null);
+  const [imagePolicy, setImagePolicy] = useState('EDITORIAL');
+  const [imageRequests, setImageRequests] = useState([]);
   const [savingSettings, setSavingSettings] = useState(false);
   const [saving, setSaving] = useState({});
   const [error, setError] = useState(null);
@@ -51,10 +53,14 @@ function AdminAiReportersPage() {
     Promise.all([
       AiReporterApi.adminReporters(...auth),
       AiReporterApi.adminSettings(...auth),
+      AiReporterApi.imageApprovalPolicy(...auth),
+      AiReporterApi.editorialImageRequests(...auth),
     ])
-      .then(([loadedReporters, loadedSettings]) => {
+      .then(([loadedReporters, loadedSettings, loadedImagePolicy, loadedImageRequests]) => {
         setReporters(loadedReporters);
         setSettings(loadedSettings);
+        setImagePolicy(loadedImagePolicy);
+        setImageRequests(loadedImageRequests);
       })
       .catch(setError);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -125,6 +131,31 @@ function AdminAiReportersPage() {
     }
   };
 
+  const saveImagePolicy = async (policy) => {
+    setSavingSettings(true);
+    setError(null);
+    try {
+      setImagePolicy(await AiReporterApi.updateImageApprovalPolicy(policy, ...auth));
+    } catch (reason) {
+      setError(reason);
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  const reviewImageRequest = async (id, approve) => {
+    setSaving((current) => ({ ...current, [`image:${id}`]: true }));
+    setError(null);
+    try {
+      const updated = await AiReporterApi.reviewEditorialImageRequest(id, approve, ...auth);
+      setImageRequests((current) => current.map((item) => item.id === id ? updated : item));
+    } catch (reason) {
+      setError(reason);
+    } finally {
+      setSaving((current) => ({ ...current, [`image:${id}`]: false }));
+    }
+  };
+
   return (
     <Box p={{ base: 3, md: 6 }}>
       <Navigation currentPage="admin" parentPage="admin" />
@@ -134,7 +165,7 @@ function AdminAiReportersPage() {
       {error && <Text mt={4} color="red.300">{error.message || String(error)}</Text>}
 
       {settings && (
-        <Box mt={5} maxW="360px">
+        <Box mt={5} maxW="420px">
           <Text mb={1} fontSize="sm" fontWeight="700">{intl.formatMessage({ id: 'aiAdmin.defaultArticleLanguage' })}</Text>
           <Select
             size="sm"
@@ -148,6 +179,37 @@ function AdminAiReportersPage() {
           <Text mt={1} fontSize="xs" color="gray.500">
             {intl.formatMessage({ id: 'aiAdmin.defaultLanguageHelp' })}
           </Text>
+          <Text mt={5} mb={1} fontSize="sm" fontWeight="700">Editorial image requests</Text>
+          <Select size="sm" value={imagePolicy} isDisabled={savingSettings}
+            onChange={(e) => saveImagePolicy(e.target.value)}>
+            <option value="AUTO">Auto-approve and develop</option>
+            <option value="EDITORIAL">Require editorial approval</option>
+            <option value="TECHNICIAN">Require technician approval</option>
+          </Select>
+          <Text mt={1} fontSize="xs" color="gray.500">
+            Requested images remain commissioned until their required approval is given.
+          </Text>
+        </Box>
+      )}
+
+      {imageRequests.length > 0 && (
+        <Box mt={6} borderWidth="1px" borderRadius="lg" overflow="auto">
+          <Box px={3} py={2} borderBottomWidth="1px"><Text fontWeight="700">Editorial image requests</Text></Box>
+          <Table size="sm">
+            <Thead><Tr><Th>Requested</Th><Th>Photographer</Th><Th>Status</Th><Th>Policy</Th><Th /></Tr></Thead>
+            <Tbody>{imageRequests.map((request) => (
+              <Tr key={request.id}>
+                <Td>{request.createdAt ? intl.formatDate(request.createdAt, { dateStyle: 'short', timeStyle: 'short' }) : ''}</Td>
+                <Td>{request.photographerId}</Td><Td>{request.status}</Td><Td>{request.approvalPolicy}</Td>
+                <Td textAlign="right">{request.status === 'COMMISSIONED' && <HStack justify="end">
+                  <Button size="xs" colorScheme="green" isLoading={saving[`image:${request.id}`]}
+                    onClick={() => reviewImageRequest(request.id, true)}>Approve</Button>
+                  <Button size="xs" variant="outline" isDisabled={saving[`image:${request.id}`]}
+                    onClick={() => reviewImageRequest(request.id, false)}>Reject</Button>
+                </HStack>}</Td>
+              </Tr>
+            ))}</Tbody>
+          </Table>
         </Box>
       )}
 

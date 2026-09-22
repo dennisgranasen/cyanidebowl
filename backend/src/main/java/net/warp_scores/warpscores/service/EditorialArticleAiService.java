@@ -3,6 +3,7 @@ package net.warp_scores.warpscores.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.ai.agents.*;
+import net.warp_scores.warpscores.ai.interaction.AiGenerationReservationService;
 import net.warp_scores.warpscores.ai.context.*;
 import net.warp_scores.warpscores.ai.provider.*;
 import net.warp_scores.warpscores.ai.reporting.ArticleGenerationLlmRequestFactory;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.util.HtmlUtils;
 
 import java.time.Instant;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.*;
 
 @Service
@@ -35,6 +38,7 @@ public class EditorialArticleAiService {
     private final MongoTemplate mongo;
     private final UserPermissionService permissions;
     private final EditorialSubjectContext subjectContext;
+    private final AiGenerationReservationService reservations;
 
     @Document("editorialArticlePolicies")
     public record Policy(@Id String id, boolean autoAccept) {}
@@ -77,6 +81,19 @@ public class EditorialArticleAiService {
         AiReporterDefinition reporter = reporters.require(input.reporterId());
         var effective = profiles.effective(reporter);
         if (!effective.reportsEnabled() || reporter.getUserId() == null) throw new IllegalArgumentException("Reporter is not enabled");
+        String reservationKey = reservationKey(reporter.getId(), input.brief(), links);
+        AiGenerationReservationService.Reservation reservation = reservations.reserve(reservationKey);
+        if (!reservation.acquired()) {
+            if (reservation.resultId() != null) {
+            return articles.findById(reservation.resultId())
+                .orElseThrow(() -> new IllegalStateException("Completed AI article is unavailable"));
+            }
+            throw new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.CONFLICT,
+                "An identical article generation request is already in progress");
+        }
+        boolean completed = false;
+        try {
         var resolved = subjectContext.resolve(links);
         List<SubjectRef> subjects = resolved.subjects();
         SubjectRef root = subjects.isEmpty() ? new SubjectRef(SubjectType.GENERAL, "editorial") : subjects.getFirst();
@@ -112,6 +129,27 @@ public class EditorialArticleAiService {
         if (autoAccept) { article.setPublishedAt(Instant.now()); article.setReviewedAt(Instant.now()); article.setReviewedBy("auto-policy"); }
         Article saved = articles.save(article);
         if (autoAccept) editorial.notifyPublished(saved);
+        reservations.complete(reservationKey, reservation.owner(), saved.getId());
+        completed = true;
         return saved;
+        } finally {
+            if (!completed) reservations.release(reservationKey, reservation.owner());
+        }
+    }
+
+    private static String reservationKey(
+            String reporterId,
+            String brief,
+            List<Article.Association> links) {
+        String material = reporterId + "\n" + brief.trim() + "\n" + links.stream()
+                .map(link -> link.type() + ":" + link.id())
+                .sorted()
+                .reduce("", (left, right) -> left + "\n" + right);
+        try {
+            return "article:" + java.util.HexFormat.of().formatHex(
+                    MessageDigest.getInstance("SHA-256").digest(material.getBytes(StandardCharsets.UTF_8)));
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 is unavailable", e);
+        }
     }
 }

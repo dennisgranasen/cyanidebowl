@@ -27,6 +27,25 @@ export default function ArticleImageGenerator({ editor, title, associations = []
   const [providerStatus, setProviderStatus] = useState(null);
   const [providerStatusError, setProviderStatusError] = useState(false);
   const [referenceRejected, setReferenceRejected] = useState(false);
+  const [imageRequest, setImageRequest] = useState(null);
+  const [requestError, setRequestError] = useState(false);
+  useEffect(() => {
+    if (!imageRequest?.id || ['COMPLETED', 'FAILED', 'REJECTED'].includes(imageRequest.status)) return undefined;
+    let active = true;
+    const timer = setInterval(async () => {
+      try {
+        const next = await Api.articleImageRequest(imageRequest.id, getAccessTokenSilently);
+        if (!active) return;
+        setImageRequest(next);
+        if (next.status === 'COMPLETED' && next.url && !editor?.isDestroyed) {
+          editor.chain().focus().setImage({ src: Api.assetUrl(next.url), editorialImageId: next.imageId,
+            title: intl.formatMessage({ id: 'news.imageCredit' }, { name: photographer?.alias || '' }) }).run();
+          setGenerated(true);
+        }
+      } catch (_) { if (active) setRequestError(true); }
+    }, 3000);
+    return () => { active = false; clearInterval(timer); };
+  }, [imageRequest?.id, imageRequest?.status, getAccessTokenSilently, editor, intl, photographer?.alias]);
   useEffect(() => {
     if (!photographerId) return undefined;
     let active = true;
@@ -87,9 +106,7 @@ export default function ArticleImageGenerator({ editor, title, associations = []
       const image = await Api.generateArticleImage({ title, body: editor.getText(), prompt,
         associations: selectedLinks.map(({ type, id }) => ({ type, id })),
         matchId, reporterId, photographerId, ignoreReferences }, getAccessTokenSilently);
-      if (!editor.isDestroyed) editor.chain().focus().setImage({ src: Api.assetUrl(image.url), editorialImageId: image.imageId,
-        title: intl.formatMessage({ id: 'news.imageCredit' }, { name: image.photographerName || photographer.alias }) }).run();
-      setGenerated(true);
+      setImageRequest(image);
       setReferenceRejected(false);
       setReferenceNotice(image.referenceImagesAvailable === 'true' && image.referenceImagesUsed !== 'true');
     } catch (error) {
@@ -153,6 +170,11 @@ export default function ArticleImageGenerator({ editor, title, associations = []
       </Text>}
     </Box>}
     {providerStatusError && <Text mt={2} fontSize="sm">Image provider status could not be checked.</Text>}
+    {imageRequest && <Box mt={2} p={2} borderWidth="1px" borderRadius="md">
+      <Text fontSize="sm">{imageRequest.statusText}</Text>
+      {imageRequest.error && <Text color="red.400" fontSize="sm">{imageRequest.error}</Text>}
+      {requestError && <Text color="orange.400" fontSize="sm">Could not refresh image request status.</Text>}
+    </Box>}
     <HStack mt={2} flexWrap="wrap">
       <Button size="sm" leftIcon={<RepeatIcon />} isLoading={pending} isDisabled={disabled || !available || !editor} onClick={() => generate(false)}>
         {t(generated ? 'news.generateAnotherImage' : 'news.generateImage')}

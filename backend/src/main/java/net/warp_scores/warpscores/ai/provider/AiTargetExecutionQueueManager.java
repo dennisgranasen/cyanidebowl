@@ -67,7 +67,18 @@ public class AiTargetExecutionQueueManager {
         q.enqueue(call);
 
         try {
-            return call.result.get();
+            return call.result.get(
+                    Math.max(1L, q.queueConfig.getMaxWait().toMillis()),
+                    TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            q.cancel(call);
+            throw new LlmProviderException(
+                    target.providerId(),
+                    LlmProviderException.Kind.UNAVAILABLE,
+                    503,
+                    "AI provider queue wait exceeded "
+                            + Math.max(1L, q.queueConfig.getMaxWait().toSeconds())
+                            + " seconds");
         } catch (InterruptedException e) {
             q.cancel(call);
             Thread.currentThread().interrupt();

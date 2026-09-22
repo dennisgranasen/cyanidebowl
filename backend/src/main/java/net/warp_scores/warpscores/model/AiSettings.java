@@ -36,6 +36,10 @@ public class AiSettings {
      */
     private Boolean autonomousExecutionEnabled = true;
 
+        /** Site-wide policy for editorial image requests. */
+        private EditorialImageRequest.ApprovalPolicy editorialImageApprovalPolicy =
+            EditorialImageRequest.ApprovalPolicy.EDITORIAL;
+
     /** null = unlimited. */
     private Integer maxConcurrentGenerations;
 

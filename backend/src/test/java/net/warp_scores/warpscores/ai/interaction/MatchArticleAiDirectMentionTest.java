@@ -52,6 +52,8 @@ class MatchArticleAiDirectMentionTest {
             mock(AiInitiativePolicyService.class);
     private final AiCommunityFanInteractionService fanInteractions =
             mock(AiCommunityFanInteractionService.class);
+    private final AiGenerationReservationService reservations =
+            mock(AiGenerationReservationService.class);
 
     private final MatchArticleAiInteractionService service =
             new MatchArticleAiInteractionService(
@@ -67,7 +69,7 @@ class MatchArticleAiDirectMentionTest {
                     continuity,
                     autonomousActivity,
                     initiativePolicy,
-                    fanInteractions, mock(net.warp_scores.warpscores.service.ArticleImageSubjects.class));
+                    fanInteractions, mock(net.warp_scores.warpscores.service.ArticleImageSubjects.class), reservations);
 
     @Test
     void exactAliasAndReporterIdTagsAreRecognized() {

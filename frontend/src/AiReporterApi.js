@@ -55,6 +55,26 @@ const AiReporterApi = {
     return (await axios.put('/admin/ai-reporters/settings', data, auth)).data;
   },
 
+  imageApprovalPolicy: async (silent, popup) => {
+    const auth = await authConfig(silent, popup);
+    return (await axios.get('/admin/ai-reporters/image-approval-policy', auth)).data;
+  },
+
+  updateImageApprovalPolicy: async (policy, silent, popup) => {
+    const auth = await authConfig(silent, popup);
+    return (await axios.put('/admin/ai-reporters/image-approval-policy', { policy }, auth)).data;
+  },
+
+  editorialImageRequests: async (silent, popup) => {
+    const auth = await authConfig(silent, popup);
+    return (await axios.get('/admin/ai-reporters/editorial-image-requests', auth)).data;
+  },
+
+  reviewEditorialImageRequest: async (id, approve, silent, popup) => {
+    const auth = await authConfig(silent, popup);
+    return (await axios.post(`/admin/ai-reporters/editorial-image-requests/${encodeURIComponent(id)}/review`, { approve }, auth)).data;
+  },
+
   autonomousWorkOverview: async (getAccessTokenSilently, getAccessTokenWithPopup) => {
     const controller = new AbortController();
     let timer;

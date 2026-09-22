@@ -10,6 +10,38 @@ import static org.mockito.Mockito.*;
 import static org.mockito.ArgumentMatchers.*;
 
 class AiTargetQueueCancellationTest {
+    @Test void waitingCallerTimesOutInsteadOfBlockingIndefinitely() throws Exception {
+        var properties = new AiProviderProperties();
+        var config = new AiProviderProperties.TargetConfig();
+        config.setProvider("test"); config.setModel("model");
+        config.getQueue().setMaxWait(java.time.Duration.ofMillis(30));
+        properties.getTargets().put("text", config);
+        var registry = mock(LlmProviderRegistry.class);
+        var provider = mock(LlmProvider.class);
+        when(registry.require("test")).thenReturn(provider);
+        when(provider.isConfigured()).thenReturn(true);
+        var entered = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        when(provider.generate(any())).thenAnswer(invocation -> {
+            entered.countDown(); release.await();
+            return new CanonicalLlmResponse("test", "model", null, "ok", null, "stop");
+        });
+        var queues = new AiTargetExecutionQueueManager(properties, registry,
+                mock(AiGenerationTraceStore.class), mock(AiGenerationAdmissionService.class));
+        var target = new LlmProviderRouter.ModelTarget("text", "test", "model", "text");
+        var request = new CanonicalLlmRequest("author", "1", ContextTaskType.EDITORIAL_ARTICLE, "model",
+                new AssembledContext("", List.of(), Map.of(), 0, 0), "brief", OutputContract.text(), GenerationOptions.defaults());
+        try {
+            new Thread(() -> queues.execute(target, "author", request, 50)).start();
+            assertTrue(entered.await(2, TimeUnit.SECONDS));
+            LlmProviderException error = assertThrows(LlmProviderException.class,
+                    () -> queues.execute(target, "author", request, 50));
+            assertEquals(503, error.statusCode());
+        } finally {
+            release.countDown(); queues.stop();
+        }
+    }
+
     @Test void interruptedCallerRemovesPendingJobWithoutRunningIt() throws Exception {
         var properties = new AiProviderProperties();
         var config = new AiProviderProperties.TargetConfig();

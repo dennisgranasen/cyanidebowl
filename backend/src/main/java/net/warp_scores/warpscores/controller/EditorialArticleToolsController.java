@@ -28,6 +28,8 @@ public class EditorialArticleToolsController {
     private final ArticleImagePromptService imagePrompts;
     private final EditorialSubjectContext subjectContext;
     private final ArticleImageSubjects imageSubjects;
+    private final EditorialImageRequestService imageRequests;
+    private final UserPermissionService permissions;
 
     public record ImageStatusInput(List<Article.Association> associations) {}
     public record ImageStatus(String provider, boolean blocked, boolean quotaExhausted,
@@ -107,38 +109,61 @@ public class EditorialArticleToolsController {
         }
     }
     @PostMapping("/image")
-    public Map<String, String> image(Authentication auth, @RequestBody ImageInput input) throws Exception {
+    public Map<String, String> image(Authentication auth, @RequestBody ImageInput input) {
         requireWriter(auth);
-        var photographer = photographers.require(input.photographerId());
-        var renderer = renderers.orderedStream().filter(AiCommunityImageRenderer::isConfigured).findFirst()
-                .orElseThrow(() -> new IllegalStateException("Image generation is not configured"));
+        if (input.matchId() == null || input.matchId().isBlank()) {
+            if (!permissions.canEditLeagueSystem(auth, null)) {
+                throw new org.springframework.security.access.AccessDeniedException("Editorial permission required");
+            }
+        }
+        photographers.require(input.photographerId());
         var subjects = subjectContext.resolve(input.associations());
         if (subjects.referenceImages().size() > 16) throw new IllegalArgumentException("At most 16 star player portraits per image");
         String prompt = imagePrompt(input) + "\nTAGGED SUBJECT CONTEXT:\n" + subjects.text();
-        net.warp_scores.warpscores.ai.context.AssembledContext assembled = null;
         if (input.matchId() != null && !input.matchId().isBlank()) {
             var context = matchArticles.imageContext(auth, input.matchId(), input.reporterId());
-            // The same assembly, evidence projection and history used by match-report generation.
-            assembled = context.assembled();
             prompt += "\nAUTHORITATIVE MATCH EVIDENCE:\n" + context.evidence().json()
                     + "\nHISTORICAL COMPETITION CONTEXT:\n" + context.history().json();
         }
-        String brief = imagePrompts.prepare(prompt, photographer, assembled, !subjects.associations().isEmpty());
-        boolean useReferences = !input.referencesDisabled()
-                && !subjects.referenceImages().isEmpty()
-                && renderer.supportsReferenceImages();
-        var image = !useReferences
-                ? renderer.render(brief, AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE)
-                : renderer.renderWithReferences(brief + "\nReference portraits in order: "
-                    + subjects.associations().stream().filter(a -> a.type() == Article.LinkType.STAR_PLAYER)
-                        .map(a -> a.id().replace('_', ' ')).collect(java.util.stream.Collectors.joining("; ")),
-                    AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE, subjects.referenceImages());
-        String url = store(image.bytes());
-        String imageId = imageSubjects.save(url, subjects.associations(), brief);
-        return Map.of("url", url, "imageId", imageId, "prompt", imagePrompt(input),
-                "photographerId", photographer.id(), "photographerName", photographer.alias(),
-                "referenceImagesUsed", Boolean.toString(useReferences),
-                "referenceImagesAvailable", Boolean.toString(!subjects.referenceImages().isEmpty()));
+        return view(imageRequests.create(auth.getName(), input.photographerId(), prompt,
+                subjects.associations(), subjects.referenceImages(), input.referencesDisabled()));
+    }
+
+    @GetMapping("/image/{id}")
+    public Map<String, String> imageRequest(Authentication auth, @PathVariable String id) {
+        requireWriter(auth);
+        return view(imageRequests.get(id));
+    }
+
+    public record ReviewInput(boolean approve) {}
+    @PostMapping("/image/{id}/review")
+    public Map<String, String> reviewImageRequest(Authentication auth, @PathVariable String id,
+                                                   @RequestBody ReviewInput input) {
+        requireWriter(auth);
+        boolean technician = permissions.isSiteAdmin(auth);
+        if (!technician && !permissions.canEditLeagueSystem(auth, null)) {
+            throw new org.springframework.security.access.AccessDeniedException("Editorial permission required");
+        }
+        return view(imageRequests.review(id, input.approve(), auth.getName(), technician));
+    }
+
+    private static Map<String, String> view(EditorialImageRequest request) {
+        String text = switch (request.getStatus()) {
+            case COMMISSIONED -> "Uppdraget är mottaget och väntar på godkännande.";
+            case DEVELOPING -> "Agenten framkallar bilden.";
+            case COMPLETED -> "Bilden är klar.";
+            case FAILED -> "Bilduppdraget misslyckades.";
+            case REJECTED -> "Bilduppdraget avslogs.";
+        };
+        var result = new java.util.LinkedHashMap<String, String>();
+        result.put("id", request.getId());
+        result.put("status", request.getStatus().name());
+        result.put("statusText", text);
+        result.put("photographerId", request.getPhotographerId());
+        if (request.getAssetUrl() != null) result.put("url", request.getAssetUrl());
+        if (request.getImageId() != null) result.put("imageId", request.getImageId());
+        if (request.getError() != null) result.put("error", request.getError());
+        return result;
     }
     @PostMapping("/upload")
     public Map<String, String> upload(Authentication auth, @RequestParam(required = false) String leagueSystemId,

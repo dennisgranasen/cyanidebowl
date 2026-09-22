@@ -73,9 +73,18 @@ and public asset endpoint. Generated illustrations use the configured
 and an explicit prompt overrides it. Image generation requires the existing
 community-media provider configuration and credentials.
 
-Text/image generation is synchronous, so failures appear in the editor while
-the existing draft remains available. No external generation calls are made by
-the automated tests.
+Generated illustrations are durable `editorialImageRequests`, not synchronous
+browser-to-provider calls. A request is either `COMMISSIONED` (waiting for
+approval), `DEVELOPING` (the agent is rendering it), `COMPLETED`, `FAILED`, or
+`REJECTED`. The editor polls its request and inserts the image only after it is
+complete. Requests retain the selected photographer, factual subject context and
+reference portraits, so retrying a browser request cannot create another paid
+render.
+
+Site administrators choose the default approval policy in AI administration:
+`AUTO` starts rendering immediately, `EDITORIAL` requires approval, and
+`TECHNICIAN` requires site-admin approval. The selected policy is stored on the
+request, so later policy changes do not alter work already commissioned.
 
 ## Validation
 
@@ -113,27 +122,11 @@ AI match reporting, an analyzed replay is required; manual image uploads remain
 available without a replay. Internal reporter context is not returned to the
 browser in the image response.
 
-The image-description text step has a 90-second deadline, including time spent
-in the AI execution queue. Its cancellation interrupts the queue wait and removes
-pending work, including work waiting for a quota reset. Calls already executing
-at a provider may finish under that provider's own timeout; their results do not
-start image rendering after the description deadline. The browser independently
-limits the complete request (including token acquisition) to five minutes and
-unlocks the editor with a localized error. This client limit is not a server job
-cancellation protocol. Existing requests need the updated backend/frontend to
-benefit from these limits.
-
-The image editor polls `/articles/tools/image-queue` every 15 seconds using the
-selected photographer's actual EDITORIAL_ARTICLE route and priority. The public
-response (authenticated writers only) contains aggregate counts, an earliest
-quota restart and an advisory wait for a new request; no prompts, agent identities
-or provider errors are exposed. After three successful text jobs, queue wait is
-estimated from average service time, eligible jobs of equal/higher priority,
-running work and concurrency. This is not a tracked job position or a guaranteed
-completion time. Image-provider latency is additional and currently unknown.
-Article images bypass the persisted community media queue; shared provider
-quotas can still affect both. Direct requests retain their timeouts rather than
-becoming durable multi-day orders.
+The image worker polls durable requests every 30 seconds. It only processes
+`DEVELOPING` work, so a coach may commission a match illustration without being
+able to spend provider quota before the configured approval is given. Failed
+requests retain their error for editorial follow-up; they are not silently retried
+by browser refreshes.
 
 ## Editorial photographers and illustrators
 

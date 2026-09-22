@@ -46,6 +46,9 @@ const EditorialCommunityApi = {
     return (await axios.post(`${base}/articles/tools/image`, payload,
       { headers, signal, timeout: IMAGE_REQUEST_TIMEOUT_MS })).data;
   }),
+  articleImageRequest: (id, token) => authGet(`/articles/tools/image/${encodeURIComponent(id)}`, token),
+  reviewArticleImageRequest: (id, approve, token) =>
+    authPost(`/articles/tools/image/${encodeURIComponent(id)}/review`, { approve }, token),
   uploadArticleImage: (file, system, token, associations = []) => {
     const data = new FormData();
     data.append('file', file);
