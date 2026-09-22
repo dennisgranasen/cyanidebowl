@@ -24,13 +24,13 @@ describe('race resolution', () => {
   test('uses local logos for races missing from the Cyanide logo repository', () => {
     expect(getRaceLogo(16, 2)).toBe('/img/raceLogos/khemri.png');
     expect(getRaceLogo(16, 3)).toBe('ChaosDwarf_01');
-    expect(getRaceLogo(1001, 3)).toBe('/img/raceLogos/chaosRenegades.jpg');
+    expect(getRaceLogo(1001, 3)).toBe('/img/raceLogos/chaosRenegades.png');
     expect(getRaceLogo(1002, 3)).toBe('/img/raceLogos/owa.png');
   });
 
   test('uses local logos for textual race fallbacks too', () => {
     expect(getRaceLogo('Tomb Kings', 2)).toBe('/img/raceLogos/khemri.png');
-    expect(getRaceLogo('Chaos Renegades', 3)).toBe('/img/raceLogos/chaosRenegades.jpg');
+    expect(getRaceLogo('Chaos Renegades', 3)).toBe('/img/raceLogos/chaosRenegades.png');
     expect(getRaceLogo('Old World Alliance', 3)).toBe('/img/raceLogos/owa.png');
   });
 
