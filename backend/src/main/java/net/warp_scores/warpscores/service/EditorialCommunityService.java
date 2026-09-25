@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
+import java.time.Duration;
 import java.util.*;
 import java.util.LinkedHashMap;
 import java.util.regex.Pattern;
@@ -48,6 +49,8 @@ public class EditorialCommunityService {
     private final MatchRepository matches;
     private final TeamRepository teams;
     private final StageSourceRepository stageSources;
+    private final StageRepository stages;
+    private final StageMatchService stageMatchService;
     private final WarpScoresUserRepository users;
     private final CoachClaimRepository coachClaims;
     private final UserPermissionService permissions;
@@ -282,8 +285,51 @@ public class EditorialCommunityService {
     }
 
     public List<CommunityComment> comments(CommunityComment.TargetType type, String targetId) {
-        return comments.findByTargetTypeAndTargetIdOrderByCreatedAtAsc(type, targetId);
+        List<CommunityComment> thread = comments.findByTargetTypeAndTargetIdOrderByCreatedAtAsc(type, targetId);
+        if (type != CommunityComment.TargetType.ARTICLE
+            || thread.stream().noneMatch(comment -> comment.getGeneration() != null
+                && comment.getGeneration().hasAiGeneration())) {
+            return thread;
+        }
+
+        Article article = articles.findById(targetId).orElse(null);
+        Instant historicalDate = historicalCommentDate(article);
+        if (historicalDate != null) {
+            thread.stream()
+                .filter(comment -> comment.getGeneration() != null
+                    && comment.getGeneration().hasAiGeneration())
+                .forEach(comment -> comment.setDisplayCreatedAt(historicalDate));
+        }
+        return thread;
     }
+
+        private Instant historicalCommentDate(Article article) {
+        if (article == null || !StringUtils.hasText(article.getLeagueSystemId())
+            || !StringUtils.hasText(article.getSeasonId())) return null;
+
+        Instant latestMatch = stages.findBySeasonIdOrderBySequenceAsc(article.getSeasonId()).stream()
+            .flatMap(stage -> {
+                try {
+                return stageMatchService.getMatchesForStage(stage.getId()).stream();
+                } catch (RuntimeException ignored) {
+                return java.util.stream.Stream.empty();
+                }
+            })
+            .map(match -> match.finishedAt() != null
+                ? match.finishedAt().toInstant()
+                : match.startedAt() == null ? null : match.startedAt().toInstant())
+            .filter(Objects::nonNull)
+            .max(Instant::compareTo)
+            .orElse(null);
+        if (latestMatch == null || !latestMatch.isBefore(Instant.now().minus(Duration.ofDays(90)))) {
+            return null;
+        }
+
+        Instant publishedAt = article.getPublishedAt();
+        return publishedAt != null && !publishedAt.isAfter(latestMatch.plus(Duration.ofDays(45)))
+            ? publishedAt
+            : latestMatch;
+        }
 
     public CommunityComment addComment(Authentication auth, CommunityComment.TargetType type,
                                        String targetId, String body) {

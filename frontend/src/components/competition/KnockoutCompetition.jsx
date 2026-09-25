@@ -35,6 +35,7 @@ const { boxSize } = config;
 function toParticipant(opponent, winner) {
   return {
     id: opponent?.id,
+    opus: identityUtils.opus(opponent?.id),
     resultText: opponent ? `${opponent.score}` : null,
     isWinner: winner?.team?.id === opponent?.id.value,
     status: opponent ? 'PLAYED' : null,
@@ -49,6 +50,10 @@ function toParticipant(opponent, winner) {
       console.log('Party clicked:', partyId);
     }
   };
+}
+
+export function participantLogoUrl(party) {
+  return imageUrls.logo(party?.picture, party?.opus ?? identityUtils.opus(party?.id));
 }
 
 function toParticipants(opponents, winner) {
@@ -112,7 +117,7 @@ function Participant({
         <GridItem pl="4px" pr="4px" area="image" textAlign="center">
           <Center w="100%" h="100%">
             <Image
-              src={imageUrls.logo(party.picture, party?.id.opus)}
+              src={participantLogoUrl(party)}
               fallback={<QuestionOutlineIcon boxSize={boxSize} />}
               objectFit="contain"
             />

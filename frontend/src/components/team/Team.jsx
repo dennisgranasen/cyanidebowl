@@ -6,13 +6,14 @@ import formatter from '../../util/formatter';
 import imageUrls from '../../imageUrls';
 import config from '../../config';
 import Race from '../common/Race';
+import { identityUtils } from '../../util/identityUtil';
 
 const { boxSize } = config;
 
 function Team({ team }) {
   const navigate = useNavigate();
   const goToTeam = () => {
-    navigate(`/competition/${team.competitionIds[0]}/team/${team.id}`);
+    navigate(`/team/${identityUtils.key(team.id)}`);
   };
 
   return team !== null ? (

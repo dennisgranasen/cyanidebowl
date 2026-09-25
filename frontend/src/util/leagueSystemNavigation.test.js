@@ -1,4 +1,4 @@
-import { leagueSystemMenuTarget } from './leagueSystemNavigation';
+import { homeSeasonTarget, leagueSystemMenuTarget } from './leagueSystemNavigation';
 
 describe('leagueSystemMenuTarget', () => {
   test('keeps the community view when switching league system', () => {
@@ -10,6 +10,12 @@ describe('leagueSystemMenuTarget', () => {
       { pathname: '/', search: '?view=playoffs&leagueSystem=old' },
       'nst'
     )).toBe('/?view=playoffs&leagueSystem=nst');
+  });
+  test('drops the old season when switching LeagueSystem on the home page', () => {
+    expect(leagueSystemMenuTarget(
+      { pathname: '/', search: '?season=old-season&leagueSystem=old' },
+      'new'
+    )).toBe('/?leagueSystem=new');
   });
 
   test('falls back to selected LeagueSystem landing page from unrelated routes', () => {
@@ -24,5 +30,12 @@ describe('leagueSystemMenuTarget', () => {
       { pathname: '/statistics', search: '' },
       'league/system'
     )).toBe('/?leagueSystem=league%2Fsystem');
+  });
+});
+
+describe('homeSeasonTarget', () => {
+  test('stores selected LeagueSystem and season in the URL', () => {
+    expect(homeSeasonTarget('system/1', 'season 2'))
+      .toBe('/?leagueSystem=system%2F1&season=season+2');
   });
 });

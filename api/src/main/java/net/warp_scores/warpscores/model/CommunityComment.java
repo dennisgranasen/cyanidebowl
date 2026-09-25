@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -32,9 +33,13 @@ public class CommunityComment {
     private GenerationProvenance generation;
     private String authorSubject;
     private String authorDisplayName;
+    @Transient
+    private String authorAvatarUrl;
     private AuthorContext authorContext;
     private String body;
     private Instant createdAt;
+    @Transient
+    private Instant displayCreatedAt;
     private Instant editedAt;
     private Instant deletedAt;
     private String deletedBySubject;

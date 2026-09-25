@@ -15,11 +15,15 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.random.RandomGenerator;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AiCommunityFanInteractionService {
+        private static final Pattern SAFETY_METADATA_LINE = Pattern.compile(
+                        "(?im)^\\s*(?:user\\s+)?safety\\s*:\\s*.+$");
+
     private final AiCommunityMemberProfileRepository profiles;
     private final ArticleRepository articles;
     private final MatchArticleRepository matchArticles;
@@ -443,17 +447,28 @@ public class AiCommunityFanInteractionService {
             AssembledContext context,
             String task,
             ContextTaskType taskType) {
-        return llm.generate(
-                fan.getId(),
-                new CanonicalLlmRequest(
-                        fan.getId(),
-                        "1",
-                        taskType,
-                        "router-selected",
-                        context,
-                        task,
-                        OutputContract.text(),
-                        new GenerationOptions(0.9, 600)));
+        String retryTask = task;
+        for (int attempt = 0; attempt < 2; attempt++) {
+            CanonicalLlmResponse response = llm.generate(
+                    fan.getId(),
+                    new CanonicalLlmRequest(
+                            fan.getId(),
+                            "1",
+                            taskType,
+                            "router-selected",
+                            context,
+                            retryTask,
+                            OutputContract.text(),
+                            new GenerationOptions(0.9, 600)));
+            if (isPublishableComment(response.content())) return response;
+            retryTask = task + "\nThe previous response was invalid because it contained status or safety metadata, not a public comment. "
+                    + "Try again. Write a short in-character comment and return only that comment. Do not include labels, analysis, or safety status.";
+        }
+        throw new IllegalStateException("Fan comment generation returned non-comment output after retry");
+    }
+
+    static boolean isPublishableComment(String content) {
+        return StringUtils.hasText(content) && !SAFETY_METADATA_LINE.matcher(content).find();
     }
 
     private void save(
@@ -465,7 +480,9 @@ public class AiCommunityFanInteractionService {
             String revision,
             String replyToCommentId) {
         String body = response.content() == null ? "" : response.content().trim();
-        if (body.isBlank()) throw new IllegalStateException("Fan comment generation returned an empty response");
+                if (!isPublishableComment(body)) {
+                        throw new IllegalStateException("Fan comment generation returned invalid comment text");
+                }
         if (body.length() > 10_000) body = body.substring(0, 10_000);
 
         Instant now = Instant.now();

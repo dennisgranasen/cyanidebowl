@@ -154,7 +154,7 @@ function Menu({ leagueSystems = [], selectedLeagueSystemId, selectedSeasonId, on
                         to={leagueSystemMenuTarget(location, system.id)}
                         fontWeight={system.id === selectedLeagueSystemId ? 'bold' : 'normal'}
                         onClick={async () => {
-                          if (onSelectLeagueSystem) await onSelectLeagueSystem(system.id);
+                          if (onSelectLeagueSystem && location.pathname !== '/') await onSelectLeagueSystem(system.id);
                           onClose();
                         }}>
                         {system.primary ? '★ ' : ''}{system.name || system.id}

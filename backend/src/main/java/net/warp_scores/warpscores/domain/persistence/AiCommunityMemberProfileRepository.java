@@ -18,4 +18,6 @@ public interface AiCommunityMemberProfileRepository
     List<AiCommunityMemberProfile> findAllByOrderByDisplayNameAsc();
 
     Optional<AiCommunityMemberProfile> findByUserId(Long userId);
+
+    List<AiCommunityMemberProfile> findByUserIdIn(Iterable<Long> userIds);
 }

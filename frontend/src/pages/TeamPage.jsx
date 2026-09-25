@@ -12,6 +12,7 @@ import imageUrls from '../imageUrls';
 import InfoArea from '../components/common/InfoArea';
 import InfoItem from '../components/common/InfoItem';
 import Matches from '../components/contest/Matches';
+import ArticleFeed from '../components/community/ArticleFeed';
 import HeaderCard from '../components/common/HeaderCard';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import { identityUtils } from '../util/identityUtil';
@@ -24,8 +25,8 @@ function MatchesCount({ matches, teamId }) {
   let lost = 0;
 
   matches.forEach((match) => {
-    const myTeam = match.teams[0].id === teamId ? match.teams[0] : match.teams[1];
-    const otherTeam = match.teams[0].id !== teamId ? match.teams[0] : match.teams[1];
+    const myTeam = identityUtils.key(match.teams[0].id) === teamId ? match.teams[0] : match.teams[1];
+    const otherTeam = identityUtils.key(match.teams[0].id) !== teamId ? match.teams[0] : match.teams[1];
     if (myTeam.score > otherTeam.score) won += 1;
     else if (myTeam.score < otherTeam.score) lost += 1;
   });
@@ -137,6 +138,9 @@ function TeamPage() {
         <LoadingOrErrorWrapper loading={loadingMatches} error={matchesError}>
           <Matches matches={matches} />
         </LoadingOrErrorWrapper>
+      </Box>
+      <Box w="full">
+        <ArticleFeed type="TEAM" subjectId={teamId} limit={6} />
       </Box>
       <Box w="full">
         <Heading size="md" mb={3}>Kommentarer</Heading>

@@ -17,7 +17,7 @@ function Navigation({ currentPage, parentPage, currentLabel, league, competition
   };
   const leagueLink = league && league.length > 0 && league[0] ? `/league/${league[0]}` : '/';
   const competitionLink = competition && competition.length > 0 && competition[0] ? `/competition/${competition[0]}` : '';
-  const teamLink = team ? `${competitionLink}/team/${team[0]}` : '';
+  const teamLink = team ? `/team/${team[0]}` : '';
   return (
     <Flex>
       <Breadcrumb fontFamily="bigStar" spacing={1}>

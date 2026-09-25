@@ -42,6 +42,40 @@ class AiTargetQueueCancellationTest {
         }
     }
 
+    @Test void maxWaitDoesNotExpireWhileCallIsRunning() throws Exception {
+        var properties = new AiProviderProperties();
+        var config = new AiProviderProperties.TargetConfig();
+        config.setProvider("test"); config.setModel("model");
+        config.getQueue().setMaxWait(java.time.Duration.ofMillis(40));
+        properties.getTargets().put("text", config);
+        var registry = mock(LlmProviderRegistry.class);
+        var provider = mock(LlmProvider.class);
+        when(registry.require("test")).thenReturn(provider);
+        when(provider.isConfigured()).thenReturn(true);
+        var entered = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        when(provider.generate(any())).thenAnswer(invocation -> {
+            entered.countDown(); release.await();
+            return new CanonicalLlmResponse("test", "model", null, "ok", null, "stop");
+        });
+        var queues = new AiTargetExecutionQueueManager(properties, registry,
+                mock(AiGenerationTraceStore.class), mock(AiGenerationAdmissionService.class));
+        var target = new LlmProviderRouter.ModelTarget("text", "test", "model", "text");
+        var request = new CanonicalLlmRequest("author", "1", ContextTaskType.EDITORIAL_ARTICLE, "model",
+                new AssembledContext("", List.of(), Map.of(), 0, 0), "brief", OutputContract.text(), GenerationOptions.defaults());
+        var execution = new FutureTask<>(() -> queues.execute(target, "author", request, 50));
+        try {
+            new Thread(execution).start();
+            assertTrue(entered.await(2, TimeUnit.SECONDS));
+            Thread.sleep(80);
+            assertFalse(execution.isDone());
+            release.countDown();
+            assertEquals("ok", execution.get(2, TimeUnit.SECONDS).content());
+        } finally {
+            release.countDown(); queues.stop();
+        }
+    }
+
     @Test void interruptedCallerRemovesPendingJobWithoutRunningIt() throws Exception {
         var properties = new AiProviderProperties();
         var config = new AiProviderProperties.TargetConfig();

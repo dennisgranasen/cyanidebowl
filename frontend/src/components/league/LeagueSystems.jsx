@@ -266,6 +266,7 @@ function PlayoffBracket({ phase, onMatchClick }) {
       feederSlot,
       participants: (match.teams || []).map((team, index) => ({
         id: team.id || { value: team.name, opus: Number(String(match.game || 'BB3').replace('BB', '')) || 3 },
+        opus: matchOpus(match),
         resultText: match.seriesMatches?.length > 1
           ? match.seriesMatches.map((seriesMatch) => playedScore(seriesMatch, index) ?? '-').join(' / ')
           : `${playedScore(match, index) ?? '-'}`,
@@ -326,7 +327,7 @@ function PlayoffBracket({ phase, onMatchClick }) {
   });
   const bronzeBracketMatch = bronze && bracketMatches.find((match) => match.id === bronze.sourceMatchKey);
   const bronzeWinner = bronze && winnerName(bronze);
-  const bronzeParties = bronze && bronze.teams.map((team, index) => ({ id: team.id || { value: team.name, opus: 3 }, resultText: `${playedScore(bronze, index) ?? '-'}`, teamName: team.name, coachName: team.coachName, race: resolveRace(team, matchOpus(bronze)), picture: team.logo }));
+  const bronzeParties = bronze && bronze.teams.map((team, index) => ({ id: team.id || { value: team.name, opus: matchOpus(bronze) }, opus: matchOpus(bronze), resultText: `${playedScore(bronze, index) ?? '-'}`, teamName: team.name, coachName: team.coachName, race: resolveRace(team, matchOpus(bronze)), picture: team.logo }));
   const roundLabels = [intl.formatMessage({ id: 'leagueSystems.playIn' }), intl.formatMessage({ id: 'leagueSystems.quarterfinals' }), intl.formatMessage({ id: 'leagueSystems.semifinals' }), intl.formatMessage({ id: 'leagueSystems.final' })];
   const bracketStyle = { width: 240, boxHeight: 86, canvasPadding: 8, spaceBetweenColumns: 18, spaceBetweenRows: 8, roundSeparatorWidth: 8, horizontalOffset: 6, roundHeader: { isShown: true, height: 20, marginBottom: 6, fontSize: 10, roundTextGenerator: (roundNumber, totalRounds) => roundLabels[roundLabels.length - totalRounds + roundNumber - 1] || intl.formatMessage({ id: 'leagueSystems.round' }, { round: roundNumber }) } };
   const requiredHeight = bracketCanvasHeight(rounds, bracketStyle);
@@ -351,6 +352,7 @@ function RichMatchCard({ match, onMatchClick }) {
   const winner = winnerName(match);
   const parties = (match.teams || []).map((team, index) => ({
     id: team.id || { value: team.name, opus: Number(String(match.game || 'BB3').replace('BB', '')) || 3 },
+    opus: matchOpus(match),
     resultText: `${playedScore(match, index) ?? '-'}`,
     teamName: team.name,
     coachName: team.coachName,

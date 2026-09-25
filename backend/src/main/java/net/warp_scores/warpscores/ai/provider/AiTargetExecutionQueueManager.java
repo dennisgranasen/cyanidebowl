@@ -67,9 +67,7 @@ public class AiTargetExecutionQueueManager {
         q.enqueue(call);
 
         try {
-            return call.result.get(
-                    Math.max(1L, q.queueConfig.getMaxWait().toMillis()),
-                    TimeUnit.MILLISECONDS);
+            return awaitResult(call, q);
         } catch (TimeoutException e) {
             q.cancel(call);
             throw new LlmProviderException(
@@ -88,6 +86,31 @@ public class AiTargetExecutionQueueManager {
             if (cause instanceof RuntimeException runtime) throw runtime;
             throw new CompletionException(cause);
         }
+    }
+
+    private CanonicalLlmResponse awaitResult(QueuedCall call, QuotaQueue q)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        long maxWaitNanos = Math.max(1L, q.queueConfig.getMaxWait().toNanos());
+        synchronized (q.monitor) {
+            while (!call.result.isDone()) {
+                if (call.status == JobStatus.RUNNING) {
+                    q.monitor.wait();
+                    continue;
+                }
+
+                long waitedNanos = call.queueWaitNanos;
+                if (call.queueWaitStartedNanos != 0L) {
+                    waitedNanos += System.nanoTime() - call.queueWaitStartedNanos;
+                }
+                long remainingNanos = maxWaitNanos - waitedNanos;
+                if (remainingNanos <= 0L) {
+                    q.cancel(call);
+                    throw new TimeoutException("AI provider queue wait exceeded");
+                }
+                TimeUnit.NANOSECONDS.timedWait(q.monitor, remainingNanos);
+            }
+        }
+        return call.result.get();
     }
 
     public List<QueueSnapshot> snapshots() {
@@ -240,13 +263,17 @@ public class AiTargetExecutionQueueManager {
 
         void enqueue(QueuedCall call) {
             synchronized (monitor) {
-                if (!call.result.isDone()) pending.add(call);
+                if (!call.result.isDone()) {
+                    call.queueWaitStartedNanos = System.nanoTime();
+                    pending.add(call);
+                }
                 monitor.notifyAll();
             }
         }
 
         void cancel(QueuedCall call) {
             synchronized (monitor) {
+                call.stopQueueWait();
                 call.result.cancel(false);
                 pending.remove(call);
                 call.status = JobStatus.CANCELLED;
@@ -283,8 +310,10 @@ public class AiTargetExecutionQueueManager {
 
                     if (best != null) {
                         pending.remove(best);
+                        best.stopQueueWait();
                         best.status = JobStatus.RUNNING;
                         activeJobs.put(best.id, best);
+                        monitor.notifyAll();
                         return best;
                     }
 
@@ -399,6 +428,9 @@ public class AiTargetExecutionQueueManager {
                 if (admitted) admission.release();
                 activeJobs.remove(call.id);
                 running.decrementAndGet();
+                synchronized (monitor) {
+                    monitor.notifyAll();
+                }
             }
         }
 
@@ -423,6 +455,7 @@ public class AiTargetExecutionQueueManager {
                         .orElse(null);
                 if (call == null) return false;
                 pending.remove(call);
+                call.stopQueueWait();
                 call.status = JobStatus.CANCELLED;
                 call.result.completeExceptionally(
                         new CancellationException("Removed from AI quota queue by admin"));
@@ -436,6 +469,7 @@ public class AiTargetExecutionQueueManager {
                 List<QueuedCall> copy = new ArrayList<>(pending);
                 pending.clear();
                 copy.forEach(call -> {
+                    call.stopQueueWait();
                     call.status = JobStatus.CANCELLED;
                     call.result.completeExceptionally(
                             new CancellationException("AI quota queue cleared by admin"));
@@ -610,6 +644,8 @@ public class AiTargetExecutionQueueManager {
         volatile int attempts;
         volatile Instant availableAt;
         volatile String lastError;
+        long queueWaitNanos;
+        long queueWaitStartedNanos;
 
         QueuedCall(
                 String id,
@@ -623,6 +659,13 @@ public class AiTargetExecutionQueueManager {
             this.target = target;
             this.agentId = agentId;
             this.request = request;
+        }
+
+        void stopQueueWait() {
+            if (queueWaitStartedNanos != 0L) {
+                queueWaitNanos += System.nanoTime() - queueWaitStartedNanos;
+                queueWaitStartedNanos = 0L;
+            }
         }
 
         JobSnapshot snapshot() {

@@ -1,24 +1,45 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Badge, Box, Button, HStack, Text, Textarea, VStack } from '@chakra-ui/react';
+import { Avatar, Badge, Box, Button, HStack, Text, Textarea, VStack } from '@chakra-ui/react';
 import useAuth0WithUserPermissions from '../../hooks/useAuth0WithUserPermissions';
 import EditorialCommunityApi from '../../EditorialCommunityApi';
 import ReactionBar from './ReactionBar';
 import { useLocation } from 'react-router-dom';
+import { useIntl } from 'react-intl';
 
 const coach = (c) => c.authorContext === 'HOME_COACH' || c.authorContext === 'AWAY_COACH';
 
 function OneComment({ comment }) {
+  const intl = useIntl();
   if (comment.deletedAt) return <Text opacity={0.6} fontStyle="italic">Kommentar borttagen</Text>;
+  const createdAt = comment.displayCreatedAt || comment.createdAt;
   return (
     <Box id={`comment-${comment.id}`} borderWidth="1px" borderRadius="md" p={3} w="full" tabIndex={-1}>
       <HStack mb={2}>
+        <Avatar size="sm" name={comment.authorDisplayName || 'User'} src={comment.authorAvatarUrl || undefined} />
         <Text fontWeight="bold">{comment.authorDisplayName}</Text>
         <Badge>{comment.authorContext}</Badge>
+        {createdAt && (
+          <Text ml="auto" fontSize="xs" color="gray.500"
+            title={intl.formatDate(createdAt, { dateStyle: 'medium', timeStyle: 'short' })}>
+            {relativeTime(createdAt, intl)}
+          </Text>
+        )}
       </HStack>
       <Text whiteSpace="pre-wrap">{comment.body}</Text>
       <Box mt={2}><ReactionBar targetType="COMMENT" targetId={comment.id} /></Box>
     </Box>
   );
+}
+
+function relativeTime(timestamp, intl) {
+  const seconds = (new Date(timestamp).getTime() - Date.now()) / 1000;
+  if (!Number.isFinite(seconds)) return '';
+  const units = [
+    ['year', 31536000], ['month', 2592000], ['week', 604800], ['day', 86400],
+    ['hour', 3600], ['minute', 60], ['second', 1],
+  ];
+  const [unit, duration] = units.find(([, size]) => Math.abs(seconds) >= size) || units[units.length - 1];
+  return intl.formatRelativeTime(Math.round(seconds / duration), unit, { numeric: 'auto' });
 }
 
 function CommentThread({ targetType, targetId }) {

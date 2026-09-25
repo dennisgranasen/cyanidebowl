@@ -9,10 +9,12 @@ import Leagues from '../components/league/Leagues';
 import LeagueSystems from '../components/league/LeagueSystems';
 import ArticleFeed from '../components/community/ArticleFeed';
 import { useIntl } from 'react-intl';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { homeSeasonTarget } from '../util/leagueSystemNavigation';
 
 function WarpScores() {
   const intl = useIntl();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const requestedLeagueSystemId = searchParams.get('leagueSystem');
   const [leagueSystems, setLeagueSystems] = useState([]);
@@ -54,19 +56,8 @@ function WarpScores() {
     }
   };
 
-  const selectLeagueSystem = async (leagueSystemId, seasonId) => {
-    setLoading(true);
-    setError(undefined);
-    try {
-      const overview = await WarpScoresApiService.leagueSystemOverview(leagueSystemId, seasonId);
-      setSelectedLeagueSystem(overview);
-      const ordered = [...(overview.seasons || [])].sort((a, b) => (b.sequence ?? b.number ?? 0) - (a.sequence ?? a.number ?? 0));
-      setSelectedSeasonId(seasonId || (ordered.find(s => (s.phases || []).some(p => (p.stages || []).some(st => st.matches?.length))) || ordered[0])?.id);
-    } catch (reason) {
-      setError({ type: 'error', message: reason.toLocaleString() });
-    } finally {
-      setLoading(false);
-    }
+  const selectSeason = (seasonId) => {
+    navigate(homeSeasonTarget(selectedLeagueSystem?.id, seasonId));
   };
 
   useEffect(() => {
@@ -81,7 +72,6 @@ function WarpScores() {
           leagueSystems={leagueSystems}
           selectedLeagueSystemId={selectedLeagueSystem?.id}
           selectedSeasonId={selectedSeasonId}
-          onSelectLeagueSystem={selectLeagueSystem}
         />
       </Box>
       <>
@@ -94,7 +84,7 @@ function WarpScores() {
         <Box>
           <LoadingOrErrorWrapper loading={loading} error={error}>
             {leagueSystems.length > 0 ? (
-              <LeagueSystems selectedSeasonId={selectedSeasonId} summaries={leagueSystems} leagueSystem={selectedLeagueSystem} onSelectSeason={(seasonId) => selectLeagueSystem(selectedLeagueSystem.id, seasonId)} />
+              <LeagueSystems selectedSeasonId={selectedSeasonId} summaries={leagueSystems} leagueSystem={selectedLeagueSystem} onSelectSeason={selectSeason} />
             ) : (
               <Leagues leagues={leagues} competitionCountByStatusPerLeague={competitionCountsByStatus} />
             )}

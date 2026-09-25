@@ -22,6 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaRegFaceSadTear } from 'react-icons/fa6';
 import LoadingOrErrorWrapper from '../common/LoadingOrErrorWrapper';
 import comparators from '../../util/comparators';
+import { identityUtils } from '../../util/identityUtil';
 import arenaHelpers from './arenaHelpers';
 import imageUrls from '../../imageUrls';
 import formatter from '../../util/formatter';
@@ -56,7 +57,7 @@ function RaceOrCoachColumn({ coachOrRace, arenaTeam, competitionId }) {
 function TeamRow({ competitionId, arenaTeam, coachOrRace }) {
   const navigate = useNavigate();
   const goToTeam = () => {
-    navigate(`/competition/${competitionId}/team/${arenaTeam.teamId}`);
+    navigate(`/team/${identityUtils.key(arenaTeam.teamId)}`);
   };
   const sortedMatches = [].concat(arenaTeam?.matches ?? []);
   sortedMatches.sort(comparators.compareContestsByDateWithMatchAsFallbackAsc);

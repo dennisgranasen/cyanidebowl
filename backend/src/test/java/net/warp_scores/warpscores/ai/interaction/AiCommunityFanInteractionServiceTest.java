@@ -10,6 +10,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class AiCommunityFanInteractionServiceTest {
     @Test
+    void rejectsSafetyMetadataInsteadOfPublishingItAsAComment() {
+        assertThat(AiCommunityFanInteractionService.isPublishableComment("User Safety: safe")).isFalse();
+        assertThat(AiCommunityFanInteractionService.isPublishableComment("A great match, that!" )).isTrue();
+        assertThat(AiCommunityFanInteractionService.isPublishableComment("  ")).isFalse();
+    }
+
+    @Test
     void teamIndexUsesCanonicalTeamIdentity() {
         Match match = match("home-team", "away-team");
         String homeTeamId = match.getTeams()[0].getId().asMongoKey();

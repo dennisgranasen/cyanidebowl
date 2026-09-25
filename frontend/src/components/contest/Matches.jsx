@@ -77,7 +77,7 @@ function Match({ match }) {
         </Td>
         <Td textAlign="right">
           <Text>
-            <RouteLink to={`/competition/${match.competitionId}/team/${match.teams[0].id}`}>
+            <RouteLink to={`/team/${identityUtils.key(match.teams[0].id)}`}>
               {match.teams[0].name}
             </RouteLink>
           </Text>
@@ -98,7 +98,7 @@ function Match({ match }) {
         }
         <Td>
           <Text>
-            <RouteLink to={`/competition/${match.competitionId}/team/${match.teams[1].id}`}>
+            <RouteLink to={`/team/${identityUtils.key(match.teams[1].id)}`}>
               {match.teams[1].name}
             </RouteLink>
           </Text>

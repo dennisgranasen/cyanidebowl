@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.model.*;
+import net.warp_scores.warpscores.service.CommunityCommentAvatarService;
 import net.warp_scores.warpscores.service.EditorialCommunityService;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +14,7 @@ import java.util.List;
 @RequestMapping("/community")
 public class CommunityController {
     private final EditorialCommunityService service;
+    private final CommunityCommentAvatarService commentAvatars;
 
     public record CommentInput(String body) {}
     public record ReactionInput(CommunityReaction.Type type) {}
@@ -21,7 +23,7 @@ public class CommunityController {
     @GetMapping("/comments/{targetType}/{targetId}")
     public List<CommunityComment> comments(@PathVariable CommunityComment.TargetType targetType,
                                            @PathVariable String targetId) {
-        return service.comments(targetType, targetId);
+        return commentAvatars.attach(service.comments(targetType, targetId));
     }
 
     @PostMapping("/comments/{targetType}/{targetId}")
@@ -29,7 +31,8 @@ public class CommunityController {
                                     @PathVariable CommunityComment.TargetType targetType,
                                     @PathVariable String targetId,
                                     @RequestBody CommentInput input) {
-        return service.addComment(auth, targetType, targetId, input.body());
+        return commentAvatars.attach(List.of(service.addComment(auth, targetType, targetId, input.body())))
+            .get(0);
     }
 
     @DeleteMapping("/comments/{commentId}")
