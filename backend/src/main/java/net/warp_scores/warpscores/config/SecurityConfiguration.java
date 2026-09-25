@@ -83,6 +83,10 @@ public class SecurityConfiguration {
                         .requestMatchers(POST, "/community/**").authenticated()
                         .requestMatchers(PUT, "/community/**").authenticated()
                         .requestMatchers(DELETE, "/community/**").authenticated()
+                        // Match article mutations require authentication; the service enforces editor scope.
+                        .requestMatchers(POST, "/matches/*/articles/**").authenticated()
+                        .requestMatchers(PUT, "/matches/*/articles/**").authenticated()
+                        .requestMatchers(DELETE, "/matches/*/articles/**").authenticated()
                         // public api read only endpoints
                         .requestMatchers(GET, "/ai-reporters", "/ai-reporters/**").permitAll()
                         .requestMatchers(GET, "/staff/**").permitAll()

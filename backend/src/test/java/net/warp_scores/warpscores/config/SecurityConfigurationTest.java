@@ -4,6 +4,7 @@ import net.warp_scores.warpscores.WarpScoresApp;
 import net.warp_scores.warpscores.domain.persistence.LeagueSystemRepository;
 import net.warp_scores.warpscores.model.LeagueSystem;
 import net.warp_scores.warpscores.model.UserPermissions;
+import net.warp_scores.warpscores.service.MatchArticleService;
 import net.warp_scores.warpscores.service.UserPermissionService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -44,6 +45,9 @@ class SecurityConfigurationTest {
 
     @MockitoBean
     private UserPermissionService userPermissionService;
+
+    @MockitoBean
+    private MatchArticleService matchArticleService;
 
     @Test
     void debugHeadersAreNotReflected() throws Exception {
@@ -112,6 +116,24 @@ class SecurityConfigurationTest {
 
             assertThat(send(request("GET", "/not-a-route")).statusCode()).isEqualTo(401);
         }
+
+        @Test
+        void authenticatedMatchArticleAiRequestReachesService() throws Exception {
+            when(jwtDecoder.decode("match-article-token")).thenReturn(jwt(List.of()));
+
+            HttpResponse<String> response = send(matchArticleAiRequest("match-article-token"));
+
+            assertThat(response.statusCode()).isEqualTo(200);
+            verify(matchArticleService).requestAi(any(), any(), any());
+        }
+
+    private HttpRequest matchArticleAiRequest(String token) {
+        return HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/matches/test-match/articles/ai"))
+                .header("Authorization", "Bearer " + token)
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString("{}"))
+                .build();
+    }
 
     private HttpRequest leagueSystemRequest(String token) {
         HttpRequest.Builder request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/admin/league-systems"))
