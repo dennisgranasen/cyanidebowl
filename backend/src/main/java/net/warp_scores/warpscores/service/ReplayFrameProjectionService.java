@@ -185,7 +185,8 @@ public class ReplayFrameProjectionService {
                 .map(action -> Map.of(
                         "id", Objects.toString(action.get("actionId"), ""),
                     "type", Objects.toString(action.get("actionType"), Objects.toString(action.get("kind"), "Action")),
-                        "playerId", action.getOrDefault("playerId", action.get("attackerPlayerId"))))
+                    "playerId", action.getOrDefault("playerId", action.get("attackerPlayerId")),
+                    "selectedFace", Objects.toString(action.get("selectedFace"), "unknown")))
                 .toList();
     }
 

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, AlertIcon, Box, Button, ButtonGroup, Checkbox, HStack, Image, Slider, SliderFilledTrack,
-  SliderThumb, SliderTrack, Spinner, Text, VStack } from '@chakra-ui/react';
+  SliderThumb, SliderTrack, Spinner, Text, VStack, Wrap } from '@chakra-ui/react';
 import { FiChevronLeft, FiChevronRight, FiPause, FiPlay, FiSkipBack, FiSkipForward } from 'react-icons/fi';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import useAuth0WithUserPermissions from '../../hooks/useAuth0WithUserPermissions';
+import TimelineIcon from './TimelineIcon';
 
 const onPitch = (position, width, height) => position
   && position.x >= 0 && position.x < width && position.y >= 0 && position.y < height;
@@ -25,12 +26,12 @@ const skillNames = (player) => [
 const ringSize = (player, match) => {
   const rosterPlayer = rosterPlayerFor(player, match);
   const skills = [...(player.traits || []), ...skillNames(rosterPlayer)].map((skill) => String(skill).toLowerCase());
-  if (skills.some((skill) => skill.includes('titchy'))) return { base: '14px', md: '19px' };
-  if (skills.some((skill) => skill.includes('stunty'))) return { base: '16px', md: '22px' };
+  if (skills.some((skill) => skill.includes('titchy'))) return 0.72;
+  if (skills.some((skill) => skill.includes('stunty'))) return 0.85;
   const strength = Number(player.strength ?? rosterPlayer?.extendedAttributes?.st?.value ?? rosterPlayer?.attributes?.st ?? 3);
-  if (strength >= 5) return { base: '27px', md: '36px' };
-  if (strength === 4) return { base: '23px', md: '30px' };
-  return { base: '19px', md: '26px' };
+  if (strength >= 5) return 1.35;
+  if (strength === 4) return 1.2;
+  return 1;
 };
 
 const roleFor = (player, match) => {
@@ -49,6 +50,27 @@ const roleStyle = {
   thrower: { color: 'white', label: 'T', text: 'gray.900' },
   runner: { color: 'yellow.400', label: 'R', text: 'gray.900' },
   star: { color: 'yellow.500', label: 'S', text: 'gray.900' },
+};
+
+const blockFaceLabels = {
+  defenderDown: 'POW',
+  attackerDown: 'Skull',
+  bothDown: 'Both down',
+  push: 'Push',
+  tackle: 'Defender stumbles',
+};
+
+const actionIconType = (action) => {
+  const type = String(action.type || '').toLowerCase();
+  if (type.includes('block')) return 'block';
+  if (type.includes('pass')) return 'pass';
+  if (type.includes('handoff')) return 'handoff';
+  if (type.includes('catch')) return 'catch';
+  if (type.includes('intercept')) return 'interception';
+  if (type.includes('foul')) return 'foul';
+  if (type.includes('dodge') || type.includes('rush') || type.includes('run')) return 'movement';
+  if (type.includes('kick')) return 'kickoff';
+  return 'special';
 };
 
 export default function ReplayPitchPlayer({ matchId, match }) {
@@ -116,7 +138,7 @@ export default function ReplayPitchPlayer({ matchId, match }) {
     if (isAuthenticated) WarpScoresApiService.updateUserPreferences(updated, ...auth).catch(() => setPreferences(preferences));
   };
 
-  return <VStack align="stretch" spacing={3}>
+  return <VStack align="stretch" spacing={3} minW={0} w="full">
     <HStack justify="space-between" flexWrap="wrap"><Box><Text fontWeight="semibold">Taktisk replay</Text><Text fontSize="sm" color="gray.500">{playbackMode === 'turn' ? 'Tur' : 'Action'} {frameIndex + 1} av {playbackFrames.length}{frameLabel ? ` · ${frameLabel}` : ''}</Text></Box><ButtonGroup size="xs" isAttached variant="outline"><Button isActive={playbackMode === 'turn'} onClick={() => { setPlaying(false); setFrameIndex(0); setPlaybackMode('turn'); }}>Tur</Button><Button isActive={playbackMode === 'action'} onClick={() => { setPlaying(false); setFrameIndex(0); setPlaybackMode('action'); }}>Actions</Button></ButtonGroup></HStack>
     <Box position="relative" overflow="hidden" borderWidth="2px" borderColor="green.900" bg="green.700" aspectRatio={`${width} / ${height}`} aria-label="Blood Bowl-plan med spelarpositioner">
       <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" aria-hidden="true">
@@ -134,7 +156,7 @@ export default function ReplayPitchPlayer({ matchId, match }) {
         const symbol = preferences.replayPlayerLabel === 'position' ? role.label : (player.number || player.id);
         const size = ringSize(player, match);
         const teamColor = Number(player.team) === 0 ? 'blue.500' : 'orange.400';
-        return <Box key={`${player.team}-${player.id}`} position="absolute" transform="translate(-50%, -50%)" width={size} height={size} borderRadius="50%" display="flex" alignItems="center" justifyContent="center" bg={teamColor} borderWidth={player.hasBall ? '4px' : '3px'} borderColor={player.hasBall ? 'yellow.200' : role.color} color="white" boxShadow="0 0 0 1px rgba(0,0,0,0.85)" fontWeight="bold" fontSize={{ base: '9px', md: '11px' }} title={`${playerName(player)} · ${role.label}${player.hasBall ? ' · bollbärare' : ''}`} {...positionStyle(player.position, width, height)}>
+        return <Box key={`${player.team}-${player.id}`} position="absolute" transform="translate(-50%, -50%)" width={`${(size / width) * 100}%`} height={`${(size / height) * 100}%`} minW="10px" minH="10px" maxW="34px" maxH="34px" borderRadius="50%" display="flex" alignItems="center" justifyContent="center" bg={teamColor} borderWidth={player.hasBall ? { base: '2px', md: '4px' } : { base: '1px', md: '3px' }} borderColor={player.hasBall ? 'yellow.200' : role.color} color="white" boxShadow="0 0 0 1px rgba(0,0,0,0.85)" fontWeight="bold" fontSize={{ base: '8px', md: '11px' }} title={`${playerName(player)} · ${role.label}${player.hasBall ? ' · bollbärare' : ''}`} {...positionStyle(player.position, width, height)}>
           {preferences.replayPlayerVisual === 'avatars' && player.avatarUrl ? <Image src={player.avatarUrl} alt={playerName(player)} boxSize="calc(100% - 5px)" borderRadius="full" objectFit="cover"/> : <Box color={role.text || 'white'}>{symbol}</Box>}
         </Box>;
       })}
@@ -158,7 +180,16 @@ export default function ReplayPitchPlayer({ matchId, match }) {
       </ButtonGroup>
       <Checkbox size="sm" isChecked={showGrid} onChange={(event) => setShowGrid(event.target.checked)}>Rutnät</Checkbox>
     </HStack>
-    {frame.actions?.length > 0 && <Text fontSize="sm">Actions: {frame.actions.map((action) => action.type).join(' · ')}</Text>}
+    {frame.actions?.length > 0 && <Wrap spacing={2} aria-label="Actions">
+      {frame.actions.map((action) => {
+        const faceLabel = blockFaceLabels[action.selectedFace];
+        const label = faceLabel ? `${action.type} · ${faceLabel}` : action.type;
+        return <HStack key={action.id} spacing={1.5} borderWidth="1px" borderRadius="md" px={2} py={1} title={label}>
+          <TimelineIcon event={{ type: actionIconType(action), details: { selectedFace: action.selectedFace } }} size={16}/>
+          <Text fontSize="xs" fontWeight="medium">{label}</Text>
+        </HStack>;
+      })}
+    </Wrap>}
     {frame.events?.length > 0 && <Text fontSize="xs" color="gray.500">Händelser: {frame.events.join(' · ')}</Text>}
     <HStack align="start" spacing={4} flexWrap="wrap">
       {[0, 1].map((team) => <Box key={team} flex="1" minW="180px"><Text fontSize="sm" fontWeight="semibold">{teamName(team)} · avbytare</Text><Text fontSize="sm" color="gray.600">{bench.filter((player) => Number(player.team) === team).map(playerName).join(', ') || 'Inga'}</Text></Box>)}

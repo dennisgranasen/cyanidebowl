@@ -235,7 +235,7 @@ export default function TimelineIcon({ event, size = 20 }) {
     return <Icon size={size}/>;
   }
   if (type === 'touchdown') return <MdSportsFootball size={size}/>;
-  if (type === 'block') {
+  if (type === 'block' || type.includes('block')) {
     const glyph = blockDieGlyph(blockFaceValue(event));
     return glyph
       ? <NuffleDiceGlyph glyph={glyph} label={String(blockFaceValue(event))} fontSize={`${size}px`}/>
@@ -247,18 +247,19 @@ export default function TimelineIcon({ event, size = 20 }) {
       return <NuffleDiceGlyph glyph={glyph} label={String(blockFaceValue(event))} fontSize={`${size}px`}/>;
     }
   }
-  if (type === 'foul') return <FaShoePrints size={size}/>;
+  if (type === 'foul' || type.includes('foul')) return <FaShoePrints size={size}/>;
   if (type === 'ejection') return <RedCardIcon size={size}/>;
   if (type === 'reroll') return <MdCasino size={size}/>;
   if (type === 'animal_savagery' || rawType === 'animal_savagery') return <FaCow size={size}/>;
   if (type === 'possession') return <MdPanToolAlt size={size}/>;
-  if (type === 'completion' || type === 'pass') return <MdSend size={size}/>;
-  if (type === 'handoff') return <MdSwapHoriz size={size}/>;
-  if (type === 'catch') {
+  if (type === 'completion' || type === 'pass' || type.includes('pass')) return <MdSend size={size}/>;
+  if (type === 'handoff' || type.includes('handoff')) return <MdSwapHoriz size={size}/>;
+  if (type === 'movement' || type.includes('dodge') || type.includes('rush') || type.includes('run')) return <MdDirectionsRun size={size}/>;
+  if (type === 'catch' || type.includes('catch')) {
     const Icon = sourceAction.includes('handoff') ? MdSwapHoriz : MdPanTool;
     return <Icon size={size}/>;
   }
-  if (type === 'interception') return <MdFrontHand size={size}/>;
+  if (type === 'interception' || type.includes('intercept')) return <MdFrontHand size={size}/>;
   if (type === 'casualty' || type === 'injury' || type === 'death') {
     return <DamageIcon event={event} size={size}/>;
   }

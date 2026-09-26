@@ -13,6 +13,24 @@ import static org.mockito.Mockito.when;
 
 class ReplayFrameProjectionServiceTest {
     @Test
+    void includesBlockFaceInProjectedActionsForReplayIcons() throws Exception {
+        var artifacts = mock(ReplayArtifactService.class);
+        var matches = mock(MatchRepository.class);
+        when(artifacts.readCompactJson("match")).thenReturn(("""
+                {"canonicalActions":[{"actionId":"bb3:0:0:block:7:8","kind":"block","attackerPlayerId":7,"selectedFace":"defenderDown"}],
+                "steps":[{"sequence":0,"checkpoint":{"boardState":{"Ball":{"Cell":{"X":8,"Y":4}}}}}]}
+                """).getBytes(StandardCharsets.UTF_8));
+
+        Map<String, Object> projected = new ReplayFrameProjectionService(artifacts, matches, new ObjectMapper()).frames("match");
+
+        var frames = (java.util.List<Map<String, Object>>) projected.get("frames");
+        var actions = (java.util.List<Map<String, Object>>) frames.get(0).get("actions");
+        assertThat(actions).singleElement().satisfies(action -> {
+            assertThat(action).containsEntry("type", "block").containsEntry("selectedFace", "defenderDown");
+        });
+    }
+
+    @Test
     void projectsBoardCheckpointsIntoTacticalFrames() throws Exception {
         var artifacts = mock(ReplayArtifactService.class);
         var matches = mock(MatchRepository.class);
