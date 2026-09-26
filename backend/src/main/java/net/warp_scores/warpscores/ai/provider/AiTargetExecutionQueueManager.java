@@ -135,7 +135,7 @@ public class AiTargetExecutionQueueManager {
 
             Instant blocked = q.blockedUntil();
             long samples = q.succeeded.get();
-            Long seconds = samples < 3 ? null : Math.max(0, (long) Math.ceil(
+                Long seconds = samples == 0 ? null : Math.max(0, (long) Math.ceil(
                     (ahead + q.running.get())
                             * (q.completedMillis.get() / (double) samples)
                             / (Math.max(1, q.queueConfig.getConcurrency()) * 1000)));
@@ -145,6 +145,39 @@ public class AiTargetExecutionQueueManager {
             }
             return new WaitEstimate(ahead, q.running.get(), seconds, blocked);
         }
+    }
+
+    public boolean exceedsFallbackWait(LlmProviderRouter.ModelTarget target, int priority) {
+        if (target.targetId() == null) return false;
+        QuotaQueue q = queueForTarget(target.targetId());
+        if (q == null) return false;
+
+        return projectedWaitSeconds(target, priority) > q.queueConfig.getFallbackAfter().toSeconds();
+        }
+
+        public List<LlmProviderRouter.ModelTarget> orderByAvailability(
+            List<LlmProviderRouter.ModelTarget> targets,
+            int priority) {
+        return targets.stream()
+            .sorted(Comparator.comparingLong(target -> projectedWaitSeconds(target, priority)))
+            .toList();
+        }
+
+        private long projectedWaitSeconds(LlmProviderRouter.ModelTarget target, int priority) {
+        if (target.targetId() == null) return 0;
+        QuotaQueue q = queueForTarget(target.targetId());
+        if (q == null) return 0;
+
+        WaitEstimate estimate = estimate(target.targetId(), priority);
+        long queueSeconds = estimate.estimatedWaitSeconds() == null
+            ? (long) Math.ceil((estimate.ahead() + estimate.running())
+                * q.queueConfig.getFallbackAfter().toMillis()
+                / (double) (Math.max(1, q.queueConfig.getConcurrency()) * 1000))
+            : estimate.estimatedWaitSeconds();
+        long blockedSeconds = estimate.notBefore() == null
+            ? 0
+            : Math.max(0, Duration.between(Instant.now(), estimate.notBefore()).toSeconds());
+        return Math.max(queueSeconds, blockedSeconds);
     }
 
     public record WaitEstimate(int ahead, int running, Long estimatedWaitSeconds, Instant notBefore) {}
@@ -387,20 +420,21 @@ public class AiTargetExecutionQueueManager {
 
                 if (e.kind() == LlmProviderException.Kind.RATE_LIMIT) {
                     Instant retry = e.retryAt();
-                    if (retry == null || !retry.isAfter(Instant.now())) {
-                        retry = Instant.now().plus(backoff(Math.max(1, call.attempts)));
+                    Instant now = Instant.now();
+                    if (e.rateLimitScope() == LlmProviderException.RateLimitScope.QUOTA_EXHAUSTED) {
+                        Instant cooldown = now.plus(queueConfig.getQuotaExhaustedCooldown());
+                        if (retry == null || retry.isBefore(cooldown)) retry = cooldown;
+                    } else if (retry == null || !retry.isAfter(now)) {
+                        retry = now.plus(backoff(Math.max(1, call.attempts)));
                     }
 
                     blockUntil(retry, e.getMessage());
 
-                    // Provider/quota exhaustion is not a failure of this job.
-                    // Do not consume an attempt. The job rejoins the shared
-                    // quota queue and competes by priority when the block ends.
-                    call.attempts = Math.max(0, call.attempts - 1);
-                    call.status = JobStatus.RETRY_WAIT;
-                    call.availableAt = retry;
+                    call.status = JobStatus.FAILED;
                     call.lastError = shortError(e);
-                    enqueue(call);
+                    recordCompletion(duration);
+                    failed.incrementAndGet();
+                    call.result.completeExceptionally(e);
                     return;
                 }
 

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -144,12 +145,14 @@ public class GeminiLlmProvider implements LlmProvider {
             message.append(": ").append(detail);
         }
 
-        return new LlmProviderException(
-                ID,
-                kind,
-                status,
-                message.toString(),
-                RetryAfter.parse(retryAfter, java.time.Instant.now()));
+        Instant retryAt = RetryAfter.parse(retryAfter, java.time.Instant.now());
+        if (kind == LlmProviderException.Kind.RATE_LIMIT
+            && LlmProviderException.isQuotaExhaustedResponse(body)) {
+            return new LlmProviderException(
+                ID, kind, status, message.toString(), null, retryAt,
+                LlmProviderException.RateLimitScope.QUOTA_EXHAUSTED);
+        }
+        return new LlmProviderException(ID, kind, status, message.toString(), retryAt);
     }
 
     private static String sanitizeBody(String body, int maxLength) {

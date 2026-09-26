@@ -86,6 +86,11 @@ function ArticleCard({
           )}
           <Text fontSize="sm" color="gray.500">Av {article.authorDisplayName}</Text>
         </HStack>
+        {canReview && article.authorType === 'AI' && (article.providerId || article.model) && (
+          <Text mt={1} fontSize="xs" color="gray.500">
+            Provider/modell: {[article.providerId, article.model].filter(Boolean).join(' / ')}
+          </Text>
+        )}
         {article.bodyHtml != null
           ? <Box mt={3} sx={articleBodyStyles} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.bodyHtml) }} />
           : <Text mt={3} whiteSpace="pre-wrap">{article.body}</Text>}

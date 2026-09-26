@@ -143,6 +143,13 @@ public class OpenAiCompatibleLlmProvider implements LlmProvider {
         if (detail.length() > 400) detail = detail.substring(0, 400) + "…";
         String message = providerId + " HTTP " + status
                 + (detail.isBlank() ? "" : ": " + detail);
-        return new LlmProviderException(providerId, kind, status, message, RetryAfter.parse(retryAfter, java.time.Instant.now()));
+        java.time.Instant retryAt = RetryAfter.parse(retryAfter, java.time.Instant.now());
+        if (kind == LlmProviderException.Kind.RATE_LIMIT
+            && LlmProviderException.isQuotaExhaustedResponse(body)) {
+            return new LlmProviderException(
+                providerId, kind, status, message, null, retryAt,
+                LlmProviderException.RateLimitScope.QUOTA_EXHAUSTED);
+        }
+        return new LlmProviderException(providerId, kind, status, message, retryAt);
     }
 }

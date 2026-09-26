@@ -148,6 +148,8 @@ warpscores:
     quota-groups:
       gemini-main:
         concurrency: 1
+        fallback-after: 30s
+        quota-exhausted-cooldown: 24h
         base-backoff: 10s
         max-backoff: 10m
         jitter: 0.20
@@ -242,7 +244,7 @@ warpscores:
 
     tasks:
       EDITORIAL_ARTICLE: { target: groq-large, priority: 80 }
-      MATCH_REPORT: { target: editorial, priority: 90 }
+      MATCH_REPORT: { target: editorial, fallback-targets: [groq-large, short-text, openrouter-free], priority: 90 }
       FAN_PROFILE: { target: editorial, priority: 50 }
       PLAYER_RATING: { target: openrouter-free, priority: 70 }
       ARTICLE_COMMENT: { target: openrouter-free, priority: 60 }

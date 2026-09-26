@@ -49,6 +49,8 @@ public class AiProviderProperties {
         private int concurrency = 1;
         private int maxAttempts = 4;
         private Duration maxWait = Duration.ofMinutes(5);
+        private Duration fallbackAfter = Duration.ofSeconds(30);
+        private Duration quotaExhaustedCooldown = Duration.ofHours(24);
         private Duration baseBackoff = Duration.ofSeconds(10);
         private Duration maxBackoff = Duration.ofMinutes(10);
         private double jitter = 0.20;

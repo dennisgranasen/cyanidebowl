@@ -22,6 +22,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.BeanUtils;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
@@ -73,17 +74,27 @@ public class MatchArticleService {
     public List<MatchArticle> visibleArticles(Authentication auth, String matchId) {
         MatchContext ctx = matchContext(auth, matchId);
         List<MatchArticle> all = articles.findByMatchIdOrderByCreatedAtAsc(matchId);
-        if (ctx.editor()) {
-            return all.stream()
-                    .filter(a -> a.getStatus() != MatchArticle.Status.REJECTED)
-                    .toList();
-        }
         String subject = subject(auth);
         return all.stream()
-                .filter(a -> a.getStatus() == MatchArticle.Status.PUBLISHED
-                        || subject != null && Objects.equals(subject, a.getAuthorSubject()))
+            .filter(a -> ctx.editor()
+                ? a.getStatus() != MatchArticle.Status.REJECTED
+                : a.getStatus() == MatchArticle.Status.PUBLISHED
+                    || subject != null && Objects.equals(subject, a.getAuthorSubject()))
+            .map(article -> articleForViewer(article, ctx.editor()))
                 .toList();
     }
+
+        private static MatchArticle articleForViewer(MatchArticle article, boolean canReview) {
+        if (canReview) return article;
+        MatchArticle view = new MatchArticle();
+        BeanUtils.copyProperties(article, view);
+        view.setProviderId(null);
+        view.setModel(null);
+        view.setProviderRequestId(null);
+        view.setInputTokens(null);
+        view.setOutputTokens(null);
+        return view;
+        }
 
     public Capabilities capabilities(Authentication auth, String matchId) {
         MatchContext ctx = matchContext(auth, matchId);
