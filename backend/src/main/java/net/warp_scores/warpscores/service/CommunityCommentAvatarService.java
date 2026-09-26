@@ -1,6 +1,7 @@
 package net.warp_scores.warpscores.service;
 
 import lombok.RequiredArgsConstructor;
+import net.warp_scores.warpscores.ai.agents.AiReporterRegistry;
 import net.warp_scores.warpscores.domain.persistence.AiCommunityMemberProfileRepository;
 import net.warp_scores.warpscores.domain.persistence.WarpScoresUserRepository;
 import net.warp_scores.warpscores.model.AiCommunityMemberProfile;
@@ -19,6 +20,7 @@ import java.util.Objects;
 public class CommunityCommentAvatarService {
     private final WarpScoresUserRepository users;
     private final AiCommunityMemberProfileRepository profiles;
+    private final AiReporterRegistry reporters;
 
     public List<CommunityComment> attach(List<CommunityComment> comments) {
         List<Long> userIds = comments.stream()
@@ -41,6 +43,16 @@ public class CommunityCommentAvatarService {
             String avatar = fanAvatars.get(comment.getAuthorUserId());
             WarpScoresUser user = usersById.get(comment.getAuthorUserId());
             if (!StringUtils.hasText(avatar) && user != null) avatar = user.getPublicAvatarUrl();
+                if (!StringUtils.hasText(avatar) && comment.getAuthorSubject() != null
+                    && comment.getAuthorSubject().startsWith("ai:")) {
+                avatar = reporters.find(comment.getAuthorSubject().substring(3))
+                    .map(reporter -> reporter.getPortrait() == null
+                        ? null
+                        : StringUtils.hasText(reporter.getPortrait().getAvatar())
+                            ? reporter.getPortrait().getAvatar()
+                            : reporter.getPortrait().getImage())
+                    .orElse(null);
+                }
             comment.setAuthorAvatarUrl(avatar);
         });
         return comments;

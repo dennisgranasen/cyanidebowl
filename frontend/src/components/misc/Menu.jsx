@@ -119,20 +119,21 @@ function Menu({ leagueSystems = [], selectedLeagueSystemId, selectedSeasonId, on
             backgroundImage={imageUrls.blaskscoreLogoPng()}
             backgroundRepeat="no-repeat"
             backgroundSize="cover"
+            overflowY="auto"
           >
             <VStack
               background="warpScoresBackgroundColor"
-              h="full"
+              minH="full"
               w="full"
-              align="left"
+              align="stretch"
               paddingLeft="6"
               paddingRight="6"
               paddingTop="2"
               paddingBottom="2"
               opacity="0.9"
-              overflowX="scroll"
+              overflowX="hidden"
             >
-              <VStack align="left" h="full" spacing={0}>
+              <VStack align="left" spacing={0}>
                 <Box pb={2}>
                   <Box fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide" mb={1}>
                     {intl.formatMessage({ id: 'menu.section.start', defaultMessage: 'Start' })}
@@ -247,13 +248,22 @@ function Menu({ leagueSystems = [], selectedLeagueSystemId, selectedSeasonId, on
                     </Link>
                     {isProduction && authenticationReady && (
                       !isAuthenticated ? (
-                        <Link variant="menu" onClick={async (e) => {
+                        <>
+                          <Link variant="menu" onClick={async (e) => {
                           e.preventDefault();
                           await loginWithRedirect();
                           onClose();
-                        }}>
-                          {intl.formatMessage({ id: 'menu.login' })}
-                        </Link>
+                          }}>
+                            {intl.formatMessage({ id: 'menu.login' })}
+                          </Link>
+                          <Link variant="menu" onClick={async (e) => {
+                            e.preventDefault();
+                            await loginWithRedirect({ authorizationParams: { screen_hint: 'signup' } });
+                            onClose();
+                          }}>
+                            {intl.formatMessage({ id: 'menu.createAccount' })}
+                          </Link>
+                        </>
                       ) : (
                         <Link variant="menu" onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}>
                           {intl.formatMessage({ id: 'menu.logout' }, { name: user.name })}
@@ -276,8 +286,6 @@ function Menu({ leagueSystems = [], selectedLeagueSystemId, selectedSeasonId, on
                     </Link>
                   </VStack>
                 </Box>
-
-                <Spacer />
               </VStack>
               <VStack align="left">
                 <ArticleFeed type={articleSubject?.type} subjectId={articleSubject?.id} leagueSystemId={selectedLeagueSystemId || new URLSearchParams(location.search).get('leagueSystem')} seasonId={selectedSeasonId || new URLSearchParams(location.search).get('season')} compact limit={4} />

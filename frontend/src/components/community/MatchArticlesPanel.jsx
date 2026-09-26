@@ -44,6 +44,11 @@ function ArticleCard({
         {teamReport && <Badge colorScheme="blue">Lagrapport · {article.teamName}</Badge>}
         {coachContribution && <Badge colorScheme="purple">Coachbidrag</Badge>}
         {article.authorType === 'AI' && <Badge colorScheme="cyan">AI · {article.reporterAlias}</Badge>}
+        {canReview && article.authorType === 'AI' && (article.providerId || article.model) && (
+          <Badge colorScheme="teal">
+            {[article.providerId, article.model].filter(Boolean).join(' · ')}
+          </Badge>
+        )}
         {!teamReport && !coachContribution && <Badge>Blödareblaskan</Badge>}
         {article.status !== 'PUBLISHED' && (
           <Badge colorScheme={statusScheme[article.status]}>{article.status}</Badge>
@@ -86,11 +91,6 @@ function ArticleCard({
           )}
           <Text fontSize="sm" color="gray.500">Av {article.authorDisplayName}</Text>
         </HStack>
-        {canReview && article.authorType === 'AI' && (article.providerId || article.model) && (
-          <Text mt={1} fontSize="xs" color="gray.500">
-            Provider/modell: {[article.providerId, article.model].filter(Boolean).join(' / ')}
-          </Text>
-        )}
         {article.bodyHtml != null
           ? <Box mt={3} sx={articleBodyStyles} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.bodyHtml) }} />
           : <Text mt={3} whiteSpace="pre-wrap">{article.body}</Text>}
