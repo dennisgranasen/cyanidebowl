@@ -11,22 +11,20 @@ Browser -> Firebase Hosting -> https://api.<your-domain>/api
                                      -> backend:8080 -> pybb3-service:8000
 ```
 
-The Firebase workflow and Oracle workflow are both started manually from GitHub Actions.
-The Oracle workflow builds ARM64 images, pushes them to GHCR, and updates the VM over SSH.
-It does not copy or replace the VM's runtime `.env` file.
+The Firebase workflow deploys the frontend when manually started from GitHub Actions.
+The Oracle workflow only builds ARM64 images and uploads a checksummed Actions artifact;
+it does not connect to Oracle or publish images to a registry. You download the artifact
+and deploy it yourself from a trusted computer using your own SSH connection.
 
 ## One-time Oracle setup
 
 1. Create an ARM64 Oracle Linux or Ubuntu VM with a reserved public IPv4 address. Provide
    enough memory for the Java 25 backend and Docker; the workflow builds images on GitHub,
    so Maven and .NET SDKs are not required on the VM.
-2. Configure the Oracle network security list/firewall to allow SSH from your trusted
-   admin address and the GitHub Actions runner addresses used by this workflow. GitHub's
-   hosted-runner IP ranges change; keep the allowlist current, use a static-IP runner
-   option, or use a secured self-hosted runner if that is operationally preferable. Do
-   not expose ports 80, 443, 8000, or 8080: the tunnel connects outbound. Ensure outbound
-   HTTPS and Cloudflare Tunnel connectivity (UDP/TCP 7844, with HTTPS fallback) are
-   allowed.
+2. Configure the Oracle network security list/firewall to allow SSH only from your
+   trusted admin address. GitHub Actions does not SSH to the VM. Do not expose ports 80,
+   443, 8000, or 8080: the tunnel connects outbound. Ensure outbound HTTPS and Cloudflare
+   Tunnel connectivity (UDP/TCP 7844, with HTTPS fallback) are allowed.
 3. Install Docker Engine and the Docker Compose v2 plugin. Create a deployment user, add
    it to the Docker group, and install the public half of a dedicated SSH key in that
    user's `~/.ssh/authorized_keys`. Membership in the Docker group grants root-equivalent
@@ -34,10 +32,10 @@ It does not copy or replace the VM's runtime `.env` file.
 4. Create `$HOME/cyanidebowl` for that SSH user and put the production environment file
    at `$HOME/cyanidebowl/.env`. Start from [.env.oracle.example](.env.oracle.example),
    fill in real values, and restrict the file to its owner (`chmod 600`). Do not commit it.
-5. Ensure the VM has outbound access to MongoDB Atlas, GHCR, Auth0/JWKS, Cloudflare, and
-   any AI providers enabled by the application. In Atlas Network Access, allow the VM's
-   stable public egress IP (or use a deliberate private-network solution); do not open
-   Atlas to all addresses just to make deployment work.
+5. Ensure the VM has outbound access to MongoDB Atlas, Auth0/JWKS, Cloudflare, and any AI
+   providers enabled by the application. In Atlas Network Access, allow the VM's stable
+   public egress IP (or use a deliberate private-network solution); do not open Atlas to
+   all addresses just to make deployment work.
 
 The `.env` values that must be set for this topology are the MongoDB URI, the Cyanide and
 pybb3 internal keys, Auth0 issuer/domain/audience/client ID, frontend origin, API and AI
@@ -63,29 +61,48 @@ separate encrypted backups and test restoration.
 4. After both sites are verified, repoint the frontend hostname from any old tunnel to
    Firebase Hosting and retire the old frontend tunnel connector if it is no longer used.
 
-## GitHub configuration
+## Build and manual Oracle deployment
 
-Add these repository **secrets** before running the Oracle workflow:
+No Oracle SSH key, host, known-host entry, or GHCR token is stored in GitHub Actions.
+The only optional repository variable for the image build is `PYBB3_REF`; it defaults to
+`main`. Pin it to a commit or release when you need a reproducible pybb3 build.
 
-- `ORACLE_HOST`: reserved public IP or SSH hostname.
-- `ORACLE_USER`: deployment SSH user.
-- `ORACLE_SSH_PRIVATE_KEY`: private half of the dedicated deployment key.
-- `ORACLE_SSH_KNOWN_HOSTS`: verified SSH host-key line(s) for the VM. Verify the
-  fingerprint through a trusted Oracle console before saving it; the workflow does not
-  trust a key discovered during deployment.
-- `GHCR_USERNAME`: GitHub account that owns the registry read token.
-- `GHCR_READ_TOKEN`: a classic personal access token with `read:packages` and access to
-   both private GHCR packages. The workflow's `GITHUB_TOKEN` publishes the images; this
-   token is only used temporarily by the VM to pull them.
+1. Open **Actions → Build Oracle ARM64 images → Run workflow**, select the code ref, and
+   start the workflow. It builds the backend and pybb3 images without pushing them to a
+   registry, then uploads an artifact containing the images, checksum, and Oracle Compose
+   file. Artifacts are retained for 14 days.
+2. Download and extract that run's `cyanidebowl-oracle-arm64-<commit>` artifact on your
+   trusted admin computer. Verify it there:
 
-`PYBB3_REF` is an optional repository variable; it defaults to `main`. Pin it to a commit
-or release for reproducible pybb3 builds.
+   ```bash
+   sha256sum -c cyanidebowl-oracle-arm64.tar.gz.sha256
+   ```
 
-From **Actions → Deploy backend and pybb3 to Oracle → Run workflow**, select the ref to
-deploy and run it. The workflow tags images with that commit SHA, transfers the Oracle
-Compose file, pulls the ARM64 images, and waits for backend/pybb3 health checks. A failed
-health check fails the deployment. The previous image tags remain in GHCR for manual
-rollback; keep the matching Compose file and image SHA together when rolling back.
+3. Copy the archive and Compose file to the VM using your own SSH key and the SSH source
+   IP allowed by the Oracle firewall. For example:
+
+   ```bash
+    scp cyanidebowl-oracle-arm64.tar.gz \
+       cyanidebowl-oracle-arm64.tar.gz.sha256 compose.oracle.yaml \
+       USER@ORACLE_HOST:cyanidebowl/
+   ```
+
+4. Connect to the VM and load the images. Run the commands from the deployment user's
+   home directory, where `.env` contains the runtime settings and image tags from
+   `.env.oracle.example`:
+
+   ```bash
+   cd "$HOME/cyanidebowl"
+   sha256sum -c cyanidebowl-oracle-arm64.tar.gz.sha256
+   docker load -i cyanidebowl-oracle-arm64.tar.gz
+   docker compose --env-file .env -f compose.oracle.yaml up -d --no-build --wait --wait-timeout 300
+   docker compose --env-file .env -f compose.oracle.yaml ps
+   ```
+
+The Oracle workflow only prepares images; container deployment happens only when you run
+these commands. Keep the downloaded artifact for rollback, because loading the next
+artifact replaces the local `:arm64` image tags. GHCR publishing and automated pull-based
+deployment can be added later, without giving GitHub Actions SSH access to the VM.
 
 ## Firebase and Auth0
 
@@ -109,9 +126,9 @@ unless the Auth0 API identifier itself is intentionally changed.
 
 ## First-deploy checks
 
-1. Run the Oracle workflow and confirm the `backend`, `pybb3-service`, and `cloudflared`
-   containers are healthy/running in `$HOME/cyanidebowl` with
-   `docker compose --env-file .env --env-file .deploy.env -f compose.oracle.yaml ps`.
+1. After the manual Oracle commands, confirm the `backend`, `pybb3-service`, and
+   `cloudflared` containers are healthy/running with
+   `docker compose --env-file .env -f compose.oracle.yaml ps`.
 2. Confirm `https://api.example.com/actuator/health` returns a healthy response and that
    the API's `/api` routes work through the tunnel.
 3. Run the Firebase frontend workflow, then test login, API calls, CORS, and one operation
@@ -119,5 +136,5 @@ unless the Auth0 API identifier itself is intentionally changed.
 4. Check GitHub Actions, Cloudflare Tunnel status, Atlas access logs, and backend logs
    before switching the main frontend DNS hostname.
 
-The Oracle workflow deploys only the backend, pybb3, and the API tunnel. Firebase Hosting
-is the frontend deployment path; it does not require a GCP VM or Cloudflare Tunnel.
+The Oracle workflow builds images only; it does not deploy containers. Firebase Hosting
+is the frontend deployment path and does not require a GCP VM or Cloudflare Tunnel.
