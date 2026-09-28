@@ -6,20 +6,20 @@ networks:
 
 volumes:
   pybb3-credentials:
-  replay_data:
-  community_media:
 
 services:
   pybb3-service:
     image: ${PYBB3_IMAGE:?PYBB3_IMAGE is required}
     container_name: pybb3-service
     restart: unless-stopped
+    group_add:
+      - ${PYBB3_DATA_GID:-20000}
     environment:
       PYBB3_INTERNAL_API_KEY: ${PYBB3_INTERNAL_API_KEY}
       PYBB3_CREDENTIAL_ENCRYPTION_KEY: ${PYBB3_CREDENTIAL_ENCRYPTION_KEY}
     volumes:
       - pybb3-credentials:/var/lib/pybb3/credentials
-      - replay_data:/app/replays
+      - ./data/replays:/app/replays
     networks:
       - internal_net
     healthcheck:
@@ -73,8 +73,8 @@ services:
       COMMUNITY_MEDIA_QUOTA_EXHAUSTED_COOLDOWN: ${COMMUNITY_MEDIA_QUOTA_EXHAUSTED_COOLDOWN:-12h}
       FAN_RATE_LIMIT_COOLDOWN: ${FAN_RATE_LIMIT_COOLDOWN:-2m}
     volumes:
-      - replay_data:/app/replays
-      - community_media:/data/community-media
+      - ./data/replays:/app/replays
+      - ./data/community-media:/data/community-media
     networks:
       - internal_net
     depends_on:

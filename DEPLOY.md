@@ -25,13 +25,36 @@ and deploy it yourself from a trusted computer using your own SSH connection.
    trusted admin address. GitHub Actions does not SSH to the VM. Do not expose ports 80,
    443, 8000, or 8080: the tunnel connects outbound. Ensure outbound HTTPS and Cloudflare
    Tunnel connectivity (UDP/TCP 7844, with HTTPS fallback) are allowed.
-3. Install Docker Engine and the Docker Compose v2 plugin. Create a deployment user, add
-   it to the Docker group, and install the public half of a dedicated SSH key in that
-   user's `~/.ssh/authorized_keys`. Membership in the Docker group grants root-equivalent
-   control of the VM.
-4. Create `$HOME/cyanidebowl` for that SSH user and put the production environment file
-   at `$HOME/cyanidebowl/.env`. Start from [.env.oracle.example](.env.oracle.example),
-   fill in real values, and restrict the file to its owner (`chmod 600`). Do not commit it.
+3. Install Docker Engine and the Docker Compose v2 plugin. You can use the existing
+   non-root OCI login (commonly `ubuntu` or `opc`); a separate deployment user is
+   optional. Install your SSH public key in that user's `~/.ssh/authorized_keys` and give
+   it Docker access. Membership in the Docker group grants root-equivalent control of
+   the VM, so protect that account and its SSH key accordingly.
+4. Use your existing `$HOME/blaskscore` directory. Ensure its `data/replays` and
+   `data/community-media` directories exist, and put the production environment file at
+   `$HOME/blaskscore/.env`. Start from [.env.oracle.example](.env.oracle.example), fill
+   in real values, and restrict the file to its owner (`chmod 600`). Do not commit it.
+   The pybb3 container runs as UID/GID `65532`. For shared replay-directory access,
+   create a dedicated host group using the `PYBB3_DATA_GID` value from `.env` (default
+   `20000`). First check that the GID is unused with `getent group 20000`. If it is free,
+   run:
+
+   ```bash
+   sudo groupadd --gid 20000 pybb3-data
+   sudo usermod -aG pybb3-data ubuntu
+   sudo chown ubuntu:pybb3-data "$HOME/blaskscore/data/replays"
+   sudo chmod 2770 "$HOME/blaskscore/data/replays"
+    sudo setfacl -m g:pybb3-data:rwx,d:g:pybb3-data:rwx \
+       "$HOME/blaskscore/data/replays"
+   ```
+
+   Replace `ubuntu` with your actual login name if different, and log out/in so your
+   shell picks up the new group. Compose adds GID `20000` to pybb3 as a supplementary
+   group; the directory's setgid bit and default ACL keep new entries group-accessible.
+   Install the `acl` package if `setfacl` is not available. If `20000` is already
+   allocated, choose a free GID and set the same value in `.env` before starting Compose.
+   These commands change only directory permissions/ACLs, not existing replay files;
+   inspect existing contents before changing any file ownership.
 5. Ensure the VM has outbound access to MongoDB Atlas, Auth0/JWKS, Cloudflare, and any AI
    providers enabled by the application. In Atlas Network Access, allow the VM's stable
    public egress IP (or use a deliberate private-network solution); do not open Atlas to
@@ -45,9 +68,11 @@ stable after credentials have been encrypted; changing it can make existing stor
 credentials unreadable. Back up the key securely before rotating it and follow the
 application's credential re-encryption/recovery procedure if rotation is required.
 
-The Compose file uses named Docker volumes for pybb3 credentials, replay data, and
-community media. These survive container replacement but are not backups. Schedule
-separate encrypted backups and test restoration.
+Replay files and community media are bind-mounted from
+`$HOME/blaskscore/data/replays` and `$HOME/blaskscore/data/community-media`, preserving
+the existing host directories across container replacement. pybb3 credentials use a
+persistent named Docker volume. None of these are backups; schedule separate encrypted
+backups and test restoration.
 
 ## Cloudflare Tunnel
 
@@ -84,7 +109,7 @@ The only optional repository variable for the image build is `PYBB3_REF`; it def
    ```bash
     scp cyanidebowl-oracle-arm64.tar.gz \
        cyanidebowl-oracle-arm64.tar.gz.sha256 compose.oracle.yaml \
-       USER@ORACLE_HOST:cyanidebowl/
+       USER@ORACLE_HOST:blaskscore/
    ```
 
 4. Connect to the VM and load the images. Run the commands from the deployment user's
@@ -92,7 +117,7 @@ The only optional repository variable for the image build is `PYBB3_REF`; it def
    `.env.oracle.example`:
 
    ```bash
-   cd "$HOME/cyanidebowl"
+   cd "$HOME/blaskscore"
    sha256sum -c cyanidebowl-oracle-arm64.tar.gz.sha256
    docker load -i cyanidebowl-oracle-arm64.tar.gz
    docker compose --env-file .env -f compose.oracle.yaml up -d --no-build --wait --wait-timeout 300
