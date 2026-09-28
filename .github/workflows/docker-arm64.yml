@@ -20,7 +20,17 @@ jobs:
     permissions:
       contents: read
     env:
-      SPRING_MONGODB_URI: ${{ secrets.SPRING_MONGODB_URI }}
+      SPRING_DATA_MONGODB_URI: mongodb://localhost:27017/cyanidebowl_test
+    services:
+      mongodb:
+        image: mongo:8
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.adminCommand(\"ping\").ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
       
     steps:
       - name: Check out repository
