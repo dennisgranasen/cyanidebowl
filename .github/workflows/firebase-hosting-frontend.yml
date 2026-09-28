@@ -1,0 +1,128 @@
+name: Deploy frontend to Firebase Hosting
+
+on:
+  workflow_dispatch:
+    inputs:
+      firebase_project_id:
+        description: Firebase project id. Defaults to repository variable FIREBASE_PROJECT_ID.
+        required: false
+        type: string
+      hosting_site:
+        description: Optional Firebase Hosting site id. Leave empty for the project's default site.
+        required: false
+        type: string
+      backend_uri:
+        description: Frontend API base URL. Defaults to repository variable REACT_APP_BACKEND_URI.
+        required: false
+        type: string
+
+concurrency:
+  group: firebase-hosting-frontend
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build and deploy frontend
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Resolve configuration
+        id: config
+        env:
+          INPUT_FIREBASE_PROJECT_ID: ${{ inputs.firebase_project_id }}
+          INPUT_HOSTING_SITE: ${{ inputs.hosting_site }}
+          INPUT_BACKEND_URI: ${{ inputs.backend_uri }}
+          VAR_FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+          VAR_FIREBASE_HOSTING_SITE: ${{ vars.FIREBASE_HOSTING_SITE }}
+          VAR_REACT_APP_BACKEND_URI: ${{ vars.REACT_APP_BACKEND_URI }}
+          VAR_AUTH0_DOMAIN: ${{ vars.AUTH0_DOMAIN }}
+          VAR_AUTH0_CLIENT_ID: ${{ vars.AUTH0_CLIENT_ID }}
+          VAR_AUTH0_AUDIENCE: ${{ vars.AUTH0_AUDIENCE }}
+        run: |
+          project_id="${INPUT_FIREBASE_PROJECT_ID:-$VAR_FIREBASE_PROJECT_ID}"
+          hosting_site="${INPUT_HOSTING_SITE:-$VAR_FIREBASE_HOSTING_SITE}"
+          backend_uri="${INPUT_BACKEND_URI:-$VAR_REACT_APP_BACKEND_URI}"
+
+          missing=0
+          for name in project_id backend_uri VAR_AUTH0_DOMAIN VAR_AUTH0_CLIENT_ID VAR_AUTH0_AUDIENCE; do
+            if [ -z "${!name}" ]; then
+              echo "::error::$name is not configured"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            exit "$missing"
+          fi
+
+          {
+            echo "project_id=$project_id"
+            echo "hosting_site=$hosting_site"
+            echo "backend_uri=$backend_uri"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm install
+
+      - name: Build frontend
+        working-directory: frontend
+        env:
+          NODE_ENV: production
+          REACT_APP_BACKEND_URI: ${{ steps.config.outputs.backend_uri }}
+          REACT_APP_AUTH0_DOMAIN: ${{ vars.AUTH0_DOMAIN }}
+          REACT_APP_AUTH0_CLIENT_ID: ${{ vars.AUTH0_CLIENT_ID }}
+          REACT_APP_AUTH0_AUDIENCE: ${{ vars.AUTH0_AUDIENCE }}
+        run: npm run build
+
+      - name: Write Firebase configuration
+        env:
+          HOSTING_SITE: ${{ steps.config.outputs.hosting_site }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const site = process.env.HOSTING_SITE || '';
+          const hosting = {
+            public: 'frontend/public',
+            ignore: ['firebase.json', '**/.*', '**/node_modules/**'],
+            rewrites: [{ source: '**', destination: '/index.html' }],
+          };
+          if (site) hosting.site = site;
+          fs.writeFileSync('firebase.json', JSON.stringify({ hosting }, null, 2));
+          NODE
+
+      - name: Install Firebase CLI
+        run: npm install --global firebase-tools
+
+      - name: Authenticate Firebase service account
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "::error::Secret FIREBASE_SERVICE_ACCOUNT is not configured"
+            exit 1
+          fi
+          credentials="$RUNNER_TEMP/firebase-service-account.json"
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$credentials"
+          chmod 600 "$credentials"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$credentials" >> "$GITHUB_ENV"
+
+      - name: Deploy to Firebase Hosting
+        env:
+          FIREBASE_PROJECT_ID: ${{ steps.config.outputs.project_id }}
+        run: firebase deploy --only hosting --project "$FIREBASE_PROJECT_ID" --non-interactive

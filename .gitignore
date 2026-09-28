@@ -58,6 +58,7 @@ backend/build.xml
 .env
 .env.*
 !.env.example
+!.env.oracle.example
 sync.sh
 fetchMongoData.sh
 warpscores-*.tar
