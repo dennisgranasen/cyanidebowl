@@ -6,6 +6,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.config.properties.Auth0ManagementProperties;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -35,6 +36,7 @@ public class Auth0ManagementUserService {
             .build();
     private volatile CachedToken cachedToken;
 
+    @Autowired
     public Auth0ManagementUserService(Auth0ManagementProperties properties, ObjectMapper objectMapper) {
         this(properties, objectMapper, HttpClient.newBuilder().connectTimeout(REQUEST_TIMEOUT).build());
     }
