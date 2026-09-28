@@ -62,7 +62,13 @@ and deploy it yourself from a trusted computer using your own SSH connection.
 
 The `.env` values that must be set for this topology are the MongoDB URI, the Cyanide and
 pybb3 internal keys, Auth0 issuer/domain/audience/client ID, frontend origin, API and AI
-provider configuration, and `CLOUDFLARE_API_TUNNEL_TOKEN`. Generate fresh secrets after
+provider configuration, and `CLOUDFLARE_API_TUNNEL_TOKEN`. To show Auth0 names and email
+addresses in the admin user-permissions panel, configure `AUTH0_MGMT_CLIENT_ID` and
+`AUTH0_MGMT_CLIENT_SECRET` for a confidential machine-to-machine application authorized
+for the Auth0 Management API with only the `read:users` scope. These credentials are
+backend-only; do not add them to frontend build variables or GitHub Actions. The panel
+continues to use locally stored profile details if these optional credentials are unset
+or Auth0 is unavailable. Generate fresh secrets after
 rotating the values previously exposed. `PYBB3_CREDENTIAL_ENCRYPTION_KEY` must remain
 stable after credentials have been encrypted; changing it can make existing stored
 credentials unreadable. Back up the key securely before rotating it and follow the

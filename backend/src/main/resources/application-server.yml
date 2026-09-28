@@ -37,3 +37,8 @@ pybb3:
   base-url: ${PYBB3_SERVICE_URL:http://pybb3-service:8000}
   internal-api-key: ${PYBB3_INTERNAL_API_KEY:}
   cookie-secure: ${PYBB3_COOKIE_SECURE:true}
+warpscores:
+  auth0-management:
+    domain: ${AUTH0_DOMAIN:}
+    client-id: ${AUTH0_MGMT_CLIENT_ID:}
+    client-secret: ${AUTH0_MGMT_CLIENT_SECRET:}

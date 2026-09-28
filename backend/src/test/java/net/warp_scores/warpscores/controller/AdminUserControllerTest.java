@@ -3,6 +3,7 @@ package net.warp_scores.warpscores.controller;
 import net.warp_scores.warpscores.domain.persistence.WarpScoresUserRepository;
 import net.warp_scores.warpscores.model.AccountType;
 import net.warp_scores.warpscores.model.WarpScoresUser;
+import net.warp_scores.warpscores.service.Auth0ManagementUserService;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -14,7 +15,8 @@ import static org.mockito.Mockito.*;
 
 class AdminUserControllerTest {
     private final WarpScoresUserRepository users = mock(WarpScoresUserRepository.class);
-    private final AdminUserController controller = new AdminUserController(users);
+        private final Auth0ManagementUserService auth0Users = mock(Auth0ManagementUserService.class);
+        private final AdminUserController controller = new AdminUserController(users, auth0Users);
 
     @Test
     void listsOnlyHumanUsersWithStableStringIdsAndReadableDisplayNames() {
@@ -55,6 +57,24 @@ class AdminUserControllerTest {
         assertThat(response.getStatusCode().value()).isEqualTo(404);
         verify(users, never()).save(any());
     }
+
+        @Test
+        void enrichesMissingLocalIdentityFromAuth0() {
+                WarpScoresUser user = new WarpScoresUser();
+                user.setId(42L);
+                user.setAuthSubject("auth0|user-42");
+                user.setProvider("auth0");
+                when(users.findAll()).thenReturn(List.of(user));
+                when(auth0Users.findUser("auth0|user-42"))
+                                .thenReturn(java.util.Optional.of(new Auth0ManagementUserService.Identity(
+                                                "Alex Example", "alex@example.com")));
+
+                var result = controller.users();
+
+                assertThat(result).hasSize(1);
+                assertThat(result.getFirst().displayName()).isEqualTo("Alex Example");
+                assertThat(result.getFirst().email()).isEqualTo("alex@example.com");
+        }
 
     @Test
     void updatesGlobalAndLeagueSystemPermissionsWithoutLegacyPermissionLists() {
