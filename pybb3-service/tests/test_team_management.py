@@ -1,0 +1,120 @@
+import base64
+import json
+import xml.etree.ElementTree as ET
+from types import SimpleNamespace
+
+import pytest
+from fastapi import HTTPException
+from bb3.rules import BB3Rules
+
+from app.api import teams as team_api
+from app.schemas.team import SkillAdvancementRequest
+
+
+def encoded(value):
+    return base64.b64encode(value.encode()).decode()
+
+
+class FakeClient:
+    def __init__(self, team_pages=None, players=()):
+        self.team_pages = team_pages or {}
+        self.players = players
+        self.skill_mutations = []
+
+    def get_teams_of_gamer(self, *, size, start):
+        page = self.team_pages.get(start, ([], 0))
+        team_items, total = page
+        items = "".join(f"<Team><Id>{encoded(team_id)}</Id></Team>" for team_id in team_items)
+        return ET.fromstring(f"<ResponseGetTeams><Total>{total}</Total><Teams>{items}</Teams></ResponseGetTeams>")
+
+    def get_team_roster_model(self, _team_id):
+        return SimpleNamespace(players=self.players)
+
+    def get_player_improvements(self, _player_id):
+        skill = SimpleNamespace(skill_id=7, available=False, choosable=False, cost=4)
+        category = SimpleNamespace(category=1, skills=(skill,), random_available=False,
+                                   random_choosable=False, cost_random=4)
+        return SimpleNamespace(skill_categories=(category,))
+
+    def add_player_skill(self, player_id, skill_id):
+        self.skill_mutations.append((player_id, skill_id))
+
+
+def test_owned_team_follows_pages_until_team_is_found():
+    client = FakeClient({0: (["first"], 101), 100: (["wanted"], 101)})
+
+    assert team_api.owned_team(client, "wanted") is client
+
+
+def test_owned_team_rejects_a_team_outside_account():
+    client = FakeClient({0: (["someone-elses-team"], 1)})
+
+    with pytest.raises(HTTPException) as error:
+        team_api.owned_team(client, "wanted")
+
+    assert error.value.status_code == 404
+
+
+def test_owned_player_requires_membership_in_requested_team():
+    player = SimpleNamespace(player_id="player-1")
+    client = FakeClient({0: (["team-1"], 1)}, players=[player])
+
+    with pytest.raises(HTTPException) as error:
+        team_api.owned_player(client, "team-1", "player-2")
+
+    assert error.value.status_code == 404
+
+
+def test_unavailable_skill_is_rejected_without_calling_bb3_mutation(monkeypatch):
+    player = SimpleNamespace(player_id="player-1", spp=10)
+    client = FakeClient({0: (["team-1"], 1)}, players=[player])
+    monkeypatch.setattr(team_api.session_manager, "call", lambda _owner, _session, operation: operation(client))
+
+    with pytest.raises(HTTPException) as error:
+        team_api.advance_skill(
+            "session-1",
+            "team-1",
+            "player-1",
+            SkillAdvancementRequest(kind="chosen", skillId=7),
+            owner="owner-1",
+        )
+
+    assert error.value.status_code == 400
+    assert client.skill_mutations == []
+
+
+def test_roster_skill_names_resolve_from_game_rules_and_keep_unknown_ids(tmp_path, monkeypatch):
+    rules_path = tmp_path / "BB3Rules.json"
+    rules_path.write_text(json.dumps({
+        "bb3_rules_skill": [
+            {"code": 30, "data": "block"},
+        ],
+    }))
+    monkeypatch.setattr(team_api, "_bb3_rules", lambda: BB3Rules.load(rules_path))
+    roster = {"players": [{"skill_ids": [30, 999]}]}
+
+    result = team_api._roster_with_skill_names(roster)
+
+    assert result["players"][0]["skill_ids"] == [30, 999]
+    assert result["players"][0]["skill_names"] == {"30": "block"}
+
+
+def test_skill_name_is_unresolved_without_rules_file(monkeypatch):
+    monkeypatch.setattr(team_api, "_bb3_rules", lambda: None)
+
+    assert team_api._skill_name(30) is None
+
+
+def test_improvement_choices_include_game_rule_skill_names(tmp_path, monkeypatch):
+    rules_path = tmp_path / "BB3Rules.json"
+    rules_path.write_text(json.dumps({
+        "bb3_rules_skill": [
+            {"code": 30, "data": "block"},
+        ],
+    }))
+    monkeypatch.setattr(team_api, "_bb3_rules", lambda: BB3Rules.load(rules_path))
+    improvements = {"skill_categories": [{"skills": [{"skill_id": 30}]}]}
+
+    result = team_api._improvements_with_skill_names(improvements)
+
+    assert result["skill_categories"][0]["skills"][0]["name"] == "block"

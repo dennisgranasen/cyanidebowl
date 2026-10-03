@@ -57,21 +57,21 @@ function Navigation({ currentPage, parentPage, currentLabel, league, competition
             <BreadcrumbLink variant="menu">{currentLabel}</BreadcrumbLink>
           </BreadcrumbItem>
         )}
-        {league && (
+        {league?.[0] && league?.[1] && (
           <BreadcrumbItem isCurrentPage={isPage('league', currentPage)} flexWrap>
             <BreadcrumbLink variant="menu" as={RouteLink} to={leagueLink}>
               {league[1]}
             </BreadcrumbLink>
           </BreadcrumbItem>
         )}
-        {competition && (
+        {competition?.[0] && competition?.[1] && (
           <BreadcrumbItem isCurrentPage={isPage('competition', currentPage)} flexWrap>
             <BreadcrumbLink variant="menu" as={RouteLink} to={competitionLink}>
               {competition[1]}
             </BreadcrumbLink>
           </BreadcrumbItem>
         )}
-        {team && (
+        {team?.[0] && team?.[1] && (
           <BreadcrumbItem isCurrentPage={isPage('team', currentPage)} flexWrap>
             <BreadcrumbLink variant="menu" as={RouteLink} to={teamLink}>
               {team[1]}

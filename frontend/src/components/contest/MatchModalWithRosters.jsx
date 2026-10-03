@@ -120,7 +120,7 @@ function ReplayAnalysisAwarePanel({ replay, match, matchId, loading, error, onDo
   return <ReplayPanel replay={replay} loading={loading} error={error} onDownload={onDownload}/>;
 }
 
-function MatchModal({ isOpen, onClose, match, contest }) {
+function MatchModal({ isOpen, onClose, match, contest, initialTabIndex = 0 }) {
   const intl = useIntl();
   const [matchData, setMatch] = useState(null);
   const [replay, setReplay] = useState(null);
@@ -181,7 +181,7 @@ function MatchModal({ isOpen, onClose, match, contest }) {
                 </Box>
               )}
               
-              <Tabs>
+              <Tabs defaultIndex={initialTabIndex}>
                 <TabList>
                   <Tab>{intl.formatMessage({ id: 'matchModal.tabs.teamStats' })}</Tab>
                   <Tab>{intl.formatMessage({ id: 'matchModal.tabs.rosters' })}</Tab>

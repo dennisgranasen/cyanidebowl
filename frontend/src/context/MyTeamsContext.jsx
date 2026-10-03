@@ -33,8 +33,15 @@ export function MyTeamsProvider({ children }) {
       setClaims(await WarpScoresApiService.coachClaims(getAccessTokenSilently, getAccessTokenWithPopup));
       const connection = await WarpScoresApiService.steamConnection(getAccessTokenSilently, getAccessTokenWithPopup);
       if (!connection.connected) { setTeams([]); return; }
-      const response = await WarpScoresApiService.myBb3Teams(getAccessTokenSilently, getAccessTokenWithPopup);
-      setTeams(response.items || []);
+      const ownedTeams = [];
+      let start = 0;
+      let response;
+      do {
+        response = await WarpScoresApiService.myBb3Teams(getAccessTokenSilently, getAccessTokenWithPopup, 100, start);
+        ownedTeams.push(...(response.items || []));
+        start += response.size || 100;
+      } while (response.hasMore);
+      setTeams(ownedTeams);
       setClaims(await WarpScoresApiService.coachClaims(getAccessTokenSilently, getAccessTokenWithPopup));
     } catch (_error) {
       // Claims remain useful even without an active Steam session.

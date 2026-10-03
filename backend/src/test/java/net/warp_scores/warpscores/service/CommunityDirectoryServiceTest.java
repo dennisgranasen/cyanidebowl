@@ -23,7 +23,8 @@ class CommunityDirectoryServiceTest {
         when(profiles.findById("fan")).thenReturn(Optional.of(member));
         var season = new Season(); season.setId("season"); season.setLeagueSystemId("league");
         when(seasons.findByLeagueSystemIdOrderBySequenceAsc("league")).thenReturn(List.of(season));
-        when(scopes.audience("league", "season")).thenReturn(new ArticleScopeService.Audience("league", Set.of("season"), Set.of("team"), Set.of()));
+        when(scopes.audience("league", "season")).thenReturn(new ArticleScopeService.Audience(
+            "league", Set.of("season"), Set.of("team"), Set.of(), Set.of()));
         var published = new Article(); published.setStatus(Article.Status.PUBLISHED); published.setTitle("News"); published.setSlug("news");
         var draft = new Article(); draft.setStatus(Article.Status.DRAFT);
         when(mongo.findById("public", Article.class)).thenReturn(published);

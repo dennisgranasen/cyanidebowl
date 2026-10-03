@@ -17,6 +17,7 @@ import HeaderCard from '../components/common/HeaderCard';
 import LoadingOrErrorWrapper from '../components/common/LoadingOrErrorWrapper';
 import { identityUtils } from '../util/identityUtil';
 import { useIntl } from 'react-intl';
+import Bb3TeamManagement from '../components/team/Bb3TeamManagement';
 
 function MatchesCount({ matches, teamId }) {
   if (!matches) return <Spinner />;
@@ -88,20 +89,25 @@ function TeamPage() {
     fetchMatches();
   }, [competitionId, teamId]);
 
-  const navCompetition =
-    team && team.competitionIds?.length === 1 ? [team.competitionIds[0], team.competitionNames[0]] : null;
-  console.log('Rendering TeamPage', { team, players, matches });
+  const leagueId = team?.leagueIds?.[0];
+  const leagueName = team?.leagueNames?.[0];
+  const navLeague = leagueId && leagueName ? [identityUtils.key(leagueId), leagueName] : null;
+  const navCompetitionId = team?.competitionIds?.length === 1 ? team.competitionIds[0] : null;
+  const competitionName = team?.competitionNames?.length === 1 ? team.competitionNames[0] : null;
+  const navCompetition = navCompetitionId && competitionName
+    ? [identityUtils.key(navCompetitionId), competitionName]
+    : null;
   return (
-    <VStack align="left">
-      <Box>
+    <VStack align="stretch" spacing={6} width="full">
+      <Box width="full">
         <Navigation
           currentPage="team"
-          league={team && team.leagueIds ? [team.leagueIds[0].key, team.leagueNames[0]] : []}
+          league={navLeague}
           competition={navCompetition}
           team={team ? [teamId, team.name] : []}
         />
       </Box>
-      <Box>
+      <Box width="full">
         <LoadingOrErrorWrapper loading={loadingTeam} error={teamError}>
           {team && (
             <>
@@ -114,7 +120,7 @@ function TeamPage() {
               >
                 <InfoArea>
                   <InfoItem key="race" label={intl.formatMessage({ id: 'team.race' })} info={prettyPrint(team.race)} />
-                  <InfoItem key="players" label={intl.formatMessage({ id: 'common.players' })} info={players !== null ? players.length : '-'} />
+                  <InfoItem key="players" label={intl.formatMessage({ id: 'common.players' })} info={players?.length ?? '-'} />
                   <InfoItem key="rerolls" label={intl.formatMessage({ id: 'team.rerolls' })} info={team.rerolls} />
                   <InfoItem key="dedicatedFans" label={intl.formatMessage({ id: 'team.dedicatedFans' })} info={team.dedicatedFans} />
                   <InfoItem key="cheerleaders" label={intl.formatMessage({ id: 'team.cheerleaders' })} info={team.cheerleaders} />
@@ -127,23 +133,34 @@ function TeamPage() {
                   />
                 </InfoArea>
               </HeaderCard>
-              <Roster players={players} />
+              <Box width="full" mt={6}>
+                <Heading size="md" borderBottom="1px solid" borderColor="warpScoresBorderColor" pb={2} mb={3}>
+                  {intl.formatMessage({ id: 'common.players' })}
+                </Heading>
+                <Roster players={players} />
+              </Box>
+              {identityUtils.opus(teamId) === 3 && <Bb3TeamManagement teamId={teamId} />}
               <TeamSupporters teamId={teamId} dedicatedFans={team.dedicatedFans} />
             </>
           )}
         </LoadingOrErrorWrapper>
       </Box>
-      <Box>
-        <Heading size="md">{intl.formatMessage({ id: 'common.matches' })}</Heading>
+      <Box width="full">
+        <Heading size="md" borderBottom="1px solid" borderColor="warpScoresBorderColor" pb={2} mb={3}>
+          {intl.formatMessage({ id: 'common.matches' })}
+        </Heading>
         <LoadingOrErrorWrapper loading={loadingMatches} error={matchesError}>
           <Matches matches={matches} />
         </LoadingOrErrorWrapper>
       </Box>
-      <Box w="full">
+      <Box width="full">
+        <Heading size="md" borderBottom="1px solid" borderColor="warpScoresBorderColor" pb={2} mb={3}>
+          {intl.formatMessage({ id: 'common.news' })}
+        </Heading>
         <ArticleFeed type="TEAM" subjectId={teamId} limit={6} />
       </Box>
-      <Box w="full">
-        <Heading size="md" mb={3}>Kommentarer</Heading>
+      <Box width="full">
+        <Heading size="md" borderBottom="1px solid" borderColor="warpScoresBorderColor" pb={2} mb={3}>Kommentarer</Heading>
         <CommentThread targetType="TEAM" targetId={teamId} />
       </Box>
     </VStack>

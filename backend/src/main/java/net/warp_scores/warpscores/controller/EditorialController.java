@@ -3,6 +3,7 @@ package net.warp_scores.warpscores.controller;
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.model.Article;
 import net.warp_scores.warpscores.service.EditorialCommunityService;
+import net.warp_scores.warpscores.service.NewsFeedItem;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,12 +17,12 @@ public class EditorialController {
     private final net.warp_scores.warpscores.service.ArticleScopeService scopes;
 
     @GetMapping
-    public List<Article> articles(@RequestParam(required = false) String leagueSystemId,
+    public List<NewsFeedItem> articles(@RequestParam(required = false) String leagueSystemId,
                                   @RequestParam(required = false) String seasonId,
                                   @RequestParam(required = false) Article.LinkType type,
                                   @RequestParam(required = false) String subjectId,
                                   @RequestParam(defaultValue = "20") int limit) {
-        return scopes.feed(leagueSystemId, seasonId, type, subjectId, limit);
+        return scopes.newsFeed(leagueSystemId, seasonId, type, subjectId, limit);
     }
 
     @GetMapping("/mine")

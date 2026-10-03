@@ -12,7 +12,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
 
@@ -88,6 +90,72 @@ public class SteamConnectionController {
                 auth.getName());
         coachClaims.claimBb3Teams(auth.getToken(), result);
         return result;
+    }
+
+    @GetMapping("/teams/{teamId}/roster")
+    public Map<String,Object> roster(@PathVariable String teamId, JwtAuthenticationToken auth,
+                                     HttpServletRequest request) {
+        return pybb3.get(teamPath(request, teamId) + "/roster", auth.getName());
+    }
+
+    @GetMapping("/teams/{teamId}/formations")
+    public Map<String,Object> formations(@PathVariable String teamId, JwtAuthenticationToken auth,
+                                         HttpServletRequest request) {
+        return Map.of("items", pybb3.get(teamPath(request, teamId) + "/formations", auth.getName()));
+    }
+
+    @PostMapping("/teams/{teamId}/formations")
+    public Map<String,Object> saveFormation(@PathVariable String teamId, @RequestBody Map<String,Object> body,
+                                            JwtAuthenticationToken auth, HttpServletRequest request) {
+        return pybb3.post(teamPath(request, teamId) + "/formations", auth.getName(), body);
+    }
+
+    @DeleteMapping("/teams/{teamId}/formations")
+    public void deleteFormation(@PathVariable String teamId, @RequestBody Map<String,Object> body,
+                                JwtAuthenticationToken auth, HttpServletRequest request) {
+        pybb3.delete(teamPath(request, teamId) + "/formations", auth.getName(), body);
+    }
+
+    @GetMapping("/teams/{teamId}/players/{playerId}/improvements")
+    public Map<String,Object> playerImprovements(@PathVariable String teamId, @PathVariable String playerId,
+                                                 JwtAuthenticationToken auth, HttpServletRequest request) {
+        return pybb3.get(teamPath(request, teamId) + "/players/" + pathSegment(playerId) + "/improvements",
+                auth.getName());
+    }
+
+    @PostMapping("/teams/{teamId}/players/{playerId}/advancement/skill")
+    public Map<String,Object> advanceSkill(@PathVariable String teamId, @PathVariable String playerId,
+                                           @RequestBody Map<String,Object> body, JwtAuthenticationToken auth,
+                                           HttpServletRequest request) {
+        return pybb3.post(teamPath(request, teamId) + "/players/" + pathSegment(playerId) + "/advancement/skill",
+                auth.getName(), body);
+    }
+
+    @PostMapping("/teams/{teamId}/players/{playerId}/advancement/characteristic/roll")
+    public Map<String,Object> rollCharacteristic(@PathVariable String teamId, @PathVariable String playerId,
+                                                  JwtAuthenticationToken auth, HttpServletRequest request) {
+        return pybb3.post(teamPath(request, teamId) + "/players/" + pathSegment(playerId)
+                + "/advancement/characteristic/roll", auth.getName(), Map.of());
+    }
+
+    @PostMapping("/teams/{teamId}/players/{playerId}/advancement/characteristic/choose")
+    public Map<String,Object> chooseCharacteristic(@PathVariable String teamId, @PathVariable String playerId,
+                                                    @RequestBody Map<String,Object> body,
+                                                    JwtAuthenticationToken auth, HttpServletRequest request) {
+        return pybb3.post(teamPath(request, teamId) + "/players/" + pathSegment(playerId)
+                + "/advancement/characteristic/choose", auth.getName(), body);
+    }
+
+    private String teamPath(HttpServletRequest request, String teamId) {
+        String session = cookie(request);
+        if (session == null || session.isBlank())
+            throw new net.warp_scores.warpscores.service.PyBb3ServiceException(401,
+                    "Connect Steam to manage your BB3 team");
+        return "/api/v1/sessions/" + pathSegment(session) + "/teams/" + pathSegment(teamId);
+    }
+
+    private String pathSegment(String value) {
+        return UriUtils.encodePathSegment(value, StandardCharsets.UTF_8);
     }
 
     private void complete(Map<String,Object> result, JwtAuthenticationToken auth, HttpServletResponse response) {

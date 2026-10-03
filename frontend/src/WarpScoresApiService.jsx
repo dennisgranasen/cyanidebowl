@@ -518,6 +518,27 @@ export default {
     deleteDataWithAuthentication('/user/steam', getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   myBb3Teams: async (getAccessTokenSilently, getAccessTokenWithPopup, size = 50, start = 0) =>
     getDataWithAuthentication(`/user/steam/teams?size=${size}&start=${start}`, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  bb3TeamRoster: async (teamId, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    getDataWithAuthentication(`/user/steam/teams/${encodeURIComponent(teamId)}/roster`, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  bb3TeamFormations: async (teamId, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    getDataWithAuthentication(`/user/steam/teams/${encodeURIComponent(teamId)}/formations`, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  saveBb3Formation: async (teamId, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication(`/user/steam/teams/${encodeURIComponent(teamId)}/formations`, data, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  deleteBb3Formation: async (teamId, formationId, getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const authHeaders = await getAuthHeaders(getAccessTokenSilently, getAccessTokenWithPopup);
+    return axios.delete(`/user/steam/teams/${encodeURIComponent(teamId)}/formations`, {
+      ...authHeaders,
+      data: { formationId },
+    }).then(returnData).catch(handleError);
+  },
+  bb3PlayerImprovements: async (teamId, playerId, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    getDataWithAuthentication(`/user/steam/teams/${encodeURIComponent(teamId)}/players/${encodeURIComponent(playerId)}/improvements`, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  advanceBb3PlayerSkill: async (teamId, playerId, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication(`/user/steam/teams/${encodeURIComponent(teamId)}/players/${encodeURIComponent(playerId)}/advancement/skill`, data, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  rollBb3PlayerCharacteristic: async (teamId, playerId, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication(`/user/steam/teams/${encodeURIComponent(teamId)}/players/${encodeURIComponent(playerId)}/advancement/characteristic/roll`, {}, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  chooseBb3PlayerCharacteristic: async (teamId, playerId, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication(`/user/steam/teams/${encodeURIComponent(teamId)}/players/${encodeURIComponent(playerId)}/advancement/characteristic/choose`, data, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   exportNafXml: async (competitionId, getAccessTokenSilently, getAccessTokenWithPopup, requestToken) =>
     getDataWithAuthentication(
       `/competitions/${competitionId.key || competitionId}/exportNafData`,

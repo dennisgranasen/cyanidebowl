@@ -36,6 +36,7 @@ public class PyBb3Client {
     public Map<String,Object> post(String path, String owner, Object body) { return request(HttpMethod.POST, path, owner, body); }
     public Map<String,Object> get(String path, String owner) { return request(HttpMethod.GET, path, owner, null); }
     public void delete(String path, String owner) { request(HttpMethod.DELETE, path, owner, null); }
+    public void delete(String path, String owner, Object body) { request(HttpMethod.DELETE, path, owner, body); }
 
     private Map<String,Object> request(HttpMethod method, String path, String owner, Object body) {
         if (apiKey.isBlank()) throw new IllegalStateException("PYBB3_INTERNAL_API_KEY is not configured");

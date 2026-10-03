@@ -243,8 +243,8 @@ warpscores:
         queue: { concurrency: 1, max-attempts: 3, base-backoff: 10s, max-backoff: 10m, jitter: 0.20 }
 
     tasks:
-      EDITORIAL_ARTICLE: { target: groq-large, priority: 80 }
-      MATCH_REPORT: { target: editorial, fallback-targets: [groq-large, openrouter-free], priority: 90 }
+      EDITORIAL_ARTICLE: { target: editorial, priority: 80 }
+      MATCH_REPORT: { target: editorial, priority: 90 }
       FAN_PROFILE: { target: editorial, priority: 50 }
       PLAYER_RATING: { target: openrouter-free, priority: 70 }
       ARTICLE_COMMENT: { target: openrouter-free, priority: 60 }

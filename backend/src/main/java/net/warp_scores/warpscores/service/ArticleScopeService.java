@@ -66,7 +66,9 @@ public class ArticleScopeService {
         }
     }
 
-    public record Audience(String systemId, Set<String> seasonIds, Set<String> teamIds, Set<String> playerIds) {}
+        public record Audience(
+            String systemId, Set<String> seasonIds, Set<String> teamIds,
+            Set<String> playerIds, Set<String> matchIds) {}
 
     public Audience audience(String systemId, String seasonId) {
         List<Season> selected;
@@ -99,7 +101,7 @@ public class ArticleScopeService {
         if (!matchIds.isEmpty()) participation.findByMatchIdIn(new ArrayList<>(matchIds)).forEach(p -> {
             if (p.getPlayerId() != null) playerIds.add(p.getPlayerId());
         });
-        return new Audience(systemId, seasonIds, teamIds, playerIds);
+        return new Audience(systemId, seasonIds, teamIds, playerIds, matchIds);
     }
 
     public static boolean relevant(Article article, Audience audience) {
@@ -115,20 +117,79 @@ public class ArticleScopeService {
         return systems.contains(audience.systemId());
     }
 
-    public List<Article> feed(String systemId, String seasonId, int limit) {
+        public List<Article> feed(String systemId, String seasonId, int limit) {
         return feed(systemId, seasonId, null, null, limit);
     }
 
-    public List<Article> feed(String systemId, String seasonId, Article.LinkType type, String subjectId, int limit) {
+        public List<Article> feed(
+            String systemId, String seasonId, Article.LinkType type, String subjectId, int limit) {
         int size = Math.max(1, Math.min(limit, 100));
         Audience audience = systemId == null && seasonId == null ? null : audience(systemId, seasonId);
-        // Filter before applying the public limit, including when many recent articles belong elsewhere.
         Query query = Query.query(Criteria.where("status").is(Article.Status.PUBLISHED))
-                .with(Sort.by(Sort.Direction.DESC, "publishedAt", "id"));
+            .with(Sort.by(Sort.Direction.DESC, "publishedAt", "id"));
         try (var stream = mongo.stream(query, Article.class)) {
-            return stream.filter(a -> audience == null || relevant(a, audience))
-                    .filter(a -> type == null || subjectId == null || global(associations(a))
-                            || ids(associations(a), type).contains(subjectId)).limit(size).toList();
+            return stream.filter(article -> audience == null || relevant(article, audience))
+                .filter(article -> type == null || subjectId == null || global(associations(article))
+                    || ids(associations(article), type).contains(subjectId))
+                .limit(size)
+                .toList();
         }
+        }
+
+        public List<NewsFeedItem> newsFeed(
+            String systemId, String seasonId, Article.LinkType type, String subjectId, int limit) {
+        int size = Math.max(1, Math.min(limit, 100));
+        Audience audience = systemId == null && seasonId == null ? null : audience(systemId, seasonId);
+        List<NewsFeedItem> items = new ArrayList<>();
+        Query articleQuery = Query.query(Criteria.where("status").is(Article.Status.PUBLISHED))
+                .with(Sort.by(Sort.Direction.DESC, "publishedAt", "id"));
+        try (var stream = mongo.stream(articleQuery, Article.class)) {
+            stream.filter(article -> audience == null || relevant(article, audience))
+                    .filter(article -> type == null || subjectId == null || global(associations(article))
+                            || ids(associations(article), type).contains(subjectId))
+                    .map(ArticleScopeService::feedItem)
+                    .forEach(items::add);
+        }
+
+        if (type == null || subjectId == null) {
+            Query matchArticleQuery = Query.query(
+                    Criteria.where("status").is(MatchArticle.Status.PUBLISHED))
+                    .with(Sort.by(Sort.Direction.DESC, "publishedAt", "id"));
+            try (var stream = mongo.stream(matchArticleQuery, MatchArticle.class)) {
+                stream.filter(article -> article.getStatus() == MatchArticle.Status.PUBLISHED)
+                        .filter(article -> audience == null || relevant(article, audience))
+                        .map(ArticleScopeService::feedItem)
+                        .forEach(items::add);
+            }
+        }
+
+        return items.stream()
+                .sorted(Comparator.comparing(
+                        (NewsFeedItem item) -> item.publishedAt(),
+                                Comparator.nullsLast(Comparator.reverseOrder()))
+                    .thenComparing(item -> item.id(), Comparator.nullsLast(Comparator.reverseOrder())))
+                .limit(size)
+                .toList();
+    }
+
+    static boolean relevant(MatchArticle article, Audience audience) {
+        if (article.getSeasonId() != null && !article.getSeasonId().isBlank()) {
+            return audience.seasonIds().contains(article.getSeasonId());
+        }
+        return audience.matchIds().contains(article.getMatchId());
+    }
+
+    private static NewsFeedItem feedItem(Article article) {
+        return new NewsFeedItem(article.getId(), article.getTitle(), article.getExcerpt(),
+                article.getCoverImageUrl(), article.getSlug(), null, article.getLeagueSystemId(),
+                article.getSeasonId(), article.getPublishedAt(), false);
+    }
+
+    private static NewsFeedItem feedItem(MatchArticle article) {
+        String excerpt = article.getBody() == null ? "" : article.getBody().trim();
+        if (excerpt.length() > 180) excerpt = excerpt.substring(0, 177) + "...";
+        return new NewsFeedItem(article.getId(), article.getTitle(), excerpt, null, null,
+                article.getMatchId(), article.getLeagueSystemId(), article.getSeasonId(),
+                article.getPublishedAt(), true);
     }
 }
