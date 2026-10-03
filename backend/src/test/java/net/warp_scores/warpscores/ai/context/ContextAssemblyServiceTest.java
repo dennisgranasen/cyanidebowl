@@ -1,7 +1,10 @@
 package net.warp_scores.warpscores.ai.context;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import net.warp_scores.warpscores.service.StarPlayerCatalog;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
@@ -17,7 +20,20 @@ import static org.mockito.Mockito.when;
 class ContextAssemblyServiceTest {
 
     @Test
-    void retrievesAllSixFamiliesAndExpandsSubjectsFromDomain() {
+    void resolvesStarPlayerKeysAndPreservesUnknownKeys() throws IOException {
+        StarPlayerPromptNormalizer names = new StarPlayerPromptNormalizer(
+                new StarPlayerCatalog(new ObjectMapper()));
+
+        assertThat(names.displayName("sp_dribblesnot")).isEqualTo("Bomber Dribblesnot");
+        assertThat(names.displayName("name_sp_dribblesnot")).isEqualTo("Bomber Dribblesnot");
+        assertThat(names.displayName("PLAYER_NAMES_CHAMPION_DRIBBLESNOT"))
+                .isEqualTo("Bomber Dribblesnot");
+        assertThat(names.normalizeText("sp_dribblesnot and sp_unknown"))
+                .isEqualTo("Bomber Dribblesnot and sp_unknown");
+    }
+
+    @Test
+        void retrievesAllSixFamiliesAndExpandsSubjectsFromDomain() throws IOException {
         CanonicalContextRetriever retriever = mock(CanonicalContextRetriever.class);
         SocialContextRetriever socialRetriever = mock(SocialContextRetriever.class);
         MemoryContextRetriever memoryRetriever = mock(MemoryContextRetriever.class);
@@ -37,7 +53,7 @@ class ContextAssemblyServiceTest {
                 List.of(),
                 List.of(),
                 "Team A - Team B",
-                "Result: Team A 2–1 Team B.",
+                "sp_dribblesnot scored for Team A.",
                 null);
 
         when(retriever.domainContext(any(), anyInt())).thenReturn(List.of(domainItem));
@@ -48,7 +64,8 @@ class ContextAssemblyServiceTest {
         when(memoryRetriever.memoryContext(anyLong(), any(Collection.class), anyInt())).thenReturn(List.of());
 
         ContextAssemblyService service = new ContextAssemblyService(
-                retriever, socialRetriever, memoryRetriever, new ContextAssembler());
+                retriever, socialRetriever, memoryRetriever, new ContextAssembler(),
+                new StarPlayerPromptNormalizer(new StarPlayerCatalog(new ObjectMapper())));
         ContextPlan plan = new ContextPlanner().plan(
                 ContextTaskType.MATCH_REPORT, 11L, match, match, List.of());
 
@@ -64,7 +81,8 @@ class ContextAssemblyServiceTest {
         verify(memoryRetriever).memoryContext(anyLong(), org.mockito.ArgumentMatchers.argThat(
                 subjects -> ((Collection<?>) subjects).contains(team)), anyInt());
 
-        assertThat(result.section(ContextSection.DOMAIN)).containsExactly(domainItem);
+        assertThat(result.section(ContextSection.DOMAIN)).singleElement()
+                .satisfies(item -> assertThat(item.body()).isEqualTo("Bomber Dribblesnot scored for Team A."));
         assertThat(result.section(ContextSection.SOCIAL)).isEmpty();
         assertThat(result.section(ContextSection.MEMORY)).isEmpty();
     }

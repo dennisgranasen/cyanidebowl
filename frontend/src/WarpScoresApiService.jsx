@@ -520,6 +520,8 @@ export default {
     getDataWithAuthentication(`/user/steam/teams?size=${size}&start=${start}`, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   bb3TeamRoster: async (teamId, getAccessTokenSilently, getAccessTokenWithPopup) =>
     getDataWithAuthentication(`/user/steam/teams/${encodeURIComponent(teamId)}/roster`, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  bb3LiveTeamRoster: async (teamId, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    getDataWithAuthentication(`/user/steam/teams/${encodeURIComponent(teamId)}/live-roster`, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   bb3TeamFormations: async (teamId, getAccessTokenSilently, getAccessTokenWithPopup) =>
     getDataWithAuthentication(`/user/steam/teams/${encodeURIComponent(teamId)}/formations`, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   saveBb3Formation: async (teamId, data, getAccessTokenSilently, getAccessTokenWithPopup) =>

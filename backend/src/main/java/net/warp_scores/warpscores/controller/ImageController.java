@@ -135,7 +135,17 @@ public class ImageController {
     public ResponseEntity<byte[]> getRaceImage(
             @PathVariable(name = "name") String name,
             @RequestParam(name = "opus", required = false) Integer opus) {
-        String imageName = translateRaceToRaceImageName(name);
+        if (!StringUtils.hasText(name) || "null".equalsIgnoreCase(name)) {
+            return noContent();
+        }
+
+        String imageName;
+        try {
+            imageName = translateRaceToRaceImageName(name);
+        } catch (IllegalArgumentException ex) {
+            log.debug("No race image available for race '{}'.", name);
+            return noContent();
+        }
 
         Optional<String> imageUrl = 
             getImageUrlFor(cyanideApiProperties.getUrls().getImages().getRaces(), 

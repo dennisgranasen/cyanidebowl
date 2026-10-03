@@ -20,6 +20,7 @@ class FakeClient:
         self.team_pages = team_pages or {}
         self.players = players
         self.skill_mutations = []
+        self.roster_reads = []
 
     def get_teams_of_gamer(self, *, size, start):
         page = self.team_pages.get(start, ([], 0))
@@ -27,8 +28,15 @@ class FakeClient:
         items = "".join(f"<Team><Id>{encoded(team_id)}</Id></Team>" for team_id in team_items)
         return ET.fromstring(f"<ResponseGetTeams><Total>{total}</Total><Teams>{items}</Teams></ResponseGetTeams>")
 
-    def get_team_roster_model(self, _team_id):
+    def get_team_roster_model(self, team_id):
+        self.roster_reads.append(team_id)
         return SimpleNamespace(players=self.players)
+
+    def get_team(self, _team_id):
+        return ET.fromstring(
+            "<ResponseGetTeam><Team><Name>Live team</Name><Treasury>120000</Treasury>"
+            "<TeamValue>1350000</TeamValue><AssistantCoaches>2</AssistantCoaches></Team></ResponseGetTeam>"
+        )
 
     def get_player_improvements(self, _player_id):
         skill = SimpleNamespace(skill_id=7, available=False, choosable=False, cost=4)
@@ -53,6 +61,46 @@ def test_owned_team_rejects_a_team_outside_account():
         team_api.owned_team(client, "wanted")
 
     assert error.value.status_code == 404
+
+
+def test_live_roster_reads_team_without_ownership_check(monkeypatch):
+    client = FakeClient({0: (["someone-elses-team"], 1)}, players=[])
+    monkeypatch.setattr(team_api.session_manager, "call", lambda _owner, _session, operation: operation(client))
+    monkeypatch.setattr(team_api, "_roster_with_skill_names", lambda _roster: {"players": []})
+
+    result = team_api.live_roster("session-1", "public-team", owner="owner-1")
+
+    assert result["players"] == []
+    assert result["team"]["cash"] == 120000
+    assert result["team"]["coachAssistants"] == 2
+    assert client.roster_reads == ["public-team"]
+
+
+def test_formations_response_uses_items_object(monkeypatch):
+    client = FakeClient()
+    monkeypatch.setattr(team_api.session_manager, "call", lambda _owner, _session, operation: operation(client))
+    monkeypatch.setattr(team_api, "team_formations", lambda _client, _team_id: [])
+
+    result = team_api.formations("session-1", "team-1", owner="owner-1")
+
+    assert result == {"items": []}
+
+
+def test_roster_characteristics_include_frontend_attribute_values():
+    roster = {"players": [{
+        "characteristics": [
+            {"characteristic_id": 0, "value": 6, "bonuses": 0, "maluses": 0},
+            {"characteristic_id": 1, "value": 3, "bonuses": 0, "maluses": 0},
+            {"characteristic_id": 2, "value": 3, "bonuses": 0, "maluses": 0},
+            {"characteristic_id": 3, "value": 4, "bonuses": 0, "maluses": 0},
+            {"characteristic_id": 4, "value": 9, "bonuses": 0, "maluses": 0},
+        ],
+        "skill_ids": [],
+    }]}
+
+    result = team_api._roster_with_skill_names(roster)
+
+    assert result["players"][0]["attributes"] == {"ma": 6, "st": 3, "ag": 3, "pa": 4, "av": 9}
 
 
 def test_owned_player_requires_membership_in_requested_team():

@@ -26,6 +26,7 @@ import { useIntl } from 'react-intl';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import useAuth0WithUserPermissions from '../../hooks/useAuth0WithUserPermissions';
 import { useMyTeams } from '../../context/MyTeamsContext';
+import { getStarPlayerDisplayName } from '../../util/starplayerUtil';
 
 const serializePitchMap = (pitchMap) => JSON.stringify(pitchMap || {}, null, 2);
 const describeIds = (values) => (values || []).map((value) => `#${value}`).join(', ') || '-';
@@ -219,7 +220,7 @@ function Bb3TeamManagement({ teamId }) {
               </Tr></Thead>
               <Tbody>{players.map((player) => (
                 <Tr key={player.player_id}>
-                  <Td>{player.number}</Td><Td>{player.name}</Td><Td>{player.level}</Td><Td>{player.spp}</Td>
+                  <Td>{player.number}</Td><Td>{getStarPlayerDisplayName(player.name)}</Td><Td>{player.level}</Td><Td>{player.spp}</Td>
                   <Td>{describeSkills(player)}</Td>
                   <Td>{(player.characteristics || []).map((item) => `#${item.characteristic_id}: ${item.value}`).join(', ') || '-'}</Td>
                   <Td>{describeIds(player.casualty_ids)}{player.miss_next_game ? ' · MNG' : ''}{player.dead ? ' · Dead' : ''}</Td>

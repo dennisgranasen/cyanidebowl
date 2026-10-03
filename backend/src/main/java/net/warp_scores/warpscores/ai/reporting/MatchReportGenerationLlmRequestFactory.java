@@ -74,6 +74,11 @@ public class MatchReportGenerationLlmRequestFactory {
             Never claim to remember, have predicted or have previously said something
             unless SELF or MEMORY actually supports it.
 
+            Game localization keys such as sp_*, name_sp_* and
+            PLAYER_NAMES_CHAMPION_* are machine identifiers, not player names. Use the
+            resolved human-readable names in the supplied evidence and context; never
+            reproduce a localization key in the article.
+
             Do not invent match events, quotations, motives, statistics, injuries or
             outcomes. If the supplied evidence does not support a detail, omit it.
 

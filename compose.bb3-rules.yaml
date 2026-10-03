@@ -1,9 +1,0 @@
-services:
-  pybb3-service:
-    environment:
-      BB3_RULES_FILE: /app/BB3Rules.json
-    volumes:
-      - type: bind
-        source: ${BB3_RULES_HOST_PATH:?Set BB3_RULES_HOST_PATH to the extracted BB3Rules.json path}
-        target: /app/BB3Rules.json
-        read_only: true

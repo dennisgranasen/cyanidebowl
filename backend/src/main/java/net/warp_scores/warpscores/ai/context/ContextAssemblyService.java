@@ -21,6 +21,7 @@ public class ContextAssemblyService {
     private final SocialContextRetriever socialRetriever;
     private final MemoryContextRetriever memoryRetriever;
     private final ContextAssembler assembler;
+        private final StarPlayerPromptNormalizer starPlayerNames;
 
     public AssembledContext assemble(ContextPlan plan) {
         ContextProfile profile = plan.profile();
@@ -64,7 +65,7 @@ public class ContextAssemblyService {
                 memory,
                 domain);
 
-        return assembler.assemble(plan, candidates);
+        return starPlayerNames.normalize(assembler.assemble(plan, candidates));
     }
 
     private static List<SubjectRef> expandedSubjects(

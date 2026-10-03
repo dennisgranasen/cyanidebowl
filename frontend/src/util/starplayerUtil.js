@@ -117,17 +117,25 @@ const STAR_PLAYER_NAMES = {
   'CINDY': "Cindy Piewhistle",
 };
 
-// Helper function to check if a player is a star player and get their display name
+const normalizedStarPlayerNames = Object.fromEntries(
+  Object.entries(STAR_PLAYER_NAMES).map(([key, value]) => [key.replace(/[^A-Z0-9]/g, ''), value]),
+);
+
+const starPlayerKey = (playerName) => playerName
+  .replace(/_FALLBACK$/i, '')
+  .replace(/^PLAYER_NAMES_CHAMPION_/i, '')
+  .replace(/^name_sp_/i, '')
+  .replace(/^sp_/i, '')
+  .toUpperCase();
+
 export const getStarPlayerDisplayName = (playerName) => {
-  return STAR_PLAYER_NAMES[
-    playerName
-      .replace('_FALLBACK', '')
-      .replace('PLAYER_NAMES_CHAMPION_', '')
-      .replace('name_sp_', '')
-      .toUpperCase()
-  ] || playerName;
+  if (!playerName) return playerName;
+  const key = starPlayerKey(playerName);
+  return STAR_PLAYER_NAMES[key]
+    || normalizedStarPlayerNames[key.replace(/[^A-Z0-9]/g, '')]
+    || playerName;
 };
 
 export const isStarPlayer = (playerName) => {
-  return playerName && (playerName.startsWith("PLAYER_NAMES_CHAMPION_") || playerName.startsWith ("name_sp_"));
+  return Boolean(playerName && /^(PLAYER_NAMES_CHAMPION_|name_sp_|sp_)/i.test(playerName));
 }

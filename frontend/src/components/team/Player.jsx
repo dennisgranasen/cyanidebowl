@@ -19,6 +19,7 @@ import Skills from './Skills';
 import prettyPrint from '../../util/prettyPrint';
 import Injuries from './Injuries';
 import config from '../../config';
+import { getStarPlayerDisplayName, isStarPlayer } from '../../util/starplayerUtil';
 
 const { smallBoxSize, tinyBoxSize } = config;
 
@@ -44,6 +45,7 @@ ATTR_MAX_VALUES[ATTR_PA] = 6;
 ATTR_MAX_VALUES[ATTR_AV] = 11;
 
 function format(type, value) {
+  if (value === null || value === undefined) return NO_PA;
   switch (type) {
     case ATTR_AG:
     case ATTR_AV:
@@ -79,6 +81,7 @@ function getRealValue(type, defaultValue, bonusValue, malusValue) {
 }
 
 function getValueFrom(arrayOfObjects, neededType) {
+  if (!Array.isArray(arrayOfObjects)) return 0;
   const sumForType = arrayOfObjects
     .map((object) => (object[neededType] ? object[neededType] : 0))
     .reduce((acc, value) => acc + value, 0);
@@ -86,7 +89,7 @@ function getValueFrom(arrayOfObjects, neededType) {
 }
 
 function Attribute({ type, defaultAttributes, bonus, malus }) {
-  const defaultValue = defaultAttributes[type];
+  const defaultValue = defaultAttributes?.[type];
   const bonusValue = getValueFrom(bonus, type) || 0;
   const malusValue = getValueFrom(malus, type) || 0;
   let color = null;
@@ -97,8 +100,9 @@ function Attribute({ type, defaultAttributes, bonus, malus }) {
 }
 
 function lookupStarPlayerName(name) {
-  const nameWithoutPrefix = name.replace('name_sp_', '');
-  return `"${prettyPrint(nameWithoutPrefix)}" (Starplayer)`;
+  const displayName = getStarPlayerDisplayName(name);
+  if (displayName !== name) return displayName;
+  return `"${prettyPrint(name.replace(/^(?:name_sp_|sp_)/i, ''))}" (Starplayer)`;
 }
 
 function iconFor(level) {
@@ -142,7 +146,7 @@ function Player({ player, opus }) {
   const defaultAttributes = player.extendedAttributes ? player.extendedAttributes.defaultAttributes : player.attributes;
   const bonus = player.extendedAttributes ? player.extendedAttributes.bonus : [];
   const malus = player.extendedAttributes ? player.extendedAttributes.malus : [];
-  const isStarplayer = player.type.endsWith('Star');
+  const isStarplayer = player.type?.endsWith('Star') || isStarPlayer(player.name);
   return (
     <Tr id={`player-${player.id?.key}`}>
       <Td>{player.number}</Td>

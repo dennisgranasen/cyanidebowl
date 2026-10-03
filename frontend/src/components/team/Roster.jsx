@@ -46,7 +46,7 @@ function Roster({ players }) {
       <Table variant="striped" size="sm">
         <Thead><TableColumns /></Thead>
         <Tbody>
-          {players !== null ? (
+          {Array.isArray(players) ? (
             players.map((player) => {
               return <Player player={player} key={player.id.key} opus={identityUtils.opus(player.id)} />;
             })

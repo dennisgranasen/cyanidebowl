@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
+import net.warp_scores.warpscores.ai.context.StarPlayerPromptNormalizer;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.ReplayAnalysis;
 import net.warp_scores.warpscores.model.Team;
@@ -22,6 +23,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class MatchReportEvidenceProjector {
     private final ObjectMapper mapper;
+    private final StarPlayerPromptNormalizer starPlayerNames;
 
     public ObjectNode project(Match match, ReplayAnalysis analysis, int maxTimelineEvents) {
         ObjectNode root = mapper.createObjectNode();
@@ -35,7 +37,7 @@ public class MatchReportEvidenceProjector {
         }
         root.put("narrativeAvailable", true);
 
-        Index index = Index.from(narrative, match);
+        Index index = Index.from(narrative, match, starPlayerNames);
         Map<Integer, Stats> stats = new LinkedHashMap<>();
         Map<String, Drive> drives = new LinkedHashMap<>();
         List<ObjectNode> possessionSpans = new ArrayList<>();
@@ -430,7 +432,7 @@ public class MatchReportEvidenceProjector {
         final Map<Integer, Integer> playerTeams = new HashMap<>();
         final Map<Integer, String> teams = new HashMap<>();
 
-        static Index from(JsonNode narrative, Match match) {
+        static Index from(JsonNode narrative, Match match, StarPlayerPromptNormalizer starPlayerNames) {
             Index i = new Index();
             JsonNode m = narrative.path("match");
             if (m.path("teams").isArray()) {
@@ -448,7 +450,7 @@ public class MatchReportEvidenceProjector {
             if (m.path("players").isArray()) {
                 for (JsonNode p : m.path("players")) {
                     int id = p.path("id").asInt();
-                    i.players.put(id, p.path("name").asText("Player " + id));
+                    i.players.put(id, starPlayerNames.displayName(p.path("name").asText("Player " + id)));
                     if (p.has("team_id")) i.playerTeams.put(id, p.path("team_id").asInt());
                 }
             }

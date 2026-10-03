@@ -43,6 +43,18 @@ def _skill_name(skill_id: int) -> str | None:
 def _roster_with_skill_names(roster: Any) -> dict[str, Any]:
     result = _public_model(roster)
     for player in result.get("players", []):
+        attributes = {"ma": None, "st": None, "ag": None, "pa": None, "av": None}
+        for characteristic in player.get("characteristics", []):
+            attribute = {
+                0: "ma",
+                1: "st",
+                2: "ag",
+                3: "pa",
+                4: "av",
+            }.get(characteristic.get("characteristic_id"))
+            if attribute:
+                attributes[attribute] = characteristic.get("value")
+        player["attributes"] = attributes
         player["skill_names"] = {
             str(skill_id): name
             for skill_id in player.get("skill_ids", [])
@@ -71,6 +83,32 @@ def _public_model(value: Any) -> Any:
     if isinstance(value, dict):
         return {key: _public_model(item) for key, item in value.items()}
     return value
+
+
+def _team_details(root: Any) -> dict[str, Any]:
+    team = root.find("./Team") if root.tag != "Team" else root
+    if team is None:
+        return {}
+    fields_by_name = {
+        "value": ("TeamValue", "Value"),
+        "cash": ("Treasury", "Cash"),
+        "rerolls": ("Rerolls", "NbRerolls"),
+        "dedicatedFans": ("DedicatedFans",),
+        "cheerleaders": ("Cheerleaders", "NbCheerleaders"),
+        "coachAssistants": ("AssistantCoaches", "CoachAssistants", "NbAssistantCoaches"),
+        "apothecary": ("Apothecary", "HasApothecary"),
+    }
+    result = {}
+    for field_name, tags in fields_by_name.items():
+        value = next((team.findtext(tag) for tag in tags if team.find(tag) is not None), None)
+        if value is None:
+            result[field_name] = None
+        else:
+            try:
+                result[field_name] = int(value)
+            except ValueError:
+                result[field_name] = value.strip().lower() in {"true", "1", "yes"}
+    return result
 
 def owned_team(client, team_id: str):
     start = 0
@@ -153,10 +191,33 @@ def roster(session_id:str,team_id:str,owner:str=Depends(trusted_owner)):
     except SessionNotFound as error:raise HTTPException(404,str(error)) from error
 
 
+@router.get("/{session_id}/teams/{team_id}/live-roster")
+def live_roster(session_id: str, team_id: str, owner: str = Depends(trusted_owner)):
+    def read(client):
+        roster = _roster_with_skill_names(client.get_team_roster_model(team_id))
+        try:
+            roster["team"] = _team_details(client.get_team(team_id))
+        except (ValueError, RuntimeError, OSError):
+            roster["team"] = {}
+        return roster
+
+    try:
+        return session_manager.call(
+            owner,
+            session_id,
+            read,
+        )
+    except SessionNotFound as error:
+        raise HTTPException(404, str(error)) from error
+    except (ValueError, RuntimeError, OSError) as error:
+        raise HTTPException(502, "Unable to retrieve live BB3 roster") from error
+
+
 @router.get("/{session_id}/teams/{team_id}/formations")
 def formations(session_id: str, team_id: str, owner: str = Depends(trusted_owner)):
     try:
-        return session_manager.call(owner, session_id, lambda client: team_formations(client, team_id))
+        items = session_manager.call(owner, session_id, lambda client: team_formations(client, team_id))
+        return {"items": items or []}
     except SessionNotFound as error:
         raise HTTPException(404, str(error)) from error
     except (ValueError, RuntimeError, OSError) as error:

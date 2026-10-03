@@ -16,6 +16,7 @@ import org.springframework.web.util.UriUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -98,10 +99,17 @@ public class SteamConnectionController {
         return pybb3.get(teamPath(request, teamId) + "/roster", auth.getName());
     }
 
+    @GetMapping("/teams/{teamId}/live-roster")
+    public Map<String,Object> liveRoster(@PathVariable String teamId, JwtAuthenticationToken auth,
+                                         HttpServletRequest request) {
+        return pybb3.get(teamPath(request, teamId) + "/live-roster", auth.getName());
+    }
+
     @GetMapping("/teams/{teamId}/formations")
     public Map<String,Object> formations(@PathVariable String teamId, JwtAuthenticationToken auth,
                                          HttpServletRequest request) {
-        return Map.of("items", pybb3.get(teamPath(request, teamId) + "/formations", auth.getName()));
+        Map<String,Object> result = pybb3.get(teamPath(request, teamId) + "/formations", auth.getName());
+        return result == null ? Map.of("items", List.of()) : result;
     }
 
     @PostMapping("/teams/{teamId}/formations")
@@ -151,7 +159,11 @@ public class SteamConnectionController {
         if (session == null || session.isBlank())
             throw new net.warp_scores.warpscores.service.PyBb3ServiceException(401,
                     "Connect Steam to manage your BB3 team");
-        return "/api/v1/sessions/" + pathSegment(session) + "/teams/" + pathSegment(teamId);
+        return "/api/v1/sessions/" + pathSegment(session) + "/teams/" + pathSegment(bb3TeamId(teamId));
+    }
+
+    static String bb3TeamId(String teamId) {
+        return teamId != null && teamId.startsWith("3_") ? teamId.substring(2) : teamId;
     }
 
     private String pathSegment(String value) {

@@ -3,6 +3,7 @@ package net.warp_scores.warpscores.ai.reporting;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import net.warp_scores.warpscores.ai.context.StarPlayerPromptNormalizer;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.domain.persistence.StageSourceRepository;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
@@ -20,6 +21,7 @@ public class DefaultPlayerRatingFactsBuilder implements PlayerRatingFactsBuilder
     private final MatchRepository matchRepository;
     private final StageSourceRepository stageSources;
     private final ObjectMapper objectMapper;
+    private final StarPlayerPromptNormalizer starPlayerNames;
 
     @Override
     public PlayerRatingFacts build(ReplayAnalysis analysis) {
@@ -67,7 +69,7 @@ public class DefaultPlayerRatingFactsBuilder implements PlayerRatingFactsBuilder
 
                 players.add(PlayerRatingFacts.Player.builder()
                         .playerId(player.getId().asMongoKey())
-                        .playerName(player.getName())
+                        .playerName(starPlayerNames.displayName(player.getName()))
                         .teamId(team.getTeamId())
                         .teamName(team.getName())
                         .race(team.getRace())

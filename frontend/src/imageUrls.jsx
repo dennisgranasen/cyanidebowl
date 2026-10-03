@@ -13,10 +13,15 @@ function logoUrl(name, opus) {
   return addOpusParam(`${config.backendUrl}/img/logo/${name}`, opus);
 }
 
+function raceUrl(name, opus) {
+  if (typeof name !== 'string' || !name.trim() || name.toLowerCase() === 'null') return undefined;
+  return addOpusParam(`${config.backendUrl}/img/race/${name}`, opus);
+}
+
 export default {
   stadium: (name, opus) => addOpusParam(`${config.backendUrl}/img/stadium/${name}`,opus),
   logo: logoUrl,
-  race: (name, opus) => addOpusParam(`${config.backendUrl}/img/race/${name}`,opus),
+  race: raceUrl,
   skill: (name, opus) => addOpusParam(`${config.backendUrl}/img/skill/${name}`,opus),
   warpscoresLogoPng: (size = null) => `${config.backendUrl}/img/warpscores.png${size ? `/${size}` : ''}`,
   warpscoresLogoSvg: () => `${config.backendUrl}/img/warpscores.svg`,

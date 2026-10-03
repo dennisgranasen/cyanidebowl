@@ -109,6 +109,8 @@ public class LlmPlayerRatingGenerator
                 Ratings MUST be integer values from -3 through +3.
                 Apply your own reporter personality, biases, memories and relationships,
                 but do not invent match events. The deterministic facts below are authoritative.
+                Player IDs are machine identifiers for the response contract; never use them
+                in verdict prose. Refer to each player by the supplied human-readable playerName.
                 Return every supplied player exactly once. verdict must be one short in-character sentence, maximum 180 characters.
                 """;
 
