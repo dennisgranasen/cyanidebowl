@@ -1,5 +1,8 @@
 const normalizedName = (name) => String(name || '').trim().toLocaleLowerCase();
-const playerId = (player) => String(player?.player_id || player?.id?.key || '').toLocaleLowerCase();
+const playerId = (player) => String(player?.player_id || player?.id?.key || '')
+  .toLocaleLowerCase().replace(/^\d+_/, '');
+export const playerKey = (player) => playerId(player)
+  || `${player?.number}:${normalizedName(player?.name)}`;
 const teamId = (team) => String(team?.id?.key || team?.id || '').toLocaleLowerCase();
 
 const statValue = (stats, ...keys) => {
@@ -63,13 +66,61 @@ export function fillMissingPlayerTypes(players, matches, requestedTeamId) {
   });
 }
 
+function playerIsExplicitlyDead(player) {
+  if (player.dead === true) return true;
+  const casualtyStatuses = [
+    ...(player.casualties?.newCasualties || []),
+    ...(player.casualties?.previousCasualties || []),
+    ...(player.casualtiesStates || []),
+    ...(player.casualties_state || []),
+  ];
+  return casualtyStatuses.some((status) => String(status).toLocaleLowerCase() === 'dead');
+}
+
+export function formerPlayersForTeam(matches, requestedTeamId, currentPlayers) {
+  const wantedTeamId = String(requestedTeamId || '').toLocaleLowerCase();
+  const history = (matches || []).flatMap((match) => (match.teams || [])
+    .filter((team) => teamId(team) === wantedTeamId)
+    .flatMap((team) => team.players || []));
+  const latestByPlayer = new Map();
+  history.forEach((player) => {
+    const id = playerKey(player);
+    const previous = latestByPlayer.get(id);
+    if (!previous) {
+      latestByPlayer.set(id, { ...player, dead: playerIsExplicitlyDead(player) });
+      return;
+    }
+    const merged = { ...previous };
+    ['type', 'attributes', 'extendedAttributes', 'skills', 'skillStrings', 'spp', 'xp', 'value']
+      .forEach((key) => {
+        if ((merged[key] === null || merged[key] === undefined || merged[key] === '')
+          && player[key] !== null && player[key] !== undefined && player[key] !== '') {
+          merged[key] = player[key];
+        }
+      });
+    merged.dead = previous.dead || playerIsExplicitlyDead(player);
+    latestByPlayer.set(id, merged);
+  });
+
+  const formerPlayers = [...latestByPlayer.values()].filter((player) => playerIsExplicitlyDead(player)
+    || (Array.isArray(currentPlayers) && !matchingSnapshotPlayer(player, currentPlayers)));
+  if (!Array.isArray(currentPlayers)) {
+    return formerPlayers.filter(playerIsExplicitlyDead).map((player) => ({ ...player, dead: true }));
+  }
+  return formerPlayers.map((player) => ({
+    ...player,
+    dead: playerIsExplicitlyDead(player),
+    notInCurrentRoster: !matchingSnapshotPlayer(player, currentPlayers),
+  }));
+}
+
 export function careerStatsForTeam(matches, requestedTeamId) {
   const careerStats = new Map();
   const wantedTeamId = String(requestedTeamId || '').toLocaleLowerCase();
   (matches || []).forEach((match) => {
     (match.teams || []).filter((team) => teamId(team) === wantedTeamId).forEach((team) => {
       (team.players || []).forEach((player) => {
-        const id = playerId(player) || `${player.number}:${normalizedName(player.name)}`;
+        const id = playerKey(player);
         const stats = player.stats || {};
         const total = careerStats.get(id) || {
           games: 0, sppEarned: 0, touchdowns: 0, casualties: 0, mvps: 0,

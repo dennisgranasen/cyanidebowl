@@ -22,6 +22,7 @@ import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 import {
   careerStatsForTeam,
   fillMissingPlayerTypes,
+  formerPlayersForTeam,
   markPlayersMissingFromLiveRoster,
   playersFromLiveRoster,
 } from '../util/teamRoster';
@@ -93,6 +94,7 @@ function TeamPage() {
   const fallbackPlayers = matchTeamSnapshot?.players || (team ? (players || []) : []);
   const currentRosterPlayers = playersFromLiveRoster(liveRoster, fallbackPlayers);
   const snapshotPlayers = markPlayersMissingFromLiveRoster(fallbackPlayers, currentRosterPlayers);
+  const formerPlayers = formerPlayersForTeam(matches, teamId, currentRosterPlayers || fallbackPlayers);
   const canChooseRosterView = currentRosterPlayers !== null && Boolean(matchTeamSnapshot?.players?.length);
   const showingCurrentRoster = currentRosterPlayers !== null
     && (rosterView === 'current' || fallbackPlayers.length === 0);
@@ -268,7 +270,7 @@ function TeamPage() {
                     <AlertDescription>{intl.formatMessage({ id: 'team.roster.missingFromCurrent' })}</AlertDescription>
                   </Alert>
                 )}
-                <Roster players={displayedPlayers} careerStats={careerStats} />
+                <Roster players={displayedPlayers} formerPlayers={formerPlayers} careerStats={careerStats} />
               </Box>
               {identityUtils.opus(teamId) === 3 && <Bb3TeamManagement teamId={teamId} />}
               <TeamSupporters teamId={teamId} dedicatedFans={displayedTeam.dedicatedFans} />

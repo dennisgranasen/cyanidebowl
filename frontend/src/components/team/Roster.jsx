@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Button, ButtonGroup, Center, Spinner, Table, TableContainer, Tbody, Tfoot, Th, Thead, Tr } from '@chakra-ui/react';
+import { Button, ButtonGroup, Center, Checkbox, HStack, Spinner, Table, TableContainer, Tbody, Tfoot, Th, Thead, Tr } from '@chakra-ui/react';
 import Player from './Player';
 import { identityUtils } from '../../util/identityUtil';
+import { playerKey } from '../../util/teamRoster';
 import { useIntl } from 'react-intl';
 
 function TableColumns({ view }) {
@@ -43,36 +44,55 @@ function TableColumns({ view }) {
   </Tr>
 }
 
-function Roster({ players, careerStats }) {
+function Roster({ players, formerPlayers = [], careerStats }) {
   const intl = useIntl();
   const [view, setView] = useState('attributes');
+  const [includeFormerPlayers, setIncludeFormerPlayers] = useState(false);
+  const visiblePlayers = [...(Array.isArray(players) ? players : [])];
+  if (includeFormerPlayers) {
+    const visibleKeys = new Set(visiblePlayers.map(playerKey));
+    formerPlayers.forEach((player) => {
+      const key = playerKey(player);
+      if (!visibleKeys.has(key)) {
+        visiblePlayers.push(player);
+        visibleKeys.add(key);
+      }
+    });
+  }
   return (
     <>
-      <ButtonGroup isAttached size="sm" variant="outline" mb={3} aria-label={intl.formatMessage({ id: 'team.roster.display' })}>
-        <Button
-          colorScheme={view === 'attributes' ? 'teal' : undefined}
-          variant={view === 'attributes' ? 'solid' : 'outline'}
-          onClick={() => setView('attributes')}
-          aria-pressed={view === 'attributes'}
-        >
-          {intl.formatMessage({ id: 'team.roster.attributesAndSkills' })}
-        </Button>
-        <Button
-          colorScheme={view === 'career' ? 'teal' : undefined}
-          variant={view === 'career' ? 'solid' : 'outline'}
-          onClick={() => setView('career')}
-          aria-pressed={view === 'career'}
-        >
-          {intl.formatMessage({ id: 'team.roster.careerStats' })}
-        </Button>
-      </ButtonGroup>
+      <HStack justify="space-between" align="center" flexWrap="wrap" spacing={3} mb={3}>
+        <ButtonGroup isAttached size="sm" variant="outline" aria-label={intl.formatMessage({ id: 'team.roster.display' })}>
+          <Button
+            colorScheme={view === 'attributes' ? 'teal' : undefined}
+            variant={view === 'attributes' ? 'solid' : 'outline'}
+            onClick={() => setView('attributes')}
+            aria-pressed={view === 'attributes'}
+          >
+            {intl.formatMessage({ id: 'team.roster.attributesAndSkills' })}
+          </Button>
+          <Button
+            colorScheme={view === 'career' ? 'teal' : undefined}
+            variant={view === 'career' ? 'solid' : 'outline'}
+            onClick={() => setView('career')}
+            aria-pressed={view === 'career'}
+          >
+            {intl.formatMessage({ id: 'team.roster.careerStats' })}
+          </Button>
+        </ButtonGroup>
+        {formerPlayers.length > 0 && (
+          <Checkbox isChecked={includeFormerPlayers} onChange={(event) => setIncludeFormerPlayers(event.target.checked)}>
+            {intl.formatMessage({ id: 'team.roster.includeFormer' }, { count: formerPlayers.length })}
+          </Checkbox>
+        )}
+      </HStack>
       <TableContainer width="100%">
         <Table variant="striped" size="sm">
           <Thead><TableColumns view={view} /></Thead>
           <Tbody>
             {Array.isArray(players) ? (
-              players.map((player) => {
-                const id = String(player.id?.key || `${player.number}:${player.name || ''}`).toLocaleLowerCase();
+              visiblePlayers.map((player) => {
+                const id = playerKey(player);
                 return <Player player={player} careerStats={careerStats?.get(id)} view={view}
                   key={player.id?.key || id} opus={identityUtils.opus(player.id)} />;
               })

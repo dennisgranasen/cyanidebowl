@@ -1,6 +1,7 @@
 import React from 'react';
-import { Badge, Center, HStack, Image, Td, Text, Tr } from '@chakra-ui/react';
+import { Center, HStack, Image, Td, Text, Tr } from '@chakra-ui/react';
 import { FaBandage, FaStar } from 'react-icons/fa6';
+import { GiTombstone } from 'react-icons/gi';
 import { Icon } from '@chakra-ui/icons';
 import {
   TbHexagon,
@@ -149,14 +150,16 @@ function Player({ player, opus, view, careerStats }) {
   const bonus = player.extendedAttributes ? player.extendedAttributes.bonus : [];
   const malus = player.extendedAttributes ? player.extendedAttributes.malus : [];
   const isStarplayer = player.type?.endsWith('Star') || isStarPlayer(player.name);
+  const isFormerPlayer = player.notInCurrentRoster || player.dead;
   return (
-    <Tr id={`player-${player.id?.key}`}>
+    <Tr
+      id={`player-${player.id?.key}`}
+      sx={isFormerPlayer ? { '& > td': { color: 'gray.500', fontStyle: 'italic' } } : undefined}
+    >
       <Td>{player.number}</Td>
       <Td>
         <HStack spacing={2} wrap="wrap">
           <Text>{isStarplayer ? lookupStarPlayerName(player.name) : player.name}</Text>
-          {player.dead && <Badge colorScheme="red">{intl.formatMessage({ id: 'team.roster.dead' })}</Badge>}
-          {player.notInCurrentRoster && <Badge colorScheme="orange">{intl.formatMessage({ id: 'team.roster.notCurrent' })}</Badge>}
         </HStack>
       </Td>
       <Td>{prettyPrint(player.type, '_')}</Td>
@@ -178,7 +181,18 @@ function Player({ player, opus, view, careerStats }) {
         <Td isNumeric>{careerStats?.interceptions ?? 0}</Td>
       </> : <Td><Skills skills={player.skills || player.skillStrings} opus={opus} /></Td>}
       <Td>
-        <Injuries injuries={player.casualtiesStates} />
+        <HStack spacing={1}>
+          {player.dead && (
+            <Icon
+              as={GiTombstone}
+              boxSize={smallBoxSize}
+              color="gray.600"
+              role="img"
+              aria-label={intl.formatMessage({ id: 'team.roster.dead' })}
+            />
+          )}
+          <Injuries injuries={player.casualtiesStates} />
+        </HStack>
       </Td>
       <Td>
         <Center>
