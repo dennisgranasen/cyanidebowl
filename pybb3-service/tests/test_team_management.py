@@ -104,6 +104,32 @@ def test_roster_characteristics_include_frontend_attribute_values():
     assert result["players"][0]["attributes"] == {"ma": 6, "st": 3, "ag": 3, "pa": 4, "av": 9}
 
 
+def test_roster_fills_position_type_and_default_characteristics(tmp_path, monkeypatch):
+    rules_path = tmp_path / "BB3Rules.json"
+    rules_path.write_text(json.dumps({
+        "bb3_rules_position": [{"code": 55, "data": "Thrall"}],
+    }))
+    monkeypatch.setattr(team_api, "_bb3_rules", lambda: BB3Rules.load(rules_path))
+    roster = {
+        "positions": [{
+            "position_id": 55,
+            "characteristics": [
+                {"characteristic_id": 0, "value": 6},
+                {"characteristic_id": 1, "value": 3},
+                {"characteristic_id": 2, "value": 3},
+                {"characteristic_id": 3, "value": 4},
+                {"characteristic_id": 4, "value": 8},
+            ],
+        }],
+        "players": [{"position_id": 55, "characteristics": [], "skill_ids": []}],
+    }
+
+    player = team_api._roster_with_skill_names(roster)["players"][0]
+
+    assert player["type"] == "Thrall"
+    assert player["attributes"] == {"ma": 6, "st": 3, "ag": 3, "pa": 4, "av": 8}
+
+
 def test_empty_roster_diagnostic_logs_xml_paths_without_player_data(caplog):
     @dataclass
     class Roster:

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, AlertDescription, AlertIcon, Box, Heading, Spinner, VStack } from '@chakra-ui/react';
+import { Alert, AlertDescription, AlertIcon, Box, Button, ButtonGroup, Heading, Spinner, VStack } from '@chakra-ui/react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import WarpScoresApiService from '../WarpScoresApiService';
 import Roster from '../components/team/Roster';
@@ -19,25 +19,12 @@ import { identityUtils } from '../util/identityUtil';
 import { useIntl } from 'react-intl';
 import Bb3TeamManagement from '../components/team/Bb3TeamManagement';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
-
-function playersFromLiveRoster(roster, fallbackPlayers) {
-  if (!Array.isArray(roster?.players) || (roster.players.length === 0 && fallbackPlayers.length > 0)) return null;
-  return roster.players.map((player) => {
-    const fallback = fallbackPlayers.find((item) => item.number === player.number) || {};
-    const skillNames = Object.values(player.skill_names || {});
-    return {
-      ...fallback,
-      id: { ...(fallback.id || {}), key: player.player_id || fallback.id?.key },
-      name: player.name || fallback.name,
-      number: player.number,
-      level: player.level,
-      spp: player.spp,
-      value: player.value,
-      attributes: player.attributes || fallback.attributes,
-      skills: skillNames.length ? skillNames : (fallback.skills || fallback.skillStrings || []),
-    };
-  });
-}
+import {
+  careerStatsForTeam,
+  fillMissingPlayerTypes,
+  markPlayersMissingFromLiveRoster,
+  playersFromLiveRoster,
+} from '../util/teamRoster';
 
 function MatchesCount({ matches, teamId }) {
   if (!matches) return <Spinner />;
@@ -87,6 +74,7 @@ function TeamPage() {
   const [players, setPlayers] = useState();
   const [liveRoster, setLiveRoster] = useState(null);
   const [liveRosterError, setLiveRosterError] = useState(null);
+  const [rosterView, setRosterView] = useState('current');
   useEffect(() => {
     const id = searchParams.get('player');
     if (id && players?.length) document.getElementById(`player-${id}`)?.scrollIntoView({ block: 'center' });
@@ -96,13 +84,21 @@ function TeamPage() {
   const [loadingMatches, setLoadingMatches] = useState(false);
   const [matchesError, setMatchesError] = useState(undefined);
   const matchTeamSnapshot = latestTeamSnapshot(matches, teamId);
+  const careerStats = careerStatsForTeam(matches, teamId);
   const baseTeam = team || matchTeamSnapshot;
   const liveTeamDetails = Object.fromEntries(
     Object.entries(liveRoster?.team || {}).filter(([, value]) => value !== null && value !== undefined),
   );
   const displayedTeam = baseTeam ? { ...baseTeam, ...liveTeamDetails } : undefined;
-  const fallbackPlayers = team ? (players || []) : (matchTeamSnapshot?.players || []);
-  const displayedPlayers = playersFromLiveRoster(liveRoster, fallbackPlayers) || fallbackPlayers;
+  const fallbackPlayers = matchTeamSnapshot?.players || (team ? (players || []) : []);
+  const currentRosterPlayers = playersFromLiveRoster(liveRoster, fallbackPlayers);
+  const snapshotPlayers = fillMissingPlayerTypes(
+    markPlayersMissingFromLiveRoster(fallbackPlayers, currentRosterPlayers), matches, teamId,
+  );
+  const canChooseRosterView = currentRosterPlayers !== null && Boolean(matchTeamSnapshot?.players?.length);
+  const showingCurrentRoster = currentRosterPlayers !== null
+    && (rosterView === 'current' || fallbackPlayers.length === 0);
+  const displayedPlayers = showingCurrentRoster ? currentRosterPlayers : snapshotPlayers;
 
   useEffect(() => {
     setLoadingTeam(true);
@@ -110,6 +106,7 @@ function TeamPage() {
     setPlayers(undefined);
     setLiveRoster(null);
     setLiveRosterError(null);
+    setRosterView('current');
     setTeamError(undefined);
     const fetchTeam = () => {
       const teamResponse = competitionId
@@ -242,10 +239,34 @@ function TeamPage() {
                 </InfoArea>
               </HeaderCard>
               <Box width="full" mt={6}>
-                <Heading size="md" borderBottom="1px solid" borderColor="warpScoresBorderColor" pb={2} mb={3}>
-                  {intl.formatMessage({ id: 'common.players' })}
-                </Heading>
-                <Roster players={displayedPlayers} />
+                <Box display="flex" justifyContent="space-between" alignItems={{ base: 'flex-start', md: 'center' }} flexWrap="wrap" gap={3} mb={3}>
+                  <Heading size="md">{intl.formatMessage({ id: 'common.players' })}</Heading>
+                  {canChooseRosterView && <ButtonGroup isAttached size="sm" variant="outline" aria-label={intl.formatMessage({ id: 'team.roster.view' })}>
+                    <Button
+                      colorScheme={showingCurrentRoster ? 'teal' : undefined}
+                      variant={showingCurrentRoster ? 'solid' : 'outline'}
+                      onClick={() => setRosterView('current')}
+                      aria-pressed={showingCurrentRoster}
+                    >
+                      {intl.formatMessage({ id: 'team.roster.current' })}
+                    </Button>
+                    <Button
+                      colorScheme={!showingCurrentRoster ? 'teal' : undefined}
+                      variant={!showingCurrentRoster ? 'solid' : 'outline'}
+                      onClick={() => setRosterView('snapshot')}
+                      aria-pressed={!showingCurrentRoster}
+                    >
+                      {intl.formatMessage({ id: 'team.roster.latestMatch' })}
+                    </Button>
+                  </ButtonGroup>}
+                </Box>
+                {!showingCurrentRoster && snapshotPlayers.some((player) => player.notInCurrentRoster) && (
+                  <Alert status="info" mb={3}>
+                    <AlertIcon />
+                    <AlertDescription>{intl.formatMessage({ id: 'team.roster.missingFromCurrent' })}</AlertDescription>
+                  </Alert>
+                )}
+                <Roster players={displayedPlayers} careerStats={careerStats} />
               </Box>
               {identityUtils.opus(teamId) === 3 && <Bb3TeamManagement teamId={teamId} />}
               <TeamSupporters teamId={teamId} dedicatedFans={displayedTeam.dedicatedFans} />

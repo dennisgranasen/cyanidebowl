@@ -1,5 +1,5 @@
 import React from 'react';
-import { Center, Image, Td, Text, Tr } from '@chakra-ui/react';
+import { Badge, Center, HStack, Image, Td, Text, Tr } from '@chakra-ui/react';
 import { FaBandage, FaStar } from 'react-icons/fa6';
 import { Icon } from '@chakra-ui/icons';
 import {
@@ -20,6 +20,7 @@ import prettyPrint from '../../util/prettyPrint';
 import Injuries from './Injuries';
 import config from '../../config';
 import { getStarPlayerDisplayName, isStarPlayer } from '../../util/starplayerUtil';
+import { useIntl } from 'react-intl';
 
 const { smallBoxSize, tinyBoxSize } = config;
 
@@ -142,24 +143,40 @@ function PlayerLevel({ level, starPlayer }) {
   );
 }
 
-function Player({ player, opus }) {
-  const defaultAttributes = player.extendedAttributes ? player.extendedAttributes.defaultAttributes : player.attributes;
+function Player({ player, opus, view, careerStats }) {
+  const intl = useIntl();
+  const defaultAttributes = player.extendedAttributes?.defaultAttributes || player.attributes;
   const bonus = player.extendedAttributes ? player.extendedAttributes.bonus : [];
   const malus = player.extendedAttributes ? player.extendedAttributes.malus : [];
   const isStarplayer = player.type?.endsWith('Star') || isStarPlayer(player.name);
   return (
     <Tr id={`player-${player.id?.key}`}>
       <Td>{player.number}</Td>
-      <Td>{isStarplayer ? lookupStarPlayerName(player.name) : player.name}</Td>
+      <Td>
+        <HStack spacing={2} wrap="wrap">
+          <Text>{isStarplayer ? lookupStarPlayerName(player.name) : player.name}</Text>
+          {player.dead && <Badge colorScheme="red">{intl.formatMessage({ id: 'team.roster.dead' })}</Badge>}
+          {player.notInCurrentRoster && <Badge colorScheme="orange">{intl.formatMessage({ id: 'team.roster.notCurrent' })}</Badge>}
+        </HStack>
+      </Td>
       <Td>{prettyPrint(player.type, '_')}</Td>
       <Td>
         <Center>
           <PlayerLevel level={player.level} starPlayer={isStarplayer} />
         </Center>
       </Td>
-      <Td>
-        <Skills skills={player.skills || player.skillStrings}  opus={opus} />
-      </Td>
+      {view === 'career' ? <>
+        <Td isNumeric>{careerStats?.games ?? 0}</Td>
+        <Td isNumeric>{careerStats?.sppEarned ?? 0}</Td>
+        <Td isNumeric>{careerStats?.touchdowns ?? 0}</Td>
+        <Td isNumeric>{careerStats?.casualties ?? 0}</Td>
+        <Td isNumeric>{careerStats?.mvps ?? 0}</Td>
+        <Td isNumeric>{careerStats?.passes ?? 0}</Td>
+        <Td isNumeric>{careerStats?.catches ?? 0}</Td>
+        <Td isNumeric>{careerStats?.blocks ?? 0}</Td>
+        <Td isNumeric>{careerStats?.knockouts ?? 0}</Td>
+        <Td isNumeric>{careerStats?.interceptions ?? 0}</Td>
+      </> : <Td><Skills skills={player.skills || player.skillStrings} opus={opus} /></Td>}
       <Td>
         <Injuries injuries={player.casualtiesStates} />
       </Td>
@@ -177,6 +194,7 @@ function Player({ player, opus }) {
           )}
         </Center>
       </Td>
+      {view === 'career' ? null : <>
       <Td>
         <Center>
           <Attribute type={ATTR_MA} defaultAttributes={defaultAttributes} bonus={bonus} malus={malus} />
@@ -202,9 +220,8 @@ function Player({ player, opus }) {
           <Attribute type={ATTR_AV} defaultAttributes={defaultAttributes} bonus={bonus} malus={malus} />
         </Center>
       </Td>
-      <Td>
-        <Center>{player.xp}</Center>
-      </Td>
+      </>}
+      <Td><Center>{player.spp ?? player.xp ?? '-'}</Center></Td>
       <Td isNumeric>{player.value}</Td>
     </Tr>
   );

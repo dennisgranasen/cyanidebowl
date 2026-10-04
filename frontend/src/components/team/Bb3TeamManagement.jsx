@@ -12,13 +12,6 @@ import {
   Select,
   Spinner,
   Stack,
-  Table,
-  TableContainer,
-  Tbody,
-  Td,
-  Th,
-  Thead,
-  Tr,
   Text,
   Textarea,
 } from '@chakra-ui/react';
@@ -26,17 +19,11 @@ import { useIntl } from 'react-intl';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import useAuth0WithUserPermissions from '../../hooks/useAuth0WithUserPermissions';
 import { useMyTeams } from '../../context/MyTeamsContext';
-import { getStarPlayerDisplayName } from '../../util/starplayerUtil';
 
 const serializePitchMap = (pitchMap) => JSON.stringify(pitchMap || {}, null, 2);
-const describeIds = (values) => (values || []).map((value) => `#${value}`).join(', ') || '-';
 const formatRuleName = (name) => name
   ?.replace(/[_-]+/g, ' ')
   .replace(/\b\w/g, (letter) => letter.toUpperCase());
-const describeSkills = (player) => (player.skill_ids || []).map((skillId) => {
-  const name = player.skill_names?.[String(skillId)];
-  return name ? formatRuleName(name) : `#${skillId}`;
-}).join(', ') || '-';
 
 function Bb3TeamManagement({ teamId }) {
   const intl = useIntl();
@@ -205,31 +192,6 @@ function Bb3TeamManagement({ teamId }) {
       </Box>
       {error && <Alert status="error"><AlertIcon />{error}</Alert>}
       {notice && <Alert status="success"><AlertIcon />{notice}</Alert>}
-
-      <Box>
-        <Heading size="sm" mb={3}>{intl.formatMessage({ id: 'team.bb3.currentRoster' })}</Heading>
-        {players.length ? (
-          <TableContainer>
-            <Table size="sm" variant="striped">
-              <Thead><Tr>
-                <Th>#</Th><Th>{intl.formatMessage({ id: 'common.name' })}</Th>
-                <Th>{intl.formatMessage({ id: 'common.level' })}</Th><Th>SPP</Th>
-                <Th>{intl.formatMessage({ id: 'common.skills' })}</Th>
-                <Th>{intl.formatMessage({ id: 'team.bb3.characteristics' })}</Th>
-                <Th>{intl.formatMessage({ id: 'common.injuries' })}</Th>
-              </Tr></Thead>
-              <Tbody>{players.map((player) => (
-                <Tr key={player.player_id}>
-                  <Td>{player.number}</Td><Td>{getStarPlayerDisplayName(player.name)}</Td><Td>{player.level}</Td><Td>{player.spp}</Td>
-                  <Td>{describeSkills(player)}</Td>
-                  <Td>{(player.characteristics || []).map((item) => `#${item.characteristic_id}: ${item.value}`).join(', ') || '-'}</Td>
-                  <Td>{describeIds(player.casualty_ids)}{player.miss_next_game ? ' · MNG' : ''}{player.dead ? ' · Dead' : ''}</Td>
-                </Tr>
-              ))}</Tbody>
-            </Table>
-          </TableContainer>
-        ) : <Text>{intl.formatMessage({ id: 'team.bb3.noPlayers' })}</Text>}
-      </Box>
 
       <Box>
         <Heading size="sm" mb={3}>{intl.formatMessage({ id: 'team.bb3.formations' })}</Heading>

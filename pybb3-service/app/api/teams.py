@@ -43,6 +43,16 @@ def _skill_name(skill_id: int) -> str | None:
         return None
 
 
+def _position_name(position_id: Any) -> str | None:
+    rules = _bb3_rules()
+    if rules is None or position_id is None:
+        return None
+    try:
+        return rules.position_by_code(int(position_id)).name
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
 def _players_from_roster_slots(roster: Any) -> list[Any]:
     raw_xml = getattr(roster, "raw_xml", None)
     if not raw_xml:
@@ -100,19 +110,21 @@ def _roster_with_skill_names(roster: Any) -> dict[str, Any]:
                 )
             except ET.ParseError:
                 log.warning("BB3 roster parsed zero players; raw roster XML is malformed")
+    positions = {
+        position.get("position_id"): position.get("characteristics", [])
+        for position in result.get("positions", [])
+        if position.get("position_id") is not None
+    }
+    attribute_names = {0: "ma", 1: "st", 2: "ag", 3: "pa", 4: "av"}
     for player in result.get("players", []):
         attributes = {"ma": None, "st": None, "ag": None, "pa": None, "av": None}
-        for characteristic in player.get("characteristics", []):
-            attribute = {
-                0: "ma",
-                1: "st",
-                2: "ag",
-                3: "pa",
-                4: "av",
-            }.get(characteristic.get("characteristic_id"))
+        characteristics = positions.get(player.get("position_id"), [])
+        for characteristic in [*characteristics, *player.get("characteristics", [])]:
+            attribute = attribute_names.get(characteristic.get("characteristic_id"))
             if attribute:
                 attributes[attribute] = characteristic.get("value")
         player["attributes"] = attributes
+        player["type"] = player.get("type") or _position_name(player.get("position_id"))
         player["skill_names"] = {
             str(skill_id): name
             for skill_id in player.get("skill_ids", [])
