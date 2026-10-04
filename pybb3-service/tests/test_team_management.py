@@ -64,6 +64,17 @@ def test_owned_team_rejects_a_team_outside_account():
     assert error.value.status_code == 404
 
 
+def test_roster_reads_a_team_by_id_without_checking_the_account_team_list(monkeypatch):
+    client = FakeClient({0: (["someone-elses-team"], 1)}, players=[])
+    monkeypatch.setattr(team_api.session_manager, "call", lambda _owner, _session, operation: operation(client))
+    monkeypatch.setattr(team_api, "_roster_with_skill_names", lambda _roster: {"players": []})
+
+    result = team_api.roster("session-1", "public-team", owner="owner-1")
+
+    assert result == {"players": []}
+    assert client.roster_reads == ["public-team"]
+
+
 def test_live_roster_reads_team_without_ownership_check(monkeypatch):
     client = FakeClient({0: (["someone-elses-team"], 1)}, players=[])
     monkeypatch.setattr(team_api.session_manager, "call", lambda _owner, _session, operation: operation(client))
@@ -75,6 +86,26 @@ def test_live_roster_reads_team_without_ownership_check(monkeypatch):
     assert result["team"]["cash"] == 120000
     assert result["team"]["coachAssistants"] == 2
     assert client.roster_reads == ["public-team"]
+
+
+def test_team_details_reads_nested_bb3_fields_and_namespaced_tags():
+    root = ET.fromstring(
+        '<Response xmlns="urn:bb3"><Team><TeamValue>980000</TeamValue>'
+        '<Treasury><Cash>120000</Cash></Treasury><NbRerolls>3</NbRerolls>'
+        '<DedicatedFans>4</DedicatedFans><NbCheerleaders>2</NbCheerleaders>'
+        '<AssistantCoaches>1</AssistantCoaches><HasApothecary>true</HasApothecary>'
+        '</Team></Response>'
+    )
+
+    assert team_api._team_details(root) == {
+        "value": 980000,
+        "cash": 120000,
+        "rerolls": 3,
+        "dedicatedFans": 4,
+        "cheerleaders": 2,
+        "coachAssistants": 1,
+        "apothecary": True,
+    }
 
 
 def test_formations_response_uses_items_object(monkeypatch):

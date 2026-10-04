@@ -23,6 +23,7 @@ import {
   careerStatsForTeam,
   fillMissingPlayerTypes,
   formerPlayersForTeam,
+  mergeTeamDetails,
   markPlayersMissingFromLiveRoster,
   playersFromLiveRoster,
 } from '../util/teamRoster';
@@ -86,11 +87,12 @@ function TeamPage() {
   const [matchesError, setMatchesError] = useState(undefined);
   const matchTeamSnapshot = latestTeamSnapshot(matches, teamId);
   const careerStats = careerStatsForTeam(matches, teamId);
-  const baseTeam = team || matchTeamSnapshot;
   const liveTeamDetails = Object.fromEntries(
     Object.entries(liveRoster?.team || {}).filter(([, value]) => value !== null && value !== undefined),
   );
-  const displayedTeam = baseTeam ? { ...baseTeam, ...liveTeamDetails } : undefined;
+  const displayedTeam = team || matchTeamSnapshot
+    ? mergeTeamDetails(team, matchTeamSnapshot, liveTeamDetails)
+    : undefined;
   const fallbackPlayers = matchTeamSnapshot?.players || (team ? (players || []) : []);
   const currentRosterPlayers = playersFromLiveRoster(liveRoster, fallbackPlayers);
   const snapshotPlayers = markPlayersMissingFromLiveRoster(fallbackPlayers, currentRosterPlayers);

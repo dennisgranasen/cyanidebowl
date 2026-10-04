@@ -2,12 +2,25 @@ import {
   careerStatsForTeam,
   fillMissingPlayerTypes,
   formerPlayersForTeam,
+  mergeTeamDetails,
   markPlayersMissingFromLiveRoster,
   playerKey,
   playersFromLiveRoster,
 } from './teamRoster';
 
 describe('team roster views', () => {
+  test('prefers live team details, then latest match snapshot, then stored team data', () => {
+    const merged = mergeTeamDetails(
+      { name: 'Stored name', rerolls: 2, dedicatedFans: 1, cash: 50000 },
+      { name: 'Latest match name', rerolls: 3, dedicatedFans: 2, cash: 60000 },
+      { rerolls: 4, dedicatedFans: null, cash: 0 },
+    );
+
+    expect(merged).toMatchObject({
+      name: 'Latest match name', rerolls: 4, dedicatedFans: 2, cash: 0,
+    });
+  });
+
   test('maps the current BB3 roster into the shared player row model', () => {
     const snapshot = [{
       id: { key: 'player-1' }, name: 'Old Name', number: 7, type: 'Thrall', casualtiesStates: ['BrokenJaw'],

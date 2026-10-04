@@ -66,6 +66,17 @@ export function fillMissingPlayerTypes(players, matches, requestedTeamId) {
   });
 }
 
+export function mergeTeamDetails(team, matchSnapshot, liveDetails) {
+  const definedFields = (source) => Object.fromEntries(
+    Object.entries(source || {}).filter(([, value]) => value !== null && value !== undefined),
+  );
+  return {
+    ...definedFields(team),
+    ...definedFields(matchSnapshot),
+    ...definedFields(liveDetails),
+  };
+}
+
 function playerIsExplicitlyDead(player) {
   if (player.dead === true) return true;
   const casualtyStatuses = [

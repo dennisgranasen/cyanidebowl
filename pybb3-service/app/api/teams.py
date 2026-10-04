@@ -156,21 +156,26 @@ def _public_model(value: Any) -> Any:
 
 
 def _team_details(root: Any) -> dict[str, Any]:
-    team = root.find("./Team") if root.tag != "Team" else root
+    tag_name = lambda element: element.tag.rsplit("}", 1)[-1].casefold()
+    team = root if tag_name(root) == "team" else next(
+        (element for element in root.iter() if tag_name(element) == "team"),
+        None,
+    )
     if team is None:
         return {}
     fields_by_name = {
-        "value": ("TeamValue", "Value"),
-        "cash": ("Treasury", "Cash"),
-        "rerolls": ("Rerolls", "NbRerolls"),
-        "dedicatedFans": ("DedicatedFans",),
-        "cheerleaders": ("Cheerleaders", "NbCheerleaders"),
-        "coachAssistants": ("AssistantCoaches", "CoachAssistants", "NbAssistantCoaches"),
-        "apothecary": ("Apothecary", "HasApothecary"),
+        "value": ("teamvalue", "currentteamvalue", "value"),
+        "cash": ("cash", "treasury"),
+        "rerolls": ("rerolls", "nbrerolls"),
+        "dedicatedFans": ("dedicatedfans", "nbdedicatedfans", "fanfactor"),
+        "cheerleaders": ("cheerleaders", "nbcheerleaders"),
+        "coachAssistants": ("assistantcoaches", "coachassistants", "nbassistantcoaches"),
+        "apothecary": ("apothecary", "hasapothecary"),
     }
     result = {}
     for field_name, tags in fields_by_name.items():
-        value = next((team.findtext(tag) for tag in tags if team.find(tag) is not None), None)
+        value = next((element.text for tag in tags for element in team.iter()
+                      if tag_name(element) == tag and element.text is not None), None)
         if value is None:
             result[field_name] = None
         else:
@@ -260,7 +265,7 @@ def my_teams(session_id:str,owner:str=Depends(trusted_owner),size:int=Query(50,g
         raise HTTPException(502,"Unable to retrieve BB3 teams") from error
 @router.get("/{session_id}/teams/{team_id}/roster")
 def roster(session_id:str,team_id:str,owner:str=Depends(trusted_owner)):
-    try:return session_manager.call(owner,session_id,lambda client:_roster_with_skill_names(owned_team(client, team_id).get_team_roster_model(team_id)))
+    try:return session_manager.call(owner,session_id,lambda client:_roster_with_skill_names(client.get_team_roster_model(team_id)))
     except SessionNotFound as error:raise HTTPException(404,str(error)) from error
 
 

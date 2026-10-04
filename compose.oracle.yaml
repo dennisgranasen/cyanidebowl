@@ -17,9 +17,16 @@ services:
     environment:
       PYBB3_INTERNAL_API_KEY: ${PYBB3_INTERNAL_API_KEY}
       PYBB3_CREDENTIAL_ENCRYPTION_KEY: ${PYBB3_CREDENTIAL_ENCRYPTION_KEY}
+      BB3_RULES_FILE: /app/BB3Rules.json
     volumes:
       - pybb3-credentials:/var/lib/pybb3/credentials
       - ./data/replays:/app/replays
+      - type: bind
+        source: ./data/BB3Rules.json
+        target: /app/BB3Rules.json
+        read_only: true
+        bind:
+          create_host_path: falsebn
     networks:
       - internal_net
     healthcheck:
