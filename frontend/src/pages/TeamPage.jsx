@@ -92,13 +92,15 @@ function TeamPage() {
   const displayedTeam = baseTeam ? { ...baseTeam, ...liveTeamDetails } : undefined;
   const fallbackPlayers = matchTeamSnapshot?.players || (team ? (players || []) : []);
   const currentRosterPlayers = playersFromLiveRoster(liveRoster, fallbackPlayers);
-  const snapshotPlayers = fillMissingPlayerTypes(
-    markPlayersMissingFromLiveRoster(fallbackPlayers, currentRosterPlayers), matches, teamId,
-  );
+  const snapshotPlayers = markPlayersMissingFromLiveRoster(fallbackPlayers, currentRosterPlayers);
   const canChooseRosterView = currentRosterPlayers !== null && Boolean(matchTeamSnapshot?.players?.length);
   const showingCurrentRoster = currentRosterPlayers !== null
     && (rosterView === 'current' || fallbackPlayers.length === 0);
-  const displayedPlayers = showingCurrentRoster ? currentRosterPlayers : snapshotPlayers;
+  const displayedPlayers = fillMissingPlayerTypes(
+    showingCurrentRoster ? currentRosterPlayers : snapshotPlayers,
+    matches,
+    teamId,
+  );
 
   useEffect(() => {
     setLoadingTeam(true);

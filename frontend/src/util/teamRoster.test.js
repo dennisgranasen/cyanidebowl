@@ -69,4 +69,17 @@ describe('team roster views', () => {
 
     expect(completed[0].type).toBe('vampire_humanThrall');
   });
+
+  test('fills a live BB3 player type when its ID format differs from match IDs', () => {
+    const livePlayer = {
+      player_id: 'player-4', name: 'Jitterbug', number: 4, type: null,
+    };
+    const completed = fillMissingPlayerTypes([livePlayer], [
+      { teams: [{ id: '3_team', players: [{
+        id: { key: '3_player-4' }, name: 'Jitterbug', number: 4, type: 'vampire_humanThrall',
+      }] }] },
+    ], '3_team');
+
+    expect(completed[0].type).toBe('vampire_humanThrall');
+  });
 });
