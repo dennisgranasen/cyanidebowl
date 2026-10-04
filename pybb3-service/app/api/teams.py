@@ -255,7 +255,9 @@ def my_teams(session_id:str,owner:str=Depends(trusted_owner),size:int=Query(50,g
             team["coachName"] = team.get("coachName") or coach_name
         return result
     except SessionNotFound as error:raise HTTPException(404,str(error)) from error
-    except (ValueError,RuntimeError,OSError) as error:raise HTTPException(502,"Unable to retrieve BB3 teams") from error
+    except (ValueError,RuntimeError,OSError) as error:
+        log.exception("BB3 team-list request failed")
+        raise HTTPException(502,"Unable to retrieve BB3 teams") from error
 @router.get("/{session_id}/teams/{team_id}/roster")
 def roster(session_id:str,team_id:str,owner:str=Depends(trusted_owner)):
     try:return session_manager.call(owner,session_id,lambda client:_roster_with_skill_names(owned_team(client, team_id).get_team_roster_model(team_id)))
@@ -281,6 +283,7 @@ def live_roster(session_id: str, team_id: str, owner: str = Depends(trusted_owne
     except SessionNotFound as error:
         raise HTTPException(404, str(error)) from error
     except (ValueError, RuntimeError, OSError) as error:
+        log.exception("BB3 live-roster request failed")
         raise HTTPException(502, "Unable to retrieve live BB3 roster") from error
 
 
