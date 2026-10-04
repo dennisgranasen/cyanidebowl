@@ -25,3 +25,25 @@ def test_session_cannot_be_used_or_closed_by_another_owner():
     with pytest.raises(SessionNotFound): service.session_info("bob",result["sessionId"])
     with pytest.raises(SessionNotFound): service.close_session("bob",result["sessionId"])
     assert service.session_info("alice",result["sessionId"])["connected"] is True
+
+
+def test_saved_steam_credential_restores_an_owner_bound_session():
+    states = []
+    service = SessionManager(
+        lambda: Flow(),
+        lambda state: (states.append(state) or Client(), "7656119", "coach-1", "Coach"),
+    )
+
+    result = service.restore_auth("alice", {
+        "username": "steam-user",
+        "refreshToken": "secret-refresh",
+        "guardData": "secret-guard-data",
+    })
+
+    assert result["status"] == "AUTHENTICATED"
+    assert states[0].username == "steam-user"
+    assert states[0].refresh_token == "secret-refresh"
+    assert states[0].guard_data == "secret-guard-data"
+    assert service.session_info("alice", result["sessionId"])["steamId"] == "7656119"
+    with pytest.raises(SessionNotFound):
+        service.session_info("bob", result["sessionId"])

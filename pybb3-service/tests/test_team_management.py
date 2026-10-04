@@ -1,6 +1,7 @@
 import base64
 import json
 import xml.etree.ElementTree as ET
+from dataclasses import dataclass
 from types import SimpleNamespace
 
 import pytest
@@ -101,6 +102,82 @@ def test_roster_characteristics_include_frontend_attribute_values():
     result = team_api._roster_with_skill_names(roster)
 
     assert result["players"][0]["attributes"] == {"ma": 6, "st": 3, "ag": 3, "pa": 4, "av": 9}
+
+
+def test_empty_roster_diagnostic_logs_xml_paths_without_player_data(caplog):
+    @dataclass
+    class Roster:
+        players: tuple
+        raw_xml: str
+
+    roster = Roster(
+        players=(),
+        raw_xml=(
+            "<ResponseGetTeamRoster><Roster><TeamRoster><Slot><Player>"
+            "<Name>private-player-name</Name></Player></Slot></TeamRoster></Roster>"
+            "</ResponseGetTeamRoster>"
+        ),
+    )
+
+    with caplog.at_level("WARNING"):
+        team_api._roster_with_skill_names(roster)
+
+    assert "ResponseGetTeamRoster/Roster/TeamRoster/Slot/Player" in caplog.text
+    assert "1 Player and 0 TeamRosterSlot" in caplog.text
+    assert "private-player-name" not in caplog.text
+
+
+def test_roster_fallback_reads_team_slots_without_race_templates():
+    @dataclass
+    class Roster:
+        players: tuple
+        raw_xml: str
+
+    roster = Roster(
+        players=(),
+        raw_xml=(
+            "<ResponseGetTeamRoster><Roster><RaceRoster><Slots><RosterSlot><Lines>"
+            "<RosterSlotLine><Player><Name>Template Player</Name></Player></RosterSlotLine>"
+            "</Lines></RosterSlot></Slots></RaceRoster><Slots><TeamRosterSlot>"
+            "<Number>6</Number><Player><Id>player-1</Id><Name>Current Player</Name>"
+            "<Position>55</Position><Number>3</Number><Level>2</Level><Spp>4</Spp>"
+            "<Value>70000</Value></Player></TeamRosterSlot></Slots></Roster>"
+            "</ResponseGetTeamRoster>"
+        ),
+    )
+
+    result = team_api._roster_with_skill_names(roster)
+
+    assert len(result["players"]) == 1
+    assert result["players"][0]["name"] == "Current Player"
+    assert result["players"][0]["position_id"] == 55
+    assert result["players"][0]["slot_number"] == 6
+    assert result["players"][0]["number"] == 3
+    assert result["players"][0]["spp"] == 4
+
+
+def test_owned_player_finds_player_from_actual_team_roster_slots():
+    @dataclass
+    class Roster:
+        players: tuple
+        raw_xml: str
+
+    client = FakeClient({0: (["team-1"], 1)})
+    roster = Roster(
+        players=(),
+        raw_xml=(
+            "<ResponseGetTeamRoster><Roster><Slots><TeamRosterSlot><Number>6</Number>"
+            "<Player><Id>player-1</Id><Name>Current Player</Name><Number>3</Number>"
+            "<Spp>8</Spp></Player></TeamRosterSlot></Slots></Roster></ResponseGetTeamRoster>"
+        ),
+    )
+    client.get_team_roster_model = lambda _team_id: roster
+
+    found_roster, player = team_api.owned_player(client, "team-1", "player-1")
+
+    assert found_roster is roster
+    assert player.player_id == "player-1"
+    assert player.spp == 8
 
 
 def test_owned_player_requires_membership_in_requested_team():

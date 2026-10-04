@@ -20,6 +20,8 @@ We are collecting your data for several reasons:
 ## Safeguarding and Securing the Data
 warp-scores ist committed to securing your data and keeping it confidential. We have done all in our power to prevent data theft, unauthorized access, and disclosure by implementing the latest technologies and software, which help us safeguard all the information we collect online.
 
+When connecting a Blood Bowl 3 account, the Steam password and Steam Guard codes are used only to complete that login and are not stored. If you opt in to keeping Steam connected, an encrypted Steam refresh token and Guard data are stored on the service so the session can be restored after a restart. You can remove this saved credential by disconnecting Steam or using the forget-saved-login control. The service encryption key is stored separately from the credential files.
+
 ## Our Cookie Policy
 When visiting warp-scores you agree to allow our site to use cookies.
 

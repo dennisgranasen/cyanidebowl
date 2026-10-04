@@ -16,6 +16,8 @@ export default function AccountPage() {
   const [connection, setConnection] = useState(null);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberSteam, setRememberSteam] = useState(false);
+  const [rememberAvailable, setRememberAvailable] = useState(false);
   const [challenge, setChallenge] = useState(null);
   const [code, setCode] = useState('');
   const [game, setGame] = useState('BB3');
@@ -31,8 +33,8 @@ export default function AccountPage() {
 
   const accept = (result) => {
     if (result.status === 'GUARD_REQUIRED') setChallenge(result);
-    if (result.status === 'AUTHENTICATED') { setChallenge(null); setConnection({ connected: true, steamUsername: result.steamUsername, steamId: result.steamId }); reloadClaims(); }
-    if (result.status === 'DISCONNECTED') { setConnection({ connected: false, steamUsername: username }); refresh(); }
+    if (result.status === 'AUTHENTICATED') { setChallenge(null); setConnection({ connected: true, steamUsername: result.steamUsername, steamId: result.steamId, remembered: rememberSteam }); reloadClaims(); }
+    if (result.status === 'DISCONNECTED') { setConnection({ connected: false, steamUsername: username, remembered: false }); setRememberSteam(false); refresh(); }
   };
   const run = async (action) => {
     setBusy(true); setError('');
@@ -41,7 +43,12 @@ export default function AccountPage() {
   };
 
   useEffect(() => {
-    WarpScoresApiService.steamConnection(...auth).then((value) => { setConnection(value); setUsername(value.steamUsername || ''); }).catch((reason) => setError(reason.message));
+    WarpScoresApiService.steamConnection(...auth).then((value) => {
+      setConnection(value);
+      setUsername(value.steamUsername || '');
+      setRememberSteam(Boolean(value.remembered));
+      setRememberAvailable(Boolean(value.rememberAvailable));
+    }).catch((reason) => setError(reason.message));
     WarpScoresApiService.coachClaimCandidates(game, ...auth).then(setCandidates).catch((reason)=>setError(reason.message));
     if(userPermissions?.writeSiteAdmin)WarpScoresApiService.adminCoachClaims(...auth).then(setAdminClaims).catch((reason)=>setError(reason.message));
     StaffApi.ownProfile(...auth).then(setStaffProfile).catch((reason)=>setError(reason.message));
@@ -78,6 +85,7 @@ export default function AccountPage() {
         {connection?.connected ? <Stack>
           <Text>{intl.formatMessage({ id: 'account.connectedAs' }, { name: connection.steamUsername })}</Text>
           <Text fontSize="sm" color="gray.500">{intl.formatMessage({ id: 'account.autoClaim' })}</Text>
+          {connection.remembered && <Text fontSize="sm" color="gray.500">{intl.formatMessage({ id: 'account.rememberedSteam' })}</Text>}
           <Heading size="sm" pt={2}>{intl.formatMessage({ id: 'account.myTeams' })}</Heading>
           {teamsLoading ? <Text>{intl.formatMessage({ id: 'account.loadingTeams' })}</Text> : teams.length === 0 ? <Text>{intl.formatMessage({ id: 'account.noTeams' })}</Text> :
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>{teams.map((team) =>
@@ -86,6 +94,12 @@ export default function AccountPage() {
                 <Text fontSize="sm">{intl.formatMessage({ id: 'account.raceTv' }, { race: team.raceId ?? intl.formatMessage({ id: 'common.unknown' }), tv: team.teamValue ?? intl.formatMessage({ id: 'common.unknown' }) })}</Text>
               </Box>)}</SimpleGrid>}
           <Button alignSelf="start" onClick={() => run(async () => { await WarpScoresApiService.disconnectSteam(...auth); return { status: 'DISCONNECTED' }; })} isLoading={busy}>{intl.formatMessage({ id: 'account.disconnect' })}</Button>
+          {connection.remembered && <Button alignSelf="start" variant="outline" onClick={() => run(async () => {
+            await WarpScoresApiService.forgetRememberedSteam(...auth);
+            setConnection({ ...connection, remembered: false });
+            setRememberSteam(false);
+            return {};
+          })} isLoading={busy}>{intl.formatMessage({ id: 'account.forgetSteam' })}</Button>}
         </Stack> : challenge ? <Stack>
           <Text>{challenge.method === 'device_confirmation' ? intl.formatMessage({ id: 'account.approveSteam' }) : intl.formatMessage({ id: 'account.enterGuard' }, { hint: challenge.emailHint || 'none' })}</Text>
           {challenge.method !== 'device_confirmation' && <FormControl><FormLabel>{intl.formatMessage({ id: 'account.guardCode' })}</FormLabel><Input value={code} onChange={(e) => setCode(e.target.value)} autoComplete="one-time-code" /></FormControl>}
@@ -95,7 +109,19 @@ export default function AccountPage() {
           <Text fontSize="sm">{intl.formatMessage({ id: 'account.credentialsPrivacy' })}</Text>
           <FormControl><FormLabel>{intl.formatMessage({ id: 'account.steamUsername' })}</FormLabel><Input value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" /></FormControl>
           <FormControl><FormLabel>{intl.formatMessage({ id: 'account.steamPassword' })}</FormLabel><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" /></FormControl>
-          <Button colorScheme="blue" isDisabled={!username || !password} isLoading={busy} onClick={() => run(() => WarpScoresApiService.startSteamAuthentication({ username, password }, ...auth))}>{intl.formatMessage({ id: 'account.connectSteam' })}</Button>
+          <Checkbox isChecked={rememberSteam} isDisabled={!rememberAvailable} onChange={(event) => setRememberSteam(event.target.checked)}>
+            {intl.formatMessage({ id: 'account.rememberSteam' })}
+          </Checkbox>
+          <Text fontSize="sm" color="gray.500">{rememberAvailable
+            ? intl.formatMessage({ id: 'account.rememberSteamHelp' })
+            : intl.formatMessage({ id: 'account.rememberUnavailable' })}</Text>
+          {connection?.remembered && <Button alignSelf="start" variant="outline" onClick={() => run(async () => {
+            await WarpScoresApiService.forgetRememberedSteam(...auth);
+            setConnection({ ...connection, remembered: false });
+            setRememberSteam(false);
+            return {};
+          })} isLoading={busy}>{intl.formatMessage({ id: 'account.forgetSteam' })}</Button>}
+          <Button colorScheme="blue" isDisabled={!username || !password} isLoading={busy} onClick={() => run(() => WarpScoresApiService.startSteamAuthentication({ username, password, persistCredential: rememberSteam }, ...auth))}>{intl.formatMessage({ id: 'account.connectSteam' })}</Button>
         </Stack>}
       </Box>
       {userPermissions?.writeSiteAdmin&&<Box borderWidth="1px" borderRadius="md" p={5}><Heading size="md" mb={3}>{intl.formatMessage({ id: 'account.claimAdmin' })}</Heading><Text fontSize="sm" color="gray.500" mb={3}>{intl.formatMessage({ id: 'account.claimAdminHelp' })}</Text><Stack>{adminClaims.map(claim=><Box key={claim.id} borderWidth="1px" borderRadius="md" p={3}><Text fontWeight="bold">{claim.coachName} <Text as="span" fontWeight="normal">({claim.game})</Text></Text><Text fontSize="sm">{claim.userDisplayName||claim.userEmail||claim.authSubject} · {claim.source}</Text><Button mt={2} size="sm" colorScheme="red" variant="outline" onClick={()=>run(async()=>{await WarpScoresApiService.adminRemoveCoachClaim(claim.id,...auth);await reloadClaims();return{}})}>{intl.formatMessage({ id: 'account.removeClaim' })}</Button></Box>)}</Stack></Box>}

@@ -147,7 +147,8 @@ function TeamPage() {
     fetchTeam();
     fetchMatches();
     if (isAuthenticated) {
-      WarpScoresApiService.bb3LiveTeamRoster(teamId, getAccessTokenSilently, getAccessTokenWithPopup)
+      WarpScoresApiService.steamConnection(getAccessTokenSilently, getAccessTokenWithPopup)
+        .then(() => WarpScoresApiService.bb3LiveTeamRoster(teamId, getAccessTokenSilently, getAccessTokenWithPopup))
         .then((data) => {
           setLiveRoster(data);
           setLiveRosterError(null);

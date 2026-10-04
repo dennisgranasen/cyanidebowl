@@ -516,6 +516,8 @@ export default {
     postDataWithAuthentication(`/user/steam/challenges/${encodeURIComponent(challengeId)}/confirm`, {}, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   disconnectSteam: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
     deleteDataWithAuthentication('/user/steam', getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  forgetRememberedSteam: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
+    deleteDataWithAuthentication('/user/steam/remembered', getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   myBb3Teams: async (getAccessTokenSilently, getAccessTokenWithPopup, size = 50, start = 0) =>
     getDataWithAuthentication(`/user/steam/teams?size=${size}&start=${start}`, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   bb3TeamRoster: async (teamId, getAccessTokenSilently, getAccessTokenWithPopup) =>

@@ -1,13 +1,15 @@
 from dataclasses import fields, is_dataclass
 from functools import lru_cache
 import json
+import logging
 import threading
 import time
 import uuid
 from typing import Any
+import xml.etree.ElementTree as ET
 
 from bb3.encoding import b64_decode_text
-from bb3.models import Formation
+from bb3.models import Formation, _parse_player
 from bb3.rules import BB3Rules
 from fastapi import APIRouter,Depends,HTTPException,Query
 from app.dependencies import trusted_owner
@@ -20,6 +22,7 @@ from app.schemas.team import (
 from app.services.session_manager import SessionNotFound,session_manager
 from app.services.team_mapper import teams_response
 router=APIRouter(prefix="/sessions",tags=["Teams"])
+log = logging.getLogger(__name__)
 _pending_rolls = {}
 _pending_rolls_lock = threading.Lock()
 _ROLL_TTL_SECONDS = 300
@@ -40,8 +43,63 @@ def _skill_name(skill_id: int) -> str | None:
         return None
 
 
+def _players_from_roster_slots(roster: Any) -> list[Any]:
+    raw_xml = getattr(roster, "raw_xml", None)
+    if not raw_xml:
+        return []
+    try:
+        root = ET.fromstring(raw_xml)
+    except ET.ParseError:
+        return []
+
+    tag = lambda element: element.tag.rsplit("}", 1)[-1]
+    roster_node = next((node for node in root.iter() if tag(node) == "Roster"), None)
+    if roster_node is None:
+        return []
+
+    players = []
+    for slot in roster_node.iter():
+        if tag(slot) != "TeamRosterSlot":
+            continue
+        player = next((node for node in slot if tag(node) == "Player"), None)
+        if player is None:
+            continue
+        number = next((node.text for node in slot if tag(node) == "Number"), None)
+        try:
+            slot_number = int(number) if number else None
+        except ValueError:
+            slot_number = None
+        players.append(_parse_player(player, slot_number=slot_number))
+    return players
+
+
 def _roster_with_skill_names(roster: Any) -> dict[str, Any]:
     result = _public_model(roster)
+    if not result.get("players"):
+        result["players"] = _public_model(_players_from_roster_slots(roster))
+    if not result.get("players"):
+        raw_xml = getattr(roster, "raw_xml", None)
+        if raw_xml:
+            try:
+                root = ET.fromstring(raw_xml)
+                tag = lambda element: element.tag.rsplit("}", 1)[-1]
+                def paths(element, parents=()):
+                    current = parents + (tag(element),)
+                    if tag(element) == "Player":
+                        return ["/".join(current)]
+                    return [path for child in element for path in paths(child, current)]
+
+                player_paths = sorted(set(paths(root)))
+                player_count = sum(tag(element) == "Player" for element in root.iter())
+                slot_count = sum(tag(element) == "TeamRosterSlot" for element in root.iter())
+                log.warning(
+                    "BB3 roster parsed zero players; XML contains %d Player and %d TeamRosterSlot elements; player_paths=%s",
+                    player_count,
+                    slot_count,
+                    player_paths[:8],
+                )
+            except ET.ParseError:
+                log.warning("BB3 roster parsed zero players; raw roster XML is malformed")
     for player in result.get("players", []):
         attributes = {"ma": None, "st": None, "ag": None, "pa": None, "av": None}
         for characteristic in player.get("characteristics", []):
@@ -126,7 +184,8 @@ def owned_team(client, team_id: str):
 
 def owned_player(client, team_id: str, player_id: str):
     roster = owned_team(client, team_id).get_team_roster_model(team_id)
-    player = next((item for item in roster.players if item.player_id == player_id), None)
+    players = roster.players or _players_from_roster_slots(roster)
+    player = next((item for item in players if item.player_id == player_id), None)
     if player is None:
         raise HTTPException(404, "Player not found in this BB3 team")
     return roster, player

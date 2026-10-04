@@ -30,9 +30,11 @@ public class SteamConnectionController {
     @Value("${pybb3.cookie-secure:true}") private boolean cookieSecure;
 
     @GetMapping
-    public Map<String,Object> status(JwtAuthenticationToken auth, HttpServletRequest request) {
+    public Map<String,Object> status(JwtAuthenticationToken auth, HttpServletRequest request,
+                                     HttpServletResponse response) {
         WarpScoresUser user = profiles.getOrCreate(auth.getToken());
         String session = cookie(request);
+        Map<String,Object> remembered = pybb3.get("/api/v1/auth/remembered", auth.getName());
         if (session != null) {
             try {
                 Map<String,Object> current = pybb3.get("/api/v1/auth/sessions/" + session, auth.getName());
@@ -41,19 +43,41 @@ public class SteamConnectionController {
                 result.put("steamUsername", current.get("steamUsername"));
                 result.put("steamId", current.get("steamId"));
                 result.put("coachIds", coachClaims.coachIds(auth.getToken()));
+                result.put("rememberAvailable", remembered.get("rememberAvailable"));
+                result.put("remembered", remembered.get("remembered"));
                 return result;
             } catch (RuntimeException ignored) { /* expired cookie */ }
         }
-        return Map.of("connected", false,
-                "steamUsername", user.getSteamUsername() == null ? "" : user.getSteamUsername(),
-                "coachIds", coachClaims.coachIds(auth.getToken()));
+        if (Boolean.TRUE.equals(remembered.get("remembered"))) {
+            try {
+                Map<String,Object> restored = pybb3.post("/api/v1/auth/restore", auth.getName(), Map.of());
+                complete(restored, auth, response);
+                var result = new java.util.HashMap<String,Object>();
+                result.put("connected", true);
+                result.put("steamUsername", restored.get("steamUsername"));
+                result.put("steamId", restored.get("steamId"));
+                result.put("coachIds", coachClaims.coachIds(auth.getToken()));
+                result.put("rememberAvailable", true);
+                result.put("remembered", true);
+                return result;
+            } catch (RuntimeException ignored) { /* saved refresh token expired or revoked */ }
+        }
+        if (session != null) response.addHeader("Set-Cookie", cookieHeader("", Duration.ZERO).toString());
+        var result = new java.util.HashMap<String,Object>();
+        result.put("connected", false);
+        result.put("steamUsername", user.getSteamUsername() == null ? "" : user.getSteamUsername());
+        result.put("coachIds", coachClaims.coachIds(auth.getToken()));
+        result.put("rememberAvailable", remembered.get("rememberAvailable"));
+        result.put("remembered", remembered.get("remembered"));
+        return result;
     }
 
     @PostMapping("/auth")
     public Map<String,Object> start(@RequestBody SteamLogin request, JwtAuthenticationToken auth, HttpServletResponse response) {
         Map<String,Object> result = pybb3.post("/api/v1/auth/start", auth.getName(), Map.of(
                 "username", request.username(),
-                "password", request.password()));
+            "password", request.password(),
+            "persistCredential", request.persistCredential()));
         complete(result, auth, response); return withoutSessionId(result);
     }
 
@@ -75,7 +99,13 @@ public class SteamConnectionController {
     public void logout(JwtAuthenticationToken auth, HttpServletRequest request, HttpServletResponse response) {
         String session = cookie(request);
         if (session != null) try { pybb3.delete("/api/v1/auth/sessions/" + session, auth.getName()); } catch (RuntimeException ignored) {}
+        try { pybb3.delete("/api/v1/auth/remembered", auth.getName()); } catch (RuntimeException ignored) {}
         response.addHeader("Set-Cookie", cookieHeader("", Duration.ZERO).toString());
+    }
+
+    @DeleteMapping("/remembered")
+    public void forgetRememberedSteam(JwtAuthenticationToken auth) {
+        pybb3.delete("/api/v1/auth/remembered", auth.getName());
     }
 
     @GetMapping("/teams")
@@ -191,6 +221,6 @@ public class SteamConnectionController {
     private Map<String,Object> withoutSessionId(Map<String,Object> source) {
         var copy = new java.util.HashMap<>(source); copy.remove("sessionId"); return copy;
     }
-    public record SteamLogin(String username, String password) {}
+    public record SteamLogin(String username, String password, boolean persistCredential) {}
     public record GuardCode(String code) {}
 }

@@ -33,6 +33,7 @@ class SessionManager:
     def __init__(self, flow_factory=None, client_factory=None):
         self._pending, self._sessions = {}, {}
         self._lock = threading.RLock()
+        self._restore_locks = {}
         self._flow_factory = flow_factory or (lambda: SteamWebAuthFlow(helper=settings.STEAM_HELPER_PATH))
         self._client_factory = client_factory or self._open_client
 
@@ -76,6 +77,30 @@ class SessionManager:
         session = self._get_session(owner_id, session_id)
         return session.coach_id, session.coach_name
 
+    def restore_auth(self, owner_id, credential):
+        username = credential.get("username")
+        refresh_token = credential.get("refreshToken")
+        if not username or not refresh_token:
+            raise ValueError("Stored Steam credential is incomplete")
+
+        with self._lock:
+            restore_lock = self._restore_locks.setdefault(owner_id, threading.Lock())
+        with restore_lock:
+            with self._lock:
+                for session_id, session in self._sessions.items():
+                    if session.owner_id == owner_id:
+                        return self._auth_response(session_id, session)
+
+            state = SteamAuthState(username, refresh_token, credential.get("guardData"))
+            opened = self._client_factory(state)
+            client, steam_id = opened[0], opened[1]
+            coach_id, coach_name = (opened[2], opened[3]) if len(opened) >= 4 else (None, None)
+            session_id = str(uuid.uuid4())
+            session = ActiveSession(owner_id, username, steam_id, client, coach_id, coach_name)
+            with self._lock:
+                self._sessions[session_id] = session
+            return self._auth_response(session_id, session)
+
     def cleanup_expired(self):
         now = time.time()
         with self._lock:
@@ -104,16 +129,24 @@ class SessionManager:
         coach_id, coach_name = (opened[2], opened[3]) if len(opened) >= 4 else (None, None)
         session_id = str(uuid.uuid4())
         with self._lock: self._sessions[session_id] = ActiveSession(owner_id, result.username, steam_id, client, coach_id, coach_name)
-        response={"status":"AUTHENTICATED", "sessionId":session_id, "steamUsername":result.username, "steamId":steam_id}
+        response=self._auth_response(session_id, self._sessions[session_id])
         if persist_credential:
             response["credential"]={"username":result.username,"refreshToken":result.refresh_token,"guardData":result.guard_data}
         return response
+
+    @staticmethod
+    def _auth_response(session_id, session):
+        return {"status": "AUTHENTICATED", "sessionId": session_id,
+                "steamUsername": session.username, "steamId": session.steam_id}
 
     def _open_client(self, state: SteamAuthState):
         client = BB3Client(steam_auth=SteamAuthProcess.from_state(state, helper=settings.STEAM_HELPER_PATH))
         try:
             client.__enter__(); login = client.login()
-            return client, client._steam_ticket.steam_id, self._login_value(login, "GamerId", "IdGamer", "Id"), self._login_value(login, "GamerName", "Name")
+            ticket = client._steam_ticket
+            if ticket is None:
+                raise RuntimeError("Steam client login returned no ticket")
+            return client, ticket.steam_id, self._login_value(login, "GamerId", "IdGamer", "Id"), self._login_value(login, "GamerName", "Name")
         except Exception:
             client.close(); raise
 
