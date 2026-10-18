@@ -7,6 +7,7 @@ import com.github.copilot.generated.AssistantMessageEvent;
 import com.github.copilot.generated.AssistantUsageEvent;
 import com.github.copilot.rpc.CopilotClientOptions;
 import com.github.copilot.rpc.MessageOptions;
+import com.github.copilot.rpc.PermissionRequestResult;
 import com.github.copilot.rpc.SessionConfig;
 import net.warp_scores.warpscores.ai.provider.CanonicalLlmRequest;
 import net.warp_scores.warpscores.ai.provider.CanonicalLlmResponse;
@@ -20,6 +21,7 @@ import org.springframework.util.StringUtils;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -86,6 +88,9 @@ public class GitHubCopilotLlmProvider implements LlmProvider {
             SessionConfig sessionConfig = new SessionConfig()
                     .setModel(request.model())
                     .setAvailableTools(List.of())
+                    .setOnPermissionRequest((permissionRequest, invocation) ->
+                            CompletableFuture.completedFuture(PermissionRequestResult.reject(
+                                    "This text-generation session does not grant tool or external permissions.")))
                     .setEnableSessionTelemetry(false);
             if (request.options().reasoningEffort() != null) {
                 sessionConfig.setReasoningEffort(request.options().reasoningEffort());
