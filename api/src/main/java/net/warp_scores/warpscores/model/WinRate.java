@@ -1,6 +1,5 @@
 package net.warp_scores.warpscores.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -9,7 +8,6 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
 @Getter
-@AllArgsConstructor
 @ToString(of = {"wins", "draws", "losses"})
 public class WinRate {
     private int wins;
@@ -17,6 +15,12 @@ public class WinRate {
     private int losses;
 
     public WinRate() {
+    }
+
+    public WinRate(int wins, int draws, int losses) {
+        this.wins = wins;
+        this.draws = draws;
+        this.losses = losses;
     }
 
     public double getWinRate() {
