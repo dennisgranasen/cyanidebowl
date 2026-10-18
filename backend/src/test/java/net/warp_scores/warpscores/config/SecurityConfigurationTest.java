@@ -121,6 +121,7 @@ class SecurityConfigurationTest {
         void authenticatedMatchArticleAiRequestReachesService() throws Exception {
             when(jwtDecoder.decode("match-article-token")).thenReturn(jwt(List.of()));
 
+            assertThat(send(matchArticleAiRequest(null)).statusCode()).isEqualTo(401);
             HttpResponse<String> response = send(matchArticleAiRequest("match-article-token"));
 
             assertThat(response.statusCode()).isEqualTo(200);
@@ -128,11 +129,11 @@ class SecurityConfigurationTest {
         }
 
     private HttpRequest matchArticleAiRequest(String token) {
-        return HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/matches/test-match/articles/ai"))
-                .header("Authorization", "Bearer " + token)
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString("{}"))
-                .build();
+        HttpRequest.Builder request = HttpRequest.newBuilder(
+                        URI.create("http://localhost:" + port + "/matches/test-match/articles/ai"))
+                .header("Content-Type", "application/json");
+        if (token != null) request.header("Authorization", "Bearer " + token);
+        return request.POST(HttpRequest.BodyPublishers.ofString("{\"copilotQuotaConfirmed\":false}")).build();
     }
 
     private HttpRequest leagueSystemRequest(String token) {
