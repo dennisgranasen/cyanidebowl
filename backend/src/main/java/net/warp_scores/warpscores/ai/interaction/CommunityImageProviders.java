@@ -83,6 +83,20 @@ public class CommunityImageProviders implements AiCommunityImageRenderer {
                 && renderer.supportsReferenceImages() && activeBlock(referenceProvider) == null;
     }
 
+    @Override
+    public ProviderSelection selection(Target target, String requestedProvider, boolean withReference) {
+        String selected = requestedProvider == null || requestedProvider.isBlank()
+                ? withReference ? referenceProvider : defaultProvider
+                : requestedProvider;
+        AiCommunityImageRenderer renderer = providers.get(selected);
+        String model = renderer instanceof CloudflareCommunityImageRenderer cloudflare
+                ? cloudflare.selectedModel(target)
+                : renderer instanceof OpenAiCommunityImageRenderer openai
+                        ? openai.imageModel()
+                        : null;
+        return new ProviderSelection(selected, model);
+    }
+
     @Override public RenderedImage render(String prompt, Target target) throws Exception {
         return render(prompt, target, defaultProvider);
     }

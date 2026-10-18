@@ -37,6 +37,7 @@ const EditorialCommunityApi = {
   reviewQueue: (system, token) => authGet(`/articles/review${system ? `?leagueSystemId=${encodeURIComponent(system)}` : ''}`, token),
   reviewArticle: (id, accept, confirmGlobal, token) => authPost(`/articles/${encodeURIComponent(id)}/review`, { accept, confirmGlobal }, token),
   reporters: (system, token) => authGet(`/articles/tools/reporters${system ? `?leagueSystemId=${encodeURIComponent(system)}` : ''}`, token),
+  articleModelOverrides: (system, token) => authGet(`/articles/tools/model-overrides${system ? `?leagueSystemId=${encodeURIComponent(system)}` : ''}`, token),
   articlePolicy: (system, token) => authGet(`/articles/tools/policy${system ? `?leagueSystemId=${encodeURIComponent(system)}` : ''}`, token),
   setArticlePolicy: (system, autoAccept, token) => authPut(`/articles/tools/policy${system ? `?leagueSystemId=${encodeURIComponent(system)}` : ''}`, { autoAccept }, token),
   generateArticle: (payload, token) => authPost('/articles/tools/generate', payload, token),
@@ -107,6 +108,8 @@ const EditorialCommunityApi = {
     authGet(`/matches/${encodeURIComponent(matchId)}/articles`, getToken),
   matchArticleCapabilities: (matchId, getToken) =>
     authGet(`/matches/${encodeURIComponent(matchId)}/articles/capabilities`, getToken),
+  matchArticleModelOverrides: (matchId, getToken) =>
+    authGet(`/matches/${encodeURIComponent(matchId)}/articles/ai-model-overrides`, getToken),
   createMatchArticle: (matchId, payload, getToken) =>
     authPost(`/matches/${encodeURIComponent(matchId)}/articles`, payload, getToken),
   updateMatchArticle: (matchId, articleId, payload, getToken) =>

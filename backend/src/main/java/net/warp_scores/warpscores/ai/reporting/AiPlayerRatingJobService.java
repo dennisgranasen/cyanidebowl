@@ -19,11 +19,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -44,15 +47,15 @@ public class AiPlayerRatingJobService {
     private final PlayerRatingFactsBuilder factsBuilder;
 
     private final AtomicInteger workerNumber = new AtomicInteger();
-    private final ExecutorService executor = Executors.newFixedThreadPool(
-            WORKERS,
-            runnable -> {
+    private final ThreadPoolExecutor executor = new ThreadPoolExecutor(
+            WORKERS, WORKERS, 0L, TimeUnit.MILLISECONDS, new PriorityBlockingQueue<>(), runnable -> {
                 Thread thread = new Thread(
                         runnable,
                         "ai-player-rating-" + workerNumber.incrementAndGet());
                 thread.setDaemon(true);
                 return thread;
             });
+    private final Map<String, RatingTaskRunnable> queuedTasks = new ConcurrentHashMap<>();
 
     public JobSnapshot start(
             String matchId,
@@ -83,6 +86,7 @@ public class AiPlayerRatingJobService {
             task.setJobId(job.getId());
             task.setMatchId(matchId);
             task.setReporterId(reporter.getId());
+            task.setPriority(priorityOverride == null ? 50 : priorityOverride);
             task.setCreatedAt(Instant.now());
 
             boolean alreadyExists = !ratings.findByMatchIdAndReporterId(
@@ -108,17 +112,51 @@ public class AiPlayerRatingJobService {
         AiPlayerRatingJob job = jobs.findById(jobId).orElse(null);
         if (job == null || !matchId.equals(job.getMatchId())) return Optional.empty();
 
-        Instant now = Instant.now();
-        for (AiPlayerRatingTask task : tasks.findByJobIdOrderByReporterIdAsc(jobId)) {
-            if (task.getStatus() == AiPlayerRatingTask.Status.QUEUED
-                    || task.getStatus() == AiPlayerRatingTask.Status.RUNNING) {
-                task.setStatus(AiPlayerRatingTask.Status.CANCELLED);
-                task.setError("Cancelled by user");
-                task.setFinishedAt(now);
-                tasks.save(task);
+        synchronized (queuedTasks) {
+            Instant now = Instant.now();
+            for (AiPlayerRatingTask task : tasks.findByJobIdOrderByReporterIdAsc(jobId)) {
+                if (task.getStatus() == AiPlayerRatingTask.Status.QUEUED
+                        || task.getStatus() == AiPlayerRatingTask.Status.RUNNING) {
+                    task.setStatus(AiPlayerRatingTask.Status.CANCELLED);
+                    task.setError("Cancelled by user");
+                    task.setFinishedAt(now);
+                    tasks.save(task);
+                    RatingTaskRunnable runnable = queuedTasks.remove(task.getId());
+                    if (runnable != null) executor.remove(runnable);
+                }
             }
         }
         return Optional.of(snapshot(job));
+    }
+
+    public boolean reprioritizeTask(String taskId, int priority) {
+        validatePriority(priority);
+        synchronized (queuedTasks) {
+            AiPlayerRatingTask task = tasks.findById(taskId).orElse(null);
+            if (task == null || task.getStatus() != AiPlayerRatingTask.Status.QUEUED) return false;
+            task.setPriority(priority);
+            tasks.save(task);
+            RatingTaskRunnable runnable = queuedTasks.get(taskId);
+            if (runnable != null && executor.remove(runnable)) {
+                runnable.priority = priority;
+                executor.execute(runnable);
+            }
+            return true;
+        }
+    }
+
+    public boolean removeQueuedTask(String taskId) {
+        synchronized (queuedTasks) {
+            AiPlayerRatingTask task = tasks.findById(taskId).orElse(null);
+            if (task == null || task.getStatus() != AiPlayerRatingTask.Status.QUEUED) return false;
+            task.setStatus(AiPlayerRatingTask.Status.CANCELLED);
+            task.setError("Removed by administrator");
+            task.setFinishedAt(Instant.now());
+            tasks.save(task);
+            RatingTaskRunnable runnable = queuedTasks.remove(taskId);
+            if (runnable != null) executor.remove(runnable);
+            return true;
+        }
     }
 
     public Optional<JobSnapshot> latestForMatch(String matchId) {
@@ -151,7 +189,14 @@ public class AiPlayerRatingJobService {
     }
 
     private void submit(AiPlayerRatingTask task) {
-        executor.submit(() -> runTask(task.getId()));
+        synchronized (queuedTasks) {
+            RatingTaskRunnable runnable = new RatingTaskRunnable(
+                    task.getId(),
+                    task.getPriority() == null ? 50 : task.getPriority(),
+                    task.getCreatedAt() == null ? Instant.now() : task.getCreatedAt());
+            queuedTasks.put(task.getId(), runnable);
+            executor.execute(runnable);
+        }
     }
 
     private void runTask(String taskId) {
@@ -186,7 +231,7 @@ public class AiPlayerRatingJobService {
             int attempt = 0;
             while (true) {
                 try {
-                    generator.generateAndPersist(reporter, facts, job.getInstruction(), job.getPriority());
+                    generator.generateAndPersist(reporter, facts, job.getInstruction(), task.getPriority());
                     break;
                 } catch (AiGenerationAdmissionService.AdmissionDeniedException denied) {
                     if (denied.reason()
@@ -304,6 +349,7 @@ public class AiPlayerRatingJobService {
             taskSnapshots.add(new TaskSnapshot(
                     task.getReporterId(),
                     task.getStatus(),
+                    task.getPriority() == null ? 50 : task.getPriority(),
                     task.getError(),
                     task.getStartedAt(),
                     task.getFinishedAt()));
@@ -336,9 +382,38 @@ public class AiPlayerRatingJobService {
         return message.length() <= 500 ? message : message.substring(0, 500);
     }
 
+    private static void validatePriority(int priority) {
+        if (priority < 0 || priority > 100) throw new IllegalArgumentException("priority must be 0..100");
+    }
+
+    private final class RatingTaskRunnable implements Runnable, Comparable<RatingTaskRunnable> {
+        private final String taskId;
+        private volatile int priority;
+        private final Instant createdAt;
+
+        private RatingTaskRunnable(String taskId, int priority, Instant createdAt) {
+            this.taskId = taskId;
+            this.priority = priority;
+            this.createdAt = createdAt;
+        }
+
+        @Override public void run() {
+            queuedTasks.remove(taskId, this);
+            runTask(taskId);
+        }
+
+        @Override public int compareTo(RatingTaskRunnable other) {
+            int byPriority = Integer.compare(other.priority, priority);
+            if (byPriority != 0) return byPriority;
+            int byCreatedAt = createdAt.compareTo(other.createdAt);
+            return byCreatedAt != 0 ? byCreatedAt : taskId.compareTo(other.taskId);
+        }
+    }
+
     public record TaskSnapshot(
             String reporterId,
             AiPlayerRatingTask.Status status,
+            int priority,
             String error,
             Instant startedAt,
             Instant finishedAt) {}

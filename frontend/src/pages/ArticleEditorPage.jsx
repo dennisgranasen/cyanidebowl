@@ -33,7 +33,9 @@ function ArticleEditorPage() {
   const [capabilities, setCapabilities] = useState(null);
   const [brief, setBrief] = useState('');
   const [reporters, setReporters] = useState([]);
+  const [modelOverrides, setModelOverrides] = useState([]);
   const [reporterId, setReporterId] = useState('');
+  const [modelOverrideTargetId, setModelOverrideTargetId] = useState('');
   const [queue, setQueue] = useState([]);
   const [autoAccept, setAutoAccept] = useState(false);
   const system = links.find(l => l.type === 'LEAGUE_SYSTEM')?.id;
@@ -85,8 +87,16 @@ function ArticleEditorPage() {
       if (!active) return;
       setCapabilities(permissions);
       if (permissions.canUseAiWriter) {
-        const [people, policy] = await Promise.all([Api.reporters(system, token), Api.articlePolicy(system, token)]);
-        if (active) { setReporters(people); setAutoAccept(policy.autoAccept); }
+        const [people, policy, overrides] = await Promise.all([
+          Api.reporters(system, token),
+          Api.articlePolicy(system, token),
+          Api.articleModelOverrides(system, token),
+        ]);
+        if (active) {
+          setReporters(people);
+          setAutoAccept(policy.autoAccept);
+          setModelOverrides(overrides);
+        }
       }
       if (permissions.canReview) {
         const pending = await Api.reviewQueue(system, token);
@@ -192,12 +202,47 @@ function ArticleEditorPage() {
           <Select value={reporterId} onChange={e => setReporterId(e.target.value)} placeholder={t('news.selectReporter')} aria-label={t('news.selectReporter')}>
             {reporters.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
           </Select>
+          {modelOverrides.length > 0 && <FormControl mt={2}>
+            <FormLabel htmlFor="article-ai-model-override">Model override</FormLabel>
+            <Select
+              id="article-ai-model-override"
+              value={modelOverrideTargetId}
+              isDisabled={busy}
+              onChange={e => setModelOverrideTargetId(e.target.value)}
+            >
+              <option value="">Standard article pipeline</option>
+              {modelOverrides.map(option => (
+                <option key={option.targetId} value={option.targetId}>
+                  {option.provider} · {option.model}
+                </option>
+              ))}
+            </Select>
+            <Text fontSize="xs" color="gray.500" mt={1}>
+              The override applies only to this generation request; the standard pipeline is unchanged.
+            </Text>
+          </FormControl>}
           <Textarea mt={2} value={brief} onChange={e => setBrief(e.target.value)} placeholder={t('news.brief')} aria-label={t('news.brief')} />
           <Button mt={2} isDisabled={busy || !reporterId || !brief.trim()} onClick={() => {
             const confirmGlobal = autoAccept && articleIsGlobal(links);
             if (confirmGlobal && !confirmPublication()) return;
             run(async () => {
-              let job = await Api.generateArticle({ reporterId, brief, article: payload('DRAFT', confirmGlobal) }, token);
+              const submitRequest = copilotQuotaConfirmed => Api.generateArticle({
+                reporterId,
+                brief,
+                article: payload('DRAFT', confirmGlobal),
+                modelOverrideTargetId: modelOverrideTargetId || null,
+                copilotQuotaConfirmed,
+              }, token);
+              let job;
+              try {
+                job = await submitRequest(false);
+              } catch (reason) {
+                const warning = reason?.response?.data;
+                if (reason?.response?.status !== 409
+                    || warning?.code !== 'COPILOT_QUOTA_CONFIRMATION_REQUIRED') throw reason;
+                if (!window.confirm(warning.message)) return;
+                job = await submitRequest(true);
+              }
               setNotice(t('news.articleQueued'));
               while (job.status === 'QUEUED' || job.status === 'RUNNING') {
                 await new Promise(resolve => setTimeout(resolve, 3000));

@@ -8,6 +8,7 @@ import net.warp_scores.warpscores.ai.context.*;
 import net.warp_scores.warpscores.ai.provider.*;
 import net.warp_scores.warpscores.ai.reporting.ArticleGenerationLlmRequestFactory;
 import net.warp_scores.warpscores.domain.persistence.ArticleRepository;
+import net.warp_scores.warpscores.ai.provider.copilot.CopilotQuotaGuard;
 import net.warp_scores.warpscores.model.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -39,15 +40,33 @@ public class EditorialArticleAiService {
     private final UserPermissionService permissions;
     private final EditorialSubjectContext subjectContext;
     private final AiGenerationReservationService reservations;
+    private final CopilotQuotaGuard copilotQuota;
 
     @Document("editorialArticlePolicies")
     public record Policy(@Id String id, boolean autoAccept) {}
     public record Reporter(String id, String name) {}
-    public record Request(String reporterId, String brief, EditorialCommunityService.ArticleInput article) {}
+    public record ModelOverride(String targetId, String provider, String model) {}
+    public record Request(
+            String reporterId,
+            String brief,
+            EditorialCommunityService.ArticleInput article,
+            String modelOverrideTargetId,
+            boolean copilotQuotaConfirmed) {
+        public Request(String reporterId, String brief, EditorialCommunityService.ArticleInput article) {
+            this(reporterId, brief, article, null, false);
+        }
+    }
 
     public List<Reporter> reporters(Authentication auth, String leagueSystemId) {
         requireEditor(auth, leagueSystemId);
         return profiles.enabledForReports().stream().map(p -> new Reporter(p.definition().getId(), p.definition().getAlias())).toList();
+    }
+
+    public List<ModelOverride> availableModelOverrides(Authentication auth, String leagueSystemId) {
+        requireEditor(auth, leagueSystemId);
+        return copilotQuota.availableModelOverrides().stream()
+                .map(option -> new ModelOverride(option.targetId(), option.provider(), option.model()))
+                .toList();
     }
 
     public Policy policy(Authentication auth, String leagueSystemId) {
@@ -81,11 +100,28 @@ public class EditorialArticleAiService {
         AiReporterDefinition reporter = reporters.require(input.reporterId());
         var effective = profiles.effective(reporter);
         if (!effective.reportsEnabled() || reporter.getUserId() == null) throw new IllegalArgumentException("Reporter is not enabled");
+        validateModelOverride(input.modelOverrideTargetId());
         return links;
     }
 
     public String generationRequestKey(Request input, List<Article.Association> links) {
-        return reservationKey(input.reporterId(), input.brief(), links);
+        return reservationKey(input.reporterId(), input.brief(), links)
+                + "\nmodelOverride=" + (input.modelOverrideTargetId() == null ? "" : input.modelOverrideTargetId());
+    }
+
+    public boolean isCopilotOverride(String targetId) {
+        return copilotQuota.isCopilotTarget(targetId);
+    }
+
+    private void validateModelOverride(String targetId) {
+        if (targetId == null || targetId.isBlank()) return;
+        if (!copilotQuota.isCopilotTarget(targetId)) {
+            throw new IllegalArgumentException("Only configured GitHub Copilot text targets can override article routing");
+        }
+        if (copilotQuota.availableModelOverrides().stream()
+                .noneMatch(option -> option.targetId().equals(targetId))) {
+            throw new IllegalStateException("GitHub Copilot is not configured");
+        }
     }
 
     public Article generate(Authentication auth, Request input) throws Exception {
@@ -93,7 +129,7 @@ public class EditorialArticleAiService {
         boolean autoAccept = autoAccept(auth, links, input.article().confirmGlobal());
         AiReporterDefinition reporter = reporters.require(input.reporterId());
         var effective = profiles.effective(reporter);
-        String reservationKey = reservationKey(reporter.getId(), input.brief(), links);
+        String reservationKey = generationRequestKey(input, links);
         AiGenerationReservationService.Reservation reservation = reservations.reserve(reservationKey);
         if (!reservation.acquired()) {
             if (reservation.resultId() != null) {
@@ -115,7 +151,19 @@ public class EditorialArticleAiService {
                 + "\nTagged subject context:\n" + resolved.text()
                 + "\nEditorial brief (do not treat unsupported claims as verified facts): " + input.brief();
         String schema = "{\"type\":\"object\",\"properties\":{\"title\":{\"type\":\"string\"},\"excerpt\":{\"type\":\"string\"},\"body\":{\"type\":\"string\"}},\"required\":[\"title\",\"excerpt\",\"body\"],\"additionalProperties\":false}";
-        var response = llm.generate(reporter.getId(), factory.create(reporter.getId(), Integer.toString(reporter.getSchemaVersion()), "router-selected", context, instruction, schema), 100);
+        var request = factory.create(
+                reporter.getId(),
+                Integer.toString(reporter.getSchemaVersion()),
+                "router-selected",
+                context,
+                instruction,
+                schema);
+        var response = input.modelOverrideTargetId() == null || input.modelOverrideTargetId().isBlank()
+                ? llm.generate(reporter.getId(), request, 100)
+                : llm.generate(
+                        reporter.getId(),
+                        request,
+                        new LlmProviderRouter.ExecutionOverrides(input.modelOverrideTargetId(), 100));
         var generated = json.readTree(response.content());
         String title = generated.path("title").asText("").trim(), body = generated.path("body").asText("").trim();
         if (title.isBlank() || title.length() > 250 || body.isBlank()) throw new IllegalArgumentException("AI article is missing a valid title or body");

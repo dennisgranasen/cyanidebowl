@@ -27,6 +27,7 @@ public class DedicatedFanReconciliationQueueService {
                     .orElseGet(DedicatedFanReconciliationJob::new);
             job.setTeamId(teamId);
             job.setStatus(DedicatedFanReconciliationJob.Status.QUEUED);
+            if (job.getPriority() == null) job.setPriority(50);
             job.setRequestedAt(now);
             job.setStartedAt(null);
             job.setLastError(null);
@@ -34,6 +35,28 @@ public class DedicatedFanReconciliationQueueService {
             if (!existed) queued++;
         }
         return new QueueSummary(scanned, queued, now);
+    }
+
+    public boolean reprioritize(String teamId, int priority) {
+        if (priority < 0 || priority > 100) {
+            throw new IllegalArgumentException("priority must be 0..100");
+        }
+        DedicatedFanReconciliationJob job = jobs.findById(teamId).orElse(null);
+        if (job == null || job.getStatus() != DedicatedFanReconciliationJob.Status.QUEUED) {
+            return false;
+        }
+        job.setPriority(priority);
+        jobs.save(job);
+        return true;
+    }
+
+    public boolean remove(String teamId) {
+        DedicatedFanReconciliationJob job = jobs.findById(teamId).orElse(null);
+        if (job == null || job.getStatus() != DedicatedFanReconciliationJob.Status.QUEUED) {
+            return false;
+        }
+        jobs.delete(job);
+        return true;
     }
 
     public record QueueSummary(int scannedTeams, int queuedTeams, Instant queuedAt) {}

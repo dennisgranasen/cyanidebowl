@@ -151,17 +151,27 @@ public class AiCommunityMediaWorker {
 
     private AiCommunityImageRenderer.RenderedImage render(
             AiCommunityMediaGenerationRequest request, AiCommunityMemberProfile profile) throws Exception {
+        String reference = null;
+        String referenceUrl = null;
+        if (request.getRequestedProvider() != null) {
+            request.setInputReferenceImageUrl(null);
+        } else {
+            // Standard generation uses the other local image as a visual identity reference.
+            // New jobs give AVATAR a higher priority than PROFILE_IMAGE, so a newly-created
+            // profile picture normally inherits the newly-created avatar's identity.
+            referenceUrl = request.getTarget() == AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE
+                    ? profile.getAvatarImageUrl() : profile.getProfileImageUrl();
+            if (renderer.supportsReferenceImages()) reference = assets.localReferenceUri(referenceUrl);
+            request.setInputReferenceImageUrl(reference == null ? null : referenceUrl);
+        }
+        var selection = renderer.selection(request.getTarget(), request.getRequestedProvider(), reference != null);
+        request.setInputReferenceSelectionRecorded(true);
+        request.setProvider(selection.provider());
+        request.setModel(selection.model());
+        requests.save(request);
         if (request.getRequestedProvider() != null) {
             return renderer.render(request.getPrompt(), request.getTarget(), request.getRequestedProvider());
         }
-
-        // Standard generation uses the other local image as a visual identity reference.
-        // New jobs give AVATAR a higher priority than PROFILE_IMAGE, so a newly-created
-        // profile picture normally inherits the newly-created avatar's identity.
-        String otherImage = request.getTarget() == AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE
-                ? profile.getAvatarImageUrl() : profile.getProfileImageUrl();
-        String reference = renderer.supportsReferenceImages()
-                ? assets.localReferenceUri(otherImage) : null;
         if (reference != null) {
             return renderer.renderWithReferences(
                     request.getPrompt(), request.getTarget(), java.util.List.of(reference));

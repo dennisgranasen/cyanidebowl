@@ -10,6 +10,88 @@ import static org.mockito.Mockito.*;
 import static org.mockito.ArgumentMatchers.*;
 
 class AiTargetQueueCancellationTest {
+    @Test void pendingJobCanMoveToAnotherTargetWithoutReplacingItsCaller() throws Exception {
+        var properties = new AiProviderProperties();
+        var sourceConfig = new AiProviderProperties.TargetConfig();
+        sourceConfig.setProvider("source");
+        sourceConfig.setModel("source-model");
+        sourceConfig.setQuotaGroup("source-queue");
+        properties.getTargets().put("source-target", sourceConfig);
+        var lunaConfig = new AiProviderProperties.TargetConfig();
+        lunaConfig.setProvider("copilot");
+        lunaConfig.setModel("gpt-6-luna");
+        lunaConfig.setQuotaGroup("copilot-queue");
+        properties.getTargets().put("copilot-gpt-6-luna", lunaConfig);
+
+        var registry = mock(LlmProviderRegistry.class);
+        var sourceProvider = mock(LlmProvider.class);
+        var copilotProvider = mock(LlmProvider.class);
+        when(registry.require("source")).thenReturn(sourceProvider);
+        when(registry.require("copilot")).thenReturn(copilotProvider);
+        when(sourceProvider.isConfigured()).thenReturn(true);
+        when(copilotProvider.isConfigured()).thenReturn(true);
+
+        var entered = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        when(sourceProvider.generate(any())).thenAnswer(invocation -> {
+            CanonicalLlmRequest request = invocation.getArgument(0);
+            if (request.taskInstruction().equals("hold")) {
+                entered.countDown();
+                release.await();
+            }
+            return new CanonicalLlmResponse("source", request.model(), null, "source-result", null, "stop");
+        });
+        when(copilotProvider.generate(any())).thenAnswer(invocation -> {
+            CanonicalLlmRequest request = invocation.getArgument(0);
+            return new CanonicalLlmResponse("copilot", request.model(), null, "copilot-result", null, "stop");
+        });
+
+        var queues = new AiTargetExecutionQueueManager(
+                properties, registry, mock(AiGenerationTraceStore.class),
+                mock(AiGenerationAdmissionService.class));
+        var sourceTarget = new LlmProviderRouter.ModelTarget(
+                "source-target", "source", "source-model", "source-queue");
+        var context = new AssembledContext("", List.of(), Map.of(), 0, 0);
+        var hold = new CanonicalLlmRequest("author", "1", ContextTaskType.EDITORIAL_ARTICLE,
+                "source-model", context, "hold", OutputContract.text(), GenerationOptions.defaults());
+        var pending = new CanonicalLlmRequest("author", "1", ContextTaskType.EDITORIAL_ARTICLE,
+                "source-model", context, "move me", OutputContract.text(), GenerationOptions.defaults());
+        var executor = Executors.newFixedThreadPool(2);
+        try {
+            var holdingCall = executor.submit(() -> queues.execute(sourceTarget, "author", hold, 50));
+            assertTrue(entered.await(2, TimeUnit.SECONDS));
+            var pendingCall = executor.submit(() -> queues.execute(sourceTarget, "author", pending, 50));
+
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+            AiTargetExecutionQueueManager.JobSnapshot queuedJob = null;
+            while (System.nanoTime() < deadline) {
+                queuedJob = queues.snapshots().stream()
+                        .filter(snapshot -> snapshot.quotaGroup().equals("source-queue"))
+                        .flatMap(snapshot -> snapshot.jobs().stream())
+                        .filter(job -> job.status() == AiTargetExecutionQueueManager.JobStatus.QUEUED)
+                        .findFirst()
+                        .orElse(null);
+                if (queuedJob != null) break;
+                Thread.sleep(5);
+            }
+            assertNotNull(queuedJob);
+            assertTrue(queues.movePendingJob("source-queue", queuedJob.id(), "copilot-gpt-6-luna"));
+            release.countDown();
+
+            holdingCall.get(2, TimeUnit.SECONDS);
+            CanonicalLlmResponse movedResult = pendingCall.get(2, TimeUnit.SECONDS);
+            assertEquals("copilot", movedResult.providerId());
+            assertEquals("gpt-6-luna", movedResult.model());
+            verify(copilotProvider).generate(argThat(request ->
+                    request.taskInstruction().equals("move me")
+                            && request.model().equals("gpt-6-luna")));
+        } finally {
+            release.countDown();
+            executor.shutdownNow();
+            queues.stop();
+        }
+    }
+
     @Test void higherPriorityPendingJobRunsBeforeOlderLowerPriorityJob() throws Exception {
         var properties = new AiProviderProperties();
         var config = new AiProviderProperties.TargetConfig();

@@ -17,6 +17,7 @@ public class EditorialArticleGenerationJob {
     @Id
     private String id;
     private String requestJson;
+    private String modelOverrideTargetId;
     private String requesterSubject;
     private List<String> requesterAuthorities = List.of();
     private Status status = Status.QUEUED;

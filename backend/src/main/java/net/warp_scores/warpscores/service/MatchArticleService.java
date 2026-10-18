@@ -11,6 +11,7 @@ import net.warp_scores.warpscores.ai.provider.LlmExecutionService;
 import net.warp_scores.warpscores.ai.provider.LlmProvider;
 import net.warp_scores.warpscores.ai.provider.LlmProviderRegistry;
 import net.warp_scores.warpscores.ai.provider.LlmProviderRouter;
+import net.warp_scores.warpscores.ai.provider.copilot.CopilotQuotaGuard;
 import net.warp_scores.warpscores.ai.reporting.MatchReportEvidenceBuilder;
 import net.warp_scores.warpscores.ai.reporting.MatchReportHistoricalContextService;
 import net.warp_scores.warpscores.ai.reporting.MatchReportGenerationLlmRequestFactory;
@@ -53,11 +54,20 @@ public class MatchArticleService {
     private final LlmExecutionService llm;
     private final LlmProviderRouter providerRouter;
     private final LlmProviderRegistry providerRegistry;
+    private final CopilotQuotaGuard copilotQuota;
 
     public record ArticleInput(String title, String body, String bodyHtml) {
         public ArticleInput(String title, String body) { this(title, body, null); }
     }
-    public record AiRequest(String reporterId, String editorialBrief) {}
+    public record AiRequest(
+            String reporterId,
+            String editorialBrief,
+            String modelOverrideTargetId,
+            boolean copilotQuotaConfirmed) {
+        public AiRequest(String reporterId, String editorialBrief) {
+            this(reporterId, editorialBrief, null, false);
+        }
+    }
     public record ReporterOption(String id, String alias, String providerId, String model) {}
     public record Capabilities(
             boolean authenticated,
@@ -274,6 +284,17 @@ public class MatchArticleService {
             throw new IllegalStateException("Reporter user has not been reconciled");
         }
         requireRunnableReporter(reporter);
+        if (StringUtils.hasText(input.modelOverrideTargetId())) {
+            if (!copilotQuota.isCopilotTarget(input.modelOverrideTargetId())) {
+                throw new IllegalArgumentException(
+                        "Only configured GitHub Copilot text targets can override match-article routing");
+            }
+            if (copilotQuota.availableModelOverrides().stream()
+                    .noneMatch(option -> option.targetId().equals(input.modelOverrideTargetId()))) {
+                throw new IllegalStateException("GitHub Copilot is not configured");
+            }
+            copilotQuota.requireConfirmation(input.copilotQuotaConfirmed());
+        }
 
         MatchArticleGenerationGuard.Lease generationLease =
                 generationGuard.acquire(matchId, reporter.getId());
@@ -293,7 +314,13 @@ public class MatchArticleService {
                 evidence,
                 historicalContext,
                 trimToNull(input.editorialBrief()));
-        CanonicalLlmResponse response = llm.generate(reporter.getId(), request);
+        CanonicalLlmResponse response = input.modelOverrideTargetId() == null
+                || input.modelOverrideTargetId().isBlank()
+                ? llm.generate(reporter.getId(), request)
+                : llm.generate(
+                        reporter.getId(),
+                        request,
+                        new LlmProviderRouter.ExecutionOverrides(input.modelOverrideTargetId(), null));
         MatchReportGenerationLlmRequestFactory.GeneratedArticle generated =
                 matchReportFactory.parse(response.content());
         validateGrounding(generated, evidence, effectiveReporter.primaryLanguage());
@@ -321,10 +348,16 @@ public class MatchArticleService {
         article.setOutputTokens(response.usage().outputTokens());
         article.setCreatedAt(now);
         article.setUpdatedAt(now);
-            return articles.save(article);
+        return articles.save(article);
         } finally {
             generationLease.close();
         }
+    }
+
+    public List<CopilotQuotaGuard.ModelOverride> aiModelOverrides(
+            Authentication auth, String matchId) {
+        requireEditor(auth, matchId);
+        return copilotQuota.availableModelOverrides();
     }
 
     public record ReportingContext(AssembledContext assembled, MatchReportEvidenceBuilder.Evidence evidence,

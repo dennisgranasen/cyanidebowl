@@ -81,4 +81,10 @@ public class MatchArticleController {
             @RequestBody MatchArticleService.AiRequest input) {
         return service.requestAi(auth, matchId, input);
     }
+
+    @GetMapping("/ai-model-overrides")
+    public List<net.warp_scores.warpscores.ai.provider.copilot.CopilotQuotaGuard.ModelOverride>
+    aiModelOverrides(Authentication auth, @PathVariable String matchId) {
+        return service.aiModelOverrides(auth, matchId);
+    }
 }

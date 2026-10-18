@@ -17,6 +17,8 @@
 
     <properties>
         <gitlab.buildnumber>n/a</gitlab.buildnumber>
+        <copilot.sdk.version>1.0.14-preview.1</copilot.sdk.version>
+        <copilot.runtime.classifier>linux-x64</copilot.runtime.classifier>
     </properties>
 
     <dependencies>
@@ -31,6 +33,17 @@
             <groupId>net.warp-scores</groupId>
             <artifactId>api</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github</groupId>
+            <artifactId>copilot-sdk-java</artifactId>
+            <version>${copilot.sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github</groupId>
+            <artifactId>copilot-sdk-java-runtime</artifactId>
+            <version>${copilot.sdk.version}</version>
+            <classifier>${copilot.runtime.classifier}</classifier>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -173,6 +186,54 @@
             <id>dev</id>
             <properties>
                 <startClass>net.warp_scores.warpscores.WarpScoresApp</startClass>
+            </properties>
+        </profile>
+        <profile>
+            <id>copilot-runtime-windows-x64</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                    <arch>amd64</arch>
+                </os>
+            </activation>
+            <properties>
+                <copilot.runtime.classifier>win32-x64</copilot.runtime.classifier>
+            </properties>
+        </profile>
+        <profile>
+            <id>copilot-runtime-windows-arm64</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                    <arch>aarch64</arch>
+                </os>
+            </activation>
+            <properties>
+                <copilot.runtime.classifier>win32-arm64</copilot.runtime.classifier>
+            </properties>
+        </profile>
+        <profile>
+            <id>copilot-runtime-linux-x64</id>
+            <activation>
+                <os>
+                    <name>Linux</name>
+                    <arch>amd64</arch>
+                </os>
+            </activation>
+            <properties>
+                <copilot.runtime.classifier>linux-x64</copilot.runtime.classifier>
+            </properties>
+        </profile>
+        <profile>
+            <id>copilot-runtime-linux-arm64</id>
+            <activation>
+                <os>
+                    <name>Linux</name>
+                    <arch>aarch64</arch>
+                </os>
+            </activation>
+            <properties>
+                <copilot.runtime.classifier>linux-arm64</copilot.runtime.classifier>
             </properties>
         </profile>
     </profiles>

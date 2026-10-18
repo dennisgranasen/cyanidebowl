@@ -69,7 +69,8 @@ public class AiTargetExecutionQueueManager {
         try {
             return awaitResult(call, q);
         } catch (TimeoutException e) {
-            q.cancel(call);
+            QuotaQueue current = call.queue == null ? q : call.queue;
+            current.cancel(call);
             throw new LlmProviderException(
                     target.providerId(),
                     LlmProviderException.Kind.UNAVAILABLE,
@@ -78,7 +79,8 @@ public class AiTargetExecutionQueueManager {
                             + Math.max(1L, q.queueConfig.getMaxWait().toSeconds())
                             + " seconds");
         } catch (InterruptedException e) {
-            q.cancel(call);
+            QuotaQueue current = call.queue == null ? q : call.queue;
+            current.cancel(call);
             Thread.currentThread().interrupt();
             throw new CancellationException("AI execution caller cancelled");
         } catch (ExecutionException e) {
@@ -91,10 +93,13 @@ public class AiTargetExecutionQueueManager {
     private CanonicalLlmResponse awaitResult(QueuedCall call, QuotaQueue q)
             throws InterruptedException, ExecutionException, TimeoutException {
         long maxWaitNanos = Math.max(1L, q.queueConfig.getMaxWait().toNanos());
-        synchronized (q.monitor) {
-            while (!call.result.isDone()) {
+        while (!call.result.isDone()) {
+            QuotaQueue current = call.queue == null ? q : call.queue;
+            synchronized (current.monitor) {
+                if (call.queue != current) continue;
+                if (call.result.isDone()) break;
                 if (call.status == JobStatus.RUNNING) {
-                    q.monitor.wait();
+                    current.monitor.wait();
                     continue;
                 }
 
@@ -104,10 +109,10 @@ public class AiTargetExecutionQueueManager {
                 }
                 long remainingNanos = maxWaitNanos - waitedNanos;
                 if (remainingNanos <= 0L) {
-                    q.cancel(call);
+                    current.cancel(call);
                     throw new TimeoutException("AI provider queue wait exceeded");
                 }
-                TimeUnit.NANOSECONDS.timedWait(q.monitor, remainingNanos);
+                TimeUnit.NANOSECONDS.timedWait(current.monitor, remainingNanos);
             }
         }
         return call.result.get();
@@ -118,6 +123,19 @@ public class AiTargetExecutionQueueManager {
                 .sorted(Comparator.comparing(q -> q.groupId))
                 .map(QuotaQueue::snapshot)
                 .toList();
+    }
+
+    public Optional<CanonicalLlmRequest> requestForJob(String queueOrTarget, String jobId) {
+        QuotaQueue q = resolveQueue(queueOrTarget);
+        if (q == null) return Optional.empty();
+        synchronized (q.monitor) {
+            return java.util.stream.Stream.concat(
+                            java.util.stream.Stream.concat(q.pending.stream(), q.activeJobs.values().stream()),
+                            q.failedJobs.values().stream())
+                    .filter(call -> call.id.equals(jobId))
+                    .map(call -> call.request)
+                    .findFirst();
+        }
     }
 
     /** Advisory wait for a newly submitted job; never exposes prompts or agent identities. */
@@ -195,6 +213,80 @@ public class AiTargetExecutionQueueManager {
     public boolean remove(String queueOrTarget, String job) {
         QuotaQueue q = resolveQueue(queueOrTarget);
         return q != null && q.remove(job);
+    }
+
+    public boolean isCopilotTarget(String targetId) {
+        AiProviderProperties.TargetConfig cfg = properties.getTargets().get(targetId);
+        return cfg != null && "github-copilot".equals(cfg.getProvider());
+    }
+
+    public boolean movePendingJob(String queueOrTarget, String jobId, String targetId) {
+        AiProviderProperties.TargetConfig targetConfig = properties.getTargets().get(targetId);
+        if (targetConfig == null || targetConfig.getModality() != AiProviderProperties.Modality.TEXT) {
+            throw new IllegalArgumentException("Unknown/non-text AI target: " + targetId);
+        }
+        LlmProviderRouter.ModelTarget target = new LlmProviderRouter.ModelTarget(
+                targetId,
+                targetConfig.getProvider(),
+                targetConfig.getModel(),
+                quotaGroup(targetId, targetConfig));
+        QuotaQueue source = resolveQueue(queueOrTarget);
+        if (source == null) return false;
+        QuotaQueue destination = queue(target.quotaGroup(), targetConfig);
+        destination.registerTarget(targetId, targetConfig);
+
+        if (source == destination) {
+            synchronized (source.monitor) {
+                return movePendingCall(source, destination, jobId, target);
+            }
+        }
+
+        QuotaQueue first = source.groupId.compareTo(destination.groupId) <= 0 ? source : destination;
+        QuotaQueue second = first == source ? destination : source;
+        synchronized (first.monitor) {
+            synchronized (second.monitor) {
+                return movePendingCall(source, destination, jobId, target);
+            }
+        }
+    }
+
+    private static boolean movePendingCall(
+            QuotaQueue source,
+            QuotaQueue destination,
+            String jobId,
+            LlmProviderRouter.ModelTarget target) {
+        QueuedCall call = source.pending.stream()
+                .filter(item -> item.id.equals(jobId))
+                .findFirst()
+                .orElse(null);
+        if (call == null || call.queue != source || call.result.isDone()
+                || (call.status != JobStatus.QUEUED && call.status != JobStatus.RETRY_WAIT)) {
+            return false;
+        }
+        if (call.target.targetId().equals(target.targetId())) return false;
+
+        source.pending.remove(call);
+        call.stopQueueWait();
+        call.target = target;
+        call.request = withModel(call.request, target.model());
+        call.queue = destination;
+        call.queueWaitStartedNanos = System.nanoTime();
+        destination.pending.add(call);
+        source.monitor.notifyAll();
+        destination.monitor.notifyAll();
+        return true;
+    }
+
+    private static CanonicalLlmRequest withModel(CanonicalLlmRequest request, String model) {
+        return new CanonicalLlmRequest(
+                request.agentId(),
+                request.agentVersion(),
+                request.taskType(),
+                model,
+                request.context(),
+                request.taskInstruction(),
+                request.outputContract(),
+                request.options());
     }
 
     public int clear(String queueOrTarget) {
@@ -298,6 +390,7 @@ public class AiTargetExecutionQueueManager {
         void enqueue(QueuedCall call) {
             synchronized (monitor) {
                 if (!call.result.isDone()) {
+                    call.queue = this;
                     call.queueWaitStartedNanos = System.nanoTime();
                     pending.add(call);
                 }
@@ -683,12 +776,13 @@ public class AiTargetExecutionQueueManager {
     private static final class QueuedCall {
         final String id;
         volatile int priority;
-        final LlmProviderRouter.ModelTarget target;
+        volatile LlmProviderRouter.ModelTarget target;
         final String agentId;
-        final CanonicalLlmRequest request;
+        volatile CanonicalLlmRequest request;
         final Instant createdAt = Instant.now();
         final CompletableFuture<CanonicalLlmResponse> result = new CompletableFuture<>();
         volatile JobStatus status = JobStatus.QUEUED;
+        volatile QuotaQueue queue;
         volatile int attempts;
         volatile Instant availableAt;
         volatile String lastError;

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Comparator;
 
 @Slf4j
 @Service
@@ -38,8 +39,15 @@ public class DedicatedFanReconciliationWorker {
         if (rateLimitCooldownUntil != null && now.isBefore(rateLimitCooldownUntil)) {
             return;
         }
-        jobs.findFirstByStatusAndRequestedAtLessThanEqualOrderByRequestedAtAsc(
+        jobs.findByStatusAndRequestedAtLessThanEqual(
                         DedicatedFanReconciliationJob.Status.QUEUED, now)
+                .stream()
+                .min(Comparator
+                        .comparingInt((DedicatedFanReconciliationJob job) ->
+                                job.getPriority() == null ? 50 : job.getPriority())
+                        .reversed()
+                        .thenComparing(job -> job.getRequestedAt() == null
+                                ? Instant.EPOCH : job.getRequestedAt()))
                 .ifPresent(this::process);
     }
 

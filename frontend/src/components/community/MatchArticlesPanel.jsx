@@ -129,6 +129,8 @@ export default function MatchArticlesPanel({ matchId }) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState({ body: '', bodyHtml: '' });
   const [reporterId, setReporterId] = useState('');
+  const [aiModelOverrides, setAiModelOverrides] = useState([]);
+  const [aiModelOverrideTargetId, setAiModelOverrideTargetId] = useState('');
   const [brief, setBrief] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -144,8 +146,12 @@ export default function MatchArticlesPanel({ matchId }) {
         EditorialCommunityApi.matchArticleCapabilities(matchId, token),
         AiReporterApi.reporters(),
       ]);
+      const modelOverrides = capabilityData?.canReview
+        ? await EditorialCommunityApi.matchArticleModelOverrides(matchId, token)
+        : [];
       setArticles(articleData || []);
       setCaps(capabilityData);
+      setAiModelOverrides(modelOverrides || []);
       setReportersById(Object.fromEntries((reporterData || []).map(r => [r.id, r])));
       if (!reporterId && capabilityData?.reporters?.length) {
         setReporterId(capabilityData.reporters[0].id);
@@ -189,9 +195,27 @@ export default function MatchArticlesPanel({ matchId }) {
   });
 
   const requestAi = () => mutate(async () => {
-    await EditorialCommunityApi.requestAiMatchArticle(
-      matchId, { reporterId, editorialBrief: brief }, getAccessTokenSilently);
+    const submitRequest = copilotQuotaConfirmed => EditorialCommunityApi.requestAiMatchArticle(
+      matchId,
+      {
+        reporterId,
+        editorialBrief: brief,
+        modelOverrideTargetId: aiModelOverrideTargetId || null,
+        copilotQuotaConfirmed,
+      },
+      getAccessTokenSilently
+    );
+    try {
+      await submitRequest(false);
+    } catch (reason) {
+      const warning = reason?.response?.data;
+      if (reason?.response?.status !== 409
+          || warning?.code !== 'COPILOT_QUOTA_CONFIRMATION_REQUIRED') throw reason;
+      if (!window.confirm(warning.message)) return;
+      await submitRequest(true);
+    }
     setBrief('');
+    setAiModelOverrideTargetId('');
   });
 
   const articlePermissions = (article) => {
@@ -302,6 +326,23 @@ export default function MatchArticlesPanel({ matchId }) {
                     </option>)}
                 </Select>
               </FormControl>
+              {aiModelOverrides.length > 0 && <FormControl mb={2}>
+                <FormLabel>Model override</FormLabel>
+                <Select
+                  value={aiModelOverrideTargetId}
+                  onChange={event => setAiModelOverrideTargetId(event.target.value)}
+                >
+                  <option value="">Standard match-report pipeline</option>
+                  {aiModelOverrides.map(option => (
+                    <option key={option.targetId} value={option.targetId}>
+                      {option.provider} · {option.model}
+                    </option>
+                  ))}
+                </Select>
+                <Text mt={1} fontSize="xs" color="gray.500">
+                  Applies only to this request; the standard match-report pipeline is unchanged.
+                </Text>
+              </FormControl>}
               <FormControl><FormLabel>Redaktionell brief (valfritt)</FormLabel>
                 <Textarea value={brief} onChange={e => setBrief(e.target.value)}
                   placeholder="Vinkel, ton eller sådant reportern särskilt ska uppmärksamma…"/></FormControl>

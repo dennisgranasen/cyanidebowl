@@ -26,39 +26,22 @@ public class AiPendingWorkService {
 
     public record Work(String id, String kind, String subject, String subjectUrl, String service,
                        String status, boolean persistent, Integer remaining, String detail,
-                       Instant nextAttemptAt, String error) {}
+                       Instant nextAttemptAt, String error, Integer priority) {}
     public record Snapshot(Instant capturedAt, List<Work> jobs) {}
 
     public Snapshot snapshot() {
         var result = new ArrayList<Work>();
 
         var reconciliationJobs = pending(DedicatedFanReconciliationJob.class, "QUEUED", "RUNNING");
-        var mediaJobs = pending(AiCommunityMediaGenerationRequest.class, "QUEUED", "RUNNING");
 
         Set<String> reconciliationTeamIds = new HashSet<>();
         for (var job : reconciliationJobs) {
             if (job.getTeamId() != null) reconciliationTeamIds.add(job.getTeamId());
         }
 
-        Set<String> mediaFanIds = new HashSet<>();
-        for (var job : mediaJobs) {
-            if (job.getFanProfileId() != null) mediaFanIds.add(job.getFanProfileId());
-        }
-
         Map<String, List<AiCommunityMemberProfile>> byTeam = new HashMap<>();
-        Map<String, AiCommunityMemberProfile> fanMap = new HashMap<>();
-        if (!reconciliationTeamIds.isEmpty() || !mediaFanIds.isEmpty()) {
-            var fanCriteria = new ArrayList<Criteria>();
-            if (!reconciliationTeamIds.isEmpty()) {
-                fanCriteria.add(Criteria.where("teamId").in(reconciliationTeamIds));
-            }
-            if (!mediaFanIds.isEmpty()) {
-                fanCriteria.add(Criteria.where("_id").in(mediaFanIds));
-            }
-
-            Query fanQuery = fanCriteria.size() == 1
-                    ? Query.query(fanCriteria.get(0))
-                    : Query.query(new Criteria().orOperator(fanCriteria.toArray(Criteria[]::new)));
+        if (!reconciliationTeamIds.isEmpty()) {
+            Query fanQuery = Query.query(Criteria.where("teamId").in(reconciliationTeamIds));
             fanQuery.fields()
                     .include("_id")
                     .include("teamId")
@@ -67,18 +50,12 @@ public class AiPendingWorkService {
 
             for (var fan : mongo.find(fanQuery, AiCommunityMemberProfile.class)) {
                 byTeam.computeIfAbsent(fan.getTeamId(), x -> new ArrayList<>()).add(fan);
-                fanMap.put(fan.getId(), fan);
             }
         }
 
-        Set<String> requiredTeamIds = new HashSet<>(reconciliationTeamIds);
-        for (var fan : fanMap.values()) {
-            if (fan.getTeamId() != null) requiredTeamIds.add(fan.getTeamId());
-        }
-
         Map<String, Team> teamMap = new HashMap<>();
-        if (!requiredTeamIds.isEmpty()) {
-            List<Identity> identities = requiredTeamIds.stream()
+        if (!reconciliationTeamIds.isEmpty()) {
+            List<Identity> identities = reconciliationTeamIds.stream()
                     .map(IdentityUtil::fromId)
                     .toList();
 
@@ -99,31 +76,29 @@ public class AiPendingWorkService {
             var progress = fanProgress(team == null ? null : team.getDedicatedFans(), existing);
             result.add(new Work("fans:" + job.getTeamId(), "FAN_PROFILE", teamName(teamMap, job.getTeamId()),
                     "/team/" + encode(job.getTeamId()), target("dedicated-fan-profile", ContextTaskType.FAN_PROFILE),
-                    job.getStatus().name(), true, progress.create(), progress.detail(), job.getRequestedAt(), job.getLastError()));
+                    job.getStatus().name(), true, progress.create(), progress.detail(), job.getRequestedAt(), job.getLastError(),
+                    job.getPriority() == null ? 50 : job.getPriority()));
         }
         for (var job : pending(AiAutonomousWorkItem.class, "QUEUED", "RUNNING", "RETRY_WAIT")) {
             result.add(new Work("autonomous:" + job.getCandidateKey(), job.getKind() == null ? job.getHandlerKey() : job.getKind().name(),
                     job.getTargetType() + " · " + job.getTargetId(), null, "Assigned by " + job.getHandlerKey(),
-                    job.getStatus().name(), true, 1, "Actor: " + Objects.toString(job.getActorId(), "—"), job.getNextAttemptAt(), job.getLastErrorMessage()));
+                    job.getStatus().name(), true, 1, "Actor: " + Objects.toString(job.getActorId(), "—"), job.getNextAttemptAt(),
+                    job.getLastErrorMessage(), job.getPriorityRank()));
         }
         for (var task : pending(AiPlayerRatingTask.class, "QUEUED", "RUNNING")) {
             result.add(new Work("rating:" + task.getId(), "PLAYER_RATING", "Match · " + task.getMatchId(), null,
                     target(task.getReporterId(), ContextTaskType.PLAYER_RATING), task.getStatus().name(), true, 1,
-                    "Reporter: " + task.getReporterId(), null, task.getError()));
+                    "Reporter: " + task.getReporterId(), null, task.getError(), task.getPriority() == null ? 50 : task.getPriority()));
         }
         for (var job : fanRatings.pendingSnapshots()) {
             result.add(new Work("fan-rating:" + job.jobId(), "FAN_PLAYER_RATING", "Match · " + job.matchId(), null,
                     "Resolved per fan", job.running() > 0 ? "RUNNING" : "QUEUED", false, job.queued() + job.running(),
-                    job.succeeded() + " completed / " + job.fanCount() + "; " + job.failed() + " failed", null, null));
+                    job.succeeded() + " completed / " + job.fanCount() + "; " + job.failed() + " failed", null,
+                    job.errors().isEmpty() ? null : String.join("; ", job.errors().values()), job.priority()));
         }
-        for (var job : mediaJobs) {
-            var fan = fanMap.get(job.getFanProfileId());
-            var type = job.getTarget() == AiCommunityMediaGenerationRequest.Target.AVATAR ? ContextTaskType.AVATAR_IMAGE : ContextTaskType.PROFILE_IMAGE;
-            result.add(new Work("media:" + job.getId(), job.getTarget().name(), fan == null ? job.getFanProfileId() : fan.getDisplayName(),
-                    fan == null ? null : "/community/" + encode(fan.getId()), target("community-media", type), job.getStatus().name(), true, 1,
-                    fan == null ? "" : teamName(teamMap, fan.getTeamId()), job.getNextAttemptAt(), job.getError()));
-        }
-        result.sort(Comparator.comparing(Work::service).thenComparing(Work::kind).thenComparing(Work::id));
+        result.sort(Comparator.comparing(Work::service)
+                .thenComparing(Comparator.comparingInt((Work item) -> item.priority() == null ? 50 : item.priority()).reversed())
+                .thenComparing(Work::kind).thenComparing(Work::id));
         return new Snapshot(Instant.now(), result);
     }
     public record FanProgress(Integer create, String detail) {}

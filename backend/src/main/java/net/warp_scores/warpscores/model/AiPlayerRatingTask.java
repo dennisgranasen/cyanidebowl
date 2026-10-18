@@ -23,6 +23,7 @@ public class AiPlayerRatingTask {
     private String jobId;
     private String matchId;
     private String reporterId;
+    private Integer priority = 50;
     private Status status;
     private String error;
     private Instant createdAt;

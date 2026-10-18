@@ -1,9 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Alert,
+  AlertIcon,
   Box,
   Button,
+  ButtonGroup,
   Heading,
   HStack,
+  Input,
   SimpleGrid,
   Spinner,
   Switch,
@@ -20,6 +24,7 @@ import { useNavigate } from 'react-router-dom';
 import Navigation from '../components/misc/Navigation';
 import AiReporterApi from '../AiReporterApi';
 import PendingAiWork from '../components/ai-reporters/PendingAiWork';
+import AiJobInputDialog from '../components/ai-reporters/AiJobInputDialog';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 
 const metric = (label, value) => (
@@ -35,6 +40,57 @@ const duration = (seconds) => {
   if (seconds < 3600) return `${Math.ceil(seconds / 60)}m`;
   if (seconds < 86400) return `${(seconds / 3600).toFixed(1)}h`;
   return `${(seconds / 86400).toFixed(1)}d`;
+};
+const saveCopilotQuotaThreshold = async () => {
+  const threshold = Number(quotaThresholdDraft);
+  if (!Number.isInteger(threshold) || threshold < 0 || threshold > 100) {
+    setCopilotQuotaError('Copilot quota threshold must be a whole percentage from 0 to 100.');
+    return;
+  }
+  setQuotaSaving(true);
+  setCopilotQuotaError(null);
+  try {
+    const saved = await AiReporterApi.setCopilotQuotaThreshold(
+      threshold,
+      getAccessTokenSilently,
+      getAccessTokenWithPopup
+    );
+    setCopilotQuota(old => old ? { ...old, minimumRemainingPercent: saved.minimumRemainingPercent } : old);
+    setQuotaThresholdDraft(String(saved.minimumRemainingPercent));
+    setQuotaThresholdDirty(false);
+  } catch (reason) {
+    setCopilotQuotaError(reason?.response?.data?.detail
+      || reason?.response?.data?.message
+      || reason?.message
+      || 'Could not save Copilot quota threshold.');
+  } finally {
+    setQuotaSaving(false);
+  }
+};
+const moveExecutionJobToCopilot = (queueTarget, jobId) => {
+  const move = confirmCopilotQuota => AiReporterApi.moveAiExecutionJob(
+    queueTarget,
+    jobId,
+    'copilot-gpt-6-luna',
+    confirmCopilotQuota,
+    getAccessTokenSilently,
+    getAccessTokenWithPopup
+  );
+  mutateQueue(async () => {
+    try {
+      const data = await move(false);
+      refreshCopilotQuota();
+      return data;
+    } catch (reason) {
+      const warning = reason?.response?.data;
+      if (reason?.response?.status !== 409
+          || warning?.code !== 'COPILOT_QUOTA_CONFIRMATION_REQUIRED') throw reason;
+      if (!window.confirm(warning.message)) return overview;
+      const data = await move(true);
+      refreshCopilotQuota();
+      return data;
+    }
+  });
 };
 
 const when = (value) => value ? new Date(value).toLocaleString() : '—';
@@ -65,6 +121,16 @@ function AdminAiAutonomousWorkPage() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [queuePages, setQueuePages] = useState({});
+  const [viewMode, setViewMode] = useState('service');
+  const [inputDialogOpen, setInputDialogOpen] = useState(false);
+  const [inputDetails, setInputDetails] = useState(null);
+  const [inputLoading, setInputLoading] = useState(false);
+  const [inputError, setInputError] = useState('');
+  const [copilotQuota, setCopilotQuota] = useState(null);
+  const [copilotQuotaError, setCopilotQuotaError] = useState(null);
+  const [quotaThresholdDraft, setQuotaThresholdDraft] = useState('20');
+  const [quotaThresholdDirty, setQuotaThresholdDirty] = useState(false);
+  const [quotaSaving, setQuotaSaving] = useState(false);
   const loadInProgress = useRef(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
 
@@ -87,6 +153,24 @@ function AdminAiAutonomousWorkPage() {
     }
   }, [getAccessTokenSilently, getAccessTokenWithPopup]);
 
+  const refreshCopilotQuota = useCallback(async () => {
+    try {
+      const data = await AiReporterApi.copilotQuota(
+        getAccessTokenSilently,
+        getAccessTokenWithPopup
+      );
+      setCopilotQuota(data);
+      setCopilotQuotaError(null);
+      if (!quotaThresholdDirty) setQuotaThresholdDraft(String(data.minimumRemainingPercent));
+    } catch (reason) {
+      setCopilotQuota(null);
+      setCopilotQuotaError(reason?.response?.data?.detail
+        || reason?.response?.data?.message
+        || reason?.message
+        || 'Could not load Copilot quota.');
+    }
+  }, [getAccessTokenSilently, getAccessTokenWithPopup, quotaThresholdDirty]);
+
   useEffect(() => {
     if (!authenticationReady) return;
     if (!userPermissions.writeSiteAdmin) {
@@ -101,6 +185,13 @@ function AdminAiAutonomousWorkPage() {
     refresh();
     return () => { active = false; clearTimeout(timer); };
   }, [authenticationReady, userPermissions.writeSiteAdmin, navigate, load]);
+
+  useEffect(() => {
+    if (!authenticationReady || !userPermissions.writeSiteAdmin) return undefined;
+    refreshCopilotQuota();
+    const timer = setInterval(refreshCopilotQuota, 60000);
+    return () => clearInterval(timer);
+  }, [authenticationReady, userPermissions.writeSiteAdmin, refreshCopilotQuota]);
 
   useEffect(() => {
     const timer = setInterval(() => setNowMs(Date.now()), 1000);
@@ -141,6 +232,14 @@ function AdminAiAutonomousWorkPage() {
   const articleGenerationQueue = overview?.articleGenerationQueue || {};
   const articleGenerationJobs = articleGenerationQueue.jobs || [];
   const editorialImageJobs = overview?.editorialImageQueue || [];
+  const providerSections = [...new Set([
+    ...executionQueues.map(qs => qs.provider || 'Unknown provider'),
+    ...providerUsage.map(provider => provider.providerId || 'Unknown provider'),
+  ])].sort().map(provider => ({
+    provider,
+    queues: executionQueues.filter(qs => (qs.provider || 'Unknown provider') === provider),
+    usage: providerUsage.filter(item => (item.providerId || 'Unknown provider') === provider),
+  }));
 
   const paginate = (key, jobs) => {
     const pageCount = Math.max(1, Math.ceil(jobs.length / PAGE_SIZE));
@@ -164,6 +263,21 @@ function AdminAiAutonomousWorkPage() {
   const mutateQueue = async (action) => {
     setSaving(true); setError(null);
     try { setOverview(await action()); } catch (reason) { setError(reason); } finally { setSaving(false); }
+  };
+  const inspectJobInput = async (type, id, queue) => {
+    setInputDialogOpen(true);
+    setInputLoading(true);
+    setInputDetails(null);
+    setInputError('');
+    try {
+      setInputDetails(await AiReporterApi.aiJobInput(
+        type, id, queue, getAccessTokenSilently, getAccessTokenWithPopup
+      ));
+    } catch (reason) {
+      setInputError(reason?.response?.data?.message || reason?.message || 'Could not load saved job input.');
+    } finally {
+      setInputLoading(false);
+    }
   };
   const priorityPrompt = (label, current, action, max = 100) => {
     const raw = window.prompt(`Ny prioritet för ${label} (0–${max}):`, String(current ?? 50));
@@ -195,10 +309,9 @@ function AdminAiAutonomousWorkPage() {
       <Navigation currentPage="admin" parentPage="admin" />
       <HStack mt={6} justify="space-between" align="start">
         <Box>
-          <Heading>Autonomous AI work</Heading>
+          <Heading>AI work queues</Heading>
           <Text mt={2} color="gray.400">
-            Inspect the durable autonomous queue and pause or resume scheduled AI work.
-            Direct and editor-triggered generation is not affected by this switch.
+            Inspect AI jobs either by the application service that requested them or by the AI provider executing them.
           </Text>
         </Box>
         <Button variant="outline" onClick={load} isLoading={loading} isDisabled={!authenticationReady || !userPermissions.writeSiteAdmin}>
@@ -214,13 +327,29 @@ function AdminAiAutonomousWorkPage() {
 
       {overview && (
         <VStack mt={6} spacing={6} align="stretch">
-          <SimpleGrid columns={{ base: 2, md: 4 }} spacing={3}>
-            {metric('Autonomous backlog', autonomousOutstanding)}
-            {metric('Model calls active/queued', modelJobs)}
-            {metric('Media jobs', mediaOutstanding)}
-            {metric('Replay analyses', (replayQueue.queued || 0) + (replayQueue.runningMatchId ? 1 : 0))}
-          </SimpleGrid>
-          <PendingAiWork getAccessTokenSilently={getAccessTokenSilently} getAccessTokenWithPopup={getAccessTokenWithPopup} />
+          <Box>
+            <ButtonGroup isAttached variant="outline" mb={2}>
+              <Button aria-pressed={viewMode === 'service'} colorScheme={viewMode === 'service' ? 'blue' : undefined}
+                onClick={() => setViewMode('service')}>By application service</Button>
+              <Button aria-pressed={viewMode === 'provider'} colorScheme={viewMode === 'provider' ? 'blue' : undefined}
+                onClick={() => setViewMode('provider')}>By AI provider</Button>
+            </ButtonGroup>
+            <Text fontSize="sm" color="gray.500">
+              {viewMode === 'service'
+                ? 'Service view shows requested work (articles, images, profiles, and other workflows). A single request may create more than one provider call.'
+                : 'Provider view shows individual model calls, retries, recorded token usage, and provider queue throttling. Vendor account quotas are not directly available here.'}
+            </Text>
+          </Box>
+          {viewMode === 'service' && <>
+            <PendingAiWork
+              getAccessTokenSilently={getAccessTokenSilently}
+              getAccessTokenWithPopup={getAccessTokenWithPopup}
+              onInspectJob={(type, id) => inspectJobInput({
+                fans: 'fan-profile',
+                rating: 'player-rating',
+                'fan-rating': 'fan-player-rating',
+              }[type] || type, id)}
+            />
 
           <Box borderWidth="1px" borderRadius="lg" p={4}>
             <Heading size="md">Deterministic replay analysis</Heading>
@@ -293,6 +422,7 @@ function AdminAiAutonomousWorkPage() {
                     <Td fontSize="xs">{job.candidateKey}</Td><Td>{job.kind || job.handlerKey}</Td>
                     <Td>{job.actorId || '—'}</Td><Td isNumeric>{job.priorityRank}</Td><Td>{job.status}</Td>
                     <Td><HStack>
+                      <Button size="xs" onClick={() => inspectJobInput('autonomous', job.candidateKey)}>Input</Button>
                       <Button size="xs" isDisabled={position === 0 || saving}
                         onClick={() => movePriority(autonomousJobs, position, -1, j => j.priorityRank, 1000,
                           priority => AiReporterApi.reprioritizeAiQueueJob(`queue/jobs/${encodeURIComponent(job.candidateKey)}`, priority, getAccessTokenSilently, getAccessTokenWithPopup))}>↑</Button>
@@ -323,15 +453,18 @@ function AdminAiAutonomousWorkPage() {
             {pager('article-generation', articleGenerationJobs, articleGenerationPage.page)}
             <Box borderWidth="1px" borderRadius="lg" overflowX="auto" maxH="440px" overflowY="auto">
               <Table size="sm">
-                <Thead><Tr><Th>Request</Th><Th isNumeric>Priority</Th><Th>Status</Th><Th>Created</Th><Th>Expected start</Th><Th>Error</Th><Th>Actions</Th></Tr></Thead>
+                <Thead><Tr><Th>Request</Th><Th>Model override</Th><Th isNumeric>Priority</Th><Th>Status</Th><Th>Created</Th><Th>Expected start</Th><Th>Error</Th><Th>Actions</Th></Tr></Thead>
                 <Tbody>{articleGenerationPage.jobs.map(job => (
                   <Tr key={job.id}>
-                    <Td fontSize="xs">{job.id}</Td><Td isNumeric>{job.priority}</Td>
+                    <Td fontSize="xs">{job.id}</Td>
+                    <Td fontSize="xs">{job.modelOverrideTargetId || 'Standard pipeline'}</Td>
+                    <Td isNumeric>{job.priority}</Td>
                     <Td color={job.status === 'FAILED' ? 'red.300' : undefined}>{job.status}</Td>
                     <Td whiteSpace="nowrap">{when(job.createdAt)}</Td>
                     <Td whiteSpace="nowrap">{job.status === 'RUNNING' ? `running since ${when(job.startedAt)}` : when(job.estimatedStartAt)}</Td>
                     <Td fontSize="xs" color="red.300">{job.error || '—'}</Td>
                     <Td><HStack>
+                      <Button size="xs" onClick={() => inspectJobInput('article-generation', job.id)}>Input</Button>
                       <Button size="xs" isDisabled={job.status !== 'QUEUED' || saving}
                         onClick={() => priorityPrompt(job.id, job.priority,
                           priority => AiReporterApi.reprioritizeAiQueueJob(`article-generation/jobs/${encodeURIComponent(job.id)}`, priority, getAccessTokenSilently, getAccessTokenWithPopup))}>Priority</Button>
@@ -375,6 +508,7 @@ function AdminAiAutonomousWorkPage() {
                     <Td whiteSpace="nowrap">{when(job.createdAt)}</Td><Td whiteSpace="nowrap">{expectedStart}</Td>
                     <Td>{job.attempts}</Td><Td fontSize="xs" color="red.300">{job.error || '—'}</Td>
                     <Td><HStack>
+                      <Button size="xs" onClick={() => inspectJobInput('editorial-image', job.id)}>Input</Button>
                       <Button size="xs" isDisabled={!['DEVELOPING', 'COMMISSIONED'].includes(job.status) || saving}
                         onClick={() => priorityPrompt(job.id, job.priority,
                           priority => AiReporterApi.reprioritizeAiQueueJob(`editorial-images/jobs/${encodeURIComponent(job.id)}`, priority, getAccessTokenSilently, getAccessTokenWithPopup))}>Priority</Button>
@@ -388,8 +522,75 @@ function AdminAiAutonomousWorkPage() {
             </Box>
           </Box>
 
+          </>}
+          {viewMode === 'provider' && <>
+          <Box borderWidth="1px" borderRadius="lg" p={3}>
+            <HStack justify="space-between" align="start" mb={2}>
+              <Box>
+                <Heading size="md">GitHub Copilot quota</Heading>
+                <Text fontSize="sm" color="gray.500">
+                  Account quota from the Copilot SDK. Token totals below are locally observed successful generations.
+                </Text>
+              </Box>
+              <Button size="xs" onClick={refreshCopilotQuota}>Refresh quota</Button>
+            </HStack>
+            {copilotQuotaError && <Alert status="error" mb={3}><AlertIcon />{copilotQuotaError}</Alert>}
+            {!copilotQuota && !copilotQuotaError && <Text color="gray.500">Loading Copilot quota…</Text>}
+            {copilotQuota && !copilotQuota.configured && (
+              <Alert status="info" mb={3}><AlertIcon />{copilotQuota.message || 'GitHub Copilot is not enabled.'}</Alert>
+            )}
+            {copilotQuota?.configured && !copilotQuota.premiumInteractions && (
+              <Alert status="warning" mb={3}>
+                <AlertIcon />The Copilot account did not report a premium-interaction quota. Manual Copilot jobs are blocked until the quota can be verified.
+              </Alert>
+            )}
+            {copilotQuota?.premiumInteractions && <SimpleGrid columns={{ base: 1, md: 3 }} spacing={3} mb={3}>
+              {metric('Premium interactions used', copilotQuota.premiumInteractions.usedRequests)}
+              {metric('Entitlement', copilotQuota.premiumInteractions.unlimited
+                ? 'Unlimited'
+                : copilotQuota.premiumInteractions.entitlementRequests)}
+              {metric('Remaining', copilotQuota.premiumInteractions.unlimited
+                ? 'Unlimited'
+                : copilotQuota.premiumInteractions.remainingPercentage == null
+                  ? 'Unknown'
+                  : `${copilotQuota.premiumInteractions.remainingPercentage.toFixed(1)}%`)}
+            </SimpleGrid>}
+            {copilotQuota?.premiumInteractions?.resetDate && (
+              <Text fontSize="xs" color="gray.500" mb={3}>
+                Copilot quota resets {when(copilotQuota.premiumInteractions.resetDate)}.
+              </Text>
+            )}
+            <HStack align="end">
+              <Box>
+                <Text fontSize="sm" mb={1}>Require confirmation when remaining is at or below</Text>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  width="120px"
+                  value={quotaThresholdDraft}
+                  onChange={event => {
+                    setQuotaThresholdDraft(event.target.value);
+                    setQuotaThresholdDirty(true);
+                  }}
+                  aria-label="Copilot quota confirmation threshold percentage"
+                />
+              </Box>
+              <Text pb={2}>%</Text>
+              <Button isLoading={quotaSaving} isDisabled={!quotaThresholdDirty} onClick={saveCopilotQuotaThreshold}>
+                Save runtime setting
+              </Button>
+            </HStack>
+            <Text mt={2} fontSize="xs" color="gray.500">
+              Initial default comes from AI_COPILOT_MIN_REMAINING_PERCENT (20% if unset); this admin setting is saved for runtime use.
+            </Text>
+          </Box>
           <Box>
-            <Heading size="md" mb={2}>AI quota queues</Heading>
+            <Heading size="md" mb={1}>Provider execution queues</Heading>
+            <Text mb={3} fontSize="sm" color="gray.500">
+              These rows are individual model calls, not service requests. A service job can create multiple calls through retries or fallbacks.
+              Queue concurrency and throttling are application settings and observed provider responses, not the provider account's full quota.
+            </Text>
             {executionQueues.length === 0 ? <Text color="gray.500">No configured AI quota queues.</Text> : (
               <VStack align="stretch" spacing={4}>
                 {executionQueues.map(qs => {
@@ -399,9 +600,9 @@ function AdminAiAutonomousWorkPage() {
                   return <Box key={qs.target} borderWidth="1px" borderRadius="lg" p={3}>
                     <HStack justify="space-between" align="start">
                       <Box>
-                        <Text fontWeight="700">{qs.quotaGroup || qs.target} · {jobs.length} jobs</Text>
+                        <Text fontWeight="700">{qs.provider || 'Unknown provider'} · quota group {qs.quotaGroup || qs.target}</Text>
                         <Text fontSize="xs" color="gray.500">{qs.provider || '—'} · {qs.model || '—'}{qs.targets?.length ? ` · targets ${qs.targets.join(', ')}` : ''}</Text>
-                        <Text fontSize="xs" color="gray.500">queued {qs.queued ?? 0} · running {qs.running ?? 0}/{qs.concurrency ?? 0} · retry {qs.retryWaiting ?? 0} · completed 1h/24h {qs.completedLastHour ?? 0}/{qs.completedLast24Hours ?? 0} · ETA {duration(qs.estimatedClearSeconds)}</Text>
+                        <Text fontSize="xs" color="gray.500">Queued {qs.queued ?? 0} · running {qs.running ?? 0}/{qs.concurrency ?? 0} · retry waiting {qs.retryWaiting ?? 0} · retained failed {qs.failed ?? 0} · completed 1h/24h {qs.completedLastHour ?? 0}/{qs.completedLast24Hours ?? 0} · ETA {duration(qs.estimatedClearSeconds)}</Text>
                         {qs.blockedUntil && <Text fontSize="sm" fontWeight="700" color="yellow.300">Throttled · next attempt {when(qs.blockedUntil)}</Text>}
                         {qs.lastError && <Text fontSize="xs" color="red.300">Last error{qs.lastStatusCode ? ` HTTP ${qs.lastStatusCode}` : ''}: {qs.lastError}</Text>}
                       </Box>
@@ -422,6 +623,14 @@ function AdminAiAutonomousWorkPage() {
                             <Td color={job.status === 'FAILED' ? 'red.300' : undefined}>{job.status}</Td>
                             <Td>{job.attempts}</Td><Td>{when(job.nextAttemptAt)}</Td>
                             <Td><HStack>
+                              <Button size="xs" onClick={() => inspectJobInput('provider-call', job.id, qs.target)}>Input</Button>
+                              {copilotQuota?.configured
+                                && ['QUEUED', 'RETRY_WAIT'].includes(job.status)
+                                && job.target !== 'copilot-gpt-6-luna'
+                                && <Button size="xs" colorScheme="purple" isDisabled={saving}
+                                  onClick={() => moveExecutionJobToCopilot(qs.target, job.id)}>
+                                  Send to GPT-6 Luna
+                                </Button>}
                               <Button size="xs" isDisabled={position === 0 || ['RUNNING', 'FAILED'].includes(job.status) || saving}
                                 onClick={() => movePriority(jobs, position, -1, j => j.priority, 100,
                                   priority => AiReporterApi.reprioritizeAiQueueJob(path, priority, getAccessTokenSilently, getAccessTokenWithPopup))}>↑</Button>
@@ -443,8 +652,17 @@ function AdminAiAutonomousWorkPage() {
                 })}
               </VStack>
             )}
+            <AiJobInputDialog
+              isOpen={inputDialogOpen}
+              onClose={() => setInputDialogOpen(false)}
+              details={inputDetails}
+              loading={inputLoading}
+              error={inputError}
+            />
           </Box>
+          </>}
 
+          {viewMode === 'service' && <>
           <Box>
             <HStack justify="space-between" mb={2}><Heading size="md">Community media queue</Heading><Button size="xs" colorScheme="red" variant="outline" isDisabled={!mediaQueue.jobs?.length || saving} onClick={() => clearPrompt('media queue', mediaQueue.jobs?.length || 0, () => AiReporterApi.clearAiQueue('media-queue/jobs', getAccessTokenSilently, getAccessTokenWithPopup))}>Clear queue</Button></HStack>
             <Text fontSize="sm" color="gray.500">queued {mediaQueue.queued ?? 0} · running {mediaQueue.running ?? 0} · succeeded {mediaQueue.succeeded ?? 0} · failed {mediaQueue.failed ?? 0} · completed 1h/24h {mediaQueue.completedLastHour ?? 0}/{mediaQueue.completedLast24Hours ?? 0} · resume {mediaQueue.providerConfigured === false ? 'provider not configured' : (mediaQueue.resumeAt ? when(mediaQueue.resumeAt) : 'now')} · ETA {duration(mediaQueue.estimatedClearSeconds)}</Text>
@@ -473,6 +691,7 @@ function AdminAiAutonomousWorkPage() {
                     <Td>{when(job.createdAt)}</Td><Td fontSize="xs">{job.provider || job.requestedProvider || 'Cloudflare (automatic)'}{job.model ? ` · ${job.model}` : ''}</Td>
                     <Td isNumeric>{job.priority ?? 0}</Td><Td>{job.attempts ?? 0}</Td><Td>{when(job.nextAttemptAt)}</Td><Td fontSize="xs" color="red.300">{job.error || '—'}</Td>
                     <Td><HStack>
+                      <Button size="xs" onClick={() => inspectJobInput('community-media', job.id)}>Input</Button>
                       <Button size="xs" isDisabled={position === 0 || ['RUNNING', 'FAILED'].includes(job.status) || saving}
                         onClick={() => movePriority(mediaQueue.jobs, position, -1, j => j.priority ?? 0, 100,
                           priority => AiReporterApi.reprioritizeAiQueueJob(path, priority, getAccessTokenSilently, getAccessTokenWithPopup))}>↑</Button>
@@ -490,9 +709,11 @@ function AdminAiAutonomousWorkPage() {
                 })}</Tbody>
               </Table>
             </Box>
-            {mediaQueue.recentFailures?.length > 0 && <Box mt={4}><Heading size="sm" mb={2} color="red.300">Recent failed community-media jobs</Heading><Box borderWidth="1px" borderColor="red.700" borderRadius="lg" overflowX="auto"><Table size="sm"><Thead><Tr><Th>Character</Th><Th>Type</Th><Th>Registered</Th><Th>Failed</Th><Th>Attempts</Th><Th>Error</Th></Tr></Thead><Tbody>{mediaQueue.recentFailures.map(job => <Tr key={job.id}><Td><Text>{job.fanName || 'Deleted / unknown character'}</Text><Text fontSize="xs" color="gray.500">{job.fanProfileId || job.id}</Text></Td><Td>{job.target}</Td><Td>{job.createdAt ? new Date(job.createdAt).toLocaleString() : '—'}</Td><Td>{job.completedAt ? new Date(job.completedAt).toLocaleString() : '—'}</Td><Td>{job.attempts ?? 0}</Td><Td fontSize="xs" color="red.300">{job.error || 'No error message recorded'}</Td></Tr>)}</Tbody></Table></Box></Box>}
+            {mediaQueue.recentFailures?.length > 0 && <Box mt={4}><Heading size="sm" mb={2} color="red.300">Recent failed community-media jobs</Heading><Box borderWidth="1px" borderColor="red.700" borderRadius="lg" overflowX="auto"><Table size="sm"><Thead><Tr><Th>Character</Th><Th>Type</Th><Th>Registered</Th><Th>Failed</Th><Th>Attempts</Th><Th>Error</Th><Th>Input</Th></Tr></Thead><Tbody>{mediaQueue.recentFailures.map(job => <Tr key={job.id}><Td><Text>{job.fanName || 'Deleted / unknown character'}</Text><Text fontSize="xs" color="gray.500">{job.fanProfileId || job.id}</Text></Td><Td>{job.target}</Td><Td>{job.createdAt ? new Date(job.createdAt).toLocaleString() : '—'}</Td><Td>{job.completedAt ? new Date(job.completedAt).toLocaleString() : '—'}</Td><Td>{job.attempts ?? 0}</Td><Td fontSize="xs" color="red.300">{job.error || 'No error message recorded'}</Td><Td><Button size="xs" onClick={() => inspectJobInput('community-media', job.id)}>Inspect</Button></Td></Tr>)}</Tbody></Table></Box></Box>}
           </Box>
+          </>}
 
+          {viewMode === 'provider' && <>
           <Box>
             <Heading size="md" mb={1}>Global AI safety budget today (UTC)</Heading>
             <Text mb={3} fontSize="sm" color="gray.500">
@@ -514,61 +735,56 @@ function AdminAiAutonomousWorkPage() {
               </Text>
             )}
           </Box>
+          </>}
 
+          {viewMode === 'service' && <>
           <Box>
-            <Heading size="md" mb={1}>Usage by provider and model today (UTC)</Heading>
+            <Heading size="md" mb={1}>Provider usage today (UTC)</Heading>
             <Text mb={3} fontSize="sm" color="gray.500">
-              Operational telemetry from actual provider attempts. Token counts are
-              measured on successful generations; Requests includes failed attempts.
-              429s show observed rate-limit responses and are not a provider quota counter.
+              Token usage is recorded for successful generations; requests include failed attempts.
+              Copilot's account quota is shown above; other provider quotas are not exposed here.
             </Text>
-            {providerUsage.length === 0 ? (
-              <Text color="gray.500">No provider usage recorded today.</Text>
-            ) : (
-              <Box borderWidth="1px" borderRadius="lg" overflowX="auto">
-                <Table size="sm">
-                  <Thead>
-                    <Tr>
-                      <Th>Provider</Th>
-                      <Th>Model</Th>
-                      <Th isNumeric>Requests</Th>
-                      <Th isNumeric>Success</Th>
-                      <Th isNumeric>Failed</Th>
-                      <Th isNumeric>Input tokens</Th>
-                      <Th isNumeric>Output tokens</Th>
-                      <Th isNumeric>429s</Th>
-                      <Th>Last 429</Th>
-                    </Tr>
-                  </Thead>
-                  <Tbody>
-                    {providerUsage.map((provider) => (
-                      <Tr key={`${provider.providerId}:${provider.model}`}>
-                        <Td fontWeight="600">{provider.providerId}</Td>
-                        <Td>{provider.model}</Td>
-                        <Td isNumeric>{provider.requests ?? 0}</Td>
-                        <Td isNumeric>{provider.successfulGenerations ?? 0}</Td>
-                        <Td isNumeric>{provider.failedGenerations ?? 0}</Td>
-                        <Td isNumeric>
-                          {provider.inputTokens ?? 0}
-                          {provider.unknownInputTokenGenerations > 0
-                            ? ` (+${provider.unknownInputTokenGenerations} unknown)` : ''}
-                        </Td>
-                        <Td isNumeric>
-                          {provider.outputTokens ?? 0}
-                          {provider.unknownOutputTokenGenerations > 0
-                            ? ` (+${provider.unknownOutputTokenGenerations} unknown)` : ''}
-                        </Td>
-                        <Td isNumeric>{provider.rateLimitFailures ?? 0}</Td>
-                        <Td whiteSpace="nowrap">
-                          {provider.lastRateLimitAt
-                            ? new Date(provider.lastRateLimitAt).toLocaleString()
-                            : '—'}
-                        </Td>
-                      </Tr>
-                    ))}
-                  </Tbody>
-                </Table>
-              </Box>
+            {providerSections.length === 0 ? <Text color="gray.500">No provider usage recorded today.</Text> : (
+              <VStack align="stretch" spacing={3}>
+                {providerSections.map(section => {
+                  const totals = section.usage.reduce((sum, item) => ({
+                    requests: sum.requests + (item.requests ?? 0),
+                    successful: sum.successful + (item.successfulGenerations ?? 0),
+                    failed: sum.failed + (item.failedGenerations ?? 0),
+                    inputTokens: sum.inputTokens + (item.inputTokens ?? 0),
+                    outputTokens: sum.outputTokens + (item.outputTokens ?? 0),
+                    rateLimits: sum.rateLimits + (item.rateLimitFailures ?? 0),
+                  }), { requests: 0, successful: 0, failed: 0, inputTokens: 0, outputTokens: 0, rateLimits: 0 });
+                  return <Box key={section.provider} borderWidth="1px" borderRadius="lg" p={3}>
+                    <Heading size="sm" mb={2}>{section.provider}</Heading>
+                    <SimpleGrid columns={{ base: 2, md: 5 }} spacing={2}>
+                      {metric('Requests', totals.requests)}
+                      {metric('Successful', totals.successful)}
+                      {metric('Failed', totals.failed)}
+                      {metric('Input tokens', totals.inputTokens)}
+                      {metric('Output tokens', totals.outputTokens)}
+                    </SimpleGrid>
+                    <Text mt={2} mb={2} fontSize="xs" color="gray.500">
+                      Observed rate-limit responses (HTTP 429): {totals.rateLimits}. Token totals exclude failed calls.
+                    </Text>
+                    {section.usage.length > 0 && <Box overflowX="auto">
+                      <Table size="sm">
+                        <Thead><Tr><Th>Model</Th><Th isNumeric>Requests</Th><Th isNumeric>Success</Th><Th isNumeric>Failed</Th><Th isNumeric>Input tokens</Th><Th isNumeric>Output tokens</Th><Th isNumeric>429s</Th><Th>Last 429</Th></Tr></Thead>
+                        <Tbody>{section.usage.map(item => (
+                          <Tr key={`${item.providerId}:${item.model}`}>
+                            <Td>{item.model}</Td><Td isNumeric>{item.requests ?? 0}</Td>
+                            <Td isNumeric>{item.successfulGenerations ?? 0}</Td><Td isNumeric>{item.failedGenerations ?? 0}</Td>
+                            <Td isNumeric>{item.inputTokens ?? 0}{item.unknownInputTokenGenerations > 0 ? ` (+${item.unknownInputTokenGenerations} unknown)` : ''}</Td>
+                            <Td isNumeric>{item.outputTokens ?? 0}{item.unknownOutputTokenGenerations > 0 ? ` (+${item.unknownOutputTokenGenerations} unknown)` : ''}</Td>
+                            <Td isNumeric>{item.rateLimitFailures ?? 0}</Td>
+                            <Td whiteSpace="nowrap">{item.lastRateLimitAt ? when(item.lastRateLimitAt) : '—'}</Td>
+                          </Tr>
+                        ))}</Tbody>
+                      </Table>
+                    </Box>}
+                  </Box>;
+                })}
+              </VStack>
             )}
           </Box>
 
@@ -612,6 +828,7 @@ function AdminAiAutonomousWorkPage() {
               </Box>
             )}
           </Box>
+          </>}
         </VStack>
       )}
     </Box>

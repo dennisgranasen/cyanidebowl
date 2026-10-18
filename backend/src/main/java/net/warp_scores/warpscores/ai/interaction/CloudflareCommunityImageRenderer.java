@@ -120,7 +120,7 @@ public class CloudflareCommunityImageRenderer implements AiCommunityImageRendere
                 "image/jpeg", "jpg", "cloudflare", selectedModel);
     }
 
-    private String selectedModel(AiCommunityMediaGenerationRequest.Target target) {
+    String selectedModel(AiCommunityMediaGenerationRequest.Target target) {
         ContextTaskType taskType = target == AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE
                 ? ContextTaskType.PROFILE_IMAGE : ContextTaskType.AVATAR_IMAGE;
         var plan = routing.planForTask("community-media", taskType, LlmProviderRouter.ExecutionOverrides.none());

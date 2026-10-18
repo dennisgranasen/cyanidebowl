@@ -96,6 +96,12 @@ warpscores:
       reconcile-job-timeout: ${FAN_RECONCILE_JOB_TIMEOUT:15m}
       rate-limit-cooldown: ${FAN_RATE_LIMIT_COOLDOWN:2m}
     providers:
+      copilot:
+        enabled: ${AI_COPILOT_ENABLED:false}
+        github-token: ${AI_COPILOT_GITHUB_TOKEN:}
+        cli-path: ${AI_COPILOT_CLI_PATH:}
+        timeout: ${AI_COPILOT_TIMEOUT:5m}
+        minimum-remaining-percent: ${AI_COPILOT_MIN_REMAINING_PERCENT:20}
       gemini:
         api-key: ${AI_API_KEY_GEMINI:}
         base-url: https://generativelanguage.googleapis.com/v1beta
@@ -178,8 +184,18 @@ warpscores:
         base-backoff: 10s
         max-backoff: 10m
         jitter: 0.20
+      github-copilot:
+        concurrency: 1
+        max-attempts: 2
+        max-wait: 10m
+        base-backoff: 30s
+        max-backoff: 5m
+        jitter: 0.20
 
     # Named executable targets. Provider blocks above contain credentials/transport.
+    # Copilot requires AI_COPILOT_ENABLED=true and a Copilot CLI authenticated as
+    # the backend runtime identity. Model access and any usage billing depend on
+    # the signed-in account's plan. Its target is opt-in; no tasks use it by default.
     targets:
       editorial:
         provider: gemini
@@ -241,6 +257,12 @@ warpscores:
         modality: TEXT
         quota-group: aion-main
         queue: { concurrency: 1, max-attempts: 3, base-backoff: 10s, max-backoff: 10m, jitter: 0.20 }
+      copilot-gpt-6-luna:
+        provider: github-copilot
+        model: gpt-6-luna
+        modality: TEXT
+        quota-group: github-copilot
+        queue: { concurrency: 1, max-attempts: 2, max-wait: 10m, base-backoff: 30s, max-backoff: 5m, jitter: 0.20 }
 
     tasks:
       EDITORIAL_ARTICLE: { target: editorial, priority: 80 }

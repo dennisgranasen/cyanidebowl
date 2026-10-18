@@ -19,6 +19,8 @@ public class AiCommunityMediaGenerationRequest {
     private String fanProfileId;
     private Target target;
     private String prompt;
+    private String inputReferenceImageUrl;
+    private boolean inputReferenceSelectionRecorded;
     private boolean approvalRequired;
     private String requestedProvider;
     /** Present only while queued/running; uniquely reserves this profile and image type. */

@@ -44,6 +44,10 @@ public class OpenAiCommunityImageRenderer implements AiCommunityImageRenderer {
 
     @Override public boolean supportsReferenceImages() { return isConfigured(); }
 
+    String imageModel() {
+        return providerProperties.getImageModel();
+    }
+
     @Override
     public boolean isConfigured() {
         return StringUtils.hasText(providerProperties.getApiKey());

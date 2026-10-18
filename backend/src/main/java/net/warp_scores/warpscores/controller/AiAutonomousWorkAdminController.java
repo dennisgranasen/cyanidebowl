@@ -6,10 +6,12 @@ import net.warp_scores.warpscores.ai.interaction.EditorialArticleGenerationQueue
 import net.warp_scores.warpscores.ai.interaction.EditorialImageRequestService;
 import net.warp_scores.warpscores.ai.provider.AiGenerationAdmissionService;
 import net.warp_scores.warpscores.ai.provider.AiTargetExecutionQueueManager;
+import net.warp_scores.warpscores.ai.provider.copilot.CopilotQuotaGuard;
 import net.warp_scores.warpscores.ai.scheduling.AiAutonomousWorkQueue;
 import net.warp_scores.warpscores.domain.persistence.AiSettingsRepository;
 import net.warp_scores.warpscores.model.AiSettings;
 import net.warp_scores.warpscores.model.EditorialImageRequest;
+import net.warp_scores.warpscores.service.AiJobInputDetailsService;
 import net.warp_scores.warpscores.service.ReplayAnalysisBackfillService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -30,6 +32,8 @@ public class AiAutonomousWorkAdminController {
     private final ReplayAnalysisBackfillService replayAnalysis;
     private final EditorialArticleGenerationQueue articleGeneration;
     private final EditorialImageRequestService editorialImages;
+    private final AiJobInputDetailsService jobInputs;
+    private final CopilotQuotaGuard copilotQuota;
 
     @GetMapping
     public Overview overview() {
@@ -45,6 +49,28 @@ public class AiAutonomousWorkAdminController {
                 replayAnalysis.snapshot(),
                 articleGeneration.snapshot(),
                 imageJobs);
+    }
+
+    @GetMapping("/job-input")
+    public AiJobInputDetailsService.JobInputDetails jobInput(
+            @RequestParam String type,
+            @RequestParam String id,
+            @RequestParam(required = false) String queue) {
+        return jobInputs.get(type, id, queue);
+    }
+
+    @GetMapping("/copilot-quota")
+    public CopilotQuotaGuard.QuotaStatus copilotQuota() {
+        return copilotQuota.status();
+    }
+
+    @PutMapping("/copilot-quota/threshold")
+    public QuotaThreshold setCopilotQuotaThreshold(@RequestBody QuotaThresholdUpdate update) {
+        if (update == null || update.minimumRemainingPercent() == null) {
+            throw new IllegalArgumentException("minimumRemainingPercent is required");
+        }
+        return new QuotaThreshold(
+                copilotQuota.setMinimumRemainingPercent(update.minimumRemainingPercent()));
     }
 
     @PutMapping("/enabled")
@@ -86,6 +112,23 @@ public class AiAutonomousWorkAdminController {
         requirePriority(update);
         if (!executionQueues.reprioritize(target, id, update.priority())) {
             throw new IllegalArgumentException("Pending execution job not found");
+        }
+        return overview();
+    }
+
+    @PutMapping("/execution-queues/{target}/jobs/{id}/target")
+    public Overview moveExecutionJob(
+            @PathVariable String target,
+            @PathVariable String id,
+            @RequestBody TargetUpdate update) {
+        if (update == null || update.targetId() == null || update.targetId().isBlank()) {
+            throw new IllegalArgumentException("targetId is required");
+        }
+        if (executionQueues.isCopilotTarget(update.targetId())) {
+            copilotQuota.requireConfirmation(Boolean.TRUE.equals(update.confirmCopilotQuota()));
+        }
+        if (!executionQueues.movePendingJob(target, id, update.targetId())) {
+            throw new IllegalArgumentException("Pending execution job not found or already running");
         }
         return overview();
     }
@@ -192,6 +235,9 @@ public class AiAutonomousWorkAdminController {
 
     public record EnabledUpdate(Boolean enabled) {}
     public record PriorityUpdate(Integer priority) {}
+    public record TargetUpdate(String targetId, Boolean confirmCopilotQuota) {}
+    public record QuotaThresholdUpdate(Integer minimumRemainingPercent) {}
+    public record QuotaThreshold(int minimumRemainingPercent) {}
     public record EditorialImageJobView(
             String id,
             EditorialImageRequest.Status status,

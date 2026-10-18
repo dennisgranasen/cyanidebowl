@@ -7,6 +7,13 @@ public interface AiCommunityImageRenderer {
 
     default boolean supportsReferenceImages() { return false; }
 
+    default ProviderSelection selection(
+            AiCommunityMediaGenerationRequest.Target target,
+            String requestedProvider,
+            boolean withReference) {
+        return new ProviderSelection(requestedProvider, null);
+    }
+
     default RenderedImage render(String prompt, AiCommunityMediaGenerationRequest.Target target,
                                  String provider) throws Exception {
         if (provider != null && !provider.isBlank()) throw new IllegalArgumentException("Provider selection is not supported");
@@ -29,4 +36,6 @@ public interface AiCommunityImageRenderer {
             String extension,
             String provider,
             String model) {}
+
+    record ProviderSelection(String provider, String model) {}
 }

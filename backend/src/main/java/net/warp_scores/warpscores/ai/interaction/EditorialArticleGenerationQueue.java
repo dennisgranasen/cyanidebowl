@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.model.Article;
 import net.warp_scores.warpscores.model.EditorialArticleGenerationJob;
+import net.warp_scores.warpscores.ai.provider.copilot.CopilotQuotaGuard;
 import net.warp_scores.warpscores.service.EditorialArticleAiService;
 import net.warp_scores.warpscores.service.EditorialCommunityService;
 import net.warp_scores.warpscores.service.UserPermissionService;
@@ -43,6 +44,7 @@ public class EditorialArticleGenerationQueue {
     private final ObjectMapper json;
     private final EditorialArticleAiService articles;
     private final UserPermissionService permissions;
+    private final CopilotQuotaGuard copilotQuota;
     private AtomicBoolean processing = new AtomicBoolean();
 
     public record JobView(
@@ -53,6 +55,7 @@ public class EditorialArticleGenerationQueue {
             Instant startedAt,
             Instant estimatedStartAt,
             String articleId,
+            String modelOverrideTargetId,
             String error) {
     }
 
@@ -66,6 +69,9 @@ public class EditorialArticleGenerationQueue {
 
     public JobView submit(Authentication authentication, EditorialArticleAiService.Request input) {
         List<Article.Association> links = articles.validateRequest(authentication, input);
+        if (articles.isCopilotOverride(input.modelOverrideTargetId())) {
+            copilotQuota.requireConfirmation(input.copilotQuotaConfirmed());
+        }
         if (!(authentication instanceof JwtAuthenticationToken jwt)) {
             throw new AccessDeniedException("A JWT-authenticated editor is required");
         }
@@ -76,6 +82,7 @@ public class EditorialArticleGenerationQueue {
 
         EditorialArticleGenerationJob job = new EditorialArticleGenerationJob();
         job.setId(id);
+        job.setModelOverrideTargetId(input.modelOverrideTargetId());
         try {
             job.setRequestJson(json.writeValueAsString(durableRequest(input, links)));
         } catch (JsonProcessingException e) {
@@ -119,6 +126,10 @@ public class EditorialArticleGenerationQueue {
                         EditorialArticleGenerationJob.Status.FAILED,
                         EditorialArticleGenerationJob.Status.COMPLETED));
         return mongo.remove(query, EditorialArticleGenerationJob.class).getDeletedCount() > 0;
+    }
+
+    public String requestJson(String id) {
+        return find(id).getRequestJson();
     }
 
     public QueueSnapshot snapshot() {
@@ -248,7 +259,8 @@ public class EditorialArticleGenerationQueue {
 
     private static JobView view(EditorialArticleGenerationJob job, Instant estimatedStartAt) {
         return new JobView(job.getId(), job.getStatus(), job.getPriority(), job.getCreatedAt(),
-                job.getStartedAt(), estimatedStartAt, job.getArticleId(), job.getError());
+                job.getStartedAt(), estimatedStartAt, job.getArticleId(),
+                job.getModelOverrideTargetId(), job.getError());
     }
 
     private static EditorialArticleAiService.Request durableRequest(
@@ -258,6 +270,11 @@ public class EditorialArticleGenerationQueue {
         var article = new EditorialCommunityService.ArticleInput(
                 null, null, null, null, null, null, source.coverImageUrl(), Article.Status.DRAFT,
                 false, List.of("news"), List.of(), List.of(), null, links, source.confirmGlobal());
-        return new EditorialArticleAiService.Request(input.reporterId(), input.brief(), article);
+        return new EditorialArticleAiService.Request(
+                input.reporterId(),
+                input.brief(),
+                article,
+                input.modelOverrideTargetId(),
+                input.copilotQuotaConfirmed());
     }
 }

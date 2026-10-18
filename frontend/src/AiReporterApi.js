@@ -103,6 +103,29 @@ const AiReporterApi = {
     }
   },
 
+  aiJobInput: async (type, id, queue, getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.get('/admin/ai-autonomous-work/job-input', {
+      ...auth,
+      params: { type, id, ...(queue ? { queue } : {}) },
+      timeout: 30000,
+    })).data;
+  },
+
+  copilotQuota: async (getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.get('/admin/ai-autonomous-work/copilot-quota', auth)).data;
+  },
+
+  setCopilotQuotaThreshold: async (minimumRemainingPercent, getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.put(
+      '/admin/ai-autonomous-work/copilot-quota/threshold',
+      { minimumRemainingPercent },
+      auth
+    )).data;
+  },
+
   setAutonomousWorkEnabled: async (
     enabled, getAccessTokenSilently, getAccessTokenWithPopup
   ) => {
@@ -113,6 +136,14 @@ const AiReporterApi = {
   reprioritizeAiQueueJob: async (path, priority, getAccessTokenSilently, getAccessTokenWithPopup) => {
     const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
     return (await axios.put(`/admin/ai-autonomous-work/${path}/priority`, { priority }, auth)).data;
+  },
+  moveAiExecutionJob: async (target, id, targetId, confirmCopilotQuota, getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.put(
+      `/admin/ai-autonomous-work/execution-queues/${encodeURIComponent(target)}/jobs/${encodeURIComponent(id)}/target`,
+      { targetId, confirmCopilotQuota },
+      auth
+    )).data;
   },
   deleteAiQueueJob: async (path, getAccessTokenSilently, getAccessTokenWithPopup) => {
     const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);

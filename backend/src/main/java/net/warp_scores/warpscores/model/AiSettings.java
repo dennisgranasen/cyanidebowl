@@ -52,6 +52,9 @@ public class AiSettings {
     /** Successful output tokens per UTC calendar day; null = unlimited. */
     private Long maxOutputTokensPerDay;
 
+    /** Copilot requests require confirmation below this remaining quota percentage; null uses config default. */
+    private Integer copilotMinimumRemainingPercent;
+
     private AiInitiativePolicy initiativePolicy = new AiInitiativePolicy();
 
     /** Probability that an existing fan changes allegiance instead of deactivate/create. */

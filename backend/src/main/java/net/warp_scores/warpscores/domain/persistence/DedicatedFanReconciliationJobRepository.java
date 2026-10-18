@@ -6,13 +6,12 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface DedicatedFanReconciliationJobRepository
         extends MongoRepository<DedicatedFanReconciliationJob, String> {
-    Optional<DedicatedFanReconciliationJob>
-            findFirstByStatusAndRequestedAtLessThanEqualOrderByRequestedAtAsc(
+    List<DedicatedFanReconciliationJob>
+            findByStatusAndRequestedAtLessThanEqual(
                     DedicatedFanReconciliationJob.Status status,
                     Instant requestedAt);
     List<DedicatedFanReconciliationJob>

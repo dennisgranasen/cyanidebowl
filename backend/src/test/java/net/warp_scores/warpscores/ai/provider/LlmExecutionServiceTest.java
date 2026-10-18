@@ -15,6 +15,61 @@ import static org.mockito.Mockito.*;
 
 class LlmExecutionServiceTest {
     @Test
+    void explicitTargetOverrideRunsOnlyTheRequestedTarget() {
+        var properties = new AiProviderProperties();
+        var editorial = targetConfig("editorial-provider", "editorial-model", "editorial-group");
+        var fallback = targetConfig("fallback-provider", "fallback-model", "fallback-group");
+        var copilot = targetConfig("github-copilot", "gpt-6-luna", "copilot-group");
+        properties.getTargets().put("editorial", editorial);
+        properties.getTargets().put("fallback", fallback);
+        properties.getTargets().put("copilot-gpt-6-luna", copilot);
+        var policy = new AiProviderProperties.TaskPolicyConfig();
+        policy.setTarget("editorial");
+        policy.setFallbackTargets(List.of("fallback"));
+        properties.getTasks().put(ContextTaskType.EDITORIAL_ARTICLE.name(), policy);
+
+        var editorialCalls = new AtomicInteger();
+        var copilotCalls = new AtomicInteger();
+        var editorialProvider = provider("editorial-provider", request -> {
+            editorialCalls.incrementAndGet();
+            return new CanonicalLlmResponse(
+                    "editorial-provider", request.model(), null, "standard", null, "stop");
+        });
+        var fallbackProvider = provider("fallback-provider", request ->
+                new CanonicalLlmResponse("fallback-provider", request.model(), null, "fallback", null, "stop"));
+        var copilotProvider = provider("github-copilot", request -> {
+            copilotCalls.incrementAndGet();
+            return new CanonicalLlmResponse(
+                    "github-copilot", request.model(), null, "copilot", null, "stop");
+        });
+        var registry = new LlmProviderRegistry(
+                List.of(editorialProvider, fallbackProvider, copilotProvider));
+        var traceStore = mock(AiGenerationTraceStore.class);
+        var admission = mock(AiGenerationAdmissionService.class);
+        var queues = new AiTargetExecutionQueueManager(properties, registry, traceStore, admission);
+        var service = new LlmExecutionService(
+                new ConfiguredLlmProviderRouter(properties, registry),
+                registry,
+                traceStore,
+                admission,
+                queues);
+
+        try {
+            CanonicalLlmResponse response = service.generate(
+                    "reporter",
+                    request(),
+                    new LlmProviderRouter.ExecutionOverrides("copilot-gpt-6-luna", 100));
+
+            assertThat(response.providerId()).isEqualTo("github-copilot");
+            assertThat(response.model()).isEqualTo("gpt-6-luna");
+            assertThat(editorialCalls.get()).isZero();
+            assertThat(copilotCalls.get()).isEqualTo(1);
+        } finally {
+            queues.stop();
+        }
+    }
+
+    @Test
     void fallsBackFromQueuedGeminiRateLimitToGrok() {
         var gemini = new LlmProviderRouter.ModelTarget("gemini-target", "gemini", "gemini-model", "gemini");
         var grok = new LlmProviderRouter.ModelTarget("grok-target", "grok", "grok-model", "grok");
@@ -135,6 +190,15 @@ class LlmExecutionServiceTest {
                 return generator.generate(request);
             }
         };
+    }
+
+    private static AiProviderProperties.TargetConfig targetConfig(
+            String provider, String model, String quotaGroup) {
+        var config = new AiProviderProperties.TargetConfig();
+        config.setProvider(provider);
+        config.setModel(model);
+        config.setQuotaGroup(quotaGroup);
+        return config;
     }
 
     private static CanonicalLlmRequest request() {

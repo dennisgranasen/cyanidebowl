@@ -194,6 +194,10 @@ public class AiAutonomousWorkQueue {
         return mongoTemplate.find(query, AiAutonomousWorkItem.class);
     }
 
+    public Optional<AiAutonomousWorkItem> find(String candidateKey) {
+        return Optional.ofNullable(mongoTemplate.findById(candidateKey, AiAutonomousWorkItem.class));
+    }
+
     public boolean reprioritize(String candidateKey, int priorityRank) {
         if (priorityRank < 0 || priorityRank > 1000) throw new IllegalArgumentException("priority must be 0..1000");
         Query query = new Query(Criteria.where("_id").is(candidateKey).and("status").in(AiAutonomousWorkItem.Status.QUEUED, AiAutonomousWorkItem.Status.RETRY_WAIT));

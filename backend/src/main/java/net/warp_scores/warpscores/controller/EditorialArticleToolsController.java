@@ -79,6 +79,11 @@ public class EditorialArticleToolsController {
     public List<EditorialArticleAiService.Reporter> reporters(Authentication auth, @RequestParam(required = false) String leagueSystemId) {
         return ai.reporters(auth, leagueSystemId);
     }
+    @GetMapping("/model-overrides")
+    public List<EditorialArticleAiService.ModelOverride> modelOverrides(
+            Authentication auth, @RequestParam(required = false) String leagueSystemId) {
+        return ai.availableModelOverrides(auth, leagueSystemId);
+    }
     @GetMapping("/policy")
     public EditorialArticleAiService.Policy policy(Authentication auth, @RequestParam(required = false) String leagueSystemId) {
         return ai.policy(auth, leagueSystemId);
