@@ -29,6 +29,8 @@ class AiCommunityMediaWorkerTest {
         when(profiles.findById("fan")).thenReturn(Optional.of(profile));
         var request = request(); request.setApprovalRequired(true); request.setRequestedProvider("openai");
         request.setActiveKey("fan:AVATAR");
+        when(renderer.selection(AiCommunityMediaGenerationRequest.Target.AVATAR, "openai", false))
+                .thenReturn(new AiCommunityImageRenderer.ProviderSelection("openai", "image-model"));
         when(renderer.render("prompt", request.getTarget(), "openai")).thenReturn(
                 new AiCommunityImageRenderer.RenderedImage(new byte[]{1}, "image/png", "png", "openai", "image-model"));
         when(assets.save(eq("fan"), eq("AVATAR"), eq("png"), any())).thenReturn(
@@ -128,6 +130,8 @@ class AiCommunityMediaWorkerTest {
         when(profiles.findById("fan")).thenReturn(Optional.of(profile));
 
         AiCommunityMediaGenerationRequest request = request();
+        when(renderer.selection(AiCommunityMediaGenerationRequest.Target.AVATAR, null, false))
+                .thenReturn(new AiCommunityImageRenderer.ProviderSelection("cloudflare", "model"));
         when(renderer.render("prompt", AiCommunityMediaGenerationRequest.Target.AVATAR))
                 .thenReturn(new AiCommunityImageRenderer.RenderedImage(
                         new byte[] {1}, "image/png", "png", "openai", "model"));
@@ -161,6 +165,8 @@ class AiCommunityMediaWorkerTest {
                 .thenReturn("file:///data/community-media/avatar.png");
         var request = request();
         request.setTarget(AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE);
+        when(renderer.selection(AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE, null, true))
+                .thenReturn(new AiCommunityImageRenderer.ProviderSelection("cloudflare", "flux-2"));
         when(renderer.renderWithReferences("prompt", AiCommunityMediaGenerationRequest.Target.PROFILE_IMAGE,
                 List.of("file:///data/community-media/avatar.png"))).thenReturn(
                 new AiCommunityImageRenderer.RenderedImage(new byte[]{1}, "image/png", "png", "cloudflare", "flux-2"));
