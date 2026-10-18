@@ -197,8 +197,22 @@ function ArticleEditorPage() {
             const confirmGlobal = autoAccept && articleIsGlobal(links);
             if (confirmGlobal && !confirmPublication()) return;
             run(async () => {
-              const article = await Api.generateArticle({ reporterId, brief, article: payload('DRAFT', confirmGlobal) }, token);
-              navigate(`/editor/articles/${article.id}`);
+              let job = await Api.generateArticle({ reporterId, brief, article: payload('DRAFT', confirmGlobal) }, token);
+              setNotice(t('news.articleQueued'));
+              while (job.status === 'QUEUED' || job.status === 'RUNNING') {
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                job = await Api.articleGenerationRequest(job.id, token);
+                if (job.status === 'QUEUED' || job.status === 'RUNNING') {
+                  setNotice(job.estimatedStartAt
+                    ? `${t('news.articleQueued')} ${t('news.expectedStart')}: ${new Date(job.estimatedStartAt).toLocaleString()}`
+                    : t('news.articleQueued'));
+                }
+              }
+              if (job.status === 'FAILED') {
+                throw new Error(`${t('news.articleGenerationFailed')}${job.error ? `: ${job.error}` : ''}`);
+              }
+              if (!job.articleId) throw new Error(t('news.articleGenerationFailed'));
+              navigate(`/editor/articles/${job.articleId}`);
             });
           }}>{t('news.generateArticle')}</Button>
           <Checkbox mt={3} display="block" isChecked={autoAccept} isDisabled={busy} onChange={e => {

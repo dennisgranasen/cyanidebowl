@@ -15,6 +15,26 @@
       }
     },
     {
+      "type": "debugpy",
+      "name": "PyBB3 Service (Debug)",
+      "request": "launch",
+      "python": "${workspaceFolder}/pybb3-service/.venv/Scripts/python.exe",
+      "module": "uvicorn",
+      "args": [
+        "app.main:app",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8001"
+      ],
+      "cwd": "${workspaceFolder}/pybb3-service",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYBB3_CREDENTIAL_DIRECTORY": "${workspaceFolder}/data/pybb3-credentials"
+      },
+      "justMyCode": true
+    },
+    {
     "type": "node-terminal",
     "name": "Frontend",
     "request": "launch",

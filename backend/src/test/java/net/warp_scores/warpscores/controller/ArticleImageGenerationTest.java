@@ -57,7 +57,7 @@ class ArticleImageGenerationTest {
         var permissions = mock(UserPermissionService.class);
         var request = new EditorialImageRequest(); request.setId("request"); request.setStatus(EditorialImageRequest.Status.COMMISSIONED); request.setPhotographerId("selma-vattenfarg");
         when(requests.create(anyString(), anyString(), anyString(), anyList(), anyList(), anyBoolean())).thenReturn(request);
-        var controller = new EditorialArticleToolsController(ai, matches, new ObjectMapper(), assets, providers, photographers, new ArticleImagePromptService(llm), subjects(), imageSubjects(), requests, permissions);
+        var controller = new EditorialArticleToolsController(ai, mock(EditorialArticleGenerationQueue.class), matches, new ObjectMapper(), assets, providers, photographers, new ArticleImagePromptService(llm), subjects(), imageSubjects(), requests, permissions);
         var input = new EditorialArticleToolsController.ImageInput(List.of(), "A newspaper illustration", "Title", "The coach's written text", "match", "reporter", "selma-vattenfarg");
         var first = controller.image(auth, input);
         assertEquals("COMMISSIONED", first.get("status"));
@@ -87,7 +87,7 @@ class ArticleImageGenerationTest {
                         var request = new EditorialImageRequest(); request.setId("request"); request.setStatus(EditorialImageRequest.Status.COMMISSIONED);
                         request.setPhotographerId(invocation.getArgument(1)); return request;
                 });
-        var controller = new EditorialArticleToolsController(mock(EditorialArticleAiService.class), matches,
+        var controller = new EditorialArticleToolsController(mock(EditorialArticleAiService.class), mock(EditorialArticleGenerationQueue.class), matches,
                 new ObjectMapper(), assets, providers, photographers, new ArticleImagePromptService(mock(LlmExecutionService.class)), subjects(), imageSubjects(), requests, permissions);
         for (var id : List.of("pip-kritsmula", "siv-slutartid")) {
             var result = controller.image(auth, new EditorialArticleToolsController.ImageInput(List.of(), "A library opening", "Community news", "Fans meet the librarian", null, null, id));
@@ -120,7 +120,7 @@ class ArticleImageGenerationTest {
         when(permissions.canEditLeagueSystem(any(), isNull())).thenReturn(true);
         var request = new EditorialImageRequest(); request.setId("request"); request.setStatus(EditorialImageRequest.Status.COMMISSIONED); request.setPhotographerId("pip-kritsmula");
         when(requests.create(anyString(), anyString(), anyString(), anyList(), anyList(), anyBoolean())).thenReturn(request);
-        var controller = new EditorialArticleToolsController(mock(EditorialArticleAiService.class), mock(MatchArticleService.class),
+        var controller = new EditorialArticleToolsController(mock(EditorialArticleAiService.class), mock(EditorialArticleGenerationQueue.class), mock(MatchArticleService.class),
                 new ObjectMapper(), assets, providers, photographers, new ArticleImagePromptService(llm), subjects(), metadata, requests, permissions);
         var links = List.of(new net.warp_scores.warpscores.model.Article.Association(net.warp_scores.warpscores.model.Article.LinkType.STAR_PLAYER, "Morg_'n'_Thorg"));
         var result = controller.image(auth, new EditorialArticleToolsController.ImageInput(links, "Bathing in a fountain", "", "", null, null, "pip-kritsmula"));

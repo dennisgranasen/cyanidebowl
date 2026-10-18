@@ -50,6 +50,8 @@ const countdown = (value, nowMs) => {
   return `${seconds}s`;
 };
 
+const PAGE_SIZE = 10;
+
 function AdminAiAutonomousWorkPage() {
   const {
     authenticationReady,
@@ -62,6 +64,7 @@ function AdminAiAutonomousWorkPage() {
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [queuePages, setQueuePages] = useState({});
   const loadInProgress = useRef(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
 
@@ -129,9 +132,34 @@ function AdminAiAutonomousWorkPage() {
   const mediaQueue = overview?.mediaQueue || {};
   const autonomousJobs = queue.pendingJobs || [];
   const replayQueue = overview?.replayAnalysisQueue || {};
-  const modelJobs = executionQueues.reduce((sum, qs) => sum + (qs.jobs?.length || 0), 0);
+  const modelJobs = executionQueues.reduce(
+    (sum, qs) => sum + (qs.queued || 0) + (qs.running || 0) + (qs.retryWaiting || 0),
+    0
+  );
   const autonomousOutstanding = (queue.queued || 0) + (queue.running || 0) + (queue.retryWaiting || 0);
   const mediaOutstanding = (mediaQueue.queued || 0) + (mediaQueue.running || 0);
+  const articleGenerationQueue = overview?.articleGenerationQueue || {};
+  const articleGenerationJobs = articleGenerationQueue.jobs || [];
+  const editorialImageJobs = overview?.editorialImageQueue || [];
+
+  const paginate = (key, jobs) => {
+    const pageCount = Math.max(1, Math.ceil(jobs.length / PAGE_SIZE));
+    const page = Math.min(queuePages[key] || 1, pageCount);
+    const start = (page - 1) * PAGE_SIZE;
+    return { page, pageCount, start, jobs: jobs.slice(start, start + PAGE_SIZE) };
+  };
+  const pager = (key, jobs, page) => (
+    <HStack justify="space-between" py={2} fontSize="sm">
+      <Text color="gray.500">
+        {jobs.length ? `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, jobs.length)} of ${jobs.length}` : '0 jobs'}
+      </Text>
+      <HStack>
+        <Button size="xs" isDisabled={page <= 1} onClick={() => setQueuePages(old => ({ ...old, [key]: page - 1 }))}>Previous</Button>
+        <Text>{page} / {Math.max(1, Math.ceil(jobs.length / PAGE_SIZE))}</Text>
+        <Button size="xs" isDisabled={page >= Math.ceil(jobs.length / PAGE_SIZE)} onClick={() => setQueuePages(old => ({ ...old, [key]: page + 1 }))}>Next</Button>
+      </HStack>
+    </HStack>
+  );
 
   const mutateQueue = async (action) => {
     setSaving(true); setError(null);
@@ -157,6 +185,10 @@ function AdminAiAutonomousWorkPage() {
       : Math.max(0, Math.min(current - 1, adjacent - 1));
     mutateQueue(() => action(next));
   };
+  const autonomousPage = paginate('autonomous', autonomousJobs);
+  const articleGenerationPage = paginate('article-generation', articleGenerationJobs);
+  const editorialImagePage = paginate('editorial-images', editorialImageJobs);
+  const mediaPage = paginate('community-media', mediaQueue.jobs || []);
 
   return (
     <Box p={{ base: 3, md: 6 }}>
@@ -243,13 +275,174 @@ function AdminAiAutonomousWorkPage() {
           </Box>
 
           <Box>
-            <HStack justify="space-between" mb={2}><Heading size="md">Autonomous queue jobs</Heading><Button size="xs" colorScheme="red" variant="outline" isDisabled={!autonomousJobs.length || saving} onClick={() => clearPrompt('autonomous queue', autonomousJobs.length, () => AiReporterApi.clearAiQueue('queue/jobs', getAccessTokenSilently, getAccessTokenWithPopup))}>Clear queue</Button></HStack>
-            {autonomousJobs.length === 0 ? <Text color="gray.500">No pending jobs.</Text> : <Box borderWidth="1px" borderRadius="lg" overflowX="auto"><Table size="sm"><Thead><Tr><Th>Job</Th><Th>Kind</Th><Th>Agent</Th><Th isNumeric>Priority</Th><Th>Status</Th><Th>Actions</Th></Tr></Thead><Tbody>{autonomousJobs.map((job, index) => <Tr key={job.candidateKey}><Td fontSize="xs">{job.candidateKey}</Td><Td>{job.kind || job.handlerKey}</Td><Td>{job.actorId || '—'}</Td><Td isNumeric>{job.priorityRank}</Td><Td>{job.status}</Td><Td><HStack><Button size="xs" isDisabled={index===0||saving} onClick={() => movePriority(autonomousJobs,index,-1,j=>j.priorityRank,1000,(priority)=>AiReporterApi.reprioritizeAiQueueJob(`queue/jobs/${encodeURIComponent(job.candidateKey)}`,priority,getAccessTokenSilently,getAccessTokenWithPopup))}>↑</Button><Button size="xs" isDisabled={index===autonomousJobs.length-1||saving} onClick={() => movePriority(autonomousJobs,index,1,j=>j.priorityRank,1000,(priority)=>AiReporterApi.reprioritizeAiQueueJob(`queue/jobs/${encodeURIComponent(job.candidateKey)}`,priority,getAccessTokenSilently,getAccessTokenWithPopup))}>↓</Button><Button size="xs" onClick={() => priorityPrompt(job.candidateKey, job.priorityRank, (priority) => AiReporterApi.reprioritizeAiQueueJob(`queue/jobs/${encodeURIComponent(job.candidateKey)}`, priority, getAccessTokenSilently, getAccessTokenWithPopup), 1000)}>Priority</Button><Button size="xs" colorScheme="red" variant="outline" onClick={() => removePrompt(job.candidateKey, () => AiReporterApi.deleteAiQueueJob(`queue/jobs/${encodeURIComponent(job.candidateKey)}`, getAccessTokenSilently, getAccessTokenWithPopup))}>Remove</Button></HStack></Td></Tr>)}</Tbody></Table></Box>}
+            <HStack justify="space-between" mb={2}>
+              <Heading size="md">Autonomous queue jobs</Heading>
+              <Button size="xs" colorScheme="red" variant="outline" isDisabled={!autonomousJobs.length || saving}
+                onClick={() => clearPrompt('autonomous queue', autonomousJobs.length,
+                  () => AiReporterApi.clearAiQueue('queue/jobs', getAccessTokenSilently, getAccessTokenWithPopup))}>
+                Clear queue
+              </Button>
+            </HStack>
+            {pager('autonomous', autonomousJobs, autonomousPage.page)}
+            <Box borderWidth="1px" borderRadius="lg" overflowX="auto" maxH="440px" overflowY="auto">
+              <Table size="sm">
+                <Thead><Tr><Th>Job</Th><Th>Kind</Th><Th>Agent</Th><Th isNumeric>Priority</Th><Th>Status</Th><Th>Actions</Th></Tr></Thead>
+                <Tbody>{autonomousPage.jobs.map((job, index) => {
+                  const position = autonomousPage.start + index;
+                  return <Tr key={job.candidateKey}>
+                    <Td fontSize="xs">{job.candidateKey}</Td><Td>{job.kind || job.handlerKey}</Td>
+                    <Td>{job.actorId || '—'}</Td><Td isNumeric>{job.priorityRank}</Td><Td>{job.status}</Td>
+                    <Td><HStack>
+                      <Button size="xs" isDisabled={position === 0 || saving}
+                        onClick={() => movePriority(autonomousJobs, position, -1, j => j.priorityRank, 1000,
+                          priority => AiReporterApi.reprioritizeAiQueueJob(`queue/jobs/${encodeURIComponent(job.candidateKey)}`, priority, getAccessTokenSilently, getAccessTokenWithPopup))}>↑</Button>
+                      <Button size="xs" isDisabled={position === autonomousJobs.length - 1 || saving}
+                        onClick={() => movePriority(autonomousJobs, position, 1, j => j.priorityRank, 1000,
+                          priority => AiReporterApi.reprioritizeAiQueueJob(`queue/jobs/${encodeURIComponent(job.candidateKey)}`, priority, getAccessTokenSilently, getAccessTokenWithPopup))}>↓</Button>
+                      <Button size="xs" onClick={() => priorityPrompt(job.candidateKey, job.priorityRank,
+                        priority => AiReporterApi.reprioritizeAiQueueJob(`queue/jobs/${encodeURIComponent(job.candidateKey)}`, priority, getAccessTokenSilently, getAccessTokenWithPopup), 1000)}>Priority</Button>
+                      <Button size="xs" colorScheme="red" variant="outline" onClick={() => removePrompt(job.candidateKey,
+                        () => AiReporterApi.deleteAiQueueJob(`queue/jobs/${encodeURIComponent(job.candidateKey)}`, getAccessTokenSilently, getAccessTokenWithPopup))}>Remove</Button>
+                    </HStack></Td>
+                  </Tr>;
+                })}</Tbody>
+              </Table>
+            </Box>
+          </Box>
+
+          <Box borderWidth="1px" borderRadius="lg" p={3}>
+            <HStack justify="space-between">
+              <Box>
+                <Heading size="md">Editorial article generation queue</Heading>
+                <Text fontSize="xs" color="gray.500">
+                  queued {articleGenerationQueue.queued ?? 0} · running {articleGenerationQueue.running ?? 0}
+                  {' · '}completed {articleGenerationQueue.completed ?? 0} · failed {articleGenerationQueue.failed ?? 0}
+                </Text>
+              </Box>
+            </HStack>
+            {pager('article-generation', articleGenerationJobs, articleGenerationPage.page)}
+            <Box borderWidth="1px" borderRadius="lg" overflowX="auto" maxH="440px" overflowY="auto">
+              <Table size="sm">
+                <Thead><Tr><Th>Request</Th><Th isNumeric>Priority</Th><Th>Status</Th><Th>Created</Th><Th>Expected start</Th><Th>Error</Th><Th>Actions</Th></Tr></Thead>
+                <Tbody>{articleGenerationPage.jobs.map(job => (
+                  <Tr key={job.id}>
+                    <Td fontSize="xs">{job.id}</Td><Td isNumeric>{job.priority}</Td>
+                    <Td color={job.status === 'FAILED' ? 'red.300' : undefined}>{job.status}</Td>
+                    <Td whiteSpace="nowrap">{when(job.createdAt)}</Td>
+                    <Td whiteSpace="nowrap">{job.status === 'RUNNING' ? `running since ${when(job.startedAt)}` : when(job.estimatedStartAt)}</Td>
+                    <Td fontSize="xs" color="red.300">{job.error || '—'}</Td>
+                    <Td><HStack>
+                      <Button size="xs" isDisabled={job.status !== 'QUEUED' || saving}
+                        onClick={() => priorityPrompt(job.id, job.priority,
+                          priority => AiReporterApi.reprioritizeAiQueueJob(`article-generation/jobs/${encodeURIComponent(job.id)}`, priority, getAccessTokenSilently, getAccessTokenWithPopup))}>Priority</Button>
+                      <Button size="xs" colorScheme="red" variant="outline" isDisabled={job.status === 'RUNNING' || saving}
+                        onClick={() => removePrompt(job.id,
+                          () => AiReporterApi.deleteAiQueueJob(`article-generation/jobs/${encodeURIComponent(job.id)}`, getAccessTokenSilently, getAccessTokenWithPopup))}>Remove</Button>
+                    </HStack></Td>
+                  </Tr>
+                ))}</Tbody>
+              </Table>
+            </Box>
+          </Box>
+
+          <Box borderWidth="1px" borderRadius="lg" p={3}>
+            <HStack justify="space-between">
+              <Box>
+                <Heading size="md">Editorial image generation queue</Heading>
+                <Text fontSize="xs" color="gray.500">
+                  queued {editorialImageJobs.filter(job => job.status === 'DEVELOPING').length}
+                  {' · '}running {editorialImageJobs.filter(job => job.status === 'RUNNING').length}
+                  {' · '}failed {editorialImageJobs.filter(job => job.status === 'FAILED').length}
+                </Text>
+              </Box>
+            </HStack>
+            {pager('editorial-images', editorialImageJobs, editorialImagePage.page)}
+            <Box borderWidth="1px" borderRadius="lg" overflowX="auto" maxH="440px" overflowY="auto">
+              <Table size="sm">
+                <Thead><Tr><Th>Request</Th><Th>Photographer</Th><Th isNumeric>Priority</Th><Th>Status</Th><Th>Created</Th><Th>Expected start</Th><Th>Attempts</Th><Th>Error</Th><Th>Actions</Th></Tr></Thead>
+                <Tbody>{editorialImagePage.jobs.map((job, index) => {
+                  const position = editorialImagePage.start + index;
+                  const queuedBefore = editorialImageJobs.slice(0, position)
+                    .filter(previous => previous.status === 'DEVELOPING').length;
+                  const expectedStart = job.status === 'DEVELOPING'
+                    ? new Date(nowMs + (editorialImageJobs.some(previous => previous.status === 'RUNNING') ? 60 : 0) * 1000
+                      + queuedBefore * 60000).toLocaleString()
+                    : job.status === 'RUNNING' ? `running since ${when(job.startedAt)}` : '—';
+                  return <Tr key={job.id}>
+                    <Td fontSize="xs">{job.id}</Td><Td>{job.photographerId || '—'}</Td>
+                    <Td isNumeric>{job.priority}</Td>
+                    <Td color={job.status === 'FAILED' ? 'red.300' : undefined}>{job.status}</Td>
+                    <Td whiteSpace="nowrap">{when(job.createdAt)}</Td><Td whiteSpace="nowrap">{expectedStart}</Td>
+                    <Td>{job.attempts}</Td><Td fontSize="xs" color="red.300">{job.error || '—'}</Td>
+                    <Td><HStack>
+                      <Button size="xs" isDisabled={!['DEVELOPING', 'COMMISSIONED'].includes(job.status) || saving}
+                        onClick={() => priorityPrompt(job.id, job.priority,
+                          priority => AiReporterApi.reprioritizeAiQueueJob(`editorial-images/jobs/${encodeURIComponent(job.id)}`, priority, getAccessTokenSilently, getAccessTokenWithPopup))}>Priority</Button>
+                      <Button size="xs" colorScheme="red" variant="outline" isDisabled={job.status === 'RUNNING' || saving}
+                        onClick={() => removePrompt(job.id,
+                          () => AiReporterApi.deleteAiQueueJob(`editorial-images/jobs/${encodeURIComponent(job.id)}`, getAccessTokenSilently, getAccessTokenWithPopup))}>Remove</Button>
+                    </HStack></Td>
+                  </Tr>;
+                })}</Tbody>
+              </Table>
+            </Box>
           </Box>
 
           <Box>
             <Heading size="md" mb={2}>AI quota queues</Heading>
-            <VStack align="stretch" spacing={4}>{executionQueues.map((qs) => <Box key={qs.target} borderWidth="1px" borderRadius="lg" p={3}><HStack justify="space-between" align="start"><Box><Text fontWeight="700">{qs.quotaGroup || qs.target} · {qs.jobs?.length || 0} jobs</Text><Text fontSize="xs" color="gray.500">{qs.provider || "—"} · {qs.model || "—"}{qs.targets?.length ? ` · targets ${qs.targets.join(", ")}` : ""}</Text><Text fontSize="xs" color="gray.500">queued {qs.queued ?? 0} · running {qs.running ?? 0}/{qs.concurrency ?? 0} · retry {qs.retryWaiting ?? 0} · completed 1h/24h {qs.completedLastHour ?? 0}/{qs.completedLast24Hours ?? 0} · avg {qs.averageDurationMs == null ? '—' : `${Math.round(qs.averageDurationMs/1000)}s`} · ETA {duration(qs.estimatedClearSeconds)}</Text><Text fontSize="xs" color="gray.500">Resume/next eligible: {qs.jobs?.length ? (qs.resumeAt ? when(qs.resumeAt) : 'now') : '—'} · throughput history since {when(qs.historyStartedAt)}</Text>{qs.blockedUntil && <Text fontSize="sm" fontWeight="700" color="yellow.300">Throttled · retry in {countdown(qs.blockedUntil, nowMs)} <Text as="span" fontSize="xs" fontWeight="400">({when(qs.blockedUntil)}){qs.throttleReason ? ` · ${qs.throttleReason}` : ''}</Text></Text>}{qs.lastError && <Text fontSize="xs" color="red.300">Last error{qs.lastStatusCode ? ` HTTP ${qs.lastStatusCode}` : ''}: {qs.lastError}</Text>}</Box><Button size="xs" colorScheme="red" variant="outline" isDisabled={!qs.jobs?.length || saving} onClick={() => clearPrompt(`${qs.target} queue`, qs.jobs?.length || 0, () => AiReporterApi.clearAiQueue(`execution-queues/${encodeURIComponent(qs.target)}/jobs`, getAccessTokenSilently, getAccessTokenWithPopup))}>Clear queue</Button></HStack>{qs.jobs?.length > 0 && <Box mt={3} overflowX="auto"><Table size="sm"><Thead><Tr><Th>Task</Th><Th>Target</Th><Th>Model</Th><Th>Agent</Th><Th isNumeric>Priority</Th><Th>Status</Th><Th>Attempts</Th><Th>Next attempt</Th><Th>Actions</Th></Tr></Thead><Tbody>{qs.jobs.map((job, index) => <Tr key={job.id}><Td>{job.task || '—'}</Td><Td>{job.target || '—'}</Td><Td fontSize="xs">{job.model || '—'}</Td><Td>{job.agentId || '—'}</Td><Td isNumeric>{job.priority}</Td><Td>{job.status}</Td><Td>{job.attempts}</Td><Td>{job.nextAttemptAt ? new Date(job.nextAttemptAt).toLocaleString() : '—'}</Td><Td><HStack><Button size="xs" isDisabled={index===0||job.status==='RUNNING'||saving} onClick={() => movePriority(qs.jobs,index,-1,j=>j.priority,100,(priority)=>AiReporterApi.reprioritizeAiQueueJob(`execution-queues/${encodeURIComponent(qs.target)}/jobs/${encodeURIComponent(job.id)}`,priority,getAccessTokenSilently,getAccessTokenWithPopup))}>↑</Button><Button size="xs" isDisabled={index===qs.jobs.length-1||job.status==='RUNNING'||saving} onClick={() => movePriority(qs.jobs,index,1,j=>j.priority,100,(priority)=>AiReporterApi.reprioritizeAiQueueJob(`execution-queues/${encodeURIComponent(qs.target)}/jobs/${encodeURIComponent(job.id)}`,priority,getAccessTokenSilently,getAccessTokenWithPopup))}>↓</Button><Button size="xs" isDisabled={job.status==='RUNNING'} onClick={() => priorityPrompt(`${job.task}/${job.agentId}`, job.priority, (priority) => AiReporterApi.reprioritizeAiQueueJob(`execution-queues/${encodeURIComponent(qs.target)}/jobs/${encodeURIComponent(job.id)}`, priority, getAccessTokenSilently, getAccessTokenWithPopup))}>Priority</Button><Button size="xs" colorScheme="red" variant="outline" isDisabled={job.status==='RUNNING'} onClick={() => removePrompt(`${job.task}/${job.agentId}`, () => AiReporterApi.deleteAiQueueJob(`execution-queues/${encodeURIComponent(qs.target)}/jobs/${encodeURIComponent(job.id)}`, getAccessTokenSilently, getAccessTokenWithPopup))}>Remove</Button></HStack></Td></Tr>)}</Tbody></Table></Box>}</Box>)}</VStack>
+            {executionQueues.length === 0 ? <Text color="gray.500">No configured AI quota queues.</Text> : (
+              <VStack align="stretch" spacing={4}>
+                {executionQueues.map(qs => {
+                  const jobs = qs.jobs || [];
+                  const key = `execution:${qs.quotaGroup || qs.target}`;
+                  const page = paginate(key, jobs);
+                  return <Box key={qs.target} borderWidth="1px" borderRadius="lg" p={3}>
+                    <HStack justify="space-between" align="start">
+                      <Box>
+                        <Text fontWeight="700">{qs.quotaGroup || qs.target} · {jobs.length} jobs</Text>
+                        <Text fontSize="xs" color="gray.500">{qs.provider || '—'} · {qs.model || '—'}{qs.targets?.length ? ` · targets ${qs.targets.join(', ')}` : ''}</Text>
+                        <Text fontSize="xs" color="gray.500">queued {qs.queued ?? 0} · running {qs.running ?? 0}/{qs.concurrency ?? 0} · retry {qs.retryWaiting ?? 0} · completed 1h/24h {qs.completedLastHour ?? 0}/{qs.completedLast24Hours ?? 0} · ETA {duration(qs.estimatedClearSeconds)}</Text>
+                        {qs.blockedUntil && <Text fontSize="sm" fontWeight="700" color="yellow.300">Throttled · next attempt {when(qs.blockedUntil)}</Text>}
+                        {qs.lastError && <Text fontSize="xs" color="red.300">Last error{qs.lastStatusCode ? ` HTTP ${qs.lastStatusCode}` : ''}: {qs.lastError}</Text>}
+                      </Box>
+                      <Button size="xs" colorScheme="red" variant="outline" isDisabled={!jobs.length || saving}
+                        onClick={() => clearPrompt(`${qs.target} queue`, jobs.length,
+                          () => AiReporterApi.clearAiQueue(`execution-queues/${encodeURIComponent(qs.target)}/jobs`, getAccessTokenSilently, getAccessTokenWithPopup))}>Clear queue</Button>
+                    </HStack>
+                    {pager(key, jobs, page.page)}
+                    <Box borderWidth="1px" borderRadius="lg" overflowX="auto" maxH="440px" overflowY="auto">
+                      <Table size="sm">
+                        <Thead><Tr><Th>Task</Th><Th>Target</Th><Th>Model</Th><Th>Agent</Th><Th isNumeric>Priority</Th><Th>Status</Th><Th>Attempts</Th><Th>Next attempt</Th><Th>Actions</Th></Tr></Thead>
+                        <Tbody>{page.jobs.map((job, index) => {
+                          const position = page.start + index;
+                          const path = `execution-queues/${encodeURIComponent(qs.target)}/jobs/${encodeURIComponent(job.id)}`;
+                          return <Tr key={job.id}>
+                            <Td>{job.task || '—'}</Td><Td>{job.target || '—'}</Td><Td fontSize="xs">{job.model || '—'}</Td>
+                            <Td>{job.agentId || '—'}</Td><Td isNumeric>{job.priority}</Td>
+                            <Td color={job.status === 'FAILED' ? 'red.300' : undefined}>{job.status}</Td>
+                            <Td>{job.attempts}</Td><Td>{when(job.nextAttemptAt)}</Td>
+                            <Td><HStack>
+                              <Button size="xs" isDisabled={position === 0 || ['RUNNING', 'FAILED'].includes(job.status) || saving}
+                                onClick={() => movePriority(jobs, position, -1, j => j.priority, 100,
+                                  priority => AiReporterApi.reprioritizeAiQueueJob(path, priority, getAccessTokenSilently, getAccessTokenWithPopup))}>↑</Button>
+                              <Button size="xs" isDisabled={position === jobs.length - 1 || ['RUNNING', 'FAILED'].includes(job.status) || saving}
+                                onClick={() => movePriority(jobs, position, 1, j => j.priority, 100,
+                                  priority => AiReporterApi.reprioritizeAiQueueJob(path, priority, getAccessTokenSilently, getAccessTokenWithPopup))}>↓</Button>
+                              <Button size="xs" isDisabled={['RUNNING', 'FAILED'].includes(job.status)}
+                                onClick={() => priorityPrompt(`${job.task}/${job.agentId}`, job.priority,
+                                  priority => AiReporterApi.reprioritizeAiQueueJob(path, priority, getAccessTokenSilently, getAccessTokenWithPopup))}>Priority</Button>
+                              <Button size="xs" colorScheme="red" variant="outline" isDisabled={job.status === 'RUNNING'}
+                                onClick={() => removePrompt(`${job.task}/${job.agentId}`,
+                                  () => AiReporterApi.deleteAiQueueJob(path, getAccessTokenSilently, getAccessTokenWithPopup))}>Remove</Button>
+                            </HStack></Td>
+                          </Tr>;
+                        })}</Tbody>
+                      </Table>
+                    </Box>
+                  </Box>;
+                })}
+              </VStack>
+            )}
           </Box>
 
           <Box>
@@ -267,7 +460,36 @@ function AdminAiAutonomousWorkPage() {
                 </Text>
               </Box>
             )}
-            {mediaQueue.jobs?.length > 0 && <Box mt={2} borderWidth="1px" borderRadius="lg" overflowX="auto"><Table size="sm"><Thead><Tr><Th>Character</Th><Th>Type</Th><Th>Status</Th><Th>Registered</Th><Th>Provider</Th><Th isNumeric>Priority</Th><Th>Attempts</Th><Th>Next attempt</Th><Th>Error</Th><Th>Actions</Th></Tr></Thead><Tbody>{mediaQueue.jobs.map((job, index) => <Tr key={job.id}><Td><Text>{job.fanName || 'Deleted / unknown character'}</Text><Text fontSize="xs" color="gray.500">{job.fanProfileId || job.id}</Text></Td><Td>{job.target}</Td><Td><Text color={job.status === 'RUNNING' ? 'blue.300' : 'yellow.300'}>{job.status}</Text></Td><Td>{job.createdAt ? new Date(job.createdAt).toLocaleString() : '—'}</Td><Td fontSize="xs">{job.provider || job.requestedProvider || 'Cloudflare (automatic)'}{job.model ? ` · ${job.model}` : ''}</Td><Td isNumeric>{job.priority ?? 0}</Td><Td>{job.attempts ?? 0}</Td><Td>{job.nextAttemptAt ? new Date(job.nextAttemptAt).toLocaleString() : '—'}</Td><Td fontSize="xs">{job.error || '—'}</Td><Td><HStack><Button size="xs" isDisabled={index===0||saving} onClick={() => movePriority(mediaQueue.jobs,index,-1,j=>j.priority??0,100,(priority)=>AiReporterApi.reprioritizeAiQueueJob(`media-queue/jobs/${encodeURIComponent(job.id)}`,priority,getAccessTokenSilently,getAccessTokenWithPopup))}>↑</Button><Button size="xs" isDisabled={index===mediaQueue.jobs.length-1||saving} onClick={() => movePriority(mediaQueue.jobs,index,1,j=>j.priority??0,100,(priority)=>AiReporterApi.reprioritizeAiQueueJob(`media-queue/jobs/${encodeURIComponent(job.id)}`,priority,getAccessTokenSilently,getAccessTokenWithPopup))}>↓</Button><Button size="xs" onClick={() => priorityPrompt(job.id, job.priority ?? 0, (priority) => AiReporterApi.reprioritizeAiQueueJob(`media-queue/jobs/${encodeURIComponent(job.id)}`, priority, getAccessTokenSilently, getAccessTokenWithPopup))}>Priority</Button><Button size="xs" colorScheme="red" variant="outline" onClick={() => removePrompt(job.id, () => AiReporterApi.deleteAiQueueJob(`media-queue/jobs/${encodeURIComponent(job.id)}`, getAccessTokenSilently, getAccessTokenWithPopup))}>Remove</Button></HStack></Td></Tr>)}</Tbody></Table></Box>}
+            {pager('community-media', mediaQueue.jobs || [], mediaPage.page)}
+            <Box mt={2} borderWidth="1px" borderRadius="lg" overflowX="auto" maxH="440px" overflowY="auto">
+              <Table size="sm">
+                <Thead><Tr><Th>Character</Th><Th>Type</Th><Th>Status</Th><Th>Registered</Th><Th>Provider</Th><Th isNumeric>Priority</Th><Th>Attempts</Th><Th>Next attempt</Th><Th>Error</Th><Th>Actions</Th></Tr></Thead>
+                <Tbody>{mediaPage.jobs.map((job, index) => {
+                  const position = mediaPage.start + index;
+                  const path = `media-queue/jobs/${encodeURIComponent(job.id)}`;
+                  return <Tr key={job.id}>
+                    <Td><Text>{job.fanName || 'Deleted / unknown character'}</Text><Text fontSize="xs" color="gray.500">{job.fanProfileId || job.id}</Text></Td>
+                    <Td>{job.target}</Td><Td color={job.status === 'FAILED' ? 'red.300' : undefined}>{job.status}</Td>
+                    <Td>{when(job.createdAt)}</Td><Td fontSize="xs">{job.provider || job.requestedProvider || 'Cloudflare (automatic)'}{job.model ? ` · ${job.model}` : ''}</Td>
+                    <Td isNumeric>{job.priority ?? 0}</Td><Td>{job.attempts ?? 0}</Td><Td>{when(job.nextAttemptAt)}</Td><Td fontSize="xs" color="red.300">{job.error || '—'}</Td>
+                    <Td><HStack>
+                      <Button size="xs" isDisabled={position === 0 || ['RUNNING', 'FAILED'].includes(job.status) || saving}
+                        onClick={() => movePriority(mediaQueue.jobs, position, -1, j => j.priority ?? 0, 100,
+                          priority => AiReporterApi.reprioritizeAiQueueJob(path, priority, getAccessTokenSilently, getAccessTokenWithPopup))}>↑</Button>
+                      <Button size="xs" isDisabled={position === mediaQueue.jobs.length - 1 || ['RUNNING', 'FAILED'].includes(job.status) || saving}
+                        onClick={() => movePriority(mediaQueue.jobs, position, 1, j => j.priority ?? 0, 100,
+                          priority => AiReporterApi.reprioritizeAiQueueJob(path, priority, getAccessTokenSilently, getAccessTokenWithPopup))}>↓</Button>
+                      <Button size="xs" isDisabled={['RUNNING', 'FAILED'].includes(job.status)}
+                        onClick={() => priorityPrompt(job.id, job.priority ?? 0,
+                          priority => AiReporterApi.reprioritizeAiQueueJob(path, priority, getAccessTokenSilently, getAccessTokenWithPopup))}>Priority</Button>
+                      <Button size="xs" colorScheme="red" variant="outline" isDisabled={job.status === 'RUNNING'}
+                        onClick={() => removePrompt(job.id,
+                          () => AiReporterApi.deleteAiQueueJob(path, getAccessTokenSilently, getAccessTokenWithPopup))}>Remove</Button>
+                    </HStack></Td>
+                  </Tr>;
+                })}</Tbody>
+              </Table>
+            </Box>
             {mediaQueue.recentFailures?.length > 0 && <Box mt={4}><Heading size="sm" mb={2} color="red.300">Recent failed community-media jobs</Heading><Box borderWidth="1px" borderColor="red.700" borderRadius="lg" overflowX="auto"><Table size="sm"><Thead><Tr><Th>Character</Th><Th>Type</Th><Th>Registered</Th><Th>Failed</Th><Th>Attempts</Th><Th>Error</Th></Tr></Thead><Tbody>{mediaQueue.recentFailures.map(job => <Tr key={job.id}><Td><Text>{job.fanName || 'Deleted / unknown character'}</Text><Text fontSize="xs" color="gray.500">{job.fanProfileId || job.id}</Text></Td><Td>{job.target}</Td><Td>{job.createdAt ? new Date(job.createdAt).toLocaleString() : '—'}</Td><Td>{job.completedAt ? new Date(job.completedAt).toLocaleString() : '—'}</Td><Td>{job.attempts ?? 0}</Td><Td fontSize="xs" color="red.300">{job.error || 'No error message recorded'}</Td></Tr>)}</Tbody></Table></Box></Box>}
           </Box>
 

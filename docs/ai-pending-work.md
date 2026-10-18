@@ -21,9 +21,26 @@ jobs state that their handler or individual fan resolves routing. Execution queu
 also retain running calls in their job lists. Content jobs and their execution
 calls describe different levels of the same work and must not be summed.
 
-The projection does not turn direct HTTP article/image requests into durable jobs.
-Direct text calls are visible in the existing service execution queues while
-waiting/running. Direct image-provider calls do not have persisted queue records.
+Editor-requested AI articles are stored as durable jobs before generation starts.
+The request returns HTTP 202 with a job id, and the editor polls that job until
+it completes or fails; a browser timeout no longer cancels the generation request.
+These jobs use
+priority 100 by default and retain failures as inactive records until an
+administrator removes them. The original editor identity and permissions are
+rechecked when the job runs.
+
+Editorial image requests are also persisted before provider execution. Their
+priority controls the order of approved, developing requests. Failed image jobs
+remain visible and inactive until removed. The AI jobs management page shows both
+editorial queues, along with the provider execution queues, with independent
+10-job pages and fixed-height table viewports. Each row includes its current
+state, estimated start where applicable, and failure details. Start estimates
+are operational estimates (about one minute per queued job, plus the image
+worker's polling delay), not guaranteed execution times; provider cooldowns and
+ongoing calls can move them.
+
+The lower-level text-provider execution queues remain in memory; failed provider
+calls remain visible there until removed but are not retried automatically.
 Remaining fan counts represent current required work, not an immutable original
 batch size, and decrease as reconciliation saves each new profile. Unknown team
 fan counts are displayed as unknown, rather than zero.

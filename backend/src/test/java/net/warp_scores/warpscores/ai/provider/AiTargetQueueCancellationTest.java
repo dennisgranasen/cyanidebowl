@@ -10,6 +10,90 @@ import static org.mockito.Mockito.*;
 import static org.mockito.ArgumentMatchers.*;
 
 class AiTargetQueueCancellationTest {
+    @Test void higherPriorityPendingJobRunsBeforeOlderLowerPriorityJob() throws Exception {
+        var properties = new AiProviderProperties();
+        var config = new AiProviderProperties.TargetConfig();
+        config.setProvider("test");
+        config.setModel("model");
+        properties.getTargets().put("text", config);
+        var registry = mock(LlmProviderRegistry.class);
+        var provider = mock(LlmProvider.class);
+        when(registry.require("test")).thenReturn(provider);
+        when(provider.isConfigured()).thenReturn(true);
+        var entered = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        var order = new CopyOnWriteArrayList<String>();
+        when(provider.generate(any())).thenAnswer(invocation -> {
+            CanonicalLlmRequest request = invocation.getArgument(0);
+            order.add(request.taskInstruction());
+            if (request.taskInstruction().equals("running")) {
+                entered.countDown();
+                release.await();
+            }
+            return new CanonicalLlmResponse("test", "model", null, "ok", null, "stop");
+        });
+        var queues = new AiTargetExecutionQueueManager(properties, registry,
+                mock(AiGenerationTraceStore.class), mock(AiGenerationAdmissionService.class));
+        var target = new LlmProviderRouter.ModelTarget("text", "test", "model", "text");
+        var executor = Executors.newFixedThreadPool(3);
+        var context = new AssembledContext("", List.of(), Map.of(), 0, 0);
+        var running = new CanonicalLlmRequest("author", "1", ContextTaskType.EDITORIAL_ARTICLE, "model",
+                context, "running", OutputContract.text(), GenerationOptions.defaults());
+        var lower = new CanonicalLlmRequest("author", "1", ContextTaskType.EDITORIAL_ARTICLE, "model",
+                context, "lower", OutputContract.text(), GenerationOptions.defaults());
+        var higher = new CanonicalLlmRequest("author", "1", ContextTaskType.EDITORIAL_ARTICLE, "model",
+                context, "higher", OutputContract.text(), GenerationOptions.defaults());
+        try {
+            var runningResult = executor.submit(() -> queues.execute(target, "author", running, 50));
+            assertTrue(entered.await(2, TimeUnit.SECONDS));
+            var lowerResult = executor.submit(() -> queues.execute(target, "author", lower, 10));
+            var higherResult = executor.submit(() -> queues.execute(target, "author", higher, 90));
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+            while (queues.snapshots().getFirst().queued() < 2 && System.nanoTime() < deadline) {
+                Thread.sleep(5);
+            }
+            assertEquals(2, queues.snapshots().getFirst().queued());
+            release.countDown();
+            runningResult.get(2, TimeUnit.SECONDS);
+            lowerResult.get(2, TimeUnit.SECONDS);
+            higherResult.get(2, TimeUnit.SECONDS);
+            assertEquals(List.of("running", "higher", "lower"), order);
+        } finally {
+            release.countDown();
+            executor.shutdownNow();
+            queues.stop();
+        }
+    }
+
+    @Test void failedJobStaysVisibleUntilRemoved() {
+        var properties = new AiProviderProperties();
+        var config = new AiProviderProperties.TargetConfig();
+        config.setProvider("test");
+        config.setModel("model");
+        properties.getTargets().put("text", config);
+        var registry = mock(LlmProviderRegistry.class);
+        var provider = mock(LlmProvider.class);
+        when(registry.require("test")).thenReturn(provider);
+        when(provider.isConfigured()).thenReturn(true);
+        when(provider.generate(any())).thenThrow(new IllegalStateException("provider failed"));
+        var queues = new AiTargetExecutionQueueManager(properties, registry,
+                mock(AiGenerationTraceStore.class), mock(AiGenerationAdmissionService.class));
+        var target = new LlmProviderRouter.ModelTarget("text", "test", "model", "text");
+        var request = new CanonicalLlmRequest("author", "1", ContextTaskType.EDITORIAL_ARTICLE, "model",
+                new AssembledContext("", List.of(), Map.of(), 0, 0), "brief", OutputContract.text(), GenerationOptions.defaults());
+        try {
+            assertThrows(IllegalStateException.class, () -> queues.execute(target, "author", request, 50));
+            var failed = queues.snapshots().getFirst();
+            assertEquals(0, failed.queued());
+            assertEquals(1, failed.jobs().size());
+            assertEquals(AiTargetExecutionQueueManager.JobStatus.FAILED, failed.jobs().getFirst().status());
+            assertTrue(queues.remove("text", failed.jobs().getFirst().id()));
+            assertTrue(queues.snapshots().getFirst().jobs().isEmpty());
+        } finally {
+            queues.stop();
+        }
+    }
+
     @Test void waitingCallerTimesOutInsteadOfBlockingIndefinitely() throws Exception {
         var properties = new AiProviderProperties();
         var config = new AiProviderProperties.TargetConfig();

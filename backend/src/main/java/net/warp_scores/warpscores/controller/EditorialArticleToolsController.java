@@ -20,6 +20,7 @@ import java.util.Map;
 @RequestMapping("/articles/tools")
 public class EditorialArticleToolsController {
     private final EditorialArticleAiService ai;
+    private final EditorialArticleGenerationQueue articleGenerationQueue;
     private final MatchArticleService matchArticles;
     private final com.fasterxml.jackson.databind.ObjectMapper json;
     private final AiCommunityMediaAssetStore assets;
@@ -88,8 +89,14 @@ public class EditorialArticleToolsController {
         return ai.setPolicy(auth, leagueSystemId, input.autoAccept());
     }
     @PostMapping("/generate")
-    public Article generate(Authentication auth, @RequestBody EditorialArticleAiService.Request input) throws Exception {
-        return ai.generate(auth, input);
+    public org.springframework.http.ResponseEntity<EditorialArticleGenerationQueue.JobView> generate(
+            Authentication auth, @RequestBody EditorialArticleAiService.Request input) {
+        return org.springframework.http.ResponseEntity.accepted()
+                .body(articleGenerationQueue.submit(auth, input));
+    }
+    @GetMapping("/generate/{id}")
+    public EditorialArticleGenerationQueue.JobView articleGeneration(Authentication auth, @PathVariable String id) {
+        return articleGenerationQueue.get(id, auth);
     }
     public record ImageInput(List<Article.Association> associations, String prompt, String title, String body,
                              String matchId, String reporterId, String photographerId,
@@ -147,10 +154,11 @@ public class EditorialArticleToolsController {
         return view(imageRequests.review(id, input.approve(), auth.getName(), technician));
     }
 
-    private static Map<String, String> view(EditorialImageRequest request) {
+    private Map<String, String> view(EditorialImageRequest request) {
         String text = switch (request.getStatus()) {
             case COMMISSIONED -> "Uppdraget är mottaget och väntar på godkännande.";
             case DEVELOPING -> "Agenten framkallar bilden.";
+            case RUNNING -> "Bilden genereras.";
             case COMPLETED -> "Bilden är klar.";
             case FAILED -> "Bilduppdraget misslyckades.";
             case REJECTED -> "Bilduppdraget avslogs.";
@@ -160,6 +168,8 @@ public class EditorialArticleToolsController {
         result.put("status", request.getStatus().name());
         result.put("statusText", text);
         result.put("photographerId", request.getPhotographerId());
+        imageRequests.estimatedStartAt(request.getId())
+                .ifPresent(estimate -> result.put("estimatedStartAt", estimate.toString()));
         if (request.getAssetUrl() != null) result.put("url", request.getAssetUrl());
         if (request.getImageId() != null) result.put("imageId", request.getImageId());
         if (request.getError() != null) result.put("error", request.getError());

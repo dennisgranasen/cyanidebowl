@@ -172,6 +172,9 @@ export default function ArticleImageGenerator({ editor, title, associations = []
     {providerStatusError && <Text mt={2} fontSize="sm">Image provider status could not be checked.</Text>}
     {imageRequest && <Box mt={2} p={2} borderWidth="1px" borderRadius="md">
       <Text fontSize="sm">{imageRequest.statusText}</Text>
+      {imageRequest.estimatedStartAt && <Text fontSize="sm">
+        {t('news.expectedStart')}: {intl.formatDate(imageRequest.estimatedStartAt, { dateStyle: 'medium', timeStyle: 'short' })}
+      </Text>}
       {imageRequest.error && <Text color="red.400" fontSize="sm">{imageRequest.error}</Text>}
       {requestError && <Text color="orange.400" fontSize="sm">Could not refresh image request status.</Text>}
     </Box>}

@@ -36,6 +36,7 @@ build/
 
 node_modules
 node
+pybb3-service/.venv/
 frontend/public/index.js
 frontend/public/index.js.LICENSE.txt
 

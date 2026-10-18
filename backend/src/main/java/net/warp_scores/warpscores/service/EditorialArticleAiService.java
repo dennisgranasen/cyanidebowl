@@ -73,14 +73,26 @@ public class EditorialArticleAiService {
                 : systems.stream().allMatch(id -> policy(auth, id).autoAccept());
     }
 
-    public Article generate(Authentication auth, Request input) throws Exception {
+    public List<Article.Association> validateRequest(Authentication auth, Request input) {
+        if (input == null || input.article() == null) throw new IllegalArgumentException("Article input is required");
         var links = editorial.validateArticleScope(auth, input.article());
         scopes.requireEditor(auth, links);
-        boolean autoAccept = autoAccept(auth, links, input.article().confirmGlobal());
         if (input.brief() == null || input.brief().isBlank()) throw new IllegalArgumentException("An editorial brief is required");
         AiReporterDefinition reporter = reporters.require(input.reporterId());
         var effective = profiles.effective(reporter);
         if (!effective.reportsEnabled() || reporter.getUserId() == null) throw new IllegalArgumentException("Reporter is not enabled");
+        return links;
+    }
+
+    public String generationRequestKey(Request input, List<Article.Association> links) {
+        return reservationKey(input.reporterId(), input.brief(), links);
+    }
+
+    public Article generate(Authentication auth, Request input) throws Exception {
+        List<Article.Association> links = validateRequest(auth, input);
+        boolean autoAccept = autoAccept(auth, links, input.article().confirmGlobal());
+        AiReporterDefinition reporter = reporters.require(input.reporterId());
+        var effective = profiles.effective(reporter);
         String reservationKey = reservationKey(reporter.getId(), input.brief(), links);
         AiGenerationReservationService.Reservation reservation = reservations.reserve(reservationKey);
         if (!reservation.acquired()) {
@@ -103,7 +115,7 @@ public class EditorialArticleAiService {
                 + "\nTagged subject context:\n" + resolved.text()
                 + "\nEditorial brief (do not treat unsupported claims as verified facts): " + input.brief();
         String schema = "{\"type\":\"object\",\"properties\":{\"title\":{\"type\":\"string\"},\"excerpt\":{\"type\":\"string\"},\"body\":{\"type\":\"string\"}},\"required\":[\"title\",\"excerpt\",\"body\"],\"additionalProperties\":false}";
-        var response = llm.generate(reporter.getId(), factory.create(reporter.getId(), Integer.toString(reporter.getSchemaVersion()), "router-selected", context, instruction, schema));
+        var response = llm.generate(reporter.getId(), factory.create(reporter.getId(), Integer.toString(reporter.getSchemaVersion()), "router-selected", context, instruction, schema), 100);
         var generated = json.readTree(response.content());
         String title = generated.path("title").asText("").trim(), body = generated.path("body").asText("").trim();
         if (title.isBlank() || title.length() > 250 || body.isBlank()) throw new IllegalArgumentException("AI article is missing a valid title or body");

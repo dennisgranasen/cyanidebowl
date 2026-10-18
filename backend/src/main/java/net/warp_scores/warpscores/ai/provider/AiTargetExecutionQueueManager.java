@@ -263,6 +263,7 @@ public class AiTargetExecutionQueueManager {
         final AtomicLong completedMillis = new AtomicLong();
         final Deque<Instant> completedHistory = new ConcurrentLinkedDeque<>();
         final Map<String, QueuedCall> activeJobs = new ConcurrentHashMap<>();
+        final Map<String, QueuedCall> failedJobs = new ConcurrentHashMap<>();
         final Set<String> targetIds = ConcurrentHashMap.newKeySet();
         final Set<String> providers = ConcurrentHashMap.newKeySet();
         final Set<String> models = ConcurrentHashMap.newKeySet();
@@ -434,6 +435,7 @@ public class AiTargetExecutionQueueManager {
                     call.lastError = shortError(e);
                     recordCompletion(duration);
                     failed.incrementAndGet();
+                    failedJobs.put(call.id, call);
                     call.result.completeExceptionally(e);
                     return;
                 }
@@ -442,6 +444,7 @@ public class AiTargetExecutionQueueManager {
                 call.lastError = shortError(e);
                 recordCompletion(duration);
                 failed.incrementAndGet();
+                failedJobs.put(call.id, call);
                 call.result.completeExceptionally(e);
             } catch (RuntimeException e) {
                 long duration = elapsed(start);
@@ -457,6 +460,7 @@ public class AiTargetExecutionQueueManager {
                 call.lastError = shortError(e);
                 recordCompletion(duration);
                 failed.incrementAndGet();
+                failedJobs.put(call.id, call);
                 call.result.completeExceptionally(e);
             } finally {
                 if (admitted) admission.release();
@@ -487,7 +491,7 @@ public class AiTargetExecutionQueueManager {
                         .filter(item -> item.id.equals(id))
                         .findFirst()
                         .orElse(null);
-                if (call == null) return false;
+                if (call == null) return failedJobs.remove(id) != null;
                 pending.remove(call);
                 call.stopQueueWait();
                 call.status = JobStatus.CANCELLED;
@@ -502,6 +506,8 @@ public class AiTargetExecutionQueueManager {
             synchronized (monitor) {
                 List<QueuedCall> copy = new ArrayList<>(pending);
                 pending.clear();
+                int removedFailures = failedJobs.size();
+                failedJobs.clear();
                 copy.forEach(call -> {
                     call.stopQueueWait();
                     call.status = JobStatus.CANCELLED;
@@ -509,7 +515,7 @@ public class AiTargetExecutionQueueManager {
                             new CancellationException("AI quota queue cleared by admin"));
                 });
                 monitor.notifyAll();
-                return copy.size();
+                return copy.size() + removedFailures;
             }
         }
 
@@ -517,7 +523,9 @@ public class AiTargetExecutionQueueManager {
             List<JobSnapshot> jobs;
             synchronized (monitor) {
                 jobs = java.util.stream.Stream
-                        .concat(pending.stream(), activeJobs.values().stream())
+                        .concat(
+                                java.util.stream.Stream.concat(pending.stream(), activeJobs.values().stream()),
+                                failedJobs.values().stream())
                         .distinct()
                         .sorted(Comparator
                                 .comparingInt((QueuedCall c) -> c.priority)
@@ -543,7 +551,8 @@ public class AiTargetExecutionQueueManager {
             Instant blocked = blockedUntil();
 
             Instant earliest = jobs.stream()
-                    .filter(job -> job.status() != JobStatus.RUNNING)
+                    .filter(job -> job.status() == JobStatus.QUEUED
+                            || job.status() == JobStatus.RETRY_WAIT)
                     .map(job -> job.nextAttemptAt() == null ? now : job.nextAttemptAt())
                     .min(Instant::compareTo)
                     .orElse(null);
@@ -559,7 +568,11 @@ public class AiTargetExecutionQueueManager {
                             24.0,
                             Duration.between(historyStartedAt, now).toMillis() / 3600000.0));
             double perHour = hour >= 3 ? hour : (day / observedHours);
-            long outstanding = jobs.size();
+            long outstanding = jobs.stream()
+                    .filter(job -> job.status() == JobStatus.QUEUED
+                            || job.status() == JobStatus.RUNNING
+                            || job.status() == JobStatus.RETRY_WAIT)
+                    .count();
 
             Long eta = outstanding == 0
                     ? Long.valueOf(0L)
@@ -585,7 +598,8 @@ public class AiTargetExecutionQueueManager {
                     groupId,
                     List.copyOf(new TreeSet<>(targetIds)),
                     Math.max(1, queueConfig.getConcurrency()),
-                    (int) jobs.stream().filter(j -> j.status() != JobStatus.RUNNING).count(),
+                    (int) jobs.stream().filter(j -> j.status() == JobStatus.QUEUED
+                            || j.status() == JobStatus.RETRY_WAIT).count(),
                     running.get(),
                     jobs.stream().filter(j -> j.status() == JobStatus.RETRY_WAIT).count(),
                     succeeded.get(),

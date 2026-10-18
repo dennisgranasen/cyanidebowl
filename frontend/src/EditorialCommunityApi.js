@@ -40,6 +40,7 @@ const EditorialCommunityApi = {
   articlePolicy: (system, token) => authGet(`/articles/tools/policy${system ? `?leagueSystemId=${encodeURIComponent(system)}` : ''}`, token),
   setArticlePolicy: (system, autoAccept, token) => authPut(`/articles/tools/policy${system ? `?leagueSystemId=${encodeURIComponent(system)}` : ''}`, { autoAccept }, token),
   generateArticle: (payload, token) => authPost('/articles/tools/generate', payload, token),
+  articleGenerationRequest: (id, token) => authGet(`/articles/tools/generate/${encodeURIComponent(id)}`, token),
   generateArticleImage: (payload, token) => boundedImageRequest(async signal => {
     const headers = await authHeaders(token);
     if (signal.aborted) throw new Error('Image generation cancelled');

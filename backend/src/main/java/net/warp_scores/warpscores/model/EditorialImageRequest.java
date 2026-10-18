@@ -13,7 +13,7 @@ import java.util.List;
 @Document("editorialImageRequests")
 public class EditorialImageRequest {
     public enum ApprovalPolicy { AUTO, EDITORIAL, TECHNICIAN }
-    public enum Status { COMMISSIONED, DEVELOPING, COMPLETED, FAILED, REJECTED }
+    public enum Status { COMMISSIONED, DEVELOPING, RUNNING, COMPLETED, FAILED, REJECTED }
 
     @Id private String id;
     private Status status;
@@ -21,6 +21,8 @@ public class EditorialImageRequest {
     private String requestedBy;
     private String approvedBy;
     private String photographerId;
+    private Integer priority = 100;
+    private int attempts;
     private String prompt;
     private List<Article.Association> associations = List.of();
     private List<String> referenceImages = List.of();
@@ -29,5 +31,6 @@ public class EditorialImageRequest {
     private String imageId;
     private String error;
     private Instant createdAt;
+    private Instant startedAt;
     private Instant completedAt;
 }
