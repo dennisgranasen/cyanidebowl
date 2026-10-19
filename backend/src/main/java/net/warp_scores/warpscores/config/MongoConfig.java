@@ -6,6 +6,8 @@ import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 
 import net.warp_scores.warpscores.mongo.IdentityReadConverter;
 import net.warp_scores.warpscores.mongo.IdentityWriteConverter;
+import net.warp_scores.warpscores.mongo.OffsetDateTimeReadConverter;
+import net.warp_scores.warpscores.mongo.OffsetDateTimeWriteConverter;
 
 import java.util.List;
 
@@ -15,7 +17,9 @@ public class MongoConfig {
     public MongoCustomConversions customConversions() {
         return new MongoCustomConversions(List.of(
             new IdentityWriteConverter(),
-            new IdentityReadConverter()
+            new IdentityReadConverter(),
+            new OffsetDateTimeWriteConverter(),
+            new OffsetDateTimeReadConverter()
         ));
     }
 }

@@ -1,3 +1,5 @@
+scheduler:
+  enabled: "${SCHEDULER_ENABLED:false}"
 server:
   address: 0.0.0.0
   port: 8080

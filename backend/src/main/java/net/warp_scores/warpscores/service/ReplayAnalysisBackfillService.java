@@ -147,23 +147,14 @@ public class ReplayAnalysisBackfillService {
 
         Date hourCutoff = Date.from(now.minus(Duration.ofHours(1)));
         Date dayCutoff = Date.from(now.minus(Duration.ofHours(24)));
-        long completedHour = 0;
-        long completedDay = 0;
-        List<Failure> failures = new ArrayList<>();
-        for (var record : downloads.findAll()) {
-            Date analyzed = record.getAnalyzedAt();
-            if (analyzed != null && !analyzed.before(dayCutoff)) {
-                completedDay++;
-                if (!analyzed.before(hourCutoff)) completedHour++;
-            }
-            if ("FAILED".equals(record.getAnalysisStatus()) && record.getAnalysisError() != null) {
-                failures.add(new Failure(record.getMatchId(), record.getParserVersion(),
-                        record.getAnalysisAttemptVersion(), record.getAnalyzedAt(), record.getAnalysisError()));
-            }
-        }
-        failures.sort(Comparator.comparing(Failure::analyzedAt,
-                Comparator.nullsLast(Comparator.reverseOrder())));
-        if (failures.size() > 10) failures = new ArrayList<>(failures.subList(0, 10));
+        long completedHour = downloads.countByAnalyzedAtGreaterThanEqual(hourCutoff);
+        long completedDay = downloads.countByAnalyzedAtGreaterThanEqual(dayCutoff);
+        List<Failure> failures = downloads
+            .findTop10ByAnalysisStatusAndAnalysisErrorIsNotNullOrderByAnalyzedAtDesc("FAILED")
+            .stream()
+            .map(record -> new Failure(record.getMatchId(), record.getParserVersion(),
+                record.getAnalysisAttemptVersion(), record.getAnalyzedAt(), record.getAnalysisError()))
+            .toList();
 
         Long eta = estimateSeconds(total, completedHour, completedDay);
         Instant nextCheck = enabled && running == null && total > 0

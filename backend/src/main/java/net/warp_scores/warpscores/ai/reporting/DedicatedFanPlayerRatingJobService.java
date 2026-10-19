@@ -1,6 +1,7 @@
 package net.warp_scores.warpscores.ai.reporting;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.model.AiCommunityMemberProfile;
 import net.warp_scores.warpscores.model.CopilotRatingQuotaUsage;
 import net.warp_scores.warpscores.ai.context.ContextTaskType;
@@ -15,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DedicatedFanPlayerRatingJobService {
     private final DedicatedFanPlayerRatingService generator;
     private final CopilotRatingQuotaUsageService quotaUsage;
@@ -27,6 +29,21 @@ public class DedicatedFanPlayerRatingJobService {
         return new Availability(
                 generator.activeFansFor(facts).size(),
                 generator.unratedActiveFansFor(facts).size());
+    }
+
+    public synchronized void queueAfterReplayAnalysis(String matchId, PlayerRatingFacts facts) {
+        try {
+            JobSnapshot current = latest(matchId);
+            if (current != null && !current.complete()) return;
+            if (generator.unratedActiveFansFor(facts).isEmpty()) return;
+
+            JobSnapshot queued = start(matchId, facts, null, false, null, "replay-analysis");
+            log.info("Queued fan player ratings for {} fans on analyzed match {}",
+                    queued.fanCount(), matchId);
+        } catch (Exception error) {
+            log.warn("Could not queue fan player ratings after analyzing match {}: {}",
+                    matchId, error.getMessage(), error);
+        }
     }
 
     public JobSnapshot start(String matchId, PlayerRatingFacts facts, String instruction, boolean force) {

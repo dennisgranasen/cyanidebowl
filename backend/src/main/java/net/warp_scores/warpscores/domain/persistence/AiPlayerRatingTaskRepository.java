@@ -11,5 +11,7 @@ import java.util.List;
 public interface AiPlayerRatingTaskRepository
         extends MongoRepository<AiPlayerRatingTask, String> {
     List<AiPlayerRatingTask> findByJobIdOrderByReporterIdAsc(String jobId);
+    List<AiPlayerRatingTask> findByMatchIdAndStatusIn(
+            String matchId, Collection<AiPlayerRatingTask.Status> statuses);
     List<AiPlayerRatingTask> findByStatusIn(Collection<AiPlayerRatingTask.Status> statuses);
 }

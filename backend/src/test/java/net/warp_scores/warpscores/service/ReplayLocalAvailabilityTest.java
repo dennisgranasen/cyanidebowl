@@ -18,7 +18,7 @@ class ReplayLocalAvailabilityTest {
     @Test
     void readsDockerWindowsAndFilenameRecordsFromConfiguredStorage() throws Exception {
         var downloads = mock(ReplayDownloadRepository.class);
-        var artifacts = new ReplayArtifactService(downloads, null, null, null, null);
+        var artifacts = new ReplayArtifactService(downloads, null, null, null, null, null);
         ReflectionTestUtils.setField(artifacts, "storageDirectory", directory.toString());
         Files.write(directory.resolve("game.bbr"), new byte[]{1, 2, 3});
         var bytes = new java.io.ByteArrayOutputStream();
@@ -39,7 +39,7 @@ class ReplayLocalAvailabilityTest {
 
     @Test
     void restoredLegacyFileBecomesAvailableWithoutChangingHistory() throws Exception {
-        var artifacts = new ReplayArtifactService(null, null, null, null, null);
+        var artifacts = new ReplayArtifactService(null, null, null, null, null, null);
         ReflectionTestUtils.setField(artifacts, "storageDirectory", directory.toString());
         var record = new ReplayDownload();
         record.setStatus("DOWNLOADED");

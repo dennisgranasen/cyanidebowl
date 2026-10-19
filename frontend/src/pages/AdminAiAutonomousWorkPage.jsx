@@ -132,7 +132,7 @@ function AdminAiAutonomousWorkPage() {
     let active = true, timer;
     const refresh = async () => {
       await load();
-      if (active) timer = setTimeout(refresh, 10000);
+      if (active) timer = setTimeout(refresh, 60000);
     };
     refresh();
     return () => { active = false; clearTimeout(timer); };

@@ -92,10 +92,6 @@ const EditorialCommunityApi = {
       { score }, { headers: await authHeaders(getToken) })).data,
   aiPlayerRatings: (matchId) =>
     get(`/matches/${encodeURIComponent(matchId)}/ai-player-ratings`),
-  generateAiPlayerRatings: (matchId, payload, getToken) =>
-    authPost(`/matches/${encodeURIComponent(matchId)}/ai-player-ratings/generate`, payload, getToken),
-  unratedAiRatingReporters: (matchId, getToken) =>
-    authGet(`/matches/${encodeURIComponent(matchId)}/ai-player-ratings/unrated-reporters`, getToken),
   aiPlayerRatingCopilotTargets: (matchId, getToken) =>
     authGet(`/matches/${encodeURIComponent(matchId)}/ai-player-ratings/copilot-targets`, getToken),
   aiPlayerRatingCopilotBudget: (matchId, getToken) =>

@@ -263,8 +263,10 @@ class AiCommunityMediaWorkerTest {
         var second = request(); second.setId("second"); second.setFanProfileId("fan-2");
         var fan = new AiCommunityMemberProfile(); fan.setId("fan"); fan.setDisplayName("Morg");
         var fan2 = new AiCommunityMemberProfile(); fan2.setId("fan-2"); fan2.setDisplayName("Nella");
-        when(requests.findByStatusInOrderByPriorityDescCreatedAtAsc(any())).thenReturn(List.of(first, second));
-        when(requests.findAll()).thenReturn(List.of(first, second));
+        when(requests.findTop200ByStatusOrderByPriorityDescCreatedAtAsc(
+                AiCommunityMediaGenerationRequest.Status.QUEUED)).thenReturn(List.of(first, second));
+        when(requests.findTop25ByStatusOrderByCompletedAtDesc(
+                AiCommunityMediaGenerationRequest.Status.FAILED)).thenReturn(List.of());
         when(requests.countByStatus(any())).thenReturn(0L);
         when(profiles.findAllById(argThat(ids -> ids.iterator().hasNext()))).thenReturn(List.of(fan, fan2));
 

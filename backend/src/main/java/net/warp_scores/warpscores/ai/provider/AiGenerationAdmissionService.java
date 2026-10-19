@@ -157,13 +157,19 @@ public class AiGenerationAdmissionService {
                 .atStartOfDay()
                 .toInstant(ZoneOffset.UTC);
 
-        List<AiGenerationTrace> successful =
-                traces.findByStatusAndCreatedAtGreaterThanEqual(
-                        AiGenerationTrace.Status.SUCCESS,
-                        start);
+        List<AiGenerationTrace> today = includeProviders
+            ? traces.findByCreatedAtGreaterThanEqual(start)
+            : null;
+        List<AiGenerationTrace> successful = includeProviders
+            ? (today == null ? List.<AiGenerationTrace>of() : today).stream()
+                .filter(trace -> trace.getStatus() == AiGenerationTrace.Status.SUCCESS)
+                .toList()
+            : traces.findByStatusAndCreatedAtGreaterThanEqual(
+                AiGenerationTrace.Status.SUCCESS, start);
 
         long input = 0L;
         long output = 0L;
+        int successfulGenerations = successful.size();
         int unknownInput = 0;
         int unknownOutput = 0;
 
@@ -177,13 +183,13 @@ public class AiGenerationAdmissionService {
 
         return new UsageSnapshot(
                 start,
-                successful.size(),
+            successfulGenerations,
                 input,
                 output,
                 unknownInput,
                 unknownOutput,
                 inFlight,
-                includeProviders ? providerUsage(start) : List.of());
+            includeProviders ? providerUsage(today) : List.of());
     }
 
     private AiSettings settings() {
@@ -191,9 +197,7 @@ public class AiGenerationAdmissionService {
                 .orElseGet(AiSettings::new);
     }
 
-    private List<ProviderUsageSnapshot> providerUsage(Instant start) {
-        List<AiGenerationTrace> today =
-                traces.findByCreatedAtGreaterThanEqual(start);
+    private List<ProviderUsageSnapshot> providerUsage(List<AiGenerationTrace> today) {
         if (today == null || today.isEmpty()) return List.of();
 
         Map<ProviderModel, ProviderAccumulator> grouped = new LinkedHashMap<>();

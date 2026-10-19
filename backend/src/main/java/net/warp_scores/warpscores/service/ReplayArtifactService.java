@@ -2,6 +2,8 @@ package net.warp_scores.warpscores.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.ai.reporting.AiPlayerRatingJobService;
 import net.warp_scores.warpscores.domain.persistence.ReplayAnalysisRepository;
 import net.warp_scores.warpscores.domain.persistence.ReplayDownloadRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
@@ -29,6 +31,7 @@ import java.util.zip.GZIPInputStream;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ReplayArtifactService {
     public static final int PARSER_VERSION = 22;
 
@@ -37,6 +40,7 @@ public class ReplayArtifactService {
     private final MatchRepository matches;
     private final ObjectMapper mapper;
     private final PyBb3Client pybb3;
+    private final AiPlayerRatingJobService playerRatingJobs;
 
     @Value("${replay-sweeper.storage-directory:./data/replays}")
     private String storageDirectory;
@@ -160,6 +164,9 @@ public class ReplayArtifactService {
             record.setError(null);
             storeAnalysis(record, result.get("analysis"));
             downloads.save(record);
+            if ("PROCESSED".equals(record.getAnalysisStatus())) {
+                playerRatingJobs.queueAfterReplayAnalysis(record.getMatchId());
+            }
             return true;
         } catch (Exception error) {
             record.setStatus("FAILED");

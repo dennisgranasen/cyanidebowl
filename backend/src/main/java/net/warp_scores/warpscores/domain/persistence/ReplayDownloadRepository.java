@@ -17,6 +17,9 @@ public interface ReplayDownloadRepository extends MongoRepository<ReplayDownload
             "             { 'analysisAttemptVersion':{ '$ne':?0 } } ] } " +
             "] }", sort="{ 'analysisRequestedAt':-1, 'downloadedAt':-1 }")
     List<ReplayDownload> findPendingAnalysis(int parserVersion, Pageable pageable);
+        long countByAnalyzedAtGreaterThanEqual(Date analyzedAt);
+        List<ReplayDownload> findTop10ByAnalysisStatusAndAnalysisErrorIsNotNullOrderByAnalyzedAtDesc(
+            String analysisStatus);
     List<ReplayDownload> findTop50ByOrderByDownloadedAtDesc();
     List<ReplayDownload> findTop50ByAttemptedAtAfterOrderByAttemptedAtDesc(Date attemptedAfter);
 }

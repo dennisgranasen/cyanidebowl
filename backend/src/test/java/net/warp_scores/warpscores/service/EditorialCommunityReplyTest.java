@@ -9,6 +9,8 @@ import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.identity.SimpleIdentity;
 import net.warp_scores.warpscores.model.Article;
 import net.warp_scores.warpscores.model.CommunityComment;
+import net.warp_scores.warpscores.model.Match;
+import net.warp_scores.warpscores.model.MatchPlayerParticipation;
 import net.warp_scores.warpscores.model.StageSource;
 import net.warp_scores.warpscores.model.Team;
 import org.junit.jupiter.api.Test;
@@ -127,6 +129,20 @@ class EditorialCommunityReplyTest {
         assertDoesNotThrow(() -> service.comments(CommunityComment.TargetType.TEAM, "1-team-1"));
     }
 
+    @Test
+    void eligiblePlayersCollapsesAndRemovesDuplicateParticipationRows() {
+        MatchPlayerParticipation first = participationRow("row-1", "player-1");
+        MatchPlayerParticipation duplicate = participationRow("row-2", "3_player-1");
+        when(participation.countByMatchId("1_match-1")).thenReturn(2L);
+        when(participation.findByMatchIdOrderByTeamIdAscPlayerNameAsc("1_match-1"))
+                .thenReturn(List.of(first, duplicate));
+
+        List<MatchPlayerParticipation> result = service.eligiblePlayers("1_match-1");
+
+        assertEquals(List.of(first), result);
+        verify(participation).deleteAll(List.of(duplicate));
+    }
+
     private static CommunityComment parent(String id, String targetId, boolean deleted) {
         CommunityComment comment = new CommunityComment();
         comment.setId(id);
@@ -134,6 +150,17 @@ class EditorialCommunityReplyTest {
         comment.setTargetId(targetId);
         if (deleted) comment.setDeletedAt(java.time.Instant.now());
         return comment;
+    }
+
+    private static MatchPlayerParticipation participationRow(String id, String playerId) {
+        MatchPlayerParticipation row = new MatchPlayerParticipation();
+        row.setId(id);
+        row.setMatchId("1_match-1");
+        row.setPlayerId(playerId);
+        row.setPlayerName("Player");
+        row.setParticipated(true);
+        row.setAvailability(MatchPlayerParticipation.Availability.PLAYED);
+        return row;
     }
 
     private static Authentication auth() {

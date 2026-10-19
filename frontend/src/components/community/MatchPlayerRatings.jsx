@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert, AlertIcon, Badge, Box, Button, FormControl, FormLabel,
-  HStack, Menu, MenuButton, MenuItem, MenuList, Select, SimpleGrid, Text,
+  HStack, Menu, MenuButton, MenuItem, MenuList, Progress, Select, SimpleGrid, Spinner, Text,
   Textarea, VStack,
 } from '@chakra-ui/react';
 import useAuth0WithUserPermissions from '../../hooks/useAuth0WithUserPermissions';
@@ -16,6 +16,17 @@ const playerIdValue = (id) => {
 
 const samePlayerId = (left, right) =>
   left === right || playerIdValue(left) === playerIdValue(right);
+
+export const uniquePlayers = (players) => {
+  const seen = new Set();
+  return players.filter((player, index) => {
+    const normalizedId = playerIdValue(player.playerId);
+    const key = normalizedId || `missing-player-id-${index}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
 
 const RatingGlyph = ({ value, fontSize = '1.35rem' }) => {
   if (value == null) return <Text as="span" color="gray.400">—</Text>;
@@ -83,15 +94,19 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
   const { isAuthenticated, getAccessTokenSilently } = useAuth0WithUserPermissions();
   const [players, setPlayers] = useState([]);
   const [overview, setOverview] = useState([]);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [dataLoaded, setDataLoaded] = useState(false);
+  const [dataLoadError, setDataLoadError] = useState(null);
+  const [loadElapsedSeconds, setLoadElapsedSeconds] = useState(0);
+  const loadRequestRef = useRef(null);
+  const displayedMatchKeyRef = useRef(null);
   const [caps, setCaps] = useState(null);
   const [instruction, setInstruction] = useState('');
-  const [generating, setGenerating] = useState(false);
   const [jobStatus, setJobStatus] = useState(null);
   const [message, setMessage] = useState('');
   const [fanAvailability, setFanAvailability] = useState({ activeFanCount: 0 });
   const [fanJobStatus, setFanJobStatus] = useState(null);
   const [fanMessage, setFanMessage] = useState('');
-  const [unratedReporters, setUnratedReporters] = useState([]);
   const [copilotTargets, setCopilotTargets] = useState([]);
   const [selectedCopilotTarget, setSelectedCopilotTarget] = useState('');
   const [copilotBudget, setCopilotBudget] = useState(null);
@@ -105,44 +120,88 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
 
 
   const load = async () => {
-    const [p, o, capabilityData, status, fanAvailabilityData, fanStatus] = await Promise.all([
-      EditorialCommunityApi.matchPlayers(matchId),
-      EditorialCommunityApi.matchRatingOverview(
-        matchId,
-        isAuthenticated ? getAccessTokenSilently : null,
-      ),
-      isAuthenticated
-        ? EditorialCommunityApi.matchArticleCapabilities(
-            matchId, getAccessTokenSilently).catch(() => null)
-        : Promise.resolve(null),
-      EditorialCommunityApi.aiPlayerRatingStatus(matchId).catch(() => null),
-      EditorialCommunityApi.fanPlayerRatingAvailability(matchId).catch(() => ({ activeFanCount: 0 })),
-      EditorialCommunityApi.fanPlayerRatingStatus(matchId).catch(() => null),
-    ]);
-    setPlayers(p || []);
-    setOverview(o || []);
-    setCaps(capabilityData);
-    setJobStatus(status);
-    setFanAvailability(fanAvailabilityData || { activeFanCount: 0 });
-    setFanJobStatus(fanStatus);
+    const requestKey = `${matchId}:${isAuthenticated}`;
+    if (loadRequestRef.current?.key === requestKey) return loadRequestRef.current.promise;
+
+    if (displayedMatchKeyRef.current !== requestKey) {
+      displayedMatchKeyRef.current = requestKey;
+      setPlayers([]);
+      setOverview([]);
+      setDataLoaded(false);
+    }
+    const requestId = Symbol(requestKey);
+    const startedAt = Date.now();
+    setDataLoading(true);
+    setLoadElapsedSeconds(0);
+    setDataLoadError(null);
+    const promise = (async () => {
+      let timeoutId;
+      try {
+        const [p, o, capabilityData, status, fanAvailabilityData, fanStatus] = await Promise.race([
+          Promise.all([
+            EditorialCommunityApi.matchPlayers(matchId),
+            EditorialCommunityApi.matchRatingOverview(
+              matchId,
+              isAuthenticated ? getAccessTokenSilently : null,
+            ),
+            isAuthenticated
+              ? EditorialCommunityApi.matchArticleCapabilities(
+                  matchId, getAccessTokenSilently).catch(() => null)
+              : Promise.resolve(null),
+            EditorialCommunityApi.aiPlayerRatingStatus(matchId).catch(() => null),
+            EditorialCommunityApi.fanPlayerRatingAvailability(matchId).catch(() => ({ activeFanCount: 0 })),
+            EditorialCommunityApi.fanPlayerRatingStatus(matchId).catch(() => null),
+          ]),
+          new Promise((resolve, reject) => {
+            timeoutId = window.setTimeout(
+              () => reject(new Error('Inläsningen tog längre än 60 sekunder. Kontrollera anslutningen och försök igen.')),
+              60000,
+            );
+          }),
+        ]);
+        if (loadRequestRef.current?.requestId !== requestId) return;
+        setPlayers(p || []);
+        setOverview(o || []);
+        setCaps(capabilityData);
+        setJobStatus(status);
+        setFanAvailability(fanAvailabilityData || { activeFanCount: 0 });
+        setFanJobStatus(fanStatus);
+        setDataLoaded(true);
+      } catch (error) {
+        if (loadRequestRef.current?.requestId === requestId) setDataLoadError(error);
+      } finally {
+        window.clearTimeout(timeoutId);
+        if (loadRequestRef.current?.requestId === requestId) {
+          loadRequestRef.current = null;
+          setDataLoading(false);
+        }
+      }
+    })();
+    loadRequestRef.current = { key: requestKey, requestId, promise, startedAt };
+    return promise;
   };
 
   useEffect(() => { load(); }, [matchId, isAuthenticated]);
 
   useEffect(() => {
+    if (!dataLoading) return undefined;
+    const timer = window.setInterval(() => {
+      const startedAt = loadRequestRef.current?.startedAt;
+      if (startedAt) setLoadElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [dataLoading]);
+
+  useEffect(() => {
     if (!isAuthenticated || !(caps?.canReview || caps?.canDeleteAny)) return undefined;
     let active = true;
-    Promise.all([
-      EditorialCommunityApi.unratedAiRatingReporters(matchId, getAccessTokenSilently),
-      EditorialCommunityApi.aiPlayerRatingCopilotTargets(matchId, getAccessTokenSilently),
-    ]).then(([reporters, targets]) => {
+    EditorialCommunityApi.aiPlayerRatingCopilotTargets(matchId, getAccessTokenSilently)
+      .then(targets => {
       if (!active) return;
-      setUnratedReporters(reporters || []);
       setCopilotTargets(targets || []);
       setSelectedCopilotTarget(current => current || targets?.[0]?.targetId || '');
     }).catch(() => {
       if (active) {
-        setUnratedReporters([]);
         setCopilotTargets([]);
       }
     });
@@ -207,49 +266,6 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
       setCopilotBudget(null);
     } finally {
       setLoadingCopilotBudget(false);
-    }
-  };
-
-  const generateEditorialTrial = async () => {
-    if (generating) return;
-    setGenerating(true);
-    setMessage('');
-    const reporterIds = unratedReporters.slice(0, 5).map(reporter => reporter.id);
-    const submit = confirmCopilotQuota => EditorialCommunityApi.generateAiPlayerRatings(
-      matchId,
-      {
-        reporterIds,
-        instruction: instruction.trim() || null,
-        force: false,
-        targetOverride: selectedCopilotTarget || null,
-        confirmCopilotQuota,
-      },
-      getAccessTokenSilently
-    );
-    try {
-      let result;
-      try {
-        result = await submit(false);
-      } catch (reason) {
-        const warning = reason?.response?.data;
-        if (reason?.response?.status !== 409
-            || warning?.code !== 'COPILOT_QUOTA_CONFIRMATION_REQUIRED') throw reason;
-        if (!window.confirm(warning.message)) return;
-        result = await submit(true);
-      }
-      setJobStatus(result);
-      setMessage(
-        `Granskningen är köad för ${result.queued || result.reporterCount || 0} reportrar.`
-      );
-      await load();
-    } catch (error) {
-      setMessage(
-        error?.response?.data?.message
-        || error?.message
-        || 'Betygsättningen misslyckades.'
-      );
-    } finally {
-      setGenerating(false);
     }
   };
 
@@ -334,13 +350,10 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
     replayReady && (caps?.canReview || caps?.canDeleteAny)
   );
   const ratingJobActive = Boolean(jobStatus && !jobStatus.complete);
-  const ratingBusy = generating || ratingJobActive;
-  const trialReporters = unratedReporters.slice(0, 5);
+  const ratingBusy = ratingJobActive;
   const unratedFans = fanAvailability?.unratedFanCount || 0;
-  const totalTrialCalls = trialReporters.length + unratedFans;
   const estimatedTokens = (calls) => ({ inputLow: calls * 8000, inputHigh: calls * 16000,
     outputLow: calls * 500, outputHigh: calls * 1500 });
-  const reporterTokenEstimate = estimatedTokens(trialReporters.length);
   const fanTokenEstimate = estimatedTokens(unratedFans);
 
   if (editorialDetailPlayer) {
@@ -414,7 +427,7 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
     <VStack align="stretch" spacing={4}>
       {canGenerateAi && (
         <Box borderWidth="1px" borderRadius="md" p={3}>
-          <Text fontWeight="700">Generera spelarbetyg</Text>
+          <Text fontWeight="700">Granska spelarbetyg</Text>
           <Text mt={1} fontSize="sm" color="gray.500">
             Alla aktiva betygsagenter får samma fakta och betygsätter alla
             spelare i ett anrop per agent. Skalan är tre skallar (-3) till
@@ -422,7 +435,7 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
           </Text>
           <FormControl mt={3}>
             <FormLabel fontSize="sm">
-              Instruktion till agenterna (valfritt)
+              Instruktion till fan-granskningen (valfritt)
             </FormLabel>
             <Textarea
               value={instruction}
@@ -453,16 +466,10 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
               </Button>
             </HStack>
             <Text mt={1} fontSize="sm">
-              Redaktion: {unratedReporters.length} har inte röstat; knappen kör högst 5.
-            </Text>
-            <Text mt={1} fontSize="sm">
-              Redaktion: {trialReporters.length} anrop, cirka {reporterTokenEstimate.inputLow.toLocaleString()}–{reporterTokenEstimate.inputHigh.toLocaleString()} inputtokens + {reporterTokenEstimate.outputLow.toLocaleString()}–{reporterTokenEstimate.outputHigh.toLocaleString()} outputtokens.
-            </Text>
-            <Text mt={1} fontSize="sm">
               Fans: {unratedFans} av {fanAvailability?.activeFanCount || 0} intresserade behöver rösta, cirka {fanTokenEstimate.inputLow.toLocaleString()}–{fanTokenEstimate.inputHigh.toLocaleString()} inputtokens + {fanTokenEstimate.outputLow.toLocaleString()}–{fanTokenEstimate.outputHigh.toLocaleString()} outputtokens.
             </Text>
             <Text mt={1} fontSize="sm" fontWeight="600">
-              Planerat: {totalTrialCalls} Copilot-anrop. Kvotavdraget kan inte räknas om till tokens och beror på vald modells kvotvikt.
+              Planerat: {unratedFans} Copilot-anrop för fans. Kvotavdraget kan inte räknas om till tokens och beror på vald modells kvotvikt.
             </Text>
             {copilotBudget?.premiumInteractions && (
               <Text mt={1} fontSize="xs" color="gray.500">
@@ -507,16 +514,7 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
           </Box>
           <Button
             mt={3}
-            colorScheme="orange"
-            onClick={generateEditorialTrial}
-            isLoading={ratingBusy}
-            isDisabled={ratingBusy || !trialReporters.length || !selectedCopilotTarget}
-          >
-            Låt upp till 5 oröstande redaktörer betygsätta ({trialReporters.length})
-          </Button>
-          <Button
-            mt={3}
-            ml={{ base: 0, md: 2 }}
+            ml={0}
             variant="outline"
             colorScheme="orange"
             onClick={generateFans}
@@ -610,7 +608,43 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
         </Box>
       )}
 
-      {players.map((player) => {
+      {dataLoading && (
+        <Box mt={3} role="status" aria-live="polite">
+          {dataLoaded ? (
+            <HStack><Spinner size="sm"/><Text fontSize="sm">Uppdaterar spelartrupper och betyg… {loadElapsedSeconds}s</Text></HStack>
+          ) : (
+            <Box borderWidth="1px" borderRadius="md" p={3}>
+              <HStack align="start">
+                <Spinner size="sm" mt={1}/>
+                <Box>
+                  <Text fontWeight="700">Hämtar spelartrupper och betyg…</Text>
+                  <Text fontSize="sm" color="gray.500">
+                    Läser matchens spelare, betyg och AI-granskningsstatus. Väntat {loadElapsedSeconds} sekunder.
+                    {loadElapsedSeconds >= 15 && ' Servern arbetar fortfarande; du kan vänta kvar medan den hämtar uppgifterna.'}
+                  </Text>
+                </Box>
+              </HStack>
+              <Progress mt={3} size="xs" isIndeterminate aria-label="Hämtar spelartrupper och betyg"/>
+            </Box>
+          )}
+        </Box>
+      )}
+      {dataLoadError && (
+        <Alert mt={3} status={dataLoaded ? 'warning' : 'error'} alignItems="flex-start">
+          <AlertIcon mt={1}/>
+          <Box>
+            <Text fontWeight="700">
+              {dataLoaded ? 'Kunde inte uppdatera spelartrupper och betyg.' : 'Kunde inte läsa in spelartrupper och betyg.'}
+            </Text>
+            <Text fontSize="sm">{dataLoadError.message || 'Kontrollera anslutningen och försök igen.'}</Text>
+            <Button mt={2} size="sm" variant="outline" onClick={load} isLoading={dataLoading}>
+              Försök igen
+            </Button>
+          </Box>
+        </Alert>
+      )}
+
+      {uniquePlayers(players).map((player) => {
         const item = byPlayer[player.playerId];
         return (
           <Box key={player.playerId} borderBottomWidth="1px" pb={4}>

@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.ai.reporting;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.ai.agents.AiReporterDefinition;
 import net.warp_scores.warpscores.ai.agents.AiReporterEffectiveProfileService;
 import net.warp_scores.warpscores.ai.context.ContextTaskType;
@@ -13,8 +14,10 @@ import net.warp_scores.warpscores.domain.persistence.AiPlayerRatingJobRepository
 import net.warp_scores.warpscores.domain.persistence.AiPlayerRatingTaskRepository;
 import net.warp_scores.warpscores.domain.persistence.ReplayAnalysisRepository;
 import net.warp_scores.warpscores.model.CopilotRatingQuotaUsage;
+import net.warp_scores.warpscores.model.AiPlayerMatchRating;
 import net.warp_scores.warpscores.model.AiPlayerRatingJob;
 import net.warp_scores.warpscores.model.AiPlayerRatingTask;
+import net.warp_scores.warpscores.model.ReplayAnalysis;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -24,13 +27,15 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AiPlayerRatingJobService {
-    private static final int TEMPORARY_DEFAULT_REPORTER_LIMIT = 5;
+    private static final int DEFAULT_REPORTER_LIMIT = 10;
     private static final int MAX_TASK_ATTEMPTS = 2;
     private static final long CONCURRENCY_RETRY_MS = 750L;
 
@@ -42,10 +47,69 @@ public class AiPlayerRatingJobService {
     private final ReplayAnalysisRepository replayAnalyses;
     private final PlayerRatingFactsBuilder factsBuilder;
     private final CopilotRatingQuotaUsageService quotaUsage;
+    private final DedicatedFanPlayerRatingJobService fanRatingJobs;
 
-        private final LlmProviderRouter providerRouter;
-        private final AiProviderWorkExecutor providerWorkExecutor;
-        private final Object taskLock = new Object();
+    private final LlmProviderRouter providerRouter;
+    private final AiProviderWorkExecutor providerWorkExecutor;
+    private final Object taskLock = new Object();
+
+    public synchronized void queueAfterReplayAnalysis(String matchId) {
+        ReplayAnalysis analysis;
+        PlayerRatingFacts facts;
+        try {
+            analysis = replayAnalyses.findById(matchId)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Analyzed replay was not persisted for match " + matchId));
+            facts = factsBuilder.build(analysis);
+        } catch (Exception error) {
+            log.warn("Could not prepare player ratings after analyzing match {}: {}",
+                matchId, error.getMessage(), error);
+            return;
+        }
+        if (facts.getPlayers() == null || facts.getPlayers().isEmpty()) return;
+
+        try {
+            Set<String> ratedReporterIds = ratings.findByMatchId(matchId).stream()
+                    .filter(rating -> rating.getSourceType() != AiPlayerMatchRating.SourceType.FAN)
+                    .map(AiPlayerMatchRating::getReporterId)
+                    .filter(id -> id != null && !id.isBlank())
+                    .collect(Collectors.toSet());
+            if (ratedReporterIds.size() < DEFAULT_REPORTER_LIMIT) {
+            Set<String> activeReporterIds = tasks.findByMatchIdAndStatusIn(
+                    matchId,
+                    List.of(AiPlayerRatingTask.Status.QUEUED, AiPlayerRatingTask.Status.RUNNING))
+                .stream()
+                .map(AiPlayerRatingTask::getReporterId)
+                .filter(id -> id != null && !id.isBlank())
+                .collect(Collectors.toSet());
+
+            List<AiReporterDefinition> eligible = effectiveProfiles.enabledForRatings().stream()
+                .map(AiReporterEffectiveProfileService.EffectiveReporter::definition)
+                .toList();
+            List<AiReporterDefinition> selected = additionalReporters(
+                eligible, ratedReporterIds, activeReporterIds,
+                DEFAULT_REPORTER_LIMIT, ThreadLocalRandom.current());
+            if (!selected.isEmpty()) {
+                start(
+                    matchId,
+                    selected.stream().map(AiReporterDefinition::getId).toList(),
+                    null,
+                    false,
+                    facts.getPlayers().size(),
+                    "replay-analysis",
+                    null,
+                    null);
+                log.info("Queued {} editorial player-rating reporters for analyzed match {}",
+                    selected.size(), matchId);
+            }
+            }
+        } catch (Exception error) {
+            log.warn("Could not queue editorial player ratings after analyzing match {}: {}",
+                    matchId, error.getMessage(), error);
+        }
+
+        fanRatingJobs.queueAfterReplayAnalysis(matchId, facts);
+    }
 
     public JobSnapshot start(
             String matchId,
@@ -349,9 +413,33 @@ public class AiPlayerRatingJobService {
                 .filter(reporter -> requested.isEmpty()
                         || requested.contains(reporter.getId()));
         if (requested.isEmpty()) {
-            stream = stream.limit(TEMPORARY_DEFAULT_REPORTER_LIMIT);
+            return randomSelection(stream.toList(), DEFAULT_REPORTER_LIMIT,
+                    ThreadLocalRandom.current());
         }
         return stream.toList();
+    }
+
+    static List<AiReporterDefinition> randomSelection(
+            List<AiReporterDefinition> reporters, int limit, java.util.Random random) {
+        List<AiReporterDefinition> shuffled = new ArrayList<>(reporters);
+        java.util.Collections.shuffle(shuffled, random);
+        return shuffled.subList(0, Math.min(Math.max(0, limit), shuffled.size()));
+    }
+
+    static List<AiReporterDefinition> additionalReporters(
+            List<AiReporterDefinition> enabled,
+            Set<String> ratedReporterIds,
+            Set<String> activeReporterIds,
+            int target,
+            java.util.Random random) {
+        Set<String> countedReporterIds = new LinkedHashSet<>(ratedReporterIds);
+        countedReporterIds.addAll(activeReporterIds);
+        int deficit = Math.max(0, target - countedReporterIds.size());
+        List<AiReporterDefinition> eligible = enabled.stream()
+                .filter(reporter -> reporter.getId() != null
+                        && !countedReporterIds.contains(reporter.getId()))
+                .toList();
+        return randomSelection(eligible, deficit, random);
     }
 
     private JobSnapshot snapshot(AiPlayerRatingJob job) {

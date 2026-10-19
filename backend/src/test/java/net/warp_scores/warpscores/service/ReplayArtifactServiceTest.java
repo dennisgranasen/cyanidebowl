@@ -1,6 +1,7 @@
 package net.warp_scores.warpscores.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.warp_scores.warpscores.ai.reporting.AiPlayerRatingJobService;
 import net.warp_scores.warpscores.domain.persistence.*;
 import net.warp_scores.warpscores.model.ReplayDownload;
 import org.junit.jupiter.api.Test;
@@ -23,7 +24,8 @@ class ReplayArtifactServiceTest {
         var downloads = mock(ReplayDownloadRepository.class);
         var analyses = mock(ReplayAnalysisRepository.class);
         var client = mock(PyBb3Client.class);
-        var service = new ReplayArtifactService(downloads, analyses, mock(MatchRepository.class), new ObjectMapper(), client);
+        var ratingJobs = mock(AiPlayerRatingJobService.class);
+        var service = new ReplayArtifactService(downloads, analyses, mock(MatchRepository.class), new ObjectMapper(), client, ratingJobs);
         ReflectionTestUtils.setField(service, "storageDirectory", directory.toString());
         var record = record();
         when(client.post(anyString(), anyString(), any())).thenReturn(response(true));
@@ -36,12 +38,14 @@ class ReplayArtifactServiceTest {
         verify(analyses).save(any());
         verify(downloads, times(2)).save(record);
         verify(downloads, never()).findById(anyString());
+        verify(ratingJobs).queueAfterReplayAnalysis("3_game");
     }
 
     @Test void missingAnalysisIsReportedExplicitlyWhileKeepingDownloadedArtifacts() throws Exception {
         var client = mock(PyBb3Client.class);
+        var ratingJobs = mock(AiPlayerRatingJobService.class);
         var service = new ReplayArtifactService(mock(ReplayDownloadRepository.class), mock(ReplayAnalysisRepository.class),
-                mock(MatchRepository.class), new ObjectMapper(), client);
+            mock(MatchRepository.class), new ObjectMapper(), client, ratingJobs);
         ReflectionTestUtils.setField(service, "storageDirectory", directory.toString());
         var record = record();
         when(client.post(anyString(), anyString(), any())).thenReturn(response(false));
@@ -49,6 +53,7 @@ class ReplayArtifactServiceTest {
         assertThatThrownBy(() -> service.reanalyze(record)).hasMessageContaining("returned no analysis");
         assertThat(record.getStatus()).isEqualTo("DOWNLOADED");
         assertThat(service.compactAvailable(record)).isTrue();
+        verifyNoInteractions(ratingJobs);
     }
 
     private ReplayDownload record() throws Exception {

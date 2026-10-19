@@ -463,15 +463,21 @@ public class EditorialCommunityService {
 
     public List<MatchPlayerParticipation> eligiblePlayers(String matchId) {
         ensureParticipation(matchId);
-        return participation.findByMatchIdOrderByTeamIdAscPlayerNameAsc(matchId);
+        return uniqueParticipationRows(matchId);
     }
 
     public MatchPlayerRating ratePlayer(Authentication auth, String matchId, String playerId, int score) {
         requireAuthenticated(auth);
         if (score < -3 || score > 3) throw new IllegalArgumentException("score must be -3..3");
         ensureParticipation(matchId);
-        MatchPlayerParticipation p = participation.findByMatchIdAndPlayerId(matchId, playerId)
-                .orElseThrow(() -> new IllegalArgumentException("player is not part of this match"));
+        String normalizedPlayerId = participationPlayerKey(playerId);
+        List<MatchPlayerParticipation> playerRows = participation
+            .findByMatchIdOrderByTeamIdAscPlayerNameAsc(matchId).stream()
+            .filter(row -> Objects.equals(normalizedPlayerId, participationPlayerKey(row.getPlayerId())))
+            .toList();
+        if (playerRows.isEmpty()) throw new IllegalArgumentException("player is not part of this match");
+        MatchPlayerParticipation p = playerRows.getFirst();
+        if (playerRows.size() > 1) participation.deleteAll(playerRows.subList(1, playerRows.size()));
         if (!p.isParticipated() || p.getAvailability() != MatchPlayerParticipation.Availability.PLAYED) {
             throw new IllegalArgumentException("player did not participate in this match");
         }
@@ -717,11 +723,13 @@ public class EditorialCommunityService {
             Set<String> mng = previousMNG(team.getId(), match);
             for (Player player : team.getPlayers()) {
                 if (player == null || player.getId() == null) continue;
+                String playerId = player.getId().asMongoKey();
                 MatchPlayerParticipation p = new MatchPlayerParticipation();
-                p.setId(UUID.randomUUID().toString());
+                p.setId(UUID.nameUUIDFromBytes((matchId + "\0" + playerId)
+                        .getBytes(java.nio.charset.StandardCharsets.UTF_8)).toString());
                 p.setMatchId(matchId);
                 p.setTeamId(team.getId().asMongoKey());
-                p.setPlayerId(player.getId().asMongoKey());
+                p.setPlayerId(playerId);
                 p.setPlayerName(player.getName());
                 boolean missed = mng.contains(player.getId().asMongoKey());
                 p.setParticipated(!missed);
@@ -730,6 +738,25 @@ public class EditorialCommunityService {
                 participation.save(p);
             }
         }
+    }
+
+    private List<MatchPlayerParticipation> uniqueParticipationRows(String matchId) {
+        Map<String, MatchPlayerParticipation> unique = new LinkedHashMap<>();
+        List<MatchPlayerParticipation> duplicates = new ArrayList<>();
+        for (MatchPlayerParticipation row : participation
+                .findByMatchIdOrderByTeamIdAscPlayerNameAsc(matchId)) {
+            MatchPlayerParticipation previous = unique.putIfAbsent(
+                    participationPlayerKey(row.getPlayerId()), row);
+            if (previous != null) duplicates.add(row);
+        }
+        if (!duplicates.isEmpty()) participation.deleteAll(duplicates);
+        return List.copyOf(unique.values());
+    }
+
+    private static String participationPlayerKey(String playerId) {
+        if (playerId == null) return null;
+        int separator = playerId.indexOf('_');
+        return separator >= 0 ? playerId.substring(separator + 1) : playerId;
     }
 
     private Set<String> previousMNG(Identity teamId, Match current) {

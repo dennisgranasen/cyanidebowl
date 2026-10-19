@@ -23,6 +23,18 @@ public interface AiCommunityMediaGenerationRequestRepository
 
     long countByStatus(AiCommunityMediaGenerationRequest.Status status);
 
+    long countByStatusAndCompletedAtGreaterThanEqual(
+            AiCommunityMediaGenerationRequest.Status status,
+            java.time.Instant completedAt);
+
+    java.util.List<AiCommunityMediaGenerationRequest>
+            findTop200ByStatusOrderByPriorityDescCreatedAtAsc(
+                    AiCommunityMediaGenerationRequest.Status status);
+
+    java.util.List<AiCommunityMediaGenerationRequest>
+            findTop25ByStatusOrderByCompletedAtDesc(
+                    AiCommunityMediaGenerationRequest.Status status);
+
     java.util.List<AiCommunityMediaGenerationRequest>
             findByStatusAndStartedAtBefore(
                     AiCommunityMediaGenerationRequest.Status status,

@@ -216,6 +216,9 @@ class AiGenerationAdmissionServiceTest {
         assertThat(gemini.outputTokens()).isEqualTo(40);
         assertThat(gemini.rateLimitFailures()).isEqualTo(1);
         assertThat(gemini.lastRateLimitAt()).isNotNull();
+        verify(traces, times(1)).findByCreatedAtGreaterThanEqual(any(Instant.class));
+        verify(traces, never()).findByStatusAndCreatedAtGreaterThanEqual(
+                any(AiGenerationTrace.Status.class), any(Instant.class));
     }
 
     private static AiGenerationTrace trace(Integer input, Integer output) {

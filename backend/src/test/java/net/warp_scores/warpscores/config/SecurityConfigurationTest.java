@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.config;
 
 import net.warp_scores.warpscores.WarpScoresApp;
 import net.warp_scores.warpscores.domain.persistence.LeagueSystemRepository;
+import net.warp_scores.warpscores.controller.AiPlayerRatingController;
 import net.warp_scores.warpscores.model.LeagueSystem;
 import net.warp_scores.warpscores.model.UserPermissions;
 import net.warp_scores.warpscores.service.MatchArticleService;
@@ -48,6 +49,9 @@ class SecurityConfigurationTest {
 
     @MockitoBean
     private MatchArticleService matchArticleService;
+
+    @MockitoBean
+    private AiPlayerRatingController aiPlayerRatingController;
 
     @Test
     void debugHeadersAreNotReflected() throws Exception {
@@ -126,6 +130,26 @@ class SecurityConfigurationTest {
 
             assertThat(response.statusCode()).isEqualTo(200);
             verify(matchArticleService).requestAi(any(), any(), any());
+        }
+
+        @Test
+        void aiPlayerRatingMutationRequiresAuthenticationButIsNotDeniedByFallbackRule() throws Exception {
+            when(jwtDecoder.decode("player-rating-token")).thenReturn(jwt(List.of()));
+            when(aiPlayerRatingController.generate(any(), any(), any()))
+                    .thenReturn(null);
+            HttpRequest.Builder request = HttpRequest.newBuilder(
+                URI.create("http://localhost:" + port + "/matches/test-match/ai-player-ratings/generate"))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString("{}"));
+            HttpRequest unauthenticatedRequest = request.build();
+            HttpRequest authenticatedRequest = HttpRequest.newBuilder(request.build().uri())
+                    .header("Authorization", "Bearer player-rating-token")
+                    .POST(HttpRequest.BodyPublishers.ofString("{}"))
+                    .build();
+
+            assertThat(send(unauthenticatedRequest).statusCode()).isEqualTo(401);
+            assertThat(send(authenticatedRequest).statusCode()).isEqualTo(200);
+            verify(aiPlayerRatingController).generate(any(), any(), any());
         }
 
     private HttpRequest matchArticleAiRequest(String token) {

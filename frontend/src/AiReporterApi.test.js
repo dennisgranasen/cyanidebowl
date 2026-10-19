@@ -11,11 +11,11 @@ beforeEach(() => {
 });
 afterEach(() => jest.useRealTimers());
 
-test('bounds a stalled HTTP request and aborts it', async () => {
+test('bounds a stalled overview request and aborts it after 90 seconds', async () => {
   axios.get.mockImplementation(() => new Promise(() => {}));
   const result = AiReporterApi.autonomousWorkOverview(async () => 'token', jest.fn());
   const check = expect(result).rejects.toThrow('timed out');
-  await jest.advanceTimersByTimeAsync(20000);
+  await jest.advanceTimersByTimeAsync(90000);
   await check;
   expect(axios.get.mock.calls[0][1].signal.aborted).toBe(true);
   expect(jest.getTimerCount()).toBe(0);
@@ -27,7 +27,7 @@ test('bounds token acquisition and never sends an expired request', async () => 
     () => new Promise(resolve => { resolveToken = resolve; }), jest.fn()
   );
   const check = expect(result).rejects.toThrow('timed out');
-  await jest.advanceTimersByTimeAsync(20000);
+  await jest.advanceTimersByTimeAsync(90000);
   await check;
   resolveToken('late-token');
   await jest.advanceTimersByTimeAsync(0);

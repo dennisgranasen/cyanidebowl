@@ -234,19 +234,15 @@ public class AiCommunityMediaWorker {
 
     public MediaQueueSnapshot snapshot() {
         Instant now=Instant.now();
-        var pending = requests.findByStatusInOrderByPriorityDescCreatedAtAsc(java.util.List.of(AiCommunityMediaGenerationRequest.Status.QUEUED));
-        var all=requests.findAll();
-        var failures = all.stream()
-                .filter(job -> job.getStatus() == AiCommunityMediaGenerationRequest.Status.FAILED)
-                .sorted(java.util.Comparator.comparing(AiCommunityMediaGenerationRequest::getCompletedAt,
-                        java.util.Comparator.nullsLast(java.util.Comparator.reverseOrder()))
-                        .thenComparing(AiCommunityMediaGenerationRequest::getCreatedAt,
-                                java.util.Comparator.nullsLast(java.util.Comparator.reverseOrder())))
-                .limit(25)
-                .toList();
+        var pending = requests.findTop200ByStatusOrderByPriorityDescCreatedAtAsc(
+            AiCommunityMediaGenerationRequest.Status.QUEUED);
+        var failures = requests.findTop25ByStatusOrderByCompletedAtDesc(
+            AiCommunityMediaGenerationRequest.Status.FAILED);
         var profilesById = profilesById(pending, failures);
-        long completedHour=all.stream().filter(r->r.getCompletedAt()!=null&&!r.getCompletedAt().isBefore(now.minus(Duration.ofHours(1)))).count();
-        long completedDay=all.stream().filter(r->r.getCompletedAt()!=null&&!r.getCompletedAt().isBefore(now.minus(Duration.ofHours(24)))).count();
+        long completedHour = requests.countByStatusAndCompletedAtGreaterThanEqual(
+            AiCommunityMediaGenerationRequest.Status.COMPLETED, now.minus(Duration.ofHours(1)));
+        long completedDay = requests.countByStatusAndCompletedAtGreaterThanEqual(
+            AiCommunityMediaGenerationRequest.Status.COMPLETED, now.minus(Duration.ofHours(24)));
         long queued=requests.countByStatus(AiCommunityMediaGenerationRequest.Status.QUEUED);
         long running=requests.countByStatus(AiCommunityMediaGenerationRequest.Status.RUNNING);
         Instant resume=pending.stream().map(r->r.getNextAttemptAt()==null?now:r.getNextAttemptAt()).min(Instant::compareTo).orElse(null);

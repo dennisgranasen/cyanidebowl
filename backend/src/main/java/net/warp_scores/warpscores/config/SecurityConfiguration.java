@@ -83,6 +83,8 @@ public class SecurityConfiguration {
                         .requestMatchers(POST, "/community/**").authenticated()
                         .requestMatchers(PUT, "/community/**").authenticated()
                         .requestMatchers(DELETE, "/community/**").authenticated()
+                        // AI player-rating mutations authenticate here; the controller enforces editor/technician scope.
+                        .requestMatchers(POST, "/matches/*/ai-player-ratings/**").authenticated()
                         // Match article mutations require authentication; the service enforces editor scope.
                         .requestMatchers(POST, "/matches/*/articles/**").authenticated()
                         .requestMatchers(PUT, "/matches/*/articles/**").authenticated()

@@ -88,7 +88,7 @@ const AiReporterApi = {
           const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
           if (controller.signal.aborted) throw new Error('Overview request expired');
           const { data } = await axios.get('/admin/ai-autonomous-work', {
-            ...auth, signal: controller.signal, timeout: 20000,
+            ...auth, signal: controller.signal, timeout: 90000,
           });
           if (!data || typeof data !== 'object' || Array.isArray(data)) {
             throw new Error('Unable to load the work overview: invalid server response.');
@@ -99,7 +99,7 @@ const AiReporterApi = {
           timer = setTimeout(() => {
             reject(new Error('Loading the work overview timed out. Please try Refresh.'));
             controller.abort();
-          }, 20000);
+          }, 90000);
         }),
       ]);
     } finally {
