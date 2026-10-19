@@ -12,6 +12,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -37,8 +40,8 @@ public class AiCommunityMediaWorker {
     @Value("${warpscores.ai.community-media.quota-exhausted-cooldown:12h}")
     private Duration quotaExhaustedCooldown;
 
-    private volatile Instant providerBlockedUntil;
-    private volatile String providerBlockReason;
+    private final Map<String, Instant> providerBlockedUntil = new ConcurrentHashMap<>();
+    private final Map<String, String> providerBlockReasons = new ConcurrentHashMap<>();
 
     @Scheduled(fixedDelayString = "${warpscores.ai.community-media.poll-ms:30000}")
     public synchronized void poll() {
@@ -46,12 +49,48 @@ public class AiCommunityMediaWorker {
 
         Instant now = Instant.now();
         recoverStaleRunning(now);
-        if (providerBlocked(now)) return;
+        requests.findByStatusInOrderByPriorityDescCreatedAtAsc(
+                java.util.List.of(AiCommunityMediaGenerationRequest.Status.QUEUED))
+            .stream()
+            .filter(request -> request.getNextAttemptAt() == null || !request.getNextAttemptAt().isAfter(now))
+            .filter(request -> !providerBlocked(providerFor(request), now))
+            .min(Comparator
+                .comparingInt((AiCommunityMediaGenerationRequest request) ->
+                    request.getPriority() == null ? 0 : request.getPriority())
+                .reversed()
+                .thenComparing(request -> request.getCreatedAt() == null
+                    ? Instant.EPOCH : request.getCreatedAt()))
+            .ifPresent(this::process);
+    }
 
-        requests.findFirstByStatusAndNextAttemptAtLessThanEqualOrderByPriorityDescCreatedAtAsc(
-                        AiCommunityMediaGenerationRequest.Status.QUEUED,
-                        now)
-                .ifPresent(this::process);
+    public synchronized boolean moveOrRetry(String id, String provider) {
+        renderer.requireConfiguredProvider(provider);
+        AiCommunityMediaGenerationRequest request = requests.findById(id).orElse(null);
+        if (request == null || (request.getStatus() != AiCommunityMediaGenerationRequest.Status.QUEUED
+                && request.getStatus() != AiCommunityMediaGenerationRequest.Status.FAILED)) {
+            return false;
+        }
+        boolean duplicateActive = requests.findByFanProfileIdOrderByCreatedAtDesc(request.getFanProfileId())
+                .stream()
+                .anyMatch(other -> !id.equals(other.getId())
+                        && other.getTarget() == request.getTarget()
+                        && (other.getStatus() == AiCommunityMediaGenerationRequest.Status.QUEUED
+                                || other.getStatus() == AiCommunityMediaGenerationRequest.Status.RUNNING));
+        if (duplicateActive) {
+            throw new IllegalStateException("Another image job for this fan and image type is already queued or running");
+        }
+
+        renderer.selection(request.getTarget(), provider, false);
+        request.setRequestedProvider(provider);
+        request.setStatus(AiCommunityMediaGenerationRequest.Status.QUEUED);
+        request.setActiveKey(request.getFanProfileId() + ":" + request.getTarget().name());
+        request.setAttempts(0);
+        request.setStartedAt(null);
+        request.setCompletedAt(null);
+        request.setNextAttemptAt(Instant.now());
+        request.setError(null);
+        requests.save(request);
+        return true;
     }
 
     void process(AiCommunityMediaGenerationRequest request) {
@@ -130,7 +169,8 @@ public class AiCommunityMediaWorker {
                 if (blockedUntil == null || !blockedUntil.isAfter(Instant.now())) {
                     blockedUntil = Instant.now().plus(quotaExhaustedCooldown);
                 }
-                blockProvider(blockedUntil, "Cloudflare daily image quota exhausted");
+                blockProvider(request.getProvider(), blockedUntil,
+                    request.getProvider() + " daily image quota exhausted");
                 // Quota exhaustion is provider-wide, not a failure of this specific job.
                 // Put it back among the normally eligible jobs. When the provider block
                 // expires, the repository performs a fresh priority-ordered queue pick.
@@ -138,6 +178,19 @@ public class AiCommunityMediaWorker {
                 requeue(request, e.getMessage(), Instant.now());
                 return;
             }
+
+                if (e instanceof AiCommunityImageProviderException providerFailure
+                    && Integer.valueOf(429).equals(providerFailure.statusCode())) {
+                Instant blockedUntil = providerFailure.retryAt() != null
+                    && providerFailure.retryAt().isAfter(Instant.now())
+                    ? providerFailure.retryAt()
+                    : Instant.now().plus(retryBaseDelay);
+                blockProvider(request.getProvider(), blockedUntil,
+                    request.getProvider() + " is rate limited");
+                request.setAttempts(Math.max(0, request.getAttempts() - 1));
+                requeue(request, e.getMessage(), blockedUntil);
+                return;
+                }
 
             if (!retryable
                     || request.getAttempts() >= Math.max(1, maxAttempts)) {
@@ -214,7 +267,10 @@ public class AiCommunityMediaWorker {
         return new MediaQueueSnapshot(queued, running,
                 requests.countByStatus(AiCommunityMediaGenerationRequest.Status.COMPLETED),
                 requests.countByStatus(AiCommunityMediaGenerationRequest.Status.FAILED),
-                renderer.isConfigured(), blockedUntil, blockedUntil == null ? null : providerBlockReason,
+                renderer.isConfigured(), blockedUntil,
+                blockedUntil == null ? null : providerBlockReasons.entrySet().stream()
+                    .filter(entry -> blockedUntil.equals(providerBlockedUntil.get(entry.getKey())))
+                    .map(Map.Entry::getValue).findFirst().orElse("Image provider is cooling down"),
                 resume, completedHour, completedDay, eta, mediaJobs(pending, profilesById),
                 mediaJobs(failures, profilesById));
     }
@@ -301,25 +357,36 @@ public class AiCommunityMediaWorker {
                 .toInstant();
     }
 
-    private boolean providerBlocked(Instant now) {
-        return activeProviderBlockedUntil(now) != null;
+    private boolean providerBlocked(String provider, Instant now) {
+        if (provider == null) return false;
+        Instant blockedUntil = providerBlockedUntil.get(provider);
+        if (blockedUntil != null && !blockedUntil.isAfter(now)) {
+            providerBlockedUntil.remove(provider, blockedUntil);
+            providerBlockReasons.remove(provider);
+            return false;
+        }
+        return blockedUntil != null;
     }
 
     private Instant activeProviderBlockedUntil(Instant now) {
-        Instant blockedUntil = providerBlockedUntil;
-        if (blockedUntil != null && !blockedUntil.isAfter(now)) {
-            providerBlockedUntil = null;
-            providerBlockReason = null;
-            return null;
-        }
-        return blockedUntil;
+        providerBlockedUntil.keySet().forEach(provider -> providerBlocked(provider, now));
+        return providerBlockedUntil.values().stream().max(Instant::compareTo).orElse(null);
     }
 
-    private synchronized void blockProvider(Instant until, String reason) {
-        if (until != null && (providerBlockedUntil == null || until.isAfter(providerBlockedUntil))) {
-            providerBlockedUntil = until;
-            providerBlockReason = reason;
+    private void blockProvider(String provider, Instant until, String reason) {
+        if (provider == null || provider.isBlank() || until == null) return;
+        providerBlockedUntil.merge(provider, until,
+                (current, updated) -> current.isAfter(updated) ? current : updated);
+        providerBlockReasons.put(provider, reason);
+    }
+
+    private String providerFor(AiCommunityMediaGenerationRequest request) {
+        if (request.getRequestedProvider() != null && !request.getRequestedProvider().isBlank()) {
+            return request.getRequestedProvider();
         }
+        AiCommunityImageRenderer.ProviderSelection selection =
+                renderer.selection(request.getTarget(), null, false);
+        return selection == null ? request.getProvider() : selection.provider();
     }
 
     private void terminalFail(

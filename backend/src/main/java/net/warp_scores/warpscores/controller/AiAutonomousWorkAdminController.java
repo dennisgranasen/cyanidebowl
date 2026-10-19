@@ -168,6 +168,17 @@ public class AiAutonomousWorkAdminController {
         return overview();
     }
 
+    @PutMapping("/media-queue/jobs/{id}/provider")
+    public Overview moveOrRetryMediaJob(@PathVariable String id, @RequestBody MediaProviderUpdate update) {
+        if (update == null || update.provider() == null || update.provider().isBlank()) {
+            throw new IllegalArgumentException("provider is required");
+        }
+        if (!mediaWorker.moveOrRetry(id, update.provider())) {
+            throw new IllegalArgumentException("Media job was not found or is currently running");
+        }
+        return overview();
+    }
+
     @DeleteMapping("/media-queue/jobs/{id}")
     public Overview removeMediaJob(@PathVariable String id) {
         if (!mediaWorker.removePending(id)) throw new IllegalArgumentException("Pending media job not found");
@@ -253,6 +264,7 @@ public class AiAutonomousWorkAdminController {
     public record ExternalResultUpdate(String content) {}
     public record QuotaThresholdUpdate(Integer minimumRemainingPercent) {}
     public record QuotaThreshold(int minimumRemainingPercent) {}
+    public record MediaProviderUpdate(String provider) {}
     public record EditorialImageJobView(
             String id,
             EditorialImageRequest.Status status,

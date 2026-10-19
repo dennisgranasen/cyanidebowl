@@ -5,12 +5,14 @@ import net.warp_scores.warpscores.ai.interaction.AiCommunityFanMediaService;
 import net.warp_scores.warpscores.ai.interaction.DedicatedFansPeriodicReconciliationService;
 import net.warp_scores.warpscores.ai.interaction.DedicatedFanReconciliationQueueService;
 import net.warp_scores.warpscores.ai.interaction.DedicatedFanResetService;
+import net.warp_scores.warpscores.ai.provider.copilot.CopilotQuotaGuard;
 import net.warp_scores.warpscores.domain.persistence.AiCommunityMemberProfileRepository;
 import net.warp_scores.warpscores.domain.persistence.AiSettingsRepository;
 import net.warp_scores.warpscores.domain.persistence.WarpScoresUserRepository;
 import net.warp_scores.warpscores.model.AiCommunityMemberProfile;
 import net.warp_scores.warpscores.model.AiCommunityMediaGenerationRequest.Target;
 import net.warp_scores.warpscores.model.AiSettings;
+import net.warp_scores.warpscores.service.AiPendingWorkService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -31,6 +33,8 @@ public class AiCommunityFanAdminController {
     private final AiCommunityFanMediaService mediaService;
     private final DedicatedFansPeriodicReconciliationService periodicReconciliation;
     private final DedicatedFanResetService resetService;
+    private final AiPendingWorkService pendingWork;
+    private final CopilotQuotaGuard copilotQuota;
     private final net.warp_scores.warpscores.ai.interaction.CommunityImageProviders imageProviders;
     private final net.warp_scores.warpscores.ai.interaction.CommunityMediaReviewService mediaReviews;
 
@@ -90,9 +94,20 @@ public class AiCommunityFanAdminController {
     }
 
     @PostMapping("/reconcile-now")
-    public DedicatedFanReconciliationQueueService.QueueSummary reconcileNow() {
-        return periodicReconciliation.enqueueNow();
+    public DedicatedFanReconciliationQueueService.QueueSummary reconcileNow(
+            @RequestBody(required = false) QueueRequest request) {
+        String targetOverride = request == null ? null : request.targetOverride();
+        boolean confirmCopilotQuota = request != null && Boolean.TRUE.equals(request.confirmCopilotQuota());
+        if (StringUtils.hasText(targetOverride)) {
+            pendingWork.validateTarget("FAN_PROFILE", targetOverride);
+            if (copilotQuota.isCopilotTarget(targetOverride)) {
+                copilotQuota.requireConfirmation(confirmCopilotQuota);
+            }
+        }
+        return periodicReconciliation.enqueueNow(targetOverride);
     }
+
+    public record QueueRequest(String targetOverride, Boolean confirmCopilotQuota) {}
 
     @PostMapping("/reset-generated")
     public DedicatedFanResetService.ResetSummary resetGeneratedProfiles() {

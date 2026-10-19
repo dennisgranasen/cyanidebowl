@@ -158,10 +158,10 @@ export default {
       getAccessTokenSilently,
       getAccessTokenWithPopup
     ).then(returnData).catch(handleError),
-  reconcileCommunityFansNow: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
+  reconcileCommunityFansNow: async (targetOverride, confirmCopilotQuota, getAccessTokenSilently, getAccessTokenWithPopup) =>
     postDataWithAuthentication(
       '/admin/community-fans/reconcile-now',
-      {},
+      { targetOverride: targetOverride || null, confirmCopilotQuota },
       getAccessTokenSilently,
       getAccessTokenWithPopup
     ).then(returnData).catch(handleError),

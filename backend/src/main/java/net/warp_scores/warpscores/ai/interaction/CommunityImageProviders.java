@@ -73,6 +73,13 @@ public class CommunityImageProviders implements AiCommunityImageRenderer {
                     block.retryAt(), block.quotaExhausted());
     }
 
+    @Override
+    public void requireConfiguredProvider(String id) {
+        if (id == null || !providers.containsKey(id) || !providers.get(id).isConfigured()) {
+            throw new IllegalArgumentException("Image provider is not configured: " + id);
+        }
+    }
+
     @Override public boolean isConfigured() {
         return providers.values().stream().anyMatch(AiCommunityImageRenderer::isConfigured);
     }

@@ -25,8 +25,8 @@ public class DedicatedFansPeriodicReconciliationService {
      * admin actions (Queue fan sync / Reset generated fans). Existing queued
      * jobs are still processed by the background worker.
      */
-    public DedicatedFanReconciliationQueueService.QueueSummary enqueueNow() {
-        var summary = queue.enqueueAll();
+    public DedicatedFanReconciliationQueueService.QueueSummary enqueueNow(String targetOverride) {
+        var summary = queue.enqueueAll(targetOverride);
         AiSettings currentSettings = settingsRepository.findById(AiSettings.GLOBAL_ID)
                 .orElseGet(AiSettings::new);
         currentSettings.setFanPopulationLastReconciledAt(summary.queuedAt());

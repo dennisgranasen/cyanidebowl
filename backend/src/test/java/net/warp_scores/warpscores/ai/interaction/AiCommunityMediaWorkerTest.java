@@ -19,6 +19,77 @@ import static org.mockito.Mockito.*;
 
 class AiCommunityMediaWorkerTest {
     @Test
+    void movesFailedRequestToConfiguredProviderAndMakesItImmediatelyEligible() {
+        var requests = mock(AiCommunityMediaGenerationRequestRepository.class);
+        var profiles = mock(AiCommunityMemberProfileRepository.class);
+        var renderer = mock(AiCommunityImageRenderer.class);
+        var assets = mock(AiCommunityMediaAssetStore.class);
+        var request = request();
+        request.setStatus(AiCommunityMediaGenerationRequest.Status.FAILED);
+        request.setAttempts(4);
+        request.setActiveKey(null);
+        request.setCompletedAt(Instant.now());
+        request.setError("Provider failed");
+        when(renderer.isConfigured()).thenReturn(true);
+        when(requests.findById("request")).thenReturn(Optional.of(request));
+        when(requests.findByFanProfileIdOrderByCreatedAtDesc("fan")).thenReturn(List.of(request));
+        when(renderer.selection(AiCommunityMediaGenerationRequest.Target.AVATAR, "openai", false))
+                .thenReturn(new AiCommunityImageRenderer.ProviderSelection("openai", "image-model"));
+
+        var worker = new AiCommunityMediaWorker(requests, profiles, renderer, assets);
+
+        org.assertj.core.api.Assertions.assertThat(worker.moveOrRetry("request", "openai")).isTrue();
+
+        org.assertj.core.api.Assertions.assertThat(request.getStatus())
+                .isEqualTo(AiCommunityMediaGenerationRequest.Status.QUEUED);
+        org.assertj.core.api.Assertions.assertThat(request.getRequestedProvider()).isEqualTo("openai");
+        org.assertj.core.api.Assertions.assertThat(request.getActiveKey()).isEqualTo("fan:AVATAR");
+        org.assertj.core.api.Assertions.assertThat(request.getAttempts()).isZero();
+        org.assertj.core.api.Assertions.assertThat(request.getNextAttemptAt()).isBefore(Instant.now().plusSeconds(5));
+        org.assertj.core.api.Assertions.assertThat(request.getCompletedAt()).isNull();
+        org.assertj.core.api.Assertions.assertThat(request.getError()).isNull();
+        verify(requests).save(request);
+    }
+
+    @Test
+    void cloudflareCooldownDoesNotPreventOpenAiImageJobFromRunning() throws Exception {
+        var requests = mock(AiCommunityMediaGenerationRequestRepository.class);
+        var profiles = mock(AiCommunityMemberProfileRepository.class);
+        var renderer = mock(AiCommunityImageRenderer.class);
+        var assets = mock(AiCommunityMediaAssetStore.class);
+        var cloudflareJob = request();
+        cloudflareJob.setId("cloudflare-job");
+        cloudflareJob.setRequestedProvider("cloudflare");
+        var openAiJob = request();
+        openAiJob.setId("openai-job");
+        openAiJob.setFanProfileId("fan-openai");
+        openAiJob.setRequestedProvider("openai");
+        var profile = new AiCommunityMemberProfile();
+        profile.setId("fan-openai");
+        when(renderer.isConfigured()).thenReturn(true);
+        when(requests.findByStatusInOrderByPriorityDescCreatedAtAsc(any()))
+                .thenReturn(List.of(cloudflareJob, openAiJob));
+        when(profiles.findById("fan-openai")).thenReturn(Optional.of(profile));
+        when(renderer.selection(AiCommunityMediaGenerationRequest.Target.AVATAR, "openai", false))
+                .thenReturn(new AiCommunityImageRenderer.ProviderSelection("openai", "image-model"));
+        when(renderer.render("prompt", AiCommunityMediaGenerationRequest.Target.AVATAR, "openai"))
+                .thenReturn(new AiCommunityImageRenderer.RenderedImage(
+                        new byte[] {1}, "image/png", "png", "openai", "image-model"));
+        when(assets.save(eq("fan-openai"), eq("AVATAR"), eq("png"), any(byte[].class)))
+                .thenReturn(new AiCommunityMediaAssetStore.StoredAsset("image.png", "/image.png"));
+        var worker = new AiCommunityMediaWorker(requests, profiles, renderer, assets);
+        configure(worker);
+        @SuppressWarnings("unchecked")
+        var blocks = (java.util.Map<String, Instant>) ReflectionTestUtils.getField(worker, "providerBlockedUntil");
+        blocks.put("cloudflare", Instant.now().plusSeconds(600));
+
+        worker.poll();
+
+        verify(renderer).render("prompt", AiCommunityMediaGenerationRequest.Target.AVATAR, "openai");
+        verify(profiles).save(profile);
+    }
+
+    @Test
     void previewStoresCandidateWithoutReplacingOrDeletingCurrentImage() throws Exception {
         var requests = mock(AiCommunityMediaGenerationRequestRepository.class);
         var profiles = mock(AiCommunityMemberProfileRepository.class);

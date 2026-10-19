@@ -121,6 +121,20 @@ const AiReporterApi = {
     return (await axios.get('/admin/ai-autonomous-work/copilot-quota', auth)).data;
   },
 
+  communityImageProviders: async (getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.get('/admin/community-fans/media/providers', auth)).data;
+  },
+
+  moveCommunityMediaJob: async (id, provider, getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.put(
+      `/admin/ai-autonomous-work/media-queue/jobs/${encodeURIComponent(id)}/provider`,
+      { provider },
+      auth
+    )).data;
+  },
+
   setCopilotQuotaThreshold: async (minimumRemainingPercent, getAccessTokenSilently, getAccessTokenWithPopup) => {
     const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
     return (await axios.put(

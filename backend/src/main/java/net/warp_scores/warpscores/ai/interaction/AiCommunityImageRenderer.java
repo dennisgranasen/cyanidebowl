@@ -5,6 +5,12 @@ import net.warp_scores.warpscores.model.AiCommunityMediaGenerationRequest;
 public interface AiCommunityImageRenderer {
     boolean isConfigured();
 
+    default void requireConfiguredProvider(String provider) {
+        if (provider == null || provider.isBlank() || !isConfigured()) {
+            throw new IllegalArgumentException("Image provider is not configured: " + provider);
+        }
+    }
+
     default boolean supportsReferenceImages() { return false; }
 
     default ProviderSelection selection(

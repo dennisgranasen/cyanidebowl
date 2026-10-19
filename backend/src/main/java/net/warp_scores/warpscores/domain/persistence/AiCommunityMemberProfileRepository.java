@@ -13,6 +13,8 @@ public interface AiCommunityMemberProfileRepository
 
     List<AiCommunityMemberProfile> findByTeamIdOrderByOrdinalAsc(String teamId);
 
+    List<AiCommunityMemberProfile> findByTeamIdIn(Iterable<String> teamIds);
+
     List<AiCommunityMemberProfile> findByActiveTrueOrderByTeamIdAscOrdinalAsc();
 
     List<AiCommunityMemberProfile> findAllByOrderByDisplayNameAsc();

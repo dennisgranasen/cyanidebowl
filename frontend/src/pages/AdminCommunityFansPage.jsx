@@ -9,6 +9,7 @@ import WarpScoresApiService from '../WarpScoresApiService';
 import CommunityApi from '../CommunityApi';
 import CommunityProfileMediaAdmin from '../components/community/CommunityProfileMediaAdmin';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
+import AiReporterApi from '../AiReporterApi';
 
 const behavioralFields = [
   ['optimism', 'Optimism'],
@@ -31,6 +32,8 @@ function AdminCommunityFansPage() {
   const [selectedId, setSelectedId] = useState('');
   const [draft, setDraft] = useState(null);
   const [settings, setSettings] = useState(null);
+  const [fanProfileTargets, setFanProfileTargets] = useState([]);
+  const [selectedFanProfileTarget, setSelectedFanProfileTarget] = useState('');
   const [filterTeam, setFilterTeam] = useState('');
   const [filterActive, setFilterActive] = useState('active');
   const [busy, setBusy] = useState(false);
@@ -52,6 +55,14 @@ function AdminCommunityFansPage() {
   };
 
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    let active = true;
+    AiReporterApi.pendingWorkTargets('FAN_PROFILE', ...auth)
+      .then(targets => { if (active) setFanProfileTargets(targets || []); })
+      .catch(e => { if (active) setError(e?.message || 'Could not load fan-profile AI targets.'); });
+    return () => { active = false; };
+  }, [getAccessTokenSilently, getAccessTokenWithPopup]);
 
   const teams = useMemo(
     () => [...new Map(
@@ -111,9 +122,21 @@ function AdminCommunityFansPage() {
   const syncNow = async () => {
     setBusy(true);
     try {
-      const result = await WarpScoresApiService.reconcileCommunityFansNow(...auth);
+      const queue = confirmCopilotQuota => WarpScoresApiService.reconcileCommunityFansNow(
+        selectedFanProfileTarget, confirmCopilotQuota, ...auth
+      );
+      let result;
+      try {
+        result = await queue(false);
+      } catch (reason) {
+        const warning = reason?.response?.data;
+        if (reason?.response?.status !== 409
+            || warning?.code !== 'COPILOT_QUOTA_CONFIRMATION_REQUIRED') throw reason;
+        if (!window.confirm(warning.message)) return;
+        result = await queue(true);
+      }
       setMessage(
-        `Fan sync queued for ${result.scannedTeams} teams; generation continues in the background.`
+        `Checked ${result.scannedTeams} teams: queued ${result.queuedTeams} with fan-count changes, skipped ${result.unchangedTeams} unchanged and ${result.unknownFanCountTeams} with unknown fan counts. Generation continues in the background.`
       );
       await load();
     } catch (e) {
@@ -175,6 +198,20 @@ function AdminCommunityFansPage() {
           </Text>
         </Box>
         <HStack>
+          <Select
+            aria-label="Provider for new fan sync jobs"
+            value={selectedFanProfileTarget}
+            onChange={event => setSelectedFanProfileTarget(event.target.value)}
+            isDisabled={busy}
+            width="260px"
+          >
+            <option value="">Default routing</option>
+            {fanProfileTargets.map(target => (
+              <option key={target.targetId} value={target.targetId}>
+                {target.targetId} · {target.provider}
+              </option>
+            ))}
+          </Select>
           <Button colorScheme="purple" onClick={syncNow} isLoading={busy}>
             Queue fan sync
           </Button>

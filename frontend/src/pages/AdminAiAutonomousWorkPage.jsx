@@ -8,6 +8,7 @@ import {
   Heading,
   HStack,
   Input,
+  Select,
   SimpleGrid,
   Spinner,
   Switch,
@@ -76,6 +77,8 @@ function AdminAiAutonomousWorkPage() {
   const [inputLoading, setInputLoading] = useState(false);
   const [inputError, setInputError] = useState('');
   const [copilotQuota, setCopilotQuota] = useState(null);
+  const [communityImageProviders, setCommunityImageProviders] = useState([]);
+  const [selectedMediaProviders, setSelectedMediaProviders] = useState({});
   const [copilotQuotaError, setCopilotQuotaError] = useState(null);
   const [quotaThresholdDraft, setQuotaThresholdDraft] = useState('20');
   const [quotaThresholdDirty, setQuotaThresholdDirty] = useState(false);
@@ -141,6 +144,17 @@ function AdminAiAutonomousWorkPage() {
     const timer = setInterval(refreshCopilotQuota, 60000);
     return () => clearInterval(timer);
   }, [authenticationReady, userPermissions.writeSiteAdmin, refreshCopilotQuota]);
+
+  useEffect(() => {
+    if (!authenticationReady || !userPermissions.writeSiteAdmin) return undefined;
+    let active = true;
+    AiReporterApi.communityImageProviders(getAccessTokenSilently, getAccessTokenWithPopup)
+      .then(providers => { if (active) setCommunityImageProviders(providers || []); })
+      .catch(reason => {
+        if (active) setError(reason?.response?.data?.message || reason?.message || 'Could not load image providers.');
+      });
+    return () => { active = false; };
+  }, [authenticationReady, userPermissions.writeSiteAdmin, getAccessTokenSilently, getAccessTokenWithPopup]);
 
   useEffect(() => {
     const timer = setInterval(() => setNowMs(Date.now()), 1000);
@@ -697,6 +711,25 @@ function AdminAiAutonomousWorkPage() {
                     <Td isNumeric>{job.priority ?? 0}</Td><Td>{job.attempts ?? 0}</Td><Td>{when(job.nextAttemptAt)}</Td><Td fontSize="xs" color="red.300">{job.error || '—'}</Td>
                     <Td><HStack>
                       <Button size="xs" onClick={() => inspectJobInput('community-media', job.id)}>Input</Button>
+                      <Select size="xs" width="150px" aria-label={`Image provider for ${job.fanName || job.id}`}
+                        value={selectedMediaProviders[job.id] ?? job.requestedProvider ?? ''}
+                        isDisabled={saving || job.status === 'RUNNING'}
+                        onChange={event => setSelectedMediaProviders(old => ({ ...old, [job.id]: event.target.value }))}>
+                        <option value="">Select image provider</option>
+                        {communityImageProviders.filter(provider => provider.configured).map(provider => (
+                          <option key={provider.id} value={provider.id}>{provider.name}</option>
+                        ))}
+                      </Select>
+                      <Button size="xs" isDisabled={saving || job.status === 'RUNNING'
+                        || !(selectedMediaProviders[job.id] ?? job.requestedProvider)}
+                        onClick={() => mutateQueue(() => AiReporterApi.moveCommunityMediaJob(
+                          job.id,
+                          selectedMediaProviders[job.id] ?? job.requestedProvider,
+                          getAccessTokenSilently,
+                          getAccessTokenWithPopup
+                        ))}>
+                        {job.status === 'FAILED' ? 'Retry / move' : 'Move'}
+                      </Button>
                       <Button size="xs" isDisabled={position === 0 || ['RUNNING', 'FAILED'].includes(job.status) || saving}
                         onClick={() => movePriority(mediaQueue.jobs, position, -1, j => j.priority ?? 0, 100,
                           priority => AiReporterApi.reprioritizeAiQueueJob(path, priority, getAccessTokenSilently, getAccessTokenWithPopup))}>↑</Button>
@@ -714,7 +747,25 @@ function AdminAiAutonomousWorkPage() {
                 })}</Tbody>
               </Table>
             </Box>
-            {mediaQueue.recentFailures?.length > 0 && <Box mt={4}><Heading size="sm" mb={2} color="red.300">Recent failed community-media jobs</Heading><Box borderWidth="1px" borderColor="red.700" borderRadius="lg" overflowX="auto"><Table size="sm"><Thead><Tr><Th>Character</Th><Th>Type</Th><Th>Registered</Th><Th>Failed</Th><Th>Attempts</Th><Th>Error</Th><Th>Input</Th></Tr></Thead><Tbody>{mediaQueue.recentFailures.map(job => <Tr key={job.id}><Td><Text>{job.fanName || 'Deleted / unknown character'}</Text><Text fontSize="xs" color="gray.500">{job.fanProfileId || job.id}</Text></Td><Td>{job.target}</Td><Td>{job.createdAt ? new Date(job.createdAt).toLocaleString() : '—'}</Td><Td>{job.completedAt ? new Date(job.completedAt).toLocaleString() : '—'}</Td><Td>{job.attempts ?? 0}</Td><Td fontSize="xs" color="red.300">{job.error || 'No error message recorded'}</Td><Td><Button size="xs" onClick={() => inspectJobInput('community-media', job.id)}>Inspect</Button></Td></Tr>)}</Tbody></Table></Box></Box>}
+              {mediaQueue.recentFailures?.length > 0 && <Box mt={4}><Heading size="sm" mb={2} color="red.300">Recent failed community-media jobs</Heading><Box borderWidth="1px" borderColor="red.700" borderRadius="lg" overflowX="auto"><Table size="sm"><Thead><Tr><Th>Character</Th><Th>Type</Th><Th>Registered</Th><Th>Failed</Th><Th>Attempts</Th><Th>Error</Th><Th>Provider / actions</Th></Tr></Thead><Tbody>{mediaQueue.recentFailures.map(job => <Tr key={job.id}><Td><Text>{job.fanName || 'Deleted / unknown character'}</Text><Text fontSize="xs" color="gray.500">{job.fanProfileId || job.id}</Text></Td><Td>{job.target}</Td><Td>{job.createdAt ? new Date(job.createdAt).toLocaleString() : '—'}</Td><Td>{job.completedAt ? new Date(job.completedAt).toLocaleString() : '—'}</Td><Td>{job.attempts ?? 0}</Td><Td fontSize="xs" color="red.300">{job.error || 'No error message recorded'}</Td><Td><HStack>
+                <Button size="xs" onClick={() => inspectJobInput('community-media', job.id)}>Inspect</Button>
+                <Select size="xs" width="150px" aria-label={`Image provider for ${job.fanName || job.id}`}
+                  value={selectedMediaProviders[job.id] ?? job.requestedProvider ?? ''}
+                  isDisabled={saving}
+                  onChange={event => setSelectedMediaProviders(old => ({ ...old, [job.id]: event.target.value }))}>
+                  <option value="">Select image provider</option>
+                  {communityImageProviders.filter(provider => provider.configured).map(provider => (
+                    <option key={provider.id} value={provider.id}>{provider.name}</option>
+                  ))}
+                </Select>
+                <Button size="xs" isDisabled={saving || !(selectedMediaProviders[job.id] ?? job.requestedProvider)}
+                  onClick={() => mutateQueue(() => AiReporterApi.moveCommunityMediaJob(
+                    job.id,
+                    selectedMediaProviders[job.id] ?? job.requestedProvider,
+                    getAccessTokenSilently,
+                    getAccessTokenWithPopup
+                  ))}>Retry / move</Button>
+              </HStack></Td></Tr>)}</Tbody></Table></Box></Box>}
           </Box>
           </>}
 

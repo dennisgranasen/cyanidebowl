@@ -22,6 +22,17 @@ describe('WarpScoresApiService', () => {
     await WarpScoresApiService.reviewCommunityFanMedia('fan/1', 'job/1', false, jest.fn(), jest.fn());
     expect(axios.post).toHaveBeenLastCalledWith('/admin/community-fans/fan%2F1/media/job%2F1/review', { approve: false }, expect.any(Object));
   });
+
+  test('queues fan sync with the selected target and quota confirmation', async () => {
+    await WarpScoresApiService.reconcileCommunityFansNow(
+      'copilot-target', true, jest.fn(), jest.fn()
+    );
+    expect(axios.post).toHaveBeenLastCalledWith(
+      '/admin/community-fans/reconcile-now',
+      { targetOverride: 'copilot-target', confirmCopilotQuota: true },
+      expect.any(Object)
+    );
+  });
   test.each(['leagueSystems', 'adminUsers'])('%s returns lists and rejects malformed responses', async (method) => {
     const systems = [{ id: 'nst', name: 'NST' }];
     axios.mockResolvedValueOnce({ data: systems });

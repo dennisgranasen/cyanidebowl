@@ -61,3 +61,18 @@ test('submits external provider output to the selected provider-call job', async
     expect.objectContaining({ headers: { Authorization: 'Bearer token' } })
   );
 });
+
+test('moves and retries a community media job using the selected image provider', async () => {
+  const data = { mediaQueue: { queued: 1 } };
+  axios.put.mockResolvedValue({ data });
+
+  await expect(AiReporterApi.moveCommunityMediaJob(
+    'image/job', 'openai', async () => 'token', jest.fn()
+  )).resolves.toEqual(data);
+
+  expect(axios.put).toHaveBeenCalledWith(
+    '/admin/ai-autonomous-work/media-queue/jobs/image%2Fjob/provider',
+    { provider: 'openai' },
+    expect.objectContaining({ headers: { Authorization: 'Bearer token' } })
+  );
+});
