@@ -2,10 +2,12 @@ package net.warp_scores.warpscores.ai.interaction;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.ai.context.ContextTaskType;
 import net.warp_scores.warpscores.domain.persistence.DedicatedFanReconciliationJobRepository;
 import net.warp_scores.warpscores.domain.persistence.TeamRepository;
 import net.warp_scores.warpscores.model.DedicatedFanReconciliationJob;
 import net.warp_scores.warpscores.ai.provider.LlmProviderException;
+import net.warp_scores.warpscores.ai.provider.LlmProviderRouter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,8 @@ public class DedicatedFanReconciliationWorker {
     private final TeamRepository teams;
     private final DedicatedFansCommunityReconciliationService reconciliation;
     private final DedicatedFanReconciliationQueueService reconciliationQueue;
+    private final LlmProviderRouter providerRouter;
+    private final DedicatedFanProviderCooldowns providerCooldowns;
 
     @Value("${warpscores.ai.fans.reconcile-job-timeout:15m}")
     private Duration jobTimeout;
@@ -29,20 +33,16 @@ public class DedicatedFanReconciliationWorker {
     @Value("${warpscores.ai.fans.rate-limit-cooldown:2m}")
     private Duration rateLimitCooldown;
 
-    private Instant rateLimitCooldownUntil;
-
     @Scheduled(
             fixedDelayString = "${warpscores.ai.fans.reconcile-worker-delay-ms:3000}",
             initialDelayString = "${warpscores.ai.fans.reconcile-worker-initial-delay-ms:15000}")
     public synchronized void poll() {
         recoverStale();
         Instant now = Instant.now();
-        if (rateLimitCooldownUntil != null && now.isBefore(rateLimitCooldownUntil)) {
-            return;
-        }
         jobs.findByStatusAndRequestedAtLessThanEqual(
                         DedicatedFanReconciliationJob.Status.QUEUED, now)
                 .stream()
+                .filter(job -> !isProviderCoolingDown(job, now))
                 .min(Comparator
                         .comparingInt((DedicatedFanReconciliationJob job) ->
                                 job.getPriority() == null ? 50 : job.getPriority())
@@ -73,14 +73,12 @@ public class DedicatedFanReconciliationWorker {
             LlmProviderException rateLimit = findRateLimit(e);
             if (rateLimit != null) {
                 Instant cooldownUntil = Instant.now().plus(rateLimitCooldown);
-                if (rateLimitCooldownUntil == null || cooldownUntil.isAfter(rateLimitCooldownUntil)) {
-                    rateLimitCooldownUntil = cooldownUntil;
-                }
-                retryAt = rateLimitCooldownUntil;
+                providerCooldowns.extend(rateLimit.providerId(), cooldownUntil);
+                retryAt = providerCooldowns.until(rateLimit.providerId());
                 log.warn(
-                        "Dedicated Fan generation hit {} rate limit; pausing the entire fan reconciliation worker until {}",
+                        "Dedicated Fan generation hit {} rate limit; pausing fan jobs routed to that provider until {}",
                         rateLimit.providerId(),
-                        rateLimitCooldownUntil);
+                        retryAt);
             } else {
                 log.warn("Dedicated Fan reconciliation failed for {}; retrying later: {}",
                         claimedJob.getTeamId(), e.getMessage());
@@ -90,6 +88,20 @@ public class DedicatedFanReconciliationWorker {
             claimedJob.setRequestedAt(retryAt);
             claimedJob.setLastError(e.getMessage());
             jobs.save(claimedJob);
+        }
+    }
+
+    private boolean isProviderCoolingDown(DedicatedFanReconciliationJob job, Instant now) {
+        try {
+            String providerId = providerRouter.planForTask(
+                    DedicatedFanAiProfileGenerator.AGENT_ID,
+                    ContextTaskType.FAN_PROFILE,
+                    new LlmProviderRouter.ExecutionOverrides(job.getTargetOverride(), null))
+                    .primary().providerId();
+            Instant until = providerCooldowns.until(providerId);
+            return until != null && now.isBefore(until);
+        } catch (RuntimeException ignored) {
+            return false;
         }
     }
 

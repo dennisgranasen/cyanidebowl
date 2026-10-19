@@ -664,15 +664,6 @@ function AdminAiAutonomousWorkPage() {
                 })}
               </VStack>
             )}
-            <AiJobInputDialog
-              isOpen={inputDialogOpen}
-              onClose={() => setInputDialogOpen(false)}
-              details={inputDetails}
-              loading={inputLoading}
-              error={inputError}
-              canSubmitResult={inputJobRef?.type === 'provider-call' && Boolean(inputDetails)}
-              onSubmitResult={submitExternalResult}
-            />
           </Box>
           </>}
 
@@ -843,6 +834,15 @@ function AdminAiAutonomousWorkPage() {
             )}
           </Box>
           </>}
+          <AiJobInputDialog
+            isOpen={inputDialogOpen}
+            onClose={() => setInputDialogOpen(false)}
+            details={inputDetails}
+            loading={inputLoading}
+            error={inputError}
+            canSubmitResult={inputJobRef?.type === 'provider-call' && Boolean(inputDetails)}
+            onSubmitResult={submitExternalResult}
+          />
         </VStack>
       )}
     </Box>

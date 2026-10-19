@@ -1,6 +1,8 @@
 package net.warp_scores.warpscores.ai.interaction;
 
 import lombok.RequiredArgsConstructor;
+import net.warp_scores.warpscores.ai.context.ContextTaskType;
+import net.warp_scores.warpscores.ai.provider.LlmProviderRouter;
 import net.warp_scores.warpscores.domain.persistence.DedicatedFanReconciliationJobRepository;
 import net.warp_scores.warpscores.domain.persistence.TeamRepository;
 import net.warp_scores.warpscores.model.DedicatedFanReconciliationJob;
@@ -13,6 +15,8 @@ import java.time.Instant;
 public class DedicatedFanReconciliationQueueService {
     private final TeamRepository teams;
     private final DedicatedFanReconciliationJobRepository jobs;
+    private final LlmProviderRouter providerRouter;
+    private final DedicatedFanProviderCooldowns providerCooldowns;
 
     public QueueSummary enqueueAll() {
         int scanned = 0;
@@ -56,6 +60,17 @@ public class DedicatedFanReconciliationQueueService {
             return false;
         }
         job.setTargetOverride(targetOverride);
+        String providerId = providerRouter.planForTask(
+            DedicatedFanAiProfileGenerator.AGENT_ID,
+            ContextTaskType.FAN_PROFILE,
+            new LlmProviderRouter.ExecutionOverrides(targetOverride, null))
+            .primary().providerId();
+        Instant now = Instant.now();
+        Instant providerCooldown = providerCooldowns.until(providerId);
+        job.setRequestedAt(providerCooldown != null && providerCooldown.isAfter(now)
+            ? providerCooldown
+            : now);
+        job.setLastError(null);
         jobs.save(job);
         return true;
     }

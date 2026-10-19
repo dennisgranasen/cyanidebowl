@@ -26,7 +26,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class DedicatedFanAiProfileGenerator {
     public static final String ROUTING_ID = "dedicated-fan-profile";
-    private static final String AGENT_ID = "dedicated-fan-profile-generator";
+    static final String AGENT_ID = "dedicated-fan-profile-generator";
     private static final String AGENT_VERSION = "1";
 
     private final LlmExecutionService llm;
