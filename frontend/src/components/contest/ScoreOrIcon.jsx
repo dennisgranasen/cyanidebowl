@@ -32,8 +32,8 @@ function ScoreOrIcon({ contestOrMatch, size, boxSize }) {
 
   const teams = contestOrMatch.contestId ? contestOrMatch.opponents : contestOrMatch.teams;
   //console.log('ScoreOrIcon', { contestOrMatch, teams, matchPlayed, matchValidated, color });  
-  const scoreA = teams && teams.length > 1 ? teams[0].score : '?';
-  const scoreB = teams && teams.length > 1 ? teams[1].score : '?';
+  const scoreA = contestOrMatch.officialScore?.home ?? (teams && teams.length > 1 ? teams[0].score : '?');
+  const scoreB = contestOrMatch.officialScore?.away ?? (teams && teams.length > 1 ? teams[1].score : '?');
   const scoreText = `${scoreA} - ${scoreB}`;
 
   return (

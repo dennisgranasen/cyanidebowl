@@ -7,11 +7,11 @@ import Standings from '../common/Standings';
 import MatchModalWithRosters from '../contest/MatchModalWithRosters';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import { resolveRace } from '../../util/raceUtil';
+import { matchScore, scoreDiffersFromTouchdowns, touchdownScore } from '../../util/matchResult';
 import { useIntl } from 'react-intl';
 
 const orderedSeasons = (system) => [...(system?.seasons || [])].sort((a, b) => (b.sequence ?? b.number ?? 0) - (a.sequence ?? a.number ?? 0));
-const matchScore = (match, index) => match.officialScore?.[index ? 'away' : 'home'] ?? match.sourceScore?.[index ? 'away' : 'home'] ?? match.teams?.[index]?.score;
-const playedScore = (match, index) => match.teams?.[index]?.touchdowns ?? match.sourceScore?.[index ? 'away' : 'home'] ?? match.teams?.[index]?.score;
+export { matchScore };
 const matchOpus = (match) => Number(String(match.game || 'BB3').replace('BB', '')) || 3;
 
 function standingsFor(stage) {
@@ -83,7 +83,7 @@ export function inferPlayoffRounds(matches) {
   matches.filter((match) => match.countsFor?.bracket !== false).forEach((match) => {
     // Legacy imports can contain one Cyanide match as multiple Mongo documents.
     // Within a single-elimination phase, participants plus final score are stable.
-    const participants = (match.teams || []).map((team, index) => `${team.name}:${playedScore(match, index)}`).sort();
+    const participants = (match.teams || []).map((team, index) => `${team.name}:${matchScore(match, index)}`).sort();
     const key = participants.length === 2
       ? `${match.game || ''}:${match.platform || ''}:${matchTime(match)}:${participants.join('|')}`
       : match.sourceMatchKey || `${matchTime(match)}:${participants.join('|')}`;
@@ -268,8 +268,8 @@ function PlayoffBracket({ phase, onMatchClick }) {
         id: team.id || { value: team.name, opus: Number(String(match.game || 'BB3').replace('BB', '')) || 3 },
         opus: matchOpus(match),
         resultText: match.seriesMatches?.length > 1
-          ? match.seriesMatches.map((seriesMatch) => playedScore(seriesMatch, index) ?? '-').join(' / ')
-          : `${playedScore(match, index) ?? '-'}`,
+          ? match.seriesMatches.map((seriesMatch) => matchScore(seriesMatch, index) ?? '-').join(' / ')
+          : `${matchScore(match, index) ?? '-'}`,
         isWinner: team.name === winner,
         status: 'PLAYED',
         teamName: team.name,
@@ -287,7 +287,7 @@ function PlayoffBracket({ phase, onMatchClick }) {
       seriesResults: match.seriesMatches?.map((seriesMatch, index) => ({
         id: seriesMatch.sourceMatchKey,
         label: intl.formatMessage({ id: 'leagueSystems.match' }, { number: index + 1 }),
-        score: `${playedScore(seriesMatch, 0) ?? '-'}–${playedScore(seriesMatch, 1) ?? '-'}`,
+        score: `${matchScore(seriesMatch, 0) ?? '-'}–${matchScore(seriesMatch, 1) ?? '-'}`,
         date: seriesMatch.finishedAt || seriesMatch.startedAt,
         deciding: seriesMatch.sourceMatchKey === match.sourceMatchKey,
       })),
@@ -327,7 +327,7 @@ function PlayoffBracket({ phase, onMatchClick }) {
   });
   const bronzeBracketMatch = bronze && bracketMatches.find((match) => match.id === bronze.sourceMatchKey);
   const bronzeWinner = bronze && winnerName(bronze);
-  const bronzeParties = bronze && bronze.teams.map((team, index) => ({ id: team.id || { value: team.name, opus: matchOpus(bronze) }, opus: matchOpus(bronze), resultText: `${playedScore(bronze, index) ?? '-'}`, teamName: team.name, coachName: team.coachName, race: resolveRace(team, matchOpus(bronze)), picture: team.logo }));
+  const bronzeParties = bronze && bronze.teams.map((team, index) => ({ id: team.id || { value: team.name, opus: matchOpus(bronze) }, opus: matchOpus(bronze), resultText: `${matchScore(bronze, index) ?? '-'}`, teamName: team.name, coachName: team.coachName, race: resolveRace(team, matchOpus(bronze)), picture: team.logo }));
   const roundLabels = [intl.formatMessage({ id: 'leagueSystems.playIn' }), intl.formatMessage({ id: 'leagueSystems.quarterfinals' }), intl.formatMessage({ id: 'leagueSystems.semifinals' }), intl.formatMessage({ id: 'leagueSystems.final' })];
   const bracketStyle = { width: 240, boxHeight: 86, canvasPadding: 8, spaceBetweenColumns: 18, spaceBetweenRows: 8, roundSeparatorWidth: 8, horizontalOffset: 6, roundHeader: { isShown: true, height: 20, marginBottom: 6, fontSize: 10, roundTextGenerator: (roundNumber, totalRounds) => roundLabels[roundLabels.length - totalRounds + roundNumber - 1] || intl.formatMessage({ id: 'leagueSystems.round' }, { round: roundNumber }) } };
   const requiredHeight = bracketCanvasHeight(rounds, bracketStyle);
@@ -353,14 +353,17 @@ function RichMatchCard({ match, onMatchClick }) {
   const parties = (match.teams || []).map((team, index) => ({
     id: team.id || { value: team.name, opus: Number(String(match.game || 'BB3').replace('BB', '')) || 3 },
     opus: matchOpus(match),
-    resultText: `${playedScore(match, index) ?? '-'}`,
+    resultText: `${matchScore(match, index) ?? '-'}`,
     teamName: team.name,
     coachName: team.coachName,
     race: resolveRace(team, matchOpus(match)),
     picture: team.logo,
   }));
   if (parties.length < 2) return null;
-  return <Box borderWidth="1px" borderRadius="md" p={2} cursor="pointer" _hover={{ boxShadow: 'md' }} onClick={() => onMatchClick(match)}><MatchComponent match={{ id: match.sourceMatchKey, state: match.finishedAt ? 'DONE' : null, startTime: match.finishedAt || match.startedAt }} topParty={parties[0]} bottomParty={parties[1]} topWon={parties[0].teamName === winner} bottomWon={parties[1].teamName === winner} topHovered={false} bottomHovered={false} connectorColor="gray.500" topText={match.finishedAt || match.startedAt} onMouseEnter={() => {}} onMouseLeave={() => {}} onMatchClick={() => {}} /><Text mt={1} px={1} fontSize="xs" color="gray.500">{match.finishedAt || match.startedAt || intl.formatMessage({ id: 'leagueSystems.noDate' })}{match.teams?.length === 2 ? ` · ${intl.formatMessage({ id: 'leagueSystems.casualties' }, { home: match.teams[0].casualties ?? '-', away: match.teams[1].casualties ?? '-' })}` : ''}{match.conceded ? ` · ${intl.formatMessage({ id: 'leagueSystems.conceded' })}` : ''}{match.replayAvailable ? ` · 🎞 ${intl.formatMessage({ id: 'leagueSystems.replay' })}` : ''}</Text></Box>;
+  const scoreMismatch = scoreDiffersFromTouchdowns(match);
+  const scoreSummary = `${matchScore(match, 0)}–${matchScore(match, 1)}`;
+  const touchdownSummary = `${touchdownScore(match, 0)}–${touchdownScore(match, 1)}`;
+  return <Box borderWidth="1px" borderRadius="md" p={2} cursor="pointer" _hover={{ boxShadow: 'md' }} onClick={() => onMatchClick(match)}><MatchComponent match={{ id: match.sourceMatchKey, state: match.finishedAt ? 'DONE' : null, startTime: match.finishedAt || match.startedAt }} topParty={parties[0]} bottomParty={parties[1]} topWon={parties[0].teamName === winner} bottomWon={parties[1].teamName === winner} topHovered={false} bottomHovered={false} connectorColor="gray.500" topText={match.finishedAt || match.startedAt} onMouseEnter={() => {}} onMouseLeave={() => {}} onMatchClick={() => {}} />{scoreMismatch && <Text mt={1} px={1} fontSize="xs" color="orange.700">{intl.formatMessage({ id: 'leagueSystems.scoreDiffersFromTouchdowns' }, { score: scoreSummary, touchdowns: touchdownSummary })}</Text>}<Text mt={1} px={1} fontSize="xs" color="gray.500">{match.finishedAt || match.startedAt || intl.formatMessage({ id: 'leagueSystems.noDate' })}{match.teams?.length === 2 ? ` · ${intl.formatMessage({ id: 'leagueSystems.casualties' }, { home: match.teams[0].casualties ?? '-', away: match.teams[1].casualties ?? '-' })}` : ''}{match.conceded ? ` · ${intl.formatMessage({ id: 'leagueSystems.conceded' })}` : ''}{match.replayAvailable ? ` · 🎞 ${intl.formatMessage({ id: 'leagueSystems.replay' })}` : ''}</Text></Box>;
 }
 
 export function matchesByMatchDay(matches) {
@@ -446,7 +449,7 @@ function MatchDetails({ summary, isOpen, onClose }) {
     }
     setMatch(null); setError(null); setLoading(true);
     WarpScoresApiService.match(matchResourceId)
-      .then((result) => result ? setMatch(result) : setError(intl.formatMessage({ id: 'leagueSystems.statsNotFound' })))
+      .then((result) => result ? setMatch({ ...result, officialScore: summary.officialScore, sourceScore: summary.sourceScore, conceded: summary.conceded }) : setError(intl.formatMessage({ id: 'leagueSystems.statsNotFound' })))
       .catch(() => setError(intl.formatMessage({ id: 'leagueSystems.statsFetchFailed' })))
       .finally(() => setLoading(false));
   }, [isOpen, summary]);

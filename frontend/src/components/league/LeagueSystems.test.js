@@ -1,4 +1,4 @@
-import { bracketCanvasHeight, inferPlayoffRounds, matchesByMatchDay, matchResourceIdFor, nextPlayoffMatch } from './LeagueSystems';
+import { bracketCanvasHeight, inferPlayoffRounds, matchScore, matchesByMatchDay, matchResourceIdFor, nextPlayoffMatch } from './LeagueSystems';
 
 const playoffMatch = (key, finishedAt, home, away, homeScore, awayScore) => ({
   sourceMatchKey: key,
@@ -6,6 +6,25 @@ const playoffMatch = (key, finishedAt, home, away, homeScore, awayScore) => ({
   teams: [{ name: home }, { name: away }],
   officialScore: { home: homeScore, away: awayScore },
   countsFor: { bracket: true },
+});
+
+test('uses final score instead of raw touchdown statistics for match displays', () => {
+  const match = {
+    teams: [{ score: 2, touchdowns: 1 }, { score: 0, touchdowns: 0 }],
+    sourceScore: { home: 2, away: 0 },
+  };
+
+  expect([matchScore(match, 0), matchScore(match, 1)]).toEqual([2, 0]);
+});
+
+test('prefers an official adjusted score over the source match score', () => {
+  const match = {
+    teams: [{ score: 2 }, { score: 0 }],
+    sourceScore: { home: 2, away: 0 },
+    officialScore: { home: 1, away: 0 },
+  };
+
+  expect([matchScore(match, 0), matchScore(match, 1)]).toEqual([1, 0]);
 });
 
 test('infers play-in, quarterfinal, semifinal and final rounds from a combined playoff stage', () => {

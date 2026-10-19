@@ -31,10 +31,12 @@ and deploy it yourself from a trusted computer using your own SSH connection.
    it Docker access. Membership in the Docker group grants root-equivalent control of
    the VM, so protect that account and its SSH key accordingly.
 4. Use your existing `$HOME/blaskscore` directory. Ensure its `data/replays` and
-   `data/community-media` directories exist. Place the modern, game-provided
-   `BB3Rules.json` at `$HOME/blaskscore/data/BB3Rules.json` and make it readable by the
-   container (`chmod 644`). pybb3 uses this read-only file to map current roster position
-   IDs to player types, including players with no match history. Do not commit the game
+   `data/community-media` directories exist. `BB3Rules.json` is optional; without it,
+   pybb3 still runs, but cannot map current roster position IDs to player types when
+   match history has no type information. To enable that mapping, place the modern,
+   game-provided file at `$HOME/blaskscore/data/BB3Rules.json`, make it readable by the
+   container (`chmod 644`), and configure the read-only bind mount and
+   `BB3_RULES_FILE=/app/BB3Rules.json` in `compose.oracle.yaml`. Do not commit the game
    data file. Put the production environment file at `$HOME/blaskscore/.env`. Start from
    [.env.oracle.example](.env.oracle.example), fill in real values, and restrict the file
    to its owner (`chmod 600`). Do not commit it.

@@ -41,6 +41,7 @@ import ReactionBar from '../community/ReactionBar';
 import CommentThread from '../community/CommentThread';
 import MatchPlayerRatings from '../community/MatchPlayerRatings';
 import MatchArticlesPanel from '../community/MatchArticlesPanel';
+import { matchScore, scoreDiffersFromTouchdowns, touchdownScore } from '../../util/matchResult';
 import { useIntl } from 'react-intl';
 
 const PlayerNameCell = ({ player }) => {
@@ -151,6 +152,9 @@ function MatchModal({ isOpen, onClose, match, contest, initialTabIndex = 0 }) {
   }, [match, contest]);
 
   const replayMatchId = matchData?.id?.key || matchData?.id;
+  const scoreMismatch = scoreDiffersFromTouchdowns(matchData);
+  const scoreSummary = `${matchScore(matchData, 0)}–${matchScore(matchData, 1)}`;
+  const touchdownSummary = `${touchdownScore(matchData, 0)}–${touchdownScore(matchData, 1)}`;
   useEffect(() => {
     if (!isOpen || !replayMatchId) return;
     setReplay(null); setReplayError(''); setReplayLoading(true);
@@ -174,6 +178,16 @@ function MatchModal({ isOpen, onClose, match, contest, initialTabIndex = 0 }) {
               <Box w="100%">
                 <ContestMatchCard contestOrMatch={contest || matchData} contestHeader={null} variant="filled" clickable={false}/>
               </Box>
+              {scoreMismatch && (
+                <Alert status="warning" mt={3}>
+                  <AlertIcon />
+                  {intl.formatMessage({ id: 'leagueSystems.scoreDiffersFromTouchdowns' }, {
+                    score: scoreSummary,
+                    touchdowns: touchdownSummary,
+                  })}
+                  {matchData.conceded && ` · ${intl.formatMessage({ id: 'leagueSystems.conceded' })}`}
+                </Alert>
+              )}
 
               {replayMatchId && (
                 <Box mt={3} mb={3}>
