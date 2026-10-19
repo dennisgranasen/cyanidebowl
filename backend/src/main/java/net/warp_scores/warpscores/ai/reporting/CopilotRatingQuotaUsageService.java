@@ -18,6 +18,10 @@ public class CopilotRatingQuotaUsageService {
     private final CopilotQuotaGuard quotaGuard;
     private final Map<String, Object> completionLocks = new ConcurrentHashMap<>();
 
+    public boolean isCopilotTarget(String targetId) {
+        return quotaGuard.isCopilotTarget(targetId);
+    }
+
     public void start(String jobId, String matchId, CopilotRatingQuotaUsage.RatingKind kind,
                       String requestedBy, String targetId, int plannedCalls) {
         if (!StringUtils.hasText(targetId)) return;

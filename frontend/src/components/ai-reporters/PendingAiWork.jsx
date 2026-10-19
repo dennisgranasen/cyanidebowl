@@ -29,7 +29,7 @@ export default function PendingAiWork({ getAccessTokenSilently, getAccessTokenWi
   }, [getAccessTokenSilently, getAccessTokenWithPopup]);
   useEffect(() => {
     let active = true;
-    Promise.all(['FAN_PROFILE', 'PLAYER_RATING'].map(async kind => [
+    Promise.all(['FAN_PROFILE', 'PLAYER_RATING', 'FAN_PLAYER_RATING'].map(async kind => [
       kind,
       await AiReporterApi.pendingWorkTargets(kind, getAccessTokenSilently, getAccessTokenWithPopup),
     ])).then(entries => {
@@ -107,7 +107,7 @@ export default function PendingAiWork({ getAccessTokenSilently, getAccessTokenWi
   return <Box borderWidth="1px" borderRadius="lg" p={4}>
     <Heading size="md">Fan profile and player-rating tasks</Heading>
     <Text mt={2} fontSize="sm">
-      This table lists fan-profile and player-rating tasks before model execution. Autonomous, article, editorial-image, and community-media jobs have dedicated queues elsewhere on this page. Provider calls and their queue controls are shown in the provider view.
+      This table lists fan-profile and player-rating tasks before model execution. Autonomous, article, editorial-image, and community-media jobs have dedicated queues elsewhere on this page. Moving a fan-rating job changes queued fan calls; calls already running stay on their current provider.
     </Text>
     <Text mt={2} fontSize="sm">Refreshes every 10 seconds. {snapshot ? `Last update: ${new Date(snapshot.capturedAt).toLocaleString()}. ${jobs.length} unfinished tasks.` : 'Loading…'}</Text>
     {error && <Text color="red.300">Could not refresh. Displayed data may be out of date: {error.message}</Text>}
@@ -137,10 +137,11 @@ export default function PendingAiWork({ getAccessTokenSilently, getAccessTokenWi
             <Button size="xs" onClick={() => onInspectJob?.(j.id.split(':', 1)[0], j.id.slice(j.id.indexOf(':') + 1))}>
               Input
             </Button>
-            {['FAN_PROFILE', 'PLAYER_RATING'].includes(j.kind) && <>
+            {['FAN_PROFILE', 'PLAYER_RATING', 'FAN_PLAYER_RATING'].includes(j.kind) && <>
               <Select size="xs" width="180px" aria-label={`Destination for ${j.subject}`}
                 value={selectedTargets[j.id] ?? j.targetOverride ?? ''}
-                isDisabled={j.status === 'RUNNING' || savingId === j.id}
+                isDisabled={(j.status === 'RUNNING' && j.kind !== 'FAN_PLAYER_RATING')
+                  || (j.kind === 'FAN_PLAYER_RATING' && !j.remaining) || savingId === j.id}
                 onChange={event => setSelectedTargets(old => ({ ...old, [j.id]: event.target.value }))}>
                 <option value="">Default routing</option>
                 {j.targetOverride && !(targetOptions[j.kind] || []).some(target => target.targetId === j.targetOverride)
@@ -149,7 +150,8 @@ export default function PendingAiWork({ getAccessTokenSilently, getAccessTokenWi
                   {target.targetId} · {target.provider}
                 </option>)}
               </Select>
-              <Button size="xs" isDisabled={j.status === 'RUNNING' || savingId === j.id
+              <Button size="xs" isDisabled={(j.status === 'RUNNING' && j.kind !== 'FAN_PLAYER_RATING')
+                || (j.kind === 'FAN_PLAYER_RATING' && !j.remaining) || savingId === j.id
                 || (selectedTargets[j.id] ?? j.targetOverride ?? '') === (j.targetOverride ?? '')
                 || !targetOptions[j.kind]?.length}
                 onClick={() => moveJob(j)}>Move</Button>

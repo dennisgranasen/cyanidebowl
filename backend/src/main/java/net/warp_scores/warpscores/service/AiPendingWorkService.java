@@ -123,9 +123,13 @@ public class AiPendingWorkService {
         }
         for (var job : fanRatings.pendingSnapshots()) {
             result.add(new Work("fan-rating:" + job.jobId(), "FAN_PLAYER_RATING", "Match · " + job.matchId(), null,
-                    "Resolved per fan", job.running() > 0 ? "RUNNING" : "QUEUED", false, job.queued() + job.running(),
+                    job.targetOverride() == null
+                            ? "Resolved per fan"
+                            : target(null, ContextTaskType.PLAYER_RATING, job.targetOverride()),
+                    job.running() > 0 ? "RUNNING" : "QUEUED", false, job.queued(),
                     job.succeeded() + " completed / " + job.fanCount() + "; " + job.failed() + " failed", null,
-                    job.errors().isEmpty() ? null : String.join("; ", job.errors().values()), job.priority(), null));
+                    job.errors().isEmpty() ? null : String.join("; ", job.errors().values()),
+                    job.priority(), job.targetOverride()));
         }
         result.sort(Comparator.comparing(Work::service)
                 .thenComparing(Comparator.comparingInt((Work item) -> item.priority() == null ? 50 : item.priority()).reversed())
@@ -161,7 +165,7 @@ public class AiPendingWorkService {
     private static TaskRoute taskRoute(String kind) {
         return switch (kind == null ? "" : kind) {
             case "FAN_PROFILE" -> new TaskRoute("dedicated-fan-profile", ContextTaskType.FAN_PROFILE);
-            case "PLAYER_RATING" -> new TaskRoute(null, ContextTaskType.PLAYER_RATING);
+            case "PLAYER_RATING", "FAN_PLAYER_RATING" -> new TaskRoute(null, ContextTaskType.PLAYER_RATING);
             default -> throw new IllegalArgumentException("Unsupported pending-work kind: " + kind);
         };
     }

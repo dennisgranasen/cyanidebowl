@@ -105,6 +105,19 @@ public class AiPendingWorkController {
         return work.snapshot();
     }
 
+    @PutMapping("/fan-player-ratings/{jobId}/target")
+    public AiPendingWorkService.Snapshot moveFanPlayerRatingTarget(
+            @PathVariable String jobId,
+            @RequestBody AiAutonomousWorkAdminController.TargetUpdate update) {
+        String targetId = targetId(update);
+        work.validateTarget("FAN_PLAYER_RATING", targetId);
+        requireCopilotConfirmation(targetId, update);
+        if (fanPlayerRatings.moveQueuedTarget(jobId, targetId) == 0) {
+            throw new IllegalArgumentException("No queued fan-player-rating work could be moved");
+        }
+        return work.snapshot();
+    }
+
     private static void requirePriority(AiAutonomousWorkAdminController.PriorityUpdate update) {
         if (update == null || update.priority() == null || update.priority() < 0 || update.priority() > 100) {
             throw new IllegalArgumentException("priority must be 0..100");

@@ -108,8 +108,10 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
   const [fanAvailability, setFanAvailability] = useState(null);
   const [fanJobStatus, setFanJobStatus] = useState(null);
   const [fanMessage, setFanMessage] = useState('');
+  const [providerTargets, setProviderTargets] = useState([]);
+  const [providerTargetsError, setProviderTargetsError] = useState('');
+  const [selectedRatingTarget, setSelectedRatingTarget] = useState('');
   const [copilotTargets, setCopilotTargets] = useState([]);
-  const [selectedCopilotTarget, setSelectedCopilotTarget] = useState('');
   const [copilotBudget, setCopilotBudget] = useState(null);
   const [loadingCopilotBudget, setLoadingCopilotBudget] = useState(false);
   const [quotaUsageHistory, setQuotaUsageHistory] = useState([]);
@@ -129,6 +131,7 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
       setPlayers([]);
       setOverview([]);
       setFanAvailability(null);
+      setSelectedRatingTarget('');
       setDataLoaded(false);
     }
     const requestId = Symbol(requestKey);
@@ -210,13 +213,31 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
   }, [dataLoading]);
 
   useEffect(() => {
-    if (!isAuthenticated || !(caps?.canReview || caps?.canDeleteAny)) return undefined;
+    if (!isAuthenticated || !(caps?.canReview || caps?.canDeleteAny)) {
+      setProviderTargets([]);
+      setProviderTargetsError('');
+      setCopilotTargets([]);
+      return undefined;
+    }
     let active = true;
+    setProviderTargets([]);
+    setProviderTargetsError('');
+    EditorialCommunityApi.aiPlayerRatingTargets(matchId, getAccessTokenSilently)
+      .then(targets => {
+        if (active) setProviderTargets(targets || []);
+      })
+      .catch(error => {
+        if (active) {
+          setProviderTargets([]);
+          setProviderTargetsError(
+            error?.response?.data?.message || error?.message || 'AI-tjänster kunde inte hämtas.',
+          );
+        }
+      });
     EditorialCommunityApi.aiPlayerRatingCopilotTargets(matchId, getAccessTokenSilently)
       .then(targets => {
       if (!active) return;
       setCopilotTargets(targets || []);
-      setSelectedCopilotTarget(current => current || targets?.[0]?.targetId || '');
     }).catch(() => {
       if (active) {
         setCopilotTargets([]);
@@ -309,7 +330,7 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
         reporterIds: [],
         instruction: instruction.trim() || null,
         force: false,
-        targetOverride: selectedCopilotTarget || null,
+        targetOverride: selectedRatingTarget || null,
         confirmCopilotQuota,
       },
       getAccessTokenSilently
@@ -383,6 +404,13 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
   const ratingJobActive = Boolean(jobStatus && !jobStatus.complete);
   const ratingBusy = ratingJobActive;
   const unratedFans = fanAvailability?.unratedFanCount || 0;
+  const selectedProvider = providerTargets.find(target => target.targetId === selectedRatingTarget);
+  const selectedTargetUsesCopilot = copilotTargets.some(
+    target => target.targetId === selectedRatingTarget,
+  );
+  const routeLabel = selectedProvider
+    ? `${selectedProvider.provider} · ${selectedProvider.model}`
+    : 'standardroutingen';
   const estimatedTokens = (calls) => ({ inputLow: calls * 8000, inputHigh: calls * 16000,
     outputLow: calls * 500, outputHigh: calls * 1500 });
   const fanTokenEstimate = estimatedTokens(unratedFans);
@@ -475,34 +503,42 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
             />
           </FormControl>
           <FormControl mt={3} maxW="420px">
-            <FormLabel fontSize="sm">Copilot-modell</FormLabel>
+            <FormLabel fontSize="sm">AI-tjänst och modell (valfritt)</FormLabel>
             <Select
-              value={selectedCopilotTarget}
-              onChange={event => setSelectedCopilotTarget(event.target.value)}
+              value={selectedRatingTarget}
+              onChange={event => setSelectedRatingTarget(event.target.value)}
               isDisabled={ratingBusy || Boolean(fanJobStatus && !fanJobStatus.complete)}
             >
-              {copilotTargets.map(target => (
+              <option value="">Standardroutingen</option>
+              {providerTargets.map(target => (
                 <option key={target.targetId} value={target.targetId}>
-                  {target.model} · GitHub Copilot
+                  {target.targetId} · {target.provider} / {target.model}
                 </option>
               ))}
             </Select>
           </FormControl>
+          {providerTargetsError && (
+            <Text mt={2} fontSize="sm" color="red.300">
+              AI-tjänster kunde inte hämtas: {providerTargetsError}
+            </Text>
+          )}
           <Box mt={3} borderWidth="1px" borderRadius="md" p={3}>
             <HStack justify="space-between">
               <Text fontWeight="700" fontSize="sm">Kostnadsöversikt före start</Text>
-              <Button size="xs" variant="outline" onClick={refreshCopilotBudget}
-                isLoading={loadingCopilotBudget}>
-                Uppdatera kvot
-              </Button>
+              {selectedTargetUsesCopilot && (
+                <Button size="xs" variant="outline" onClick={refreshCopilotBudget}
+                  isLoading={loadingCopilotBudget}>
+                  Uppdatera Copilot-kvot
+                </Button>
+              )}
             </HStack>
             <Text mt={1} fontSize="sm">
               Fans: {unratedFans} av {fanAvailability?.activeFanCount || 0} intresserade behöver rösta, cirka {fanTokenEstimate.inputLow.toLocaleString()}–{fanTokenEstimate.inputHigh.toLocaleString()} inputtokens + {fanTokenEstimate.outputLow.toLocaleString()}–{fanTokenEstimate.outputHigh.toLocaleString()} outputtokens.
             </Text>
             <Text mt={1} fontSize="sm" fontWeight="600">
-              Planerat: {unratedFans} Copilot-anrop för fans. Kvotavdraget kan inte räknas om till tokens och beror på vald modells kvotvikt.
+              Planerat: {unratedFans} anrop via {routeLabel}.
             </Text>
-            {copilotBudget?.premiumInteractions && (
+            {selectedTargetUsesCopilot && copilotBudget?.premiumInteractions && (
               <Text mt={1} fontSize="xs" color="gray.500">
                 Aktuell Copilot-kvot: {copilotBudget.premiumInteractions.usedRequests ?? '—'} använda av {copilotBudget.premiumInteractions.entitlementRequests ?? '—'}
                 {copilotBudget.premiumInteractions.remainingPercentage != null
@@ -511,15 +547,15 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
                   ? ` Återställs ${new Date(copilotBudget.premiumInteractions.resetDate).toLocaleString()}.` : ''}
               </Text>
             )}
-            {copilotBudget && !copilotBudget.configured && (
+            {selectedTargetUsesCopilot && copilotBudget && !copilotBudget.configured && (
               <Text mt={1} fontSize="xs" color="orange.300">
                 Copilot-kvot kunde inte läsas: {copilotBudget.message || 'Copilot är inte konfigurerat.'}
               </Text>
             )}
             <Text mt={1} fontSize="xs" color="gray.500">
-              Tokenintervallet är en uppskattning per röst; verklig mängd beror på matchfakta, kontext och svarslängd. Kvotens faktiska avdrag syns när Copilot har uppdaterat kontostatistiken.
+              Tokenintervallet är en uppskattning per röst; verklig mängd beror på matchfakta, kontext och svarslängd.
             </Text>
-            {quotaUsageHistory.length > 0 && (
+            {selectedTargetUsesCopilot && quotaUsageHistory.length > 0 && (
               <Box mt={3} pt={2} borderTopWidth="1px">
                 <Text fontSize="xs" fontWeight="700" mb={1}>Senaste kvotmätningar</Text>
                 {quotaUsageHistory.slice(0, 5).map(entry => (
@@ -549,7 +585,7 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
             variant="outline"
             colorScheme="orange"
             onClick={generateFans}
-            isDisabled={!unratedFans || Boolean(fanJobStatus && !fanJobStatus.complete) || !selectedCopilotTarget}
+            isDisabled={!unratedFans || Boolean(fanJobStatus && !fanJobStatus.complete)}
           >
             Låt oröstande fans betygsätta ({unratedFans})
           </Button>

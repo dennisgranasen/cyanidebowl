@@ -52,6 +52,24 @@ public class AiProviderWorkExecutor {
         return true;
     }
 
+    public boolean move(
+            String workId,
+            LlmProviderRouter.ModelTarget target,
+            int priority,
+            Runnable work) {
+        if (target == null || work == null) {
+            throw new IllegalArgumentException("provider target and work are required");
+        }
+        WorkItem item = pending.get(workId);
+        if (item == null || !item.lane.executor.remove(item)) return false;
+
+        ProviderLane destination = lane(target);
+        WorkItem moved = new WorkItem(workId, priority, order.getAndIncrement(), destination, work);
+        if (!pending.replace(workId, item, moved)) return false;
+        destination.executor.execute(moved);
+        return true;
+    }
+
     public boolean remove(String workId) {
         WorkItem item = pending.get(workId);
         if (item == null || !item.lane.executor.remove(item)) return false;

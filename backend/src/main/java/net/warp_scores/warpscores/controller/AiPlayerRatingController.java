@@ -17,6 +17,7 @@ import java.util.List;
 import net.warp_scores.warpscores.ai.reporting.DedicatedFanPlayerRatingJobService;
 import net.warp_scores.warpscores.ai.reporting.CopilotRatingQuotaUsageService;
 import net.warp_scores.warpscores.ai.provider.copilot.CopilotQuotaGuard;
+import net.warp_scores.warpscores.service.AiPendingWorkService;
 
 @RestController
 @RequestMapping("/matches/{matchId}/ai-player-ratings")
@@ -32,6 +33,7 @@ public class AiPlayerRatingController {
     private final MatchArticleService matchArticles;
     private final CopilotQuotaGuard copilotQuota;
     private final CopilotRatingQuotaUsageService quotaUsage;
+    private final AiPendingWorkService pendingWork;
 
     @GetMapping
     public List<?> get(@PathVariable String matchId) {
@@ -101,6 +103,13 @@ public class AiPlayerRatingController {
         return copilotQuota.availableModelOverrides();
     }
 
+    @GetMapping("/targets")
+    public List<AiPendingWorkService.TargetOption> targets(
+            Authentication auth, @PathVariable String matchId) {
+        requireRatingPermission(auth, matchId);
+        return pendingWork.targetOptions("FAN_PLAYER_RATING");
+    }
+
     @GetMapping("/copilot-budget")
     public CopilotQuotaGuard.QuotaStatus copilotBudget(
             Authentication auth, @PathVariable String matchId) {
@@ -160,7 +169,7 @@ public class AiPlayerRatingController {
         GenerationRequest normalized = request == null
             ? new GenerationRequest(List.of(), null, false, null, null, false)
             : request;
-        validateCopilotTarget(normalized.targetOverride(), normalized.confirmCopilotQuota());
+        validateFanRatingTarget(normalized.targetOverride(), normalized.confirmCopilotQuota());
         return fanRatingJobs.start(
             matchId, facts, normalized.instruction(), normalized.force(), normalized.targetOverride(),
                 auth == null ? null : auth.getName());
@@ -196,6 +205,14 @@ public class AiPlayerRatingController {
             throw new IllegalArgumentException("Unknown or unavailable Copilot target: " + targetId);
         }
         copilotQuota.requireConfirmation(confirmed);
+    }
+
+    private void validateFanRatingTarget(String targetId, boolean confirmed) {
+        if (targetId == null || targetId.isBlank()) return;
+        pendingWork.validateTarget("FAN_PLAYER_RATING", targetId);
+        if (copilotQuota.isCopilotTarget(targetId)) {
+            copilotQuota.requireConfirmation(confirmed);
+        }
     }
 
     private void requireRatingPermission(Authentication auth, String matchId) {

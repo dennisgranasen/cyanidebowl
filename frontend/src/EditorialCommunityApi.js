@@ -92,6 +92,8 @@ const EditorialCommunityApi = {
       { score }, { headers: await authHeaders(getToken) })).data,
   aiPlayerRatings: (matchId) =>
     get(`/matches/${encodeURIComponent(matchId)}/ai-player-ratings`),
+  aiPlayerRatingTargets: (matchId, getToken) =>
+    authGet(`/matches/${encodeURIComponent(matchId)}/ai-player-ratings/targets`, getToken),
   aiPlayerRatingCopilotTargets: (matchId, getToken) =>
     authGet(`/matches/${encodeURIComponent(matchId)}/ai-player-ratings/copilot-targets`, getToken),
   aiPlayerRatingCopilotBudget: (matchId, getToken) =>
