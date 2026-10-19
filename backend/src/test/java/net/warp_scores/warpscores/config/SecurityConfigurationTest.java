@@ -137,12 +137,14 @@ class SecurityConfigurationTest {
             when(jwtDecoder.decode("player-rating-token")).thenReturn(jwt(List.of()));
             when(aiPlayerRatingController.generate(any(), any(), any()))
                     .thenReturn(null);
-            HttpRequest.Builder request = HttpRequest.newBuilder(
-                URI.create("http://localhost:" + port + "/matches/test-match/ai-player-ratings/generate"))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString("{}"));
-            HttpRequest unauthenticatedRequest = request.build();
-            HttpRequest authenticatedRequest = HttpRequest.newBuilder(request.build().uri())
+                URI uri = URI.create(
+                    "http://localhost:" + port + "/matches/test-match/ai-player-ratings/generate");
+                HttpRequest unauthenticatedRequest = HttpRequest.newBuilder(uri)
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString("{}"))
+                    .build();
+                HttpRequest authenticatedRequest = HttpRequest.newBuilder(uri)
+                    .header("Content-Type", "application/json")
                     .header("Authorization", "Bearer player-rating-token")
                     .POST(HttpRequest.BodyPublishers.ofString("{}"))
                     .build();
