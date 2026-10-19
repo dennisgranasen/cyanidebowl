@@ -141,6 +141,15 @@ class DedicatedFansCommunityReconciliationServiceTest {
         });
     }
 
+        @Test
+        void passesRequestedTargetOverrideToNewFanProfileGeneration() {
+                service.reconcile(team(1), "copilot-gpt-6-luna");
+
+                verify(aiProfileGenerator).populateNewProfile(
+                                any(AiCommunityMemberProfile.class), any(Team.class), anyInt(),
+                                org.mockito.ArgumentMatchers.eq("copilot-gpt-6-luna"));
+        }
+
     @Test
     void increaseReactivatesExistingIdentityBeforeCreatingAnother() {
         Team team = team(2);

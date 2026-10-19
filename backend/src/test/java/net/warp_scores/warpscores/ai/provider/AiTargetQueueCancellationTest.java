@@ -92,6 +92,51 @@ class AiTargetQueueCancellationTest {
         }
     }
 
+    @Test void runningProviderCallCanBeCompletedWithExternallyGeneratedResult() throws Exception {
+        var properties = new AiProviderProperties();
+        var config = new AiProviderProperties.TargetConfig();
+        config.setProvider("test");
+        config.setModel("model");
+        properties.getTargets().put("text", config);
+        var registry = mock(LlmProviderRegistry.class);
+        var provider = mock(LlmProvider.class);
+        when(registry.require("test")).thenReturn(provider);
+        when(provider.isConfigured()).thenReturn(true);
+        var entered = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        when(provider.generate(any())).thenAnswer(invocation -> {
+            entered.countDown();
+            release.await();
+            return new CanonicalLlmResponse("test", "model", null, "provider result", null, "stop");
+        });
+
+        var queues = new AiTargetExecutionQueueManager(properties, registry,
+                mock(AiGenerationTraceStore.class), mock(AiGenerationAdmissionService.class));
+        var target = new LlmProviderRouter.ModelTarget("text", "test", "model", "text");
+        var request = new CanonicalLlmRequest("author", "1", ContextTaskType.EDITORIAL_ARTICLE, "model",
+                new AssembledContext("", List.of(), Map.of(), 0, 0), "brief",
+                OutputContract.text(), GenerationOptions.defaults());
+        var executor = Executors.newSingleThreadExecutor();
+        try {
+            var caller = executor.submit(() -> queues.execute(target, "author", request, 50));
+            assertTrue(entered.await(2, TimeUnit.SECONDS));
+            String jobId = queues.snapshots().getFirst().jobs().getFirst().id();
+
+            assertTrue(queues.completeWithExternalResult("text", jobId, "externally generated output"));
+            CanonicalLlmResponse response = caller.get(2, TimeUnit.SECONDS);
+
+            assertEquals("external", response.providerId());
+            assertEquals("externally generated output", response.content());
+            assertEquals(AiTargetExecutionQueueManager.JobStatus.SUCCEEDED,
+                    queues.snapshots().getFirst().jobs().getFirst().status());
+            assertFalse(queues.completeWithExternalResult("text", jobId, "duplicate"));
+        } finally {
+            release.countDown();
+            executor.shutdownNow();
+            queues.stop();
+        }
+    }
+
     @Test void higherPriorityPendingJobRunsBeforeOlderLowerPriorityJob() throws Exception {
         var properties = new AiProviderProperties();
         var config = new AiProviderProperties.TargetConfig();

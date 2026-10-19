@@ -138,6 +138,41 @@ public class AiTargetExecutionQueueManager {
         }
     }
 
+    public boolean completeWithExternalResult(String queueOrTarget, String jobId, String content) {
+        if (content == null || content.isBlank()) {
+            throw new IllegalArgumentException("External result content is required");
+        }
+        if (content.length() > 200_000) {
+            throw new IllegalArgumentException("External result content must not exceed 200000 characters");
+        }
+        QuotaQueue q = resolveQueue(queueOrTarget);
+        if (q == null) return false;
+        synchronized (q.monitor) {
+            QueuedCall call = java.util.stream.Stream.concat(
+                            q.pending.stream(), q.activeJobs.values().stream())
+                    .filter(item -> item.id.equals(jobId))
+                    .findFirst()
+                    .orElse(null);
+            if (call == null || call.result.isDone()
+                    || (call.status != JobStatus.QUEUED
+                        && call.status != JobStatus.RETRY_WAIT
+                        && call.status != JobStatus.RUNNING)) {
+                return false;
+            }
+            q.pending.remove(call);
+            call.stopQueueWait();
+            call.status = JobStatus.SUCCEEDED;
+            call.lastError = null;
+            q.recordCompletion(0);
+            q.succeeded.incrementAndGet();
+            call.result.complete(new CanonicalLlmResponse(
+                    "external", "manual-submission", null, content,
+                    CanonicalLlmResponse.Usage.unknown(), "completed"));
+            q.monitor.notifyAll();
+            return true;
+        }
+    }
+
     /** Advisory wait for a newly submitted job; never exposes prompts or agent identities. */
     public WaitEstimate estimate(String targetId, int priority) {
         QuotaQueue q = queueForTarget(targetId);
@@ -491,38 +526,53 @@ public class AiTargetExecutionQueueManager {
                 CanonicalLlmResponse response = provider.generate(call.request);
                 long duration = elapsed(start);
 
-                traceStore.recordSuccess(
-                        call.agentId,
-                        call.target.providerId(),
-                        call.request,
-                        response,
-                        duration);
+                synchronized (monitor) {
+                    if (call.result.isDone()) return;
 
-                call.status = JobStatus.SUCCEEDED;
-                recordCompletion(duration);
-                succeeded.incrementAndGet();
-                call.result.complete(response);
+                    traceStore.recordSuccess(
+                            call.agentId,
+                            call.target.providerId(),
+                            call.request,
+                            response,
+                            duration);
+
+                    call.status = JobStatus.SUCCEEDED;
+                    recordCompletion(duration);
+                    succeeded.incrementAndGet();
+                    call.result.complete(response);
+                }
             } catch (LlmProviderException e) {
-                long duration = elapsed(start);
-                traceStore.recordFailure(
-                        call.agentId,
-                        call.target.providerId(),
-                        call.request,
-                        e,
-                        duration);
-                remember(e);
+                synchronized (monitor) {
+                    if (call.result.isDone()) return;
+                    long duration = elapsed(start);
+                    traceStore.recordFailure(
+                            call.agentId,
+                            call.target.providerId(),
+                            call.request,
+                            e,
+                            duration);
+                    remember(e);
 
-                if (e.kind() == LlmProviderException.Kind.RATE_LIMIT) {
-                    Instant retry = e.retryAt();
-                    Instant now = Instant.now();
-                    if (e.rateLimitScope() == LlmProviderException.RateLimitScope.QUOTA_EXHAUSTED) {
-                        Instant cooldown = now.plus(queueConfig.getQuotaExhaustedCooldown());
-                        if (retry == null || retry.isBefore(cooldown)) retry = cooldown;
-                    } else if (retry == null || !retry.isAfter(now)) {
-                        retry = now.plus(backoff(Math.max(1, call.attempts)));
+                    if (e.kind() == LlmProviderException.Kind.RATE_LIMIT) {
+                        Instant retry = e.retryAt();
+                        Instant now = Instant.now();
+                        if (e.rateLimitScope() == LlmProviderException.RateLimitScope.QUOTA_EXHAUSTED) {
+                            Instant cooldown = now.plus(queueConfig.getQuotaExhaustedCooldown());
+                            if (retry == null || retry.isBefore(cooldown)) retry = cooldown;
+                        } else if (retry == null || !retry.isAfter(now)) {
+                            retry = now.plus(backoff(Math.max(1, call.attempts)));
+                        }
+
+                        blockUntil(retry, e.getMessage());
+
+                        call.status = JobStatus.FAILED;
+                        call.lastError = shortError(e);
+                        recordCompletion(duration);
+                        failed.incrementAndGet();
+                        failedJobs.put(call.id, call);
+                        call.result.completeExceptionally(e);
+                        return;
                     }
-
-                    blockUntil(retry, e.getMessage());
 
                     call.status = JobStatus.FAILED;
                     call.lastError = shortError(e);
@@ -530,31 +580,26 @@ public class AiTargetExecutionQueueManager {
                     failed.incrementAndGet();
                     failedJobs.put(call.id, call);
                     call.result.completeExceptionally(e);
-                    return;
                 }
-
-                call.status = JobStatus.FAILED;
-                call.lastError = shortError(e);
-                recordCompletion(duration);
-                failed.incrementAndGet();
-                failedJobs.put(call.id, call);
-                call.result.completeExceptionally(e);
             } catch (RuntimeException e) {
-                long duration = elapsed(start);
-                traceStore.recordUnexpectedFailure(
-                        call.agentId,
-                        call.target.providerId(),
-                        call.request,
-                        e,
-                        duration);
-                lastError = shortError(e);
-                lastErrorAt = Instant.now();
-                call.status = JobStatus.FAILED;
-                call.lastError = shortError(e);
-                recordCompletion(duration);
-                failed.incrementAndGet();
-                failedJobs.put(call.id, call);
-                call.result.completeExceptionally(e);
+                synchronized (monitor) {
+                    if (call.result.isDone()) return;
+                    long duration = elapsed(start);
+                    traceStore.recordUnexpectedFailure(
+                            call.agentId,
+                            call.target.providerId(),
+                            call.request,
+                            e,
+                            duration);
+                    lastError = shortError(e);
+                    lastErrorAt = Instant.now();
+                    call.status = JobStatus.FAILED;
+                    call.lastError = shortError(e);
+                    recordCompletion(duration);
+                    failed.incrementAndGet();
+                    failedJobs.put(call.id, call);
+                    call.result.completeExceptionally(e);
+                }
             } finally {
                 if (admitted) admission.release();
                 activeJobs.remove(call.id);

@@ -133,6 +133,20 @@ public class AiAutonomousWorkAdminController {
         return overview();
     }
 
+    @PutMapping("/execution-queues/{target}/jobs/{id}/external-result")
+    public Overview submitExternalExecutionResult(
+            @PathVariable String target,
+            @PathVariable String id,
+            @RequestBody ExternalResultUpdate update) {
+        if (update == null || update.content() == null || update.content().isBlank()) {
+            throw new IllegalArgumentException("External result content is required");
+        }
+        if (!executionQueues.completeWithExternalResult(target, id, update.content())) {
+            throw new IllegalArgumentException("Provider call was not found or has already completed");
+        }
+        return overview();
+    }
+
     @DeleteMapping("/execution-queues/{target}/jobs/{id}")
     public Overview removeExecutionJob(@PathVariable String target, @PathVariable String id) {
         if (!executionQueues.remove(target, id)) throw new IllegalArgumentException("Pending execution job not found");
@@ -236,6 +250,7 @@ public class AiAutonomousWorkAdminController {
     public record EnabledUpdate(Boolean enabled) {}
     public record PriorityUpdate(Integer priority) {}
     public record TargetUpdate(String targetId, Boolean confirmCopilotQuota) {}
+    public record ExternalResultUpdate(String content) {}
     public record QuotaThresholdUpdate(Integer minimumRemainingPercent) {}
     public record QuotaThreshold(int minimumRemainingPercent) {}
     public record EditorialImageJobView(

@@ -21,6 +21,7 @@ public class DedicatedFanReconciliationWorker {
     private final DedicatedFanReconciliationJobRepository jobs;
     private final TeamRepository teams;
     private final DedicatedFansCommunityReconciliationService reconciliation;
+    private final DedicatedFanReconciliationQueueService reconciliationQueue;
 
     @Value("${warpscores.ai.fans.reconcile-job-timeout:15m}")
     private Duration jobTimeout;
@@ -52,10 +53,8 @@ public class DedicatedFanReconciliationWorker {
     }
 
     private void process(DedicatedFanReconciliationJob job) {
-        job.setStatus(DedicatedFanReconciliationJob.Status.RUNNING);
-        job.setStartedAt(Instant.now());
-        job.setAttempts(job.getAttempts() + 1);
-        jobs.save(job);
+        job = reconciliationQueue.claim(job.getTeamId());
+        if (job == null) return;
         try {
             var team = teams.findAll().stream()
                     .filter(candidate -> candidate != null
@@ -67,7 +66,7 @@ public class DedicatedFanReconciliationWorker {
                 jobs.delete(job);
                 return;
             }
-            reconciliation.reconcile(team);
+            reconciliation.reconcile(team, job.getTargetOverride());
             jobs.delete(job);
         } catch (RuntimeException e) {
             Instant retryAt = Instant.now().plusSeconds(60);

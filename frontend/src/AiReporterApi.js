@@ -28,6 +28,10 @@ const authConfig = async (getAccessTokenSilently, getAccessTokenWithPopup) => {
 
 const AiReporterApi = {
   pendingWork: async (silent, popup) => (await axios.get('/admin/ai-autonomous-work/pending', { ...(await authConfig(silent, popup)), timeout: 20000 })).data,
+  pendingWorkTargets: async (kind, silent, popup) => (await axios.get(
+    '/admin/ai-autonomous-work/pending/targets',
+    { ...(await authConfig(silent, popup)), params: { kind } }
+  )).data,
   reporters: async () => (await axios.get('/ai-reporters')).data,
   reporter: async (id) => (await axios.get(`/ai-reporters/${encodeURIComponent(id)}`)).data,
   reports: async (id) => (await axios.get(`/ai-reporters/${encodeURIComponent(id)}/reports`)).data,
@@ -137,11 +141,27 @@ const AiReporterApi = {
     const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
     return (await axios.put(`/admin/ai-autonomous-work/${path}/priority`, { priority }, auth)).data;
   },
+  movePendingWork: async (path, targetId, confirmCopilotQuota, getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.put(
+      `/admin/ai-autonomous-work/${path}/target`,
+      { targetId, confirmCopilotQuota },
+      auth
+    )).data;
+  },
   moveAiExecutionJob: async (target, id, targetId, confirmCopilotQuota, getAccessTokenSilently, getAccessTokenWithPopup) => {
     const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
     return (await axios.put(
       `/admin/ai-autonomous-work/execution-queues/${encodeURIComponent(target)}/jobs/${encodeURIComponent(id)}/target`,
       { targetId, confirmCopilotQuota },
+      auth
+    )).data;
+  },
+  submitExternalAiResult: async (target, id, content, getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.put(
+      `/admin/ai-autonomous-work/execution-queues/${encodeURIComponent(target)}/jobs/${encodeURIComponent(id)}/external-result`,
+      { content },
       auth
     )).data;
   },

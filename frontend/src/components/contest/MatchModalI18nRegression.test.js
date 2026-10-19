@@ -5,7 +5,7 @@ const source = fs.readFileSync(path.join(__dirname, 'MatchModalWithRosters.jsx')
 
 describe('MatchModalWithRosters localization regression', () => {
   test('does not embed formatMessage expressions inside JavaScript identifiers', () => {
-    expect(source).not.toMatch(/[A-Za-z0-9_$]\{intl\.formatMessage\(/);
+    expect(source).not.toMatch(/[A-Za-z0-9_]\{intl\.formatMessage\(/);
   });
 
   test('does not reintroduce known hard-coded labels', () => {

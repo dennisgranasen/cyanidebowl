@@ -8,6 +8,7 @@ import net.warp_scores.warpscores.ai.context.ContextTaskType;
 import net.warp_scores.warpscores.ai.provider.CanonicalLlmRequest;
 import net.warp_scores.warpscores.ai.provider.GenerationOptions;
 import net.warp_scores.warpscores.ai.provider.LlmExecutionService;
+import net.warp_scores.warpscores.ai.provider.LlmProviderRouter;
 import net.warp_scores.warpscores.ai.provider.OutputContract;
 import net.warp_scores.warpscores.domain.persistence.AiCommunityMemberProfileRepository;
 import net.warp_scores.warpscores.model.AiCommunityMemberProfile;
@@ -34,6 +35,11 @@ public class DedicatedFanAiProfileGenerator {
     private final LocalizationService localization;
 
     public void populateNewProfile(AiCommunityMemberProfile profile, Team team, int ordinal) {
+        populateNewProfile(profile, team, ordinal, null);
+        }
+
+        public void populateNewProfile(
+            AiCommunityMemberProfile profile, Team team, int ordinal, String targetOverride) {
         DedicatedFanProfilePolicy basePolicy = policy(profile, team);
         DedicatedFanProfilePolicy policy = new DedicatedFanProfilePolicy(basePolicy.teamId(), basePolicy.teamName(),
                 basePolicy.teamRace(), basePolicy.teamColors(),
@@ -41,9 +47,7 @@ public class DedicatedFanAiProfileGenerator {
                 basePolicy.existingFans(), basePolicy.creativePolicy());
         String siteDefaultLocale = localization.defaultLocale();
         try {
-            var response = llm.generate(
-                    ROUTING_ID,
-                    new CanonicalLlmRequest(
+                CanonicalLlmRequest request = new CanonicalLlmRequest(
                             AGENT_ID,
                             AGENT_VERSION,
                             ContextTaskType.FAN_PROFILE,
@@ -56,7 +60,11 @@ public class DedicatedFanAiProfileGenerator {
                                     0),
                             instruction(policy, ordinal, siteDefaultLocale),
                             new OutputContract(OutputContract.Format.JSON, schema()),
-                            new GenerationOptions(0.95, 5000)));
+                                    new GenerationOptions(0.95, 5000));
+                            var response = targetOverride == null
+                                ? llm.generate(ROUTING_ID, request)
+                                : llm.generate(ROUTING_ID, request,
+                                    new LlmProviderRouter.ExecutionOverrides(targetOverride, null));
 
             Draft draft = parseDraft(response.content());
             validate(draft, policy);

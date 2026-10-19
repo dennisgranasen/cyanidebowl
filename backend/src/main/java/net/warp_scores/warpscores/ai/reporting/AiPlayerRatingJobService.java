@@ -145,6 +145,16 @@ public class AiPlayerRatingJobService {
         }
     }
 
+    public boolean moveTaskTarget(String taskId, String targetOverride) {
+        synchronized (queuedTasks) {
+            AiPlayerRatingTask task = tasks.findById(taskId).orElse(null);
+            if (task == null || task.getStatus() != AiPlayerRatingTask.Status.QUEUED) return false;
+            task.setTargetOverride(targetOverride);
+            tasks.save(task);
+            return true;
+        }
+    }
+
     public boolean removeQueuedTask(String taskId) {
         synchronized (queuedTasks) {
             AiPlayerRatingTask task = tasks.findById(taskId).orElse(null);
@@ -200,15 +210,15 @@ public class AiPlayerRatingJobService {
     }
 
     private void runTask(String taskId) {
-        AiPlayerRatingTask task = tasks.findById(taskId).orElse(null);
-        if (task == null || task.getStatus() != AiPlayerRatingTask.Status.QUEUED) {
-            return;
+        AiPlayerRatingTask task;
+        synchronized (queuedTasks) {
+            task = tasks.findById(taskId).orElse(null);
+            if (task == null || task.getStatus() != AiPlayerRatingTask.Status.QUEUED) return;
+            task.setStatus(AiPlayerRatingTask.Status.RUNNING);
+            task.setStartedAt(Instant.now());
+            task.setError(null);
+            tasks.save(task);
         }
-
-        task.setStatus(AiPlayerRatingTask.Status.RUNNING);
-        task.setStartedAt(Instant.now());
-        task.setError(null);
-        tasks.save(task);
 
         try {
             AiPlayerRatingJob job = jobs.findById(task.getJobId())
@@ -231,7 +241,8 @@ public class AiPlayerRatingJobService {
             int attempt = 0;
             while (true) {
                 try {
-                    generator.generateAndPersist(reporter, facts, job.getInstruction(), task.getPriority());
+                        generator.generateAndPersist(reporter, facts, job.getInstruction(),
+                            task.getPriority(), task.getTargetOverride());
                     break;
                 } catch (AiGenerationAdmissionService.AdmissionDeniedException denied) {
                     if (denied.reason()

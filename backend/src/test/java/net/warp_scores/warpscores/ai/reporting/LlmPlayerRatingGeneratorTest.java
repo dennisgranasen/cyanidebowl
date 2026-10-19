@@ -7,6 +7,7 @@ import net.warp_scores.warpscores.ai.context.ContextAssemblyService;
 import net.warp_scores.warpscores.ai.context.ContextPlanner;
 import net.warp_scores.warpscores.ai.provider.CanonicalLlmResponse;
 import net.warp_scores.warpscores.ai.provider.LlmExecutionService;
+import net.warp_scores.warpscores.ai.provider.LlmProviderRouter;
 import net.warp_scores.warpscores.domain.persistence.AiPlayerMatchRatingRepository;
 import net.warp_scores.warpscores.model.AiPlayerMatchRating;
 import net.warp_scores.warpscores.service.LocalizationService;
@@ -143,6 +144,26 @@ class LlmPlayerRatingGeneratorTest {
         assertThrows(IllegalArgumentException.class, () -> generator.generateAndPersist(reporter(), facts, null));
         verify(ratings, times(1)).saveAll(any());
     }
+
+        @Test
+        void routesExplicitlyMovedRatingToSelectedTarget() {
+                when(assembly.assemble(isNull())).thenReturn(emptyContext());
+                when(llm.generate(eq("r1"), any(), any(LlmProviderRouter.ExecutionOverrides.class)))
+                                .thenReturn(response("""
+                                                {"ratings":[
+                                                  {"playerId":"p1","rating":1,"verdict":"Bra"},
+                                                  {"playerId":"p2","rating":0,"verdict":"Okej"}
+                                                ]}
+                                                """));
+
+                generator.generateAndPersist(reporter(), facts(), null, 70, "copilot-gpt-6-luna");
+
+                ArgumentCaptor<LlmProviderRouter.ExecutionOverrides> overrides =
+                                ArgumentCaptor.forClass(LlmProviderRouter.ExecutionOverrides.class);
+                verify(llm).generate(eq("r1"), any(), overrides.capture());
+                assertEquals("copilot-gpt-6-luna", overrides.getValue().target());
+                assertEquals(70, overrides.getValue().priority());
+        }
 
     private static AiReporterDefinition reporter() {
         AiReporterDefinition reporter = new AiReporterDefinition();

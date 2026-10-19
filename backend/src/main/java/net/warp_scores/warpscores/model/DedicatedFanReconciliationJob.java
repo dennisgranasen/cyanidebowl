@@ -17,6 +17,7 @@ public class DedicatedFanReconciliationJob {
     private String teamId;
     private Status status = Status.QUEUED;
     private Integer priority = 50;
+    private String targetOverride;
     private Instant requestedAt;
     private Instant startedAt;
     private int attempts;

@@ -58,6 +58,10 @@ public class DedicatedFansCommunityReconciliationService {
     }
 
     public Result reconcile(Team team) {
+        return reconcile(team, null);
+    }
+
+    public Result reconcile(Team team, String targetOverride) {
         if (team == null || team.getId() == null) {
             throw new IllegalArgumentException("team and team.id are required");
         }
@@ -129,7 +133,7 @@ public class DedicatedFansCommunityReconciliationService {
 
         while (missing > 0) {
             AiCommunityMemberProfile profile =
-                    createProfile(team, teamId, nextOrdinal, now);
+                    createProfile(team, teamId, nextOrdinal, now, targetOverride);
             existing.add(profile);
             nextOrdinal = nextAvailableOrdinal(teamId, existing);
             created++;
@@ -159,7 +163,8 @@ public class DedicatedFansCommunityReconciliationService {
             Team team,
             String teamId,
             int ordinal,
-            Instant now) {
+            Instant now,
+            String targetOverride) {
 
         String subject = subject(teamId, ordinal);
 
@@ -176,7 +181,11 @@ public class DedicatedFansCommunityReconciliationService {
         profile.setActivatedAt(now);
         refreshTeamMetadata(profile, team);
 
-        aiProfileGenerator.populateNewProfile(profile, team, ordinal);
+        if (targetOverride == null) {
+            aiProfileGenerator.populateNewProfile(profile, team, ordinal);
+        } else {
+            aiProfileGenerator.populateNewProfile(profile, team, ordinal, targetOverride);
+        }
 
         String displayName = StringUtils.hasText(profile.getDisplayName())
                 ? profile.getDisplayName().trim()

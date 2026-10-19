@@ -24,6 +24,7 @@ public class AiPlayerRatingTask {
     private String matchId;
     private String reporterId;
     private Integer priority = 50;
+    private String targetOverride;
     private Status status;
     private String error;
     private Instant createdAt;

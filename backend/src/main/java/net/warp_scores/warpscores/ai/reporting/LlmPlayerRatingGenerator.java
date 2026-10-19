@@ -80,6 +80,16 @@ public class LlmPlayerRatingGenerator
             PlayerRatingFacts facts,
             String instruction,
             Integer priorityOverride) {
+        generateAndPersist(reporter, facts, instruction, priorityOverride, null);
+        }
+
+        @Override
+        public void generateAndPersist(
+            AiReporterDefinition reporter,
+            PlayerRatingFacts facts,
+            String instruction,
+            Integer priorityOverride,
+            String targetOverride) {
         if (reporter.getUserId() == null) {
             throw new IllegalStateException("Reporter user has not been reconciled");
         }
@@ -146,7 +156,11 @@ public class LlmPlayerRatingGenerator
                 new OutputContract(OutputContract.Format.JSON, SCHEMA),
                 new GenerationOptions(null, 6000, null));
 
-        CanonicalLlmResponse response = llm.generate(reporter.getId(), request, priorityOverride);
+        CanonicalLlmResponse response = targetOverride == null
+            ? llm.generate(reporter.getId(), request, priorityOverride)
+            : llm.generate(reporter.getId(), request,
+                new net.warp_scores.warpscores.ai.provider.LlmProviderRouter.ExecutionOverrides(
+                    targetOverride, priorityOverride));
         persistValidated(reporter, facts, response);
     }
 

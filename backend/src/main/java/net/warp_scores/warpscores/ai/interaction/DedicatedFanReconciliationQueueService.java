@@ -50,6 +50,25 @@ public class DedicatedFanReconciliationQueueService {
         return true;
     }
 
+    public synchronized boolean moveTarget(String teamId, String targetOverride) {
+        DedicatedFanReconciliationJob job = jobs.findById(teamId).orElse(null);
+        if (job == null || job.getStatus() != DedicatedFanReconciliationJob.Status.QUEUED) {
+            return false;
+        }
+        job.setTargetOverride(targetOverride);
+        jobs.save(job);
+        return true;
+    }
+
+    public synchronized DedicatedFanReconciliationJob claim(String teamId) {
+        DedicatedFanReconciliationJob job = jobs.findById(teamId).orElse(null);
+        if (job == null || job.getStatus() != DedicatedFanReconciliationJob.Status.QUEUED) return null;
+        job.setStatus(DedicatedFanReconciliationJob.Status.RUNNING);
+        job.setStartedAt(Instant.now());
+        job.setAttempts(job.getAttempts() + 1);
+        return jobs.save(job);
+    }
+
     public boolean remove(String teamId) {
         DedicatedFanReconciliationJob job = jobs.findById(teamId).orElse(null);
         if (job == null || job.getStatus() != DedicatedFanReconciliationJob.Status.QUEUED) {

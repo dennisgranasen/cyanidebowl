@@ -1,4 +1,4 @@
-jest.mock('axios', () => ({ defaults: {}, get: jest.fn() }));
+jest.mock('axios', () => ({ defaults: {}, get: jest.fn(), put: jest.fn() }));
 jest.mock('./config', () => ({ isProduction: true, auth0Audience: 'test' }));
 
 import axios from 'axios';
@@ -7,6 +7,7 @@ import AiReporterApi from './AiReporterApi';
 beforeEach(() => {
   jest.useFakeTimers();
   axios.get.mockReset();
+  axios.put.mockReset();
 });
 afterEach(() => jest.useRealTimers());
 
@@ -44,4 +45,19 @@ test.each([null, '', '<html></html>'])('rejects invalid overview %p', async data
   axios.get.mockResolvedValue({ data });
   await expect(AiReporterApi.autonomousWorkOverview(async () => 'token', jest.fn())).rejects.toThrow('invalid server response');
   expect(jest.getTimerCount()).toBe(0);
+});
+
+test('submits external provider output to the selected provider-call job', async () => {
+  const data = { succeeded: true };
+  axios.put.mockResolvedValue({ data });
+
+  await expect(AiReporterApi.submitExternalAiResult(
+    'quota group/one', 'job id', '{"answer":"ok"}', async () => 'token', jest.fn()
+  )).resolves.toEqual(data);
+
+  expect(axios.put).toHaveBeenCalledWith(
+    '/admin/ai-autonomous-work/execution-queues/quota%20group%2Fone/jobs/job%20id/external-result',
+    { content: '{"answer":"ok"}' },
+    expect.objectContaining({ headers: { Authorization: 'Bearer token' } })
+  );
 });

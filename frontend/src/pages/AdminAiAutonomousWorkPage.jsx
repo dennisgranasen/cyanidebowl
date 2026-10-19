@@ -41,58 +41,6 @@ const duration = (seconds) => {
   if (seconds < 86400) return `${(seconds / 3600).toFixed(1)}h`;
   return `${(seconds / 86400).toFixed(1)}d`;
 };
-const saveCopilotQuotaThreshold = async () => {
-  const threshold = Number(quotaThresholdDraft);
-  if (!Number.isInteger(threshold) || threshold < 0 || threshold > 100) {
-    setCopilotQuotaError('Copilot quota threshold must be a whole percentage from 0 to 100.');
-    return;
-  }
-  setQuotaSaving(true);
-  setCopilotQuotaError(null);
-  try {
-    const saved = await AiReporterApi.setCopilotQuotaThreshold(
-      threshold,
-      getAccessTokenSilently,
-      getAccessTokenWithPopup
-    );
-    setCopilotQuota(old => old ? { ...old, minimumRemainingPercent: saved.minimumRemainingPercent } : old);
-    setQuotaThresholdDraft(String(saved.minimumRemainingPercent));
-    setQuotaThresholdDirty(false);
-  } catch (reason) {
-    setCopilotQuotaError(reason?.response?.data?.detail
-      || reason?.response?.data?.message
-      || reason?.message
-      || 'Could not save Copilot quota threshold.');
-  } finally {
-    setQuotaSaving(false);
-  }
-};
-const moveExecutionJobToCopilot = (queueTarget, jobId) => {
-  const move = confirmCopilotQuota => AiReporterApi.moveAiExecutionJob(
-    queueTarget,
-    jobId,
-    'copilot-gpt-6-luna',
-    confirmCopilotQuota,
-    getAccessTokenSilently,
-    getAccessTokenWithPopup
-  );
-  mutateQueue(async () => {
-    try {
-      const data = await move(false);
-      refreshCopilotQuota();
-      return data;
-    } catch (reason) {
-      const warning = reason?.response?.data;
-      if (reason?.response?.status !== 409
-          || warning?.code !== 'COPILOT_QUOTA_CONFIRMATION_REQUIRED') throw reason;
-      if (!window.confirm(warning.message)) return overview;
-      const data = await move(true);
-      refreshCopilotQuota();
-      return data;
-    }
-  });
-};
-
 const when = (value) => value ? new Date(value).toLocaleString() : '—';
 
 const countdown = (value, nowMs) => {
@@ -124,6 +72,7 @@ function AdminAiAutonomousWorkPage() {
   const [viewMode, setViewMode] = useState('service');
   const [inputDialogOpen, setInputDialogOpen] = useState(false);
   const [inputDetails, setInputDetails] = useState(null);
+  const [inputJobRef, setInputJobRef] = useState(null);
   const [inputLoading, setInputLoading] = useState(false);
   const [inputError, setInputError] = useState('');
   const [copilotQuota, setCopilotQuota] = useState(null);
@@ -215,6 +164,33 @@ function AdminAiAutonomousWorkPage() {
     }
   };
 
+  const saveCopilotQuotaThreshold = async () => {
+    const threshold = Number(quotaThresholdDraft);
+    if (!Number.isInteger(threshold) || threshold < 0 || threshold > 100) {
+      setCopilotQuotaError('Copilot quota threshold must be a whole percentage from 0 to 100.');
+      return;
+    }
+    setQuotaSaving(true);
+    setCopilotQuotaError(null);
+    try {
+      const saved = await AiReporterApi.setCopilotQuotaThreshold(
+        threshold,
+        getAccessTokenSilently,
+        getAccessTokenWithPopup
+      );
+      setCopilotQuota(old => old ? { ...old, minimumRemainingPercent: saved.minimumRemainingPercent } : old);
+      setQuotaThresholdDraft(String(saved.minimumRemainingPercent));
+      setQuotaThresholdDirty(false);
+    } catch (reason) {
+      setCopilotQuotaError(reason?.response?.data?.detail
+        || reason?.response?.data?.message
+        || reason?.message
+        || 'Could not save Copilot quota threshold.');
+    } finally {
+      setQuotaSaving(false);
+    }
+  };
+
   const queue = overview?.queue || {};
   const usage = overview?.generationUsage || {};
   const failures = queue.recentFailures || [];
@@ -264,8 +240,34 @@ function AdminAiAutonomousWorkPage() {
     setSaving(true); setError(null);
     try { setOverview(await action()); } catch (reason) { setError(reason); } finally { setSaving(false); }
   };
+  const moveExecutionJobToCopilot = (queueTarget, jobId) => {
+    const move = confirmCopilotQuota => AiReporterApi.moveAiExecutionJob(
+      queueTarget,
+      jobId,
+      'copilot-gpt-6-luna',
+      confirmCopilotQuota,
+      getAccessTokenSilently,
+      getAccessTokenWithPopup
+    );
+    mutateQueue(async () => {
+      try {
+        const data = await move(false);
+        refreshCopilotQuota();
+        return data;
+      } catch (reason) {
+        const warning = reason?.response?.data;
+        if (reason?.response?.status !== 409
+            || warning?.code !== 'COPILOT_QUOTA_CONFIRMATION_REQUIRED') throw reason;
+        if (!window.confirm(warning.message)) return overview;
+        const data = await move(true);
+        refreshCopilotQuota();
+        return data;
+      }
+    });
+  };
   const inspectJobInput = async (type, id, queue) => {
     setInputDialogOpen(true);
+    setInputJobRef({ type, id, queue });
     setInputLoading(true);
     setInputDetails(null);
     setInputError('');
@@ -278,6 +280,16 @@ function AdminAiAutonomousWorkPage() {
     } finally {
       setInputLoading(false);
     }
+  };
+  const submitExternalResult = async content => {
+    if (inputJobRef?.type !== 'provider-call' || !inputJobRef.queue) {
+      throw new Error('External results can only be submitted for provider calls.');
+    }
+    await AiReporterApi.submitExternalAiResult(
+      inputJobRef.queue, inputJobRef.id, content,
+      getAccessTokenSilently, getAccessTokenWithPopup);
+    setInputDialogOpen(false);
+    await load();
   };
   const priorityPrompt = (label, current, action, max = 100) => {
     const raw = window.prompt(`Ny prioritet för ${label} (0–${max}):`, String(current ?? 50));
@@ -658,6 +670,8 @@ function AdminAiAutonomousWorkPage() {
               details={inputDetails}
               loading={inputLoading}
               error={inputError}
+              canSubmitResult={inputJobRef?.type === 'provider-call' && Boolean(inputDetails)}
+              onSubmitResult={submitExternalResult}
             />
           </Box>
           </>}

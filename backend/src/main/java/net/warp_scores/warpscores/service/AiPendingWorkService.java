@@ -3,6 +3,9 @@ package net.warp_scores.warpscores.service;
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.ai.context.ContextTaskType;
 import net.warp_scores.warpscores.ai.provider.LlmProviderRouter;
+import net.warp_scores.warpscores.ai.provider.AiProviderProperties;
+import net.warp_scores.warpscores.ai.provider.LlmProviderRegistry;
+import net.warp_scores.warpscores.ai.provider.LlmProvider;
 import net.warp_scores.warpscores.ai.reporting.DedicatedFanPlayerRatingJobService;
 import net.warp_scores.warpscores.domain.persistence.*;
 import net.warp_scores.warpscores.identity.Identity;
@@ -23,11 +26,36 @@ public class AiPendingWorkService {
     private final AiCommunityMemberProfileRepository fans;
     private final DedicatedFanPlayerRatingJobService fanRatings;
     private final LlmProviderRouter routing;
+    private final AiProviderProperties providerProperties;
+    private final LlmProviderRegistry providers;
 
     public record Work(String id, String kind, String subject, String subjectUrl, String service,
                        String status, boolean persistent, Integer remaining, String detail,
-                       Instant nextAttemptAt, String error, Integer priority) {}
+                       Instant nextAttemptAt, String error, Integer priority, String targetOverride) {}
+    public record TargetOption(String targetId, String provider, String model) {}
     public record Snapshot(Instant capturedAt, List<Work> jobs) {}
+
+    public List<TargetOption> targetOptions(String kind) {
+        TaskRoute route = taskRoute(kind);
+        return providerProperties.getTargets().entrySet().stream()
+                .filter(entry -> entry.getValue().getModality() == AiProviderProperties.Modality.TEXT)
+                .filter(entry -> providers.find(entry.getValue().getProvider())
+                        .map(LlmProvider::isConfigured).orElse(false))
+                .map(entry -> targetOption(route, entry.getKey()))
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    public void validateTarget(String kind, String targetId) {
+        if (targetId == null || targetId.isBlank()) return;
+        TaskRoute route = taskRoute(kind);
+        AiProviderProperties.TargetConfig target = providerProperties.getTargets().get(targetId);
+        if (target == null || target.getModality() != AiProviderProperties.Modality.TEXT
+                || providers.find(target.getProvider()).map(LlmProvider::isConfigured).orElse(false) == false
+                || targetOption(route, targetId) == null) {
+            throw new IllegalArgumentException("Unknown or unavailable text target for " + kind + ": " + targetId);
+        }
+    }
 
     public Snapshot snapshot() {
         var result = new ArrayList<Work>();
@@ -77,24 +105,25 @@ public class AiPendingWorkService {
             result.add(new Work("fans:" + job.getTeamId(), "FAN_PROFILE", teamName(teamMap, job.getTeamId()),
                     "/team/" + encode(job.getTeamId()), target("dedicated-fan-profile", ContextTaskType.FAN_PROFILE),
                     job.getStatus().name(), true, progress.create(), progress.detail(), job.getRequestedAt(), job.getLastError(),
-                    job.getPriority() == null ? 50 : job.getPriority()));
+                    job.getPriority() == null ? 50 : job.getPriority(), job.getTargetOverride()));
         }
         for (var job : pending(AiAutonomousWorkItem.class, "QUEUED", "RUNNING", "RETRY_WAIT")) {
             result.add(new Work("autonomous:" + job.getCandidateKey(), job.getKind() == null ? job.getHandlerKey() : job.getKind().name(),
                     job.getTargetType() + " · " + job.getTargetId(), null, "Assigned by " + job.getHandlerKey(),
                     job.getStatus().name(), true, 1, "Actor: " + Objects.toString(job.getActorId(), "—"), job.getNextAttemptAt(),
-                    job.getLastErrorMessage(), job.getPriorityRank()));
+                    job.getLastErrorMessage(), job.getPriorityRank(), null));
         }
         for (var task : pending(AiPlayerRatingTask.class, "QUEUED", "RUNNING")) {
             result.add(new Work("rating:" + task.getId(), "PLAYER_RATING", "Match · " + task.getMatchId(), null,
                     target(task.getReporterId(), ContextTaskType.PLAYER_RATING), task.getStatus().name(), true, 1,
-                    "Reporter: " + task.getReporterId(), null, task.getError(), task.getPriority() == null ? 50 : task.getPriority()));
+                    "Reporter: " + task.getReporterId(), null, task.getError(),
+                    task.getPriority() == null ? 50 : task.getPriority(), task.getTargetOverride()));
         }
         for (var job : fanRatings.pendingSnapshots()) {
             result.add(new Work("fan-rating:" + job.jobId(), "FAN_PLAYER_RATING", "Match · " + job.matchId(), null,
                     "Resolved per fan", job.running() > 0 ? "RUNNING" : "QUEUED", false, job.queued() + job.running(),
                     job.succeeded() + " completed / " + job.fanCount() + "; " + job.failed() + " failed", null,
-                    job.errors().isEmpty() ? null : String.join("; ", job.errors().values()), job.priority()));
+                    job.errors().isEmpty() ? null : String.join("; ", job.errors().values()), job.priority(), null));
         }
         result.sort(Comparator.comparing(Work::service)
                 .thenComparing(Comparator.comparingInt((Work item) -> item.priority() == null ? 50 : item.priority()).reversed())
@@ -117,6 +146,23 @@ public class AiPendingWorkService {
             return Objects.toString(t.targetId(), t.providerId()) + " · " + t.providerId() + " / " + t.model();
         } catch (RuntimeException e) { return "Routing unavailable"; }
     }
+    private TargetOption targetOption(TaskRoute route, String targetId) {
+        try {
+            var target = routing.planForTask(route.agent(), route.taskType(),
+                    new LlmProviderRouter.ExecutionOverrides(targetId, null)).primary();
+            return new TargetOption(target.targetId(), target.providerId(), target.model());
+        } catch (RuntimeException unavailable) {
+            return null;
+        }
+    }
+    private static TaskRoute taskRoute(String kind) {
+        return switch (kind == null ? "" : kind) {
+            case "FAN_PROFILE" -> new TaskRoute("dedicated-fan-profile", ContextTaskType.FAN_PROFILE);
+            case "PLAYER_RATING" -> new TaskRoute(null, ContextTaskType.PLAYER_RATING);
+            default -> throw new IllegalArgumentException("Unsupported pending-work kind: " + kind);
+        };
+    }
+    private record TaskRoute(String agent, ContextTaskType taskType) {}
     private static String teamName(Map<String, Team> teams, String id) { var t = teams.get(id); return t == null ? Objects.toString(id, "—") : Objects.toString(t.getName(), id); }
     private static String encode(String id) { return java.net.URLEncoder.encode(id, java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20"); }
 }

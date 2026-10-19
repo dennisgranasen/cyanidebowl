@@ -13,6 +13,8 @@ export default function PendingAiWork({ getAccessTokenSilently, getAccessTokenWi
   const [page, setPage] = useState(1);
   const [savingId, setSavingId] = useState('');
   const [actionError, setActionError] = useState('');
+  const [targetOptions, setTargetOptions] = useState({});
+  const [selectedTargets, setSelectedTargets] = useState({});
   useEffect(() => {
     let active = true, timer;
     const refresh = async () => {
@@ -24,6 +26,18 @@ export default function PendingAiWork({ getAccessTokenSilently, getAccessTokenWi
     };
     refresh();
     return () => { active = false; clearTimeout(timer); };
+  }, [getAccessTokenSilently, getAccessTokenWithPopup]);
+  useEffect(() => {
+    let active = true;
+    Promise.all(['FAN_PROFILE', 'PLAYER_RATING'].map(async kind => [
+      kind,
+      await AiReporterApi.pendingWorkTargets(kind, getAccessTokenSilently, getAccessTokenWithPopup),
+    ])).then(entries => {
+      if (active) setTargetOptions(Object.fromEntries(entries));
+    }).catch(reason => {
+      if (active) setActionError(reason?.response?.data?.message || reason?.message || 'Could not load AI targets.');
+    });
+    return () => { active = false; };
   }, [getAccessTokenSilently, getAccessTokenWithPopup]);
   const jobs = snapshot?.jobs || [];
   const visible = jobs.filter(j => (!service || j.service === service) && `${j.subject} ${j.kind} ${j.detail}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()));
@@ -72,6 +86,24 @@ export default function PendingAiWork({ getAccessTokenSilently, getAccessTokenWi
     applyAction(job, path => AiReporterApi.deleteAiQueueJob(
       path, getAccessTokenSilently, getAccessTokenWithPopup));
   };
+  const moveJob = job => {
+    const path = queuePath(job);
+    if (!path) return;
+    const targetId = selectedTargets[job.id] ?? job.targetOverride ?? '';
+    const move = confirmCopilotQuota => AiReporterApi.movePendingWork(
+      path, targetId, confirmCopilotQuota, getAccessTokenSilently, getAccessTokenWithPopup);
+    applyAction(job, async () => {
+      try {
+        return await move(false);
+      } catch (reason) {
+        const warning = reason?.response?.data;
+        if (reason?.response?.status !== 409
+            || warning?.code !== 'COPILOT_QUOTA_CONFIRMATION_REQUIRED') throw reason;
+        if (!window.confirm(warning.message)) return;
+        return move(true);
+      }
+    });
+  };
   return <Box borderWidth="1px" borderRadius="lg" p={4}>
     <Heading size="md">Fan profile and player-rating tasks</Heading>
     <Text mt={2} fontSize="sm">
@@ -105,6 +137,23 @@ export default function PendingAiWork({ getAccessTokenSilently, getAccessTokenWi
             <Button size="xs" onClick={() => onInspectJob?.(j.id.split(':', 1)[0], j.id.slice(j.id.indexOf(':') + 1))}>
               Input
             </Button>
+            {['FAN_PROFILE', 'PLAYER_RATING'].includes(j.kind) && <>
+              <Select size="xs" width="180px" aria-label={`Destination for ${j.subject}`}
+                value={selectedTargets[j.id] ?? j.targetOverride ?? ''}
+                isDisabled={j.status === 'RUNNING' || savingId === j.id}
+                onChange={event => setSelectedTargets(old => ({ ...old, [j.id]: event.target.value }))}>
+                <option value="">Default routing</option>
+                {j.targetOverride && !(targetOptions[j.kind] || []).some(target => target.targetId === j.targetOverride)
+                  && <option value={j.targetOverride}>{j.targetOverride} · unavailable</option>}
+                {(targetOptions[j.kind] || []).map(target => <option key={target.targetId} value={target.targetId}>
+                  {target.targetId} · {target.provider}
+                </option>)}
+              </Select>
+              <Button size="xs" isDisabled={j.status === 'RUNNING' || savingId === j.id
+                || (selectedTargets[j.id] ?? j.targetOverride ?? '') === (j.targetOverride ?? '')
+                || !targetOptions[j.kind]?.length}
+                onClick={() => moveJob(j)}>Move</Button>
+            </>}
             <Button size="xs" isDisabled={j.status === 'RUNNING' || savingId === j.id || !queuePath(j)}
               onClick={() => changePriority(j)}>Priority</Button>
             <Button size="xs" colorScheme="red" variant="outline"
