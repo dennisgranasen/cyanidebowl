@@ -26,9 +26,10 @@ public class DedicatedFanPlayerRatingJobService {
     private final Map<String, String> latestByMatch = new ConcurrentHashMap<>();
 
     public Availability availability(PlayerRatingFacts facts) {
+        List<AiCommunityMemberProfile> activeFans = generator.activeFansFor(facts);
         return new Availability(
-                generator.activeFansFor(facts).size(),
-                generator.unratedActiveFansFor(facts).size());
+                activeFans.size(),
+                generator.unratedActiveFansFor(facts, activeFans).size());
     }
 
     public synchronized void queueAfterReplayAnalysis(String matchId, PlayerRatingFacts facts) {

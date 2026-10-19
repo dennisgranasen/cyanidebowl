@@ -15,8 +15,10 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class DedicatedFanPlayerRatingServiceTest {
@@ -40,10 +42,9 @@ class DedicatedFanPlayerRatingServiceTest {
         AiCommunityMemberProfile unrelated = fan("unrelated", "team-c", 3L);
         when(profiles.findByActiveTrueOrderByTeamIdAscOrdinalAsc())
                 .thenReturn(List.of(alreadyRated, stillUnrated, unrelated));
-        when(ratings.findByMatchIdAndReporterId(eq("match-1"), eq("fan:rated")))
-                .thenReturn(List.of(new AiPlayerMatchRating()));
-        when(ratings.findByMatchIdAndReporterId(eq("match-1"), eq("fan:unrated")))
-                .thenReturn(List.of());
+        AiPlayerMatchRating existingRating = new AiPlayerMatchRating();
+        existingRating.setReporterId("fan:rated");
+        when(ratings.findByMatchId("match-1")).thenReturn(List.of(existingRating));
 
         var facts = PlayerRatingFacts.builder()
                 .matchId("match-1")
@@ -56,6 +57,8 @@ class DedicatedFanPlayerRatingServiceTest {
         assertThat(service.unratedActiveFansFor(facts))
                 .extracting(AiCommunityMemberProfile::getId)
                 .containsExactly("unrated");
+        verify(ratings).findByMatchId("match-1");
+        verify(ratings, never()).findByMatchIdAndReporterId(anyString(), anyString());
     }
 
     private static AiCommunityMemberProfile fan(String id, String teamId, long userId) {

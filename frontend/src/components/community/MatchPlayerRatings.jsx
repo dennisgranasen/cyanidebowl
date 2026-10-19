@@ -99,12 +99,13 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
   const [dataLoadError, setDataLoadError] = useState(null);
   const [loadElapsedSeconds, setLoadElapsedSeconds] = useState(0);
   const loadRequestRef = useRef(null);
+  const supplementalLoadRequestRef = useRef(null);
   const displayedMatchKeyRef = useRef(null);
   const [caps, setCaps] = useState(null);
   const [instruction, setInstruction] = useState('');
   const [jobStatus, setJobStatus] = useState(null);
   const [message, setMessage] = useState('');
-  const [fanAvailability, setFanAvailability] = useState({ activeFanCount: 0 });
+  const [fanAvailability, setFanAvailability] = useState(null);
   const [fanJobStatus, setFanJobStatus] = useState(null);
   const [fanMessage, setFanMessage] = useState('');
   const [copilotTargets, setCopilotTargets] = useState([]);
@@ -127,9 +128,11 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
       displayedMatchKeyRef.current = requestKey;
       setPlayers([]);
       setOverview([]);
+      setFanAvailability(null);
       setDataLoaded(false);
     }
     const requestId = Symbol(requestKey);
+    supplementalLoadRequestRef.current = requestId;
     const startedAt = Date.now();
     setDataLoading(true);
     setLoadElapsedSeconds(0);
@@ -137,20 +140,13 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
     const promise = (async () => {
       let timeoutId;
       try {
-        const [p, o, capabilityData, status, fanAvailabilityData, fanStatus] = await Promise.race([
+        const [p, o] = await Promise.race([
           Promise.all([
             EditorialCommunityApi.matchPlayers(matchId),
             EditorialCommunityApi.matchRatingOverview(
               matchId,
               isAuthenticated ? getAccessTokenSilently : null,
-            ),
-            isAuthenticated
-              ? EditorialCommunityApi.matchArticleCapabilities(
-                  matchId, getAccessTokenSilently).catch(() => null)
-              : Promise.resolve(null),
-            EditorialCommunityApi.aiPlayerRatingStatus(matchId).catch(() => null),
-            EditorialCommunityApi.fanPlayerRatingAvailability(matchId).catch(() => ({ activeFanCount: 0 })),
-            EditorialCommunityApi.fanPlayerRatingStatus(matchId).catch(() => null),
+            )
           ]),
           new Promise((resolve, reject) => {
             timeoutId = window.setTimeout(
@@ -162,11 +158,32 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
         if (loadRequestRef.current?.requestId !== requestId) return;
         setPlayers(p || []);
         setOverview(o || []);
-        setCaps(capabilityData);
-        setJobStatus(status);
-        setFanAvailability(fanAvailabilityData || { activeFanCount: 0 });
-        setFanJobStatus(fanStatus);
         setDataLoaded(true);
+        const applySupplemental = (promise, setter) => {
+          const apply = value => {
+            if (displayedMatchKeyRef.current === requestKey
+                && supplementalLoadRequestRef.current === requestId) {
+              setter(value || null);
+            }
+          };
+          promise.then(apply).catch(() => apply(null));
+        };
+        if (isAuthenticated) {
+          applySupplemental(
+            EditorialCommunityApi.matchArticleCapabilities(
+              matchId, getAccessTokenSilently),
+            setCaps,
+          );
+        }
+        applySupplemental(EditorialCommunityApi.aiPlayerRatingStatus(matchId), setJobStatus);
+        applySupplemental(
+          EditorialCommunityApi.fanPlayerRatingAvailability(matchId),
+          setFanAvailability,
+        );
+        applySupplemental(
+          EditorialCommunityApi.fanPlayerRatingStatus(matchId),
+          setFanJobStatus,
+        );
       } catch (error) {
         if (loadRequestRef.current?.requestId === requestId) setDataLoadError(error);
       } finally {
@@ -233,18 +250,32 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
     caps?.canReview, caps?.canDeleteAny, jobStatus?.complete, fanJobStatus?.complete]);
 
   useEffect(() => {
-    if (!jobStatus || jobStatus.complete) return undefined;
-    const timer = window.setInterval(() => {
-      load().catch(() => {});
+    const pollEditorial = Boolean(jobStatus && !jobStatus.complete);
+    const pollFans = Boolean(fanJobStatus && !fanJobStatus.complete);
+    if (!pollEditorial && !pollFans) return undefined;
+    const timer = window.setInterval(async () => {
+      const [status, fanStatus] = await Promise.all([
+        pollEditorial
+          ? EditorialCommunityApi.aiPlayerRatingStatus(matchId).catch(() => null)
+          : Promise.resolve(null),
+        pollFans
+          ? EditorialCommunityApi.fanPlayerRatingStatus(matchId).catch(() => null)
+          : Promise.resolve(null),
+      ]);
+      let completed = false;
+      if (status) {
+        setJobStatus(status);
+        completed ||= status.complete;
+      }
+      if (fanStatus) {
+        setFanJobStatus(fanStatus);
+        completed ||= fanStatus.complete;
+      }
+      if (completed) await load();
     }, 2000);
     return () => window.clearInterval(timer);
-  }, [jobStatus?.jobId, jobStatus?.complete, matchId, isAuthenticated]);
-
-  useEffect(() => {
-    if (!fanJobStatus || fanJobStatus.complete) return undefined;
-    const timer = window.setInterval(() => { load().catch(() => {}); }, 2000);
-    return () => window.clearInterval(timer);
-  }, [fanJobStatus?.jobId, fanJobStatus?.complete, matchId, isAuthenticated]);
+  }, [jobStatus?.jobId, jobStatus?.complete, fanJobStatus?.jobId,
+    fanJobStatus?.complete, matchId, isAuthenticated]);
 
   const byPlayer = Object.fromEntries(
     overview.map((item) => [item.playerId, item]));
@@ -522,7 +553,7 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
           >
             Låt oröstande fans betygsätta ({unratedFans})
           </Button>
-          {!fanAvailability?.activeFanCount && (
+          {fanAvailability && !fanAvailability.activeFanCount && (
             <Text mt={1} fontSize="xs" color="gray.500">Inga aktiva fans är kopplade till lagen i matchen.</Text>
           )}
           {fanMessage && <Alert mt={3} status="info"><AlertIcon/>{fanMessage}</Alert>}
@@ -619,7 +650,7 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
                 <Box>
                   <Text fontWeight="700">Hämtar spelartrupper och betyg…</Text>
                   <Text fontSize="sm" color="gray.500">
-                    Läser matchens spelare, betyg och AI-granskningsstatus. Väntat {loadElapsedSeconds} sekunder.
+                    Läser matchens spelare och betyg. Väntat {loadElapsedSeconds} sekunder.
                     {loadElapsedSeconds >= 15 && ' Servern arbetar fortfarande; du kan vänta kvar medan den hämtar uppgifterna.'}
                   </Text>
                 </Box>

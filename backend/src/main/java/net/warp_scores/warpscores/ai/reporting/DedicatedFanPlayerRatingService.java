@@ -2,7 +2,6 @@ package net.warp_scores.warpscores.ai.reporting;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.ai.context.*;
 import net.warp_scores.warpscores.ai.provider.*;
 import net.warp_scores.warpscores.domain.persistence.AiCommunityMemberProfileRepository;
@@ -17,7 +16,6 @@ import java.time.Instant;
 import java.util.*;
 
 @Service
-@RequiredArgsConstructor
 public class DedicatedFanPlayerRatingService {
     private static final String PROMPT_VERSION = "fan-player-rating-v1";
     private static final String SCHEMA = """
@@ -51,6 +49,23 @@ public class DedicatedFanPlayerRatingService {
     private final AiPlayerMatchRatingRepository ratings;
     private final LocalizationService localization;
 
+    public DedicatedFanPlayerRatingService(
+            AiCommunityMemberProfileRepository profiles,
+            ObjectMapper objectMapper,
+            ContextPlanner contextPlanner,
+            ContextAssemblyService contextAssembly,
+            LlmExecutionService llm,
+            AiPlayerMatchRatingRepository ratings,
+            LocalizationService localization) {
+        this.profiles = profiles;
+        this.objectMapper = objectMapper;
+        this.contextPlanner = contextPlanner;
+        this.contextAssembly = contextAssembly;
+        this.llm = llm;
+        this.ratings = ratings;
+        this.localization = localization;
+    }
+
     public List<AiCommunityMemberProfile> activeFansFor(PlayerRatingFacts facts) {
         Set<String> matchTeams = facts.getPlayers().stream()
                 .map(PlayerRatingFacts.Player::getTeamId)
@@ -66,9 +81,19 @@ public class DedicatedFanPlayerRatingService {
     }
 
     public List<AiCommunityMemberProfile> unratedActiveFansFor(PlayerRatingFacts facts) {
-        return activeFansFor(facts).stream()
-                .filter(fan -> ratings.findByMatchIdAndReporterId(
-                        facts.getMatchId(), "fan:" + fan.getId()).isEmpty())
+        return unratedActiveFansFor(facts, activeFansFor(facts));
+    }
+
+    public List<AiCommunityMemberProfile> unratedActiveFansFor(
+            PlayerRatingFacts facts,
+            List<AiCommunityMemberProfile> activeFans) {
+        if (activeFans.isEmpty()) return List.of();
+        Set<String> ratedReporterIds = ratings.findByMatchId(facts.getMatchId()).stream()
+                .map(AiPlayerMatchRating::getReporterId)
+                .filter(reporterId -> reporterId != null && reporterId.startsWith("fan:"))
+                .collect(java.util.stream.Collectors.toSet());
+        return activeFans.stream()
+                .filter(fan -> !ratedReporterIds.contains("fan:" + fan.getId()))
                 .toList();
     }
 
