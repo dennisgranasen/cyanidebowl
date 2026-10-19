@@ -53,21 +53,21 @@ public class DedicatedFanReconciliationWorker {
     }
 
     private void process(DedicatedFanReconciliationJob job) {
-        job = reconciliationQueue.claim(job.getTeamId());
-        if (job == null) return;
+        DedicatedFanReconciliationJob claimedJob = reconciliationQueue.claim(job.getTeamId());
+        if (claimedJob == null) return;
         try {
             var team = teams.findAll().stream()
                     .filter(candidate -> candidate != null
                             && candidate.getId() != null
-                            && job.getTeamId().equals(candidate.getId().asMongoKey()))
+                            && claimedJob.getTeamId().equals(candidate.getId().asMongoKey()))
                     .findFirst()
                     .orElse(null);
             if (team == null) {
-                jobs.delete(job);
+                jobs.delete(claimedJob);
                 return;
             }
-            reconciliation.reconcile(team, job.getTargetOverride());
-            jobs.delete(job);
+            reconciliation.reconcile(team, claimedJob.getTargetOverride());
+            jobs.delete(claimedJob);
         } catch (RuntimeException e) {
             Instant retryAt = Instant.now().plusSeconds(60);
             LlmProviderException rateLimit = findRateLimit(e);
@@ -83,13 +83,13 @@ public class DedicatedFanReconciliationWorker {
                         rateLimitCooldownUntil);
             } else {
                 log.warn("Dedicated Fan reconciliation failed for {}; retrying later: {}",
-                        job.getTeamId(), e.getMessage());
+                        claimedJob.getTeamId(), e.getMessage());
             }
-            job.setStatus(DedicatedFanReconciliationJob.Status.QUEUED);
-            job.setStartedAt(null);
-            job.setRequestedAt(retryAt);
-            job.setLastError(e.getMessage());
-            jobs.save(job);
+            claimedJob.setStatus(DedicatedFanReconciliationJob.Status.QUEUED);
+            claimedJob.setStartedAt(null);
+            claimedJob.setRequestedAt(retryAt);
+            claimedJob.setLastError(e.getMessage());
+            jobs.save(claimedJob);
         }
     }
 
