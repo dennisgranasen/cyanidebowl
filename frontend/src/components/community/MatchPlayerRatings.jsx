@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   Alert, AlertIcon, Badge, Box, Button, FormControl, FormLabel,
-  HStack, Menu, MenuButton, MenuItem, MenuList, SimpleGrid, Text,
+  HStack, Menu, MenuButton, MenuItem, MenuList, Select, SimpleGrid, Text,
   Textarea, VStack,
 } from '@chakra-ui/react';
 import useAuth0WithUserPermissions from '../../hooks/useAuth0WithUserPermissions';
@@ -91,6 +91,12 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
   const [fanAvailability, setFanAvailability] = useState({ activeFanCount: 0 });
   const [fanJobStatus, setFanJobStatus] = useState(null);
   const [fanMessage, setFanMessage] = useState('');
+  const [unratedReporters, setUnratedReporters] = useState([]);
+  const [copilotTargets, setCopilotTargets] = useState([]);
+  const [selectedCopilotTarget, setSelectedCopilotTarget] = useState('');
+  const [copilotBudget, setCopilotBudget] = useState(null);
+  const [loadingCopilotBudget, setLoadingCopilotBudget] = useState(false);
+  const [quotaUsageHistory, setQuotaUsageHistory] = useState([]);
 
   const [editorialDetailPlayer, setEditorialDetailPlayer] = useState(null);
   const [editorialDetailRatings, setEditorialDetailRatings] = useState([]);
@@ -124,6 +130,50 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
   useEffect(() => { load(); }, [matchId, isAuthenticated]);
 
   useEffect(() => {
+    if (!isAuthenticated || !(caps?.canReview || caps?.canDeleteAny)) return undefined;
+    let active = true;
+    Promise.all([
+      EditorialCommunityApi.unratedAiRatingReporters(matchId, getAccessTokenSilently),
+      EditorialCommunityApi.aiPlayerRatingCopilotTargets(matchId, getAccessTokenSilently),
+    ]).then(([reporters, targets]) => {
+      if (!active) return;
+      setUnratedReporters(reporters || []);
+      setCopilotTargets(targets || []);
+      setSelectedCopilotTarget(current => current || targets?.[0]?.targetId || '');
+    }).catch(() => {
+      if (active) {
+        setUnratedReporters([]);
+        setCopilotTargets([]);
+      }
+    });
+    EditorialCommunityApi.aiPlayerRatingCopilotBudget(matchId, getAccessTokenSilently)
+      .then(budget => {
+        if (active) setCopilotBudget(budget || null);
+      })
+      .catch(() => {
+        if (active) setCopilotBudget({
+          configured: false,
+          message: 'Kvotinformationen är tillfälligt otillgänglig.',
+        });
+      });
+    return () => { active = false; };
+  }, [matchId, isAuthenticated, getAccessTokenSilently, caps?.canReview, caps?.canDeleteAny]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !(caps?.canReview || caps?.canDeleteAny)) return undefined;
+    let active = true;
+    EditorialCommunityApi.aiPlayerRatingQuotaUsage(matchId, getAccessTokenSilently)
+      .then(history => {
+        if (active) setQuotaUsageHistory(history || []);
+      })
+      .catch(() => {
+        if (active) setQuotaUsageHistory([]);
+      });
+    return () => { active = false; };
+  }, [matchId, isAuthenticated, getAccessTokenSilently,
+    caps?.canReview, caps?.canDeleteAny, jobStatus?.complete, fanJobStatus?.complete]);
+
+  useEffect(() => {
     if (!jobStatus || jobStatus.complete) return undefined;
     const timer = window.setInterval(() => {
       load().catch(() => {});
@@ -146,23 +196,50 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
     await load();
   };
 
-  const generateAll = async () => {
+  const refreshCopilotBudget = async () => {
+    if (!isAuthenticated) return;
+    setLoadingCopilotBudget(true);
+    try {
+      setCopilotBudget(await EditorialCommunityApi.aiPlayerRatingCopilotBudget(
+        matchId, getAccessTokenSilently
+      ));
+    } catch {
+      setCopilotBudget(null);
+    } finally {
+      setLoadingCopilotBudget(false);
+    }
+  };
+
+  const generateEditorialTrial = async () => {
     if (generating) return;
     setGenerating(true);
     setMessage('');
+    const reporterIds = unratedReporters.slice(0, 5).map(reporter => reporter.id);
+    const submit = confirmCopilotQuota => EditorialCommunityApi.generateAiPlayerRatings(
+      matchId,
+      {
+        reporterIds,
+        instruction: instruction.trim() || null,
+        force: false,
+        targetOverride: selectedCopilotTarget || null,
+        confirmCopilotQuota,
+      },
+      getAccessTokenSilently
+    );
     try {
-      const result = await EditorialCommunityApi.generateAiPlayerRatings(
-        matchId,
-        {
-          reporterIds: [],
-          instruction: instruction.trim() || null,
-          force: true,
-        },
-        getAccessTokenSilently
-      );
+      let result;
+      try {
+        result = await submit(false);
+      } catch (reason) {
+        const warning = reason?.response?.data;
+        if (reason?.response?.status !== 409
+            || warning?.code !== 'COPILOT_QUOTA_CONFIRMATION_REQUIRED') throw reason;
+        if (!window.confirm(warning.message)) return;
+        result = await submit(true);
+      }
       setJobStatus(result);
       setMessage(
-        `Granskningen är köad för ${result.reporterCount || 0} reportrar.`
+        `Granskningen är köad för ${result.queued || result.reporterCount || 0} reportrar.`
       );
       await load();
     } catch (error) {
@@ -177,14 +254,30 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
   };
 
   const generateFans = async () => {
-    if (!fanAvailability?.activeFanCount || (fanJobStatus && !fanJobStatus.complete)) return;
+    if (!fanAvailability?.unratedFanCount || (fanJobStatus && !fanJobStatus.complete)) return;
     setFanMessage('');
+    const submit = confirmCopilotQuota => EditorialCommunityApi.generateFanPlayerRatings(
+      matchId,
+      {
+        reporterIds: [],
+        instruction: instruction.trim() || null,
+        force: false,
+        targetOverride: selectedCopilotTarget || null,
+        confirmCopilotQuota,
+      },
+      getAccessTokenSilently
+    );
     try {
-      const result = await EditorialCommunityApi.generateFanPlayerRatings(
-        matchId,
-        { reporterIds: [], instruction: instruction.trim() || null, force: true },
-        getAccessTokenSilently
-      );
+      let result;
+      try {
+        result = await submit(false);
+      } catch (reason) {
+        const warning = reason?.response?.data;
+        if (reason?.response?.status !== 409
+            || warning?.code !== 'COPILOT_QUOTA_CONFIRMATION_REQUIRED') throw reason;
+        if (!window.confirm(warning.message)) return;
+        result = await submit(true);
+      }
       setFanJobStatus(result);
       setFanMessage(`Granskningen är köad för ${result.fanCount || 0} aktiva fans.`);
       await load();
@@ -242,6 +335,13 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
   );
   const ratingJobActive = Boolean(jobStatus && !jobStatus.complete);
   const ratingBusy = generating || ratingJobActive;
+  const trialReporters = unratedReporters.slice(0, 5);
+  const unratedFans = fanAvailability?.unratedFanCount || 0;
+  const totalTrialCalls = trialReporters.length + unratedFans;
+  const estimatedTokens = (calls) => ({ inputLow: calls * 8000, inputHigh: calls * 16000,
+    outputLow: calls * 500, outputHigh: calls * 1500 });
+  const reporterTokenEstimate = estimatedTokens(trialReporters.length);
+  const fanTokenEstimate = estimatedTokens(unratedFans);
 
   if (editorialDetailPlayer) {
     return (
@@ -330,14 +430,89 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
               placeholder="T.ex. var extra hård mot onödiga turnovers, men håll er till replayfakta…"
             />
           </FormControl>
+          <FormControl mt={3} maxW="420px">
+            <FormLabel fontSize="sm">Copilot-modell</FormLabel>
+            <Select
+              value={selectedCopilotTarget}
+              onChange={event => setSelectedCopilotTarget(event.target.value)}
+              isDisabled={ratingBusy || Boolean(fanJobStatus && !fanJobStatus.complete)}
+            >
+              {copilotTargets.map(target => (
+                <option key={target.targetId} value={target.targetId}>
+                  {target.model} · GitHub Copilot
+                </option>
+              ))}
+            </Select>
+          </FormControl>
+          <Box mt={3} borderWidth="1px" borderRadius="md" p={3}>
+            <HStack justify="space-between">
+              <Text fontWeight="700" fontSize="sm">Kostnadsöversikt före start</Text>
+              <Button size="xs" variant="outline" onClick={refreshCopilotBudget}
+                isLoading={loadingCopilotBudget}>
+                Uppdatera kvot
+              </Button>
+            </HStack>
+            <Text mt={1} fontSize="sm">
+              Redaktion: {unratedReporters.length} har inte röstat; knappen kör högst 5.
+            </Text>
+            <Text mt={1} fontSize="sm">
+              Redaktion: {trialReporters.length} anrop, cirka {reporterTokenEstimate.inputLow.toLocaleString()}–{reporterTokenEstimate.inputHigh.toLocaleString()} inputtokens + {reporterTokenEstimate.outputLow.toLocaleString()}–{reporterTokenEstimate.outputHigh.toLocaleString()} outputtokens.
+            </Text>
+            <Text mt={1} fontSize="sm">
+              Fans: {unratedFans} av {fanAvailability?.activeFanCount || 0} intresserade behöver rösta, cirka {fanTokenEstimate.inputLow.toLocaleString()}–{fanTokenEstimate.inputHigh.toLocaleString()} inputtokens + {fanTokenEstimate.outputLow.toLocaleString()}–{fanTokenEstimate.outputHigh.toLocaleString()} outputtokens.
+            </Text>
+            <Text mt={1} fontSize="sm" fontWeight="600">
+              Planerat: {totalTrialCalls} Copilot-anrop. Kvotavdraget kan inte räknas om till tokens och beror på vald modells kvotvikt.
+            </Text>
+            {copilotBudget?.premiumInteractions && (
+              <Text mt={1} fontSize="xs" color="gray.500">
+                Aktuell Copilot-kvot: {copilotBudget.premiumInteractions.usedRequests ?? '—'} använda av {copilotBudget.premiumInteractions.entitlementRequests ?? '—'}
+                {copilotBudget.premiumInteractions.remainingPercentage != null
+                  ? ` (${copilotBudget.premiumInteractions.remainingPercentage}% kvar)` : ''}.
+                {copilotBudget.premiumInteractions.resetDate
+                  ? ` Återställs ${new Date(copilotBudget.premiumInteractions.resetDate).toLocaleString()}.` : ''}
+              </Text>
+            )}
+            {copilotBudget && !copilotBudget.configured && (
+              <Text mt={1} fontSize="xs" color="orange.300">
+                Copilot-kvot kunde inte läsas: {copilotBudget.message || 'Copilot är inte konfigurerat.'}
+              </Text>
+            )}
+            <Text mt={1} fontSize="xs" color="gray.500">
+              Tokenintervallet är en uppskattning per röst; verklig mängd beror på matchfakta, kontext och svarslängd. Kvotens faktiska avdrag syns när Copilot har uppdaterat kontostatistiken.
+            </Text>
+            {quotaUsageHistory.length > 0 && (
+              <Box mt={3} pt={2} borderTopWidth="1px">
+                <Text fontSize="xs" fontWeight="700" mb={1}>Senaste kvotmätningar</Text>
+                {quotaUsageHistory.slice(0, 5).map(entry => (
+                  <HStack key={entry.id} justify="space-between" align="start" fontSize="xs" py={1}>
+                    <Text>
+                      {entry.ratingKind === 'FANS' ? 'Fans' : 'Redaktion'} · {entry.model || entry.targetId} · {entry.succeededCalls}/{entry.plannedCalls} lyckade
+                      {entry.failedCalls ? ` · ${entry.failedCalls} misslyckade` : ''}
+                    </Text>
+                    <Text textAlign="right" color="gray.500">
+                      {entry.observedUsedRequestDelta == null
+                        ? 'Kvotdifferens saknas'
+                        : `Observerad ändring: ${entry.observedUsedRequestDelta > 0 ? '+' : ''}${entry.observedUsedRequestDelta} använda`}
+                      {entry.quotaBefore?.usedRequests != null && entry.quotaAfter?.usedRequests != null
+                        ? ` (${entry.quotaBefore.usedRequests} → ${entry.quotaAfter.usedRequests})` : ''}
+                    </Text>
+                  </HStack>
+                ))}
+                <Text fontSize="xs" color="gray.500" mt={1}>
+                  Differensen gäller hela Copilot-kontot under körningen och kan även innehålla annan samtidig Copilot-användning.
+                </Text>
+              </Box>
+            )}
+          </Box>
           <Button
             mt={3}
             colorScheme="orange"
-            onClick={generateAll}
+            onClick={generateEditorialTrial}
             isLoading={ratingBusy}
-            isDisabled={ratingBusy}
+            isDisabled={ratingBusy || !trialReporters.length || !selectedCopilotTarget}
           >
-            Låt redaktionen betygsätta
+            Låt upp till 5 oröstande redaktörer betygsätta ({trialReporters.length})
           </Button>
           <Button
             mt={3}
@@ -345,10 +520,9 @@ function MatchPlayerRatings({ matchId, replayReady = false }) {
             variant="outline"
             colorScheme="orange"
             onClick={generateFans}
-            isDisabled={!fanAvailability?.activeFanCount || Boolean(fanJobStatus && !fanJobStatus.complete)}
+            isDisabled={!unratedFans || Boolean(fanJobStatus && !fanJobStatus.complete) || !selectedCopilotTarget}
           >
-            Låt aktiva fans betygsätta
-            {fanAvailability?.activeFanCount > 0 ? ` (${fanAvailability.activeFanCount})` : ''}
+            Låt oröstande fans betygsätta ({unratedFans})
           </Button>
           {!fanAvailability?.activeFanCount && (
             <Text mt={1} fontSize="xs" color="gray.500">Inga aktiva fans är kopplade till lagen i matchen.</Text>

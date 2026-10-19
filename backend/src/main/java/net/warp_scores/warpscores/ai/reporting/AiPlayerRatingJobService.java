@@ -1,15 +1,18 @@
 package net.warp_scores.warpscores.ai.reporting;
 
 import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.ai.agents.AiReporterDefinition;
 import net.warp_scores.warpscores.ai.agents.AiReporterEffectiveProfileService;
+import net.warp_scores.warpscores.ai.context.ContextTaskType;
 import net.warp_scores.warpscores.ai.provider.AiGenerationAdmissionService;
+import net.warp_scores.warpscores.ai.provider.AiProviderWorkExecutor;
+import net.warp_scores.warpscores.ai.provider.LlmProviderRouter;
 import net.warp_scores.warpscores.domain.persistence.AiPlayerMatchRatingRepository;
 import net.warp_scores.warpscores.domain.persistence.AiPlayerRatingJobRepository;
 import net.warp_scores.warpscores.domain.persistence.AiPlayerRatingTaskRepository;
 import net.warp_scores.warpscores.domain.persistence.ReplayAnalysisRepository;
+import net.warp_scores.warpscores.model.CopilotRatingQuotaUsage;
 import net.warp_scores.warpscores.model.AiPlayerRatingJob;
 import net.warp_scores.warpscores.model.AiPlayerRatingTask;
 import org.springframework.stereotype.Service;
@@ -19,21 +22,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AiPlayerRatingJobService {
-    private static final int WORKERS = 3;
     private static final int TEMPORARY_DEFAULT_REPORTER_LIMIT = 5;
     private static final int MAX_TASK_ATTEMPTS = 2;
     private static final long CONCURRENCY_RETRY_MS = 750L;
@@ -45,17 +41,11 @@ public class AiPlayerRatingJobService {
     private final AiPlayerRatingTaskRepository tasks;
     private final ReplayAnalysisRepository replayAnalyses;
     private final PlayerRatingFactsBuilder factsBuilder;
+    private final CopilotRatingQuotaUsageService quotaUsage;
 
-    private final AtomicInteger workerNumber = new AtomicInteger();
-    private final ThreadPoolExecutor executor = new ThreadPoolExecutor(
-            WORKERS, WORKERS, 0L, TimeUnit.MILLISECONDS, new PriorityBlockingQueue<>(), runnable -> {
-                Thread thread = new Thread(
-                        runnable,
-                        "ai-player-rating-" + workerNumber.incrementAndGet());
-                thread.setDaemon(true);
-                return thread;
-            });
-    private final Map<String, RatingTaskRunnable> queuedTasks = new ConcurrentHashMap<>();
+        private final LlmProviderRouter providerRouter;
+        private final AiProviderWorkExecutor providerWorkExecutor;
+        private final Object taskLock = new Object();
 
     public JobSnapshot start(
             String matchId,
@@ -65,6 +55,19 @@ public class AiPlayerRatingJobService {
             int playerCount,
             String requestedBy,
             Integer priorityOverride) {
+            return start(matchId, reporterIds, instruction, force, playerCount, requestedBy,
+                priorityOverride, null);
+            }
+
+            public JobSnapshot start(
+                String matchId,
+                Collection<String> reporterIds,
+                String instruction,
+                boolean force,
+                int playerCount,
+                String requestedBy,
+                Integer priorityOverride,
+                String targetOverride) {
         List<AiReporterDefinition> selected = selectReporters(reporterIds);
 
         AiPlayerRatingJob job = new AiPlayerRatingJob();
@@ -86,6 +89,7 @@ public class AiPlayerRatingJobService {
             task.setJobId(job.getId());
             task.setMatchId(matchId);
             task.setReporterId(reporter.getId());
+            task.setTargetOverride(targetOverride);
             task.setPriority(priorityOverride == null ? 50 : priorityOverride);
             task.setCreatedAt(Instant.now());
 
@@ -101,72 +105,89 @@ public class AiPlayerRatingJobService {
         }
         tasks.saveAll(pending);
 
+        int queuedCount = (int) pending.stream()
+            .filter(task -> task.getStatus() == AiPlayerRatingTask.Status.QUEUED).count();
+        quotaUsage.start(job.getId(), matchId, CopilotRatingQuotaUsage.RatingKind.EDITORIAL,
+            requestedBy, targetOverride, queuedCount);
+
         pending.stream()
                 .filter(task -> task.getStatus() == AiPlayerRatingTask.Status.QUEUED)
                 .forEach(this::submit);
 
+        if (queuedCount == 0) completeQuotaUsageIfTerminal(job.getId());
+
         return snapshot(job);
+    }
+
+    public List<ReporterCandidate> unratedReporters(String matchId) {
+        return effectiveProfiles.enabledForRatings().stream()
+            .map(profile -> profile.definition())
+                .filter(reporter -> ratings.findByMatchIdAndReporterId(matchId, reporter.getId()).isEmpty())
+                .map(reporter -> new ReporterCandidate(reporter.getId(), reporter.getAlias()))
+                .sorted(java.util.Comparator.comparing(
+                    candidate -> candidate.alias(),
+                    java.util.Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
+                .toList();
     }
 
     public Optional<JobSnapshot> cancel(String matchId, String jobId) {
         AiPlayerRatingJob job = jobs.findById(jobId).orElse(null);
         if (job == null || !matchId.equals(job.getMatchId())) return Optional.empty();
 
-        synchronized (queuedTasks) {
+        synchronized (taskLock) {
             Instant now = Instant.now();
             for (AiPlayerRatingTask task : tasks.findByJobIdOrderByReporterIdAsc(jobId)) {
-                if (task.getStatus() == AiPlayerRatingTask.Status.QUEUED
-                        || task.getStatus() == AiPlayerRatingTask.Status.RUNNING) {
+                if (task.getStatus() == AiPlayerRatingTask.Status.QUEUED) {
                     task.setStatus(AiPlayerRatingTask.Status.CANCELLED);
                     task.setError("Cancelled by user");
                     task.setFinishedAt(now);
                     tasks.save(task);
-                    RatingTaskRunnable runnable = queuedTasks.remove(task.getId());
-                    if (runnable != null) executor.remove(runnable);
+                    providerWorkExecutor.remove(task.getId());
                 }
             }
         }
+        completeQuotaUsageIfTerminal(jobId);
         return Optional.of(snapshot(job));
     }
 
     public boolean reprioritizeTask(String taskId, int priority) {
         validatePriority(priority);
-        synchronized (queuedTasks) {
+        synchronized (taskLock) {
             AiPlayerRatingTask task = tasks.findById(taskId).orElse(null);
             if (task == null || task.getStatus() != AiPlayerRatingTask.Status.QUEUED) return false;
             task.setPriority(priority);
             tasks.save(task);
-            RatingTaskRunnable runnable = queuedTasks.get(taskId);
-            if (runnable != null && executor.remove(runnable)) {
-                runnable.priority = priority;
-                executor.execute(runnable);
-            }
+            providerWorkExecutor.reprioritize(taskId, priority);
             return true;
         }
     }
 
     public boolean moveTaskTarget(String taskId, String targetOverride) {
-        synchronized (queuedTasks) {
+        synchronized (taskLock) {
             AiPlayerRatingTask task = tasks.findById(taskId).orElse(null);
             if (task == null || task.getStatus() != AiPlayerRatingTask.Status.QUEUED) return false;
             task.setTargetOverride(targetOverride);
             tasks.save(task);
+            providerWorkExecutor.remove(taskId);
+            submit(task);
             return true;
         }
     }
 
     public boolean removeQueuedTask(String taskId) {
-        synchronized (queuedTasks) {
+        String jobId;
+        synchronized (taskLock) {
             AiPlayerRatingTask task = tasks.findById(taskId).orElse(null);
             if (task == null || task.getStatus() != AiPlayerRatingTask.Status.QUEUED) return false;
             task.setStatus(AiPlayerRatingTask.Status.CANCELLED);
             task.setError("Removed by administrator");
             task.setFinishedAt(Instant.now());
             tasks.save(task);
-            RatingTaskRunnable runnable = queuedTasks.remove(taskId);
-            if (runnable != null) executor.remove(runnable);
-            return true;
+            providerWorkExecutor.remove(taskId);
+            jobId = task.getJobId();
         }
+        completeQuotaUsageIfTerminal(jobId);
+        return true;
     }
 
     public Optional<JobSnapshot> latestForMatch(String matchId) {
@@ -193,25 +214,20 @@ public class AiPlayerRatingJobService {
         }
     }
 
-    @PreDestroy
-    void stopWorkers() {
-        executor.shutdownNow();
-    }
-
     private void submit(AiPlayerRatingTask task) {
-        synchronized (queuedTasks) {
-            RatingTaskRunnable runnable = new RatingTaskRunnable(
-                    task.getId(),
-                    task.getPriority() == null ? 50 : task.getPriority(),
-                    task.getCreatedAt() == null ? Instant.now() : task.getCreatedAt());
-            queuedTasks.put(task.getId(), runnable);
-            executor.execute(runnable);
-        }
+        var target = providerRouter.planForTask(
+                task.getReporterId(),
+                ContextTaskType.PLAYER_RATING,
+                new LlmProviderRouter.ExecutionOverrides(task.getTargetOverride(), task.getPriority()))
+                .primary();
+        providerWorkExecutor.submit(
+                task.getId(), target, task.getPriority() == null ? 50 : task.getPriority(),
+                () -> runTask(task.getId()));
     }
 
     private void runTask(String taskId) {
         AiPlayerRatingTask task;
-        synchronized (queuedTasks) {
+        synchronized (taskLock) {
             task = tasks.findById(taskId).orElse(null);
             if (task == null || task.getStatus() != AiPlayerRatingTask.Status.QUEUED) return;
             task.setStatus(AiPlayerRatingTask.Status.RUNNING);
@@ -264,6 +280,7 @@ public class AiPlayerRatingJobService {
             latest.setStatus(AiPlayerRatingTask.Status.SUCCEEDED);
             latest.setFinishedAt(Instant.now());
             tasks.save(latest);
+            completeQuotaUsageIfTerminal(latest.getJobId());
         } catch (Exception error) {
             AiPlayerRatingTask latest = tasks.findById(task.getId()).orElse(task);
             if (latest.getStatus() == AiPlayerRatingTask.Status.CANCELLED) return;
@@ -271,6 +288,7 @@ public class AiPlayerRatingJobService {
             latest.setError(shortError(error));
             latest.setFinishedAt(Instant.now());
             tasks.save(latest);
+            completeQuotaUsageIfTerminal(latest.getJobId());
         }
     }
 
@@ -385,6 +403,26 @@ public class AiPlayerRatingJobService {
                 taskSnapshots);
     }
 
+    private void completeQuotaUsageIfTerminal(String jobId) {
+        List<AiPlayerRatingTask> rows = tasks.findByJobIdOrderByReporterIdAsc(jobId);
+        if (rows.stream().anyMatch(task -> task.getStatus() == AiPlayerRatingTask.Status.QUEUED
+                || task.getStatus() == AiPlayerRatingTask.Status.RUNNING)) return;
+        int succeeded = 0;
+        int failed = 0;
+        int skipped = 0;
+        int cancelled = 0;
+        for (AiPlayerRatingTask task : rows) {
+            switch (task.getStatus()) {
+                case SUCCEEDED -> succeeded++;
+                case FAILED -> failed++;
+                case SKIPPED -> skipped++;
+                case CANCELLED -> cancelled++;
+                default -> { }
+            }
+        }
+        quotaUsage.complete(jobId, succeeded, failed, skipped, cancelled);
+    }
+
     private static String shortError(Throwable error) {
         String message = error.getMessage();
         if (message == null || message.isBlank()) {
@@ -395,30 +433,6 @@ public class AiPlayerRatingJobService {
 
     private static void validatePriority(int priority) {
         if (priority < 0 || priority > 100) throw new IllegalArgumentException("priority must be 0..100");
-    }
-
-    private final class RatingTaskRunnable implements Runnable, Comparable<RatingTaskRunnable> {
-        private final String taskId;
-        private volatile int priority;
-        private final Instant createdAt;
-
-        private RatingTaskRunnable(String taskId, int priority, Instant createdAt) {
-            this.taskId = taskId;
-            this.priority = priority;
-            this.createdAt = createdAt;
-        }
-
-        @Override public void run() {
-            queuedTasks.remove(taskId, this);
-            runTask(taskId);
-        }
-
-        @Override public int compareTo(RatingTaskRunnable other) {
-            int byPriority = Integer.compare(other.priority, priority);
-            if (byPriority != 0) return byPriority;
-            int byCreatedAt = createdAt.compareTo(other.createdAt);
-            return byCreatedAt != 0 ? byCreatedAt : taskId.compareTo(other.taskId);
-        }
     }
 
     public record TaskSnapshot(
@@ -443,4 +457,6 @@ public class AiPlayerRatingJobService {
             boolean complete,
             Instant createdAt,
             List<TaskSnapshot> tasks) {}
+
+    public record ReporterCandidate(String id, String alias) {}
 }

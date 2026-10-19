@@ -65,7 +65,23 @@ public class DedicatedFanPlayerRatingService {
                 .toList();
     }
 
+    public List<AiCommunityMemberProfile> unratedActiveFansFor(PlayerRatingFacts facts) {
+        return activeFansFor(facts).stream()
+                .filter(fan -> ratings.findByMatchIdAndReporterId(
+                        facts.getMatchId(), "fan:" + fan.getId()).isEmpty())
+                .toList();
+    }
+
     public void generateAndPersist(AiCommunityMemberProfile fan, PlayerRatingFacts facts, String instruction, boolean force) {
+        generateAndPersist(fan, facts, instruction, force, null);
+    }
+
+    public void generateAndPersist(
+            AiCommunityMemberProfile fan,
+            PlayerRatingFacts facts,
+            String instruction,
+            boolean force,
+            String targetOverride) {
         if (!fan.isActive()) throw new IllegalStateException("Inactive fan cannot rate a match");
         String raterId = "fan:" + fan.getId();
         if (!force && !ratings.findByMatchIdAndReporterId(facts.getMatchId(), raterId).isEmpty()) return;
@@ -104,12 +120,14 @@ public class DedicatedFanPlayerRatingService {
             throw new IllegalStateException("Could not serialize player rating facts", e);
         }
 
-        CanonicalLlmResponse response = llm.generate(
-                fan.getId(),
-                new CanonicalLlmRequest(
+        CanonicalLlmRequest request = new CanonicalLlmRequest(
                         fan.getId(), "1", ContextTaskType.PLAYER_RATING, "router-selected", context, task,
                         new OutputContract(OutputContract.Format.JSON, SCHEMA),
-                        new GenerationOptions(null, 4000, null)));
+                new GenerationOptions(null, 4000, null));
+        CanonicalLlmResponse response = targetOverride == null || targetOverride.isBlank()
+            ? llm.generate(fan.getId(), request)
+            : llm.generate(fan.getId(), request,
+                new LlmProviderRouter.ExecutionOverrides(targetOverride, null));
         persist(fan, facts, raterId, response);
     }
 

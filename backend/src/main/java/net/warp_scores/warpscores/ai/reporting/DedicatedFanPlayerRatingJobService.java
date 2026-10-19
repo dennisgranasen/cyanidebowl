@@ -1,49 +1,74 @@
 package net.warp_scores.warpscores.ai.reporting;
 
-import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.model.AiCommunityMemberProfile;
+import net.warp_scores.warpscores.model.CopilotRatingQuotaUsage;
+import net.warp_scores.warpscores.ai.context.ContextTaskType;
+import net.warp_scores.warpscores.ai.provider.AiProviderWorkExecutor;
+import net.warp_scores.warpscores.ai.provider.LlmProviderRouter;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @RequiredArgsConstructor
 public class DedicatedFanPlayerRatingJobService {
     private final DedicatedFanPlayerRatingService generator;
-    private final AtomicInteger workerNo = new AtomicInteger();
-    private final AtomicLong taskOrder = new AtomicLong();
-    private final ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 2, 0L,
-            TimeUnit.MILLISECONDS, new PriorityBlockingQueue<>(), runnable -> {
-        Thread thread = new Thread(runnable, "fan-player-rating-" + workerNo.incrementAndGet());
-        thread.setDaemon(true);
-        return thread;
-    });
+    private final CopilotRatingQuotaUsageService quotaUsage;
+    private final LlmProviderRouter providerRouter;
+    private final AiProviderWorkExecutor providerWorkExecutor;
     private final Map<String, MutableJob> jobs = new ConcurrentHashMap<>();
     private final Map<String, String> latestByMatch = new ConcurrentHashMap<>();
 
     public Availability availability(PlayerRatingFacts facts) {
-        return new Availability(generator.activeFansFor(facts).size());
+        return new Availability(
+                generator.activeFansFor(facts).size(),
+                generator.unratedActiveFansFor(facts).size());
     }
 
     public JobSnapshot start(String matchId, PlayerRatingFacts facts, String instruction, boolean force) {
-        List<AiCommunityMemberProfile> fans = generator.activeFansFor(facts);
+        return start(matchId, facts, instruction, force, null, null);
+    }
+
+    public JobSnapshot start(
+            String matchId,
+            PlayerRatingFacts facts,
+            String instruction,
+            boolean force,
+            String targetOverride) {
+            return start(matchId, facts, instruction, force, targetOverride, null);
+            }
+
+            public JobSnapshot start(
+                String matchId,
+                PlayerRatingFacts facts,
+                String instruction,
+                boolean force,
+                String targetOverride,
+                String requestedBy) {
+        List<AiCommunityMemberProfile> fans = force
+                ? generator.activeFansFor(facts)
+                : generator.unratedActiveFansFor(facts);
         if (fans.isEmpty()) throw new IllegalStateException("No active Dedicated Fans are linked to either match team");
         MutableJob job = new MutableJob(UUID.randomUUID().toString(), matchId, fans.size(), 50,
                 facts, instruction, force,
                 fans.stream().map(fan -> fan.getDisplayName() == null ? fan.getId() : fan.getDisplayName()).toList());
         jobs.put(job.jobId, job);
         latestByMatch.put(matchId, job.jobId);
+        quotaUsage.start(job.jobId, matchId, CopilotRatingQuotaUsage.RatingKind.FANS,
+            requestedBy, targetOverride, fans.size());
         for (AiCommunityMemberProfile fan : fans) {
-            executor.execute(new FanRatingTask(job, fan, facts, instruction, force, taskOrder.getAndIncrement()));
+            String workId = workId(job, fan);
+            job.workIds.add(workId);
+            var target = providerRouter.planForTask(
+                fan.getId(), ContextTaskType.PLAYER_RATING,
+                new LlmProviderRouter.ExecutionOverrides(targetOverride, job.priority))
+                .primary();
+            providerWorkExecutor.submit(workId, target, job.priority,
+                () -> runOne(job, fan, facts, instruction, force, targetOverride));
         }
         return snapshot(job);
     }
@@ -71,11 +96,7 @@ public class DedicatedFanPlayerRatingJobService {
         synchronized (job) {
             if (job.queued == 0 || job.cancelled) return false;
             job.priority = priority;
-            List<Runnable> queued = executor.getQueue().stream()
-                    .filter(task -> task instanceof FanRatingTask fanTask && fanTask.job == job)
-                    .toList();
-            List<Runnable> reordered = queued.stream().filter(executor.getQueue()::remove).toList();
-            reordered.forEach(executor::execute);
+                job.workIds.forEach(workId -> providerWorkExecutor.reprioritize(workId, priority));
             return true;
         }
     }
@@ -85,26 +106,32 @@ public class DedicatedFanPlayerRatingJobService {
         if (job == null) return false;
         synchronized (job) {
             if (job.running != 0 || job.queued == 0) return false;
-            List<Runnable> queued = executor.getQueue().stream()
-                    .filter(task -> task instanceof FanRatingTask fanTask && fanTask.job == job)
-                    .toList();
             job.cancelled = true;
+            int cancelledCount = job.queued;
             job.queued = 0;
-            queued.forEach(executor::remove);
+                job.workIds.forEach(providerWorkExecutor::remove);
+            job.usageFinalizing = true;
+            quotaUsage.complete(job.jobId, job.succeeded, job.failed, 0, cancelledCount);
             jobs.remove(jobId, job);
             latestByMatch.remove(job.matchId, jobId);
             return true;
         }
     }
 
-    private void runOne(MutableJob job, AiCommunityMemberProfile fan, PlayerRatingFacts facts, String instruction, boolean force) {
+        private void runOne(
+            MutableJob job,
+            AiCommunityMemberProfile fan,
+            PlayerRatingFacts facts,
+            String instruction,
+            boolean force,
+            String targetOverride) {
         synchronized (job) {
             if (job.cancelled) return;
             job.queued--;
             job.running++;
         }
         try {
-            generator.generateAndPersist(fan, facts, instruction, force);
+            generator.generateAndPersist(fan, facts, instruction, force, targetOverride);
             synchronized (job) { job.running--; job.succeeded++; }
         } catch (Exception e) {
             synchronized (job) {
@@ -113,6 +140,19 @@ public class DedicatedFanPlayerRatingJobService {
                 job.errors.put(fan.getDisplayName() == null ? fan.getId() : fan.getDisplayName(), shortError(e));
             }
         }
+        finalizeUsageIfComplete(job);
+    }
+
+    private void finalizeUsageIfComplete(MutableJob job) {
+        int succeeded;
+        int failed;
+        synchronized (job) {
+            if (job.usageFinalizing || job.queued != 0 || job.running != 0) return;
+            job.usageFinalizing = true;
+            succeeded = job.succeeded;
+            failed = job.failed;
+        }
+        quotaUsage.complete(job.jobId, succeeded, failed, 0, 0);
     }
 
     private JobSnapshot snapshot(MutableJob job) {
@@ -130,32 +170,8 @@ public class DedicatedFanPlayerRatingJobService {
         return message.length() <= 500 ? message : message.substring(0, 500);
     }
 
-    @PreDestroy void shutdown() { executor.shutdownNow(); }
-
-    private final class FanRatingTask implements Runnable, Comparable<FanRatingTask> {
-        private final MutableJob job;
-        private final AiCommunityMemberProfile fan;
-        private final PlayerRatingFacts facts;
-        private final String instruction;
-        private final boolean force;
-        private final long order;
-
-        private FanRatingTask(MutableJob job, AiCommunityMemberProfile fan, PlayerRatingFacts facts,
-                              String instruction, boolean force, long order) {
-            this.job = job;
-            this.fan = fan;
-            this.facts = facts;
-            this.instruction = instruction;
-            this.force = force;
-            this.order = order;
-        }
-
-        @Override public void run() { runOne(job, fan, facts, instruction, force); }
-
-        @Override public int compareTo(FanRatingTask other) {
-            int byPriority = Integer.compare(other.job.priority, job.priority);
-            return byPriority != 0 ? byPriority : Long.compare(order, other.order);
-        }
+    private static String workId(MutableJob job, AiCommunityMemberProfile fan) {
+        return job.jobId + ":fan:" + fan.getId();
     }
 
     private static final class MutableJob {
@@ -168,11 +184,13 @@ public class DedicatedFanPlayerRatingJobService {
         private int succeeded;
         private int failed;
         private boolean cancelled;
+        private boolean usageFinalizing;
         private final Map<String, String> errors = new java.util.LinkedHashMap<>();
         private final PlayerRatingFacts facts;
         private final String instruction;
         private final boolean force;
         private final List<String> fanNames;
+        private final List<String> workIds = new java.util.concurrent.CopyOnWriteArrayList<>();
         private MutableJob(String jobId, String matchId, int total, int priority, PlayerRatingFacts facts,
                            String instruction, boolean force, List<String> fanNames) {
             this.jobId = jobId; this.matchId = matchId; this.total = total; this.queued = total;
@@ -184,7 +202,7 @@ public class DedicatedFanPlayerRatingJobService {
         }
     }
 
-    public record Availability(int activeFanCount) {}
+    public record Availability(int activeFanCount, int unratedFanCount) {}
     public record JobInputSnapshot(String matchId, PlayerRatingFacts facts, String instruction,
                                    boolean force, List<String> fanNames) {}
     public record JobSnapshot(String jobId, String matchId, int fanCount, int queued, int running,

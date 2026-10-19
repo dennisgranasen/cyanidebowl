@@ -9,14 +9,14 @@ import net.warp_scores.warpscores.domain.persistence.AiPlayerMatchRatingReposito
 import net.warp_scores.warpscores.domain.persistence.ReplayAnalysisRepository;
 import net.warp_scores.warpscores.domain.persistence.ReplayDownloadRepository;
 import net.warp_scores.warpscores.service.MatchArticleService;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import net.warp_scores.warpscores.ai.reporting.DedicatedFanPlayerRatingJobService;
+import net.warp_scores.warpscores.ai.reporting.CopilotRatingQuotaUsageService;
+import net.warp_scores.warpscores.ai.provider.copilot.CopilotQuotaGuard;
 
 @RestController
 @RequestMapping("/matches/{matchId}/ai-player-ratings")
@@ -30,6 +30,8 @@ public class AiPlayerRatingController {
     private final DedicatedFanPlayerRatingJobService fanRatingJobs;
     private final ReporterPlayerRatingService reporterRatings;
     private final MatchArticleService matchArticles;
+    private final CopilotQuotaGuard copilotQuota;
+    private final CopilotRatingQuotaUsageService quotaUsage;
 
     @GetMapping
     public List<?> get(@PathVariable String matchId) {
@@ -70,8 +72,9 @@ public class AiPlayerRatingController {
         PlayerRatingFacts facts = factsBuilder.build(analysis);
 
         GenerationRequest normalized = request == null
-                ? new GenerationRequest(List.of(), null, false, null)
+            ? new GenerationRequest(List.of(), null, false, null, null, false)
                 : request;
+        validateCopilotTarget(normalized.targetOverride(), normalized.confirmCopilotQuota());
 
         return ratingJobs.start(
                 matchId,
@@ -80,7 +83,29 @@ public class AiPlayerRatingController {
                 normalized.force(),
                 facts.getPlayers().size(),
                 auth == null ? null : auth.getName(),
-                normalized.priority());
+                normalized.priority(),
+                normalized.targetOverride());
+    }
+
+    @GetMapping("/unrated-reporters")
+    public List<AiPlayerRatingJobService.ReporterCandidate> unratedReporters(
+            Authentication auth, @PathVariable String matchId) {
+        requireRatingPermission(auth, matchId);
+        return ratingJobs.unratedReporters(matchId);
+    }
+
+    @GetMapping("/copilot-targets")
+    public List<CopilotQuotaGuard.ModelOverride> copilotTargets(
+            Authentication auth, @PathVariable String matchId) {
+        requireRatingPermission(auth, matchId);
+        return copilotQuota.availableModelOverrides();
+    }
+
+    @GetMapping("/copilot-budget")
+    public CopilotQuotaGuard.QuotaStatus copilotBudget(
+            Authentication auth, @PathVariable String matchId) {
+        requireRatingPermission(auth, matchId);
+        return copilotQuota.status();
     }
 
     @PostMapping("/generation-jobs/{jobId}/cancel")
@@ -132,8 +157,13 @@ public class AiPlayerRatingController {
         var analysis = replayAnalyses.findById(matchId)
                 .orElseThrow(() -> new IllegalStateException("An analyzed replay is required for fan player ratings"));
         PlayerRatingFacts facts = factsBuilder.build(analysis);
-        GenerationRequest normalized = request == null ? new GenerationRequest(List.of(), null, false, null) : request;
-        return fanRatingJobs.start(matchId, facts, normalized.instruction(), normalized.force());
+        GenerationRequest normalized = request == null
+            ? new GenerationRequest(List.of(), null, false, null, null, false)
+            : request;
+        validateCopilotTarget(normalized.targetOverride(), normalized.confirmCopilotQuota());
+        return fanRatingJobs.start(
+            matchId, facts, normalized.instruction(), normalized.force(), normalized.targetOverride(),
+                auth == null ? null : auth.getName());
     }
 
     @GetMapping("/fan-generation-status")
@@ -141,13 +171,37 @@ public class AiPlayerRatingController {
         return fanRatingJobs.latest(matchId);
     }
 
+    @GetMapping("/quota-usage")
+    public List<?> quotaUsage(Authentication auth, @PathVariable String matchId) {
+        requireRatingPermission(auth, matchId);
+        return quotaUsage.recentForMatch(matchId);
+    }
+
     public record GenerationRequest(
             List<String> reporterIds,
             String instruction,
             boolean force,
-            Integer priority) {
+            Integer priority,
+            String targetOverride,
+            boolean confirmCopilotQuota) {
         public GenerationRequest {
             if (priority != null && (priority < 0 || priority > 100)) throw new IllegalArgumentException("priority must be 0..100");
+        }
+    }
+
+    private void validateCopilotTarget(String targetId, boolean confirmed) {
+        if (targetId == null || targetId.isBlank()) return;
+        if (copilotQuota.availableModelOverrides().stream()
+                .noneMatch(target -> target.targetId().equals(targetId))) {
+            throw new IllegalArgumentException("Unknown or unavailable Copilot target: " + targetId);
+        }
+        copilotQuota.requireConfirmation(confirmed);
+    }
+
+    private void requireRatingPermission(Authentication auth, String matchId) {
+        MatchArticleService.Capabilities capabilities = matchArticles.capabilities(auth, matchId);
+        if (!capabilities.canReview() && !capabilities.canDeleteAny()) {
+            throw new AccessDeniedException("Technician or editor permission required");
         }
     }
 }

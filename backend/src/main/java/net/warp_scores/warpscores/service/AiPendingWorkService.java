@@ -103,7 +103,8 @@ public class AiPendingWorkService {
             var existing = byTeam.getOrDefault(job.getTeamId(), List.of());
             var progress = fanProgress(team == null ? null : team.getDedicatedFans(), existing);
             result.add(new Work("fans:" + job.getTeamId(), "FAN_PROFILE", teamName(teamMap, job.getTeamId()),
-                    "/team/" + encode(job.getTeamId()), target("dedicated-fan-profile", ContextTaskType.FAN_PROFILE),
+                    "/team/" + encode(job.getTeamId()), target("dedicated-fan-profile", ContextTaskType.FAN_PROFILE,
+                        job.getTargetOverride()),
                     job.getStatus().name(), true, progress.create(), progress.detail(), job.getRequestedAt(), job.getLastError(),
                     job.getPriority() == null ? 50 : job.getPriority(), job.getTargetOverride()));
         }
@@ -115,7 +116,8 @@ public class AiPendingWorkService {
         }
         for (var task : pending(AiPlayerRatingTask.class, "QUEUED", "RUNNING")) {
             result.add(new Work("rating:" + task.getId(), "PLAYER_RATING", "Match · " + task.getMatchId(), null,
-                    target(task.getReporterId(), ContextTaskType.PLAYER_RATING), task.getStatus().name(), true, 1,
+                    target(task.getReporterId(), ContextTaskType.PLAYER_RATING, task.getTargetOverride()),
+                    task.getStatus().name(), true, 1,
                     "Reporter: " + task.getReporterId(), null, task.getError(),
                     task.getPriority() == null ? 50 : task.getPriority(), task.getTargetOverride()));
         }
@@ -141,8 +143,9 @@ public class AiPendingWorkService {
     private <T> List<T> pending(Class<T> type, String... statuses) {
         return mongo.find(Query.query(Criteria.where("status").in((Object[]) statuses)), type);
     }
-    private String target(String agent, ContextTaskType type) {
-        try { var t = routing.planForTask(agent, type, LlmProviderRouter.ExecutionOverrides.none()).primary();
+    private String target(String agent, ContextTaskType type, String targetOverride) {
+        try { var t = routing.planForTask(agent, type,
+                    new LlmProviderRouter.ExecutionOverrides(targetOverride, null)).primary();
             return Objects.toString(t.targetId(), t.providerId()) + " · " + t.providerId() + " / " + t.model();
         } catch (RuntimeException e) { return "Routing unavailable"; }
     }

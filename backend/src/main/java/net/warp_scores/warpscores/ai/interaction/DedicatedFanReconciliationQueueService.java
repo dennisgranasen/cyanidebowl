@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -48,6 +49,7 @@ public class DedicatedFanReconciliationQueueService {
         int queued = 0;
         int unchanged = 0;
         int unknownFanCounts = 0;
+        var unknownFanCountTeamIds = new java.util.ArrayList<String>();
         Instant now = Instant.now();
         var allTeams = teams.findAll().stream()
                 .filter(team -> team != null && team.getId() != null)
@@ -73,6 +75,7 @@ public class DedicatedFanReconciliationQueueService {
             DedicatedFanReconciliationJob existing = existingJobs.get(teamId);
             if (team.getDedicatedFans() == null) {
                 unknownFanCounts++;
+                unknownFanCountTeamIds.add(teamId);
                 removeObsoleteQueuedJob(existing);
                 continue;
             }
@@ -86,10 +89,9 @@ public class DedicatedFanReconciliationQueueService {
             if (existing != null && existing.getStatus() == DedicatedFanReconciliationJob.Status.RUNNING) {
                 continue;
             }
-            boolean isNewJob = existing == null;
             DedicatedFanReconciliationJob job = existing;
             if (job == null) job = new DedicatedFanReconciliationJob();
-            if (isNewJob && targetOverride != null && !targetOverride.isBlank()) {
+            if (targetOverride != null && !targetOverride.isBlank()) {
                 job.setTargetOverride(targetOverride);
             }
             Instant providerCooldown = null;
@@ -113,7 +115,8 @@ public class DedicatedFanReconciliationQueueService {
             jobs.save(job);
             queued++;
         }
-        return new QueueSummary(scanned, queued, unchanged, unknownFanCounts, now);
+        return new QueueSummary(
+            scanned, queued, unchanged, unknownFanCounts, List.copyOf(unknownFanCountTeamIds), now);
     }
 
     private Map<SourceKey, Integer> mainLeagueSources() {
@@ -244,5 +247,6 @@ public class DedicatedFanReconciliationQueueService {
             int queuedTeams,
             int unchangedTeams,
             int unknownFanCountTeams,
+            List<String> unknownFanCountTeamIds,
             Instant queuedAt) {}
 }

@@ -82,6 +82,10 @@ public class TeamDomainService {
         return Optional.of(team);
     }
 
+    public boolean exists(Identity teamId) {
+        return teamRepository.existsById(teamId);
+    }
+
     @Transactional
     public List<Team> findTeams(Collection<Identity> teamIds) {
         List<Team> teams = teamRepository.findAllById(teamIds);

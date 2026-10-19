@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.service.cyanide;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.warp_scores.warpscores.cyanide.api.model.ApiTeam;
 import net.warp_scores.warpscores.cyanide.api.requests.*;
 import net.warp_scores.warpscores.cyanide.api.responses.*;
 import net.warp_scores.warpscores.domain.*;
@@ -141,6 +142,12 @@ public class CyanideApiService {
         matchRequest.setMatch_id(matchId);
         matchRequest.setOpus(opus);
         MatchResponse matchResponse = cyanideCachedRestApiClient.getFromCacheOrApi(matchRequest);
+        if (matchResponse != null && !matchResponse.isEmpty()) {
+            fetchMissingTeams(matchResponse.getTeams(), opus);
+            ofNullable(matchResponse.getMatch())
+                    .map(apiMatch -> apiMatch.getTeams())
+                    .ifPresent(teams -> fetchMissingTeams(teams, opus));
+        }
         return matchDomainService.createOrUpdateMatch(matchResponse, opus);
     }
 
@@ -174,10 +181,34 @@ public class CyanideApiService {
                     "Loading matches for {} {} starting from {}.",
                     entityType, entityId, startDate);
             MatchesResponse matchesResponse = cyanideCachedRestApiClient.getFromCacheOrApi(matchesRequest);
+            if (matchesResponse != null && !matchesResponse.isEmpty()) {
+                Arrays.stream(matchesResponse.getMatches())
+                        .filter(Objects::nonNull)
+                    .map(apiMatch -> apiMatch.getTeams())
+                        .forEach(teams -> fetchMissingTeams(teams, entityId.getOpus()));
+            }
             return matchDomainService.createOrUpdateMatches(matchesResponse, entityId.getOpus());
         }
         log.debug("No matches to load for {} {}.", entityType, entityId);
         return Collections.emptyList();
+    }
+
+    private void fetchMissingTeams(ApiTeam[] apiTeams, int opus) {
+        if (apiTeams == null) {
+            return;
+        }
+
+        Arrays.stream(apiTeams)
+                .filter(Objects::nonNull)
+            .map(apiTeam -> apiTeam.getId())
+                .filter(id -> id != null && !id.isBlank())
+                .map(id -> (Identity) new SimpleIdentity(id, opus))
+                .distinct()
+                .filter(teamId -> !teamDomainService.exists(teamId))
+                .forEach(teamId -> {
+                    log.info("Fetching team {} reported in match data because it is not in the team repository.", teamId);
+                    loadTeam(teamId, true, Optional.of(true));
+                });
     }
 
 

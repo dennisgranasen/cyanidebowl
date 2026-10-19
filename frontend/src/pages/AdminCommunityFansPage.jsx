@@ -136,7 +136,7 @@ function AdminCommunityFansPage() {
         result = await queue(true);
       }
       setMessage(
-        `Checked ${result.scannedTeams} teams: queued ${result.queuedTeams} with fan-count changes, skipped ${result.unchangedTeams} unchanged and ${result.unknownFanCountTeams} with unknown fan counts. Generation continues in the background.`
+        `Checked ${result.scannedTeams} teams: queued ${result.queuedTeams} with fan-count changes, skipped ${result.unchangedTeams} unchanged and ${result.unknownFanCountTeams} with unknown fan counts${result.unknownFanCountTeamIds?.length ? ` (team IDs: ${result.unknownFanCountTeamIds.join(', ')})` : ''}. Generation continues in the background.`
       );
       await load();
     } catch (e) {

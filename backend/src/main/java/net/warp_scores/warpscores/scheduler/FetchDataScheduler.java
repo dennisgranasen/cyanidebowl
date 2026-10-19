@@ -46,7 +46,7 @@ public class FetchDataScheduler {
         fetchDataService.fetchNewMatches();
     }
 
-    //@Scheduled(cron = "0 0 3 * * ?")
+        @Scheduled(cron = "0 0 3 * * ?")
     public void fetchTeams() {
   /*
         if (!cyanideApiProperties.isJobCreationSchedulerActive()) {

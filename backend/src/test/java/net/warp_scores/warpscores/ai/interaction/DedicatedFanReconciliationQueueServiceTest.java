@@ -69,6 +69,7 @@ class DedicatedFanReconciliationQueueServiceTest {
         assertThat(summary.queuedTeams()).isEqualTo(1);
         assertThat(summary.unchangedTeams()).isEqualTo(1);
         assertThat(summary.unknownFanCountTeams()).isEqualTo(1);
+        assertThat(summary.unknownFanCountTeamIds()).containsExactly(unknown.getId().asMongoKey());
         verify(jobs).save(org.mockito.ArgumentMatchers.argThat(job ->
             job.getTeamId().equals(needsFan.getId().asMongoKey())
                 && job.getPriority() == 1));
@@ -121,6 +122,33 @@ class DedicatedFanReconciliationQueueServiceTest {
         assertThat(job.getRequestedAt()).isBefore(Instant.now().plusSeconds(5));
         assertNull(job.getLastError());
     }
+
+        @Test
+        void appliesSelectedTargetToExistingQueuedJobsDuringReconciliation() {
+        Team team = team(12, 2);
+        DedicatedFanReconciliationJob existing = new DedicatedFanReconciliationJob();
+        existing.setTeamId(team.getId().asMongoKey());
+        existing.setStatus(DedicatedFanReconciliationJob.Status.QUEUED);
+        existing.setTargetOverride("editorial");
+        when(teams.findAll()).thenReturn(List.of(team));
+        when(profiles.findByTeamIdIn(any())).thenReturn(List.of());
+        when(jobs.findAll()).thenReturn(List.of(existing));
+        when(leagueSystems.findAll()).thenReturn(List.of());
+        when(providerRouter.planForTask(
+            eq(DedicatedFanAiProfileGenerator.AGENT_ID),
+            eq(ContextTaskType.FAN_PROFILE),
+            any(LlmProviderRouter.ExecutionOverrides.class)))
+            .thenReturn(new LlmProviderRouter.ExecutionPlan(
+                new LlmProviderRouter.ModelTarget(
+                    "copilot-gpt-6-luna", "copilot", "gpt-6-luna", "github-copilot"),
+                List.of(), 50));
+
+        var summary = service.enqueueAll("copilot-gpt-6-luna");
+
+        assertThat(summary.queuedTeams()).isEqualTo(1);
+        verify(jobs).save(org.mockito.ArgumentMatchers.argThat(job ->
+            job == existing && "copilot-gpt-6-luna".equals(job.getTargetOverride())));
+        }
 
     @Test
     void refusesToMoveRunningJob() {

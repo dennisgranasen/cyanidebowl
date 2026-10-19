@@ -3,6 +3,7 @@ package net.warp_scores.warpscores.ai.interaction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.ai.context.ContextTaskType;
+import net.warp_scores.warpscores.ai.provider.AiProviderWorkExecutor;
 import net.warp_scores.warpscores.domain.persistence.DedicatedFanReconciliationJobRepository;
 import net.warp_scores.warpscores.domain.persistence.TeamRepository;
 import net.warp_scores.warpscores.model.DedicatedFanReconciliationJob;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Comparator;
 
 @Slf4j
@@ -26,6 +28,9 @@ public class DedicatedFanReconciliationWorker {
     private final DedicatedFanReconciliationQueueService reconciliationQueue;
     private final LlmProviderRouter providerRouter;
     private final DedicatedFanProviderCooldowns providerCooldowns;
+    private final AiProviderWorkExecutor providerWorkExecutor;
+
+    private final Object dispatchLock = new Object();
 
     @Value("${warpscores.ai.fans.reconcile-job-timeout:15m}")
     private Duration jobTimeout;
@@ -36,25 +41,43 @@ public class DedicatedFanReconciliationWorker {
     @Scheduled(
             fixedDelayString = "${warpscores.ai.fans.reconcile-worker-delay-ms:3000}",
             initialDelayString = "${warpscores.ai.fans.reconcile-worker-initial-delay-ms:15000}")
-    public synchronized void poll() {
+    public void poll() {
         recoverStale();
-        Instant now = Instant.now();
-        jobs.findByStatusAndRequestedAtLessThanEqual(
-                        DedicatedFanReconciliationJob.Status.QUEUED, now)
-                .stream()
-                .filter(job -> !isProviderCoolingDown(job, now))
-                .min(Comparator
-                        .comparingInt((DedicatedFanReconciliationJob job) ->
-                                job.getPriority() == null ? 50 : job.getPriority())
-                        .reversed()
-                        .thenComparing(job -> job.getRequestedAt() == null
-                                ? Instant.EPOCH : job.getRequestedAt()))
-                .ifPresent(this::process);
+        synchronized (dispatchLock) {
+            Instant now = Instant.now();
+            var pending = new ArrayList<>(jobs.findByStatusAndRequestedAtLessThanEqual(
+                    DedicatedFanReconciliationJob.Status.QUEUED, now));
+            pending.sort(Comparator
+                    .comparingInt((DedicatedFanReconciliationJob job) ->
+                            job.getPriority() == null ? 50 : job.getPriority())
+                    .reversed()
+                    .thenComparing(job -> job.getRequestedAt() == null
+                            ? Instant.EPOCH : job.getRequestedAt()));
+
+            for (DedicatedFanReconciliationJob job : pending) {
+                if (isProviderCoolingDown(job, now)) continue;
+                var target = providerRouter.planForTask(
+                        DedicatedFanAiProfileGenerator.AGENT_ID,
+                        ContextTaskType.FAN_PROFILE,
+                        new LlmProviderRouter.ExecutionOverrides(job.getTargetOverride(), null)).primary();
+                if (!providerWorkExecutor.hasCapacity(target)) continue;
+
+                DedicatedFanReconciliationJob claimed = reconciliationQueue.claim(job.getTeamId());
+                if (claimed == null) continue;
+                int priority = claimed.getPriority() == null ? 50 : claimed.getPriority();
+                if (!providerWorkExecutor.submit(
+                        claimed.getTeamId(), target, priority, () -> process(claimed))) {
+                    claimed.setStatus(DedicatedFanReconciliationJob.Status.QUEUED);
+                    claimed.setStartedAt(null);
+                    claimed.setRequestedAt(Instant.now());
+                    claimed.setLastError("Provider work capacity changed; returned to pending queue");
+                    jobs.save(claimed);
+                }
+            }
+        }
     }
 
-    private void process(DedicatedFanReconciliationJob job) {
-        DedicatedFanReconciliationJob claimedJob = reconciliationQueue.claim(job.getTeamId());
-        if (claimedJob == null) return;
+    private void process(DedicatedFanReconciliationJob claimedJob) {
         try {
             var team = teams.findAll().stream()
                     .filter(candidate -> candidate != null
@@ -128,4 +151,5 @@ public class DedicatedFanReconciliationWorker {
             jobs.save(job);
         }
     }
+
 }
