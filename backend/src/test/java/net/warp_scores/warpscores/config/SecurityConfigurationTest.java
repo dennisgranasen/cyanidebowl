@@ -139,18 +139,23 @@ class SecurityConfigurationTest {
                     .thenReturn(null);
                 URI uri = URI.create(
                     "http://localhost:" + port + "/matches/test-match/ai-player-ratings/generate");
+                HttpRequest.BodyPublisher body = HttpRequest.BodyPublishers.ofString(
+                        "{\"reporterIds\":[],\"force\":false,\"confirmCopilotQuota\":false}");
                 HttpRequest unauthenticatedRequest = HttpRequest.newBuilder(uri)
                     .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString("{}"))
+                    .POST(body)
                     .build();
                 HttpRequest authenticatedRequest = HttpRequest.newBuilder(uri)
                     .header("Content-Type", "application/json")
                     .header("Authorization", "Bearer player-rating-token")
-                    .POST(HttpRequest.BodyPublishers.ofString("{}"))
+                    .POST(body)
                     .build();
 
             assertThat(send(unauthenticatedRequest).statusCode()).isEqualTo(401);
-            assertThat(send(authenticatedRequest).statusCode()).isEqualTo(200);
+            HttpResponse<String> response = send(authenticatedRequest);
+            assertThat(response.statusCode())
+                    .as("Authenticated request response body: %s", response.body())
+                    .isEqualTo(200);
             verify(aiPlayerRatingController).generate(any(), any(), any());
         }
 
