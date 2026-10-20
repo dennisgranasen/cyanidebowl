@@ -69,7 +69,7 @@ ReplayAnalysisRepository.existsById(matchId) == true
 If no analyzed replay exists, the AI request is rejected even if a caller bypasses the
 UI.
 
-Generation reuses AI-008:
+Generation uses the canonical AI context pipeline:
 
 ```text
 match

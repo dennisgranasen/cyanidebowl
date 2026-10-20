@@ -17,12 +17,14 @@ BlaskScore already has the foundations required for continued product work:
 - human and AI-authored article workflows with review, provenance and configurable auto-accept;
 - canonical HUMAN/AI identity, AI context/provenance and provider abstraction;
 - durable autonomous AI work and community-media queues;
-- quota-scoped text execution queues with provider-aware retry/resume handling;
+- provider-quota AI queues with retry/resume and queue diagnostics;
+- replay-grounded AI Staff and Dedicated Fan player ratings;
 - provider-routed community-image generation with Cloudflare quota handling that waits
   for free quota reset rather than accumulating paid usage;
 - deterministic replay download/storage/reanalysis separated from LLM execution;
 - BB3 semantic replay timeline/narrative parsing with checks, rerolls, unknown-event
   provenance and IP redaction;
+- BB2 archive extraction and raw analysis, with semantic decoding still incomplete;
 - authenticated `pybb3-service` boundary and versioned replay-analysis contract;
 - ARM64/Raspberry Pi Compose deployment behind Cloudflare Tunnel.
 
@@ -40,27 +42,20 @@ recoverable without maintainer-specific knowledge.
   retry/resume reasons, cooldown countdowns, throughput and stale-job recovery.
 - Keep build/test paths hermetic enough that normal verification does not require live
   external services.
-- Document and verify ARM64 image upgrade/rollback.
-- Document persistent-volume backup/restore expectations for replay data, community media
-  and pybb3 credentials.
-- Improve startup/health diagnosis for backend, pybb3 and Cloudflare Tunnel.
+- Rehearse the documented ARM64 image rollback and test persistent-volume restoration on
+  the deployment target.
 - Replace ambiguous integration null/error handling with typed outcomes where callers
   genuinely need to distinguish unavailable, unauthorized, rate-limited and invalid data.
 
 ## R2 — Editorial/community product evolution
 
-Continue through the existing article/community primitives rather than adding parallel
-systems.
+The shared article, community and image foundations are implemented. Extend those
+primitives rather than creating parallel systems. Keep AI publication reviewable unless
+automatic acceptance is explicitly configured, add producers only for concrete domain
+events, and never switch a free-provider failure to paid generation automatically.
 
-- Keep general articles, match reports and AI-authored material on the same
-  publication/review/provenance model where their semantics overlap.
-- AI-generated content remains reviewable unless automatic acceptance is explicitly
-  configured.
-- Community/Fan generation remains durable and recoverable across restarts.
-- Add autonomous candidate producers only for concrete product/domain events; avoid
-  generic background content polling.
-- Keep image generation renderer-neutral in the domain model and cost-safe: automatic
-  fallback must never introduce paid usage unless explicitly enabled by configuration.
+The remaining reliability gap is restart recovery for Dedicated Fan player-rating jobs;
+their job state is currently held in memory.
 
 ## R3 — Replay state and visualization
 
@@ -72,7 +67,8 @@ is product functionality above the normalized semantic event stream.
 - Build deterministic replay state reconstruction from normalized events.
 - Build interactive replay visualization only after deterministic reconstruction is
   stable.
-- Add BB1/BB2 adapters behind the same normalized consumer model when upstream support is
+- Complete BB2 semantic event decoding (archive extraction and raw analysis exist, but
+  canonical action/timeline output does not); add BB1 decoding when upstream support is
   available.
 
 ## Cross-cutting invariants

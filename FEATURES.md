@@ -33,6 +33,7 @@ warp-scores/cyanidebowl foundation. It is not a release history; see
 - Canonical human/AI identities, reporter profiles and persisted context.
 - Autonomous, deduplicated AI work with retry, cooldown and administrator diagnostics.
 - Provider-aware text queues, generation budgets and an explicit global stop control.
+- Replay-grounded AI player ratings for Staff and Dedicated Fans.
 - Renderer-neutral image generation; paid providers require explicit selection.
 
 ### Deployment and localization
@@ -45,7 +46,8 @@ warp-scores/cyanidebowl foundation. It is not a release history; see
 
 - Replay visualization is not yet interactive; deterministic state reconstruction is the
   next prerequisite.
-- BB1 and BB2 adapters depend on upstream support.
+- BB2 archive extraction is available, but semantic event decoding is incomplete; BB1
+  replay support is not implemented.
 - Automatic paid image-provider fallback is disabled.
 
 ## Keeping this current

@@ -12,7 +12,7 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Idempotent relationship persistence. B-019 can use TEAM_AFFINITY without changing
+ * Idempotent relationship persistence. Team affinity is stored separately from
  * the canonical User model.
  */
 @Service

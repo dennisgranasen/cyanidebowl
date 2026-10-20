@@ -9,27 +9,14 @@ exists for the match. The generated text becomes a `MatchArticle` with
 
 See `MATCH_ARTICLES.md` for authorization, review states and UI/API behavior.
 
-### Current behavior vs target automation
+### Automatic coverage
 
 The implemented safe path is explicit editor/site-admin generation: a caller chooses an
 enabled reporter, the server requires analyzed replay context, and the result is stored
 as `PENDING_REVIEW`.
 
-Automatic coverage of completed matches is a **target policy for B-016**, not a guarantee
-of the current generation pipeline. When autonomous scheduling is implemented, the
-intended default policy is at least one generated report for an eligible completed match
-and an optional second independent report with a default probability of 10%:
-
-```yaml
-match_reporting:
-  minimum_reports: 1
-  second_report_probability: 0.10
-  distinct_reporter_required: true
-  selection_mode: WEIGHTED_RANDOM
-```
-
-That policy must still honor reporter/global enablement, quotas, budgets, retries,
-idempotency and kill switches before it may create review candidates.
+Automatic match-report coverage is not implemented. Other event-driven AI community
+work does not imply that completed matches will receive report drafts automatically.
 
 Canonical flow:
 

@@ -27,23 +27,23 @@ required too early.
 
 ### Queue diagnostics and lifecycle
 
-- Validate admin queue diagnostics under realistic backlog/quota conditions.
-- Keep deterministic replay analysis visually and operationally separate from AI queues.
-- Keep explicit retry/resume reasons and cooldown countdowns rather than opaque pending
-  states.
-- Verify stale RUNNING recovery, provider cooldown expiry and fresh priority selection with
-  regression tests.
-- Persist model-execution throughput history only if restart-surviving history proves
-  operationally useful; current quota execution queues are intentionally process-local.
+- Validate the existing queue estimates, provider cooldowns and recovery behavior against
+  realistic backlog/quota conditions; add regression coverage for any observed failures.
+
+### Dedicated Fan player-rating recovery
+
+Dedicated Fan player-rating job state is currently in memory, so a backend restart can
+lose the visible job and queued fan work.
+
+- Persist job and per-fan work state, or provide an equivalent recoverable queue.
+- Recover interrupted work idempotently and preserve provider-quota accounting.
+- Add restart/recovery tests.
 
 ### Deployment/runbook
 
-- Document and verify image upgrade and rollback on Raspberry Pi/ARM64.
-- Document persistent volumes (`replay_data`, `community_media`, pybb3 credentials) and
-  backup/restore expectations.
-- Document Cloudflare Tunnel diagnosis and container health/start ordering.
-- Keep secrets host-local and keep build-time public frontend configuration distinct from
-  runtime secrets.
+- Rehearse the documented ARM64 image rollback on the deployment host.
+- Define backup retention and verify restoration of MongoDB, replay/media files and the
+  pybb3 credentials volume, including the stable encryption key.
 
 ### Integration failure contracts
 
@@ -59,9 +59,10 @@ project.
 - Maintain representative cyanidebowl/pybb3 contract fixtures as new replay shapes are
   discovered.
 - Turn newly discovered misleading interpretations into permanent regression fixtures.
+- Complete BB2 semantic event decoding; add BB1 support when upstream format support is
+  available.
 - Define deterministic replay state transitions from normalized events.
 - Build interactive replay visualization only after deterministic reconstruction is stable.
-- Add BB1/BB2 adapters behind the same normalized model when upstream support is ready.
 
 ## Rules for implementation
 

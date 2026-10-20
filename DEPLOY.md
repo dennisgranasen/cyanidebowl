@@ -83,8 +83,9 @@ application's credential re-encryption/recovery procedure if rotation is require
 Replay files and community media are bind-mounted from
 `$HOME/blaskscore/data/replays` and `$HOME/blaskscore/data/community-media`, preserving
 the existing host directories across container replacement. pybb3 credentials use a
-persistent named Docker volume. None of these are backups; schedule separate encrypted
-backups and test restoration.
+persistent named Docker volume. These are not backups. Include MongoDB, both host data
+directories and the credentials volume in an encrypted backup plan; retain
+`PYBB3_CREDENTIAL_ENCRYPTION_KEY` and test restoration into an isolated environment.
 
 ## Cloudflare Tunnel
 
@@ -140,6 +141,13 @@ The Oracle workflow only prepares images; container deployment happens only when
 these commands. Keep the downloaded artifact for rollback, because loading the next
 artifact replaces the local `:arm64` image tags. GHCR publishing and automated pull-based
 deployment can be added later, without giving GitHub Actions SSH access to the VM.
+
+### Rollback
+
+Copy the last known-good artifact and its checksum to the VM, verify it, load its images,
+then run the same Compose `up -d --no-build --wait` command with the existing `.env`.
+This rolls back container images only; it does not roll back MongoDB or persistent volume
+contents.
 
 ## Firebase and Auth0
 

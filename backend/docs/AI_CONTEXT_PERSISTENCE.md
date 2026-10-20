@@ -1,7 +1,7 @@
-# AI context persistence — AI-008
+# AI context persistence
 
-AI-008 completes the B-018 foundation for the two previously empty canonical context
-families: `social` and `memory`.
+This document defines the persistence boundary for the canonical `social` and `memory`
+context families.
 
 ## Social relationships
 
@@ -16,8 +16,7 @@ canonical user identity. Supported foundation relationship types are:
 Relationships have stable IDs, active/inactive lifecycle, timestamps and subject
 metadata. `AiSocialRelationshipStore.upsert(...)` is idempotent.
 
-B-019 Dedicated Fans should use `TEAM_AFFINITY` and activation/deactivation rather than
-adding supporter fields to `WarpScoresUser`.
+Team affinity belongs in social relationships, not in canonical user identity fields.
 
 Social relationship context is rendered as `DOMAIN_FACT` because the relationship
 record itself is canonical application state. It is placed in the semantic `SOCIAL`
@@ -38,9 +37,8 @@ authoritative storage origin.
 Memory is always rendered as `ATTRIBUTED_DISCOURSE`. Persisting or summarizing a claim
 must never silently promote it to an objective fact.
 
-AI-008 provides the persistence/retrieval seam only. Policy for deciding what deserves
-to become memory, summarization frequency and automatic memory writes belong to later
-agent-runtime work.
+Persistence and retrieval do not decide what deserves to become memory. Summarization
+and automatic memory writes remain separate agent-runtime policy.
 
 ## Subject expansion
 

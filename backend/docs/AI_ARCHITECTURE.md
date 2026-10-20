@@ -369,11 +369,9 @@ For Dedicated Fan profile creation in particular, a failed LLM call leaves the
 reconciliation work pending for retry; it must not substitute a deterministic identity
 merely because the provider is temporarily unavailable.
 
-The current Dedicated Fan worker uses a configurable fixed global cooldown after a
-normalized `RATE_LIMIT` failure. This is an operational stopgap, not the final provider
-policy. A later hardening pass should use provider-aware exponential backoff with jitter
-and distinguish transient throttling from quota exhaustion where the normalized provider
-error contract supports it.
+Dedicated Fan reconciliation preserves failed work for retry. Rate-limit failures use
+provider-specific cooldowns to delay matching work; retry and cooldown state remain
+operational metadata and never alter persistent AI identity.
 
 Retry/backpressure state belongs to operational work/queue/provider layers. It must not
 be persisted as persona identity or leak into public profiles.

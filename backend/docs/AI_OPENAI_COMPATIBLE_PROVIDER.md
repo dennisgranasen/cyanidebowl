@@ -1,6 +1,6 @@
 # OpenAI-compatible provider adapter
 
-AI-007 adds one reusable adapter for services implementing the OpenAI Responses API.
+This adapter supports services implementing the OpenAI Responses API.
 
 The adapter is intentionally named by protocol, not vendor. Each configured endpoint becomes
 a logical `LlmProvider` with its own provider id, base URL and credential.
@@ -20,9 +20,9 @@ warpscores:
 
     default-targets:
       - provider-id: gemini
-        model: gemini-...
+      model: <configured-model>
       - provider-id: grok
-        model: grok-4.6
+      model: <configured-model>
 ```
 
 Additional compatible services can reuse the same adapter:

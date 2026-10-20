@@ -11,6 +11,10 @@ Implemented user- and developer-visible changes. The concise product overview li
   removed redundant subsystem roadmaps/AI-agent notes.
 - Added Gemini community-image generation and a Copilot SDK orchestration route that
   delegates image creation to Gemini.
+- Added replay-grounded AI player ratings for Staff and Dedicated Fans, with quota-aware
+  provider execution and admin queue controls.
+- Added initial BB2 replay archive extraction and raw analysis; semantic event decoding
+  remains incomplete.
 
 - Added OpenAI-rendered community images with local asset serving, a full Site Admin
   Community editor, and team-page supporter cards linked to public fan profiles.
