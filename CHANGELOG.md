@@ -9,6 +9,8 @@ Implemented user- and developer-visible changes. The concise product overview li
   retry protection, manual reanalysis requests and Site Admin queue diagnostics.
 - Consolidated project documentation around a smaller set of canonical documents and
   removed redundant subsystem roadmaps/AI-agent notes.
+- Added Gemini community-image generation and a Copilot SDK orchestration route that
+  delegates image creation to Gemini.
 
 - Added OpenAI-rendered community images with local asset serving, a full Site Admin
   Community editor, and team-page supporter cards linked to public fan profiles.
@@ -111,4 +113,3 @@ Implemented user- and developer-visible changes. The concise product overview li
   those dependencies are outside the behavior under test.
 
 Add a dated release heading when a tagged release is published.
-

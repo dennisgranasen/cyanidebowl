@@ -1,7 +1,7 @@
 # BlaskScore roadmap
 
 > Working branch: `dev`  
-> Reviewed: 2026-09-16
+> Reviewed: 2026-10-20
 
 This file contains broad remaining direction only. Detailed implementation tasks belong
 in `BACKLOG.md`. Completed work belongs in `CHANGELOG.md`.
@@ -18,8 +18,8 @@ BlaskScore already has the foundations required for continued product work:
 - canonical HUMAN/AI identity, AI context/provenance and provider abstraction;
 - durable autonomous AI work and community-media queues;
 - quota-scoped text execution queues with provider-aware retry/resume handling;
-- Cloudflare community-image quota handling that waits for free quota reset rather than
-  accumulating paid usage;
+- provider-routed community-image generation with Cloudflare quota handling that waits
+  for free quota reset rather than accumulating paid usage;
 - deterministic replay download/storage/reanalysis separated from LLM execution;
 - BB3 semantic replay timeline/narrative parsing with checks, rerolls, unknown-event
   provenance and IP redaction;

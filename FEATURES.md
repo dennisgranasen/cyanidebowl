@@ -33,7 +33,7 @@ warp-scores/cyanidebowl foundation. It is not a release history; see
 - Canonical human/AI identities, reporter profiles and persisted context.
 - Autonomous, deduplicated AI work with retry, cooldown and administrator diagnostics.
 - Provider-aware text queues, generation budgets and an explicit global stop control.
-- Renderer-neutral image requests that never fall back to paid generation by default.
+- Renderer-neutral image generation; paid providers require explicit selection.
 
 ### Deployment and localization
 
@@ -46,7 +46,7 @@ warp-scores/cyanidebowl foundation. It is not a release history; see
 - Replay visualization is not yet interactive; deterministic state reconstruction is the
   next prerequisite.
 - BB1 and BB2 adapters depend on upstream support.
-- Image generation waits for free provider quota; paid fallback is not configured.
+- Automatic paid image-provider fallback is disabled.
 
 ## Keeping this current
 

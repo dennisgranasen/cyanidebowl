@@ -1,7 +1,7 @@
 # Development backlog
 
 > Working branch: `dev`  
-> Reviewed: 2026-09-16
+> Reviewed: 2026-10-20
 
 This file contains **active actionable work only**. It is intentionally not a history of
 the project. See `ROADMAP.md` for direction and `CHANGELOG.md` for completed work.
