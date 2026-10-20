@@ -4,7 +4,7 @@ import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 import { identityUtils } from '../util/identityUtil';
 
 const MyTeamsContext = createContext({ teams: [], claims: [], coachIds: [], loading: false,
-  isMyTeam: () => false, isMyCoach: () => false, refresh: () => {} });
+  teamsError: null, isMyTeam: () => false, isMyCoach: () => false, refresh: () => {} });
 
 const canonicalId = (id) => {
   if (!id) return null;
@@ -25,10 +25,17 @@ export function MyTeamsProvider({ children }) {
   const [teams, setTeams] = useState([]);
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [teamsError, setTeamsError] = useState(null);
 
   const refresh = useCallback(async () => {
-    if (!authenticationReady || !isAuthenticated) { setTeams([]); setClaims([]); return; }
+    if (!authenticationReady || !isAuthenticated) {
+      setTeams([]);
+      setClaims([]);
+      setTeamsError(null);
+      return;
+    }
     setLoading(true);
+    setTeamsError(null);
     try {
       setClaims(await WarpScoresApiService.coachClaims(getAccessTokenSilently, getAccessTokenWithPopup));
       const connection = await WarpScoresApiService.steamConnection(getAccessTokenSilently, getAccessTokenWithPopup);
@@ -43,19 +50,19 @@ export function MyTeamsProvider({ children }) {
       } while (response.hasMore);
       setTeams(ownedTeams);
       setClaims(await WarpScoresApiService.coachClaims(getAccessTokenSilently, getAccessTokenWithPopup));
-    } catch (_error) {
-      // Claims remain useful even without an active Steam session.
+    } catch (error) {
       setTeams([]);
+      setTeamsError(error?.response?.data?.message || error?.message || 'Unknown error');
     } finally { setLoading(false); }
   }, [authenticationReady, isAuthenticated, getAccessTokenSilently, getAccessTokenWithPopup]);
 
   useEffect(() => { refresh(); }, [refresh]);
   const coachIds = useMemo(() => claims.map(claim => claim.coachId), [claims]);
   const ids = useMemo(() => new Set(teams.map((team) => canonicalId(team.id)).filter(Boolean)), [teams]);
-  const value = useMemo(() => ({ teams, claims, coachIds, loading, refresh,
+  const value = useMemo(() => ({ teams, claims, coachIds, loading, teamsError, refresh,
     isMyTeam: (id) => ids.has(canonicalId(id)),
     isMyCoach: (id, opus) => isCoachClaimed(claims, id, opus),
-  }), [teams, claims, coachIds, loading, refresh, ids]);
+  }), [teams, claims, coachIds, loading, teamsError, refresh, ids]);
   return <MyTeamsContext.Provider value={value}>{children}</MyTeamsContext.Provider>;
 }
 

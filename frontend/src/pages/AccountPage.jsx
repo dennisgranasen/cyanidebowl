@@ -12,7 +12,7 @@ export default function AccountPage() {
   const intl = useIntl();
   const { user, userPermissions, getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0WithUserPermissions();
   const auth = [getAccessTokenSilently, getAccessTokenWithPopup];
-  const { teams, claims, loading: teamsLoading, refresh } = useMyTeams();
+  const { teams, claims, loading: teamsLoading, teamsError, refresh } = useMyTeams();
   const [connection, setConnection] = useState(null);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -87,7 +87,11 @@ export default function AccountPage() {
           <Text fontSize="sm" color="gray.500">{intl.formatMessage({ id: 'account.autoClaim' })}</Text>
           {connection.remembered && <Text fontSize="sm" color="gray.500">{intl.formatMessage({ id: 'account.rememberedSteam' })}</Text>}
           <Heading size="sm" pt={2}>{intl.formatMessage({ id: 'account.myTeams' })}</Heading>
-          {teamsLoading ? <Text>{intl.formatMessage({ id: 'account.loadingTeams' })}</Text> : teams.length === 0 ? <Text>{intl.formatMessage({ id: 'account.noTeams' })}</Text> :
+          {teamsLoading ? <Text>{intl.formatMessage({ id: 'account.loadingTeams' })}</Text> : teamsError ? <Stack align="start">
+            <Text color="red.500">{intl.formatMessage({ id: 'account.teamsLoadFailed' })}</Text>
+            <Text fontSize="sm" color="gray.500">{teamsError}</Text>
+            <Button size="sm" variant="outline" onClick={refresh} isLoading={teamsLoading}>{intl.formatMessage({ id: 'account.retryTeams' })}</Button>
+          </Stack> : teams.length === 0 ? <Text>{intl.formatMessage({ id: 'account.noTeams' })}</Text> :
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>{teams.map((team) =>
               <Box key={team.id} borderWidth="1px" borderRadius="md" p={3}>
                 <Text fontWeight="bold">{team.name || team.id}</Text>
