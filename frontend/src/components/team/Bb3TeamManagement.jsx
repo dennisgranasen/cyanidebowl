@@ -19,6 +19,7 @@ import { useIntl } from 'react-intl';
 import WarpScoresApiService from '../../WarpScoresApiService';
 import useAuth0WithUserPermissions from '../../hooks/useAuth0WithUserPermissions';
 import { useMyTeams } from '../../context/MyTeamsContext';
+import Bb3FormationPreview from './Bb3FormationPreview';
 
 const serializePitchMap = (pitchMap) => JSON.stringify(pitchMap || {}, null, 2);
 const formatRuleName = (name) => name
@@ -195,6 +196,7 @@ function Bb3TeamManagement({ teamId }) {
 
       <Box>
         <Heading size="sm" mb={3}>{intl.formatMessage({ id: 'team.bb3.formations' })}</Heading>
+        <Bb3FormationPreview formations={formations} players={players} />
         <Stack spacing={3} maxWidth="720px">
           <FormControl>
             <FormLabel>{intl.formatMessage({ id: 'team.bb3.selectFormation' })}</FormLabel>
