@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class StarPlayerPromptNormalizer {
     private static final Pattern STAR_PLAYER_KEY = Pattern.compile(
-            "(?i)(?<![A-Za-z0-9])(?:PLAYER_NAMES_CHAMPION_|name_sp_|sp_)"
+            "(?i)(?<![A-Za-z0-9])(?:PLAYER_NAMES_CHAMPION_|sp_name_|name_sp_|sp_)"
                     + "[A-Za-z0-9]+(?:_[A-Za-z0-9]+)*(?:_FALLBACK)?(?![A-Za-z0-9])");
 
     private final StarPlayerCatalog catalog;

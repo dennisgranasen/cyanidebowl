@@ -26,10 +26,13 @@ class ContextAssemblyServiceTest {
 
         assertThat(names.displayName("sp_dribblesnot")).isEqualTo("Bomber Dribblesnot");
         assertThat(names.displayName("name_sp_dribblesnot")).isEqualTo("Bomber Dribblesnot");
+        assertThat(names.displayName("sp_name_dribblesnot")).isEqualTo("Bomber Dribblesnot");
         assertThat(names.displayName("PLAYER_NAMES_CHAMPION_DRIBBLESNOT"))
                 .isEqualTo("Bomber Dribblesnot");
         assertThat(names.normalizeText("sp_dribblesnot and sp_unknown"))
                 .isEqualTo("Bomber Dribblesnot and sp_unknown");
+        assertThat(names.normalizeText("sp_name_dribblesnot scored"))
+                .isEqualTo("Bomber Dribblesnot scored");
     }
 
     @Test

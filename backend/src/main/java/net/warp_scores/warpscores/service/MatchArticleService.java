@@ -55,6 +55,7 @@ public class MatchArticleService {
     private final LlmProviderRouter providerRouter;
     private final LlmProviderRegistry providerRegistry;
     private final CopilotQuotaGuard copilotQuota;
+    private final StarPlayerPromptNormalizer starPlayerNames;
 
     public record ArticleInput(String title, String body, String bodyHtml) {
         public ArticleInput(String title, String body) { this(title, body, null); }
@@ -331,8 +332,8 @@ public class MatchArticleService {
         article.setMatchId(matchId);
         article.setLeagueSystemId(ctx.leagueSystemId());
         article.setSeasonId(ctx.seasonId());
-        article.setTitle(generated.title());
-        article.setBody(generated.body());
+        article.setTitle(starPlayerNames.normalizeText(generated.title()));
+        article.setBody(starPlayerNames.normalizeText(generated.body()));
         article.setStatus(MatchArticle.Status.PENDING_REVIEW);
         article.setKind(MatchArticle.Kind.EDITORIAL);
         article.setAuthorType(MatchArticle.AuthorType.AI);

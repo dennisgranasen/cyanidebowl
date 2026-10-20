@@ -41,6 +41,7 @@ public class EditorialArticleAiService {
     private final EditorialSubjectContext subjectContext;
     private final AiGenerationReservationService reservations;
     private final CopilotQuotaGuard copilotQuota;
+    private final StarPlayerPromptNormalizer starPlayerNames;
 
     @Document("editorialArticlePolicies")
     public record Policy(@Id String id, boolean autoAccept) {}
@@ -165,12 +166,14 @@ public class EditorialArticleAiService {
                         request,
                         new LlmProviderRouter.ExecutionOverrides(input.modelOverrideTargetId(), 100));
         var generated = json.readTree(response.content());
-        String title = generated.path("title").asText("").trim(), body = generated.path("body").asText("").trim();
+        String title = starPlayerNames.normalizeText(generated.path("title").asText("").trim());
+        String excerpt = starPlayerNames.normalizeText(generated.path("excerpt").asText(""));
+        String body = starPlayerNames.normalizeText(generated.path("body").asText("").trim());
         if (title.isBlank() || title.length() > 250 || body.isBlank()) throw new IllegalArgumentException("AI article is missing a valid title or body");
         var source = input.article();
         String html = "<p>" + HtmlUtils.htmlEscape(body).replace("\n\n", "</p><p>").replace("\n", "<br>") + "</p>";
         Article article = editorial.saveArticle(auth, null, new EditorialCommunityService.ArticleInput(
-                null, null, title, UUID.randomUUID().toString(), generated.path("excerpt").asText(""), html,
+                null, null, title, UUID.randomUUID().toString(), excerpt, html,
                 source.coverImageUrl(), Article.Status.DRAFT, false, List.of("news"), List.of(), List.of(), null, links, false));
         article.setAuthorUserId(reporter.getUserId());
         article.setAuthorSubject(reporter.resolvedUserSubject());

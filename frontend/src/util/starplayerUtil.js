@@ -124,6 +124,7 @@ const normalizedStarPlayerNames = Object.fromEntries(
 const starPlayerKey = (playerName) => playerName
   .replace(/_FALLBACK$/i, '')
   .replace(/^PLAYER_NAMES_CHAMPION_/i, '')
+  .replace(/^sp_name_/i, '')
   .replace(/^name_sp_/i, '')
   .replace(/^sp_/i, '')
   .toUpperCase();

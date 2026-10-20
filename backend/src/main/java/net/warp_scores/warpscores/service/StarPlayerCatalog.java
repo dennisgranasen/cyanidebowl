@@ -76,6 +76,7 @@ public class StarPlayerCatalog {
         String key = value.trim()
                 .replaceFirst("(?i)_FALLBACK$", "")
                 .replaceFirst("(?i)^PLAYER_NAMES_CHAMPION_", "")
+                .replaceFirst("(?i)^sp_name_", "")
                 .replaceFirst("(?i)^name_sp_", "")
                 .replaceFirst("(?i)^sp_", "");
         return key.replaceAll("[^A-Za-z0-9]", "").toUpperCase(Locale.ROOT);
