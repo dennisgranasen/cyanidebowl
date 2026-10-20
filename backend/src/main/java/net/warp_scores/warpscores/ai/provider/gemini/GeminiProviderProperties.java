@@ -15,6 +15,8 @@ public class GeminiProviderProperties {
     private String apiKey;
     private String baseUrl = "https://generativelanguage.googleapis.com/v1beta";
     private Duration timeout = Duration.ofSeconds(60);
+    private Duration imageTimeout = Duration.ofMinutes(3);
+    private String imageModel = "gemini-nano-banana-2.1";
     private Integer contextWindowTokens;
     private Integer maxOutputTokens;
 

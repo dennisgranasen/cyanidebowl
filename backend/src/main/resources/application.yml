@@ -101,12 +101,14 @@ warpscores:
         github-token: ${AI_COPILOT_GITHUB_TOKEN:}
         cli-path: ${AI_COPILOT_CLI_PATH:}
         timeout: ${AI_COPILOT_TIMEOUT:5m}
+        image-model: ${AI_COPILOT_IMAGE_MODEL:gpt-6-luna}
         minimum-remaining-percent: ${AI_COPILOT_MIN_REMAINING_PERCENT:20}
       gemini:
         api-key: ${AI_API_KEY_GEMINI:}
         base-url: https://generativelanguage.googleapis.com/v1beta
         timeout: 60s
-        image-model: ${GEMINI_IMAGE_MODEL:gemini-3.1-flash-image}
+        image-timeout: ${GEMINI_IMAGE_TIMEOUT:3m}
+        image-model: ${GEMINI_IMAGE_MODEL:gemini-nano-banana-2.1}
       openai-compatible:
         cloudflare:
           base-url: https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID:}/ai/v1

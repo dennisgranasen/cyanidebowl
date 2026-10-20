@@ -3,13 +3,16 @@ package net.warp_scores.warpscores.ai.interaction;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.warp_scores.warpscores.ai.provider.LlmProviderRouter;
 import net.warp_scores.warpscores.ai.provider.cloudflare.CloudflareAiProviderProperties;
+import net.warp_scores.warpscores.ai.provider.gemini.GeminiProviderProperties;
 import net.warp_scores.warpscores.ai.provider.openai.OpenAiNativeProviderProperties;
 import net.warp_scores.warpscores.model.AiCommunityMediaGenerationRequest.Target;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -22,14 +25,27 @@ public class CommunityImageProviders implements AiCommunityImageRenderer {
     private final Map<String, AiCommunityImageRenderer> providers;
     private final String defaultProvider;
     private final String referenceProvider;
+    private final GeminiCommunityImageRenderer gemini;
+    private final CopilotSdkCommunityImageRenderer copilot;
     private final Map<String, Block> blocks = new ConcurrentHashMap<>();
 
     public CommunityImageProviders(ObjectMapper json, CloudflareAiProviderProperties cloudflare,
                                    OpenAiNativeProviderProperties openai, LlmProviderRouter routing,
-                                   Environment environment) {
+                                   GeminiProviderProperties geminiProperties, Environment environment,
+                                   @Value("${warpscores.ai.providers.copilot.enabled:false}") boolean copilotEnabled,
+                                   @Value("${warpscores.ai.providers.copilot.cli-path:}") String copilotCliPath,
+                                   @Value("${warpscores.ai.providers.copilot.timeout:5m}") Duration copilotTimeout,
+                                   @Value("${warpscores.ai.providers.copilot.github-token:}") String copilotGithubToken,
+                                   @Value("${warpscores.ai.providers.copilot.image-model:gpt-6-luna}") String copilotModel) {
+        gemini = new GeminiCommunityImageRenderer(json, geminiProperties);
+        copilot = new CopilotSdkCommunityImageRenderer(
+                gemini, copilotEnabled, copilotCliPath, copilotTimeout,
+                copilotGithubToken, copilotModel);
         providers = Map.of(
                 "cloudflare", new CloudflareCommunityImageRenderer(json, cloudflare, routing),
-                "openai", new OpenAiCommunityImageRenderer(json, openai, environment));
+                "openai", new OpenAiCommunityImageRenderer(json, openai, environment),
+                "gemini", gemini,
+                "copilot-sdk", copilot);
         defaultProvider = environment.getProperty("warpscores.ai.community-media.provider", "cloudflare");
         referenceProvider = environment.getProperty(
                 "warpscores.ai.community-media.reference-provider", defaultProvider);
@@ -45,7 +61,11 @@ public class CommunityImageProviders implements AiCommunityImageRenderer {
                 new Provider("cloudflare", "Cloudflare Workers AI", providers.get("cloudflare").isConfigured(),
                         providers.get("cloudflare").supportsReferenceImages()),
                 new Provider("openai", "OpenAI", providers.get("openai").isConfigured(),
-                        providers.get("openai").supportsReferenceImages()));
+                        providers.get("openai").supportsReferenceImages()),
+                new Provider("gemini", "Gemini Nano Banana", gemini.isConfigured(),
+                        gemini.supportsReferenceImages()),
+                new Provider("copilot-sdk", "Copilot SDK + Gemini Nano Banana",
+                        copilot.isConfigured(), copilot.supportsReferenceImages()));
     }
 
     public Status status(boolean references) {
@@ -100,6 +120,10 @@ public class CommunityImageProviders implements AiCommunityImageRenderer {
                 ? cloudflare.selectedModel(target)
                 : renderer instanceof OpenAiCommunityImageRenderer openai
                         ? openai.imageModel()
+                        : renderer instanceof GeminiCommunityImageRenderer gemini
+                                ? gemini.imageModel()
+                        : renderer instanceof CopilotSdkCommunityImageRenderer copilot
+                                ? copilot.imageModel()
                         : null;
         return new ProviderSelection(selected, model);
     }
