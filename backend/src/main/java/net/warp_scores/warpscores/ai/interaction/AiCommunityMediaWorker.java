@@ -245,11 +245,22 @@ public class AiCommunityMediaWorker {
             AiCommunityMediaGenerationRequest.Status.COMPLETED, now.minus(Duration.ofHours(24)));
         long queued=requests.countByStatus(AiCommunityMediaGenerationRequest.Status.QUEUED);
         long running=requests.countByStatus(AiCommunityMediaGenerationRequest.Status.RUNNING);
-        Instant resume=pending.stream().map(r->r.getNextAttemptAt()==null?now:r.getNextAttemptAt()).min(Instant::compareTo).orElse(null);
-        Instant blockedUntil = activeProviderBlockedUntil(now);
-        if (blockedUntil != null && (resume == null || blockedUntil.isAfter(resume))) {
-            resume = blockedUntil;
-        }
+        var schedules = pending.stream().map(request -> {
+            String provider = providerFor(request);
+            Instant blockedUntil = activeProviderBlockUntil(provider, now);
+            Instant nextAttemptAt = request.getNextAttemptAt() == null ? now : request.getNextAttemptAt();
+            Instant eligibleAt = blockedUntil != null && blockedUntil.isAfter(nextAttemptAt)
+                    ? blockedUntil : nextAttemptAt;
+            return new ProviderSchedule(provider, blockedUntil, eligibleAt);
+        }).toList();
+        Instant resume = schedules.stream()
+                .map(ProviderSchedule::eligibleAt)
+                .min(Instant::compareTo)
+                .orElse(null);
+        Instant blockedUntil = !schedules.isEmpty()
+                && schedules.stream().allMatch(schedule -> schedule.blockedUntil() != null)
+                ? schedules.stream().map(ProviderSchedule::blockedUntil).min(Instant::compareTo).orElse(null)
+                : null;
         if(resume!=null&&resume.isBefore(now))resume=now.plusMillis(Math.max(1,pollMs));
         double perHour=completedHour>0?completedHour:completedDay/24.0;
         long outstanding=queued+running;
@@ -264,12 +275,16 @@ public class AiCommunityMediaWorker {
                 requests.countByStatus(AiCommunityMediaGenerationRequest.Status.COMPLETED),
                 requests.countByStatus(AiCommunityMediaGenerationRequest.Status.FAILED),
                 renderer.isConfigured(), blockedUntil,
-                blockedUntil == null ? null : providerBlockReasons.entrySet().stream()
-                    .filter(entry -> blockedUntil.equals(providerBlockedUntil.get(entry.getKey())))
-                    .map(Map.Entry::getValue).findFirst().orElse("Image provider is cooling down"),
+                blockedUntil == null ? null : schedules.stream()
+                    .filter(schedule -> blockedUntil.equals(schedule.blockedUntil()))
+                    .map(schedule -> providerBlockReasons.get(schedule.provider()))
+                    .filter(java.util.Objects::nonNull)
+                    .findFirst().orElse("Image provider is cooling down"),
                 resume, completedHour, completedDay, eta, mediaJobs(pending, profilesById),
                 mediaJobs(failures, profilesById));
     }
+
+    private record ProviderSchedule(String provider, Instant blockedUntil, Instant eligibleAt) {}
 
     private java.util.Map<String, AiCommunityMemberProfile> profilesById(
             java.util.List<AiCommunityMediaGenerationRequest> pending,
@@ -354,19 +369,18 @@ public class AiCommunityMediaWorker {
     }
 
     private boolean providerBlocked(String provider, Instant now) {
-        if (provider == null) return false;
+        return activeProviderBlockUntil(provider, now) != null;
+    }
+
+    private Instant activeProviderBlockUntil(String provider, Instant now) {
+        if (provider == null) return null;
         Instant blockedUntil = providerBlockedUntil.get(provider);
         if (blockedUntil != null && !blockedUntil.isAfter(now)) {
             providerBlockedUntil.remove(provider, blockedUntil);
             providerBlockReasons.remove(provider);
-            return false;
+            return null;
         }
-        return blockedUntil != null;
-    }
-
-    private Instant activeProviderBlockedUntil(Instant now) {
-        providerBlockedUntil.keySet().forEach(provider -> providerBlocked(provider, now));
-        return providerBlockedUntil.values().stream().max(Instant::compareTo).orElse(null);
+        return blockedUntil;
     }
 
     private void blockProvider(String provider, Instant until, String reason) {

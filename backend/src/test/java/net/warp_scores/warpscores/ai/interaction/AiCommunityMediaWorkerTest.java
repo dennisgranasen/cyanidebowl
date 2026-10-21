@@ -282,6 +282,43 @@ class AiCommunityMediaWorkerTest {
     }
 
     @Test
+    void geminiCooldownDoesNotReportCloudflareQueueAsBlocked() {
+        var requests = mock(AiCommunityMediaGenerationRequestRepository.class);
+        var profiles = mock(AiCommunityMemberProfileRepository.class);
+        var renderer = mock(AiCommunityImageRenderer.class);
+        var assets = mock(AiCommunityMediaAssetStore.class);
+        var cloudflareJob = request();
+        cloudflareJob.setRequestedProvider("cloudflare");
+        var geminiJob = request();
+        geminiJob.setId("gemini-job");
+        geminiJob.setFanProfileId("fan-gemini");
+        geminiJob.setRequestedProvider("gemini");
+        when(requests.findTop200ByStatusOrderByPriorityDescCreatedAtAsc(
+                AiCommunityMediaGenerationRequest.Status.QUEUED))
+                .thenReturn(List.of(cloudflareJob, geminiJob));
+        when(requests.findTop25ByStatusOrderByCompletedAtDesc(
+                AiCommunityMediaGenerationRequest.Status.FAILED)).thenReturn(List.of());
+        when(profiles.findAllById(any())).thenReturn(List.of());
+
+        var worker = new AiCommunityMediaWorker(requests, profiles, renderer, assets);
+        configure(worker);
+        Instant geminiRetryAt = Instant.now().plus(Duration.ofHours(1));
+        @SuppressWarnings("unchecked")
+        var blocks = (java.util.Map<String, Instant>) ReflectionTestUtils.getField(worker, "providerBlockedUntil");
+        @SuppressWarnings("unchecked")
+        var reasons = (java.util.Map<String, String>) ReflectionTestUtils.getField(worker, "providerBlockReasons");
+        blocks.put("gemini", geminiRetryAt);
+        reasons.put("gemini", "gemini daily image quota exhausted");
+
+        var snapshot = worker.snapshot();
+
+        org.assertj.core.api.Assertions.assertThat(snapshot.blockedUntil()).isNull();
+        org.assertj.core.api.Assertions.assertThat(snapshot.blockReason()).isNull();
+        org.assertj.core.api.Assertions.assertThat(snapshot.resumeAt())
+                .isBefore(geminiRetryAt);
+    }
+
+    @Test
     void staleRunningJobIsRecoveredToQueue() {
         var requests = mock(AiCommunityMediaGenerationRequestRepository.class);
         var profiles = mock(AiCommunityMemberProfileRepository.class);
