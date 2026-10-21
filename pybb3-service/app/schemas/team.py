@@ -27,6 +27,10 @@ class FormationDeleteRequest(BaseModel):
         populate_by_name = True
 
 
+class TeamNameRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=40)
+
+
 class SkillAdvancementRequest(BaseModel):
     kind: Literal["chosen", "random"]
     category: int | None = None

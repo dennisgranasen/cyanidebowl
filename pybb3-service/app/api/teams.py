@@ -18,6 +18,7 @@ from app.schemas.team import (
     FormationDeleteRequest,
     FormationRequest,
     SkillAdvancementRequest,
+    TeamNameRequest,
 )
 from app.services.session_manager import SessionNotFound,session_manager
 from app.services.team_mapper import teams_response
@@ -327,6 +328,31 @@ def formations(session_id: str, team_id: str, owner: str = Depends(trusted_owner
         raise HTTPException(404, str(error)) from error
     except (ValueError, RuntimeError, OSError) as error:
         raise HTTPException(502, "Unable to retrieve BB3 formations") from error
+
+
+@router.post("/{session_id}/teams/{team_id}/name")
+def rename_team(
+    session_id: str,
+    team_id: str,
+    request: TeamNameRequest,
+    owner: str = Depends(trusted_owner),
+):
+    name = request.name.strip()
+    if not name:
+        raise HTTPException(400, "Team name cannot be blank")
+
+    def rename(client):
+        owned_team(client, team_id)
+        client.set_team_name(team_id, name)
+        return {"name": name}
+
+    try:
+        return session_manager.call(owner, session_id, rename)
+    except SessionNotFound as error:
+        raise HTTPException(404, str(error)) from error
+    except (ValueError, RuntimeError, OSError) as error:
+        log.exception("BB3 team rename failed")
+        raise HTTPException(502, "Unable to rename BB3 team") from error
 
 
 @router.post("/{session_id}/teams/{team_id}/formations")

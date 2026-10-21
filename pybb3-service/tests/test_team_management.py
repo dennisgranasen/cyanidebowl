@@ -9,7 +9,7 @@ from fastapi import HTTPException
 from bb3.rules import BB3Rules
 
 from app.api import teams as team_api
-from app.schemas.team import SkillAdvancementRequest
+from app.schemas.team import SkillAdvancementRequest, TeamNameRequest
 
 
 def encoded(value):
@@ -22,6 +22,7 @@ class FakeClient:
         self.players = players
         self.skill_mutations = []
         self.roster_reads = []
+        self.team_name_updates = []
 
     def get_teams_of_gamer(self, *, size, start):
         page = self.team_pages.get(start, ([], 0))
@@ -32,6 +33,9 @@ class FakeClient:
     def get_team_roster_model(self, team_id):
         self.roster_reads.append(team_id)
         return SimpleNamespace(players=self.players)
+
+    def set_team_name(self, team_id, name):
+        self.team_name_updates.append((team_id, name))
 
     def get_team(self, _team_id):
         return ET.fromstring(
@@ -62,6 +66,36 @@ def test_owned_team_rejects_a_team_outside_account():
         team_api.owned_team(client, "wanted")
 
     assert error.value.status_code == 404
+
+
+def test_team_name_can_only_be_changed_for_an_owned_team(monkeypatch):
+    client = FakeClient({0: (["team-1"], 1)})
+    monkeypatch.setattr(
+        team_api.session_manager,
+        "call",
+        lambda _owner, _session, operation: operation(client),
+    )
+
+    result = team_api.rename_team(
+        "session-1",
+        "team-1",
+        TeamNameRequest(name="  New Name  "),
+        owner="owner-1",
+    )
+
+    assert result == {"name": "New Name"}
+    assert client.team_name_updates == [("team-1", "New Name")]
+
+    with pytest.raises(HTTPException) as error:
+        team_api.rename_team(
+            "session-1",
+            "other-team",
+            TeamNameRequest(name="Unauthorized"),
+            owner="owner-1",
+        )
+
+    assert error.value.status_code == 404
+    assert client.team_name_updates == [("team-1", "New Name")]
 
 
 def test_roster_reads_a_team_by_id_without_checking_the_account_team_list(monkeypatch):

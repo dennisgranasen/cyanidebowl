@@ -1,6 +1,7 @@
 package net.warp_scores.warpscores.controller;
 
 import net.warp_scores.warpscores.config.properties.CyanideApiProperties;
+import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.service.CoachClaimService;
 import net.warp_scores.warpscores.service.ImageService;
 import net.warp_scores.warpscores.service.PyBb3Client;
@@ -16,11 +17,13 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.http.HttpStatus;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -57,7 +60,8 @@ class SteamConnectionControllerTest {
     void nullFormationsResponseBecomesAnEmptyItemsList() {
         PyBb3Client pybb3 = mock(PyBb3Client.class);
         SteamConnectionController controller = new SteamConnectionController(
-                pybb3, mock(UserProfileService.class), mock(CoachClaimService.class));
+                pybb3, mock(UserProfileService.class), mock(CoachClaimService.class),
+                mock(TeamDomainService.class));
         HttpServletRequest request = mock(HttpServletRequest.class);
         JwtAuthenticationToken auth = mock(JwtAuthenticationToken.class);
         when(request.getCookies()).thenReturn(new Cookie[] { new Cookie("BLASKSCORE_BB3_SESSION", "session-1") });
@@ -74,7 +78,8 @@ class SteamConnectionControllerTest {
         PyBb3Client pybb3 = mock(PyBb3Client.class);
         UserProfileService profiles = mock(UserProfileService.class);
         CoachClaimService coachClaims = mock(CoachClaimService.class);
-        SteamConnectionController controller = new SteamConnectionController(pybb3, profiles, coachClaims);
+        SteamConnectionController controller = new SteamConnectionController(
+                pybb3, profiles, coachClaims, mock(TeamDomainService.class));
         HttpServletRequest request = mock(HttpServletRequest.class);
         HttpServletResponse response = mock(HttpServletResponse.class);
         JwtAuthenticationToken auth = mock(JwtAuthenticationToken.class);
@@ -105,7 +110,8 @@ class SteamConnectionControllerTest {
     void doesNotTreatPyBb3NetworkFailureAsAnExpiredSteamSession() {
         PyBb3Client pybb3 = mock(PyBb3Client.class);
         SteamConnectionController controller = new SteamConnectionController(
-                pybb3, mock(UserProfileService.class), mock(CoachClaimService.class));
+                pybb3, mock(UserProfileService.class), mock(CoachClaimService.class),
+                mock(TeamDomainService.class));
         HttpServletRequest request = mock(HttpServletRequest.class);
         HttpServletResponse response = mock(HttpServletResponse.class);
         JwtAuthenticationToken auth = mock(JwtAuthenticationToken.class);
@@ -124,5 +130,56 @@ class SteamConnectionControllerTest {
                 () -> controller.status(auth, request, response));
 
         assertEquals(503, failure.getStatusCode());
+    }
+
+    @Test
+    void importsSteamTeamsWhenListingOwnedTeams() {
+        PyBb3Client pybb3 = mock(PyBb3Client.class);
+        CoachClaimService coachClaims = mock(CoachClaimService.class);
+        TeamDomainService teamDomainService = mock(TeamDomainService.class);
+        SteamConnectionController controller = new SteamConnectionController(
+                pybb3, mock(UserProfileService.class), coachClaims, teamDomainService);
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        JwtAuthenticationToken auth = mock(JwtAuthenticationToken.class);
+        Jwt token = mock(Jwt.class);
+        when(request.getCookies()).thenReturn(
+                new Cookie[] { new Cookie("BLASKSCORE_BB3_SESSION", "session-1") });
+        when(auth.getName()).thenReturn("owner-1");
+        when(auth.getToken()).thenReturn(token);
+        when(pybb3.get("/api/v1/sessions/session-1/teams?size=50&start=0", "owner-1"))
+                .thenReturn(Map.of("items", List.of(Map.of(
+                        "id", "team-1",
+                        "name", "Vampire team",
+                        "raceId", 4,
+                        "teamValue", 125000,
+                        "coachName", "Coach"))));
+
+        Map<String, Object> result = controller.teams(50, 0, auth, request);
+
+        assertEquals(1, ((List<?>) result.get("items")).size());
+        verify(teamDomainService).upsertSteamTeam(
+                "team-1", "Vampire team", 4, new BigDecimal("125000"), "Coach");
+        verify(coachClaims).claimBb3Teams(token, result);
+    }
+
+    @Test
+    void renamesOwnedBb3TeamAndUpdatesItsStoredTeamName() {
+        PyBb3Client pybb3 = mock(PyBb3Client.class);
+        TeamDomainService teamDomainService = mock(TeamDomainService.class);
+        SteamConnectionController controller = new SteamConnectionController(
+                pybb3, mock(UserProfileService.class), mock(CoachClaimService.class), teamDomainService);
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        JwtAuthenticationToken auth = mock(JwtAuthenticationToken.class);
+        when(request.getCookies()).thenReturn(
+                new Cookie[] { new Cookie("BLASKSCORE_BB3_SESSION", "session-1") });
+        when(auth.getName()).thenReturn("owner-1");
+        when(pybb3.post("/api/v1/sessions/session-1/teams/team-1/name", "owner-1",
+                Map.of("name", "New Vampire Team"))).thenReturn(Map.of("name", "New Vampire Team"));
+
+        Map<String, Object> result = controller.renameTeam(
+                "3_team-1", Map.of("name", "New Vampire Team"), auth, request);
+
+        assertEquals("New Vampire Team", result.get("name"));
+        verify(teamDomainService).upsertSteamTeam("team-1", "New Vampire Team", null, null, null);
     }
 }

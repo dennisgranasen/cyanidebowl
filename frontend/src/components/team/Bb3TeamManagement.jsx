@@ -26,11 +26,12 @@ const formatRuleName = (name) => name
   ?.replace(/[_-]+/g, ' ')
   .replace(/\b\w/g, (letter) => letter.toUpperCase());
 
-function Bb3TeamManagement({ teamId }) {
+function Bb3TeamManagement({ teamId, teamName, onTeamNameChange }) {
   const intl = useIntl();
   const auth = useAuth0WithUserPermissions();
   const { isMyTeam } = useMyTeams();
   const [roster, setRoster] = useState(null);
+  const [teamNameInput, setTeamNameInput] = useState(teamName || '');
   const [formations, setFormations] = useState([]);
   const [selectedFormationId, setSelectedFormationId] = useState('');
   const [formationName, setFormationName] = useState('');
@@ -90,6 +91,10 @@ function Bb3TeamManagement({ teamId }) {
   }, [teamId, isMyTeam]);
 
   useEffect(() => {
+    setTeamNameInput(teamName || '');
+  }, [teamId, teamName]);
+
+  useEffect(() => {
     setImprovements(null);
     setCharacteristicRoll(null);
     if (!selectedPlayerId) return;
@@ -109,6 +114,22 @@ function Bb3TeamManagement({ teamId }) {
       if (selectedPlayerId) {
         setImprovements(await WarpScoresApiService.bb3PlayerImprovements(teamId, selectedPlayerId, ...callArgs));
       }
+    } catch (reason) {
+      setError(reason.response?.data?.message || reason.message || String(reason));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const renameTeam = async () => {
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      const name = teamNameInput.trim();
+      await WarpScoresApiService.renameBb3Team(teamId, name, ...callArgs);
+      onTeamNameChange?.(name);
+      setNotice(intl.formatMessage({ id: 'team.bb3.teamNameSaved' }));
     } catch (reason) {
       setError(reason.response?.data?.message || reason.message || String(reason));
     } finally {
@@ -199,6 +220,26 @@ function Bb3TeamManagement({ teamId }) {
         </Button>
       </Alert>}
       {notice && <Alert status="success"><AlertIcon />{notice}</Alert>}
+
+      <Box>
+        <Heading size="sm" mb={3}>{intl.formatMessage({ id: 'team.bb3.teamName' })}</Heading>
+        <HStack maxWidth="720px">
+          <Input
+            value={teamNameInput}
+            maxLength={40}
+            onChange={(event) => setTeamNameInput(event.target.value)}
+            aria-label={intl.formatMessage({ id: 'team.bb3.teamName' })}
+          />
+          <Button
+            colorScheme="teal"
+            onClick={renameTeam}
+            isLoading={busy}
+            isDisabled={!teamNameInput.trim() || teamNameInput.trim() === teamName?.trim()}
+          >
+            {intl.formatMessage({ id: 'common.save' })}
+          </Button>
+        </HStack>
+      </Box>
 
       <Box>
         <Heading size="sm" mb={3}>{intl.formatMessage({ id: 'team.bb3.formations' })}</Heading>

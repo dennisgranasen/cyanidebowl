@@ -72,6 +72,7 @@ function TeamPage() {
   const { competitionId, teamId } = useParams();
   const [searchParams] = useSearchParams();
   const [team, setTeam] = useState();
+  const [teamNameOverride, setTeamNameOverride] = useState();
   const [matches, setMatches] = useState();
   const [players, setPlayers] = useState();
   const [liveRoster, setLiveRoster] = useState(null);
@@ -91,7 +92,10 @@ function TeamPage() {
     Object.entries(liveRoster?.team || {}).filter(([, value]) => value !== null && value !== undefined),
   );
   const displayedTeam = team || matchTeamSnapshot
-    ? mergeTeamDetails(team, matchTeamSnapshot, liveTeamDetails)
+    ? {
+      ...mergeTeamDetails(team, matchTeamSnapshot, liveTeamDetails),
+      ...(teamNameOverride ? { name: teamNameOverride } : {}),
+    }
     : undefined;
   const fallbackPlayers = matchTeamSnapshot?.players || (team ? (players || []) : []);
   const currentRosterPlayers = playersFromLiveRoster(liveRoster, fallbackPlayers);
@@ -109,6 +113,7 @@ function TeamPage() {
   useEffect(() => {
     setLoadingTeam(true);
     setTeam(undefined);
+    setTeamNameOverride(undefined);
     setPlayers(undefined);
     setLiveRoster(null);
     setLiveRosterError(null);
@@ -282,7 +287,13 @@ function TeamPage() {
                 )}
                 <Roster players={displayedPlayers} formerPlayers={formerPlayers} careerStats={careerStats} />
               </Box>
-              {identityUtils.opus(teamId) === 3 && <Bb3TeamManagement teamId={teamId} />}
+              {identityUtils.opus(teamId) === 3 && (
+                <Bb3TeamManagement
+                  teamId={teamId}
+                  teamName={displayedTeam.name}
+                  onTeamNameChange={setTeamNameOverride}
+                />
+              )}
               <TeamSupporters teamId={teamId} dedicatedFans={displayedTeam.dedicatedFans} />
             </>
           )}

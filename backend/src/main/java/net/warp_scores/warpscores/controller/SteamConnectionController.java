@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.model.WarpScoresUser;
+import net.warp_scores.warpscores.domain.TeamDomainService;
 import net.warp_scores.warpscores.service.CoachClaimService;
 import net.warp_scores.warpscores.service.PyBb3Client;
 import net.warp_scores.warpscores.service.PyBb3ServiceException;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +32,7 @@ public class SteamConnectionController {
     private final PyBb3Client pybb3;
     private final UserProfileService profiles;
     private final CoachClaimService coachClaims;
+    private final TeamDomainService teamDomainService;
     @Value("${pybb3.cookie-secure:true}") private boolean cookieSecure;
 
     @GetMapping
@@ -126,8 +129,26 @@ public class SteamConnectionController {
         int safeStart = Math.max(0, start);
         Map<String,Object> result = pybb3.get("/api/v1/sessions/" + session + "/teams?size=" + safeSize + "&start=" + safeStart,
                 auth.getName());
+        importSteamTeams(result);
         coachClaims.claimBb3Teams(auth.getToken(), result);
         return result;
+    }
+
+    @PostMapping("/teams/{teamId}/name")
+    public Map<String,Object> renameTeam(@PathVariable String teamId, @RequestBody Map<String,String> body,
+                                         JwtAuthenticationToken auth, HttpServletRequest request) {
+        String name = body.get("name");
+        if (name == null || name.isBlank())
+            throw new PyBb3ServiceException(400, "Team name cannot be blank");
+        name = name.trim();
+        if (name.length() > 40)
+            throw new PyBb3ServiceException(400, "Team name cannot exceed 40 characters");
+
+        String id = bb3TeamId(teamId);
+        Map<String,Object> result = pybb3.post(teamPath(request, teamId) + "/name", auth.getName(),
+                Map.of("name", name));
+        teamDomainService.upsertSteamTeam(id, name, null, null, null);
+        return result.isEmpty() ? Map.of("name", name) : result;
     }
 
     @GetMapping("/teams/{teamId}/roster")
@@ -197,6 +218,49 @@ public class SteamConnectionController {
             throw new net.warp_scores.warpscores.service.PyBb3ServiceException(401,
                     "Connect Steam to manage your BB3 team");
         return "/api/v1/sessions/" + pathSegment(session) + "/teams/" + pathSegment(bb3TeamId(teamId));
+    }
+
+    private void importSteamTeams(Map<String,Object> response) {
+        Object itemsValue = response.get("items");
+        if (!(itemsValue instanceof List<?> items))
+            throw new PyBb3ServiceException(502, "Invalid BB3 teams response");
+
+        for (Object item : items) {
+            if (!(item instanceof Map<?,?> team))
+                throw new PyBb3ServiceException(502, "Invalid BB3 team entry");
+            String id = requiredString(team.get("id"), "id");
+            teamDomainService.upsertSteamTeam(
+                    id,
+                    optionalString(team.get("name"), "name"),
+                    optionalInteger(team.get("raceId"), "raceId"),
+                    optionalBigDecimal(team.get("teamValue"), "teamValue"),
+                    optionalString(team.get("coachName"), "coachName"));
+        }
+    }
+
+    private static String requiredString(Object value, String field) {
+        String result = optionalString(value, field);
+        if (result == null || result.isBlank())
+            throw new PyBb3ServiceException(502, "BB3 team is missing " + field);
+        return result;
+    }
+
+    private static String optionalString(Object value, String field) {
+        if (value == null) return null;
+        if (value instanceof String result) return result;
+        throw new PyBb3ServiceException(502, "Invalid BB3 team " + field);
+    }
+
+    private static Integer optionalInteger(Object value, String field) {
+        if (value == null) return null;
+        if (value instanceof Number result) return result.intValue();
+        throw new PyBb3ServiceException(502, "Invalid BB3 team " + field);
+    }
+
+    private static BigDecimal optionalBigDecimal(Object value, String field) {
+        if (value == null) return null;
+        if (value instanceof Number result) return new BigDecimal(result.toString());
+        throw new PyBb3ServiceException(502, "Invalid BB3 team " + field);
     }
 
     static String bb3TeamId(String teamId) {

@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -137,5 +138,24 @@ public class TeamDomainService {
             PopulatorUtil.copyNonNullProperties(team, oldTeam);
             teamRepository.save(oldTeam);
         }
+    }
+
+    @Transactional
+    public Team upsertSteamTeam(
+            String teamId,
+            String name,
+            Integer raceId,
+            BigDecimal value,
+            String coachName) {
+        if (teamId == null || teamId.isBlank()) {
+            throw new IllegalArgumentException("Steam team ID cannot be blank");
+        }
+
+        Team team = newTeamOrFromDb(new SimpleIdentity(teamId, 3));
+        if (name != null && !name.isBlank()) team.setName(name);
+        if (raceId != null) team.setRaceId(raceId);
+        if (value != null) team.setValue(value);
+        if (coachName != null && !coachName.isBlank()) team.setCoachName(coachName);
+        return teamRepository.save(team);
     }
 }

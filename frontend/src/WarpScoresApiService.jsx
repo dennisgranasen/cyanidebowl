@@ -520,6 +520,8 @@ export default {
     deleteDataWithAuthentication('/user/steam/remembered', getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   myBb3Teams: async (getAccessTokenSilently, getAccessTokenWithPopup, size = 50, start = 0) =>
     getDataWithAuthentication(`/user/steam/teams?size=${size}&start=${start}`, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+  renameBb3Team: async (teamId, name, getAccessTokenSilently, getAccessTokenWithPopup) =>
+    postDataWithAuthentication(`/user/steam/teams/${encodeURIComponent(teamId)}/name`, { name }, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   bb3TeamRoster: async (teamId, getAccessTokenSilently, getAccessTokenWithPopup) =>
     getDataWithAuthentication(`/user/steam/teams/${encodeURIComponent(teamId)}/roster`, getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
   bb3LiveTeamRoster: async (teamId, getAccessTokenSilently, getAccessTokenWithPopup) =>

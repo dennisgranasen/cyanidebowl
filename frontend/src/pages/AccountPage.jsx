@@ -93,10 +93,12 @@ export default function AccountPage() {
             <Text fontSize="sm" color="gray.500">{teamsError}</Text>
             <Button size="sm" variant="outline" onClick={refresh} isLoading={teamsLoading}>{intl.formatMessage({ id: 'account.retryTeams' })}</Button>
           </Stack> : teams.length === 0 ? <Text>{intl.formatMessage({ id: 'account.noTeams' })}</Text> :
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>{teams.map((team) =>
-              <Box
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>{teams.map((team) => {
+              const teamId = String(team.id);
+              const teamPageId = teamId.startsWith('3_') ? teamId : `3_${teamId}`;
+              return <Box
                 as={RouteLink}
-                to={`/team/${encodeURIComponent(team.id)}`}
+                to={`/team/${encodeURIComponent(teamPageId)}`}
                 key={team.id}
                 borderWidth="1px"
                 borderRadius="md"
@@ -106,7 +108,8 @@ export default function AccountPage() {
               >
                 <Text fontWeight="bold">{team.name || team.id}</Text>
                 <Text fontSize="sm">{intl.formatMessage({ id: 'account.raceTv' }, { race: team.raceId ?? intl.formatMessage({ id: 'common.unknown' }), tv: team.teamValue ?? intl.formatMessage({ id: 'common.unknown' }) })}</Text>
-              </Box>)}</SimpleGrid>}
+              </Box>;
+            })}</SimpleGrid>}
           <Button alignSelf="start" onClick={() => run(async () => { await WarpScoresApiService.disconnectSteam(...auth); return { status: 'DISCONNECTED' }; })} isLoading={busy}>{intl.formatMessage({ id: 'account.disconnect' })}</Button>
           {connection.remembered && <Button alignSelf="start" variant="outline" onClick={() => run(async () => {
             await WarpScoresApiService.forgetRememberedSteam(...auth);
