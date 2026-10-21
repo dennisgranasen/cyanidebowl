@@ -5,6 +5,7 @@ import net.warp_scores.warpscores.ai.agents.AiReporterRegistry;
 import net.warp_scores.warpscores.domain.persistence.AiCommunityMemberProfileRepository;
 import net.warp_scores.warpscores.domain.persistence.WarpScoresUserRepository;
 import net.warp_scores.warpscores.model.CommunityComment;
+import net.warp_scores.warpscores.model.AiCommunityMemberProfile;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -25,7 +26,10 @@ class CommunityCommentAvatarServiceTest {
         definition.setPortrait(portrait);
         when(reporters.find("ravbert-smalnos")).thenReturn(Optional.of(definition));
         when(users.findAllById(List.of(42L))).thenReturn(List.of());
-        when(profiles.findByUserIdIn(List.of(42L))).thenReturn(List.of());
+        var profile = new AiCommunityMemberProfile();
+        profile.setId("fan-profile-42");
+        profile.setUserId(42L);
+        when(profiles.findByUserIdIn(List.of(42L))).thenReturn(List.of(profile));
 
         var comment = new CommunityComment();
         comment.setAuthorUserId(42L);
@@ -34,5 +38,6 @@ class CommunityCommentAvatarServiceTest {
         new CommunityCommentAvatarService(users, profiles, reporters).attach(List.of(comment));
 
         assertThat(comment.getAuthorAvatarUrl()).isEqualTo("/img/portraits/ravbert_small.png");
+        assertThat(comment.getAuthorFanProfileId()).isEqualTo("fan-profile-42");
     }
 }

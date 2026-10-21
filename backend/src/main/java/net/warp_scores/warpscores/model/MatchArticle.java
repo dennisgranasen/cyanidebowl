@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.model;
 
 import lombok.Data;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
@@ -30,6 +31,8 @@ public class MatchArticle {
     private String authorSubject;
     private Long authorUserId;
     private String authorDisplayName;
+    @Transient
+    private String authorFanProfileId;
 
     /** Set only for an official report written by one of the two match coaches. */
     private String teamId;

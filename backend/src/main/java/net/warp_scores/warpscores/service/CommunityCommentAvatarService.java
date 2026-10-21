@@ -5,7 +5,9 @@ import net.warp_scores.warpscores.ai.agents.AiReporterRegistry;
 import net.warp_scores.warpscores.domain.persistence.AiCommunityMemberProfileRepository;
 import net.warp_scores.warpscores.domain.persistence.WarpScoresUserRepository;
 import net.warp_scores.warpscores.model.AiCommunityMemberProfile;
+import net.warp_scores.warpscores.model.Article;
 import net.warp_scores.warpscores.model.CommunityComment;
+import net.warp_scores.warpscores.model.MatchArticle;
 import net.warp_scores.warpscores.model.WarpScoresUser;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -32,7 +34,9 @@ public class CommunityCommentAvatarService {
         users.findAllById(userIds).forEach(user -> usersById.put(user.getId(), user));
 
         Map<Long, String> fanAvatars = new HashMap<>();
+        Map<Long, String> fanProfileIds = new HashMap<>();
         profiles.findByUserIdIn(userIds).forEach(profile -> {
+            if (profile.getId() != null) fanProfileIds.put(profile.getUserId(), profile.getId());
             String avatar = StringUtils.hasText(profile.getAvatarImageUrl())
                     ? profile.getAvatarImageUrl()
                     : profile.getProfileImageUrl();
@@ -42,6 +46,7 @@ public class CommunityCommentAvatarService {
         comments.forEach(comment -> {
             String avatar = fanAvatars.get(comment.getAuthorUserId());
             WarpScoresUser user = usersById.get(comment.getAuthorUserId());
+            comment.setAuthorFanProfileId(fanProfileIds.get(comment.getAuthorUserId()));
             if (!StringUtils.hasText(avatar) && user != null) avatar = user.getPublicAvatarUrl();
                 if (!StringUtils.hasText(avatar) && comment.getAuthorSubject() != null
                     && comment.getAuthorSubject().startsWith("ai:")) {
@@ -56,5 +61,27 @@ public class CommunityCommentAvatarService {
             comment.setAuthorAvatarUrl(avatar);
         });
         return comments;
+    }
+
+    public Article attach(Article article) {
+        if (article != null && article.getAuthorUserId() != null) {
+            profiles.findByUserId(article.getAuthorUserId())
+                    .ifPresent(profile -> article.setAuthorFanProfileId(profile.getId()));
+        }
+        return article;
+    }
+
+    public List<MatchArticle> attachArticles(List<MatchArticle> articles) {
+        List<Long> userIds = articles.stream()
+                .map(MatchArticle::getAuthorUserId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        Map<Long, String> profileIds = new HashMap<>();
+        profiles.findByUserIdIn(userIds).forEach(profile -> {
+            if (profile.getId() != null) profileIds.put(profile.getUserId(), profile.getId());
+        });
+        articles.forEach(article -> article.setAuthorFanProfileId(profileIds.get(article.getAuthorUserId())));
+        return articles;
     }
 }

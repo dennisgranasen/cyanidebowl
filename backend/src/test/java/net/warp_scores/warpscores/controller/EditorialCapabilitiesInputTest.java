@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import net.warp_scores.warpscores.model.Article;
 import net.warp_scores.warpscores.service.ArticleScopeService;
+import net.warp_scores.warpscores.service.CommunityCommentAvatarService;
 import net.warp_scores.warpscores.service.EditorialCommunityService;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.Authentication;
@@ -24,7 +25,8 @@ class EditorialCapabilitiesInputTest {
                 """, EditorialController.CapabilitiesInput.class);
         var service = mock(EditorialCommunityService.class);
         var auth = mock(Authentication.class);
-        var controller = new EditorialController(service, mock(ArticleScopeService.class));
+        var controller = new EditorialController(
+                service, mock(ArticleScopeService.class), mock(CommunityCommentAvatarService.class));
         controller.capabilities(auth, null, input);
         verify(service).articleCapabilities(eq(auth), isNull(), argThat(article ->
                 !article.featured() && !article.confirmGlobal() && article.status() == Article.Status.DRAFT

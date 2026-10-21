@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.model.Article;
+import net.warp_scores.warpscores.service.CommunityCommentAvatarService;
 import net.warp_scores.warpscores.service.EditorialCommunityService;
 import net.warp_scores.warpscores.service.NewsFeedItem;
 import org.springframework.security.core.Authentication;
@@ -15,6 +16,7 @@ import java.util.List;
 public class EditorialController {
     private final EditorialCommunityService service;
     private final net.warp_scores.warpscores.service.ArticleScopeService scopes;
+    private final CommunityCommentAvatarService authorProfiles;
 
     @GetMapping
     public List<NewsFeedItem> articles(@RequestParam(required = false) String leagueSystemId,
@@ -60,7 +62,7 @@ public class EditorialController {
 
     @GetMapping("/{slugOrId}")
     public Article article(@PathVariable String slugOrId) {
-        return service.publicArticle(slugOrId);
+        return authorProfiles.attach(service.publicArticle(slugOrId));
     }
 
     @PostMapping

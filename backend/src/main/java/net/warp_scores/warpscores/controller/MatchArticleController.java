@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.model.MatchArticle;
+import net.warp_scores.warpscores.service.CommunityCommentAvatarService;
 import net.warp_scores.warpscores.service.MatchArticleService;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -13,10 +14,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MatchArticleController {
     private final MatchArticleService service;
+    private final CommunityCommentAvatarService authorProfiles;
 
     @GetMapping
     public List<MatchArticle> list(Authentication auth, @PathVariable String matchId) {
-        return service.visibleArticles(auth, matchId);
+        return authorProfiles.attachArticles(service.visibleArticles(auth, matchId));
     }
 
     @GetMapping("/capabilities")

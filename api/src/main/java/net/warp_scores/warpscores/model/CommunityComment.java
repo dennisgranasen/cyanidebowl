@@ -35,6 +35,8 @@ public class CommunityComment {
     private String authorDisplayName;
     @Transient
     private String authorAvatarUrl;
+    @Transient
+    private String authorFanProfileId;
     private AuthorContext authorContext;
     private String body;
     private Instant createdAt;

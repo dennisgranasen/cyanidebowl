@@ -1,32 +1,47 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Avatar, Badge, Box, Button, HStack, Text, Textarea, VStack } from '@chakra-ui/react';
+import { Avatar, Badge, Box, Button, HStack, Link, Text, Textarea, VStack } from '@chakra-ui/react';
 import useAuth0WithUserPermissions from '../../hooks/useAuth0WithUserPermissions';
 import EditorialCommunityApi from '../../EditorialCommunityApi';
 import ReactionBar from './ReactionBar';
-import { useLocation } from 'react-router-dom';
+import { Link as RouteLink, useLocation } from 'react-router-dom';
 import { useIntl } from 'react-intl';
+import { commentAuthorProfilePath } from '../../util/communityAuthorProfiles';
 
 const coach = (c) => c.authorContext === 'HOME_COACH' || c.authorContext === 'AWAY_COACH';
+const contextLabels = {
+  EDITOR: 'Redaktion',
+  HOME_COACH: 'Hemmalagets coach',
+  AWAY_COACH: 'Bortalagets coach',
+  SPECTATOR: 'Läktaren',
+  USER: 'Medlem',
+};
 
-function OneComment({ comment }) {
+function OneComment({ comment, match }) {
   const intl = useIntl();
   if (comment.deletedAt) return <Text opacity={0.6} fontStyle="italic">Kommentar borttagen</Text>;
   const createdAt = comment.displayCreatedAt || comment.createdAt;
+  const profilePath = commentAuthorProfilePath(comment, match);
   return (
-    <Box id={`comment-${comment.id}`} borderWidth="1px" borderRadius="md" p={3} w="full" tabIndex={-1}>
-      <HStack mb={2}>
+    <Box id={`comment-${comment.id}`} py={3} borderBottomWidth="1px" borderColor="whiteAlpha.200" w="full" tabIndex={-1}>
+      <HStack align="start" spacing={3}>
         <Avatar size="sm" name={comment.authorDisplayName || 'User'} src={comment.authorAvatarUrl || undefined} />
-        <Text fontWeight="bold">{comment.authorDisplayName}</Text>
-        <Badge>{comment.authorContext}</Badge>
-        {createdAt && (
-          <Text ml="auto" fontSize="xs" color="gray.500"
-            title={intl.formatDate(createdAt, { dateStyle: 'medium', timeStyle: 'short' })}>
-            {relativeTime(createdAt, intl)}
-          </Text>
-        )}
+        <Box minW={0} flex={1}>
+          <HStack mb={1} spacing={2} flexWrap="wrap">
+            {profilePath
+              ? <Link as={RouteLink} to={profilePath} fontWeight="bold" _hover={{ color: 'teal.300' }}>{comment.authorDisplayName}</Link>
+              : <Text fontWeight="bold">{comment.authorDisplayName}</Text>}
+            {comment.authorContext && <Badge variant="subtle">{contextLabels[comment.authorContext] || comment.authorContext}</Badge>}
+            {createdAt && (
+              <Text ml="auto" fontSize="xs" color="gray.500"
+                title={intl.formatDate(createdAt, { dateStyle: 'medium', timeStyle: 'short' })}>
+                {relativeTime(createdAt, intl)}
+              </Text>
+            )}
+          </HStack>
+          <Text whiteSpace="pre-wrap">{comment.body}</Text>
+          <Box mt={1}><ReactionBar targetType="COMMENT" targetId={comment.id} /></Box>
+        </Box>
       </HStack>
-      <Text whiteSpace="pre-wrap">{comment.body}</Text>
-      <Box mt={2}><ReactionBar targetType="COMMENT" targetId={comment.id} /></Box>
     </Box>
   );
 }
@@ -42,7 +57,7 @@ function relativeTime(timestamp, intl) {
   return intl.formatRelativeTime(Math.round(seconds / duration), unit, { numeric: 'auto' });
 }
 
-function CommentThread({ targetType, targetId }) {
+function CommentThread({ targetType, targetId, match }) {
   const location = useLocation();
   const { isAuthenticated, getAccessTokenSilently } = useAuth0WithUserPermissions();
   const [comments, setComments] = useState([]);
@@ -69,17 +84,17 @@ function CommentThread({ targetType, targetId }) {
     : comments, [comments, targetType]);
 
   return (
-    <VStack align="stretch" spacing={3}>
-      {targetType === 'MATCH' && ordered.some(coach) && <Text fontWeight="bold">Coachernas kommentarer</Text>}
+    <VStack align="stretch" spacing={0}>
+      {targetType === 'MATCH' && ordered.some(coach) && <Text fontWeight="bold" color="purple.200" pt={3}>Coachernas kommentarer</Text>}
       {ordered.map((comment, index) => (
         <React.Fragment key={comment.id}>
           {targetType === 'MATCH' && index > 0 && coach(ordered[index - 1]) && !coach(comment)
-            && <Text fontWeight="bold" mt={4}>Läktaren</Text>}
-          <OneComment comment={comment} />
+            && <Text fontWeight="bold" color="teal.200" pt={4}>Läktaren</Text>}
+          <OneComment comment={comment} match={match} />
         </React.Fragment>
       ))}
       {isAuthenticated && (
-        <Box>
+        <Box pt={3}>
           <Textarea value={body} onChange={(e) => setBody(e.target.value)}
             placeholder="Skriv en kommentar…" maxLength={10000} />
           <Button mt={2} onClick={submit}>Publicera kommentar</Button>

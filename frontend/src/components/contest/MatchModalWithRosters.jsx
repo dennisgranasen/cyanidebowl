@@ -515,12 +515,12 @@ function MatchModal({ isOpen, onClose, match, contest, initialTabIndex = 0 }) {
                   </TabPanel>
                   <TabPanel>
                     {replayMatchId
-                      ? <MatchArticlesPanel matchId={replayMatchId} />
+                      ? <MatchArticlesPanel matchId={replayMatchId} match={matchData} />
                       : <Text color="gray.500">{intl.formatMessage({ id: 'matchModal.missingId.articles' })}</Text>}
                   </TabPanel>
                   <TabPanel>
                     {replayMatchId
-                      ? <CommentThread targetType="MATCH" targetId={replayMatchId} />
+                      ? <CommentThread targetType="MATCH" targetId={replayMatchId} match={matchData} />
                       : <Text color="gray.500">{intl.formatMessage({ id: 'matchModal.missingId.comments' })}</Text>}
                   </TabPanel>
                   <TabPanel>

@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert, AlertIcon, Avatar, Badge, Box, Button, Divider, FormControl, FormLabel,
-  Heading, HStack, IconButton, Input, Select, Spinner, Text, Textarea, VStack,
+  Heading, HStack, IconButton, Input, Link, Select, Spinner, Text, Textarea, VStack,
 } from '@chakra-ui/react';
 import { DeleteIcon } from '@chakra-ui/icons';
+import { Link as RouterLink } from 'react-router-dom';
 import useAuth0WithUserPermissions from '../../hooks/useAuth0WithUserPermissions';
 import EditorialCommunityApi from '../../EditorialCommunityApi';
 import AiReporterApi from '../../AiReporterApi';
@@ -13,6 +14,7 @@ import ArticleComposer from './ArticleComposer';
 import DOMPurify from 'dompurify';
 import { articleBodyStyles } from './articleBodyStyles';
 import { hasArticleContent } from '../../util/articleContent';
+import { matchArticleAuthorProfilePath } from '../../util/communityAuthorProfiles';
 
 const statusScheme = {
   DRAFT: 'gray',
@@ -23,13 +25,14 @@ const statusScheme = {
 
 function ArticleCard({
   article, reporter, canReview, canEdit, canDelete,
-  onSave, onPublish, onReject, onDelete, matchId, contextAvailable, busy, onBusyChange, onError,
+  onSave, onPublish, onReject, onDelete, matchId, match, contextAvailable, busy, onBusyChange, onError,
 }) {
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(article.title);
   const [editContent, setEditContent] = useState({ body: article.body, bodyHtml: article.bodyHtml });
   const teamReport = article.kind === 'TEAM_REPORT';
   const coachContribution = article.kind === 'COACH_CONTRIBUTION';
+  const authorProfilePath = matchArticleAuthorProfilePath(article, match);
   const save = async () => {
     const saved = await onSave(article.id, { title: editTitle, ...editContent });
     if (saved !== false) setEditing(false);
@@ -89,7 +92,9 @@ function ArticleCard({
               src={reporter?.avatarImage || reporter?.portraitImage}
             />
           )}
-          <Text fontSize="sm" color="gray.500">Av {article.authorDisplayName}</Text>
+          <Text fontSize="sm" color="gray.500">Av {authorProfilePath
+            ? <Link as={RouterLink} to={authorProfilePath}>{article.authorDisplayName}</Link>
+            : article.authorDisplayName}</Text>
         </HStack>
         {article.bodyHtml != null
           ? <Box mt={3} sx={articleBodyStyles} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.bodyHtml) }} />
@@ -100,7 +105,8 @@ function ArticleCard({
           <Divider mb={3}/>
           <ReactionBar targetType="MATCH_ARTICLE" targetId={article.id}/>
           <Box mt={3}>
-            <CommentThread targetType="MATCH_ARTICLE" targetId={article.id}/>
+            <Text mb={1} fontSize="sm" fontWeight="semibold" color="gray.400">Kommentarer</Text>
+            <CommentThread targetType="MATCH_ARTICLE" targetId={article.id} match={match}/>
           </Box>
         </Box>
       )}
@@ -119,7 +125,7 @@ function ArticleCard({
   );
 }
 
-export default function MatchArticlesPanel({ matchId }) {
+export default function MatchArticlesPanel({ matchId, match }) {
   const { user, isAuthenticated, getAccessTokenSilently } = useAuth0WithUserPermissions();
   const [articles, setArticles] = useState([]);
   const [caps, setCaps] = useState(null);
@@ -239,7 +245,7 @@ export default function MatchArticlesPanel({ matchId }) {
         {sections.editorial.length
           ? <VStack align="stretch" spacing={3}>{sections.editorial.map(a =>
               <ArticleCard key={a.id} matchId={matchId} contextAvailable={caps?.replayAnalyzed}
-                busy={busy} onBusyChange={setBusy} onError={e => setError(e?.response?.data?.message || e.message)} article={a} reporter={reportersById[a.reporterId]}
+                busy={busy} onBusyChange={setBusy} onError={e => setError(e?.response?.data?.message || e.message)} article={a} match={match} reporter={reportersById[a.reporterId]}
                 canReview={caps?.canReview}
                 canEdit={articlePermissions(a).canEdit}
                 canDelete={articlePermissions(a).canDelete}
@@ -257,7 +263,7 @@ export default function MatchArticlesPanel({ matchId }) {
         </Text>
         <VStack align="stretch" spacing={3}>{sections.team.map(a =>
           <ArticleCard key={a.id} matchId={matchId} contextAvailable={caps?.replayAnalyzed}
-                busy={busy} onBusyChange={setBusy} onError={e => setError(e?.response?.data?.message || e.message)} article={a} reporter={reportersById[a.reporterId]}
+                busy={busy} onBusyChange={setBusy} onError={e => setError(e?.response?.data?.message || e.message)} article={a} match={match} reporter={reportersById[a.reporterId]}
             canReview={caps?.canReview}
             canEdit={articlePermissions(a).canEdit}
             canDelete={articlePermissions(a).canDelete}
@@ -271,7 +277,7 @@ export default function MatchArticlesPanel({ matchId }) {
         <Heading size="md" mb={3}>Övriga coachbidrag</Heading>
         <VStack align="stretch" spacing={3}>{sections.coach.map(a =>
           <ArticleCard key={a.id} matchId={matchId} contextAvailable={caps?.replayAnalyzed}
-                busy={busy} onBusyChange={setBusy} onError={e => setError(e?.response?.data?.message || e.message)} article={a} reporter={reportersById[a.reporterId]}
+                busy={busy} onBusyChange={setBusy} onError={e => setError(e?.response?.data?.message || e.message)} article={a} match={match} reporter={reportersById[a.reporterId]}
             canReview={caps?.canReview}
             canEdit={articlePermissions(a).canEdit}
             canDelete={articlePermissions(a).canDelete}
