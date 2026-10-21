@@ -151,8 +151,16 @@ function TeamPage() {
     fetchMatches();
     if (isAuthenticated) {
       WarpScoresApiService.steamConnection(getAccessTokenSilently, getAccessTokenWithPopup)
-        .then(() => WarpScoresApiService.bb3LiveTeamRoster(teamId, getAccessTokenSilently, getAccessTokenWithPopup))
+        .then((connection) => {
+          if (!connection.connected) return null;
+          return WarpScoresApiService.bb3LiveTeamRoster(
+            teamId,
+            getAccessTokenSilently,
+            getAccessTokenWithPopup,
+          );
+        })
         .then((data) => {
+          if (!data) return;
           setLiveRoster(data);
           setLiveRosterError(null);
         })

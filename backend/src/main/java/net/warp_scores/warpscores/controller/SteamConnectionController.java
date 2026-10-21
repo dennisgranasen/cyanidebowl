@@ -4,9 +4,11 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.model.WarpScoresUser;
 import net.warp_scores.warpscores.service.CoachClaimService;
 import net.warp_scores.warpscores.service.PyBb3Client;
+import net.warp_scores.warpscores.service.PyBb3ServiceException;
 import net.warp_scores.warpscores.service.UserProfileService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
@@ -22,6 +24,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/user/steam")
 @RequiredArgsConstructor
+@Slf4j
 public class SteamConnectionController {
     private static final String COOKIE = "BLASKSCORE_BB3_SESSION";
     private final PyBb3Client pybb3;
@@ -46,7 +49,9 @@ public class SteamConnectionController {
                 result.put("rememberAvailable", remembered.get("rememberAvailable"));
                 result.put("remembered", remembered.get("remembered"));
                 return result;
-            } catch (RuntimeException ignored) { /* expired cookie */ }
+            } catch (PyBb3ServiceException error) {
+                if (error.getStatusCode() != 404) throw error;
+            }
         }
         if (Boolean.TRUE.equals(remembered.get("remembered"))) {
             try {
@@ -60,7 +65,9 @@ public class SteamConnectionController {
                 result.put("rememberAvailable", true);
                 result.put("remembered", true);
                 return result;
-            } catch (RuntimeException ignored) { /* saved refresh token expired or revoked */ }
+            } catch (PyBb3ServiceException error) {
+                if (error.getStatusCode() != 401 && error.getStatusCode() != 404) throw error;
+            }
         }
         if (session != null) response.addHeader("Set-Cookie", cookieHeader("", Duration.ZERO).toString());
         var result = new java.util.HashMap<String,Object>();
@@ -204,10 +211,6 @@ public class SteamConnectionController {
         if (!"AUTHENTICATED".equals(result.get("status"))) return;
         profiles.connectSteam(auth.getToken(), (String)result.get("steamUsername"), (String)result.get("steamId"));
         String sessionId = (String) result.get("sessionId");
-        if (sessionId != null && !sessionId.isBlank()) {
-            Map<String,Object> teams = pybb3.get("/api/v1/sessions/" + sessionId + "/teams?size=100&start=0", auth.getName());
-            coachClaims.claimBb3Teams(auth.getToken(), teams);
-        }
         response.addHeader("Set-Cookie", cookieHeader(sessionId, Duration.ofMinutes(30)).toString());
     }
     private ResponseCookie cookieHeader(String value, Duration age) {

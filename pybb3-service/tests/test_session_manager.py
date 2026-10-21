@@ -1,5 +1,6 @@
 import pytest
 from bb3 import SteamAuthState, SteamGuardChallenge
+from app.config import settings
 from app.services.session_manager import SessionManager, SessionNotFound
 
 class Flow:
@@ -47,3 +48,21 @@ def test_saved_steam_credential_restores_an_owner_bound_session():
     assert service.session_info("alice", result["sessionId"])["steamId"] == "7656119"
     with pytest.raises(SessionNotFound):
         service.session_info("bob", result["sessionId"])
+
+
+def test_restore_replaces_an_expired_in_memory_session():
+    service = manager()
+    challenge = service.start_auth("alice", "steam-user", "password")
+    previous = service.submit_code("alice", challenge["challengeId"], "12345")
+    previous_session = service._sessions[previous["sessionId"]]
+    previous_session.last_access -= settings.SESSION_TTL_SECONDS + 1
+
+    restored = service.restore_auth("alice", {
+        "username": "steam-user",
+        "refreshToken": "secret-refresh",
+        "guardData": "secret-guard-data",
+    })
+
+    assert restored["sessionId"] != previous["sessionId"]
+    assert previous_session.client.closed is True
+    assert service.session_info("alice", restored["sessionId"])["connected"] is True

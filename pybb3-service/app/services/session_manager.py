@@ -78,6 +78,7 @@ class SessionManager:
         return session.coach_id, session.coach_name
 
     def restore_auth(self, owner_id, credential):
+        self.cleanup_expired()
         username = credential.get("username")
         refresh_token = credential.get("refreshToken")
         if not username or not refresh_token:
