@@ -37,6 +37,10 @@ import imageUrls from '../../imageUrls';
 import DelayedIconTooltip from '../common/DelayedIconTooltip';
 import useAuth0WithUserPermissions from '../../hooks/useAuth0WithUserPermissions';
 import { leagueSystemMenuTarget } from '../../util/leagueSystemNavigation';
+import {
+  AUTH_EXPLICIT_LOGOUT,
+  AUTH_SILENT_REAUTH_ATTEMPTED,
+} from '../../util/authSessionRecovery';
 
 const { smallBoxSize, isProduction } = config;
 
@@ -251,6 +255,8 @@ function Menu({ leagueSystems = [], selectedLeagueSystemId, selectedSeasonId, on
                         <>
                           <Link variant="menu" onClick={async (e) => {
                           e.preventDefault();
+                          localStorage.removeItem(AUTH_EXPLICIT_LOGOUT);
+                          sessionStorage.removeItem(AUTH_SILENT_REAUTH_ATTEMPTED);
                           await loginWithRedirect();
                           onClose();
                           }}>
@@ -258,6 +264,8 @@ function Menu({ leagueSystems = [], selectedLeagueSystemId, selectedSeasonId, on
                           </Link>
                           <Link variant="menu" onClick={async (e) => {
                             e.preventDefault();
+                            localStorage.removeItem(AUTH_EXPLICIT_LOGOUT);
+                            sessionStorage.removeItem(AUTH_SILENT_REAUTH_ATTEMPTED);
                             await loginWithRedirect({ authorizationParams: { screen_hint: 'signup' } });
                             onClose();
                           }}>
@@ -265,7 +273,11 @@ function Menu({ leagueSystems = [], selectedLeagueSystemId, selectedSeasonId, on
                           </Link>
                         </>
                       ) : (
-                        <Link variant="menu" onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}>
+                        <Link variant="menu" onClick={() => {
+                          localStorage.setItem(AUTH_EXPLICIT_LOGOUT, 'true');
+                          sessionStorage.removeItem(AUTH_SILENT_REAUTH_ATTEMPTED);
+                          return logout({ logoutParams: { returnTo: window.location.origin } });
+                        }}>
                           {intl.formatMessage({ id: 'menu.logout' }, { name: user.name })}
                         </Link>
                       )

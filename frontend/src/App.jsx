@@ -1,8 +1,9 @@
 import React from 'react';
+import { useEffect } from 'react';
 import CommunityDiscussionPage from './pages/CommunityDiscussionPage';
 import { Box, ChakraProvider, CSSReset, DarkMode } from '@chakra-ui/react';
 import { HashRouter as Router, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import { Auth0Provider, withAuthenticationRequired } from '@auth0/auth0-react';
+import { Auth0Provider, useAuth0, withAuthenticationRequired } from '@auth0/auth0-react';
 import WarpScores from './pages/WarpScores';
 import TeamPage from './pages/TeamPage';
 import CompetitionPage from './pages/CompetitionPage';
@@ -38,6 +39,12 @@ import AdminCommunityFansPage from './pages/AdminCommunityFansPage';
 import AdminAiAutonomousWorkPage from './pages/AdminAiAutonomousWorkPage';
 
 import { MockAuth0Provider } from './components/misc/MockAuthProvider';
+import logger from './util/logger';
+import {
+  AUTH_EXPLICIT_LOGOUT,
+  AUTH_PREVIOUSLY_AUTHENTICATED,
+  AUTH_SILENT_REAUTH_ATTEMPTED,
+} from './util/authSessionRecovery';
 
 
 const { isProduction } = config;
@@ -75,6 +82,48 @@ function Auth0ProviderWithRedirectCallback({ children, ...props }) {
       {children}
     </Auth0Provider>
   );
+}
+
+function SilentAuthRecovery() {
+  const { isAuthenticated, isLoading, loginWithRedirect } = useAuth0();
+  const location = useLocation();
+  const returnTo = `${location.pathname}${location.search}${location.hash}`;
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      localStorage.setItem(AUTH_PREVIOUSLY_AUTHENTICATED, 'true');
+      sessionStorage.removeItem(AUTH_SILENT_REAUTH_ATTEMPTED);
+      localStorage.removeItem(AUTH_EXPLICIT_LOGOUT);
+      return undefined;
+    }
+
+    if (isLoading
+      || localStorage.getItem(AUTH_PREVIOUSLY_AUTHENTICATED) !== 'true'
+      || localStorage.getItem(AUTH_EXPLICIT_LOGOUT) === 'true') {
+      return undefined;
+    }
+
+    const reauthenticateSilently = () => {
+      if (document.visibilityState !== 'visible'
+        || sessionStorage.getItem(AUTH_SILENT_REAUTH_ATTEMPTED) === 'true') {
+        return;
+      }
+
+      sessionStorage.setItem(AUTH_SILENT_REAUTH_ATTEMPTED, 'true');
+      loginWithRedirect({
+        authorizationParams: { prompt: 'none' },
+        appState: { returnTo },
+      }).catch((error) => {
+        logger.warn('Unable to start silent Auth0 reauthentication.', error);
+      });
+    };
+
+    reauthenticateSilently();
+    document.addEventListener('visibilitychange', reauthenticateSilently);
+    return () => document.removeEventListener('visibilitychange', reauthenticateSilently);
+  }, [isAuthenticated, isLoading, loginWithRedirect, returnTo]);
+
+  return null;
 }
 
 function AppRoutes() {
@@ -159,6 +208,7 @@ function App() {
                   audience: config.auth0Audience,
                 }}
               >
+                <SilentAuthRecovery />
                 <LocalizedAppRoutes />
               </Auth0ProviderWithRedirectCallback>
             ) : (
