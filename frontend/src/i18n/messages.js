@@ -672,6 +672,7 @@ const en = {
   'leagueSystems.selectSeason': 'Select season',
   'leagueSystems.empty': 'No group stage or playoff matches yet',
   'common.loading': 'Loading…',
+  'common.retry': 'Retry',
   'common.save': 'Save',
 };
 
@@ -1349,6 +1350,7 @@ const sv = {
   'leagueSystems.selectSeason': 'Välj säsong',
   'leagueSystems.empty': 'Inga gruppspels- eller slutspelsmatcher ännu',
   'common.loading': 'Laddar…',
+  'common.retry': 'Försök igen',
   'common.save': 'Spara',
 };
 
@@ -1767,6 +1769,7 @@ const es = {
   'leagueSystems.selectSeason': 'Seleccionar temporada',
   'leagueSystems.empty': 'Aún no hay partidos de fase de grupos o eliminatorias',
   'common.loading': 'Cargando…',
+  'common.retry': 'Reintentar',
   'common.save': 'Guardar',
   'menu.section.account': 'Mi cuenta',
 };
@@ -2186,6 +2189,7 @@ const fi = {
   'leagueSystems.selectSeason': 'Valitse kausi',
   'leagueSystems.empty': 'Lohko- tai pudotuspelivaiheen otteluita ei vielä ole',
   'common.loading': 'Ladataan…',
+  'common.retry': 'Yritä uudelleen',
   'common.save': 'Tallenna',
   'menu.section.account': 'Oma tili',
 };
@@ -2605,6 +2609,7 @@ const pl = {
   'leagueSystems.selectSeason': 'Wybierz sezon',
   'leagueSystems.empty': 'Brak meczów fazy grupowej lub pucharowej',
   'common.loading': 'Ładowanie…',
+  'common.retry': 'Ponów próbę',
   'common.save': 'Zapisz',
   'menu.section.account': 'Mój profil',
 };

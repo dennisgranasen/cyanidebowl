@@ -191,7 +191,13 @@ function Bb3TeamManagement({ teamId }) {
       <Box borderBottom="1px solid" borderColor="warpScoresBorderColor" pb={2}>
         <Heading size="md">{intl.formatMessage({ id: 'team.bb3.management' })}</Heading>
       </Box>
-      {error && <Alert status="error"><AlertIcon />{error}</Alert>}
+      {error && <Alert status="error" alignItems="center">
+        <AlertIcon />
+        <Text flex="1">{error}</Text>
+        <Button size="sm" variant="outline" onClick={loadData} isLoading={loading}>
+          {intl.formatMessage({ id: 'common.retry', defaultMessage: 'Retry' })}
+        </Button>
+      </Alert>}
       {notice && <Alert status="success"><AlertIcon />{notice}</Alert>}
 
       <Box>

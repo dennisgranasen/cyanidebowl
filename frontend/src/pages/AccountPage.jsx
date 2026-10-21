@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, AlertIcon, Box, Button, Checkbox, FormControl, FormLabel, Heading, Input, Select, SimpleGrid, Stack, Text, Textarea, VStack } from '@chakra-ui/react';
+import { Link as RouteLink } from 'react-router-dom';
 import WarpScoresApiService from '../WarpScoresApiService';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 import Navigation from '../components/misc/Navigation';
@@ -93,7 +94,16 @@ export default function AccountPage() {
             <Button size="sm" variant="outline" onClick={refresh} isLoading={teamsLoading}>{intl.formatMessage({ id: 'account.retryTeams' })}</Button>
           </Stack> : teams.length === 0 ? <Text>{intl.formatMessage({ id: 'account.noTeams' })}</Text> :
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>{teams.map((team) =>
-              <Box key={team.id} borderWidth="1px" borderRadius="md" p={3}>
+              <Box
+                as={RouteLink}
+                to={`/team/${encodeURIComponent(team.id)}`}
+                key={team.id}
+                borderWidth="1px"
+                borderRadius="md"
+                p={3}
+                _hover={{ borderColor: 'teal.400', textDecoration: 'none' }}
+                _focusVisible={{ outline: '2px solid', outlineColor: 'teal.400' }}
+              >
                 <Text fontWeight="bold">{team.name || team.id}</Text>
                 <Text fontSize="sm">{intl.formatMessage({ id: 'account.raceTv' }, { race: team.raceId ?? intl.formatMessage({ id: 'common.unknown' }), tv: team.teamValue ?? intl.formatMessage({ id: 'common.unknown' }) })}</Text>
               </Box>)}</SimpleGrid>}
