@@ -287,6 +287,20 @@ def test_skill_name_is_unresolved_without_rules_file(monkeypatch):
     assert team_api._skill_name(30) is None
 
 
+def test_missing_configured_rules_file_does_not_break_roster(monkeypatch, tmp_path):
+    monkeypatch.setenv("BB3_RULES_FILE", str(tmp_path / "missing-BB3Rules.json"))
+    team_api._bb3_rules.cache_clear()
+    try:
+        result = team_api._roster_with_skill_names({
+            "players": [{"position_id": 55, "skill_ids": [30]}],
+        })
+    finally:
+        team_api._bb3_rules.cache_clear()
+
+    assert result["players"][0]["type"] is None
+    assert result["players"][0]["skill_names"] == {}
+
+
 def test_improvement_choices_include_game_rule_skill_names(tmp_path, monkeypatch):
     rules_path = tmp_path / "BB3Rules.json"
     rules_path.write_text(json.dumps({

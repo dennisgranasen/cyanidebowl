@@ -1,6 +1,7 @@
 package net.warp_scores.warpscores.ai.scheduling;
 
 import net.warp_scores.warpscores.domain.persistence.AiCommunityMemberProfileRepository;
+import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.domain.persistence.StageSourceRepository;
 import net.warp_scores.warpscores.identity.Identity;
 import net.warp_scores.warpscores.model.AiAutonomousWorkItem;
@@ -11,8 +12,12 @@ import net.warp_scores.warpscores.model.Team;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Date;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.*;
 
@@ -23,8 +28,9 @@ class AiCompletedMatchFanWorkProducerTest {
         AiCommunityMemberProfileRepository profiles =
                 mock(AiCommunityMemberProfileRepository.class);
         AiAutonomousWorkQueue queue = mock(AiAutonomousWorkQueue.class);
+        MatchRepository matches = mock(MatchRepository.class);
         AiCompletedMatchFanWorkProducer producer =
-                new AiCompletedMatchFanWorkProducer(stageSources, profiles, queue);
+                new AiCompletedMatchFanWorkProducer(stageSources, profiles, queue, matches);
 
         Identity competitionId = mock(Identity.class);
         Match match = match(competitionId, "match-key", "team-a");
@@ -66,8 +72,9 @@ class AiCompletedMatchFanWorkProducerTest {
         AiCommunityMemberProfileRepository profiles =
                 mock(AiCommunityMemberProfileRepository.class);
         AiAutonomousWorkQueue queue = mock(AiAutonomousWorkQueue.class);
+        MatchRepository matches = mock(MatchRepository.class);
         AiCompletedMatchFanWorkProducer producer =
-                new AiCompletedMatchFanWorkProducer(stageSources, profiles, queue);
+                new AiCompletedMatchFanWorkProducer(stageSources, profiles, queue, matches);
 
         Match match = mock(Match.class);
         when(match.getIsFinalized()).thenReturn(false);
@@ -83,8 +90,9 @@ class AiCompletedMatchFanWorkProducerTest {
         AiCommunityMemberProfileRepository profiles =
                 mock(AiCommunityMemberProfileRepository.class);
         AiAutonomousWorkQueue queue = mock(AiAutonomousWorkQueue.class);
+        MatchRepository matches = mock(MatchRepository.class);
         AiCompletedMatchFanWorkProducer producer =
-                new AiCompletedMatchFanWorkProducer(stageSources, profiles, queue);
+                new AiCompletedMatchFanWorkProducer(stageSources, profiles, queue, matches);
 
         Identity competitionId = mock(Identity.class);
         Match match = match(competitionId, "match-key", "team-a");
@@ -95,6 +103,56 @@ class AiCompletedMatchFanWorkProducerTest {
 
         verifyNoInteractions(stageSources);
         verifyNoInteractions(queue);
+    }
+
+    @Test
+    void historicalBackfillQueuesEligibleMatchesFromRequestedWindow() {
+        StageSourceRepository stageSources = mock(StageSourceRepository.class);
+        AiCommunityMemberProfileRepository profiles =
+                mock(AiCommunityMemberProfileRepository.class);
+        AiAutonomousWorkQueue queue = mock(AiAutonomousWorkQueue.class);
+        MatchRepository matches = mock(MatchRepository.class);
+        AiCompletedMatchFanWorkProducer producer =
+                new AiCompletedMatchFanWorkProducer(stageSources, profiles, queue, matches);
+
+        Identity competitionId = mock(Identity.class);
+        when(competitionId.asMongoKey()).thenReturn("3_competition");
+        StageSource source = new StageSource();
+        source.setSourceEntityId(competitionId);
+        when(stageSources.findByLeagueSystemId("league-1")).thenReturn(List.of(source));
+        Match match = match(competitionId, "match-key", "team-a");
+        when(matches.findFinalizedByCompetitionIdSince(eq(competitionId), any(Date.class)))
+                .thenReturn(List.of(match));
+        when(profiles.findByActiveTrueOrderByTeamIdAscOrdinalAsc())
+                .thenReturn(List.of(fan("fan-1", "team-a", 1)));
+        when(queue.enqueue(any(AiAutonomousWorkQueue.EnqueueRequest.class))).thenReturn(true);
+
+        Instant before = Instant.now().minus(40, ChronoUnit.DAYS).minusSeconds(2);
+        var result = producer.backfill("league-1", 40);
+        Instant after = Instant.now().minus(40, ChronoUnit.DAYS).plusSeconds(2);
+
+        assertThat(result.matchesConsidered()).isEqualTo(1);
+        assertThat(result.candidatesQueued()).isEqualTo(1);
+        var dateCaptor = forClass(Date.class);
+        verify(matches).findFinalizedByCompetitionIdSince(eq(competitionId), dateCaptor.capture());
+        assertThat(dateCaptor.getValue().toInstant()).isBetween(before, after);
+        verify(queue).enqueue(argThat(request ->
+                request.candidateKey().equals("fan-match-comment:league-1:match-key")
+                        && request.actorId().equals("fan-1")));
+    }
+
+    @Test
+    void historicalBackfillRejectsUnboundedOrInvalidLookback() {
+        AiCompletedMatchFanWorkProducer producer = new AiCompletedMatchFanWorkProducer(
+                mock(StageSourceRepository.class),
+                mock(AiCommunityMemberProfileRepository.class),
+                mock(AiAutonomousWorkQueue.class),
+                mock(MatchRepository.class));
+
+        assertThatThrownBy(() -> producer.backfill("league-1", 0))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> producer.backfill("league-1", AiCompletedMatchFanWorkProducer.MAX_BACKFILL_DAYS + 1))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

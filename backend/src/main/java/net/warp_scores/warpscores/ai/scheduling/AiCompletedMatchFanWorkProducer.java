@@ -2,15 +2,21 @@ package net.warp_scores.warpscores.ai.scheduling;
 
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.domain.persistence.AiCommunityMemberProfileRepository;
+import net.warp_scores.warpscores.domain.persistence.MatchRepository;
 import net.warp_scores.warpscores.domain.persistence.StageSourceRepository;
 import net.warp_scores.warpscores.model.AiAutonomousWorkItem;
 import net.warp_scores.warpscores.model.AiCommunityMemberProfile;
 import net.warp_scores.warpscores.model.Match;
 import net.warp_scores.warpscores.model.StageSource;
 import net.warp_scores.warpscores.model.Team;
+import net.warp_scores.warpscores.identity.Identity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -19,10 +25,14 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class AiCompletedMatchFanWorkProducer {
     public static final String HANDLER_KEY = "fan-match-comment";
+    public static final int MAX_BACKFILL_DAYS = 3650;
 
     private final StageSourceRepository stageSources;
     private final AiCommunityMemberProfileRepository profiles;
     private final AiAutonomousWorkQueue queue;
+    private final MatchRepository matches;
+
+    public record BackfillResult(int matchesConsidered, int candidatesQueued) {}
 
     /**
      * Produces at most one fan-comment candidate per league system and finalized match.
@@ -35,8 +45,8 @@ public class AiCompletedMatchFanWorkProducer {
         if (!isEligibleFinalizedMatch(match)) return;
 
         String matchId = canonicalMatchId(match);
-        List<AiCommunityMemberProfile> eligibleFans = eligibleFans(match);
-        if (eligibleFans.isEmpty()) return;
+        List<AiCommunityMemberProfile> activeFans = activeFans();
+        if (activeFans.stream().noneMatch(fan -> teamParticipates(match, fan.getTeamId()))) return;
 
         Set<String> leagueSystemIds = new LinkedHashSet<>();
         for (StageSource source : stageSources.findBySourceEntityId(match.getCompetitionId())) {
@@ -46,21 +56,40 @@ public class AiCompletedMatchFanWorkProducer {
         }
 
         for (String leagueSystemId : leagueSystemIds) {
-            AiCommunityMemberProfile fan =
-                    selectDeterministically(leagueSystemId, matchId, eligibleFans);
-
-            queue.enqueue(new AiAutonomousWorkQueue.EnqueueRequest(
-                    candidateKey(leagueSystemId, matchId),
-                    HANDLER_KEY,
-                    AiAutonomousWorkItem.WorkKind.FAN_MATCH_COMMENT,
-                    AiAutonomousWorkItem.Priority.AUTONOMOUS,
-                    leagueSystemId,
-                    fan.getId(),
-                    "MATCH",
-                    matchId,
-                    null,
-                    1));
+            enqueueForMatch(leagueSystemId, match, activeFans);
         }
+    }
+
+    public BackfillResult backfill(String leagueSystemId, int daysBack) {
+        if (!StringUtils.hasText(leagueSystemId)) {
+            throw new IllegalArgumentException("leagueSystemId is required");
+        }
+        if (daysBack < 1 || daysBack > MAX_BACKFILL_DAYS) {
+            throw new IllegalArgumentException(
+                    "daysBack must be between 1 and " + MAX_BACKFILL_DAYS);
+        }
+
+        Date finishedSince = Date.from(Instant.now().minus(daysBack, ChronoUnit.DAYS));
+        List<AiCommunityMemberProfile> activeFans = activeFans();
+        Set<String> competitionKeys = new HashSet<>();
+        Set<String> matchIds = new HashSet<>();
+        int matchesConsidered = 0;
+        int candidatesQueued = 0;
+
+        for (StageSource source : stageSources.findByLeagueSystemId(leagueSystemId)) {
+            Identity competitionId = source == null ? null : source.getSourceEntityId();
+            if (competitionId == null || !competitionKeys.add(competitionId.asMongoKey())) continue;
+
+            for (Match match : matches.findFinalizedByCompetitionIdSince(competitionId, finishedSince)) {
+                if (!isEligibleFinalizedMatch(match)) continue;
+                String matchId = canonicalMatchId(match);
+                if (!matchIds.add(matchId)) continue;
+                matchesConsidered++;
+                if (enqueueForMatch(leagueSystemId, match, activeFans)) candidatesQueued++;
+            }
+        }
+
+        return new BackfillResult(matchesConsidered, candidatesQueued);
     }
 
     static String candidateKey(String leagueSystemId, String matchId) {
@@ -76,15 +105,39 @@ public class AiCompletedMatchFanWorkProducer {
         return eligibleFans.get(index);
     }
 
-    private List<AiCommunityMemberProfile> eligibleFans(Match match) {
+    private List<AiCommunityMemberProfile> activeFans() {
         return profiles.findByActiveTrueOrderByTeamIdAscOrdinalAsc().stream()
                 .filter(fan -> fan != null
                         && StringUtils.hasText(fan.getId())
                         && fan.getUserId() != null
                         && StringUtils.hasText(fan.getUserSubject())
                         && StringUtils.hasText(fan.getTeamId()))
+                .toList();
+    }
+
+    private boolean enqueueForMatch(
+            String leagueSystemId,
+            Match match,
+            List<AiCommunityMemberProfile> activeFans) {
+        String matchId = canonicalMatchId(match);
+        List<AiCommunityMemberProfile> participants = activeFans.stream()
                 .filter(fan -> teamParticipates(match, fan.getTeamId()))
                 .toList();
+        if (participants.isEmpty()) return false;
+
+        AiCommunityMemberProfile fan =
+                selectDeterministically(leagueSystemId, matchId, participants);
+        return queue.enqueue(new AiAutonomousWorkQueue.EnqueueRequest(
+                candidateKey(leagueSystemId, matchId),
+                HANDLER_KEY,
+                AiAutonomousWorkItem.WorkKind.FAN_MATCH_COMMENT,
+                AiAutonomousWorkItem.Priority.AUTONOMOUS,
+                leagueSystemId,
+                fan.getId(),
+                "MATCH",
+                matchId,
+                null,
+                1));
     }
 
     private static boolean isEligibleFinalizedMatch(Match match) {

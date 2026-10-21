@@ -33,6 +33,8 @@ public interface MatchRepository extends MongoRepository<Match, Identity> {
 
     List<Match> findByCompetitionId(Identity competitionId);
     List<Match> findByCompetitionId(Identity competitionId, Pageable pageable);
+    @Query("{ 'competitionId': ?0, 'isFinalized': true, 'finished': { '$gte': ?1 } }")
+    List<Match> findFinalizedByCompetitionIdSince(Identity competitionId, Date finishedSince);
 
     List<Match> findAllById(List<Identity> matchIds);
 

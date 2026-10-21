@@ -26,6 +26,7 @@ import Navigation from '../components/misc/Navigation';
 import AiReporterApi from '../AiReporterApi';
 import PendingAiWork from '../components/ai-reporters/PendingAiWork';
 import AiJobInputDialog from '../components/ai-reporters/AiJobInputDialog';
+import AiFanMatchCommentSettings from '../components/ai-reporters/AiFanMatchCommentSettings';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 
 const metric = (label, value) => (
@@ -347,6 +348,14 @@ function AdminAiAutonomousWorkPage() {
 
       {error && (
         <Text mt={4} color="red.300">{error.message || String(error)}</Text>
+      )}
+
+      {authenticationReady && userPermissions.writeSiteAdmin && (
+        <AiFanMatchCommentSettings
+          getAccessTokenSilently={getAccessTokenSilently}
+          getAccessTokenWithPopup={getAccessTokenWithPopup}
+          onBackfillComplete={load}
+        />
       )}
 
       {!overview && !error && <Spinner mt={8} />}

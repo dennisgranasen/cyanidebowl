@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.ai.interaction.AiInitiativePolicyService;
+import net.warp_scores.warpscores.ai.scheduling.AiCompletedMatchFanWorkProducer;
 import net.warp_scores.warpscores.domain.persistence.AiLeagueSystemInitiativePolicyRepository;
 import net.warp_scores.warpscores.model.AiLeagueSystemInitiativePolicy;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,6 +19,7 @@ import java.time.Instant;
 public class AiInitiativePolicyController {
     private final AiLeagueSystemInitiativePolicyRepository policies;
     private final AiInitiativePolicyService resolver;
+    private final AiCompletedMatchFanWorkProducer matchCommentWork;
 
     @GetMapping
     @PreAuthorize("@userPermissionService.canEditLeagueSystem(authentication, #leagueSystemId)")
@@ -51,6 +53,19 @@ public class AiInitiativePolicyController {
     public PolicyView clear(@PathVariable String leagueSystemId) {
         policies.deleteById(leagueSystemId);
         return view(leagueSystemId);
+    }
+
+    public record BackfillRequest(int daysBack) {}
+
+    @PostMapping("/fan-match-comments/backfill")
+    @PreAuthorize("@userPermissionService.canEditLeagueSystem(authentication, #leagueSystemId)")
+    public AiCompletedMatchFanWorkProducer.BackfillResult backfillMatchComments(
+            @PathVariable String leagueSystemId,
+            @RequestBody BackfillRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("backfill request is required");
+        }
+        return matchCommentWork.backfill(leagueSystemId, request.daysBack());
     }
 
     private PolicyView view(String leagueSystemId) {

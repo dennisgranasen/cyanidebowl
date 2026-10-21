@@ -30,7 +30,14 @@ _ROLL_TTL_SECONDS = 300
 
 @lru_cache(maxsize=1)
 def _bb3_rules() -> BB3Rules | None:
-    return BB3Rules.from_env()
+    try:
+        return BB3Rules.from_env()
+    except FileNotFoundError as error:
+        log.warning(
+            "Configured BB3 rules file %s is missing; roster names will be incomplete",
+            error.filename,
+        )
+        return None
 
 
 def _skill_name(skill_id: int) -> str | None:

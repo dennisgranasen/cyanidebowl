@@ -59,6 +59,36 @@ const AiReporterApi = {
     return (await axios.put('/admin/ai-reporters/settings', data, auth)).data;
   },
 
+  leagueSystemInitiativePolicy: async (leagueSystemId, getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.get(
+      `/admin/league-systems/${encodeURIComponent(leagueSystemId)}/ai-initiative-policy`,
+      auth
+    )).data;
+  },
+
+  updateLeagueSystemInitiativePolicy: async (
+    leagueSystemId, policy, getAccessTokenSilently, getAccessTokenWithPopup
+  ) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.put(
+      `/admin/league-systems/${encodeURIComponent(leagueSystemId)}/ai-initiative-policy`,
+      policy,
+      auth
+    )).data;
+  },
+
+  backfillFanMatchComments: async (
+    leagueSystemId, daysBack, getAccessTokenSilently, getAccessTokenWithPopup
+  ) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.post(
+      `/admin/league-systems/${encodeURIComponent(leagueSystemId)}/ai-initiative-policy/fan-match-comments/backfill`,
+      { daysBack },
+      auth
+    )).data;
+  },
+
   imageApprovalPolicy: async (silent, popup) => {
     const auth = await authConfig(silent, popup);
     return (await axios.get('/admin/ai-reporters/image-approval-policy', auth)).data;
