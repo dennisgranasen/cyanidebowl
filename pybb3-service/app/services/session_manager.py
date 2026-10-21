@@ -6,10 +6,13 @@ import time
 import uuid
 import base64
 import binascii
+import logging
 from bb3 import BB3Client, SteamAuthProcess, SteamAuthState, SteamGuardChallenge, SteamWebAuthFlow
 from app.config import settings
 
 class SessionNotFound(Exception): pass
+
+log = logging.getLogger(__name__)
 
 @dataclass
 class PendingAuth:
@@ -26,6 +29,7 @@ class ActiveSession:
     client: BB3Client
     coach_id: str | None = None
     coach_name: str | None = None
+    auth_state: SteamAuthState | None = None
     lock: threading.RLock = field(default_factory=threading.RLock)
     last_access: float = field(default_factory=time.time)
 
@@ -67,11 +71,30 @@ class SessionManager:
             self._sessions.pop(session_id)
         session.client.close()
 
-    def call(self, owner_id, session_id, operation):
+    def call(self, owner_id, session_id, operation, retry_on_transport_failure=False):
         session = self._get_session(owner_id, session_id)
         with session.lock:
             session.last_access = time.time()
-            return operation(session.client)
+            try:
+                return operation(session.client)
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+                if not retry_on_transport_failure or session.auth_state is None:
+                    raise
+
+                old_client = session.client
+                opened = self._client_factory(session.auth_state)
+                client, steam_id = opened[0], opened[1]
+                coach_id, coach_name = (opened[2], opened[3]) if len(opened) >= 4 else (None, None)
+                session.client = client
+                session.steam_id = steam_id
+                session.coach_id = coach_id
+                session.coach_name = coach_name
+                session.last_access = time.time()
+                try:
+                    old_client.close()
+                except OSError:
+                    log.warning("Failed to close stale BB3 client after reconnect", exc_info=True)
+                return operation(session.client)
 
     def coach_info(self, owner_id, session_id):
         session = self._get_session(owner_id, session_id)
@@ -97,7 +120,15 @@ class SessionManager:
             client, steam_id = opened[0], opened[1]
             coach_id, coach_name = (opened[2], opened[3]) if len(opened) >= 4 else (None, None)
             session_id = str(uuid.uuid4())
-            session = ActiveSession(owner_id, username, steam_id, client, coach_id, coach_name)
+            session = ActiveSession(
+                owner_id,
+                username,
+                steam_id,
+                client,
+                coach_id,
+                coach_name,
+                auth_state=state,
+            )
             with self._lock:
                 self._sessions[session_id] = session
             return self._auth_response(session_id, session)
@@ -129,7 +160,16 @@ class SessionManager:
         client, steam_id = opened[0], opened[1]
         coach_id, coach_name = (opened[2], opened[3]) if len(opened) >= 4 else (None, None)
         session_id = str(uuid.uuid4())
-        with self._lock: self._sessions[session_id] = ActiveSession(owner_id, result.username, steam_id, client, coach_id, coach_name)
+        with self._lock:
+            self._sessions[session_id] = ActiveSession(
+                owner_id,
+                result.username,
+                steam_id,
+                client,
+                coach_id,
+                coach_name,
+                auth_state=result,
+            )
         response=self._auth_response(session_id, self._sessions[session_id])
         if persist_credential:
             response["credential"]={"username":result.username,"refreshToken":result.refresh_token,"guardData":result.guard_data}

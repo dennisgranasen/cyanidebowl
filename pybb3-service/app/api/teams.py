@@ -252,7 +252,12 @@ def _prune_rolls(now=None):
 @router.get("/{session_id}/teams")
 def my_teams(session_id:str,owner:str=Depends(trusted_owner),size:int=Query(50,ge=1,le=100),start:int=Query(0,ge=0)):
     try:
-        root=session_manager.call(owner,session_id,lambda client:client.get_teams_of_gamer(size=size,start=start))
+        root=session_manager.call(
+            owner,
+            session_id,
+            lambda client: client.get_teams_of_gamer(size=size, start=start),
+            retry_on_transport_failure=True,
+        )
         result=teams_response(root,start=start,size=size)
         coach_id,coach_name=session_manager.coach_info(owner,session_id)
         for team in result["items"]:
@@ -265,7 +270,13 @@ def my_teams(session_id:str,owner:str=Depends(trusted_owner),size:int=Query(50,g
         raise HTTPException(502,"Unable to retrieve BB3 teams") from error
 @router.get("/{session_id}/teams/{team_id}/roster")
 def roster(session_id:str,team_id:str,owner:str=Depends(trusted_owner)):
-    try:return session_manager.call(owner,session_id,lambda client:_roster_with_skill_names(client.get_team_roster_model(team_id)))
+    try:
+        return session_manager.call(
+            owner,
+            session_id,
+            lambda client: _roster_with_skill_names(client.get_team_roster_model(team_id)),
+            retry_on_transport_failure=True,
+        )
     except SessionNotFound as error:raise HTTPException(404,str(error)) from error
 
 
@@ -275,6 +286,8 @@ def live_roster(session_id: str, team_id: str, owner: str = Depends(trusted_owne
         roster = _roster_with_skill_names(client.get_team_roster_model(team_id))
         try:
             roster["team"] = _team_details(client.get_team(team_id))
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            raise
         except (ValueError, RuntimeError, OSError):
             roster["team"] = {}
         return roster
@@ -284,6 +297,7 @@ def live_roster(session_id: str, team_id: str, owner: str = Depends(trusted_owne
             owner,
             session_id,
             read,
+            retry_on_transport_failure=True,
         )
     except SessionNotFound as error:
         raise HTTPException(404, str(error)) from error
@@ -295,7 +309,12 @@ def live_roster(session_id: str, team_id: str, owner: str = Depends(trusted_owne
 @router.get("/{session_id}/teams/{team_id}/formations")
 def formations(session_id: str, team_id: str, owner: str = Depends(trusted_owner)):
     try:
-        items = session_manager.call(owner, session_id, lambda client: team_formations(client, team_id))
+        items = session_manager.call(
+            owner,
+            session_id,
+            lambda client: team_formations(client, team_id),
+            retry_on_transport_failure=True,
+        )
         return {"items": items or []}
     except SessionNotFound as error:
         raise HTTPException(404, str(error)) from error
@@ -371,7 +390,12 @@ def player_improvements(
         return _improvements_with_skill_names(client.get_player_improvements(player.player_id))
 
     try:
-        return session_manager.call(owner, session_id, read)
+        return session_manager.call(
+            owner,
+            session_id,
+            read,
+            retry_on_transport_failure=True,
+        )
     except SessionNotFound as error:
         raise HTTPException(404, str(error)) from error
     except (ValueError, RuntimeError, OSError) as error:

@@ -66,3 +66,56 @@ def test_restore_replaces_an_expired_in_memory_session():
     assert restored["sessionId"] != previous["sessionId"]
     assert previous_session.client.closed is True
     assert service.session_info("alice", restored["sessionId"])["connected"] is True
+
+
+def test_read_call_reconnects_and_retries_after_broken_pipe():
+    clients = []
+    states = []
+
+    def client_factory(state):
+        states.append(state)
+        client = Client()
+        clients.append(client)
+        return client, "7656119", "coach-1", "Coach"
+
+    service = SessionManager(lambda: Flow(), client_factory)
+    challenge = service.start_auth("alice", "steam-user", "password")
+    result = service.submit_code("alice", challenge["challengeId"], "12345")
+    original_state = service._sessions[result["sessionId"]].auth_state
+
+    def read(client):
+        if client is clients[0]:
+            raise BrokenPipeError("stale BB3 socket")
+        return "reconnected"
+
+    assert service.call(
+        "alice",
+        result["sessionId"],
+        read,
+        retry_on_transport_failure=True,
+    ) == "reconnected"
+    assert len(clients) == 2
+    assert states == [original_state, original_state]
+    assert clients[0].closed is True
+    assert service._sessions[result["sessionId"]].client is clients[1]
+
+
+def test_call_does_not_retry_transport_failure_by_default():
+    clients = []
+
+    def client_factory(_state):
+        client = Client()
+        clients.append(client)
+        return client, "7656119"
+
+    service = SessionManager(lambda: Flow(), client_factory)
+    challenge = service.start_auth("alice", "steam-user", "password")
+    result = service.submit_code("alice", challenge["challengeId"], "12345")
+
+    def fail(_client):
+        raise BrokenPipeError()
+
+    with pytest.raises(BrokenPipeError):
+        service.call("alice", result["sessionId"], fail)
+
+    assert len(clients) == 1
