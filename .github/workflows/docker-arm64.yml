@@ -14,15 +14,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  runner-kernel:
-    name: Runner kernel
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Show runner kernel
-        run: |
-          uname -r
-          uname -a
-          cat /etc/os-release
+  # runner-kernel:
+  #   name: Runner kernel
+  #   runs-on: ubuntu-24.04
+  #   steps:
+  #     - name: Show runner kernel
+  #       run: |
+  #         uname -r
+  #         uname -a
+  #         cat /etc/os-release
 
   backend-tests:
     name: Backend tests
@@ -83,111 +83,111 @@ jobs:
       - name: Run frontend test suite
         run: npm test -- --runInBand
 
-  build-arm64:
-    name: Build ARM64 image artifact
-    runs-on: ubuntu-24.04
-    needs:
-      - backend-tests
-      - frontend-tests
-    if: github.event_name != 'pull_request'
+  # build-arm64:
+  #   name: Build ARM64 image artifact
+  #   runs-on: ubuntu-24.04
+  #   needs:
+  #     - backend-tests
+  #     - frontend-tests
+  #   if: github.event_name != 'pull_request'
 
-    permissions:
-      contents: read
+  #   permissions:
+  #     contents: read
 
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
+  #   steps:
+  #     - name: Check out repository
+  #       uses: actions/checkout@v6
 
-      - name: Validate frontend build variables
-        env:
-          REACT_APP_BACKEND_URI: ${{ vars.REACT_APP_BACKEND_URI }}
-          AUTH0_DOMAIN: ${{ vars.AUTH0_DOMAIN }}
-          AUTH0_CLIENT_ID: ${{ vars.AUTH0_CLIENT_ID }}
-          AUTH0_AUDIENCE: ${{ vars.AUTH0_AUDIENCE }}
-        run: |
-          missing=0
-          for name in REACT_APP_BACKEND_URI AUTH0_DOMAIN AUTH0_CLIENT_ID AUTH0_AUDIENCE; do
-            if [ -z "${!name}" ]; then
-              echo "::error::Repository variable $name is not configured"
-              missing=1
-            fi
-          done
-          exit "$missing"
+  #     - name: Validate frontend build variables
+  #       env:
+  #         REACT_APP_BACKEND_URI: ${{ vars.REACT_APP_BACKEND_URI }}
+  #         AUTH0_DOMAIN: ${{ vars.AUTH0_DOMAIN }}
+  #         AUTH0_CLIENT_ID: ${{ vars.AUTH0_CLIENT_ID }}
+  #         AUTH0_AUDIENCE: ${{ vars.AUTH0_AUDIENCE }}
+  #       run: |
+  #         missing=0
+  #         for name in REACT_APP_BACKEND_URI AUTH0_DOMAIN AUTH0_CLIENT_ID AUTH0_AUDIENCE; do
+  #           if [ -z "${!name}" ]; then
+  #             echo "::error::Repository variable $name is not configured"
+  #             missing=1
+  #           fi
+  #         done
+  #         exit "$missing"
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-        with:
-          platforms: arm64
+  #     - name: Set up QEMU
+  #       uses: docker/setup-qemu-action@v4
+  #       with:
+  #         platforms: arm64
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v4
 
-      - name: Build backend ARM64 image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: backend/Dockerfile
-          platforms: linux/arm64
-          load: true
-          tags: cyanidebowl-backend:arm64
-          labels: |
-            org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.sha }}
-          cache-from: type=gha,scope=backend-arm64
-          cache-to: type=gha,mode=max,scope=backend-arm64
+  #     - name: Build backend ARM64 image
+  #       uses: docker/build-push-action@v6
+  #       with:
+  #         context: .
+  #         file: backend/Dockerfile
+  #         platforms: linux/arm64
+  #         load: true
+  #         tags: cyanidebowl-backend:arm64
+  #         labels: |
+  #           org.opencontainers.image.source=https://github.com/${{ github.repository }}
+  #           org.opencontainers.image.revision=${{ github.sha }}
+  #         cache-from: type=gha,scope=backend-arm64
+  #         cache-to: type=gha,mode=max,scope=backend-arm64
 
-      - name: Build pybb3 service ARM64 image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./pybb3-service
-          file: ./pybb3-service/Dockerfile
-          platforms: linux/arm64
-          load: true
-          build-args: |
-            PYBB3_REF=${{ vars.PYBB3_REF || 'main' }}
-          tags: cyanidebowl-pybb3:arm64
-          labels: |
-            org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.sha }}
-          cache-from: type=gha,scope=pybb3-arm64
-          cache-to: type=gha,mode=max,scope=pybb3-arm64
+  #     - name: Build pybb3 service ARM64 image
+  #       uses: docker/build-push-action@v6
+  #       with:
+  #         context: ./pybb3-service
+  #         file: ./pybb3-service/Dockerfile
+  #         platforms: linux/arm64
+  #         load: true
+  #         build-args: |
+  #           PYBB3_REF=${{ vars.PYBB3_REF || 'main' }}
+  #         tags: cyanidebowl-pybb3:arm64
+  #         labels: |
+  #           org.opencontainers.image.source=https://github.com/${{ github.repository }}
+  #           org.opencontainers.image.revision=${{ github.sha }}
+  #         cache-from: type=gha,scope=pybb3-arm64
+  #         cache-to: type=gha,mode=max,scope=pybb3-arm64
 
-      - name: Build frontend ARM64 image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./frontend
-          file: ./frontend/Dockerfile
-          platforms: linux/arm64
-          load: true
-          build-args: |
-            REACT_APP_BACKEND_URI=${{ vars.REACT_APP_BACKEND_URI }}
-            REACT_APP_AUTH0_DOMAIN=${{ vars.AUTH0_DOMAIN }}
-            REACT_APP_AUTH0_CLIENT_ID=${{ vars.AUTH0_CLIENT_ID }}
-            REACT_APP_AUTH0_AUDIENCE=${{ vars.AUTH0_AUDIENCE }}
-          tags: cyanidebowl-frontend:arm64
-          labels: |
-            org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.sha }}
-          cache-from: type=gha,scope=frontend-arm64
-          cache-to: type=gha,mode=max,scope=frontend-arm64
+  #     - name: Build frontend ARM64 image
+  #       uses: docker/build-push-action@v6
+  #       with:
+  #         context: ./frontend
+  #         file: ./frontend/Dockerfile
+  #         platforms: linux/arm64
+  #         load: true
+  #         build-args: |
+  #           REACT_APP_BACKEND_URI=${{ vars.REACT_APP_BACKEND_URI }}
+  #           REACT_APP_AUTH0_DOMAIN=${{ vars.AUTH0_DOMAIN }}
+  #           REACT_APP_AUTH0_CLIENT_ID=${{ vars.AUTH0_CLIENT_ID }}
+  #           REACT_APP_AUTH0_AUDIENCE=${{ vars.AUTH0_AUDIENCE }}
+  #         tags: cyanidebowl-frontend:arm64
+  #         labels: |
+  #           org.opencontainers.image.source=https://github.com/${{ github.repository }}
+  #           org.opencontainers.image.revision=${{ github.sha }}
+  #         cache-from: type=gha,scope=frontend-arm64
+  #         cache-to: type=gha,mode=max,scope=frontend-arm64
 
-      - name: Export Docker images
-        run: |
-          docker image inspect cyanidebowl-backend:arm64 >/dev/null
-          docker image inspect cyanidebowl-pybb3:arm64 >/dev/null
-          docker image inspect cyanidebowl-frontend:arm64 >/dev/null
+  #     - name: Export Docker images
+  #       run: |
+  #         docker image inspect cyanidebowl-backend:arm64 >/dev/null
+  #         docker image inspect cyanidebowl-pybb3:arm64 >/dev/null
+  #         docker image inspect cyanidebowl-frontend:arm64 >/dev/null
 
-          docker save             cyanidebowl-backend:arm64             cyanidebowl-pybb3:arm64             cyanidebowl-frontend:arm64             | gzip -1 > cyanidebowl-arm64.tar.gz
+  #         docker save             cyanidebowl-backend:arm64             cyanidebowl-pybb3:arm64             cyanidebowl-frontend:arm64             | gzip -1 > cyanidebowl-arm64.tar.gz
 
-          sha256sum cyanidebowl-arm64.tar.gz > cyanidebowl-arm64.tar.gz.sha256
+  #         sha256sum cyanidebowl-arm64.tar.gz > cyanidebowl-arm64.tar.gz.sha256
 
-      - name: Upload ARM64 images
-        uses: actions/upload-artifact@v4
-        with:
-          name: cyanidebowl-arm64-${{ github.sha }}
-          path: |
-            cyanidebowl-arm64.tar.gz
-            cyanidebowl-arm64.tar.gz.sha256
-          if-no-files-found: error
-          compression-level: 0
-          retention-days: 14
+  #     - name: Upload ARM64 images
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: cyanidebowl-arm64-${{ github.sha }}
+  #         path: |
+  #           cyanidebowl-arm64.tar.gz
+  #           cyanidebowl-arm64.tar.gz.sha256
+  #         if-no-files-found: error
+  #         compression-level: 0
+  #         retention-days: 14
