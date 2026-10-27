@@ -2,9 +2,11 @@ package net.warp_scores.warpscores.controller;
 
 import lombok.RequiredArgsConstructor;
 import net.warp_scores.warpscores.ai.interaction.AiInitiativePolicyService;
+import net.warp_scores.warpscores.ai.agents.AiReporterRegistry;
 import net.warp_scores.warpscores.ai.scheduling.AiCompletedMatchFanWorkProducer;
 import net.warp_scores.warpscores.domain.persistence.AiLeagueSystemInitiativePolicyRepository;
 import net.warp_scores.warpscores.model.AiLeagueSystemInitiativePolicy;
+import net.warp_scores.warpscores.service.MatchArticleService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -20,6 +22,8 @@ public class AiInitiativePolicyController {
     private final AiLeagueSystemInitiativePolicyRepository policies;
     private final AiInitiativePolicyService resolver;
     private final AiCompletedMatchFanWorkProducer matchCommentWork;
+    private final MatchArticleService matchArticles;
+    private final AiReporterRegistry reporters;
 
     @GetMapping
     @PreAuthorize("@userPermissionService.canEditLeagueSystem(authentication, #leagueSystemId)")
@@ -74,10 +78,31 @@ public class AiInitiativePolicyController {
         return new PolicyView(
                 leagueSystemId,
                 override,
-                resolver.effective(leagueSystemId));
+                resolver.effective(leagueSystemId),
+                matchArticles.autonomousReporterOptions());
     }
 
-    private static void validate(AiLeagueSystemInitiativePolicy policy) {
+    private void validate(AiLeagueSystemInitiativePolicy policy) {
+        var staff = policy.getStaff();
+        if (staff != null) {
+            Integer count = staff.getMatchArticlesPerMatch();
+            if (count != null && (count < 1 || count > 10)) {
+                throw new IllegalArgumentException("matchArticlesPerMatch must be between 1 and 10");
+            }
+            if (staff.getMatchArticleReporterIds() != null) {
+                var knownIds = reporters.all().stream()
+                        .map(net.warp_scores.warpscores.ai.agents.AiReporterDefinition::getId)
+                        .collect(java.util.stream.Collectors.toSet());
+                if (staff.getMatchArticleReporterIds().stream().anyMatch(id -> !StringUtils.hasText(id)
+                        || !knownIds.contains(id.trim()))) {
+                    throw new IllegalArgumentException("matchArticleReporterIds must contain known reporter ids");
+                }
+                if (staff.getMatchArticleReporterIds().stream().distinct().count()
+                        != staff.getMatchArticleReporterIds().size()) {
+                    throw new IllegalArgumentException("matchArticleReporterIds must not contain duplicates");
+                }
+            }
+        }
         var fans = policy.getFans();
         if (fans == null) return;
         validateProbability("generalArticleCommentProbability", fans.getGeneralArticleCommentProbability());
@@ -104,6 +129,7 @@ public class AiInitiativePolicyController {
     public record PolicyView(
             String leagueSystemId,
             AiLeagueSystemInitiativePolicy override,
-            AiInitiativePolicyService.EffectivePolicy effective) {
+            AiInitiativePolicyService.EffectivePolicy effective,
+            java.util.List<MatchArticleService.ReporterOption> availableMatchArticleReporters) {
     }
 }

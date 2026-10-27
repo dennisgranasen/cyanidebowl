@@ -6,6 +6,7 @@ import net.warp_scores.warpscores.ai.agents.AiReporterEffectiveProfileService;
 import net.warp_scores.warpscores.ai.agents.AiReporterRegistry;
 import net.warp_scores.warpscores.ai.context.*;
 import net.warp_scores.warpscores.ai.interaction.MatchArticleAiInteractionService;
+import net.warp_scores.warpscores.ai.interaction.AiInitiativePolicyService;
 import net.warp_scores.warpscores.ai.provider.CanonicalLlmResponse;
 import net.warp_scores.warpscores.ai.provider.LlmExecutionService;
 import net.warp_scores.warpscores.ai.provider.LlmProvider;
@@ -51,6 +52,7 @@ public class MatchArticleService {
     private final MatchReportGenerationLlmRequestFactory matchReportFactory;
     private final ReporterMemoryConsolidationService reporterMemory;
     private final MatchArticleAiInteractionService articleInteractions;
+    private final AiInitiativePolicyService initiativePolicy;
     private final LlmExecutionService llm;
     private final LlmProviderRouter providerRouter;
     private final LlmProviderRegistry providerRegistry;
@@ -269,6 +271,67 @@ public class MatchArticleService {
 
     public MatchArticle requestAi(Authentication auth, String matchId, AiRequest input) {
         requireEditor(auth, matchId);
+        return generateAi(matchId, input);
+    }
+
+    public List<String> autonomousReporterIds() {
+        return autonomousReporterOptions().stream().map(ReporterOption::id).toList();
+        }
+
+        public List<String> autonomousReporterIds(String leagueSystemId) {
+        List<String> configured = initiativePolicy.effective(leagueSystemId)
+            .staff().getMatchArticleReporterIds();
+        return autonomousReporterOptions().stream()
+            .map(ReporterOption::id)
+            .filter(id -> configured == null || configured.contains(id))
+            .toList();
+        }
+
+        public List<ReporterOption> autonomousReporterOptions() {
+        return reporterProfiles.enabledForReports().stream()
+                .map(AiReporterEffectiveProfileService.EffectiveReporter::definition)
+                .filter(reporter -> reporter.getUserId() != null
+                        && StringUtils.hasText(reporter.resolvedUserSubject()))
+            .map(this::runnableReporterOption)
+            .flatMap(Optional::stream)
+            .sorted(Comparator.comparing(ReporterOption::alias, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+    }
+
+        public MatchArticle requestAiAutonomously(String matchId, String reporterId, int generationSlot) {
+        MatchContext ctx = matchContext(null, matchId);
+        if (!initiativePolicy.staffMayRunAutonomously(
+                ctx.leagueSystemId(), AiInitiativePolicyService.StaffActivity.MATCH_ARTICLE)) {
+            return null;
+        }
+        if (!autonomousReporterIds(ctx.leagueSystemId()).contains(reporterId)) return null;
+        MatchArticle existing = articles.findByMatchIdOrderByCreatedAtAsc(matchId).stream()
+                .filter(article -> article.getAuthorType() == MatchArticle.AuthorType.AI
+                && Objects.equals(reporterId, article.getReporterId())
+                && Objects.equals(generationSlot, article.getAutonomousGenerationSlot()))
+                .findFirst()
+                .orElse(null);
+        if (existing != null) return existing;
+        var staffPolicy = initiativePolicy.effective(ctx.leagueSystemId()).staff();
+        if (generationSlot < 0 || generationSlot >= staffPolicy.getMatchArticlesPerMatch()) {
+            return null;
+        }
+        return generateAi(
+            matchId,
+            new AiRequest(reporterId, null, null, false),
+            generationSlot,
+            staffPolicy.isMatchArticlesAutoAccept());
+    }
+
+    private MatchArticle generateAi(String matchId, AiRequest input) {
+        return generateAi(matchId, input, null, false);
+        }
+
+        private MatchArticle generateAi(
+            String matchId,
+            AiRequest input,
+            Integer generationSlot,
+            boolean autoAccept) {
         if (input == null || !StringUtils.hasText(input.reporterId())) {
             throw new IllegalArgumentException("reporterId is required");
         }
@@ -300,7 +363,7 @@ public class MatchArticleService {
         MatchArticleGenerationGuard.Lease generationLease =
                 generationGuard.acquire(matchId, reporter.getId());
         try {
-        MatchContext ctx = matchContext(auth, matchId);
+        MatchContext ctx = matchContext(null, matchId);
         ReportingContext reportContext = reportingContext(ctx.match(), matchId, reporter.getUserId());
         var evidence = reportContext.evidence();
         var historicalContext = reportContext.history();
@@ -334,7 +397,7 @@ public class MatchArticleService {
         article.setSeasonId(ctx.seasonId());
         article.setTitle(starPlayerNames.normalizeText(generated.title()));
         article.setBody(starPlayerNames.normalizeText(generated.body()));
-        article.setStatus(MatchArticle.Status.PENDING_REVIEW);
+        article.setStatus(autoAccept ? MatchArticle.Status.PUBLISHED : MatchArticle.Status.PENDING_REVIEW);
         article.setKind(MatchArticle.Kind.EDITORIAL);
         article.setAuthorType(MatchArticle.AuthorType.AI);
         article.setAuthorSubject(reporter.resolvedUserSubject());
@@ -342,6 +405,7 @@ public class MatchArticleService {
         article.setAuthorDisplayName(reporter.getAlias());
         article.setReporterId(reporter.getId());
         article.setReporterAlias(reporter.getAlias());
+        article.setAutonomousGenerationSlot(generationSlot);
         article.setProviderId(response.providerId());
         article.setModel(response.model());
         article.setProviderRequestId(response.providerRequestId());
@@ -349,7 +413,17 @@ public class MatchArticleService {
         article.setOutputTokens(response.usage().outputTokens());
         article.setCreatedAt(now);
         article.setUpdatedAt(now);
-        return articles.save(article);
+        if (autoAccept) {
+            article.setPublishedAt(now);
+            article.setReviewedAt(now);
+            article.setReviewedBySubject("system:match-article-auto-accept");
+        }
+        MatchArticle saved = articles.save(article);
+        if (autoAccept) {
+            reporterMemory.considerPublished(saved);
+            articleInteractions.onPublished(saved);
+        }
+        return saved;
         } finally {
             generationLease.close();
         }

@@ -1,6 +1,7 @@
 package net.warp_scores.warpscores.service;
 
 import net.warp_scores.warpscores.domain.persistence.ReplayDownloadRepository;
+import net.warp_scores.warpscores.ai.scheduling.AiCompletedMatchArticleWorkProducer;
 import net.warp_scores.warpscores.model.ReplayDownload;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -18,7 +19,8 @@ class ReplayLocalAvailabilityTest {
     @Test
     void readsDockerWindowsAndFilenameRecordsFromConfiguredStorage() throws Exception {
         var downloads = mock(ReplayDownloadRepository.class);
-        var artifacts = new ReplayArtifactService(downloads, null, null, null, null, null);
+        var artifacts = new ReplayArtifactService(downloads, null, null, null, null, null,
+            mock(AiCompletedMatchArticleWorkProducer.class));
         ReflectionTestUtils.setField(artifacts, "storageDirectory", directory.toString());
         Files.write(directory.resolve("game.bbr"), new byte[]{1, 2, 3});
         var bytes = new java.io.ByteArrayOutputStream();
@@ -39,7 +41,8 @@ class ReplayLocalAvailabilityTest {
 
     @Test
     void restoredLegacyFileBecomesAvailableWithoutChangingHistory() throws Exception {
-        var artifacts = new ReplayArtifactService(null, null, null, null, null, null);
+        var artifacts = new ReplayArtifactService(null, null, null, null, null, null,
+            null);
         ReflectionTestUtils.setField(artifacts, "storageDirectory", directory.toString());
         var record = new ReplayDownload();
         record.setStatus("DOWNLOADED");

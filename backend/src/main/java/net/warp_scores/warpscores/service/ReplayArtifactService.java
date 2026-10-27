@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warp_scores.warpscores.ai.reporting.AiPlayerRatingJobService;
+import net.warp_scores.warpscores.ai.scheduling.AiCompletedMatchArticleWorkProducer;
 import net.warp_scores.warpscores.domain.persistence.ReplayAnalysisRepository;
 import net.warp_scores.warpscores.domain.persistence.ReplayDownloadRepository;
 import net.warp_scores.warpscores.domain.persistence.MatchRepository;
@@ -41,6 +42,7 @@ public class ReplayArtifactService {
     private final ObjectMapper mapper;
     private final PyBb3Client pybb3;
     private final AiPlayerRatingJobService playerRatingJobs;
+    private final AiCompletedMatchArticleWorkProducer matchArticleWork;
 
     @Value("${replay-sweeper.storage-directory:./data/replays}")
     private String storageDirectory;
@@ -166,6 +168,8 @@ public class ReplayArtifactService {
             downloads.save(record);
             if ("PROCESSED".equals(record.getAnalysisStatus())) {
                 playerRatingJobs.queueAfterReplayAnalysis(record.getMatchId());
+                matches.findById(IdentityUtil.fromId(record.getMatchId()))
+                        .ifPresent(matchArticleWork::onMatchFinalized);
             }
             return true;
         } catch (Exception error) {

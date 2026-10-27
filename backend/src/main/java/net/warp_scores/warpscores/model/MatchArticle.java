@@ -41,6 +41,8 @@ public class MatchArticle {
     /** AI provenance. These fields are null for human-authored articles. */
     private String reporterId;
     private String reporterAlias;
+    /** Autonomous generation slot, used to make retries idempotent. */
+    private Integer autonomousGenerationSlot;
     private String providerId;
     private String model;
     private String providerRequestId;

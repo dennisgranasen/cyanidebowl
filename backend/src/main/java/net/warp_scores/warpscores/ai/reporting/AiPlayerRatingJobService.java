@@ -48,6 +48,7 @@ public class AiPlayerRatingJobService {
     private final PlayerRatingFactsBuilder factsBuilder;
     private final CopilotRatingQuotaUsageService quotaUsage;
     private final DedicatedFanPlayerRatingJobService fanRatingJobs;
+    private final AiPlayerRatingTargetSettings targetSettings;
 
     private final LlmProviderRouter providerRouter;
     private final AiProviderWorkExecutor providerWorkExecutor;
@@ -133,6 +134,7 @@ public class AiPlayerRatingJobService {
                 Integer priorityOverride,
                 String targetOverride) {
         List<AiReporterDefinition> selected = selectReporters(reporterIds);
+        String effectiveTarget = targetOverride == null ? targetSettings.editorialTarget() : targetOverride;
 
         AiPlayerRatingJob job = new AiPlayerRatingJob();
         job.setId(UUID.randomUUID().toString());
@@ -153,7 +155,7 @@ public class AiPlayerRatingJobService {
             task.setJobId(job.getId());
             task.setMatchId(matchId);
             task.setReporterId(reporter.getId());
-            task.setTargetOverride(targetOverride);
+            task.setTargetOverride(effectiveTarget);
             task.setPriority(priorityOverride == null ? 50 : priorityOverride);
             task.setCreatedAt(Instant.now());
 
@@ -172,7 +174,7 @@ public class AiPlayerRatingJobService {
         int queuedCount = (int) pending.stream()
             .filter(task -> task.getStatus() == AiPlayerRatingTask.Status.QUEUED).count();
         quotaUsage.start(job.getId(), matchId, CopilotRatingQuotaUsage.RatingKind.EDITORIAL,
-            requestedBy, targetOverride, queuedCount);
+            requestedBy, effectiveTarget, queuedCount);
 
         pending.stream()
                 .filter(task -> task.getStatus() == AiPlayerRatingTask.Status.QUEUED)

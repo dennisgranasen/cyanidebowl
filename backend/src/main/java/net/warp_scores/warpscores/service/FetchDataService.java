@@ -74,6 +74,8 @@ public class FetchDataService {
     private net.warp_scores.warpscores.ai.interaction.DedicatedFansCommunityReconciliationService dedicatedFansCommunity;
     @Autowired
     private net.warp_scores.warpscores.ai.scheduling.AiCompletedMatchFanWorkProducer completedMatchFanWork;
+        @Autowired
+        private net.warp_scores.warpscores.ai.scheduling.AiCompletedMatchArticleWorkProducer completedMatchArticleWork;
     @Autowired
     private MatchRepository matchRepository;
     @Autowired
@@ -165,6 +167,7 @@ public class FetchDataService {
                         Match savedMatch = matchRepository.save(fullMatch);
                         dedicatedFansCommunity.reconcileAfterMatch(savedMatch);
                         completedMatchFanWork.onMatchFinalized(savedMatch);
+                        completedMatchArticleWork.onMatchFinalized(savedMatch);
                 });
         
 

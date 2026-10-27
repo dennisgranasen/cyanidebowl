@@ -20,8 +20,9 @@ class DedicatedFanPlayerRatingJobServiceTest {
     private final CopilotRatingQuotaUsageService quotaUsage = mock(CopilotRatingQuotaUsageService.class);
     private final LlmProviderRouter providerRouter = mock(LlmProviderRouter.class);
     private final AiProviderWorkExecutor providerWorkExecutor = mock(AiProviderWorkExecutor.class);
+    private final AiPlayerRatingTargetSettings targetSettings = mock(AiPlayerRatingTargetSettings.class);
     private final DedicatedFanPlayerRatingJobService service = new DedicatedFanPlayerRatingJobService(
-            generator, quotaUsage, providerRouter, providerWorkExecutor);
+            generator, quotaUsage, providerRouter, providerWorkExecutor, targetSettings);
 
     @Test
     void automaticQueueIncludesEveryUnratedActiveFanAndSkipsDuplicateActiveJob() {
@@ -37,17 +38,19 @@ class DedicatedFanPlayerRatingJobServiceTest {
                 .matchId("match-1")
                 .players(List.of(PlayerRatingFacts.Player.builder().playerId("player-1").build()))
                 .build();
+        when(targetSettings.fanTarget()).thenReturn("fan-target");
         when(generator.unratedActiveFansFor(facts)).thenReturn(fans);
         when(providerRouter.planForTask(anyString(), eq(ContextTaskType.PLAYER_RATING), any()))
                 .thenReturn(new LlmProviderRouter.ExecutionPlan(
-                        new LlmProviderRouter.ModelTarget("provider", "model"), List.of(), 50));
+                        new LlmProviderRouter.ModelTarget("fan-target", "provider", "model", "quota"), List.of(), 50));
 
         service.queueAfterReplayAnalysis("match-1", facts);
         service.queueAfterReplayAnalysis("match-1", facts);
 
         verify(generator, times(2)).unratedActiveFansFor(facts);
         verify(quotaUsage).start(anyString(), eq("match-1"),
-                eq(CopilotRatingQuotaUsage.RatingKind.FANS), eq("replay-analysis"), isNull(), eq(12));
+                eq(CopilotRatingQuotaUsage.RatingKind.FANS), eq("replay-analysis"), eq("fan-target"), eq(12));
+        verify(quotaUsage).isCopilotTarget("fan-target");
         verify(providerWorkExecutor, times(12)).submit(anyString(), any(), eq(50), any(Runnable.class));
         verifyNoMoreInteractions(quotaUsage);
     }

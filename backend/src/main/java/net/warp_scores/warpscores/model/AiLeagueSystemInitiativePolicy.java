@@ -6,6 +6,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
+import java.util.List;
 
 @Getter
 @Setter
@@ -28,6 +29,9 @@ public class AiLeagueSystemInitiativePolicy {
         private AiInitiativeMode articleComments;
         private AiInitiativeMode matchComments;
         private AiInitiativeMode directTagReplies;
+        private List<String> matchArticleReporterIds;
+        private Integer matchArticlesPerMatch;
+        private Boolean matchArticlesAutoAccept;
     }
 
     @Getter

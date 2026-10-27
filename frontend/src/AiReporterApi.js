@@ -59,6 +59,16 @@ const AiReporterApi = {
     return (await axios.put('/admin/ai-reporters/settings', data, auth)).data;
   },
 
+  playerRatingRouting: async (getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.get('/admin/ai-reporters/player-rating-routing', auth)).data;
+  },
+
+  updatePlayerRatingRouting: async (data, getAccessTokenSilently, getAccessTokenWithPopup) => {
+    const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
+    return (await axios.put('/admin/ai-reporters/player-rating-routing', data, auth)).data;
+  },
+
   leagueSystemInitiativePolicy: async (leagueSystemId, getAccessTokenSilently, getAccessTokenWithPopup) => {
     const auth = await authConfig(getAccessTokenSilently, getAccessTokenWithPopup);
     return (await axios.get(

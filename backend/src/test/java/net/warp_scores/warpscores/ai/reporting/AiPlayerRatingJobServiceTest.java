@@ -2,6 +2,7 @@ package net.warp_scores.warpscores.ai.reporting;
 
 import net.warp_scores.warpscores.ai.agents.AiReporterDefinition;
 import net.warp_scores.warpscores.ai.agents.AiReporterEffectiveProfileService;
+import net.warp_scores.warpscores.ai.context.ContextTaskType;
 import net.warp_scores.warpscores.ai.provider.AiProviderWorkExecutor;
 import net.warp_scores.warpscores.ai.provider.LlmProviderRouter;
 import net.warp_scores.warpscores.domain.persistence.AiPlayerMatchRatingRepository;
@@ -13,6 +14,7 @@ import net.warp_scores.warpscores.model.ReplayAnalysis;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -40,6 +42,7 @@ class AiPlayerRatingJobServiceTest {
     @Mock private LlmProviderRouter providerRouter;
     @Mock private AiProviderWorkExecutor providerWorkExecutor;
         @Mock private DedicatedFanPlayerRatingJobService fanRatingJobs;
+        @Mock private AiPlayerRatingTargetSettings targetSettings;
     @InjectMocks private AiPlayerRatingJobService jobService;
 
     @Test
@@ -111,6 +114,29 @@ class AiPlayerRatingJobServiceTest {
 
         verifyNoInteractions(tasks, jobs, effectiveProfiles, providerRouter, providerWorkExecutor);
         verify(fanRatingJobs).queueAfterReplayAnalysis("match-1", facts);
+    }
+
+    @Test
+    void newEditorialRatingTasksUseConfiguredDefaultTarget() {
+        AiReporterDefinition reporter = reporter("reporter-1");
+        when(effectiveProfiles.enabledForRatings()).thenReturn(List.of(
+                new AiReporterEffectiveProfileService.EffectiveReporter(
+                        reporter, true, true, true, true, 1.0, "sv")));
+        when(targetSettings.editorialTarget()).thenReturn("editorial-target");
+        when(providerRouter.planForTask(eq("reporter-1"), eq(ContextTaskType.PLAYER_RATING), any()))
+                .thenReturn(new LlmProviderRouter.ExecutionPlan(
+                        new LlmProviderRouter.ModelTarget("editorial-target", "provider", "model", "quota"),
+                        List.of(), 50));
+
+        jobService.start("match-1", List.of("reporter-1"), null, false, 1, "admin", null);
+
+        ArgumentCaptor<List<net.warp_scores.warpscores.model.AiPlayerRatingTask>> tasksCaptor =
+                ArgumentCaptor.forClass(List.class);
+        verify(tasks).saveAll(tasksCaptor.capture());
+        assertEquals("editorial-target", tasksCaptor.getValue().get(0).getTargetOverride());
+        verify(quotaUsage).start(anyString(), eq("match-1"),
+                eq(net.warp_scores.warpscores.model.CopilotRatingQuotaUsage.RatingKind.EDITORIAL),
+                eq("admin"), eq("editorial-target"), eq(1));
     }
 
     private static AiReporterDefinition reporter(String id) {

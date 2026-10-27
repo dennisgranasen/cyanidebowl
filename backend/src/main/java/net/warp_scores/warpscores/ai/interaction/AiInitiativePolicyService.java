@@ -143,6 +143,10 @@ public class AiInitiativePolicyService {
         target.setArticleComments(source.getArticleComments());
         target.setMatchComments(source.getMatchComments());
         target.setDirectTagReplies(source.getDirectTagReplies());
+        target.setMatchArticleReporterIds(source.getMatchArticleReporterIds() == null
+            ? null : java.util.List.copyOf(source.getMatchArticleReporterIds()));
+        target.setMatchArticlesPerMatch(source.getMatchArticlesPerMatch());
+        target.setMatchArticlesAutoAccept(source.isMatchArticlesAutoAccept());
         return target;
     }
 
@@ -171,6 +175,15 @@ public class AiInitiativePolicyService {
         if (override.getArticleComments() != null) target.setArticleComments(override.getArticleComments());
         if (override.getMatchComments() != null) target.setMatchComments(override.getMatchComments());
         if (override.getDirectTagReplies() != null) target.setDirectTagReplies(override.getDirectTagReplies());
+        if (override.getMatchArticleReporterIds() != null) {
+            target.setMatchArticleReporterIds(java.util.List.copyOf(override.getMatchArticleReporterIds()));
+        }
+        if (override.getMatchArticlesPerMatch() != null) {
+            target.setMatchArticlesPerMatch(override.getMatchArticlesPerMatch());
+        }
+        if (override.getMatchArticlesAutoAccept() != null) {
+            target.setMatchArticlesAutoAccept(override.getMatchArticlesAutoAccept());
+        }
     }
 
     private static void apply(

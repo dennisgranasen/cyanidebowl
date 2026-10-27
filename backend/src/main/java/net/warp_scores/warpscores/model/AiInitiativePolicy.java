@@ -3,6 +3,8 @@ package net.warp_scores.warpscores.model;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 public class AiInitiativePolicy {
@@ -13,10 +15,13 @@ public class AiInitiativePolicy {
     @Setter
     public static class Staff {
         private AiInitiativeMode generalArticles = AiInitiativeMode.REQUEST_ONLY;
-        private AiInitiativeMode matchArticles = AiInitiativeMode.REQUEST_ONLY;
+        private AiInitiativeMode matchArticles = AiInitiativeMode.AUTONOMOUS;
         private AiInitiativeMode articleComments = AiInitiativeMode.AUTONOMOUS;
         private AiInitiativeMode matchComments = AiInitiativeMode.AUTONOMOUS;
         private AiInitiativeMode directTagReplies = AiInitiativeMode.AUTONOMOUS;
+        private List<String> matchArticleReporterIds;
+        private int matchArticlesPerMatch = 1;
+        private boolean matchArticlesAutoAccept;
     }
 
     @Getter

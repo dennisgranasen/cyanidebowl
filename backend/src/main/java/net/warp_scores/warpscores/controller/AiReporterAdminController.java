@@ -12,6 +12,7 @@ import net.warp_scores.warpscores.model.AiSettings;
 import net.warp_scores.warpscores.model.AiInitiativePolicy;
 import net.warp_scores.warpscores.model.AiReporterRuntimeState;
 import net.warp_scores.warpscores.model.EditorialImageRequest;
+import net.warp_scores.warpscores.service.AiPendingWorkService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.util.StringUtils;
@@ -31,6 +32,7 @@ public class AiReporterAdminController {
     private final AiReporterRuntimeStateRepository runtimeRepository;
     private final AiSettingsRepository settingsRepository;
     private final AiGenerationAdmissionService generationAdmission;
+        private final AiPendingWorkService pendingWork;
         private final EditorialImageRequestService imageRequests;
 
     @GetMapping
@@ -64,6 +66,34 @@ public class AiReporterAdminController {
         settingsRepository.save(settings);
         return new AdminSettings(settings.getDefaultLanguage());
     }
+
+        @GetMapping("/player-rating-routing")
+        public PlayerRatingRoutingSettings playerRatingRouting() {
+                AiSettings settings = settingsRepository.findById(AiSettings.GLOBAL_ID)
+                                .orElseGet(AiSettings::new);
+                return new PlayerRatingRoutingSettings(
+                                settings.getEditorialPlayerRatingTarget(),
+                                settings.getFanPlayerRatingTarget(),
+                                pendingWork.targetOptions("PLAYER_RATING"),
+                                pendingWork.targetOptions("FAN_PLAYER_RATING"));
+        }
+
+        @PutMapping("/player-rating-routing")
+        public PlayerRatingRoutingSettings updatePlayerRatingRouting(
+                        @RequestBody PlayerRatingRoutingUpdate update) {
+                if (update == null) {
+                        throw new IllegalArgumentException("player rating routing payload is required");
+                }
+                pendingWork.validateTarget("PLAYER_RATING", update.editorialTargetId());
+                pendingWork.validateTarget("FAN_PLAYER_RATING", update.fanTargetId());
+
+                AiSettings settings = settingsRepository.findById(AiSettings.GLOBAL_ID)
+                                .orElseGet(AiSettings::new);
+                settings.setEditorialPlayerRatingTarget(normalizeTargetId(update.editorialTargetId()));
+                settings.setFanPlayerRatingTarget(normalizeTargetId(update.fanTargetId()));
+                settingsRepository.save(settings);
+                return playerRatingRouting();
+        }
 
     @GetMapping("/initiative-policy")
     public AiInitiativePolicy initiativePolicy() {
@@ -229,6 +259,13 @@ public class AiReporterAdminController {
     public record SettingsUpdate(String defaultLanguage) {}
     public record AdminSettings(String defaultLanguage) {}
 
+    public record PlayerRatingRoutingUpdate(String editorialTargetId, String fanTargetId) {}
+    public record PlayerRatingRoutingSettings(
+            String editorialTargetId,
+            String fanTargetId,
+            List<AiPendingWorkService.TargetOption> editorialTargets,
+            List<AiPendingWorkService.TargetOption> fanTargets) {}
+
     public record GenerationLimitsUpdate(
             Boolean generationEnabled,
             Integer maxConcurrentGenerations,
@@ -281,6 +318,10 @@ public class AiReporterAdminController {
                 || policy.getStaff().getDirectTagReplies() == null) {
             throw new IllegalArgumentException("all staff initiative modes are required");
         }
+                if (policy.getStaff().getMatchArticlesPerMatch() < 1
+                                || policy.getStaff().getMatchArticlesPerMatch() > 10) {
+                        throw new IllegalArgumentException("matchArticlesPerMatch must be between 1 and 10");
+                }
 
         validateProbability(
                 "fans.generalArticleCommentProbability",
@@ -319,4 +360,8 @@ public class AiReporterAdminController {
         }
         return normalized.replace('_', '-');
     }
+
+        private static String normalizeTargetId(String targetId) {
+                return StringUtils.hasText(targetId) ? targetId.trim() : null;
+        }
 }

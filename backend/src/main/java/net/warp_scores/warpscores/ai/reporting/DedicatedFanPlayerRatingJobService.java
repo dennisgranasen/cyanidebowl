@@ -25,6 +25,7 @@ public class DedicatedFanPlayerRatingJobService {
     private final CopilotRatingQuotaUsageService quotaUsage;
     private final LlmProviderRouter providerRouter;
     private final AiProviderWorkExecutor providerWorkExecutor;
+    private final AiPlayerRatingTargetSettings targetSettings;
     private final Map<String, MutableJob> jobs = new ConcurrentHashMap<>();
     private final Map<String, String> latestByMatch = new ConcurrentHashMap<>();
 
@@ -74,14 +75,15 @@ public class DedicatedFanPlayerRatingJobService {
                 ? generator.activeFansFor(facts)
                 : generator.unratedActiveFansFor(facts);
         if (fans.isEmpty()) throw new IllegalStateException("No active Dedicated Fans are linked to either match team");
+        String effectiveTarget = targetOverride == null ? targetSettings.fanTarget() : targetOverride;
         MutableJob job = new MutableJob(UUID.randomUUID().toString(), matchId, fans.size(), 50,
-                facts, instruction, force, targetOverride, requestedBy,
+            facts, instruction, force, effectiveTarget, requestedBy,
                 fans.stream().map(fan -> fan.getDisplayName() == null ? fan.getId() : fan.getDisplayName()).toList());
         jobs.put(job.jobId, job);
         latestByMatch.put(matchId, job.jobId);
         quotaUsage.start(job.jobId, matchId, CopilotRatingQuotaUsage.RatingKind.FANS,
-            requestedBy, targetOverride, fans.size());
-        String quotaBatchId = hasText(targetOverride) && quotaUsage.isCopilotTarget(targetOverride)
+            requestedBy, effectiveTarget, fans.size());
+        String quotaBatchId = hasText(effectiveTarget) && quotaUsage.isCopilotTarget(effectiveTarget)
                 ? job.jobId : null;
         if (quotaBatchId != null) job.quotaBatches.put(quotaBatchId, new QuotaBatch(fans.size()));
         for (AiCommunityMemberProfile fan : fans) {
@@ -89,10 +91,10 @@ public class DedicatedFanPlayerRatingJobService {
             job.workIds.add(workId);
             var target = providerRouter.planForTask(
                 fan.getId(), ContextTaskType.PLAYER_RATING,
-                new LlmProviderRouter.ExecutionOverrides(targetOverride, job.priority))
+                new LlmProviderRouter.ExecutionOverrides(effectiveTarget, job.priority))
                 .primary();
             synchronized (job) {
-                job.queuedWork.put(workId, new QueuedFanWork(fan, targetOverride, quotaBatchId));
+                job.queuedWork.put(workId, new QueuedFanWork(fan, effectiveTarget, quotaBatchId));
             }
             providerWorkExecutor.submit(workId, target, job.priority,
                 () -> runOne(job, workId, fan));

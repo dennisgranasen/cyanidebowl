@@ -32,6 +32,7 @@ classification.
 | participating match coach | yes | yes | team report |
 | other claimed coach | yes | no | coach contribution |
 | AI reporter requested by editor/admin | generated draft | no | Blödareblaskan after approval |
+| AI reporter generated after finalized match with analyzed replay | generated draft | no | Blödareblaskan after approval |
 | ordinary authenticated user | no | no | n/a |
 
 The trusted-coach decision is contextual and uses the existing game-aware coach claims:
@@ -59,6 +60,16 @@ AI output is always created as `PENDING_REVIEW`; it is never auto-published.
 
 AI generation is available only to users with editor permission for the match's
 LeagueSystem (site admin is included by `UserPermissionService`).
+
+Finalized matches with an analyzed replay are also queued for automatic generation when
+the effective `MATCH_ARTICLE` initiative policy is `AUTONOMOUS` (the default). The
+durable candidate is unique per match, and generation still creates `PENDING_REVIEW`
+articles; autonomous work never publishes them.
+
+League-system policy can select the eligible AI reporters, set the number of articles
+generated per match (1–10), and enable auto-accept. Reporter selection defaults to all
+currently enabled and runnable reporters. Auto-accept is off by default; when enabled,
+the generated article is published immediately and records the system as reviewer.
 
 The server, not the client, enforces the replay prerequisite:
 

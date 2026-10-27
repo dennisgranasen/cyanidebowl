@@ -36,6 +36,7 @@ function AdminAiReportersPage() {
   const navigate = useNavigate();
   const [reporters, setReporters] = useState(null);
   const [settings, setSettings] = useState(null);
+  const [ratingRouting, setRatingRouting] = useState(null);
   const [imagePolicy, setImagePolicy] = useState('EDITORIAL');
   const [imageRequests, setImageRequests] = useState([]);
   const [savingSettings, setSavingSettings] = useState(false);
@@ -53,12 +54,14 @@ function AdminAiReportersPage() {
     Promise.all([
       AiReporterApi.adminReporters(...auth),
       AiReporterApi.adminSettings(...auth),
+      AiReporterApi.playerRatingRouting(...auth),
       AiReporterApi.imageApprovalPolicy(...auth),
       AiReporterApi.editorialImageRequests(...auth),
     ])
-      .then(([loadedReporters, loadedSettings, loadedImagePolicy, loadedImageRequests]) => {
+      .then(([loadedReporters, loadedSettings, loadedRatingRouting, loadedImagePolicy, loadedImageRequests]) => {
         setReporters(loadedReporters);
         setSettings(loadedSettings);
+        setRatingRouting(loadedRatingRouting);
         setImagePolicy(loadedImagePolicy);
         setImageRequests(loadedImageRequests);
       })
@@ -131,6 +134,22 @@ function AdminAiReportersPage() {
     }
   };
 
+  const saveRatingRouting = async (field, value) => {
+    setSavingSettings(true);
+    setError(null);
+    try {
+      const updated = await AiReporterApi.updatePlayerRatingRouting({
+        editorialTargetId: field === 'editorialTargetId' ? value : ratingRouting.editorialTargetId,
+        fanTargetId: field === 'fanTargetId' ? value : ratingRouting.fanTargetId,
+      }, ...auth);
+      setRatingRouting(updated);
+    } catch (reason) {
+      setError(reason);
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
   const saveImagePolicy = async (policy) => {
     setSavingSettings(true);
     setError(null);
@@ -188,6 +207,37 @@ function AdminAiReportersPage() {
           </Select>
           <Text mt={1} fontSize="xs" color="gray.500">
             Requested images remain commissioned until their required approval is given.
+          </Text>
+        </Box>
+      )}
+
+      {ratingRouting && (
+        <Box mt={5} maxW="520px">
+          <Text mb={1} fontSize="sm" fontWeight="700">Default provider for editorial player ratings</Text>
+          <Select size="sm" value={ratingRouting.editorialTargetId || ''} isDisabled={savingSettings}
+            onChange={(e) => saveRatingRouting('editorialTargetId', e.target.value || null)}>
+            <option value="">Use task routing policy</option>
+            {ratingRouting.editorialTargets.map((target) => (
+              <option key={target.targetId} value={target.targetId}>
+                {target.targetId} · {target.provider} / {target.model}
+              </option>
+            ))}
+          </Select>
+          <Text mt={1} fontSize="xs" color="gray.500">
+            Applies to newly queued editorial ratings. Existing queued ratings can be moved in the work queue.
+          </Text>
+          <Text mt={4} mb={1} fontSize="sm" fontWeight="700">Default provider for fan player ratings</Text>
+          <Select size="sm" value={ratingRouting.fanTargetId || ''} isDisabled={savingSettings}
+            onChange={(e) => saveRatingRouting('fanTargetId', e.target.value || null)}>
+            <option value="">Use task routing policy</option>
+            {ratingRouting.fanTargets.map((target) => (
+              <option key={target.targetId} value={target.targetId}>
+                {target.targetId} · {target.provider} / {target.model}
+              </option>
+            ))}
+          </Select>
+          <Text mt={1} fontSize="xs" color="gray.500">
+            Applies to newly queued fan ratings. Running calls stay on their current provider.
           </Text>
         </Box>
       )}

@@ -27,7 +27,7 @@ class AiInitiativePolicyServiceTest {
         assertThat(service.staffMode(null, AiInitiativePolicyService.StaffActivity.GENERAL_ARTICLE))
                 .isEqualTo(AiInitiativeMode.REQUEST_ONLY);
         assertThat(service.staffMode(null, AiInitiativePolicyService.StaffActivity.MATCH_ARTICLE))
-                .isEqualTo(AiInitiativeMode.REQUEST_ONLY);
+                .isEqualTo(AiInitiativeMode.AUTONOMOUS);
         assertThat(service.staffMode(null, AiInitiativePolicyService.StaffActivity.ARTICLE_COMMENT))
                 .isEqualTo(AiInitiativeMode.AUTONOMOUS);
         assertThat(service.staffMode(null, AiInitiativePolicyService.StaffActivity.MATCH_COMMENT))
@@ -52,6 +52,28 @@ class AiInitiativePolicyServiceTest {
                 AiInitiativePolicyService.StaffActivity.MATCH_ARTICLE))
                 .isEqualTo(AiInitiativeMode.AUTONOMOUS);
     }
+
+        @Test
+        void matchArticleControlsUseDefaultsAndLeagueOverrides() {
+                when(settings.findById(AiSettings.GLOBAL_ID)).thenReturn(Optional.empty());
+                when(leagues.findById("ls-1")).thenReturn(Optional.empty());
+
+                var defaults = service.effective("ls-1").staff();
+                assertThat(defaults.getMatchArticleReporterIds()).isNull();
+                assertThat(defaults.getMatchArticlesPerMatch()).isEqualTo(1);
+                assertThat(defaults.isMatchArticlesAutoAccept()).isFalse();
+
+                AiLeagueSystemInitiativePolicy override = new AiLeagueSystemInitiativePolicy();
+                override.getStaff().setMatchArticleReporterIds(java.util.List.of("reporter-a", "reporter-b"));
+                override.getStaff().setMatchArticlesPerMatch(4);
+                override.getStaff().setMatchArticlesAutoAccept(true);
+                when(leagues.findById("ls-1")).thenReturn(Optional.of(override));
+
+                var effective = service.effective("ls-1").staff();
+                assertThat(effective.getMatchArticleReporterIds()).containsExactly("reporter-a", "reporter-b");
+                assertThat(effective.getMatchArticlesPerMatch()).isEqualTo(4);
+                assertThat(effective.isMatchArticlesAutoAccept()).isTrue();
+        }
 
     @Test
     void fanOwnTeamMatchRequiresActualTeamParticipation() {

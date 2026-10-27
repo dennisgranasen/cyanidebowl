@@ -21,6 +21,12 @@ public class AiSettings {
 
     private String defaultLanguage = "sv";
 
+    /** Optional configured text target for newly queued editorial player ratings. */
+    private String editorialPlayerRatingTarget;
+
+    /** Optional configured text target for newly queued Dedicated Fan ratings. */
+    private String fanPlayerRatingTarget;
+
     /**
      * Site-wide hard kill switch for provider-backed generation.
      * Missing/legacy values remain enabled for backwards compatibility.
