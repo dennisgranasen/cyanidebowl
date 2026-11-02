@@ -16,6 +16,8 @@ import LanguageSelect from '../components/common/LanguageSelect';
 import WarpScoresApiService from '../WarpScoresApiService';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 import { useLocale } from '../i18n/I18nProvider';
+import SiteUserAdmin from '../components/admin/SiteUserAdmin';
+import ReplaySweeperAdmin from '../components/admin/ReplaySweeperAdmin';
 
 export default function LocalizationAdminPage() {
   const intl = useIntl();
@@ -23,6 +25,7 @@ export default function LocalizationAdminPage() {
   const {
     getAccessTokenSilently,
     getAccessTokenWithPopup,
+    userPermissions,
   } = useAuth0WithUserPermissions();
   const auth = [getAccessTokenSilently, getAccessTokenWithPopup];
   const [selected, setSelected] = useState(defaultLocale);
@@ -53,7 +56,8 @@ export default function LocalizationAdminPage() {
 
   return (
     <Stack>
-      <Navigation currentPage="admin" />
+      <Navigation currentPage="admin" parentPage="admin" />
+      <Heading size="lg">General settings</Heading>
       <Box maxW="xl" borderWidth="1px" borderRadius="md" p={5}>
         <Heading size="lg" mb={3}>
           {intl.formatMessage({ id: 'localizationAdmin.heading' })}
@@ -70,6 +74,8 @@ export default function LocalizationAdminPage() {
         </Button>
         {notice && <Alert status={notice.status} mt={4}><AlertIcon />{notice.message}</Alert>}
       </Box>
+      {userPermissions.writeSiteAdmin && <ReplaySweeperAdmin auth={auth} />}
+      {userPermissions.writeSiteAdmin && <SiteUserAdmin auth={auth} />}
     </Stack>
   );
 }

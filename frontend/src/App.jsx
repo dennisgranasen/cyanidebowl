@@ -38,6 +38,7 @@ import CommunityProfilePage from './pages/CommunityProfilePage';
 import AdminCommunityFansPage from './pages/AdminCommunityFansPage';
 import AdminAiAutonomousWorkPage from './pages/AdminAiAutonomousWorkPage';
 import AdminEditorialPage from './pages/AdminEditorialPage';
+import AdminCoachPage from './pages/AdminCoachPage';
 
 import { MockAuth0Provider } from './components/misc/MockAuthProvider';
 import logger from './util/logger';
@@ -171,11 +172,15 @@ function AppRoutes() {
       <Route path="/account" element={<ProtectedRoute component={AccountPage} />} />
       <Route path="/language" element={<LanguagePreferencesPage />} />
       <Route path="/admin/localization" element={<ProtectedRoute component={LocalizationAdminPage} />} />
+      <Route path="/admin/settings" element={<ProtectedRoute component={LocalizationAdminPage} />} />
       <Route path="/my-statistics" element={<ProtectedRoute component={MyStatisticsPage} />} />
-      <Route path="/admin" element={<ProtectedRoute component={AdminPage} />} />
+      <Route path="/admin" element={<ProtectedRoute component={LocalizationAdminPage} />} />
+      <Route path="/admin/leagues" element={<ProtectedRoute component={AdminPage} />} />
+      <Route path="/admin/coaches" element={<ProtectedRoute component={AdminCoachPage} />} />
       <Route path="/admin/ai-reporters" element={<ProtectedRoute component={AdminAiReportersPage} />} />
       <Route path="/admin/editorial" element={<ProtectedRoute component={AdminEditorialPage} />} />
       <Route path="/admin/community-fans" element={<ProtectedRoute component={AdminCommunityFansPage} />} />
+      <Route path="/admin/community" element={<ProtectedRoute component={AdminCommunityFansPage} />} />
       <Route path="/admin/ai-autonomous-work" element={<ProtectedRoute component={AdminAiAutonomousWorkPage} />} />
       <Route path="/editor/articles/:articleId" element={<ProtectedRoute component={ArticleEditorPage} />} />
       <Route path="/editor/articles/new" element={<ProtectedRoute component={ArticleEditorPage} />} />

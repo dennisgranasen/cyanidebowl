@@ -210,56 +210,11 @@ function Menu({ leagueSystems = [], selectedLeagueSystemId, selectedSeasonId, on
                       {intl.formatMessage({ id: 'menu.section.administration', defaultMessage: 'Administration' })}
                     </Box>
                     <VStack align="stretch" spacing={3}>
-                      <Box>
-                        <Box fontSize="xs" color="gray.500" textTransform="uppercase" mb={1}>
-                          {intl.formatMessage({ id: 'menu.admin.general', defaultMessage: 'General' })}
-                        </Box>
-                        <VStack align="left" spacing={1}>
-                          <Link variant="menu" as={RouteLink} to="/admin" onClick={onClose}>
-                            {intl.formatMessage({ id: 'menu.admin' })}
-                          </Link>
-                          {userPermissions?.writeSiteAdmin && (
-                            <Link variant="menu" as={RouteLink} to="/admin/localization" onClick={onClose}>
-                              {intl.formatMessage({ id: 'menu.localizationAdmin' })}
-                            </Link>
-                          )}
-                        </VStack>
-                      </Box>
-                      {userPermissions?.writeSiteAdmin && (
-                        <Box>
-                          <Box fontSize="xs" color="gray.500" textTransform="uppercase" mb={1}>
-                            {intl.formatMessage({ id: 'menu.section.community', defaultMessage: 'Community' })}
-                          </Box>
-                          <Link variant="menu" as={RouteLink} to="/admin/community-fans" onClick={onClose}>
-                            Community admin
-                          </Link>
-                        </Box>
-                      )}
-                      {userPermissions?.writeSiteAdmin && (
-                        <Box>
-                          <Box fontSize="xs" color="gray.500" textTransform="uppercase" mb={1}>
-                            {intl.formatMessage({ id: 'menu.admin.editorial', defaultMessage: 'Editorial' })}
-                          </Box>
-                          <VStack align="left" spacing={1}>
-                            <Link variant="menu" as={RouteLink} to="/admin/editorial" onClick={onClose}>
-                              {intl.formatMessage({ id: 'menu.editorialReview' })}
-                            </Link>
-                            <Link variant="menu" as={RouteLink} to="/admin/ai-reporters" onClick={onClose}>
-                              {intl.formatMessage({ id: 'menu.admin.reporters' })}
-                            </Link>
-                          </VStack>
-                        </Box>
-                      )}
-                      {userPermissions?.writeSiteAdmin && (
-                        <Box>
-                          <Box fontSize="xs" color="gray.500" textTransform="uppercase" mb={1}>
-                            {intl.formatMessage({ id: 'menu.admin.ai', defaultMessage: 'AI' })}
-                          </Box>
-                          <Link variant="menu" as={RouteLink} to="/admin/ai-autonomous-work" onClick={onClose}>
-                            {intl.formatMessage({ id: 'menu.admin.ai-autonomous-work' })}
-                          </Link>
-                        </Box>
-                      )}
+                      {userPermissions?.writeSiteAdmin && <Link variant="menu" as={RouteLink} to="/admin/settings" onClick={onClose}>General settings</Link>}
+                      {(userPermissions?.writeSiteAdmin || userPermissions?.writeLeagueAdmin) && <Link variant="menu" as={RouteLink} to="/admin/leagues" onClick={onClose}>League systems</Link>}
+                      {(userPermissions?.writeSiteAdmin || userPermissions?.writeEditor || userPermissions?.editorForLeagueSystems?.length > 0) && <Link variant="menu" as={RouteLink} to="/admin/editorial" onClick={onClose}>Editorial</Link>}
+                      {userPermissions?.writeSiteAdmin && <Link variant="menu" as={RouteLink} to="/admin/coaches" onClick={onClose}>Coaches</Link>}
+                      {userPermissions?.writeSiteAdmin && <Link variant="menu" as={RouteLink} to="/admin/community" onClick={onClose}>Community</Link>}
                     </VStack>
                   </Box>
                 )}
