@@ -26,9 +26,9 @@ import Navigation from '../components/misc/Navigation';
 import AiReporterApi from '../AiReporterApi';
 import PendingAiWork from '../components/ai-reporters/PendingAiWork';
 import AiJobInputDialog from '../components/ai-reporters/AiJobInputDialog';
-import AiFanMatchCommentSettings from '../components/ai-reporters/AiFanMatchCommentSettings';
-import AiMatchArticleSettings from '../components/ai-reporters/AiMatchArticleSettings';
+import AiPlayerRatingRoutingSettings from '../components/ai-reporters/AiPlayerRatingRoutingSettings';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
+import { useIntl } from 'react-intl';
 
 const metric = (label, value) => (
   <Box borderWidth="1px" borderRadius="md" p={3}>
@@ -60,6 +60,7 @@ const countdown = (value, nowMs) => {
 const PAGE_SIZE = 10;
 
 function AdminAiAutonomousWorkPage() {
+  const intl = useIntl();
   const {
     authenticationReady,
     userPermissions,
@@ -127,10 +128,11 @@ function AdminAiAutonomousWorkPage() {
 
   useEffect(() => {
     if (!authenticationReady) return;
-    if (!userPermissions.writeSiteAdmin) {
+    if (!userPermissions.writeSiteAdmin && !userPermissions.writeEditor) {
       navigate('/admin');
       return;
     }
+    if (!userPermissions.writeSiteAdmin) return;
     let active = true, timer;
     const refresh = async () => {
       await load();
@@ -138,7 +140,7 @@ function AdminAiAutonomousWorkPage() {
     };
     refresh();
     return () => { active = false; clearTimeout(timer); };
-  }, [authenticationReady, userPermissions.writeSiteAdmin, navigate, load]);
+  }, [authenticationReady, userPermissions.writeSiteAdmin, userPermissions.writeEditor, navigate, load]);
 
   useEffect(() => {
     if (!authenticationReady || !userPermissions.writeSiteAdmin) return undefined;
@@ -337,35 +339,34 @@ function AdminAiAutonomousWorkPage() {
       <Navigation currentPage="admin" parentPage="admin" />
       <HStack mt={6} justify="space-between" align="start">
         <Box>
-          <Heading>AI work queues</Heading>
+          <Heading>{userPermissions.writeSiteAdmin
+            ? 'AI work queues'
+            : intl.formatMessage({ id: 'editorialReview.pageTitle' })}</Heading>
           <Text mt={2} color="gray.400">
-            Inspect AI jobs either by the application service that requested them or by the AI provider executing them.
+            {userPermissions.writeSiteAdmin
+              ? 'Inspect AI jobs either by the application service that requested them or by the AI provider executing them.'
+              : intl.formatMessage({ id: 'editorialReview.pageHelp' })}
           </Text>
         </Box>
-        <Button variant="outline" onClick={load} isLoading={loading} isDisabled={!authenticationReady || !userPermissions.writeSiteAdmin}>
-          Refresh
-        </Button>
+        {userPermissions.writeSiteAdmin && (
+          <Button variant="outline" onClick={load} isLoading={loading} isDisabled={!authenticationReady}>
+            Refresh
+          </Button>
+        )}
       </HStack>
 
-      {error && (
+      {userPermissions.writeSiteAdmin && error && (
         <Text mt={4} color="red.300">{error.message || String(error)}</Text>
       )}
 
       {authenticationReady && userPermissions.writeSiteAdmin && (
-        <>
-          <AiFanMatchCommentSettings
-            getAccessTokenSilently={getAccessTokenSilently}
-            getAccessTokenWithPopup={getAccessTokenWithPopup}
-            onBackfillComplete={load}
-          />
-          <AiMatchArticleSettings
-            getAccessTokenSilently={getAccessTokenSilently}
-            getAccessTokenWithPopup={getAccessTokenWithPopup}
-          />
-        </>
+        <AiPlayerRatingRoutingSettings
+          getAccessTokenSilently={getAccessTokenSilently}
+          getAccessTokenWithPopup={getAccessTokenWithPopup}
+        />
       )}
 
-      {!overview && !error && <Spinner mt={8} />}
+      {userPermissions.writeSiteAdmin && !overview && !error && <Spinner mt={8} />}
 
       {overview && (
         <VStack mt={6} spacing={6} align="stretch">

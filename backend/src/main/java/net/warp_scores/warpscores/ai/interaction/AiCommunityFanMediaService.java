@@ -25,6 +25,7 @@ import static net.warp_scores.warpscores.model.AiCommunityMediaGenerationRequest
 public class AiCommunityFanMediaService {
     private final AiCommunityMediaGenerationRequestRepository requests;
     private final LlmProviderRouter routing;
+    private final AiCommunityMediaAssetStore assets;
 
     public synchronized void ensureInitialRequests(AiCommunityMemberProfile profile) {
         if (profile == null || !StringUtils.hasText(profile.getId())) return;
@@ -70,7 +71,7 @@ public class AiCommunityFanMediaService {
         return regenerate(profile, null);
     }
 
-    public record QueueMissingResult(int queued, int alreadyQueued, int missingPrompt) {}
+    public record QueueMissingResult(int queued, int alreadyQueued, int missingPrompt, int missing) {}
     private record MediaKey(String profileId, Target target) {}
 
     public synchronized AiCommunityMediaGenerationRequest preview(
@@ -96,12 +97,13 @@ public class AiCommunityFanMediaService {
         requests.findByStatusInOrderByPriorityDescCreatedAtAsc(List.of(QUEUED, RUNNING))
                 .forEach(r -> activeJobs.add(new MediaKey(r.getFanProfileId(), r.getTarget())));
         List<AiCommunityMediaGenerationRequest> added = new ArrayList<>();
-        int alreadyQueued = 0, missingPrompt = 0;
+        int alreadyQueued = 0, missingPrompt = 0, missing = 0;
         for (var profile : profiles) {
             for (Target selected : Target.values()) {
                 if (target != null && target != selected) continue;
                 String url = selected == Target.PROFILE_IMAGE ? profile.getProfileImageUrl() : profile.getAvatarImageUrl();
-                if (StringUtils.hasText(url)) continue;
+            if (StringUtils.hasText(url) && !assets.isMissingManagedAsset(url)) continue;
+            missing++;
                 MediaKey key = new MediaKey(profile.getId(), selected);
                 if (activeJobs.contains(key)) { alreadyQueued++; continue; }
                 String prompt = prompt(profile, selected);
@@ -115,7 +117,7 @@ public class AiCommunityFanMediaService {
             try { requests.insert(request); queued++; }
             catch (DuplicateKeyException duplicate) { alreadyQueued++; }
         }
-        return new QueueMissingResult(queued, alreadyQueued, missingPrompt);
+        return new QueueMissingResult(queued, alreadyQueued, missingPrompt, missing);
     }
 
     private static boolean active(AiCommunityMediaGenerationRequest request) {

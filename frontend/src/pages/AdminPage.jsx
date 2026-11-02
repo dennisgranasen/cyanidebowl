@@ -11,7 +11,6 @@ import formatter from '../util/formatter';
 import MatchSelectionEditor from '../components/admin/MatchSelectionEditor';
 import ReplaySweeperAdmin from '../components/admin/ReplaySweeperAdmin';
 import SiteUserAdmin from '../components/admin/SiteUserAdmin';
-import RejectedMatchArticlesAdmin from '../components/admin/RejectedMatchArticlesAdmin';
 
 const emptySystem = { name: '', primary: false, discoveryAliases: [], discoveryNotificationEnabled: false, discoveryNotificationEmail: '' };
 const emptySeason = { id: '', number: '', name: '', isCollected: true };
@@ -248,44 +247,8 @@ function AdminPage() {
     <VStack align="stretch" spacing={5}>
       <Navigation currentPage="admin" />
       <HeaderCard mainImageSrc={imageUrls.blaskscoreLogoPng('medium')} heading="League Systems" subHeading="Manage seasons, stages, and match sources" />
-      {userPermissions.writeSiteAdmin && (
-        <Box borderWidth="1px" borderRadius="md" p={4}>
-          <HStack
-            justify="space-between"
-            align={{ base: 'stretch', md: 'center' }}
-            flexDirection={{ base: 'column', md: 'row' }}
-          >
-            <Box>
-              <Heading size="sm">Community fans</Heading>
-              <Text mt={1} color="gray.500" fontSize="sm">
-                Manage generated fan identities, personalities, media and population reconciliation.
-              </Text>
-            </Box>
-            <HStack>
-              <Button
-                colorScheme="purple"
-                onClick={() => navigate('/admin/community-fans')}
-              >
-                Manage community fans
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => navigate('/admin/ai-autonomous-work')}
-              >
-                Autonomous AI work
-              </Button>
-            </HStack>
-          </HStack>
-        </Box>
-      )}
       {userPermissions.writeSiteAdmin && <ReplaySweeperAdmin auth={auth} />}
       {userPermissions.writeSiteAdmin && <SiteUserAdmin auth={auth} />}
-      {userPermissions.writeSiteAdmin && (
-        <RejectedMatchArticlesAdmin
-          getAccessTokenSilently={getAccessTokenSilently}
-          onError={fail}
-        />
-      )}
       {error && <Text color="red.400">{error}</Text>}
       <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}><ResourceList heading="League systems" items={systems} selectedId={selectedSystemId} onSelect={selectSystem} label={(item) => `${item.primary ? 'â˜… ' : ''}${item.name || item.id}`} /><Box><Heading size="sm" mb={2}>{selectedSystemId ? 'Edit league system' : 'New league system'}</Heading><TextField label="Name" value={system.name} onChange={(name) => setSystem({ ...system, name })} /><Checkbox mt={3} isChecked={Boolean(system.primary)} onChange={(event) => setSystem({ ...system, primary: event.target.checked })}>Primary league system on home page</Checkbox><TextField label="Discovery aliases (comma separated)" value={(system.discoveryAliases || []).join(', ')} onChange={(value) => setSystem({ ...system, discoveryAliases: value.split(',').map((alias) => alias.trim()).filter(Boolean) })} /><Checkbox mt={3} isChecked={Boolean(system.discoveryNotificationEnabled)} onChange={(event) => setSystem({ ...system, discoveryNotificationEnabled: event.target.checked })}>Email new candidate notifications</Checkbox>{system.discoveryNotificationEnabled && <TextField label="Notification email" type="email" value={system.discoveryNotificationEmail} onChange={(discoveryNotificationEmail) => setSystem({ ...system, discoveryNotificationEmail })} />}<HStack mt={3}><Button onClick={() => { setSelectedSystemId(null); setSystem(emptySystem); }}>New</Button><Button colorScheme="blue" onClick={saveSystem}>Save</Button>{selectedSystemId && <Button colorScheme="red" onClick={() => remove('league system', () => WarpScoresApiService.deleteLeagueSystem(selectedSystemId, ...auth), () => { setSelectedSystemId(null); setSystem(emptySystem); setSeasons([]); setStages([]); setSources([]); })}>Delete</Button>}</HStack></Box></SimpleGrid>
       {selectedSystemId && <FormControl maxW="30rem"><FormLabel>Working season</FormLabel><Select placeholder={seasons.length ? 'Choose the season to configure' : 'No seasons yet â€” create one below'} value={selectedSeasonId || ''} isDisabled={seasons.length === 0} onChange={(event) => { const selected = seasons.find((item) => item.id === event.target.value); if (selected) selectSeason(selected); }}>{seasons.map((item) => <option key={item.id} value={item.id}>{item.name || `Season ${item.number}`}</option>)}</Select><Text color="gray.500" fontSize="sm" mt={1}>Selecting a season reveals its phases, stages, watched sources, summaries, and Inspect actions.</Text></FormControl>}

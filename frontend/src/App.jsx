@@ -37,6 +37,7 @@ import CommunityPage from './pages/CommunityPage';
 import CommunityProfilePage from './pages/CommunityProfilePage';
 import AdminCommunityFansPage from './pages/AdminCommunityFansPage';
 import AdminAiAutonomousWorkPage from './pages/AdminAiAutonomousWorkPage';
+import AdminEditorialPage from './pages/AdminEditorialPage';
 
 import { MockAuth0Provider } from './components/misc/MockAuthProvider';
 import logger from './util/logger';
@@ -173,6 +174,7 @@ function AppRoutes() {
       <Route path="/my-statistics" element={<ProtectedRoute component={MyStatisticsPage} />} />
       <Route path="/admin" element={<ProtectedRoute component={AdminPage} />} />
       <Route path="/admin/ai-reporters" element={<ProtectedRoute component={AdminAiReportersPage} />} />
+      <Route path="/admin/editorial" element={<ProtectedRoute component={AdminEditorialPage} />} />
       <Route path="/admin/community-fans" element={<ProtectedRoute component={AdminCommunityFansPage} />} />
       <Route path="/admin/ai-autonomous-work" element={<ProtectedRoute component={AdminAiAutonomousWorkPage} />} />
       <Route path="/editor/articles/:articleId" element={<ProtectedRoute component={ArticleEditorPage} />} />

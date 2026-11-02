@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, AlertIcon, Box, Button, Checkbox, FormControl, FormLabel, Heading, Input, Select, SimpleGrid, Stack, Text, Textarea, VStack } from '@chakra-ui/react';
-import { Link as RouteLink } from 'react-router-dom';
+import { Alert, AlertIcon, Box, Button, Checkbox, FormControl, FormLabel, Heading, Input, Select, Stack, Text, Textarea, VStack } from '@chakra-ui/react';
 import WarpScoresApiService from '../WarpScoresApiService';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 import Navigation from '../components/misc/Navigation';
@@ -13,7 +12,7 @@ export default function AccountPage() {
   const intl = useIntl();
   const { user, userPermissions, getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0WithUserPermissions();
   const auth = [getAccessTokenSilently, getAccessTokenWithPopup];
-  const { teams, claims, loading: teamsLoading, teamsError, refresh } = useMyTeams();
+  const { claims, refresh } = useMyTeams();
   const [connection, setConnection] = useState(null);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -87,29 +86,6 @@ export default function AccountPage() {
           <Text>{intl.formatMessage({ id: 'account.connectedAs' }, { name: connection.steamUsername })}</Text>
           <Text fontSize="sm" color="gray.500">{intl.formatMessage({ id: 'account.autoClaim' })}</Text>
           {connection.remembered && <Text fontSize="sm" color="gray.500">{intl.formatMessage({ id: 'account.rememberedSteam' })}</Text>}
-          <Heading size="sm" pt={2}>{intl.formatMessage({ id: 'account.myTeams' })}</Heading>
-          {teamsLoading ? <Text>{intl.formatMessage({ id: 'account.loadingTeams' })}</Text> : teamsError ? <Stack align="start">
-            <Text color="red.500">{intl.formatMessage({ id: 'account.teamsLoadFailed' })}</Text>
-            <Text fontSize="sm" color="gray.500">{teamsError}</Text>
-            <Button size="sm" variant="outline" onClick={refresh} isLoading={teamsLoading}>{intl.formatMessage({ id: 'account.retryTeams' })}</Button>
-          </Stack> : teams.length === 0 ? <Text>{intl.formatMessage({ id: 'account.noTeams' })}</Text> :
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>{teams.map((team) => {
-              const teamId = String(team.id);
-              const teamPageId = teamId.startsWith('3_') ? teamId : `3_${teamId}`;
-              return <Box
-                as={RouteLink}
-                to={`/team/${encodeURIComponent(teamPageId)}`}
-                key={team.id}
-                borderWidth="1px"
-                borderRadius="md"
-                p={3}
-                _hover={{ borderColor: 'teal.400', textDecoration: 'none' }}
-                _focusVisible={{ outline: '2px solid', outlineColor: 'teal.400' }}
-              >
-                <Text fontWeight="bold">{team.name || team.id}</Text>
-                <Text fontSize="sm">{intl.formatMessage({ id: 'account.raceTv' }, { race: team.raceId ?? intl.formatMessage({ id: 'common.unknown' }), tv: team.teamValue ?? intl.formatMessage({ id: 'common.unknown' }) })}</Text>
-              </Box>;
-            })}</SimpleGrid>}
           <Button alignSelf="start" onClick={() => run(async () => { await WarpScoresApiService.disconnectSteam(...auth); return { status: 'DISCONNECTED' }; })} isLoading={busy}>{intl.formatMessage({ id: 'account.disconnect' })}</Button>
           {connection.remembered && <Button alignSelf="start" variant="outline" onClick={() => run(async () => {
             await WarpScoresApiService.forgetRememberedSteam(...auth);

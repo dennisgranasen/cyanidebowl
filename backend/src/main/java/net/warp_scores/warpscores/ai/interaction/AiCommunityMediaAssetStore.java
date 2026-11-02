@@ -85,6 +85,18 @@ public class AiCommunityMediaAssetStore {
         return file.toUri().toString();
     }
 
+    public boolean isMissingManagedAsset(String publicUrl) {
+        if (!StringUtils.hasText(publicUrl)) return false;
+        String prefix = "/community/media/assets/";
+        if (!publicUrl.startsWith(prefix)) return false;
+
+        String filename = publicUrl.substring(prefix.length());
+        if (!filename.matches("[A-Za-z0-9._-]+")) return false;
+
+        Path file = storageDir.resolve(filename).normalize();
+        return file.startsWith(storageDir) && Files.notExists(file);
+    }
+
     public Resource resource(String filename) {
         if (!StringUtils.hasText(filename)
                 || !filename.matches("[A-Za-z0-9._-]+")) {

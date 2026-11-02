@@ -184,6 +184,11 @@ function Menu({ leagueSystems = [], selectedLeagueSystemId, selectedSeasonId, on
                         {intl.formatMessage({ id: 'menu.writeArticle' })}
                       </Link>
                     )}
+                    {checkPermissions && userPermissions?.writeEditor && (
+                      <Link variant="menu" as={RouteLink} to="/admin/editorial" onClick={onClose}>
+                        {intl.formatMessage({ id: 'menu.editorialReview' })}
+                      </Link>
+                    )}
                     <Link variant="menu" as={RouteLink} to="/staff" onClick={onClose}>
                       {intl.formatMessage({ id: 'menu.staff' })}
                     </Link>
@@ -204,29 +209,56 @@ function Menu({ leagueSystems = [], selectedLeagueSystemId, selectedSeasonId, on
                     <Box fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide" mb={1}>
                       {intl.formatMessage({ id: 'menu.section.administration', defaultMessage: 'Administration' })}
                     </Box>
-                    <VStack align="left" spacing={1}>
-                      <Link variant="menu" as={RouteLink} to="/admin" onClick={onClose}>
-                        {intl.formatMessage({ id: 'menu.admin' })}
-                      </Link>
-                      {checkPermissions && userPermissions?.writeSiteAdmin && (
-                        <Link variant="menu" as={RouteLink} to="/admin/community-fans" onClick={onClose}>
-                          Community admin
-                        </Link>
-                      )}
-                      {checkPermissions && userPermissions?.writeSiteAdmin && (
-                        <Link variant="menu" as={RouteLink} to="/admin/ai-reporters" onClick={onClose}>
-                          {intl.formatMessage({ id: 'menu.admin.reporters' })}                          
-                        </Link>
-                      )}
-                      {checkPermissions && userPermissions?.writeSiteAdmin && (
-                        <Link variant="menu" as={RouteLink} to="/admin/ai-autonomous-work" onClick={onClose}>
-                          {intl.formatMessage({ id: 'menu.admin.ai-autonomous-work' })}                          
-                        </Link>
+                    <VStack align="stretch" spacing={3}>
+                      <Box>
+                        <Box fontSize="xs" color="gray.500" textTransform="uppercase" mb={1}>
+                          {intl.formatMessage({ id: 'menu.admin.general', defaultMessage: 'General' })}
+                        </Box>
+                        <VStack align="left" spacing={1}>
+                          <Link variant="menu" as={RouteLink} to="/admin" onClick={onClose}>
+                            {intl.formatMessage({ id: 'menu.admin' })}
+                          </Link>
+                          {userPermissions?.writeSiteAdmin && (
+                            <Link variant="menu" as={RouteLink} to="/admin/localization" onClick={onClose}>
+                              {intl.formatMessage({ id: 'menu.localizationAdmin' })}
+                            </Link>
+                          )}
+                        </VStack>
+                      </Box>
+                      {userPermissions?.writeSiteAdmin && (
+                        <Box>
+                          <Box fontSize="xs" color="gray.500" textTransform="uppercase" mb={1}>
+                            {intl.formatMessage({ id: 'menu.section.community', defaultMessage: 'Community' })}
+                          </Box>
+                          <Link variant="menu" as={RouteLink} to="/admin/community-fans" onClick={onClose}>
+                            Community admin
+                          </Link>
+                        </Box>
                       )}
                       {userPermissions?.writeSiteAdmin && (
-                        <Link variant="menu" as={RouteLink} to="/admin/localization" onClick={onClose}>
-                          {intl.formatMessage({ id: 'menu.localizationAdmin' })}
-                        </Link>
+                        <Box>
+                          <Box fontSize="xs" color="gray.500" textTransform="uppercase" mb={1}>
+                            {intl.formatMessage({ id: 'menu.admin.editorial', defaultMessage: 'Editorial' })}
+                          </Box>
+                          <VStack align="left" spacing={1}>
+                            <Link variant="menu" as={RouteLink} to="/admin/editorial" onClick={onClose}>
+                              {intl.formatMessage({ id: 'menu.editorialReview' })}
+                            </Link>
+                            <Link variant="menu" as={RouteLink} to="/admin/ai-reporters" onClick={onClose}>
+                              {intl.formatMessage({ id: 'menu.admin.reporters' })}
+                            </Link>
+                          </VStack>
+                        </Box>
+                      )}
+                      {userPermissions?.writeSiteAdmin && (
+                        <Box>
+                          <Box fontSize="xs" color="gray.500" textTransform="uppercase" mb={1}>
+                            {intl.formatMessage({ id: 'menu.admin.ai', defaultMessage: 'AI' })}
+                          </Box>
+                          <Link variant="menu" as={RouteLink} to="/admin/ai-autonomous-work" onClick={onClose}>
+                            {intl.formatMessage({ id: 'menu.admin.ai-autonomous-work' })}
+                          </Link>
+                        </Box>
                       )}
                     </VStack>
                   </Box>

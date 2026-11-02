@@ -10,6 +10,7 @@ import CommunityApi from '../CommunityApi';
 import CommunityProfileMediaAdmin from '../components/community/CommunityProfileMediaAdmin';
 import useAuth0WithUserPermissions from '../hooks/useAuth0WithUserPermissions';
 import AiReporterApi from '../AiReporterApi';
+import AiFanMatchCommentSettings from '../components/ai-reporters/AiFanMatchCommentSettings';
 
 const behavioralFields = [
   ['optimism', 'Optimism'],
@@ -113,7 +114,8 @@ function AdminCommunityFansPage() {
     setBusy(true); setError(''); setMessage('');
     try {
       const result = await WarpScoresApiService.queueMissingCommunityFanMedia(target, ...auth);
-      setMessage(`${result.queued} image jobs queued; ${result.alreadyQueued} already queued/running; ${result.missingPrompt} skipped because an image prompt is missing.`);
+      const label = target === 'PROFILE_IMAGE' ? 'profile images' : 'avatars';
+      setMessage(`Found ${result.missing} missing ${label}; ${result.queued} jobs queued; ${result.alreadyQueued} already queued/running; ${result.missingPrompt} skipped because an image prompt is missing.`);
       await load();
     } catch (e) { setError(e?.message || String(e)); }
     finally { setBusy(false); }
@@ -190,6 +192,11 @@ function AdminCommunityFansPage() {
   return (
     <VStack align="stretch" spacing={5} p={{ base: 3, md: 6 }}>
       <Navigation currentPage="admin" />
+      <AiFanMatchCommentSettings
+        getAccessTokenSilently={getAccessTokenSilently}
+        getAccessTokenWithPopup={getAccessTokenWithPopup}
+        onBackfillComplete={load}
+      />
       <HStack justify="space-between">
         <Box>
           <Heading>Community members</Heading>
@@ -226,17 +233,14 @@ function AdminCommunityFansPage() {
 
       <Box borderWidth="1px" borderRadius="md" p={4}>
         <HStack justify="space-between"><Heading size="sm">Missing images</Heading>
-          <Button size="sm" onClick={load} isDisabled={busy}>Refresh counts</Button></HStack>
-        <Text fontSize="sm" mt={2}>All community profiles, including inactive members. Existing images are kept; queued and running jobs are skipped.</Text>
+          <Button size="sm" onClick={load} isDisabled={busy}>Refresh profiles</Button></HStack>
+        <Text fontSize="sm" mt={2}>Scan all community profiles, including inactive members. Missing generated-image files are re-created; existing files and external image URLs are left untouched. Queued and running jobs are skipped.</Text>
         <SimpleGrid mt={3} columns={{ base: 1, md: 2 }} spacing={4}>
           {[
-            ['PROFILE_IMAGE', 'profileImageUrl', 'Profile images'],
-            ['AVATAR', 'avatarImageUrl', 'Avatars'],
-          ].map(([target, field, label]) => {
-            const count = fans.filter(fan => !fan[field]?.trim()).length;
-            return <Box key={target}><Text>{label} missing: <strong>{count}</strong></Text>
-              <Button mt={2} size="sm" isLoading={busy} isDisabled={!count} onClick={() => queueMissing(target)}>Queue missing {label.toLowerCase()}</Button></Box>;
-          })}
+            ['PROFILE_IMAGE', 'Profile images'],
+            ['AVATAR', 'Avatars'],
+          ].map(([target, label]) => <Box key={target}><Text>{label}</Text>
+            <Button mt={2} size="sm" isLoading={busy} onClick={() => queueMissing(target)}>Scan and queue missing {label.toLowerCase()}</Button></Box>)}
         </SimpleGrid>
       </Box>
 

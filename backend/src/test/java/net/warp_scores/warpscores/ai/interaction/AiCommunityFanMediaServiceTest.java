@@ -5,6 +5,9 @@ import net.warp_scores.warpscores.domain.persistence.AiCommunityMediaGenerationR
 import net.warp_scores.warpscores.model.AiCommunityMediaGenerationRequest;
 import net.warp_scores.warpscores.model.AiCommunityMemberProfile;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import static net.warp_scores.warpscores.model.AiCommunityMediaGenerationRequest.Target.*;
@@ -16,7 +19,8 @@ import static org.mockito.Mockito.*;
 class AiCommunityFanMediaServiceTest {
     private final AiCommunityMediaGenerationRequestRepository requests = mock(AiCommunityMediaGenerationRequestRepository.class);
     private final LlmProviderRouter routing = mock(LlmProviderRouter.class);
-    private final AiCommunityFanMediaService service = new AiCommunityFanMediaService(requests, routing);
+    private final AiCommunityMediaAssetStore assets = mock(AiCommunityMediaAssetStore.class);
+    private final AiCommunityFanMediaService service = new AiCommunityFanMediaService(requests, routing, assets);
 
     private void routing() {
         when(routing.planForTask(anyString(), any(), any())).thenReturn(new LlmProviderRouter.ExecutionPlan(null, List.of(), 50));
@@ -37,10 +41,33 @@ class AiCommunityFanMediaServiceTest {
         when(requests.findByStatusInOrderByPriorityDescCreatedAtAsc(anyList())).thenReturn(List.of(
                 job("queued", AVATAR, QUEUED), job("running", AVATAR, RUNNING)));
         var result = service.queueMissing(List.of(complete, partial, noPrompt, profile("queued"), profile("running")), AVATAR);
-        assertThat(result).isEqualTo(new AiCommunityFanMediaService.QueueMissingResult(1, 2, 1));
+        assertThat(result).isEqualTo(new AiCommunityFanMediaService.QueueMissingResult(1, 2, 1, 4));
         verify(requests).insert(argThat((AiCommunityMediaGenerationRequest r) ->
                 r.getFanProfileId().equals("partial") && r.getTarget() == AVATAR));
     }
+    @Test void bulkQueuesImageWhenManagedAssetPathHasNoFile() {
+        routing();
+        var missing = profile("missing");
+        missing.setProfileImageUrl("/community/media/assets/missing.png");
+        when(assets.isMissingManagedAsset(missing.getProfileImageUrl())).thenReturn(true);
+        when(requests.findByStatusInOrderByPriorityDescCreatedAtAsc(anyList())).thenReturn(List.of());
+
+        var result = service.queueMissing(List.of(missing), PROFILE_IMAGE);
+
+        assertThat(result).isEqualTo(new AiCommunityFanMediaService.QueueMissingResult(1, 0, 0, 1));
+        verify(requests).insert(argThat((AiCommunityMediaGenerationRequest request) ->
+                request.getFanProfileId().equals("missing") && request.getTarget() == PROFILE_IMAGE));
+    }
+
+    @Test void managedAssetScanDistinguishesMissingExistingAndExternalAssets(@TempDir Path storageDir) throws Exception {
+        var store = new AiCommunityMediaAssetStore(storageDir.toString());
+        Files.writeString(storageDir.resolve("present.png"), "image");
+
+        assertThat(store.isMissingManagedAsset("/community/media/assets/missing.png")).isTrue();
+        assertThat(store.isMissingManagedAsset("/community/media/assets/present.png")).isFalse();
+        assertThat(store.isMissingManagedAsset("https://example.test/image.png")).isFalse();
+    }
+
     @Test void selectiveRetryLeavesSuccessfulPortraitAloneAndDoesNotDuplicateOnSecondClick() {
         routing();
         var p = profile("fan"); p.setProfileImageUrl("/keep");
@@ -77,6 +104,6 @@ class AiCommunityFanMediaServiceTest {
         when(requests.insert(any(AiCommunityMediaGenerationRequest.class)))
                 .thenThrow(new org.springframework.dao.DuplicateKeyException("activeKey"));
         assertThat(service.queueMissing(List.of(profile("fan")), AVATAR))
-                .isEqualTo(new AiCommunityFanMediaService.QueueMissingResult(0, 1, 0));
+            .isEqualTo(new AiCommunityFanMediaService.QueueMissingResult(0, 1, 0, 1));
     }
 }
