@@ -213,6 +213,12 @@ export default {
       adminRemoveCoachClaim: async (id, getAccessTokenSilently, getAccessTokenWithPopup) =>
         deleteDataWithAuthentication(`/admin/coach-claims/${encodeURIComponent(id)}`,
           getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
+      adminCoaches: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
+        getDataWithAuthentication('/admin/coaches', getAccessTokenSilently, getAccessTokenWithPopup)
+          .then(returnData).catch(handleError),
+      updateAdminCoachMappings: async (id, data, getAccessTokenSilently, getAccessTokenWithPopup) =>
+        putDataWithAuthentication(`/admin/coaches/${encodeURIComponent(id)}/mappings`, data,
+          getAccessTokenSilently, getAccessTokenWithPopup).then(returnData).catch(handleError),
       adminUsers: async (getAccessTokenSilently, getAccessTokenWithPopup) =>
         getDataWithAuthentication('/admin/users', getAccessTokenSilently, getAccessTokenWithPopup)
           .then(returnList('/admin/users')).catch(handleError),
