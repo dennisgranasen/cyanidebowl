@@ -33,6 +33,8 @@ public class Coach implements Identifiable{
     private String lastLang;
     private String status;
     private Boolean matchValidation;
+    private String bb2CoachId;
+    private String bb3CoachId;
 
     public Coach(Identity id) {
         this.id = id;
